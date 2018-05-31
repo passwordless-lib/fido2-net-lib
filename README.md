@@ -9,3 +9,5 @@ If you want to have a look at the code, the most interesting is these files for 
 * [Controller.cs](Controller.cs)
 
 The HTML and javascript is copied (more or less as-is) from WebAuthn.org.
+
+Feedback, issues and pull requests are VERY welcome.
