@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2024
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fido2-net-lib", "fido2-net-lib\fido2-net-lib.csproj", "{671046B3-32C4-4430-A71F-27192EACECD0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2Demo", "Fido2Demo\Fido2Demo.csproj", "{1A7DD7B0-255E-44AD-8BE0-5F833846F444}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fido2-net-lib.Test", "fido2-net-lib.Test\fido2-net-lib.Test.csproj", "{06E82E3F-C626-4070-98BB-6D307DA86AC2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{80EE6A6B-EA6A-4C01-9EEA-45BE37DB5A2D}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{671046B3-32C4-4430-A71F-27192EACECD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{671046B3-32C4-4430-A71F-27192EACECD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{671046B3-32C4-4430-A71F-27192EACECD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{671046B3-32C4-4430-A71F-27192EACECD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A7DD7B0-255E-44AD-8BE0-5F833846F444}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A7DD7B0-255E-44AD-8BE0-5F833846F444}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A7DD7B0-255E-44AD-8BE0-5F833846F444}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A7DD7B0-255E-44AD-8BE0-5F833846F444}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06E82E3F-C626-4070-98BB-6D307DA86AC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06E82E3F-C626-4070-98BB-6D307DA86AC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06E82E3F-C626-4070-98BB-6D307DA86AC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06E82E3F-C626-4070-98BB-6D307DA86AC2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {538DBEBC-502B-4FFF-B278-5A5D3D290C80}
+	EndGlobalSection
+EndGlobal

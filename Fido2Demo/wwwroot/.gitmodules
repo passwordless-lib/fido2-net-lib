@@ -1,0 +1,3 @@
+[submodule "js/webauthn-simple-app"]
+	path = js/webauthn-simple-app
+	url = https://github.com/apowers313/webauthn-simple-app.git

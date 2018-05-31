@@ -1,0 +1,21 @@
+﻿{
+  "status": "ok",
+  "errorMessage": "",
+  "rp": {
+    "name": "localhost",
+    "id": "localhost"
+  },
+  "user": {
+    "name": "anders",
+    "id": "ASD",
+    "displayName": "anders"
+  },
+  "challenge": "CBsfWRMr39ViLU9p8JLnvcXBIpP1TRWxWhI_or7UIIzxR8chyobvgfW-Vwz8eOnUOUHr6adHE6C_PHDgPNIpVw",
+  "pubKeyCredParams": [
+    {
+      "type": "public-key",
+      "alg": -7
+    }
+  ],
+  "timeout": 0
+}

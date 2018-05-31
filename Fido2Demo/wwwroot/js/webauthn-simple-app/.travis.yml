@@ -1,0 +1,23 @@
+sudo: false
+cache:
+  directories:
+    - node_modules
+notifications:
+  email: true
+language: node_js
+node_js:
+  - '8'
+addons:
+  sauce_connect: true
+  hosts:
+    - saucelabs.test
+before_script:
+  - npm prune
+  - 'curl -Lo travis_after_all.py https://git.io/vLSON'
+after_success:
+  - python travis_after_all.py
+  - export $(cat .to_export_back)
+  - npm run docs
+  - git config --global user.name "Adam Powers"
+  - git config --global user.email "apowers@ato.ms"
+  - npm run publish-docs
