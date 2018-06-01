@@ -55,7 +55,7 @@ namespace fido2_net_lib.Test
 
             Assert.True(AuthDataHelper.HasAttested(ad));
 
-            var aaguid = AuthDataHelper.GetAttestionData(ad);
+            var aaguid = AuthDataHelper.GetAttestionData(new Memory<byte>(o.AttestionObject.AuthData));
 
 
 

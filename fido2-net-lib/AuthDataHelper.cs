@@ -19,7 +19,10 @@ namespace fido2NetLib
             return (authData[32] & 0x01) != 0;
         }
 
-
+        public static bool HasExtensions(ReadOnlySpan<byte> authData)
+        {
+            return (authData[32] & 0x80) != 0;
+        }
 
         public static bool HasAttested(ReadOnlySpan<byte> authData)
         {
@@ -37,32 +40,42 @@ namespace fido2NetLib
             return BitConverter.ToUInt32(ad.Slice(32, 4));
         }
 
-        public static object GetAttestionData(ReadOnlySpan<byte> ad)
+        public static (Memory<byte> aaguid, int credIdLen, Memory<byte> credId, Memory<byte> credentialPublicKey) GetAttestionData(Memory<byte> ad)
         {
-            int offset = 37; // https://w3c.github.io/webauthn/#attestedcredentialdata
+            int offset = 36; // https://w3c.github.io/webauthn/#attestedcredentialdata
             var aaguid = ad.Slice(offset, 16);
             offset += 16;
             // todo: Do we need to account for little endian?
             int credIdLen;
             if (!BitConverter.IsLittleEndian)
             {
-                credIdLen = BitConverter.ToUInt16(ad.Slice(offset,2).ToArray().Reverse().ToArray());
+                credIdLen = BitConverter.ToUInt16(ad.Slice(offset, 2).ToArray().Reverse().ToArray());
             }
             else
             {
-                credIdLen = BitConverter.ToUInt16(ad.Slice(offset,2));
+                credIdLen = BitConverter.ToUInt16(ad.Slice(offset, 2).Span);
             }
             offset += 2;
 
             var credId = ad.Slice(offset, credIdLen);
-            offset += credIdLen;
-            var credentialPublicKeyCose = ad.Slice(offset, ad.Length).ToArray();
 
-            var x = Com.AugustCellars.COSE.EncryptCommon.DecodeFromBytes(credentialPublicKeyCose);
+            offset += credIdLen;
+
+            var hasExtensions = AuthDataHelper.HasExtensions(ad.Span);
+
+            // Not sure this is working as expected...
+            var credentialPublicKey = ad.Slice(offset, (ad.Length - offset)).ToArray();
+
+            // for debugging...
+            string hex = BitConverter.ToString(credentialPublicKey);
+
+            var cborcertmap = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKey);
+
+            return (aaguid, credIdLen, credId, credentialPublicKey);
+
             // convert to jwk
             // convert to pem
 
-            return null;
 
         }
     }

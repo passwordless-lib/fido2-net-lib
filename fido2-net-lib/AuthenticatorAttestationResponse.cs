@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace fido2NetLib
@@ -89,7 +90,7 @@ namespace fido2NetLib
 
             // 14
             // validate the attStmt
-            if(AttestionObject.Fmt == "fido-u2f")
+            if (AttestionObject.Fmt == "fido-u2f")
             {
                 // validate format
                 if (!(
@@ -103,10 +104,12 @@ namespace fido2NetLib
                 // validate 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
                 if (x5c.Count != 1) throw new Fido2VerificationException();
 
-                var attCert = x5c[0].GetByteString();
+                var cert = new X509Certificate2(x5c.Values.First().GetByteString());
+
+                var pubKey = cert.PublicKey;
                 var y = 1;
 
-                
+
             }
             /**
              * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
