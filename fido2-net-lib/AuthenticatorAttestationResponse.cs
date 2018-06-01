@@ -89,7 +89,25 @@ namespace fido2NetLib
 
             // 14
             // validate the attStmt
+            if(AttestionObject.Fmt == "fido-u2f")
+            {
+                // validate format
+                if (!(
+                    AttestionObject.AttStmt.ContainsKey("x5c") &&
+                    AttestionObject.AttStmt.ContainsKey("sig")
+                    )) throw new Fido2VerificationException("Format is invalid");
 
+                var x5c = AttestionObject.AttStmt["x5c"];
+                var sig = AttestionObject.AttStmt["sig"];
+
+                // validate 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
+                if (x5c.Count != 1) throw new Fido2VerificationException();
+
+                var attCert = x5c[0].GetByteString();
+                var y = 1;
+
+                
+            }
             /**
              * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 */
