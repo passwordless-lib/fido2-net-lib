@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 
 namespace fido2NetLib
@@ -36,18 +37,32 @@ namespace fido2NetLib
 
         public static uint GetSignCount(ReadOnlySpan<byte> ad)
         {
-            // https://w3c.github.io/webauthn/#attestedcredentialdata
-            return BitConverter.ToUInt32(ad.Slice(32, 4));
+            var bytes = ad.Slice(33, 4);
+            var reversebytes = bytes.ToArray().Reverse().ToArray();
+            return BitConverter.ToUInt32(reversebytes);
+            //return BitConverter.ToUInt32(ad.Slice(33, 4),);
+            //using (var ms = new MemoryStream(ad.ToArray()))
+            //using (var br = new BinaryReader(ms))
+            //{
+            //    var pos = br.BaseStream.Seek(33, SeekOrigin.Current);
+            //    var x = br.ReadUInt32();
+            //    // https://w3c.github.io/webauthn/#attestedcredentialdata
+            //    
+            //    return x;
+            //}
         }
 
         public static (Memory<byte> aaguid, int credIdLen, Memory<byte> credId, Memory<byte> credentialPublicKey) GetAttestionData(Memory<byte> ad)
         {
-            int offset = 36; // https://w3c.github.io/webauthn/#attestedcredentialdata
+            string hex2 = BitConverter.ToString(ad.ToArray());
+
+            int offset = 37; // https://w3c.github.io/webauthn/#attestedcredentialdata
             var aaguid = ad.Slice(offset, 16);
+            var guid = new Guid(aaguid.ToArray());
             offset += 16;
             // todo: Do we need to account for little endian?
-            int credIdLen;
-            if (!BitConverter.IsLittleEndian)
+            ushort credIdLen;
+            if (true == BitConverter.IsLittleEndian)
             {
                 credIdLen = BitConverter.ToUInt16(ad.Slice(offset, 2).ToArray().Reverse().ToArray());
             }
@@ -68,8 +83,6 @@ namespace fido2NetLib
 
             // for debugging...
             string hex = BitConverter.ToString(credentialPublicKey);
-
-            var cborcertmap = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKey);
 
             return (aaguid, credIdLen, credId, credentialPublicKey);
 
