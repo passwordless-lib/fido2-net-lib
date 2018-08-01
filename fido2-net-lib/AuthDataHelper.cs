@@ -9,6 +9,37 @@ namespace fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
+        public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
+        {
+            var ms = new System.IO.MemoryStream(sigData.ToArray());
+
+            if (0x30 != ms.ReadByte()) throw new Fido2VerificationException(); // header
+            var dataLen = ms.ReadByte(); // all bytes
+            if (0x2 != ms.ReadByte()) throw new Fido2VerificationException();
+            var rLen = ms.ReadByte(); // length of r
+            if (0 != (rLen % 8)) // must be on 8 byte boundary
+            {
+                if (0 == ms.ReadByte()) rLen--; // throw away signing byte
+                else throw new Fido2VerificationException();
+            }
+            var r = new byte[rLen]; // r
+            ms.Read(r, 0, r.Length);
+
+            if (0x2 != ms.ReadByte()) throw new Fido2VerificationException();
+            var sLen = ms.ReadByte(); // length of s
+            if (0 != (sLen % 8)) // must be on 8 byte boundary
+            {
+                if (0 == ms.ReadByte()) sLen--; // throw away signing byte
+                else throw new Fido2VerificationException();
+            }
+            var s = new byte[sLen]; // s
+            ms.Read(s, 0, s.Length);
+
+            var sig = new byte[r.Length + s.Length];
+            r.CopyTo(sig, 0);
+            s.CopyTo(sig, r.Length);
+            return sig;
+        }
         public static ReadOnlySpan<byte> GetRpIdHash(ReadOnlySpan<byte> authData)
         {
             // todo: Switch to spans
