@@ -6,7 +6,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 namespace fido2NetLib
 {
-
     /// <summary>
     /// The AuthenticatorAttestationResponse interface represents the authenticator's response to a client’s request for the creation of a new public key credential.
     /// It contains information about the new credential that can be used to identify it for later use, and metadata that can be used by the Relying Party to assess the characteristics of the credential during registration.
@@ -22,7 +21,6 @@ namespace fido2NetLib
         public string Challenge { get; set; }
         public string HashAlgorithm { get; set; }
         public string Origin { get; set; }
-
         public Dictionary<string, object> ClientExtensions { get; set; }
         public string Type { get; set; }
 
@@ -104,6 +102,7 @@ namespace fido2NetLib
             var x5c = AttestionObject.AttStmt["x5c"];
             // The identifier of the ECDAA-Issuer public key
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
+
             var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
             if (AttestionObject.Fmt == "fido-u2f")
             {
@@ -118,7 +117,6 @@ namespace fido2NetLib
 
                 // 2a. the attestation certificate attestnCert MUST be the first element in the array
                 var cert = new X509Certificate2(x5c.Values.First().GetByteString());
-
                 var pubKey = (ECDsaCng)cert.GetECDsaPublicKey();
 
                 // 2b. If certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve, terminate this algorithm and return an appropriate error
@@ -129,10 +127,13 @@ namespace fido2NetLib
                 var credentialIdPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
 
                 // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
+                var COSE_kty = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
+                var COSE_alg = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
+                var COSE_crv = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
                 var x = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
                 var y = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
                 var publicKeyU2F = new byte[1 + x.Length + y.Length];
-                publicKeyU2F[0] = 0x4;
+                publicKeyU2F[0] = 0x4; // uncompressed
                 var offset = 1;
                 x.CopyTo(publicKeyU2F, offset);
                 offset += x.Length;
@@ -150,7 +151,7 @@ namespace fido2NetLib
                 offset += credentialId.Length;
                 publicKeyU2F.CopyTo(verificationData, offset);
                 // 6. Verify the sig using verificationData and certificate public key
-                if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), HashAlgorithmName.SHA256)) throw new Fido2VerificationException();
+                if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), algLookup[COSE_alg.AsInt32()])) throw new Fido2VerificationException();
             }
             /**
              * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
@@ -193,10 +194,10 @@ namespace fido2NetLib
                             if (0x4 != ms.ReadByte()) throw new Fido2VerificationException();
                             // AAGUID
                             if (0x10 != ms.ReadByte()) throw new Fido2VerificationException();
-                            var btGuid = new byte[0x10];
-                            ms.Read(btGuid, 0, 0x10);
+                            var aaguid = new byte[0x10];
+                            ms.Read(aaguid, 0, 0x10);
                             // verify that the value of this extension matches the aaguid in authenticatorData
-                            if (!btGuid.SequenceEqual(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).aaguid.ToArray())) throw new Fido2VerificationException();
+                            if (!aaguid.SequenceEqual(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).aaguid.ToArray())) throw new Fido2VerificationException();
                             //The extension MUST NOT be marked as critical
                             if (true == ext.Critical) throw new Fido2VerificationException();
                         }
