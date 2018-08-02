@@ -104,7 +104,6 @@ namespace fido2NetLib
             var x5c = AttestionObject.AttStmt["x5c"];
             // The identifier of the ECDAA-Issuer public key
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
-
             var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
             if (AttestionObject.Fmt == "fido-u2f")
             {
@@ -127,16 +126,18 @@ namespace fido2NetLib
 
                 // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
                 var credentialId = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credId.ToArray();
-                var credentialIdPublicKey = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray();
+                var credentialIdPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
+
                 // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
-                var x = AuthDataHelper.CoseKeyToU2F(credentialIdPublicKey).x.ToArray();
-                var y = AuthDataHelper.CoseKeyToU2F(credentialIdPublicKey).y.ToArray();
+                var x = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                var y = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
                 var publicKeyU2F = new byte[1 + x.Length + y.Length];
                 publicKeyU2F[0] = 0x4;
                 var offset = 1;
                 x.CopyTo(publicKeyU2F, offset);
                 offset += x.Length;
                 y.CopyTo(publicKeyU2F, offset);
+                
                 // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
                 var verificationData = new byte[1 + hashedRpId.Length + hashedClientDataJson.Length + credentialId.Length + publicKeyU2F.Length];
                 verificationData[0] = 0x00;
