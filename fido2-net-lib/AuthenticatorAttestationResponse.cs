@@ -73,10 +73,6 @@ namespace fido2NetLib
                 hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(options.Rp.Id));
             }
 
-            byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
-            AttestionObject.AuthData.CopyTo(data, 0);
-            hashedClientDataJson.CopyTo(data, AttestionObject.AuthData.Length);
-
             // 9 
             // Verify that the RP ID hash in authData is indeed the SHA - 256 hash of the RP ID expected by the RP.
             var hash = AuthDataHelper.GetRpIdHash(this.AttestionObject.AuthData);
@@ -88,7 +84,7 @@ namespace fido2NetLib
 
             // 11 
             // If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
-            if (!AuthDataHelper.IsUserVerified(AttestionObject.AuthData)) throw new Fido2VerificationException();
+            var userVerified = AuthDataHelper.IsUserVerified(AttestionObject.AuthData);
 
             // 12
             // Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected
@@ -118,8 +114,6 @@ namespace fido2NetLib
                     AttestionObject.AttStmt.ContainsKey("sig")
                     )) throw new Fido2VerificationException("Format is invalid");
 
-
-
                 // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
                 if (x5c.Count != 1) throw new Fido2VerificationException();
 
@@ -132,18 +126,40 @@ namespace fido2NetLib
                 if (CngAlgorithm.ECDsaP256 != pubKey.Key.Algorithm) throw new Fido2VerificationException();
 
                 // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
-
+                var credentialId = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credId.ToArray();
+                var credentialIdPublicKey = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray();
                 // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
-
+                var x = AuthDataHelper.CoseKeyToU2F(credentialIdPublicKey).x.ToArray();
+                var y = AuthDataHelper.CoseKeyToU2F(credentialIdPublicKey).y.ToArray();
+                var publicKeyU2F = new byte[1 + x.Length + y.Length];
+                publicKeyU2F[0] = 0x4;
+                var offset = 1;
+                x.CopyTo(publicKeyU2F, offset);
+                offset += x.Length;
+                y.CopyTo(publicKeyU2F, offset);
                 // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
-
+                var verificationData = new byte[1 + hashedRpId.Length + hashedClientDataJson.Length + credentialId.Length + publicKeyU2F.Length];
+                verificationData[0] = 0x00;
+                offset = 1;
+                hashedRpId.CopyTo(verificationData, offset);
+                offset += hashedRpId.Length;
+                hashedClientDataJson.CopyTo(verificationData, offset);
+                offset += hashedClientDataJson.Length;
+                credentialId.CopyTo(verificationData, offset);
+                offset += credentialId.Length;
+                publicKeyU2F.CopyTo(verificationData, offset);
                 // 6. Verify the sig using verificationData and certificate public key
+                if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), HashAlgorithmName.SHA256)) throw new Fido2VerificationException();
             }
             /**
              * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
              */
             if (AttestionObject.Fmt == "packed")
             {
+                byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
+                AttestionObject.AuthData.CopyTo(data, 0);
+                hashedClientDataJson.CopyTo(data, AttestionObject.AuthData.Length);
+
                 // If x5c is present, this indicates that the attestation type is not ECDAA
                 if (null != x5c)
                 {

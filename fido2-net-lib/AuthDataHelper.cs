@@ -9,10 +9,35 @@ namespace fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
+        public static (Memory<byte> x, Memory<byte> y) CoseKeyToU2F(Memory<byte> CoseKey)
+        {
+            // Not pretty, but seems to work
+            var ms = new System.IO.MemoryStream(CoseKey.ToArray());
+            if (0xA5 != ms.ReadByte()) throw new Fido2VerificationException(); // header
+            if (0x1 != ms.ReadByte()) throw new Fido2VerificationException();  // kty header
+            var kty = ms.ReadByte(); // 2 is "EC"?
+            if (0x3 != ms.ReadByte()) throw new Fido2VerificationException();  // alg header
+            var alg = ms.ReadByte(); // 38 ?
+            if (0x20 != ms.ReadByte()) throw new Fido2VerificationException();  // crv header
+            var crv = ms.ReadByte(); // 1 ?
+            if (0x21 != ms.ReadByte()) throw new Fido2VerificationException();  // x header
+            if (0x58 != ms.ReadByte()) throw new Fido2VerificationException();  // ?
+            if (0x20 != ms.ReadByte()) throw new Fido2VerificationException();  // x.Length must be 32
+            var x = new byte[0x20];
+            ms.Read(x, 0, 0x20);
+
+            if (0x22 != ms.ReadByte()) throw new Fido2VerificationException();  // y header
+            if (0x58 != ms.ReadByte()) throw new Fido2VerificationException();  // ?
+            if (0x20 != ms.ReadByte()) throw new Fido2VerificationException();  // y.Length must be 32
+            var y = new byte[0x20];
+            ms.Read(y, 0, 0x20);
+
+            return (x, y);
+        }
         public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
         {
+            // Not pretty, but seems to work
             var ms = new System.IO.MemoryStream(sigData.ToArray());
-
             if (0x30 != ms.ReadByte()) throw new Fido2VerificationException(); // header
             var dataLen = ms.ReadByte(); // all bytes
             if (0x2 != ms.ReadByte()) throw new Fido2VerificationException();
