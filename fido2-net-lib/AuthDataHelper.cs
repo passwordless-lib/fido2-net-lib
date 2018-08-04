@@ -9,6 +9,51 @@ namespace fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
+        public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
+        {
+            /*
+             *  Ecdsa-Sig-Value  ::=  SEQUENCE  {
+             *       r     INTEGER,
+             *       s     INTEGER  } 
+             *       
+             *  From: https://docs.microsoft.com/en-us/windows/desktop/seccertenroll/about-integer
+             *  
+             *  "Integer values are encoded into a TLV triplet that begins with a Tag value of 0x02. 
+             *  The Value field of the TLV triplet contains the encoded integer if it is positive, 
+             *  or its two's complement if it is negative. If the integer is positive but the high 
+             *  order bit is set to 1, a leading 0x00 is added to the content to indicate that the
+             *  number is not negative."
+             *  
+             */
+
+            var ms = new System.IO.MemoryStream(sigData.ToArray());
+            if (0x30 != ms.ReadByte()) throw new Fido2VerificationException(); // DER SEQUENCE
+            var dataLen = ms.ReadByte(); // length of r + s
+            if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
+            var rLen = ms.ReadByte(); // length of r
+            if (0 != (rLen % 8)) // must be on 8 byte boundary
+            {
+                if (0 == ms.ReadByte()) rLen--; // strip leading 0x00
+                else throw new Fido2VerificationException();
+            }
+            var r = new byte[rLen]; // r
+            ms.Read(r, 0, r.Length);
+
+            if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
+            var sLen = ms.ReadByte(); // length of s
+            if (0 != (sLen % 8)) // must be on 8 byte boundary
+            {
+                if (0 == ms.ReadByte()) sLen--; // strip leading 0x00
+                else throw new Fido2VerificationException();
+            }
+            var s = new byte[sLen]; // s
+            ms.Read(s, 0, s.Length);
+
+            var sig = new byte[r.Length + s.Length];
+            r.CopyTo(sig, 0);
+            s.CopyTo(sig, r.Length);
+            return sig;
+        }
         public static ReadOnlySpan<byte> GetRpIdHash(ReadOnlySpan<byte> authData)
         {
             // todo: Switch to spans
