@@ -20,10 +20,40 @@ namespace Fido2Demo
             Origin = "https://localhost:44329"
         });
 
+        [HttpPost]
+        [Route("/makeCredentialOptions")]
+        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType)
+        {
+            var user = new User
+            {
+                DisplayName = "Default value",
+                Name = username,
+                Id = "1"
+            };
+
+            var challenge = _lib.CreateCredentialChallenge(user);
+            HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
+
+            return Json(challenge);
+        }
+
+        [HttpPost]
+        [Route("/makeCredential")]
+        public Fido2NetLib.CreationResult MakeCredential(
+            [FromBody] AuthenticatorAttestationRawResponse attestionResponse)
+        {
+            var json = HttpContext.Session.GetString("fido2.challenge");
+            var origChallenge = JsonConvert.DeserializeObject<OptionsResponse>(json);
+
+            var res = _lib.CreateCredentialResult(attestionResponse, origChallenge);
+            return res;
+
+        }
+
         // GET: api/<controller>
         [HttpPost]
         [Route("/attestation/options")]
-        public fido2NetLib.OptionsResponse Get([FromBody] Createdto dto)
+        public JsonResult Get([FromBody] Createdto dto)
         {
 
             User user = new User
@@ -36,7 +66,7 @@ namespace Fido2Demo
             var challenge = _lib.CreateCredentialChallenge(user);
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
-            return challenge;
+            return new JsonResult(challenge);
         }
 
         [HttpPost]

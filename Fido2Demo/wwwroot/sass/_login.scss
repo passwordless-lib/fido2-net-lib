@@ -1,0 +1,35 @@
+body {
+    padding-top: 6em;
+    padding-bottom: 2em;
+    background-color: #dddddd;
+    font-size: 1.2em;
+}
+
+.login-wrapper {    
+    background-color: #eeeeee;
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid #cccccc;    
+}
+
+.buttons {
+    padding: 15px;
+}
+
+.alert-wrapper {
+    padding-top: 20px;
+}
+
+.footer {
+    span {
+        font-size: 10px;
+    }
+    a { 
+        color: #6BBF4E
+    }
+}
+
+#inputAttestation {
+    margin-bottom: 15px;
+    font-size: 15px;
+}

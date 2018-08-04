@@ -10,8 +10,8 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="wwwroot\js\site.js" />
-    <None Include="wwwroot\js\site.min.js" />
+    <None Include="wwwroot\old\js\site.js" />
+    <None Include="wwwroot\old\js\site.min.js" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\fido2-net-lib\fido2-net-lib.csproj" />
