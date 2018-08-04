@@ -90,7 +90,8 @@ namespace fido2NetLib
 
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
-            //
+            // todo: check
+
             // 14
             // validate the attStmt
 
@@ -103,9 +104,10 @@ namespace fido2NetLib
             // The identifier of the ECDAA-Issuer public key
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
 
-            var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
+            
             if (AttestionObject.Fmt == "fido-u2f")
             {
+                var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
                 // validate format
                 if (!(
                     AttestionObject.AttStmt.ContainsKey("x5c") &&
@@ -158,6 +160,7 @@ namespace fido2NetLib
              */
             if (AttestionObject.Fmt == "packed")
             {
+                var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
                 byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
                 AttestionObject.AuthData.CopyTo(data, 0);
                 hashedClientDataJson.CopyTo(data, AttestionObject.AuthData.Length);
