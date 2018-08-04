@@ -65,6 +65,7 @@ namespace fido2NetLib
                 ErrorMessage = string.Empty,
                 Challenge = Base64Url.Encode(challenge),
                 Rp = new Rp("localhost", config.ServerDomain),
+                Timeout = config.Timeout,
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
                     ES256
