@@ -57,6 +57,12 @@ namespace fido2NetLib
             Alg = -7
         };
 
+        /// <summary>
+        /// This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance.The default is none.
+        /// </summary>
+        [JsonProperty("attestation")]
+        public string Attestation { get; set; } = "none";
+
         public static OptionsResponse Create(byte[] challenge, Configuration config)
         {
             return new OptionsResponse
@@ -70,6 +76,7 @@ namespace fido2NetLib
                 {
                     ES256
                 }
+                
             };
         }
     }
