@@ -82,9 +82,6 @@ namespace fido2_net_lib.Test
             };
 
             Assert.Equal(expectedPublicKeyCose, authData.credentialPublicKey.ToArray());
-
-            var x = PeterO.Cbor.CBORObject.DecodeFromBytes(authData.credentialPublicKey.ToArray());
-            var json = x.ToJSONString();
         }
 
         //public void TestHasCorrentAAguid()
