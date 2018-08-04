@@ -11,7 +11,7 @@ namespace fido2NetLib
         static ConcurrentDictionary<string, object> globalAttestationMap = new ConcurrentDictionary<string, object>();
         public class Configuration
         {
-            public int Timeout { get; set; } = 6000;
+            public int Timeout { get; set; } = 60000;
             public int ChallengeSize { get; set; } = 64;
             public string ServerDomain { get; set; }
             public string ServerName { get; set; }
