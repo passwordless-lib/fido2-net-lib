@@ -8,6 +8,7 @@
         public string Id { get; set; }
         public string RawId { get; set; }
 
+        public string Type { get; set; }
         public ResponseData Response { get; set; }
 
         public class ResponseData
