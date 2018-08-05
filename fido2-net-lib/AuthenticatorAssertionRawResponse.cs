@@ -6,6 +6,9 @@ namespace fido2NetLib
     {
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] Id { get; set; }
+
+        // might be wrong to base64url encode this...
+        [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] RawId { get; set; }
 
         public AssertionResponse Response { get; set; }

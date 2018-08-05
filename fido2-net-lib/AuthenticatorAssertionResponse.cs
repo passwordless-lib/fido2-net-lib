@@ -114,8 +114,8 @@ namespace fido2NetLib
 
             // 16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.
             var concatedBytes = Raw.Response.AuthenticatorData.Concat(hashedClientDataJson).ToArray();
-            var newSignature = publicKey.VerifyData(concatedBytes, Signature);
-
+            var signatureMatch = publicKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
+            if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
 
 
 
