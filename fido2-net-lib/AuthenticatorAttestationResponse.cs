@@ -47,7 +47,7 @@ namespace fido2NetLib
             return response;
         }
 
-        public void Verify(OptionsResponse options, string expectedOrigin)
+        public void Verify(CredentialCreateOptions options, string expectedOrigin)
         {
             if (this.Type != "webauthn.create") throw new Fido2VerificationException();
 

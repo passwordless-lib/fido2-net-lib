@@ -14,7 +14,7 @@ namespace fido2_net_lib.Test
         public void TestParsing()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./json1.json"));
-            var options = JsonConvert.DeserializeObject<OptionsResponse>(File.ReadAllText("./options1.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./options1.json"));
 
             Assert.NotNull(jsonPost);
 
@@ -39,7 +39,7 @@ namespace fido2_net_lib.Test
         public void TestAuthenticatorDataParsing()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./json2.json"));
-            var options = JsonConvert.DeserializeObject<OptionsResponse>(File.ReadAllText("./options2.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./options2.json"));
 
             Assert.NotNull(jsonPost);
 

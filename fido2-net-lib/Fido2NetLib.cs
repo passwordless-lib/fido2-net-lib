@@ -11,7 +11,7 @@ namespace fido2NetLib
         static ConcurrentDictionary<string, object> globalAttestationMap = new ConcurrentDictionary<string, object>();
         public class Configuration
         {
-            public int Timeout { get; set; } = 60000;
+            public uint Timeout { get; set; } = 60000;
             public int ChallengeSize { get; set; } = 64;
             public string ServerDomain { get; set; }
             public string ServerName { get; set; }
@@ -31,10 +31,10 @@ namespace fido2NetLib
         }
 
         /// <summary>
-        /// Gets a challenge and any other parameters for the credentials.create() call
+        /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
         /// </summary>
         /// <returns></returns>
-        public OptionsResponse CreateCredentialChallenge(User user)
+        public CredentialCreateOptions RequestNewCredential(User user)
         {
             // https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptions
             // challenge.rp
@@ -54,13 +54,19 @@ namespace fido2NetLib
             //    Timeout = this.Config.Timeout
             //};
 
-            var options = OptionsResponse.Create(challenge, this.Config);
+            var options = CredentialCreateOptions.Create(challenge, this.Config);
             options.User = user;
 
             return options;
         }
 
-        public CreationResult CreateCredentialResult(AuthenticatorAttestationRawResponse attestionResponse, OptionsResponse origChallenge)
+        /// <summary>
+        /// Verifies the response from the browser/authr after creating new credentials
+        /// </summary>
+        /// <param name="attestionResponse"></param>
+        /// <param name="origChallenge"></param>
+        /// <returns></returns>
+        public CreationResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
             parsedResponse.Verify(origChallenge, this.Config.Origin);
@@ -68,6 +74,46 @@ namespace fido2NetLib
             // todo: Set Errormessage etc.
             return new CreationResult { Status = "ok", ErrorMessage = "" };
         }
+
+
+        /// <summary>
+        /// Returns XOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
+        /// </summary>
+        /// <returns></returns>
+        public AssertionOptions GetAssertion(User user)
+        {
+
+            var challenge = new byte[this.Config.ChallengeSize];
+            _crypto.GetBytes(challenge);
+
+            //var options = new OptionsResponse()
+            //{
+            //    Challenge = challenge.ToString(), //?
+            //    Timeout = this.Config.Timeout
+            //};
+
+            var options = AssertionOptions.Create(challenge, this.Config);
+
+            return options;
+            
+
+        }
+
+        /// <summary>
+        /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
+        /// </summary>
+        /// <returns></returns>
+        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions)
+        {
+            var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
+            parsedResponse.Verify(origOptions.Challenge, this.Config.Origin);
+
+            return true;
+        }
+
+
+
+
 
         public class CreationResult
         {

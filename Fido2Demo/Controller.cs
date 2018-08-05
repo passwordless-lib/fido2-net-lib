@@ -31,7 +31,7 @@ namespace Fido2Demo
                 Id = "1"
             };
 
-            var challenge = _lib.CreateCredentialChallenge(user);
+            var challenge = _lib.RequestNewCredential(user);
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
             return Json(challenge);
@@ -43,9 +43,9 @@ namespace Fido2Demo
             [FromBody] AuthenticatorAttestationRawResponse attestionResponse)
         {
             var json = HttpContext.Session.GetString("fido2.challenge");
-            var origChallenge = JsonConvert.DeserializeObject<OptionsResponse>(json);
+            var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
-            var res = _lib.CreateCredentialResult(attestionResponse, origChallenge);
+            var res = _lib.MakeNewCredential(attestionResponse, origChallenge);
             return res;
 
         }
@@ -63,7 +63,7 @@ namespace Fido2Demo
                 Id = "ABC"
             };
 
-            var challenge = _lib.CreateCredentialChallenge(user);
+            var challenge = _lib.RequestNewCredential(user);
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
             return new JsonResult(challenge);
@@ -74,9 +74,9 @@ namespace Fido2Demo
         public Fido2NetLib.CreationResult HandleResult([FromBody] AuthenticatorAttestationRawResponse attestionResponse)
         {
             var json = HttpContext.Session.GetString("fido2.challenge");
-            var origChallenge = JsonConvert.DeserializeObject<OptionsResponse>(json);
+            var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
-            var res = _lib.CreateCredentialResult(attestionResponse, origChallenge);
+            var res = _lib.MakeNewCredential(attestionResponse, origChallenge);
             return res;
             
         }

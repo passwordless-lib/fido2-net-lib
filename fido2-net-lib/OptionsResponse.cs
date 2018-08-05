@@ -7,7 +7,7 @@ using static fido2NetLib.Fido2NetLib;
 
 namespace fido2NetLib
 {
-    public class OptionsResponse
+    public class CredentialCreateOptions
     {
         [JsonProperty("status")]
         public string Status { get; set; }
@@ -63,9 +63,9 @@ namespace fido2NetLib
         [JsonProperty("attestation")]
         public string Attestation { get; set; } = "none";
 
-        public static OptionsResponse Create(byte[] challenge, Configuration config)
+        public static CredentialCreateOptions Create(byte[] challenge, Configuration config)
         {
-            return new OptionsResponse
+            return new CredentialCreateOptions
             {
                 Status = "ok",
                 ErrorMessage = string.Empty,
