@@ -1,0 +1,22 @@
+﻿{
+  "status": "ok",
+  "errorMessage": "",
+  "rp": {
+    "name": "localhost",
+    "id": "localhost"
+  },
+  "user": {
+    "name": "anders@example.com",
+    "id": "1",
+    "displayName": "Default value"
+  },
+  "challenge": "anCCIxFRyLEyIgoHHpkJoxUjx2axA9sWbRw3Tb7yWNfTfw4d2dPmwOzmpQ84RlXB3RRNZjDdxtMD8xY43RThMw",
+  "pubKeyCredParams": [
+    {
+      "type": "public-key",
+      "alg": -7
+    }
+  ],
+  "timeout": 60000,
+  "attestation": "none"
+}
