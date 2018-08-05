@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
 using fido2NetLib;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,8 +15,21 @@ namespace Fido2Demo
     [Route("api/[controller]")]
     public class MyController : Controller
     {
+
+        public static byte[] StringToByteArray(String hex)
+        {
+            hex = hex.Replace("-", "");
+            int NumberChars = hex.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            return bytes;
+        }
+
+
         // todo: Add proper config
-        private Fido2NetLib _lib = new Fido2NetLib(new Fido2NetLib.Configuration {
+        private Fido2NetLib _lib = new Fido2NetLib(new Fido2NetLib.Configuration
+        {
             ServerDomain = "localhost",
             Origin = "https://localhost:44329"
         });
@@ -31,7 +45,7 @@ namespace Fido2Demo
                 Id = "1"
             };
 
-            var challenge = _lib.RequestNewCredential(user);
+            var challenge = _lib.RequestNewCredential(user, attType);
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
             return Json(challenge);
@@ -39,14 +53,87 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredential")]
-        public Fido2NetLib.CreationResult MakeCredential(
-            [FromBody] AuthenticatorAttestationRawResponse attestionResponse)
+        public Fido2NetLib.CreationResult MakeCredential()
         {
+
+            // work around failing modelbinding
+            string body;
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                body = reader.ReadToEnd();
+            }
+
+            var bodyRes = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(body);
+
             var json = HttpContext.Session.GetString("fido2.challenge");
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
-            var res = _lib.MakeNewCredential(attestionResponse, origChallenge);
+            var res = _lib.MakeNewCredential(bodyRes, origChallenge);
             return res;
+
+        }
+
+        [HttpPost]
+        [Route("/assertionOptions")]
+        public JsonResult AssertionOptions(string username)
+        {
+            var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
+            var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
+                    new PublicKeyCredentialDescriptor()
+                    {
+                        Id = StringToByteArray(credId),
+                        Type = "public-key"
+                    }
+                };
+
+            // assertion
+
+            var aoptions = _lib.GetAssertion(new User()
+            {
+                Id = "1",
+                Name = "anders"
+            },
+            allowedCreds
+            );
+            return Json(aoptions);
+            //var options = _lib.GetAssertion(new User()
+            //{
+            //    Id = "1",
+            //    Name = username
+            //});
+
+            //HttpContext.Session.SetString("fido2.options", JsonConvert.SerializeObject(options));
+
+            //return Json(options);
+
+        }
+
+        [HttpPost]
+        [Route("/makeAssertion")]
+        public JsonResult MakeAssertion( [FromBody] AuthenticatorAssertionRawResponse r)
+        {
+            var x = ModelState.IsValid;
+          
+
+            // work around failing modelbinding
+            string body;
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                body = reader.ReadToEnd();
+            }
+
+            if (r is null)
+            {
+                throw new Exception("what?");
+            }
+
+            //var bodyRes = JsonConvert.DeserializeObject<AuthenticatorAssertionRawResponse>(body);
+
+            var json = HttpContext.Session.GetString("fido2.options");
+            var origChallenge = JsonConvert.DeserializeObject<AssertionOptions>(json);
+
+            var res = _lib.MakeAssertion(r, origChallenge, null);
+            return Json(res);
 
         }
 
@@ -63,7 +150,7 @@ namespace Fido2Demo
                 Id = "ABC"
             };
 
-            var challenge = _lib.RequestNewCredential(user);
+            var challenge = _lib.RequestNewCredential(user, "none");
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
             return new JsonResult(challenge);
@@ -78,7 +165,7 @@ namespace Fido2Demo
 
             var res = _lib.MakeNewCredential(attestionResponse, origChallenge);
             return res;
-            
+
         }
 
         // GET api/<controller>/5
@@ -105,6 +192,8 @@ namespace Fido2Demo
         public void Delete(int id)
         {
         }
+
+
     }
 
     public class Createdto

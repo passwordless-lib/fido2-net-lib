@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
@@ -34,7 +35,7 @@ namespace fido2NetLib
         /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
         /// </summary>
         /// <returns></returns>
-        public CredentialCreateOptions RequestNewCredential(User user)
+        public CredentialCreateOptions RequestNewCredential(User user, string requestedAttesstation)
         {
             // https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptions
             // challenge.rp
@@ -56,6 +57,7 @@ namespace fido2NetLib
 
             var options = CredentialCreateOptions.Create(challenge, this.Config);
             options.User = user;
+            options.Attestation = requestedAttesstation;
 
             return options;
         }
@@ -75,12 +77,11 @@ namespace fido2NetLib
             return new CreationResult { Status = "ok", ErrorMessage = "" };
         }
 
-
         /// <summary>
         /// Returns XOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public AssertionOptions GetAssertion(User user)
+        public AssertionOptions GetAssertion(User user, List<PublicKeyCredentialDescriptor> allowedCredentials)
         {
 
             var challenge = new byte[this.Config.ChallengeSize];
@@ -92,10 +93,10 @@ namespace fido2NetLib
             //    Timeout = this.Config.Timeout
             //};
 
-            var options = AssertionOptions.Create(challenge, this.Config);
+            var options = AssertionOptions.Create(challenge, allowedCredentials, this.Config);
 
             return options;
-            
+
 
         }
 
@@ -103,12 +104,22 @@ namespace fido2NetLib
         /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions)
+        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, ECDsaCng existingPublicKey)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
-            parsedResponse.Verify(origOptions.Challenge, this.Config.Origin);
+            parsedResponse.Verify(origOptions, this.Config.Origin, 0, false, existingPublicKey);
 
             return true;
+        }
+
+        public static byte[] StringToByteArray(String hex)
+        {
+            hex = hex.Replace("-", "");
+            int NumberChars = hex.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            return bytes;
         }
 
 

@@ -84,12 +84,13 @@ coerceToArrayBuffer = function (thing, name) {
 
 // Don't drop any blanks
 function b64RawEnc(buf) {
-    return base64js.fromByteArray(buf)
-        //.replace(/\+/g, "-")
-        //.replace(/\//g, "_")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=*$/g, "")
+    return b64enc(buf);
+    //return base64js.fromByteArray(buf)
+    //    //.replace(/\+/g, "-")
+    //    //.replace(/\//g, "_")
+    //    .replace(/\+/g, "-")
+    //    .replace(/\//g, "_")
+    //    .replace(/=*$/g, "")
 }
 
 function string2buffer(str) {
@@ -223,6 +224,7 @@ function registerNewCredential(newCredential) {
         method: 'POST', // or 'PUT'
         body: JSON.stringify(data), // data can be `string` or {object}!
         headers: {
+            'Accept': 'application/json',
             'Content-Type': 'application/json'
         }
     }).then(res => res.json())
@@ -280,10 +282,13 @@ function getAssertion() {
         return;
     });
 
-    $.get('/assertion/' + state.user.name, {
+    $.post('/assertionOptions', {
+        username: state.user.name
     }, null, 'json')
         .done(function (makeAssertionOptions) {
-            makeAssertionOptions.challenge = Uint8Array.from(atob(makeAssertionOptions.challenge), c => c.charCodeAt(0));
+            const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
+            makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
+
             makeAssertionOptions.allowCredentials.forEach(function (listItem) {
                 var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+")
                 listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
@@ -308,22 +313,36 @@ function verifyAssertion(assertedCredential) {
     let clientDataJSON = new Uint8Array(assertedCredential.response.clientDataJSON);
     let rawId = new Uint8Array(assertedCredential.rawId);
     let sig = new Uint8Array(assertedCredential.response.signature);
-    $.post('/assertion', {
+    const data = {
         id: assertedCredential.id,
         rawId: b64enc(rawId),
         type: assertedCredential.type,
-        authData: b64RawEnc(authData),
-        clientData: b64RawEnc(clientDataJSON),
-        signature: hexEncode(sig),
-    }).done(function (response) {
-        console.log(response)
-        if (response.success) {
-            window.location.href = "/dashboard/" + state.user.displayName;
-        } else {
-            showErrorAlert("Error Doing Assertion");
-            swal.closeModal();
+        response: {
+            authenticatorData: b64RawEnc(authData),
+            clientDataJson: b64RawEnc(clientDataJSON),
+            signature: hexEncode(sig)
         }
-    });
+    };
+
+    fetch("/makeAssertion", {
+        method: 'POST', // or 'PUT'
+        body: JSON.stringify(data), // data can be `string` or {object}!
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(r => r.json())
+        .catch(e => console.error(e))
+        .then(function (response) {
+            console.log(response)
+            if (response.success) {
+                window.location.href = "/dashboard/" + state.user.displayName;
+            } else {
+                showErrorAlert("Error Doing Assertion");
+                swal.closeModal();
+            }
+        });
 }
 
 function setCurrentUser(userResponse) {
