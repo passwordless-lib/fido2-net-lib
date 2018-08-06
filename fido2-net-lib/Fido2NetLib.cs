@@ -71,10 +71,14 @@ namespace fido2NetLib
         public CreationResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
-            parsedResponse.Verify(origChallenge, this.Config.Origin);
+            var res = parsedResponse.Verify(origChallenge, this.Config.Origin);
+
+
+            var pk = BitConverter.ToString(res.PublicKey);
+            var cid = BitConverter.ToString(res.CredentialId);
 
             // todo: Set Errormessage etc.
-            return new CreationResult { Status = "ok", ErrorMessage = "" };
+            return new CreationResult { Status = "ok", ErrorMessage = "", Result = res };
         }
 
         /// <summary>
@@ -104,7 +108,7 @@ namespace fido2NetLib
         /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, ECDsaCng existingPublicKey)
+        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, byte[] existingPublicKey)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
             parsedResponse.Verify(origOptions, this.Config.Origin, 0, false, existingPublicKey);
@@ -130,6 +134,7 @@ namespace fido2NetLib
         {
             public string Status { get; set; }
             public string ErrorMessage { get; set; }
+            public AttestationVerificationData Result { get; internal set; }
 
             // todo: add debuginfo?
         }

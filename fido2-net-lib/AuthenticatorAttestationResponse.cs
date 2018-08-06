@@ -31,7 +31,7 @@ namespace fido2NetLib
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
-            var rawAttestionObj = Base64Url.Decode(rawResponse.Response.AttestationObject);
+            var rawAttestionObj = rawResponse.Response.AttestationObject;
             var cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawAttestionObj);
 
             var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
@@ -48,8 +48,10 @@ namespace fido2NetLib
             return response;
         }
 
-        public void Verify(CredentialCreateOptions options, string expectedOrigin)
+        public AttestationVerificationData Verify(CredentialCreateOptions options, string expectedOrigin)
         {
+            var result = new AttestationVerificationData();
+
             BaseVerify(expectedOrigin, options.Challenge);
             // verify challenge is same as we expected
             // verify origin
@@ -110,32 +112,46 @@ namespace fido2NetLib
                 var credentialId = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credId.ToArray();
                 var credentialIdPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
 
+                
+
                 var COSE_kty = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
                 var COSE_alg = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
                 var COSE_crv = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
                 var x = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
                 var y = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
-                var publicKeyU2F = new byte[8 + x.Length + y.Length];
-                //publicKeyU2F[0] = 0x4; // uncompressed
-                var offset = 0;
-                var keyType = new byte[] { 0x45, 0x43, 0x53, 0x31 };
-                var keyLength = new byte[] { 0x20, 0x00, 0x00, 0x00 };
-                keyType.CopyTo(publicKeyU2F, offset);
-                offset += keyType.Length;
-                keyLength.CopyTo(publicKeyU2F, offset);
-                offset += keyLength.Length;
+                var publicKeyU2F = new byte[1 + x.Length + y.Length];
+                publicKeyU2F[0] = 0x4; // uncompressed
+                var offset = 1;
+
+                
+
+                // specifics for CngKey. Should also switch length of byte array from 1 + to 8+ and remove 0x4 byte write.
+                //var keyType = new byte[] { 0x45, 0x43, 0x53, 0x31 };
+                //var keyLength = new byte[] { 0x20, 0x00, 0x00, 0x00 };
+                //keyType.CopyTo(publicKeyU2F, offset);
+                //offset += keyType.Length;
+                //keyLength.CopyTo(publicKeyU2F, offset);
+                //offset += keyLength.Length;
 
                 x.CopyTo(publicKeyU2F, offset);
                 offset += x.Length;
                 y.CopyTo(publicKeyU2F, offset);
 
-                var cng = CngKey.Import(publicKeyU2F, CngKeyBlobFormat.EccPublicBlob);
-                var s = cng.ToString();
-                var s2 = cng.Export(CngKeyBlobFormat.EccPublicBlob);
-                var s3 = System.Text.Encoding.UTF8.GetString(s2);
-                var s4 = BitConverter.ToString(publicKeyU2F);
-                var credId = BitConverter.ToString(credentialId);
-                var pubKey = new ECDsaCng(cng);
+                result.PublicKey = publicKeyU2F;
+                result.CredentialId = credentialId;
+
+                // test code...
+                //var cng = CngKey.Import(publicKeyU2F, CngKeyBlobFormat.EccPublicBlob);
+                //var s = cng.ToString();
+                //var s2 = cng.Export(CngKeyBlobFormat.EccPublicBlob);
+                //var s3 = System.Text.Encoding.UTF8.GetString(s2);
+                //var s4 = BitConverter.ToString(publicKeyU2F);
+                //var credId = BitConverter.ToString(credentialId);
+                //var pubKey = new ECDsaCng(cng);
+
+
+
+
 
                 // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                 //if (true != algLookup[alg.AsInt32()].Equals(pubKey.Key.Algorithm)) throw new Fido2VerificationException();
@@ -190,6 +206,10 @@ namespace fido2NetLib
                 credentialId.CopyTo(verificationData, offset);
                 offset += credentialId.Length;
                 publicKeyU2F.CopyTo(verificationData, offset);
+
+                result.PublicKey = publicKeyU2F;
+                result.CredentialId = credentialId;
+
                 // 6. Verify the sig using verificationData and certificate public key
                 if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), algLookup[COSE_alg.AsInt32()])) throw new Fido2VerificationException();
             }
@@ -277,12 +297,16 @@ namespace fido2NetLib
                 {
                     var cert = new X509Certificate2(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
                     var pubKey = (ECDsaCng)cert.GetECDsaPublicKey();
+                    result.PublicKey = pubKey.Key.Export(CngKeyBlobFormat.EccPublicBlob); // todo: is this right?.
+
                     // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                     if (true != algLookup[alg.AsInt32()].Equals(pubKey.Key.Algorithm)) throw new Fido2VerificationException();
                     // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
                     if (true != pubKey.VerifyData(data, parsedSignature, algLookup[alg.AsInt32()])) throw new Fido2VerificationException();
                 }
             }
+
+            return result;
         }
 
         /// <summary>

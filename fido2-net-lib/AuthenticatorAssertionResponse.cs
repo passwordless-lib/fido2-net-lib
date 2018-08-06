@@ -1,7 +1,16 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Security;
 
 namespace fido2NetLib
 {
@@ -13,6 +22,7 @@ namespace fido2NetLib
         }
 
         public AuthenticatorAssertionRawResponse Raw { get; set; }
+
         public byte[] AuthenticatorData { get; set; }
         public byte[] Signature { get; set; }
         public string UserHandle { get; set; }
@@ -49,7 +59,7 @@ namespace fido2NetLib
         /// <param name="options"></param>
         /// <param name="expectedOrigin"></param>
         /// <param name="savedCounter"></param>
-        public void Verify(AssertionOptions options, string expectedOrigin, uint savedCounter, bool isUserVerificationRequired, ECDsaCng storedPublicKey)
+        public void Verify(AssertionOptions options, string expectedOrigin, uint savedCounter, bool isUserVerificationRequired, byte[] storedPublicKey)
         {
             BaseVerify(expectedOrigin, options.Challenge);
 
@@ -114,7 +124,14 @@ namespace fido2NetLib
 
             // 16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.
             var concatedBytes = Raw.Response.AuthenticatorData.Concat(hashedClientDataJson).ToArray();
-            var signatureMatch = publicKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
+
+            var pubKey = LoadPublicKey(publicKey);
+
+            //if (CngAlgorithm.ECDsaP256 != ) throw new Fido2VerificationException();
+            var pk2 = new ECDsaCng(ECCurve.NamedCurves.nistP256);
+            var sign = pk2.SignData(concatedBytes, HashAlgorithmName.SHA256);
+            var m = pk2.VerifyData(concatedBytes, sign, HashAlgorithmName.SHA256);
+            var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
             if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
 
 
@@ -122,5 +139,29 @@ namespace fido2NetLib
 
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
         }
+
+        private static ECDsa LoadPublicKey(byte[] key)
+        {
+
+            var pubKeyX = key.Skip(1).Take(32).ToArray();
+            var pubKeyY = key.Skip(33).ToArray();
+
+            return ECDsa.Create(new ECParameters
+            {
+                Curve = ECCurve.NamedCurves.nistP256,
+                Q = new ECPoint
+                {
+                    X = pubKeyX,
+                    Y = pubKeyY
+                }
+            });
+
+           
+
+        }
+            
+
+         
+        
     }
 }

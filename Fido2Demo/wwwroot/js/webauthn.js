@@ -320,7 +320,7 @@ function verifyAssertion(assertedCredential) {
         response: {
             authenticatorData: b64RawEnc(authData),
             clientDataJson: b64RawEnc(clientDataJSON),
-            signature: hexEncode(sig)
+            signature: b64RawEnc(sig)
         }
     };
 

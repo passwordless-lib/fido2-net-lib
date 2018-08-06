@@ -64,9 +64,9 @@ namespace fido2_net_lib.Test
             AuthenticatorAssertionRawResponse aresponse = Get<AuthenticatorAssertionRawResponse>("./assertionNoneResponse.json");
 
             // signed assertion?
-            var cng = CngKey.Import(StringToByteArray(key2), CngKeyBlobFormat.EccPublicBlob);
-            var existingPublicKey = new ECDsaCng(cng);
-            fido2.MakeAssertion(aresponse, aoptions, existingPublicKey);
+            //var cng = CngKey.Import(StringToByteArray(key2), CngKeyBlobFormat.EccPublicBlob);
+            //var existingPublicKey = new ECDsaCng(cng);
+            //fido2.MakeAssertion(aresponse, aoptions, response.);
 
 
         }

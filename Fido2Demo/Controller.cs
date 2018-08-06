@@ -69,6 +69,8 @@ namespace Fido2Demo
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
             var res = _lib.MakeNewCredential(bodyRes, origChallenge);
+
+            HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
             return res;
 
         }
@@ -77,11 +79,14 @@ namespace Fido2Demo
         [Route("/assertionOptions")]
         public JsonResult AssertionOptions(string username)
         {
-            var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
+            // todo: Fetch creds for the user from database.
+            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
+            var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
+            //var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
             var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
                     new PublicKeyCredentialDescriptor()
                     {
-                        Id = StringToByteArray(credId),
+                        Id = creds.CredentialId,
                         Type = "public-key"
                     }
                 };
@@ -95,6 +100,9 @@ namespace Fido2Demo
             },
             allowedCreds
             );
+
+            HttpContext.Session.SetString("fido2.options", JsonConvert.SerializeObject(aoptions));
+
             return Json(aoptions);
             //var options = _lib.GetAssertion(new User()
             //{
@@ -102,7 +110,6 @@ namespace Fido2Demo
             //    Name = username
             //});
 
-            //HttpContext.Session.SetString("fido2.options", JsonConvert.SerializeObject(options));
 
             //return Json(options);
 
@@ -132,39 +139,12 @@ namespace Fido2Demo
             var json = HttpContext.Session.GetString("fido2.options");
             var origChallenge = JsonConvert.DeserializeObject<AssertionOptions>(json);
 
-            var res = _lib.MakeAssertion(r, origChallenge, null);
+            // todo: Fetch creds for the user from database.
+            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
+            var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
+            byte[] existingPublicKey = creds.PublicKey; // todo: read from database.
+            var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey);
             return Json(res);
-
-        }
-
-        // GET: api/<controller>
-        [HttpPost]
-        [Route("/attestation/options")]
-        public JsonResult Get([FromBody] Createdto dto)
-        {
-
-            User user = new User
-            {
-                DisplayName = dto.DisplayName,
-                Name = dto.Username,
-                Id = "ABC"
-            };
-
-            var challenge = _lib.RequestNewCredential(user, "none");
-            HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
-
-            return new JsonResult(challenge);
-        }
-
-        [HttpPost]
-        [Route("/attestation/result")]
-        public Fido2NetLib.CreationResult HandleResult([FromBody] AuthenticatorAttestationRawResponse attestionResponse)
-        {
-            var json = HttpContext.Session.GetString("fido2.challenge");
-            var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
-
-            var res = _lib.MakeNewCredential(attestionResponse, origChallenge);
-            return res;
 
         }
 
