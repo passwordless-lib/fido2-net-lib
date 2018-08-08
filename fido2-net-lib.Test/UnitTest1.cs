@@ -33,8 +33,6 @@ namespace fido2_net_lib.Test
             Assert.Equal(s, bs);
         }
 
-
-
         [Fact]
         public void TestAuthenticatorDataParsing()
         {
@@ -83,7 +81,25 @@ namespace fido2_net_lib.Test
 
             Assert.Equal(expectedPublicKeyCose, authData.credentialPublicKey.ToArray());
         }
-
+        
+        [Fact]
+        public void TestU2FAttestation()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsU2F.json"));
+            var options = JsonConvert.DeserializeObject<OptionsResponse>(File.ReadAllText("./attestationOptionsU2F.json"));
+            var fido2 = new Fido2NetLib(new Fido2NetLib.Configuration());
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            o.Verify(options, "https://localhost:44329");
+        }
+        [Fact]
+        public void TestPackedAttestation()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsPacked.json"));
+            var options = JsonConvert.DeserializeObject<OptionsResponse>(File.ReadAllText("./attestationOptionsPacked.json"));
+            var fido2 = new Fido2NetLib(new Fido2NetLib.Configuration());
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            o.Verify(options, "https://localhost:44329");
+        }
         //public void TestHasCorrentAAguid()
         //{
         //    var expectedAaguid = new Uint8Array([

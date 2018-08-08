@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="attestationOptionsPacked.json" />
+    <None Remove="attestationOptionsU2F.json" />
+    <None Remove="attestationResultsPacked.json" />
+    <None Remove="attestationResultsU2F.json" />
     <None Remove="json1.json" />
     <None Remove="json2.json" />
     <None Remove="options1.json" />
@@ -14,6 +18,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="attestationOptionsPacked.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationOptionsU2F.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationResultsPacked.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationResultsU2F.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="json2.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

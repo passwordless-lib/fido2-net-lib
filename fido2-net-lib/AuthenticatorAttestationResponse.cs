@@ -126,14 +126,14 @@ namespace fido2NetLib
 
                 // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
                 var credentialId = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credId.ToArray();
-                var credentialIdPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
+                var credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
 
                 // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
-                var COSE_kty = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
-                var COSE_alg = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
-                var COSE_crv = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
-                var x = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
-                var y = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                var COSE_kty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
+                var COSE_alg = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
+                var COSE_crv = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
+                var x = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                var y = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
                 var publicKeyU2F = new byte[1 + x.Length + y.Length];
                 publicKeyU2F[0] = 0x4; // uncompressed
                 var offset = 1;
@@ -176,6 +176,7 @@ namespace fido2NetLib
 
                     if (true != pubKey.VerifyData(data, parsedSignature, algLookup[alg.AsInt32()])) throw new Fido2VerificationException();
                     // 2b. Version MUST be set to 3
+                    // TODO: Move all this messy certificate verification stuff to a seperate function
                     if (3 != cert.Version) throw new Fido2VerificationException();
                     // Subject field MUST contain C, O, OU, CN
                     // OU must match "Authenticator Attestation"
