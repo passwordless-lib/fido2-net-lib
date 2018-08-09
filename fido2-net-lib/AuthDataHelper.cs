@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace fido2NetLib
 {
@@ -9,6 +10,76 @@ namespace fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
+        public static ReadOnlySpan<byte> AaguidFromAttnCertExts(X509ExtensionCollection exts)
+        {
+            var aaguid = new byte[16];
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.1.1.4")) // id-fido-gen-ce-aaguid
+                {
+                    var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
+                    // OCTET STRING
+                    if (0x4 != ms.ReadByte()) throw new Fido2VerificationException();
+                    // AAGUID
+                    if (0x10 != ms.ReadByte()) throw new Fido2VerificationException();
+                    ms.Read(aaguid, 0, 0x10);
+                    //The extension MUST NOT be marked as critical
+                    if (true == ext.Critical) throw new Fido2VerificationException();
+                }
+            }
+            return aaguid;
+        }
+        public static bool IsAttnCertCACert(X509ExtensionCollection exts)
+        {
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.FriendlyName == "Basic Constraints")
+                {
+                    X509BasicConstraintsExtension baseExt = (X509BasicConstraintsExtension)ext;
+                    return baseExt.CertificateAuthority;
+                }
+            }
+            return true;
+        }
+        public static int U2FTransportsFromAttnCert(X509ExtensionCollection exts)
+        {
+            var u2ftransports = 0;
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.2.1.1"))
+                {
+                    var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
+                    // BIT STRING
+                    if (0x3 != ms.ReadByte()) throw new Fido2VerificationException();
+                    if (0x2 != ms.ReadByte()) throw new Fido2VerificationException();
+                    var unused = ms.ReadByte(); // unused byte
+                    // https://fidoalliance.org/specs/fido-u2f-v1.1-id-20160915/fido-u2f-authenticator-transports-extension-v1.1-id-20160915.html#fido-u2f-certificate-transports-extension
+                    u2ftransports = ms.ReadByte(); // do something with this?
+                }
+            }
+            return u2ftransports;
+        }
+    
+        public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
+        {
+            var dictSubject = attnCertSubj.Split(", ").Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
+            return (0 != dictSubject["C"].Length ||
+                0 != dictSubject["O"].Length ||
+                0 != dictSubject["OU"].Length ||
+                0 != dictSubject["CN"].Length ||
+                "Authenticator Attestation" == dictSubject["OU"].ToString());
+        }
+        public static (Memory<byte> publicKeyU2F, int COSE_alg) U2FKeyFromCOSEKey(PeterO.Cbor.CBORObject COSEKey)
+        {
+            var COSE_kty = COSEKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
+            var COSE_alg = COSEKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
+            var COSE_crv = COSEKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
+            var x = COSEKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+            var y = COSEKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+            var publicKeyU2F = new byte[1] { 0x4 }; // uncompressed
+            publicKeyU2F = publicKeyU2F.Concat(x).Concat(y).ToArray();
+            return (publicKeyU2F, COSE_alg.AsInt32());
+        }
         public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
         {
             /*

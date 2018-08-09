@@ -90,12 +90,27 @@ namespace fido2_net_lib.Test
             var fido2 = new Fido2NetLib(new Fido2NetLib.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             o.Verify(options, "https://localhost:44329");
+            ReadOnlySpan<byte> ad = o.AttestionObject.AuthData;
+            Assert.True(AuthDataHelper.IsUserPresent(ad));
+            Assert.False(AuthDataHelper.IsUserVerified(ad));
         }
         [Fact]
         public void TestPackedAttestation()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsPacked.json"));
             var options = JsonConvert.DeserializeObject<OptionsResponse>(File.ReadAllText("./attestationOptionsPacked.json"));
+            var fido2 = new Fido2NetLib(new Fido2NetLib.Configuration());
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            o.Verify(options, "https://localhost:44329");
+            ReadOnlySpan<byte> ad = o.AttestionObject.AuthData;
+            Assert.True(AuthDataHelper.IsUserPresent(ad));
+            Assert.True(AuthDataHelper.IsUserVerified(ad));
+        }
+        [Fact]
+        public void TestNoneAttestation()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsNone.json"));
+            var options = JsonConvert.DeserializeObject<OptionsResponse>(File.ReadAllText("./attestationOptionsNone.json"));
             var fido2 = new Fido2NetLib(new Fido2NetLib.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             o.Verify(options, "https://localhost:44329");
