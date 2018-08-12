@@ -1,16 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.Nist;
-using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Asn1.X9;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Security;
 
 namespace fido2NetLib
 {
