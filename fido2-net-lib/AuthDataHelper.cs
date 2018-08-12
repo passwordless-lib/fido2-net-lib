@@ -60,6 +60,7 @@ namespace fido2NetLib
             s.CopyTo(sig, r.Length);
             return sig;
         }
+
         public static ReadOnlySpan<byte> GetRpIdHash(ReadOnlySpan<byte> authData)
         {
             // todo: Switch to spans

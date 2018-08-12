@@ -74,7 +74,7 @@ namespace fido2NetLib
                 Timeout = config.Timeout,
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    ES256
+                    ES256 // todo: is this ok?
                 }
                 
             };

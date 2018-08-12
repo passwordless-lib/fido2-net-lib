@@ -14,6 +14,10 @@ using Org.BouncyCastle.Security;
 
 namespace fido2NetLib
 {
+    /// <summary>
+    /// The AuthenticatorAssertionResponse interface represents an authenticator's response to a client’s request for generation of a new authentication assertion given the Relying Party's challenge and optional list of credentials it is aware of.
+    /// This response contains a cryptographic signature proving possession of the credential private key, and optionally evidence of user consent to a specific transaction.
+    /// </summary>
     public class AuthenticatorAssertionResponse : AuthenticatorResponse
     {
         private AuthenticatorAssertionResponse(byte[] clientDataJson) : base(clientDataJson)

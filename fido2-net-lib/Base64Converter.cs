@@ -6,6 +6,9 @@ using Newtonsoft.Json.Linq;
 
 namespace fido2NetLib
 {
+    /// <summary>
+    /// Custom Converter for encoding/encoding byte[] using Base64Url instead of default Base64.
+    /// </summary>
     public class Base64UrlConverter : JsonConverter<byte[]>
     {
         public override void WriteJson(JsonWriter writer, byte[] value, JsonSerializer serializer)

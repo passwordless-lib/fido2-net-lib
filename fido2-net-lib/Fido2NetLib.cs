@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace fido2NetLib
 {
+    /// <summary>
+    /// Public API for parsing and veriyfing FIDO2 attestation & assertion responses.
+    /// </summary>
     public class Fido2NetLib
     {
         public class Configuration

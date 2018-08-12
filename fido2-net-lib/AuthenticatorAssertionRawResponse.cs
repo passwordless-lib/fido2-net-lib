@@ -2,6 +2,9 @@
 
 namespace fido2NetLib
 {
+    /// <summary>
+    /// Transport class for AssertionResponse
+    /// </summary>
     public class AuthenticatorAssertionRawResponse
     {
         [JsonConverter(typeof(Base64UrlConverter))]

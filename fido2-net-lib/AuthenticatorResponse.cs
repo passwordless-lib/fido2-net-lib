@@ -4,7 +4,10 @@ using Newtonsoft.Json;
 
 namespace fido2NetLib
 {
-    public class AuthenticatorResponse
+    /// <summary>
+    /// Base class for responses sent by the Authenticator Client
+    /// </summary>
+    public abstract class AuthenticatorResponse
     {
 
         protected AuthenticatorResponse(byte[] clientDataJson)
