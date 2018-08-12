@@ -1,5 +1,5 @@
-# fido2-net-lib
-A proof of Concept implementation library + demo for fido2 and WebAuthn using .NET (Work in progress)
+# FIDO2 .net library (WebAuthn)
+A working (maybe still proof of concept) implementation library + demo for fido2 and WebAuthn using .NET (Work in progress)
 
 To run the demo: Start Fido2Demo (SSL, expected url https://localhost:44329) and open https://localhost:44329/index.html in the browser.
 
@@ -16,14 +16,15 @@ Feedback, issues and pull requests are VERY welcome.
 
 ## Supported features
 
-✅ Attestation API & verification (Register and verify credentials/authenticators)
-✅ Assertment API & verification (Authenticate users)
-✅ Fido 2 Security Keys
-✅ Backwards compatability with Fido-u2f.
-❔ Windows Hello support
-✅ ES256 Public Key format (no other public key formats yet)
-✅ "none", "fidu-u2f" & "packed" attestation formats
-❌ "tpm", "android-key", "android-safetynet"
+✅ Attestation API & verification (Register and verify credentials/authenticators)  
+✅ Assertment API & verification (Authenticate users)  
+✅ Fido 2 Security Keys  
+✅ Backwards compatability with Fido-u2f.  
+❔ Windows Hello support  
+✅ ES256 Public Key format (no other public key formats yet)  
+✅ "none", "fidu-u2f" & "packed" attestation formats  
+❌ "tpm", "android-key", "android-safetynet"  
+❌ Extensions
 
 ## Examples
 
