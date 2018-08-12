@@ -70,11 +70,11 @@ namespace fido2NetLib
                 Status = "ok",
                 ErrorMessage = string.Empty,
                 Challenge = challenge,
-                Rp = new Rp("localhost", config.ServerDomain),
+                Rp = new Rp(config.ServerDomain, config.ServerName),
                 Timeout = config.Timeout,
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    ES256 // todo: is this ok?
+                    ES256 // todo: support more formats tha es256
                 }
                 
             };
@@ -98,7 +98,7 @@ namespace fido2NetLib
 
     public class Rp
     {
-        public Rp(string name, string id)
+        public Rp(string id, string name)
         {
             Name = name;
             Id = id;
@@ -121,13 +121,13 @@ namespace fido2NetLib
     {
 
         /// <summary>
-        /// todo: Unsure if this is needed
+        /// Required. A human-friendly identifier for a user account. It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames. For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity
         /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
         /// <summary>
-        /// The user handle of the user account entity.
+        /// The user handle of the user account entity. To ensure secure operation, authentication and authorization decisions MUST be made on the basis of this id member, not the displayName nor name members
         /// </summary>
         [JsonProperty("id")]
         public string Id { get; set; }
