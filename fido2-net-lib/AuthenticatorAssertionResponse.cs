@@ -127,15 +127,10 @@ namespace fido2NetLib
 
             var pubKey = LoadPublicKey(publicKey);
 
-            //if (CngAlgorithm.ECDsaP256 != ) throw new Fido2VerificationException();
-            //var pk2 = new ECDsaCng(ECCurve.NamedCurves.nistP256);
-            //var sign = pk2.SignData(concatedBytes, HashAlgorithmName.SHA256);
-            //var m = pk2.VerifyData(concatedBytes, sign, HashAlgorithmName.SHA256);
-            var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
-            if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
+            // note: is this ok? At least it works.
+            var pubKeyAlgo = $"{pubKey.SignatureAlgorithm.ToUpperInvariant()}_P{pubKey.KeySize}";
 
-
-
+            if (CngAlgorithm.ECDsaP256.ToString() != pubKeyAlgo) throw new Fido2VerificationException();
 
             var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
             if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
