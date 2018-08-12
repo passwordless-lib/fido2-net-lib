@@ -177,12 +177,12 @@ function makeCredential() {
             console.log(makeCredentialOptions);
 
             // base64url to base64
-            const challenge = makeCredentialOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
+            //const challenge = makeCredentialOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
 
             // Turn the challenge back into the accepted format
-            makeCredentialOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
+            makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge); // Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
             // Turn ID into a UInt8Array Buffer for some reason
-            makeCredentialOptions.user.id = Uint8Array.from(challenge)
+            makeCredentialOptions.user.id = coerceToArrayBuffer(makeCredentialOptions.user.id);
 
             console.log("Credential Options Formatted");
             console.log(makeCredentialOptions);
@@ -340,8 +340,8 @@ function verifyAssertion(assertedCredential) {
         //.then(r => r.json())
         .catch(e => console.error(e))
         .then(function (r) {
-            var response = r.json();
-            console.log(response)
+            //var response = r.json();
+            //console.log(response)
 
             if (r.status === 200) {
                 //swal(

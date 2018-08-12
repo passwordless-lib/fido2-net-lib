@@ -130,7 +130,8 @@ namespace fido2NetLib
         /// The user handle of the user account entity. To ensure secure operation, authentication and authorization decisions MUST be made on the basis of this id member, not the displayName nor name members
         /// </summary>
         [JsonProperty("id")]
-        public string Id { get; set; }
+        [JsonConverter(typeof(Base64UrlConverter))]
+        public byte[] Id { get; set; }
 
         /// <summary>
         /// A human-friendly name for the user account, intended only for display. For example, "Alex P. Müller" or "田中 倫". The Relying Party SHOULD let the user choose this, and SHOULD NOT restrict the choice more than necessary.

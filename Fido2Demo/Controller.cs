@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using fido2NetLib;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -16,12 +17,18 @@ namespace Fido2Demo
     [Route("api/[controller]")]
     public class MyController : Controller
     {
-        // todo: Add proper config
-        private Fido2NetLib _lib = new Fido2NetLib(new Fido2NetLib.Configuration
+
+        public MyController(IConfiguration config)
         {
-            ServerDomain = "localhost",
-            Origin = "https://localhost:44329"
-        });
+            _lib = new Fido2NetLib(new Fido2NetLib.Configuration
+            {
+                ServerDomain = config["fido2:serverDomain"],
+                ServerName = "Fido2 test",
+                Origin = config["fido2:origin"]
+            });
+        }
+        // todo: Add proper config
+        private Fido2NetLib _lib;
 
         [HttpPost]
         [Route("/makeCredentialOptions")]
@@ -31,7 +38,7 @@ namespace Fido2Demo
             {
                 DisplayName = "Display " + username,
                 Name = username,
-                Id = "1"
+                Id = Encoding.UTF8.GetBytes("1")
             };
 
             var challenge = _lib.RequestNewCredential(user, attType);
@@ -82,7 +89,7 @@ namespace Fido2Demo
 
             var aoptions = _lib.GetAssertion(new User()
             {
-                Id = "1",
+                Id = Encoding.UTF8.GetBytes("1"),
                 Name = username,
                 DisplayName = "Display " + username
             },
