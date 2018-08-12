@@ -10,7 +10,7 @@ namespace fido2NetLib
     /// The AuthenticatorAttestationResponse interface represents the authenticator's response to a client’s request for the creation of a new public key credential.
     /// It contains information about the new credential that can be used to identify it for later use, and metadata that can be used by the Relying Party to assess the characteristics of the credential during registration.
     /// </summary>
-    public class AuthenticatorAttestationResponse
+    public class AuthenticatorAttestationResponse : AuthenticatorResponse
     {
         public static readonly Dictionary<int, HashAlgorithmName> algLookup = new Dictionary<int, HashAlgorithmName>
         {
@@ -18,45 +18,47 @@ namespace fido2NetLib
             {-35, HashAlgorithmName.SHA384 },
             {-36, HashAlgorithmName.SHA512 }
         };
-        public string Challenge { get; set; }
+
+        private AuthenticatorAttestationResponse(byte[] clientDataJson) : base(clientDataJson)
+        {
+        }
+
         public string HashAlgorithm { get; set; }
-        public string Origin { get; set; }
         public Dictionary<string, object> ClientExtensions { get; set; }
-        public string Type { get; set; }
 
         public ParsedAttestionObject AttestionObject { get; set; }
         public AuthenticatorAttestationRawResponse Raw { get; private set; }
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
-            var stringx = Encoding.UTF8.GetString(rawResponse.Response.ClientDataJson);
-            var response = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatorAttestationResponse>(stringx);
-
-            // we will need to access raw in Verify()
-            response.Raw = rawResponse;
-
-            var rawAttestionObj = Base64Url.Decode(rawResponse.Response.AttestationObject);
+            var rawAttestionObj = rawResponse.Response.AttestationObject;
             var cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawAttestionObj);
-            response.AttestionObject = new ParsedAttestionObject()
+
+            var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
             {
-                Fmt = cborAttestion["fmt"].AsString(),
-                AttStmt = cborAttestion["attStmt"], // convert to dictionary?
-                AuthData = cborAttestion["authData"].GetByteString()
+                Raw = rawResponse,
+                AttestionObject = new ParsedAttestionObject()
+                {
+                    Fmt = cborAttestion["fmt"].AsString(),
+                    AttStmt = cborAttestion["attStmt"], // convert to dictionary?
+                    AuthData = cborAttestion["authData"].GetByteString()
+                }
             };
 
             return response;
         }
 
-        public void Verify(OptionsResponse options, string expectedOrigin)
+        public AttestationVerificationData Verify(CredentialCreateOptions options, string expectedOrigin)
         {
-            if (this.Type != "webauthn.create") throw new Fido2VerificationException();
+            var result = new AttestationVerificationData();
 
-            // verify challenge is same
-            if (this.Challenge != options.Challenge) throw new Fido2VerificationException();
-
+            BaseVerify(expectedOrigin, options.Challenge);
+            // verify challenge is same as we expected
             // verify origin
-            // todo: This might not be so correct
-            if (this.Origin != expectedOrigin) throw new Fido2VerificationException();
+            // done in baseclass
+
+            if (Type != "webauthn.create") throw new Fido2VerificationException();
+
 
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
@@ -67,13 +69,13 @@ namespace fido2NetLib
             byte[] hashedRpId;
             using (var sha = SHA256.Create())
             {
-                hashedClientDataJson = sha.ComputeHash(this.Raw.Response.ClientDataJson);
+                hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
                 hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(options.Rp.Id));
             }
 
             // 9 
             // Verify that the RP ID hash in authData is indeed the SHA - 256 hash of the RP ID expected by the RP.
-            var hash = AuthDataHelper.GetRpIdHash(this.AttestionObject.AuthData);
+            var hash = AuthDataHelper.GetRpIdHash(AttestionObject.AuthData);
             if (!hash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException();
 
             // 10
@@ -104,7 +106,58 @@ namespace fido2NetLib
             // The identifier of the ECDAA-Issuer public key
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
 
-            
+            if (AttestionObject.Fmt == "none")
+            {
+
+                // todo: Refactor publickeyu2f extraction to method.
+                var credentialId = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credId.ToArray();
+                var credentialIdPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
+
+                //var COSE_kty = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
+                //var COSE_alg = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
+                //var COSE_crv = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
+                var x = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                var y = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                var publicKeyU2F = new byte[1 + x.Length + y.Length];
+                publicKeyU2F[0] = 0x4; // uncompressed
+                var offset = 1;
+
+                
+
+                // specifics for CngKey. Should also switch length of byte array from 1 + to 8+ and remove 0x4 byte write.
+                //var keyType = new byte[] { 0x45, 0x43, 0x53, 0x31 };
+                //var keyLength = new byte[] { 0x20, 0x00, 0x00, 0x00 };
+                //keyType.CopyTo(publicKeyU2F, offset);
+                //offset += keyType.Length;
+                //keyLength.CopyTo(publicKeyU2F, offset);
+                //offset += keyLength.Length;
+
+                x.CopyTo(publicKeyU2F, offset);
+                offset += x.Length;
+                y.CopyTo(publicKeyU2F, offset);
+
+                result.PublicKey = publicKeyU2F;
+                result.CredentialId = credentialId;
+
+                // test code...
+                //var cng = CngKey.Import(publicKeyU2F, CngKeyBlobFormat.EccPublicBlob);
+                //var s = cng.ToString();
+                //var s2 = cng.Export(CngKeyBlobFormat.EccPublicBlob);
+                //var s3 = System.Text.Encoding.UTF8.GetString(s2);
+                //var s4 = BitConverter.ToString(publicKeyU2F);
+                //var credId = BitConverter.ToString(credentialId);
+                //var pubKey = new ECDsaCng(cng);
+
+
+
+
+
+                // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
+                //if (true != algLookup[alg.AsInt32()].Equals(pubKey.Key.Algorithm)) throw new Fido2VerificationException();
+                // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
+                //if (true != pubKey.VerifyData(data, parsedSignature, algLookup[alg.AsInt32()])) throw new Fido2VerificationException();
+            }
+
             if (AttestionObject.Fmt == "fido-u2f")
             {
                 var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
@@ -140,7 +193,7 @@ namespace fido2NetLib
                 x.CopyTo(publicKeyU2F, offset);
                 offset += x.Length;
                 y.CopyTo(publicKeyU2F, offset);
-                
+
                 // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
                 var verificationData = new byte[1 + hashedRpId.Length + hashedClientDataJson.Length + credentialId.Length + publicKeyU2F.Length];
                 verificationData[0] = 0x00;
@@ -152,6 +205,10 @@ namespace fido2NetLib
                 credentialId.CopyTo(verificationData, offset);
                 offset += credentialId.Length;
                 publicKeyU2F.CopyTo(verificationData, offset);
+
+                result.PublicKey = publicKeyU2F;
+                result.CredentialId = credentialId;
+
                 // 6. Verify the sig using verificationData and certificate public key
                 if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), algLookup[COSE_alg.AsInt32()])) throw new Fido2VerificationException();
             }
@@ -239,12 +296,16 @@ namespace fido2NetLib
                 {
                     var cert = new X509Certificate2(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
                     var pubKey = (ECDsaCng)cert.GetECDsaPublicKey();
+                    result.PublicKey = pubKey.Key.Export(CngKeyBlobFormat.EccPublicBlob); // todo: is this right?.
+
                     // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                     if (true != algLookup[alg.AsInt32()].Equals(pubKey.Key.Algorithm)) throw new Fido2VerificationException();
                     // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
                     if (true != pubKey.VerifyData(data, parsedSignature, algLookup[alg.AsInt32()])) throw new Fido2VerificationException();
                 }
             }
+
+            return result;
         }
 
         /// <summary>

@@ -1,18 +1,25 @@
-﻿namespace fido2NetLib
+﻿using Newtonsoft.Json;
+
+namespace fido2NetLib
 {
     /// <summary>
     /// The raw transportation dto for <see cref="AuthenticatorAttestationResponse"/>
     /// </summary>
     public class AuthenticatorAttestationRawResponse
     {
-        public string Id { get; set; }
-        public string RawId { get; set; }
+        [JsonConverter(typeof(Base64UrlConverter))]
+        public byte[] Id { get; set; }
+        [JsonConverter(typeof(Base64UrlConverter))]
+        public byte[] RawId { get; set; }
 
+        public string Type { get; set; }
         public ResponseData Response { get; set; }
 
         public class ResponseData
         {
-            public string AttestationObject { get; set; }
+            [JsonConverter(typeof(Base64UrlConverter))]
+            public byte[] AttestationObject { get; set; }
+            [JsonConverter(typeof(Base64UrlConverter))]
             public byte[] ClientDataJson { get; set; }
         }
     }

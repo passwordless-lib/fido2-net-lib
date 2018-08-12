@@ -1128,7 +1128,7 @@
             var args = {
                 publicKey: options.toObject()
             };
-            args.publicKey.attestation = args.publicKey.attestation || "direct";
+            args.publicKey.attestation = args.publicKey.attestation || "none";
             delete args.publicKey.status;
             delete args.publicKey.errorMessage;
 

@@ -9,6 +9,12 @@ namespace fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
+        /// <summary>
+        /// Parses the encoded Signature data to a byte array (DER  / ASN.1 decode)
+        /// todo: Improve this notes
+        /// </summary>
+        /// <param name="sigData"></param>
+        /// <returns></returns>
         public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
         {
             /*
@@ -54,6 +60,7 @@ namespace fido2NetLib
             s.CopyTo(sig, r.Length);
             return sig;
         }
+
         public static ReadOnlySpan<byte> GetRpIdHash(ReadOnlySpan<byte> authData)
         {
             // todo: Switch to spans
@@ -127,7 +134,7 @@ namespace fido2NetLib
             var credentialPublicKey = ad.Slice(offset, (ad.Length - offset)).ToArray();
 
             // for debugging...
-            string hex = BitConverter.ToString(credentialPublicKey);
+            //string hex = BitConverter.ToString(credentialPublicKey);
 
             return (aaguid, credIdLen, credId, credentialPublicKey);
 
