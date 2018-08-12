@@ -37,18 +37,6 @@ namespace fido2NetLib
                 Signature = AuthDataHelper.ParseSigData(rawResponse.Response.Signature).ToArray()
             };
 
-
-            //response.Raw = rawResponse;
-
-            //var cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawResponse.Response);
-            //response.AttestionObject = new ParsedAttestionObject()
-            //{
-            //    Fmt = cborAttestion["fmt"].AsString(),
-            //    AttStmt = cborAttestion["attStmt"], // convert to dictionary?
-            //    AuthData = cborAttestion["authData"].GetByteString()
-            //};
-
-
             return response;
         }
 
@@ -134,13 +122,19 @@ namespace fido2NetLib
 
             var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
             if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
-            
+
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
         }
 
+        /// <summary>
+        /// Parses the bytes to a ECDSa signature alg
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         private static ECDsa LoadPublicKey(byte[] key)
         {
-
+            // .net ECDsa expects two 32 byte arays for X/Y.
+            // skip first byte which should alawys be (0x4).
             var pubKeyX = key.Skip(1).Take(32).ToArray();
             var pubKeyY = key.Skip(33).ToArray();
 
@@ -153,13 +147,6 @@ namespace fido2NetLib
                     Y = pubKeyY
                 }
             });
-
-
-
         }
-
-
-
-
     }
 }
