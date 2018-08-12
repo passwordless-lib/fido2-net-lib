@@ -9,6 +9,12 @@
   <ItemGroup>
     <None Remove="assertionNoneOptions.json" />
     <None Remove="assertionNoneResponse.json" />
+    <None Remove="attestationOptionsNone.json" />
+    <None Remove="attestationOptionsPacked.json" />
+    <None Remove="attestationOptionsU2F.json" />
+    <None Remove="attestationResultsNone.json" />
+    <None Remove="attestationResultsPacked.json" />
+    <None Remove="attestationResultsU2F.json" />
     <None Remove="attestionNoneOptions.json" />
     <None Remove="attestionNoneResponse.json" />
     <None Remove="json1.json" />
@@ -24,10 +30,28 @@
     <Content Include="assertionNoneResponse.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="attestionNoneResponse.json">
+    <Content Include="attestationOptionsNone.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationOptionsPacked.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationOptionsU2F.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationResultsNone.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationResultsPacked.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationResultsU2F.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="attestionNoneOptions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestionNoneResponse.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="json2.json">
