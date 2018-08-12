@@ -16,14 +16,14 @@ Feedback, issues and pull requests are VERY welcome.
 
 ## Supported features
 
-✅ Attestation API & verification (Register and verify credentials/authenticators)
-✅ Assertment API & verification (Authenticate users)
-✅ Fido 2 Security Keys
-✅ Backwards compatability with Fido-u2f.
-❔ Windows Hello support
-✅ ES256 Public Key format (no other public key formats yet)
-✅ "none", "fidu-u2f" & "packed" attestation formats
-❌ "tpm", "android-key", "android-safetynet"
+✅ Attestation API & verification (Register and verify credentials/authenticators)  
+✅ Assertment API & verification (Authenticate users)  
+✅ Fido 2 Security Keys  
+✅ Backwards compatability with Fido-u2f.  
+❔ Windows Hello support  
+✅ ES256 Public Key format (no other public key formats yet)  
+✅ "none", "fidu-u2f" & "packed" attestation formats  
+❌ "tpm", "android-key", "android-safetynet"  
 
 ## Examples
 
