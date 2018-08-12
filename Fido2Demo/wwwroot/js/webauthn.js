@@ -229,10 +229,16 @@ function registerNewCredential(newCredential) {
         }
     }).then(res => res.json())
         .catch(error => console.error('Error:', error))
-        .then(response => console.log('Success:', response))
+        //.then(response => console.log('Success:', response))
         .then(response => {
-            if (response.success) {
-                window.location.href = "/dashboard/" + state.user.displayName;
+            console.log('Success:', response);
+            if (response.status === "ok") {
+                swal(
+                    'Good job!',
+                    'You\'re registrered successfully',
+                    'success'
+                );
+                //window.location.href = "/dashboard/" + state.user.displayName;
             } else {
                 console.log("Error creating credential");
                 console.log(response);
@@ -256,9 +262,30 @@ function getAssertion() {
         return;
     }
     setUser();
-    $.get('/user/' + state.user.name, {}, null, 'json').done(function (response) {
-        console.log(response);
-    }).then(function () {
+    fetch('/user/' + state.user.name).then(function () {
+        $.post('/assertionOptions', {
+            username: state.user.name
+        }, null, 'json')
+            .done(function (makeAssertionOptions) {
+                const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
+                makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
+
+                makeAssertionOptions.allowCredentials.forEach(function (listItem) {
+                    var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+")
+                    listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
+                });
+                console.log(makeAssertionOptions);
+                navigator.credentials.get({ publicKey: makeAssertionOptions })
+                    .then(function (credential) {
+                        console.log(credential);
+                        verifyAssertion(credential);
+                        swal.clickConfirm();
+                    }).catch(function (err) {
+                        console.log(err);
+                        showErrorAlert(err.message);
+                        swal.closeModal();
+                    });
+            });
         swal({
             title: 'Logging In...',
             text: 'Tap your security key to login.',
@@ -282,29 +309,7 @@ function getAssertion() {
         return;
     });
 
-    $.post('/assertionOptions', {
-        username: state.user.name
-    }, null, 'json')
-        .done(function (makeAssertionOptions) {
-            const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
-            makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
-
-            makeAssertionOptions.allowCredentials.forEach(function (listItem) {
-                var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+")
-                listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
-            });
-            console.log(makeAssertionOptions);
-            navigator.credentials.get({ publicKey: makeAssertionOptions })
-                .then(function (credential) {
-                    console.log(credential);
-                    verifyAssertion(credential);
-                    swal.clickConfirm();
-                }).catch(function (err) {
-                    console.log(err);
-                    showErrorAlert(err.message);
-                    swal.closeModal();
-                });
-        });
+    
 }
 
 function verifyAssertion(assertedCredential) {
@@ -332,12 +337,19 @@ function verifyAssertion(assertedCredential) {
             'Content-Type': 'application/json'
         }
     })
-        .then(r => r.json())
+        //.then(r => r.json())
         .catch(e => console.error(e))
-        .then(function (response) {
+        .then(function (r) {
+            var response = r.json();
             console.log(response)
-            if (response.success) {
-                window.location.href = "/dashboard/" + state.user.displayName;
+
+            if (r.status === 200) {
+                //swal(
+                //    'Good job!',
+                //    'You\'re registrered in successfully',
+                //    'success'
+                //);
+                //window.location.href = "/dashboard/" + state.user.displayName;
             } else {
                 showErrorAlert("Error Doing Assertion");
                 swal.closeModal();
@@ -353,6 +365,10 @@ function setCurrentUser(userResponse) {
 function showErrorAlert(msg) {
     $("#alert-msg").text(msg);
     $("#user-alert").show();
+}
+
+function showSuccessAlert(msg) {
+    swal()
 }
 
 function hideErrorAlert() {

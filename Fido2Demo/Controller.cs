@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using fido2NetLib;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -123,6 +124,19 @@ namespace Fido2Demo
             var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey, (userhandle, credentialId) => true);
             return Json(res);
 
+        }
+
+        [HttpGet]
+        [Route("/user/{username}")]
+        public  ActionResult GetUser(string username)
+        {
+            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
+            if (string.IsNullOrEmpty(jsonCreds))
+            {
+                Response.StatusCode = 401;
+                return BadRequest("No user in HTTP Session (please register)");
+            }
+            return Ok();
         }
     }
 }
