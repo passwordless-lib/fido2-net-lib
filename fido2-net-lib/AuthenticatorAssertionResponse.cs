@@ -34,7 +34,7 @@ namespace fido2NetLib
                 // we will need to access raw in Verify()
                 Raw = rawResponse,
                 AuthenticatorData = rawResponse.Response.AuthenticatorData,
-                Signature = rawResponse.Response.Signature
+                Signature = AuthDataHelper.ParseSigData(rawResponse.Response.Signature).ToArray()
             };
 
 
@@ -128,9 +128,9 @@ namespace fido2NetLib
             var pubKey = LoadPublicKey(publicKey);
 
             //if (CngAlgorithm.ECDsaP256 != ) throw new Fido2VerificationException();
-            var pk2 = new ECDsaCng(ECCurve.NamedCurves.nistP256);
-            var sign = pk2.SignData(concatedBytes, HashAlgorithmName.SHA256);
-            var m = pk2.VerifyData(concatedBytes, sign, HashAlgorithmName.SHA256);
+            //var pk2 = new ECDsaCng(ECCurve.NamedCurves.nistP256);
+            //var sign = pk2.SignData(concatedBytes, HashAlgorithmName.SHA256);
+            //var m = pk2.VerifyData(concatedBytes, sign, HashAlgorithmName.SHA256);
             var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
             if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
 
