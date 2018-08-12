@@ -7,7 +7,7 @@ namespace fido2NetLib
     /// <summary>
     /// Base class for responses sent by the Authenticator Client
     /// </summary>
-    public abstract class AuthenticatorResponse
+    public class AuthenticatorResponse
     {
 
         protected AuthenticatorResponse(byte[] clientDataJson)
