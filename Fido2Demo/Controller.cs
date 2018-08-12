@@ -51,17 +51,6 @@ namespace Fido2Demo
         [Route("/makeCredential")]
         public Fido2NetLib.CredentialMakeResult MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
         {
-
-            // work around failing modelbinding
-            //var y = ModelState;
-            //string body;
-            //using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            //{
-            //    body = reader.ReadToEnd();
-            //}
-
-            //var bodyRes = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(body);
-
             var json = HttpContext.Session.GetString("fido2.challenge");
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
@@ -69,7 +58,6 @@ namespace Fido2Demo
 
             HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
             return res;
-
         }
 
         [HttpPost]
@@ -105,21 +93,6 @@ namespace Fido2Demo
         [Route("/makeAssertion")]
         public JsonResult MakeAssertion([FromBody] AuthenticatorAssertionRawResponse r)
         {
-
-            //// work around failing modelbinding
-            //var x = ModelState.IsValid;
-            //string body;
-            //using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            //{
-            //    body = reader.ReadToEnd();
-            //}
-
-            //if (r is null)
-            //{
-            //    throw new Exception("what?");
-            //}
-            //var bodyRes = JsonConvert.DeserializeObject<AuthenticatorAssertionRawResponse>(body);
-
             var json = HttpContext.Session.GetString("fido2.options");
             var origChallenge = JsonConvert.DeserializeObject<AssertionOptions>(json);
 
@@ -130,7 +103,6 @@ namespace Fido2Demo
             byte[] existingPublicKey = creds.PublicKey; // todo: read from database.
             var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey, (userhandle, credentialId) => true);
             return Json(res);
-
         }
 
         [HttpGet]
