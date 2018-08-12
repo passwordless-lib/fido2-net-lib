@@ -28,7 +28,7 @@ namespace Fido2Demo
         {
             var user = new User
             {
-                DisplayName = "Default value",
+                DisplayName = "Display " + username,
                 Name = username,
                 Id = "1"
             };
@@ -41,18 +41,18 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredential")]
-        public Fido2NetLib.CredentialMakeResult MakeCredential()
+        public Fido2NetLib.CredentialMakeResult MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
         {
 
             // work around failing modelbinding
-            // todo: solve why ModelState is invalid (causing modelbind to fail)
-            string body;
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                body = reader.ReadToEnd();
-            }
+            //var y = ModelState;
+            //string body;
+            //using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            //{
+            //    body = reader.ReadToEnd();
+            //}
 
-            var bodyRes = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(body);
+            //var bodyRes = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(body);
 
             var json = HttpContext.Session.GetString("fido2.challenge");
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
@@ -82,7 +82,8 @@ namespace Fido2Demo
             var aoptions = _lib.GetAssertion(new User()
             {
                 Id = "1",
-                Name = "anders"
+                Name = username,
+                DisplayName = "Display " + username
             },
             allowedCreds
             );
