@@ -9,6 +9,12 @@ namespace fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
+        /// <summary>
+        /// Parses the encoded Signature data to a byte array (DER  / ASN.1 decode)
+        /// todo: Improve this notes
+        /// </summary>
+        /// <param name="sigData"></param>
+        /// <returns></returns>
         public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
         {
             /*
