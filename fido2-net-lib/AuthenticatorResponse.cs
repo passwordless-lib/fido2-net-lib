@@ -15,9 +15,9 @@ namespace fido2NetLib
             var stringx = Encoding.UTF8.GetString(clientDataJson);
             var response = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatorResponse>(stringx);
 
-            this.Type = response.Type;
-            this.Challenge = response.Challenge;
-            this.Origin = response.Origin;
+            Type = response.Type;
+            Challenge = response.Challenge;
+            Origin = response.Origin;
 
         }
 
@@ -38,11 +38,11 @@ namespace fido2NetLib
         protected void BaseVerify(string expectedOrigin, byte[] originalChallenge)
         {
             // verify challenge is same
-            if (!this.Challenge.SequenceEqual(originalChallenge)) throw new Fido2VerificationException();
+            if (!Challenge.SequenceEqual(originalChallenge)) throw new Fido2VerificationException();
 
-            if (this.Origin != expectedOrigin) throw new Fido2VerificationException();
+            if (Origin != expectedOrigin) throw new Fido2VerificationException();
 
-            if (this.Type != "webauthn.create" && this.Type != "webauthn.get") throw new Fido2VerificationException();
+            if (Type != "webauthn.create" && Type != "webauthn.get") throw new Fido2VerificationException();
             
         }
     }

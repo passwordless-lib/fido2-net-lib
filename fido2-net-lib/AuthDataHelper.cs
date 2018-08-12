@@ -134,7 +134,7 @@ namespace fido2NetLib
             var credentialPublicKey = ad.Slice(offset, (ad.Length - offset)).ToArray();
 
             // for debugging...
-            string hex = BitConverter.ToString(credentialPublicKey);
+            //string hex = BitConverter.ToString(credentialPublicKey);
 
             return (aaguid, credIdLen, credId, credentialPublicKey);
 

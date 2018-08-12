@@ -47,7 +47,7 @@ namespace fido2NetLib
             // challenge.extensions
 
             // note: I have no idea if this crypto is ok...
-            var challenge = new byte[this.Config.ChallengeSize];
+            var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
 
             //var options = new OptionsResponse()
@@ -56,7 +56,7 @@ namespace fido2NetLib
             //    Timeout = this.Config.Timeout
             //};
 
-            var options = CredentialCreateOptions.Create(challenge, this.Config);
+            var options = CredentialCreateOptions.Create(challenge, Config);
             options.User = user;
             options.Attestation = requestedAttesstation;
 
@@ -72,7 +72,7 @@ namespace fido2NetLib
         public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
-            var res = parsedResponse.Verify(origChallenge, this.Config.Origin);
+            var res = parsedResponse.Verify(origChallenge, Config.Origin);
 
 
             var pk = BitConverter.ToString(res.PublicKey);
@@ -89,10 +89,10 @@ namespace fido2NetLib
         public AssertionOptions GetAssertion(User user, List<PublicKeyCredentialDescriptor> allowedCredentials)
         {
 
-            var challenge = new byte[this.Config.ChallengeSize];
+            var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
 
-            var options = AssertionOptions.Create(challenge, allowedCredentials, this.Config);
+            var options = AssertionOptions.Create(challenge, allowedCredentials, Config);
 
             return options;
 
@@ -106,7 +106,7 @@ namespace fido2NetLib
         public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, byte[] existingPublicKey)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
-            parsedResponse.Verify(origOptions, this.Config.Origin, 0, false, existingPublicKey);
+            parsedResponse.Verify(origOptions, Config.Origin, 0, false, existingPublicKey);
 
             return true;
         }

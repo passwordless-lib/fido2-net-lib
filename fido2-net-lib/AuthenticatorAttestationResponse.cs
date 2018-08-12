@@ -57,7 +57,7 @@ namespace fido2NetLib
             // verify origin
             // done in baseclass
 
-            if (this.Type != "webauthn.create") throw new Fido2VerificationException();
+            if (Type != "webauthn.create") throw new Fido2VerificationException();
 
 
             // 6
@@ -69,13 +69,13 @@ namespace fido2NetLib
             byte[] hashedRpId;
             using (var sha = SHA256.Create())
             {
-                hashedClientDataJson = sha.ComputeHash(this.Raw.Response.ClientDataJson);
+                hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
                 hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(options.Rp.Id));
             }
 
             // 9 
             // Verify that the RP ID hash in authData is indeed the SHA - 256 hash of the RP ID expected by the RP.
-            var hash = AuthDataHelper.GetRpIdHash(this.AttestionObject.AuthData);
+            var hash = AuthDataHelper.GetRpIdHash(AttestionObject.AuthData);
             if (!hash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException();
 
             // 10
@@ -108,15 +108,14 @@ namespace fido2NetLib
 
             if (AttestionObject.Fmt == "none")
             {
-                var x2 = AuthDataHelper.GetAttestionData(AttestionObject.AuthData);
+
+                // todo: Refactor publickeyu2f extraction to method.
                 var credentialId = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credId.ToArray();
                 var credentialIdPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
 
-                
-
-                var COSE_kty = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
-                var COSE_alg = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
-                var COSE_crv = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
+                //var COSE_kty = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
+                //var COSE_alg = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
+                //var COSE_crv = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
                 var x = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
                 var y = credentialIdPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
                 var publicKeyU2F = new byte[1 + x.Length + y.Length];
