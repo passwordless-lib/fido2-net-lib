@@ -8,8 +8,6 @@ namespace fido2NetLib
 {
     public class Fido2NetLib
     {
-        // todo: should not be object
-        static ConcurrentDictionary<string, object> globalAttestationMap = new ConcurrentDictionary<string, object>();
         public class Configuration
         {
             public uint Timeout { get; set; } = 60000;
@@ -68,7 +66,7 @@ namespace fido2NetLib
         /// <param name="attestionResponse"></param>
         /// <param name="origChallenge"></param>
         /// <returns></returns>
-        public CreationResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge)
+        public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
             var res = parsedResponse.Verify(origChallenge, this.Config.Origin);
@@ -78,11 +76,11 @@ namespace fido2NetLib
             var cid = BitConverter.ToString(res.CredentialId);
 
             // todo: Set Errormessage etc.
-            return new CreationResult { Status = "ok", ErrorMessage = "", Result = res };
+            return new CredentialMakeResult { Status = "ok", ErrorMessage = "", Result = res };
         }
 
         /// <summary>
-        /// Returns XOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
+        /// Returns AssertionOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
         public AssertionOptions GetAssertion(User user, List<PublicKeyCredentialDescriptor> allowedCredentials)
@@ -90,12 +88,6 @@ namespace fido2NetLib
 
             var challenge = new byte[this.Config.ChallengeSize];
             _crypto.GetBytes(challenge);
-
-            //var options = new OptionsResponse()
-            //{
-            //    Challenge = challenge.ToString(), //?
-            //    Timeout = this.Config.Timeout
-            //};
 
             var options = AssertionOptions.Create(challenge, allowedCredentials, this.Config);
 
@@ -116,21 +108,10 @@ namespace fido2NetLib
             return true;
         }
 
-        public static byte[] StringToByteArray(String hex)
-        {
-            hex = hex.Replace("-", "");
-            int NumberChars = hex.Length;
-            byte[] bytes = new byte[NumberChars / 2];
-            for (int i = 0; i < NumberChars; i += 2)
-                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-            return bytes;
-        }
-
-
-
-
-
-        public class CreationResult
+        /// <summary>
+        /// Result of parsing and verifying attestation. Used to transport Public Key back to RP
+        /// </summary>
+        public class CredentialMakeResult
         {
             public string Status { get; set; }
             public string ErrorMessage { get; set; }
@@ -138,15 +119,5 @@ namespace fido2NetLib
 
             // todo: add debuginfo?
         }
-
-        ///// <summary>
-        ///// Processes the makeCredential response
-        ///// </summary>
-        //public void CreateCredentialResponse(res, expectedChallenge, expectedOrigin, expectedFactor)
-        //{
-
-        //}
-
-
     }
 }

@@ -137,6 +137,9 @@ namespace fido2NetLib
 
 
 
+            var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
+            if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
+            
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
         }
 
@@ -156,12 +159,12 @@ namespace fido2NetLib
                 }
             });
 
-           
+
 
         }
-            
 
-         
-        
+
+
+
     }
 }
