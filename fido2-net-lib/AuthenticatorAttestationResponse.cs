@@ -99,6 +99,12 @@ namespace fido2NetLib
             // The identifier of the ECDAA-Issuer public key
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
 
+            var attData = AuthDataHelper.GetAttestionData(AttestionObject.AuthData);
+
+            var credentialId = attData.credId.ToArray();
+            var credentialPublicKeyBytes = attData.credentialPublicKey.ToArray();
+            var credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
+
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
@@ -145,8 +151,7 @@ namespace fido2NetLib
                     if (CngAlgorithm.ECDsaP256 != pubKey.Key.Algorithm) throw new Fido2VerificationException();
 
                     // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
-                    var credentialId = AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credId.ToArray();
-                    var credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
+                    // done above
 
                     // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
                     var publicKeyU2F = AuthDataHelper.U2FKeyFromCOSEKey(credentialPublicKey).publicKeyU2F.ToArray();
@@ -155,7 +160,7 @@ namespace fido2NetLib
                     // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
                     var verificationData = new byte[1] { 0x00 };
                     verificationData = verificationData.Concat(hashedRpId).Concat(hashedClientDataJson).Concat(credentialId).Concat(publicKeyU2F).ToArray();
-                    
+
                     // 6. Verify the sig using verificationData and certificate public key
                     if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), algMap[COSE_alg])) throw new Fido2VerificationException();
                     break;
@@ -163,7 +168,7 @@ namespace fido2NetLib
                  * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
                  */
                 case "packed":
-            
+
                     var packedParsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
                     byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
                     AttestionObject.AuthData.CopyTo(data, 0);
@@ -179,10 +184,10 @@ namespace fido2NetLib
                         // using the attestation public key in attestnCert with the algorithm specified in alg
                         var packedPubKey = (ECDsaCng)packedCert.GetECDsaPublicKey(); // attestation public key
                         if (true != packedPubKey.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException();
-                        
+
                         // 2b. Version MUST be set to 3
                         if (3 != packedCert.Version) throw new Fido2VerificationException();
-                        
+
                         // Subject field MUST contain C, O, OU, CN
                         // OU must match "Authenticator Attestation"
                         if (true != AuthDataHelper.IsValidPackedAttnCertSubject(packedCert.Subject)) throw new Fido2VerificationException("Invalid attestation cert subject");
@@ -191,7 +196,7 @@ namespace fido2NetLib
                         // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
                         // verify that the value of this extension matches the aaguid in authenticatorData
                         var aaguid = AuthDataHelper.AaguidFromAttnCertExts(packedCert.Extensions);
-                        if (!aaguid.SequenceEqual(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).aaguid.ToArray())) throw new Fido2VerificationException();
+                        if (!aaguid.SequenceEqual(attData.aaguid.ToArray())) throw new Fido2VerificationException();
 
                         // 2d. The Basic Constraints extension MUST have the CA component set to false
                         if (AuthDataHelper.IsAttnCertCACert(packedCert.Extensions)) throw new Fido2VerificationException();
@@ -209,7 +214,7 @@ namespace fido2NetLib
                     // If neither x5c nor ecdaaKeyId is present, self attestation is in use
                     else
                     {
-                        var packedCert = new X509Certificate2(AuthDataHelper.GetAttestionData(AttestionObject.AuthData).credentialPublicKey.ToArray());
+                        var packedCert = new X509Certificate2(attData.credentialPublicKey.ToArray());
                         var packedPubKey = (ECDsaCng)packedCert.GetECDsaPublicKey();
                         // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                         if (true != algMap[alg.AsInt32()].Equals(packedPubKey.Key.Algorithm)) throw new Fido2VerificationException();
@@ -220,6 +225,9 @@ namespace fido2NetLib
 
                 default: throw new Fido2VerificationException("Missing or unknown attestation type");
             }
+
+            result.CredentialId = credentialId;
+            result.PublicKey = credentialPublicKeyBytes;
 
             return result;
         }

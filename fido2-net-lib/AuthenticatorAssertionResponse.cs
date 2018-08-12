@@ -61,8 +61,7 @@ namespace fido2NetLib
             }
 
             // 3. Using credential’s id attribute(or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.
-            // todo: get PublicKey from storage callback
-            var publicKey = storedPublicKey;
+            // public key inserted via parameter.
 
             // 7. Verify that the value of C.type is the string webauthn.get.
             if (Type != "webauthn.get") throw new Fido2VerificationException();
@@ -108,7 +107,9 @@ namespace fido2NetLib
             // 16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.
             var concatedBytes = Raw.Response.AuthenticatorData.Concat(hashedClientDataJson).ToArray();
 
-            var pubKey = LoadPublicKey(publicKey);
+            // todo: Add support for more keyformats (https://www.w3.org/TR/webauthn/#sctn-encoded-credPubKey-examples)
+            var u2fFormattedKey = AuthDataHelper.U2FKeyFromCOSEKey(PeterO.Cbor.CBORObject.DecodeFromBytes(storedPublicKey));
+            var pubKey = LoadPublicKey(u2fFormattedKey.publicKeyU2F.Span);
 
             // note: is this ok? At least it works.
             var pubKeyAlgo = $"{pubKey.SignatureAlgorithm.ToUpperInvariant()}_P{pubKey.KeySize}";
@@ -126,20 +127,21 @@ namespace fido2NetLib
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        private static ECDsa LoadPublicKey(byte[] key)
+        private static ECDsa LoadPublicKey(Span<byte> key)
         {
             // .net ECDsa expects two 32 byte arays for X/Y.
             // skip first byte which should alawys be (0x4).
-            var pubKeyX = key.Skip(1).Take(32).ToArray();
-            var pubKeyY = key.Skip(33).ToArray();
+            var pubKeyX = key.Slice(1, 32);
+            var pubKeyY = key.Slice(33, 32);
 
+            // add support for more than nistp256 by checking alg (https://www.w3.org/TR/webauthn/#sctn-encoded-credPubKey-examples)
             return ECDsa.Create(new ECParameters
             {
                 Curve = ECCurve.NamedCurves.nistP256,
                 Q = new ECPoint
                 {
-                    X = pubKeyX,
-                    Y = pubKeyY
+                    X = pubKeyX.ToArray(),
+                    Y = pubKeyY.ToArray()
                 }
             });
         }
