@@ -49,13 +49,7 @@ namespace fido2NetLib
             // note: I have no idea if this crypto is ok...
             var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
-
-            //var options = new OptionsResponse()
-            //{
-            //    Challenge = challenge.ToString(), //?
-            //    Timeout = this.Config.Timeout
-            //};
-
+            
             var options = CredentialCreateOptions.Create(challenge, Config);
             options.User = user;
             options.Attestation = requestedAttesstation;
