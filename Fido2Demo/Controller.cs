@@ -57,7 +57,7 @@ namespace Fido2Demo
             var json = HttpContext.Session.GetString("fido2.challenge");
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
-            var res = _lib.MakeNewCredential(bodyRes, origChallenge);
+            var res = _lib.MakeNewCredential(bodyRes, origChallenge, (crendialId, user) => true);
 
             HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
             return res;
@@ -119,7 +119,7 @@ namespace Fido2Demo
             var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
 
             byte[] existingPublicKey = creds.PublicKey; // todo: read from database.
-            var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey);
+            var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey, (userhandle, credentialId) => true);
             return Json(res);
 
         }

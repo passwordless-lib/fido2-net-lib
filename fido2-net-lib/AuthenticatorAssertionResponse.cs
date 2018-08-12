@@ -42,7 +42,7 @@ namespace fido2NetLib
         /// <param name="options"></param>
         /// <param name="expectedOrigin"></param>
         /// <param name="savedCounter"></param>
-        public void Verify(AssertionOptions options, string expectedOrigin, uint savedCounter, bool isUserVerificationRequired, byte[] storedPublicKey)
+        public void Verify(AssertionOptions options, string expectedOrigin, uint savedCounter, bool isUserVerificationRequired, byte[] storedPublicKey, Fido2NetLib.isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredId)
         {
             BaseVerify(expectedOrigin, options.Challenge);
 
@@ -54,10 +54,13 @@ namespace fido2NetLib
                 if (!options.AllowCredentials.Exists(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException();
             }
 
-            // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.2. 
+            // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
             if (UserHandle != null)
             {
-                // todo: Do we need to do a callback to check this?
+                if (false == isUserHandleOwnerOfCredId(Raw.Id, UserHandle))
+                {
+                    throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
+                }
             }
 
             // 3. Using credential’s id attribute(or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.
