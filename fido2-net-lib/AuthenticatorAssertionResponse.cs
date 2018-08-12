@@ -65,7 +65,7 @@ namespace fido2NetLib
 
 
             // 1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
-            if (options.AllowCredentials != null && options.AllowCredentials.Count > 1)
+            if (options.AllowCredentials != null && options.AllowCredentials.Count > 0)
             {
                 // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
                 if (!options.AllowCredentials.Exists(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException();
