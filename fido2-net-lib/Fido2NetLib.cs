@@ -59,6 +59,7 @@ namespace fido2NetLib
 
         public delegate bool isCredentialIdUniqueToUserDelegate(byte[] credentialId, User user);
         public delegate bool isUserHandleOwnerOfCredentialId(Span<byte> credentialId, string userHandle);
+        public delegate bool StoreSignatureCounter(Span<byte> credentialId, uint signatureCounter);
 
         /// <summary>
         /// Verifies the response from the browser/authr after creating new credentials
@@ -66,12 +67,12 @@ namespace fido2NetLib
         /// <param name="attestionResponse"></param>
         /// <param name="origChallenge"></param>
         /// <returns></returns>
-        public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, isCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
+        public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, byte[] requestTokenBindingId, isCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
             //Func<byte[], User, bool> isCredentialIdUniqueToUser = isCredentialIdUniqueToUser
             // add overload/null check and user config then maybe?
-            var res = parsedResponse.Verify(origChallenge, Config.Origin, isCredentialIdUniqueToUser);
+            var res = parsedResponse.Verify(origChallenge, Config.Origin, requestTokenBindingId, isCredentialIdUniqueToUser);
 
 
             var pk = BitConverter.ToString(res.PublicKey);
@@ -102,11 +103,11 @@ namespace fido2NetLib
         /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, byte[] existingPublicKey, isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredentialId)
+        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, uint storedSignatureCounter, byte[] existingPublicKey, byte[] requestTokenBindingId, isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredentialIdCallback, StoreSignatureCounter storeSignatureCounterCallback)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
             
-            parsedResponse.Verify(origOptions, Config.Origin, 0, false, existingPublicKey, isUserHandleOwnerOfCredentialId);
+            parsedResponse.Verify(origOptions, Config.Origin, storedSignatureCounter, false, existingPublicKey, requestTokenBindingId, isUserHandleOwnerOfCredentialIdCallback, storeSignatureCounterCallback);
 
             return true;
         }

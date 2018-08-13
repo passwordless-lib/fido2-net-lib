@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using fido2NetLib;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -54,7 +55,8 @@ namespace Fido2Demo
             var json = HttpContext.Session.GetString("fido2.challenge");
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
-            var res = _lib.MakeNewCredential(bodyRes, origChallenge, (crendialId, user) => true);
+            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
+            var res = _lib.MakeNewCredential(bodyRes, origChallenge, requestTokenBindingId, (crendialId, user) => true);
 
             HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
             return res;
@@ -101,13 +103,16 @@ namespace Fido2Demo
             var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
 
             byte[] existingPublicKey = creds.PublicKey; // todo: read from database.
-            var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey, (userhandle, credentialId) => true);
+            uint storedSignatureCounter = 0; // todo: read from database.
+
+            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
+            var res = _lib.MakeAssertion(r, origChallenge, storedSignatureCounter, existingPublicKey, requestTokenBindingId, (userhandle, credentialId) => true, null);
             return Json(res);
         }
 
         [HttpGet]
         [Route("/user/{username}")]
-        public  ActionResult GetUser(string username)
+        public ActionResult GetUser(string username)
         {
             var jsonCreds = HttpContext.Session.GetString("fido2.creds");
             if (string.IsNullOrEmpty(jsonCreds))
