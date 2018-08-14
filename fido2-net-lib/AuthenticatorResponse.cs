@@ -18,6 +18,7 @@ namespace fido2NetLib
             Type = response.Type;
             Challenge = response.Challenge;
             Origin = response.Origin;
+            TokenBinding = response.TokenBinding;
 
         }
 
@@ -33,9 +34,11 @@ namespace fido2NetLib
         public byte[] Challenge { get; set; }
         public string Origin { get; set; }
 
+        public TokenBindingDto TokenBinding { get; set; }
+
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
 
-        protected void BaseVerify(string expectedOrigin, byte[] originalChallenge)
+        protected void BaseVerify(string expectedOrigin, byte[] originalChallenge, byte[] requestTokenBindingId)
         {
             // verify challenge is same
             if (!Challenge.SequenceEqual(originalChallenge)) throw new Fido2VerificationException();
@@ -43,7 +46,12 @@ namespace fido2NetLib
             if (Origin != expectedOrigin) throw new Fido2VerificationException();
 
             if (Type != "webauthn.create" && Type != "webauthn.get") throw new Fido2VerificationException();
-            
+
+            if (TokenBinding != null)
+            {
+                TokenBinding.Verify(requestTokenBindingId);
+            }
+
         }
     }
 }

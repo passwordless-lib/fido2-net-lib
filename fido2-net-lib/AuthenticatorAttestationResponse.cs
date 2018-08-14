@@ -49,11 +49,11 @@ namespace fido2NetLib
             return response;
         }
 
-        public AttestationVerificationData Verify(CredentialCreateOptions options, string expectedOrigin, Fido2NetLib.isCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
+        public AttestationVerificationData Verify(CredentialCreateOptions options, string expectedOrigin, byte[] requestTokenBindingId, Fido2NetLib.isCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
         {
             var result = new AttestationVerificationData();
 
-            BaseVerify(expectedOrigin, options.Challenge);
+            BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
             // verify origin
             // done in baseclass
@@ -63,6 +63,8 @@ namespace fido2NetLib
 
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
+            // This id done in BaseVerify.
+            // todo: test that implmentation
 
             // 7
             // Compute the hash of response.clientDataJSON using SHA - 256.

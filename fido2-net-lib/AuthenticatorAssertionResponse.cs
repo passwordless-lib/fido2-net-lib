@@ -41,10 +41,10 @@ namespace fido2NetLib
         /// </summary>
         /// <param name="options"></param>
         /// <param name="expectedOrigin"></param>
-        /// <param name="savedCounter"></param>
-        public void Verify(AssertionOptions options, string expectedOrigin, uint savedCounter, bool isUserVerificationRequired, byte[] storedPublicKey, Fido2NetLib.isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredId)
+        /// <param name="storedCounter"></param>
+        public void Verify(AssertionOptions options, string expectedOrigin, uint storedSignatureCounter, bool isUserVerificationRequired, byte[] storedPublicKey, byte[] requestTokenBindingId, Fido2NetLib.isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredId, Fido2NetLib.StoreSignatureCounter storeSignatureCounterCallback)
         {
-            BaseVerify(expectedOrigin, options.Challenge);
+            BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
 
             // 1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
@@ -74,7 +74,8 @@ namespace fido2NetLib
             // done in base class
 
             //10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-            // todo: how?
+            // Validated in BaseVerify.
+            // todo: Needs testing
 
             // 11. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
 
@@ -102,7 +103,7 @@ namespace fido2NetLib
             }
 
             // 14. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call.In particular, any extension identifier values in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
-            // todo: Verify this
+            // todo: Verify this (and implement extensions on options)
 
             // 15.
             // Done earlier
@@ -122,7 +123,13 @@ namespace fido2NetLib
             var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
             if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
 
+            // 17.
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
+            if(counter <= storedSignatureCounter)
+            {
+                throw new Fido2VerificationException("SignatureCounter was not greather than storedC SignatureCounter");
+            }
+            storeSignatureCounterCallback(Raw.Id, counter);
         }
 
         /// <summary>
