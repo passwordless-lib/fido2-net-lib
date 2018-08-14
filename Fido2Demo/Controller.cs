@@ -104,6 +104,7 @@ namespace Fido2Demo
             };
 
             var challenge = _lib.RequestNewCredential(user, attType, null, null);
+            HttpContext.Session.Clear();
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
             return Json(challenge);
@@ -167,7 +168,7 @@ namespace Fido2Demo
             uint storedSignatureCounter = 0; // todo: read from database.
 
             var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeAssertion(r, origChallenge, storedSignatureCounter, existingPublicKey, requestTokenBindingId, (userhandle, credentialId) => true, null);
+            var res = _lib.MakeAssertion(r, origChallenge, storedSignatureCounter, existingPublicKey, requestTokenBindingId, (userhandle, credentialId) => true, (Span<byte> credentialId, uint signatureCounter) => true);
             return Json(res);
         }
 
