@@ -42,7 +42,7 @@ namespace fido2NetLib
         /// <param name="options"></param>
         /// <param name="expectedOrigin"></param>
         /// <param name="storedCounter"></param>
-        public void Verify(AssertionOptions options, string expectedOrigin, uint storedSignatureCounter, bool isUserVerificationRequired, byte[] storedPublicKey, byte[] requestTokenBindingId, Fido2NetLib.isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredId, Fido2NetLib.StoreSignatureCounter storeSignatureCounterCallback)
+        public void Verify(AssertionOptions options, string expectedOrigin, uint storedSignatureCounter, bool isUserVerificationRequired, byte[] storedPublicKey, byte[] requestTokenBindingId, IsUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredId, StoreSignatureCounter storeSignatureCounterCallback)
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
@@ -57,7 +57,7 @@ namespace fido2NetLib
             // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
             if (UserHandle != null)
             {
-                if (false == isUserHandleOwnerOfCredId(Raw.Id, UserHandle))
+                if (false == isUserHandleOwnerOfCredId(new CredentialIdUserHandleParams(Raw.Id, UserHandle)))
                 {
                     throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
                 }
@@ -129,7 +129,7 @@ namespace fido2NetLib
             {
                 throw new Fido2VerificationException("SignatureCounter was not greather than storedC SignatureCounter");
             }
-            storeSignatureCounterCallback(Raw.Id, counter);
+            storeSignatureCounterCallback(new StoreSignaturecounterParams(Raw.Id, counter));
         }
 
         /// <summary>

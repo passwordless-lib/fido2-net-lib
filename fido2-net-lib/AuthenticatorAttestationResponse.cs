@@ -49,7 +49,7 @@ namespace fido2NetLib
             return response;
         }
 
-        public AttestationVerificationData Verify(CredentialCreateOptions options, string expectedOrigin, byte[] requestTokenBindingId, Fido2NetLib.isCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
+        public AttestationVerificationData Verify(CredentialCreateOptions options, string expectedOrigin, byte[] requestTokenBindingId, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
         {
             var result = new AttestationVerificationData();
 
@@ -60,9 +60,9 @@ namespace fido2NetLib
 
             if (Type != "webauthn.create") throw new Fido2VerificationException();
 
-            if(Raw.Id == null || Raw.Id.Length == 0) throw new Fido2VerificationException("AttestionResponse is missing Id");
+            if (Raw.Id == null || Raw.Id.Length == 0) throw new Fido2VerificationException("AttestionResponse is missing Id");
 
-            if(Raw.Type != "public-key") throw new Fido2VerificationException("AttestionResponse is missing type with value 'public-key'");
+            if (Raw.Type != "public-key") throw new Fido2VerificationException("AttestionResponse is missing type with value 'public-key'");
 
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
@@ -300,7 +300,7 @@ namespace fido2NetLib
              * Check that the credentialId is not yet registered to any other user.
              * If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
              * */
-            if (!isCredentialIdUniqueToUser(credentialId, options.User))
+            if (!isCredentialIdUniqueToUser(new CredentialIdUserParams(credentialId, options.User)))
             {
                 throw new Fido2VerificationException("CredentialId is not unique to this user");
             }

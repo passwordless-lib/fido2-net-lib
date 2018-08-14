@@ -61,17 +61,13 @@ namespace fido2NetLib
             return options;
         }
 
-        public delegate bool isCredentialIdUniqueToUserDelegate(byte[] credentialId, User user);
-        public delegate bool isUserHandleOwnerOfCredentialId(Span<byte> credentialId, string userHandle);
-        public delegate bool StoreSignatureCounter(Span<byte> credentialId, uint signatureCounter);
-
         /// <summary>
         /// Verifies the response from the browser/authr after creating new credentials
         /// </summary>
         /// <param name="attestionResponse"></param>
         /// <param name="origChallenge"></param>
         /// <returns></returns>
-        public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, byte[] requestTokenBindingId, isCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
+        public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, byte[] requestTokenBindingId, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
             //Func<byte[], User, bool> isCredentialIdUniqueToUser = isCredentialIdUniqueToUser
@@ -108,7 +104,7 @@ namespace fido2NetLib
         /// </summary>
         /// <returns></returns>
         /// <param name="storeSignatureCounterCallback">Span<byte> credentialId, uint signatureCounter</param>
-        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, uint storedSignatureCounter, byte[] existingPublicKey, byte[] requestTokenBindingId, isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredentialIdCallback, StoreSignatureCounter storeSignatureCounterCallback)
+        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, uint storedSignatureCounter, byte[] existingPublicKey, byte[] requestTokenBindingId, IsUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredentialIdCallback, StoreSignatureCounter storeSignatureCounterCallback)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 
@@ -129,4 +125,67 @@ namespace fido2NetLib
             // todo: add debuginfo?
         }
     }
+
+    /// <summary>
+    /// Paramters used for callback function
+    /// </summary>
+    public class CredentialIdUserParams
+    {
+        public byte[] CredentialId { get; set; }
+        public User User { get; set; }
+
+        public CredentialIdUserParams(byte[] credentialId, User user)
+        {
+            CredentialId = credentialId;
+            User = user;
+        }
+    }
+
+    /// <summary>
+    /// Paramters used for callback function
+    /// </summary>
+    public class CredentialIdUserHandleParams
+    {
+        public string UserHandle { get; }
+        public byte[] CredentialId { get; }
+
+        public CredentialIdUserHandleParams(byte[] credentialId, string userHandle)
+        {
+            CredentialId = credentialId;
+            UserHandle = userHandle;
+        }
+    }
+    /// <summary>
+    /// Paramters used for callback function
+    /// </summary>
+    public class StoreSignaturecounterParams
+    {
+        public byte[] CredentialID { get; }
+        public uint SignatureCounter { get; }
+
+        public StoreSignaturecounterParams(byte[] credentialID, uint signatureCounter)
+        {
+            CredentialID = credentialID;
+            SignatureCounter = signatureCounter;
+        }
+    }
+
+    /// <summary>
+    /// Callback function used to validate that the CredentialID is unique to this User
+    /// </summary>
+    /// <param name="credentialIdUserParams"></param>
+    /// <returns></returns>
+    public delegate bool IsCredentialIdUniqueToUserDelegate(CredentialIdUserParams credentialIdUserParams);
+    /// <summary>
+    /// Callback function used to validate that the Userhandle is indeed owned of the CrendetialId
+    /// </summary>
+    /// <param name="credentialIdUserHandleParams"></param>
+    /// <returns></returns>
+    public delegate bool IsUserHandleOwnerOfCredentialId(CredentialIdUserHandleParams credentialIdUserHandleParams);
+    /// <summary>
+    /// Callback function for storing the updates siganture counter
+    /// </summary>
+    /// <param name="storeSignaturecounterParams"></param>
+    /// <returns></returns>
+    public delegate bool StoreSignatureCounter(StoreSignaturecounterParams storeSignaturecounterParams);
 }
