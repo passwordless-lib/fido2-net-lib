@@ -42,7 +42,7 @@ namespace fido2NetLib
     /// </summary>
     public class PublicKeyCredentialDescriptor
     {
-        public string Type { get; set; }
+        public string Type { get; set; } = "public-key";
 
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] Id { get; set; }
