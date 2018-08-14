@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 
 namespace Fido2Demo
 {
+
     [Route("api/[controller]")]
     public class MyController : Controller
     {
@@ -31,6 +32,40 @@ namespace Fido2Demo
         // todo: Add proper config
         private Fido2NetLib _lib;
 
+        private static string data;
+
+        [HttpPost]
+        [Route("/attestation/options")]
+        public JsonResult MakeCredentialOptionsTest([FromBody] OptionArgsDto opts)
+        {
+            var user = new User
+            {
+                DisplayName = opts.DisplayName,
+                Id = Base64Url.Decode(opts.Username),
+                Name = opts.Username
+            };
+            var attType = opts.Attestation;
+            var challenge = _lib.RequestNewCredential(user, attType, opts.AuthenticatorSelection);
+            data = JsonConvert.SerializeObject(challenge);
+            //HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
+
+            return Json(challenge);
+        }
+
+        [HttpPost]
+        [Route("/attestation/result")]
+        public JsonResult MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse bodyRes)
+        {
+            //var json = HttpContext.Session.GetString("fido2.challenge");
+            var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(data);
+
+            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
+            var res = _lib.MakeNewCredential(bodyRes, origChallenge, requestTokenBindingId, (crendialId, user) => true);
+
+            HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
+            return Json(res);
+        }
+
         [HttpPost]
         [Route("/makeCredentialOptions")]
         public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType)
@@ -42,7 +77,7 @@ namespace Fido2Demo
                 Id = Encoding.UTF8.GetBytes("1")
             };
 
-            var challenge = _lib.RequestNewCredential(user, attType);
+            var challenge = _lib.RequestNewCredential(user, attType, null);
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
             return Json(challenge);
@@ -121,6 +156,14 @@ namespace Fido2Demo
                 return BadRequest("No user in HTTP Session (please register)");
             }
             return Ok();
+        }
+
+        public class OptionArgsDto
+        {
+            public string DisplayName { get; set; }
+            public string Username { get; set; }
+            public string Attestation { get; set; }
+            public AuthenticatorSelection AuthenticatorSelection { get; set; }
         }
     }
 }

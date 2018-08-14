@@ -63,7 +63,9 @@ namespace fido2NetLib
         [JsonProperty("attestation")]
         public string Attestation { get; set; } = "none";
 
-        public static CredentialCreateOptions Create(byte[] challenge, Configuration config)
+        public AuthenticatorSelection AuthenticatorSelection { get; set; }
+
+        public static CredentialCreateOptions Create(byte[] challenge, Configuration config, AuthenticatorSelection authenticatorSelection)
         {
             return new CredentialCreateOptions
             {
@@ -75,7 +77,8 @@ namespace fido2NetLib
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
                     ES256 // todo: support more formats tha es256
-                }
+                },
+                AuthenticatorSelection = authenticatorSelection
                 
             };
         }
@@ -115,6 +118,13 @@ namespace fido2NetLib
         /// </summary>
         [JsonProperty("id")]
         public string Id { get; set; }
+    }
+
+    public class AuthenticatorSelection
+    {
+        public string AuthenticatorAttachment { get; set; }
+        public bool RequireResidentKey { get; set; }
+        public string UserVerification { get; set; }
     }
 
     public class User

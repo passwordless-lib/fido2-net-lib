@@ -36,7 +36,7 @@ namespace fido2NetLib
         /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
         /// </summary>
         /// <returns></returns>
-        public CredentialCreateOptions RequestNewCredential(User user, string requestedAttesstation)
+        public CredentialCreateOptions RequestNewCredential(User user, string requestedAttesstation, AuthenticatorSelection authenticatorSelection)
         {
             // https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptions
             // challenge.rp
@@ -50,7 +50,7 @@ namespace fido2NetLib
             var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
             
-            var options = CredentialCreateOptions.Create(challenge, Config);
+            var options = CredentialCreateOptions.Create(challenge, Config, authenticatorSelection);
             options.User = user;
             options.Attestation = requestedAttesstation;
 
