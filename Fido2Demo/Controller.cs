@@ -33,6 +33,7 @@ namespace Fido2Demo
         private Fido2NetLib _lib;
 
         private static string data;
+        private static Fido2NetLib.CredentialMakeResult creds;
 
         [HttpPost]
         [Route("/attestation/options")]
@@ -45,7 +46,31 @@ namespace Fido2Demo
                 Name = opts.Username
             };
             var attType = opts.Attestation;
-            var challenge = _lib.RequestNewCredential(user, attType, opts.AuthenticatorSelection);
+
+            List<PublicKeyCredentialDescriptor> excludeCredentials = null;
+
+            if (data != null)
+            {
+                var origChallange = JsonConvert.DeserializeObject<CredentialCreateOptions>(data);
+
+                // exclude existing credentials
+                if (user.Id.SequenceEqual(origChallange.User.Id))
+                {
+                    if (creds != null)
+                    {
+                        excludeCredentials = new List<PublicKeyCredentialDescriptor>() {
+                            new PublicKeyCredentialDescriptor()
+                            {
+                                Id = creds.Result.CredentialId,
+                                Type = "public-key"
+                            } };
+                    }
+
+                }
+
+            }
+
+            var challenge = _lib.RequestNewCredential(user, attType, opts.AuthenticatorSelection, excludeCredentials);
             data = JsonConvert.SerializeObject(challenge);
             //HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
@@ -63,6 +88,7 @@ namespace Fido2Demo
             var res = _lib.MakeNewCredential(bodyRes, origChallenge, requestTokenBindingId, (crendialId, user) => true);
 
             HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
+            creds = res;
             return Json(res);
         }
 
@@ -77,7 +103,7 @@ namespace Fido2Demo
                 Id = Encoding.UTF8.GetBytes("1")
             };
 
-            var challenge = _lib.RequestNewCredential(user, attType, null);
+            var challenge = _lib.RequestNewCredential(user, attType, null, null);
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
             return Json(challenge);

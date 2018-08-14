@@ -65,6 +65,12 @@ namespace fido2NetLib
 
         public AuthenticatorSelection AuthenticatorSelection { get; set; }
 
+        /// <summary>
+        /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
+        /// </summary>
+        [JsonProperty("excludeCredentials")]
+        public List<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; }
+
         public static CredentialCreateOptions Create(byte[] challenge, Configuration config, AuthenticatorSelection authenticatorSelection)
         {
             return new CredentialCreateOptions
