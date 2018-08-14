@@ -28,6 +28,9 @@ Feedback, issues and pull requests are VERY welcome.
 ❌ "tpm", "android-key", "android-safetynet"  
 ❌ Extensions
 
+## Conformance testing tool
+To run a suit of test of different verifcations and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
+
 ## Examples
 
 Coming soon
