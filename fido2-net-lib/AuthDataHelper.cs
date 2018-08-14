@@ -12,11 +12,12 @@ namespace fido2NetLib
     {
         public static ReadOnlySpan<byte> AaguidFromAttnCertExts(X509ExtensionCollection exts)
         {
-            var aaguid = new byte[16];
+            byte[] aaguid = null;
             foreach (var ext in exts)
             {
                 if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.1.1.4")) // id-fido-gen-ce-aaguid
                 {
+                    aaguid = new byte[16];
                     var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
                     // OCTET STRING
                     if (0x4 != ms.ReadByte()) throw new Fido2VerificationException();

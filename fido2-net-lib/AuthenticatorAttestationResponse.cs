@@ -200,7 +200,7 @@ namespace fido2NetLib
                         // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
                         // verify that the value of this extension matches the aaguid in authenticatorData
                         var aaguid = AuthDataHelper.AaguidFromAttnCertExts(packedCert.Extensions);
-                        if (!aaguid.SequenceEqual(attData.aaguid.ToArray())) throw new Fido2VerificationException();
+                        if (aaguid != null && !aaguid.SequenceEqual(attData.aaguid.ToArray())) throw new Fido2VerificationException();
 
                         // 2d. The Basic Constraints extension MUST have the CA component set to false
                         if (AuthDataHelper.IsAttnCertCACert(packedCert.Extensions)) throw new Fido2VerificationException();
