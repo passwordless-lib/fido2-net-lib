@@ -49,11 +49,14 @@ namespace fido2NetLib
             // note: I have no idea if this crypto is ok...
             var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
-            
+
             var options = CredentialCreateOptions.Create(challenge, Config, authenticatorSelection);
             options.User = user;
             options.Attestation = requestedAttesstation;
-            options.ExcludeCredentials = excludeCredentials;
+            if (excludeCredentials != null)
+            {
+                options.ExcludeCredentials = excludeCredentials;
+            }
 
             return options;
         }
@@ -104,10 +107,11 @@ namespace fido2NetLib
         /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
+        /// <param name="storeSignatureCounterCallback">Span<byte> credentialId, uint signatureCounter</param>
         public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, uint storedSignatureCounter, byte[] existingPublicKey, byte[] requestTokenBindingId, isUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredentialIdCallback, StoreSignatureCounter storeSignatureCounterCallback)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
-            
+
             parsedResponse.Verify(origOptions, Config.Origin, storedSignatureCounter, false, existingPublicKey, requestTokenBindingId, isUserHandleOwnerOfCredentialIdCallback, storeSignatureCounterCallback);
 
             return true;
