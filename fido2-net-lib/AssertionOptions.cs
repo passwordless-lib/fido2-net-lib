@@ -9,6 +9,12 @@ namespace fido2NetLib
     /// </summary>
     public class AssertionOptions
     {
+        [JsonProperty("status")]
+        public string Status { get; set; } = "ok";
+
+        [JsonProperty("errorMessage")]
+        public string ErrorMessage { get; set; } = string.Empty;
+
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] Challenge { get; set; }
         public uint Timeout { get; set; }
