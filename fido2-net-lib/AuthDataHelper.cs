@@ -29,7 +29,30 @@ namespace fido2NetLib
             }
             return aaguid;
         }
-
+        public static ReadOnlySpan<byte> SANFromAttnCertExts(X509ExtensionCollection exts)
+        {
+            var SAN = new byte[0];
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("2.5.29.17")) // subject alternative name
+                {
+                    return ext.RawData.ToArray();
+                }
+            }
+            return SAN;
+        }
+        public static ReadOnlySpan<byte> EKUFromAttnCertExts(X509ExtensionCollection exts)
+        {
+            var EKU = new byte[0];
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("2.5.29.37")) // subject alternative name
+                {
+                    return ext.RawData.ToArray();
+                }
+            }
+            return EKU;
+        }
         public static bool IsAttnCertCACert(X509ExtensionCollection exts)
         {
             foreach (var ext in exts)
@@ -61,7 +84,7 @@ namespace fido2NetLib
             }
             return u2ftransports;
         }
-    
+
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
             var dictSubject = attnCertSubj.Split(", ").Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
@@ -83,7 +106,7 @@ namespace fido2NetLib
             publicKeyU2F = publicKeyU2F.Concat(x).Concat(y).ToArray();
             return (publicKeyU2F, COSE_alg.AsInt32());
         }
-        
+
         public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
         {
             /*
@@ -211,6 +234,133 @@ namespace fido2NetLib
             // convert to pem
 
 
+        }
+        public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset)
+        {
+            var len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray());
+            offset += 2;
+            var result = ab.Slice(offset, len).ToArray();
+            offset += len;
+            return result;
+        }
+
+        public static (int size, byte[] name) NameFromTPM2BName(Memory<byte> ab)
+        {
+            // This buffer holds a Name for any entity type. 
+            // The type of Name in the structure is determined by context and the size parameter. 
+            var size = BitConverter.ToUInt16(ab.Slice(0, 2).ToArray().Reverse().ToArray());
+            // If size is four, then the Name is a handle. 
+            if (4 == size) throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
+            // If size is zero, then no Name is present. 
+            if (0 == size) throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
+            // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
+            TpmAlg tmpalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), size.ToString());
+            // where to get size of digest for given alg?  assume 32 bytes for now
+            var name = ab.Slice(2, 32).ToArray();
+            return (size, name);
+        }
+        // TPM_ALG_ID 
+        public enum TpmAlg : UInt16
+        {
+            TPM_ALG_ERROR, // 0
+            TPM_ALG_RSA, // 1
+            TPM_ALG_SHA1 = 4, // 4
+            TPM_ALG_HMAC, // 5
+            TPM_ALG_AES, // 6
+            TPM_ALG_MGF1, // 7
+            TPM_ALG_KEYEDHASH, // 8
+            TPM_ALG_XOR = 0xA, // A
+            TPM_ALG_SHA256, // B
+            TPM_ALG_SHA384, // C
+            TPM_ALG_SHA512, // D
+            TPM_ALG_NULL = 0x10, // 10
+            TPM_ALG_SM3_256 = 0x12, // 12
+            TPM_ALG_SM4, // 13
+            TPM_ALG_RSASSA, // 14
+            TPM_ALG_RSAES, // 15
+            TPM_ALG_RSAPSS, // 16
+            TPM_ALG_OAEP, // 17
+            TPM_ALG_ECDSA, // 18
+            TPM_ALG_ECDH, // 19
+            TPM_ALG_ECDAA, // 1A
+            TPM_ALG_SM2, // 1B
+            TPM_ALG_ECSCHNORR, // 1C
+            TPM_ALG_ECMQV, // 1D
+            TPM_ALG_KDF1_SP800_56A = 0x20, 
+            TPM_ALG_KDF2, // 21
+            TPM_ALG_KDF1_SP800_108, // 22
+            TPM_ALG_ECC, // 23
+            TPM_ALG_SYMCIPHER = 0x25,
+            TPM_ALG_CAMELLIA, // 26
+            TPM_ALG_CTR = 0x40,
+            TPM_ALG_OFB, // 41
+            TPM_ALG_CBC, // 42 
+            TPM_ALG_CFB, // 43
+            TPM_ALG_ECB // 44
+        };
+        public static (Memory<byte> extraData, Memory<byte> attested) ParseCertInfo(Memory<byte> certInfo)
+        {
+            var offset = 0;
+            var magic = certInfo.Slice(offset, 4);
+            if (0xff544347 != BitConverter.ToUInt32(magic.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad magic number " + magic.ToString());
+            offset += 4;
+            var type = certInfo.Slice(offset, 2);
+            if (0x8017 != BitConverter.ToUInt16(type.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad structure tag " + type.ToString());
+            offset += 2;
+            var qualifiedSigner = GetSizedByteArray(certInfo, ref offset);
+            var extraData = GetSizedByteArray(certInfo, ref offset);
+            var clock = certInfo.Slice(offset, 8);
+            offset += 8;
+            var resetCount = BitConverter.ToInt32(certInfo.Slice(offset, 4).ToArray().Reverse().ToArray());
+            offset += 4;
+            var restartCount = BitConverter.ToInt32(certInfo.Slice(offset, 4).ToArray().Reverse().ToArray());
+            offset += 4;
+            var safe = certInfo.Slice(offset, 1);
+            offset += 1;
+            var firmwareVersion = certInfo.Slice(offset, 8);
+            offset += 8;
+            var attestedNameBuffer = GetSizedByteArray(certInfo, ref offset);
+            var tmp = NameFromTPM2BName(attestedNameBuffer);
+            var alg = tmp.size; // TPM_ALG_ID
+            var attestedName = tmp.name;
+            var attestedQualifiedNameBuffer = GetSizedByteArray(certInfo, ref offset);
+            if (certInfo.Length != offset) throw new Fido2VerificationException("Leftover bits decoding certInfo");
+            return (extraData, attestedName);
+        }
+        public static (Memory<byte> alg, int exponent, Memory<byte> unique) ParsePubArea(Memory<byte> pubArea)
+        {
+            var offset = 0;
+            var type = pubArea.Slice(offset, 2);
+            offset += 2;
+            var alg = pubArea.Slice(offset, 2);
+            TpmAlg tmpalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(alg.ToArray().Reverse().ToArray()).ToString());
+            offset += 2;
+            var atts = pubArea.Slice(offset, 4);
+            offset += 4;
+            var policy = GetSizedByteArray(pubArea, ref offset);
+            var symmetric = pubArea.Slice(offset, 2);
+            offset += 2;
+            var scheme = pubArea.Slice(offset, 2);
+            offset += 2;
+            //if (0x0001 == BitConverter.ToInt16(type.ToArray().Reverse().ToArray()))
+            //{
+            var keyBits = pubArea.Slice(offset, 2);
+            offset += 2;
+            var tmp = pubArea.Slice(offset, 4);
+            offset += 4;
+            var exponent = BitConverter.ToInt32(tmp.ToArray());
+            if (0x0 == exponent) exponent = 65537;
+            //}
+            //else if (0x0023 == BitConverter.ToInt16(type.ToArray().Reverse().ToArray()))
+            //{
+            //    var curveID = pubArea.Slice(offset, 2);
+            //    offset += 2;
+            //    var kdf = pubArea.Slice(offset, 2);
+            //    offset += 2;
+            //}
+            var unique = GetSizedByteArray(pubArea, ref offset);
+            if (pubArea.Length != offset) throw new Fido2VerificationException("Leftover bits decoding pubArea");
+            return (alg, exponent, unique);
         }
     }
 }
