@@ -51,7 +51,6 @@ namespace fido2NetLib
             {
                 TokenBinding.Verify(requestTokenBindingId);
             }
-
         }
     }
 }

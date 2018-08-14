@@ -16,13 +16,19 @@
 
         public void Verify(byte[] requestTokenbinding)
         {
-            if (this.Status == "present")
+            // validation by the FIDO conformance tool (more than spec says)
+            switch (this.Status)
             {
-                if (string.IsNullOrEmpty(Id)) throw new Fido2VerificationException("TokenBinding status was present but Id is missing");
-
-                var b64 = Base64Url.Encode(requestTokenbinding);
-
-                if (this.Id != b64) throw new Fido2VerificationException("Tokenbinding Id does not match");
+                case "present":
+                    if (string.IsNullOrEmpty(Id)) throw new Fido2VerificationException("TokenBinding status was present but Id is missing");
+                    var b64 = Base64Url.Encode(requestTokenbinding);
+                    if (this.Id != b64) throw new Fido2VerificationException("Tokenbinding Id does not match");
+                    break;
+                case "supported":
+                case "not-supported":
+                    break;
+                default:
+                    throw new Fido2VerificationException("Malformed tokenbinding status field");
             }
         }
     }
