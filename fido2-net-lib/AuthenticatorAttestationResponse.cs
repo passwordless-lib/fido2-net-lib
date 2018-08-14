@@ -135,6 +135,11 @@ namespace fido2NetLib
                     break;
 
                 case "fido-u2f":
+
+                    // veirfy that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
+                    var EMPTY_16_BYTES = new Span<byte>(new byte[16]);
+                    if (false == attData.aaguid.Span.SequenceEqual(EMPTY_16_BYTES)) throw new Fido2VerificationException("aaguid was not empty");
+
                     var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
                     // validate format
                     if (!(
