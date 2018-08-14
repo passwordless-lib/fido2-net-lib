@@ -15,6 +15,8 @@
     <None Remove="attestationResultsNone.json" />
     <None Remove="attestationResultsPacked.json" />
     <None Remove="attestationResultsU2F.json" />
+    <None Remove="attestationTPMOptions.json" />
+    <None Remove="attestationTPMResponse.json" />
     <None Remove="attestionNoneOptions.json" />
     <None Remove="attestionNoneResponse.json" />
     <None Remove="json1.json" />
@@ -46,6 +48,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="attestationResultsU2F.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationTPMOptions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationTPMResponse.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="attestionNoneOptions.json">

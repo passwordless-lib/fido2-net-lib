@@ -176,6 +176,19 @@ namespace fido2_net_lib.Test
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             o.Verify(options, "https://localhost:44329", null, (credId, user) => true);
         }
+        [Fact]
+        public void TestTPMAttestation()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationTPMResponse.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationTPMOptions.json"));
+            var fido2 = new Fido2NetLib(new Fido2NetLib.Configuration());
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            o.Verify(options, "https://localhost:44329", (credId, user) => true);
+            ReadOnlySpan<byte> ad = o.AttestionObject.AuthData;
+            Assert.True(AuthDataHelper.IsUserPresent(ad));
+            Assert.False(AuthDataHelper.IsUserVerified(ad));
+        }
+
         //public void TestHasCorrentAAguid()
         //{
         //    var expectedAaguid = new Uint8Array([
