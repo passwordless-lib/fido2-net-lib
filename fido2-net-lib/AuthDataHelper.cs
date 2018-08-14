@@ -62,7 +62,7 @@ namespace fido2NetLib
             }
             return u2ftransports;
         }
-    
+
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
             var dictSubject = attnCertSubj.Split(", ").Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
@@ -84,7 +84,7 @@ namespace fido2NetLib
             publicKeyU2F = publicKeyU2F.Concat(x).Concat(y).ToArray();
             return (publicKeyU2F, COSE_alg.AsInt32());
         }
-        
+
         public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
         {
             /*

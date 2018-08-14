@@ -247,7 +247,10 @@ namespace fido2NetLib
              * Check that the credentialId is not yet registered to any other user.
              * If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
              * */
-            if (!isCredentialIdUniqueToUser(credentialId, options.User)) { throw new Fido2VerificationException("CredentialId is not unique to this user"); }
+            if (!isCredentialIdUniqueToUser(credentialId, options.User))
+            {
+                throw new Fido2VerificationException("CredentialId is not unique to this user");
+            }
 
             /* 
              * 18
