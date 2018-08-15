@@ -46,6 +46,7 @@ namespace fido2NetLib
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
+            if (Raw.Type != "public-key") throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
 
             // 1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
             if (options.AllowCredentials != null && options.AllowCredentials.Count > 0)
@@ -125,7 +126,7 @@ namespace fido2NetLib
 
             // 17.
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
-            if(counter <= storedSignatureCounter)
+            if (counter <= storedSignatureCounter)
             {
                 throw new Fido2VerificationException("SignatureCounter was not greather than storedC SignatureCounter");
             }
