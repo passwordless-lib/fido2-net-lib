@@ -22,9 +22,9 @@ Feedback, issues and pull requests are VERY welcome.
 ✅ Assertment API & verification (Authenticate users)  
 ✅ Fido 2 Security Keys  
 ✅ Backwards compatability with Fido-u2f.  
-❔ Windows Hello support  
+✅ Windows Hello support  
 ✅ ES256 Public Key format (no other public key formats yet)  
-✅ "none", "fidu-u2f" & "packed" attestation formats  
+✅ "none", "fido-u2f" & "packed" attestation formats  
 ❌ "tpm", "android-key", "android-safetynet"  
 ❌ Extensions
 
