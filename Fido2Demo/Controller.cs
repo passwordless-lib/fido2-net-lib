@@ -194,30 +194,62 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/assertion/options")]
-        public JsonResult AssertionOptionsTest(string username)
+        public JsonResult AssertionOptionsTest([FromBody] AssertionClientOptions assertionClientOptions)
         {
             // todo: Fetch creds for the user from database.
 
             var creds = CONFORMANCE_TESTING_STORED_CREDENTIALS;
-            var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
-                new PublicKeyCredentialDescriptor()
+            var allowedCreds = new List<PublicKeyCredentialDescriptor>();
+            if (creds != null)
+            {
+                allowedCreds.Add(new PublicKeyCredentialDescriptor()
                 {
                     Id = creds.Result.CredentialId
-                }
-            };
+                });
+            }
 
             var aoptions = _lib.GetAssertion(new User()
             {
                 Id = Encoding.UTF8.GetBytes("1"),
-                Name = username,
-                DisplayName = "Display " + username
+                Name = assertionClientOptions.Username,
+                DisplayName = "Display " + assertionClientOptions.Username
             },
-            allowedCreds
+            allowedCreds,
+            assertionClientOptions.UserVerification
             );
 
             CONFORMANCE_TESTING_PREV_ASRT_OPTIONS = aoptions;
 
             return Json(aoptions);
+        }
+
+        [HttpPost]
+        [Route("/assertion/result")]
+        public JsonResult MakeAssertionTest([FromBody] AuthenticatorAssertionRawResponse r)
+        {
+            var origChallenge = CONFORMANCE_TESTING_PREV_ASRT_OPTIONS;
+
+            // todo: Fetch creds for the user from database.
+            var creds = CONFORMANCE_TESTING_STORED_CREDENTIALS;
+
+            byte[] existingPublicKey = creds.Result.PublicKey; // todo: read from database.
+            uint storedSignatureCounter = 0; // todo: read from database.
+
+            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
+            var res = _lib.MakeAssertion(r, origChallenge, storedSignatureCounter, existingPublicKey, requestTokenBindingId, (x) => true, (x) => true);
+            var res2 = new
+            {
+                status = "ok",
+                errormessage = "",
+                res
+            };
+            return Json(res2);
+        }
+
+        public class AssertionClientOptions
+        {
+            public string Username { get; set; }
+            public string UserVerification { get; set; }
         }
 
         public class OptionArgsDto
