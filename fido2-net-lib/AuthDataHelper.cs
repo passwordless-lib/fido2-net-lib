@@ -126,6 +126,7 @@ namespace fido2NetLib
              *  number is not negative."
              *  
              */
+            if (sigData.IsEmpty) return null;
 
             var ms = new System.IO.MemoryStream(sigData.ToArray());
             if (0x30 != ms.ReadByte()) throw new Fido2VerificationException(); // DER SEQUENCE

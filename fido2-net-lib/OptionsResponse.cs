@@ -53,8 +53,16 @@ namespace fido2NetLib
 
         private static PubKeyCredParam ES256 = new PubKeyCredParam()
         {
+            // External authenticators support the ES256 algorithm
             Type = "public-key",
             Alg = -7
+        };
+
+        private static PubKeyCredParam RS256 = new PubKeyCredParam()
+        {
+            // Windows Hello supports the RS256 algorithm
+            Type = "public-key",
+            Alg = -257
         };
 
         /// <summary>
@@ -82,7 +90,8 @@ namespace fido2NetLib
                 Timeout = config.Timeout,
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    ES256 // todo: support more formats tha es256
+                    ES256, // todo: support more formats tha es256
+                    RS256
                 },
                 AuthenticatorSelection = authenticatorSelection
                 
