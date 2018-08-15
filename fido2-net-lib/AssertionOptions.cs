@@ -20,7 +20,7 @@ namespace fido2NetLib
         public uint Timeout { get; set; }
         public string RpId { get; set; }
         public List<PublicKeyCredentialDescriptor> AllowCredentials { get; set; } = new List<PublicKeyCredentialDescriptor>();
-        public string UserVerification { get; set; } = "discouraged"; // todo: move to config for caller
+        public string UserVerification { get; set; }
 
         internal static AssertionOptions Create(byte[] challenge, List<PublicKeyCredentialDescriptor> allowedCredentials, Fido2NetLib.Configuration config)
         {
