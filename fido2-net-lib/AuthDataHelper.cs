@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace fido2NetLib
@@ -124,6 +126,7 @@ namespace fido2NetLib
              *  number is not negative."
              *  
              */
+            if (sigData.IsEmpty) return null;
 
             var ms = new System.IO.MemoryStream(sigData.ToArray());
             if (0x30 != ms.ReadByte()) throw new Fido2VerificationException(); // DER SEQUENCE
@@ -245,6 +248,14 @@ namespace fido2NetLib
             return result;
         }
 
+        public static readonly Dictionary<TpmAlg, Int32> tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, Int32>
+        {
+            {TpmAlg.TPM_ALG_SHA1,   (160/8) },
+            {TpmAlg.TPM_ALG_SHA256, (256/8) },
+            {TpmAlg.TPM_ALG_SHA384, (384/8) },
+            {TpmAlg.TPM_ALG_SHA512, (512/8) }
+        };
+
         public static (int size, byte[] name) NameFromTPM2BName(Memory<byte> ab)
         {
             // This buffer holds a Name for any entity type. 
@@ -255,9 +266,8 @@ namespace fido2NetLib
             // If size is zero, then no Name is present. 
             if (0 == size) throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
             // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
-            TpmAlg tmpalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), size.ToString());
-            // where to get size of digest for given alg?  assume 32 bytes for now
-            var name = ab.Slice(2, 32).ToArray();
+            TpmAlg tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), size.ToString());
+            var name = ab.Slice(2, tpmAlgToDigestSizeMap[tpmalg]).ToArray();
             return (size, name);
         }
         // TPM_ALG_ID 
