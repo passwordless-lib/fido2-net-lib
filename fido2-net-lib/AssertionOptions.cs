@@ -29,7 +29,7 @@ namespace fido2NetLib
                 Challenge = challenge,
                 Timeout = config.Timeout,
                 RpId = config.ServerDomain,
-                AllowCredentials = allowedCredentials
+                AllowCredentials = allowedCredentials ?? new List<PublicKeyCredentialDescriptor>()
             };
         }
 
