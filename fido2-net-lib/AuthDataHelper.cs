@@ -200,51 +200,35 @@ namespace Fido2NetLib
             //}
         }
 
-        public static (Memory<byte> aaguid, int credIdLen, Memory<byte> credId, Memory<byte> credentialPublicKey) GetAttestionData(Memory<byte> ad)
+        public static (Memory<byte> aaguid, Memory<byte> credId, Memory<byte> credentialPublicKey) GetAttestionData(Memory<byte> ad)
         {
-            string hex2 = BitConverter.ToString(ad.ToArray());
-
             int offset = 37; // https://w3c.github.io/webauthn/#attestedcredentialdata
-            var aaguid = ad.Slice(offset, 16);
-            var guid = new Guid(aaguid.ToArray());
-            offset += 16;
-            // todo: Do we need to account for little endian?
-            ushort credIdLen;
-            if (true == BitConverter.IsLittleEndian)
+            Memory<byte> aaguid = null;
+            if ((offset + 16) <= ad.Length)
             {
-                credIdLen = BitConverter.ToUInt16(ad.Slice(offset, 2).ToArray().Reverse().ToArray());
+                aaguid = ad.Slice(offset, 16);
+                offset += 16;
             }
-            else
-            {
-                credIdLen = BitConverter.ToUInt16(ad.Slice(offset, 2).Span);
-            }
-            offset += 2;
-
-            var credId = ad.Slice(offset, credIdLen);
-
-            offset += credIdLen;
-
+            var credId = GetSizedByteArray(ad, ref offset);
             var hasExtensions = AuthDataHelper.HasExtensions(ad.Span);
-
-            // Not sure this is working as expected...
-            var credentialPublicKey = ad.Slice(offset, (ad.Length - offset)).ToArray();
-
-            // for debugging...
-            //string hex = BitConverter.ToString(credentialPublicKey);
-
-            return (aaguid, credIdLen, credId, credentialPublicKey);
-
-            // convert to jwk
-            // convert to pem
-
-
+            Memory<byte> credentialPublicKey = null;
+            if ((ad.Length - offset) > 0 ) credentialPublicKey = ad.Slice(offset, (ad.Length - offset)).ToArray();
+            return (aaguid, credId, credentialPublicKey);
         }
         public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset)
         {
-            var len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray());
-            offset += 2;
-            var result = ab.Slice(offset, len).ToArray();
-            offset += len;
+            var len = 0;
+            if ((offset + 2) <= ab.Length)
+            {
+                len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray());
+                offset += 2;
+            }
+            byte[] result = null;
+            if ((0 < len) && ((offset + len) <= ab.Length)) 
+            {
+                result = ab.Slice(offset, len).ToArray();
+                offset += len;
+            }
             return result;
         }
 

@@ -38,14 +38,28 @@ namespace Fido2NetLib
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
-            if (null == rawResponse) throw new Fido2VerificationException("Expected rawResponse, got null");
-            if (null == rawResponse.Response) throw new Fido2VerificationException("Expected Response in rawResponse, got null");
-            if (null == rawResponse.Response.AttestationObject) throw new Fido2VerificationException("Expected AttestationObject in response, got null");
-            var rawAttestionObj = rawResponse.Response.AttestationObject;
-            if (0 == rawAttestionObj.Length) throw new Fido2VerificationException("Empty attestation object");
-            var cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawAttestionObj);
+            if (null == rawResponse || null == rawResponse.Response) throw new Fido2VerificationException("Expected rawResponse, got null");
+            
+            if (null == rawResponse.Response.AttestationObject || 0 == rawResponse.Response.AttestationObject.Length) throw new Fido2VerificationException("Missing AttestationObject");
+            PeterO.Cbor.CBORObject cborAttestion = null;
+            try
+            {
+                cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawResponse.Response.AttestationObject);
+            }
+            catch (PeterO.Cbor.CBORException)
+            {
+                throw new Fido2VerificationException("Malformed AttestationObject");
+            }
 
-            var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
+            if (    null == cborAttestion["fmt"] ||
+                    PeterO.Cbor.CBORType.TextString != cborAttestion["fmt"].Type || 
+                    null == cborAttestion["attStmt"] ||
+                    PeterO.Cbor.CBORType.Map != cborAttestion["attStmt"].Type || 
+                    null == cborAttestion["authData"] ||
+                    PeterO.Cbor.CBORType.ByteString != cborAttestion["authData"].Type
+                    )   throw new Fido2VerificationException("Malformed AttestationObject");
+
+            AuthenticatorAttestationResponse response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
             {
                 Raw = rawResponse,
                 AttestionObject = new ParsedAttestionObject()
@@ -55,7 +69,6 @@ namespace Fido2NetLib
                     AuthData = cborAttestion["authData"].GetByteString()
                 }
             };
-
             return response;
         }
 
@@ -73,6 +86,8 @@ namespace Fido2NetLib
             if (Raw.Id == null || Raw.Id.Length == 0) throw new Fido2VerificationException("AttestionResponse is missing Id");
 
             if (Raw.Type != "public-key") throw new Fido2VerificationException("AttestionResponse is missing type with value 'public-key'");
+
+            if (null == AttestionObject.AuthData || 0 == AttestionObject.AuthData.Length) throw new Fido2VerificationException("Missing or malformed authData");
 
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
@@ -116,10 +131,10 @@ namespace Fido2NetLib
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
 
             var attData = AuthDataHelper.GetAttestionData(AttestionObject.AuthData);
-
             var credentialId = attData.credId.ToArray();
             var credentialPublicKeyBytes = attData.credentialPublicKey.ToArray();
-            var credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
+            PeterO.Cbor.CBORObject credentialPublicKey = null;
+            if (0 != credentialPublicKeyBytes.Length) credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
 
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
