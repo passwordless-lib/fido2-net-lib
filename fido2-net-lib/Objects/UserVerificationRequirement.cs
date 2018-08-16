@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace fido2NetLib.Objects
+namespace Fido2NetLib.Objects
 {
     public sealed class UserVerificationRequirement : TypedString
     {

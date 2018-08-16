@@ -1,4 +1,4 @@
-﻿namespace fido2NetLib
+﻿namespace Fido2NetLib
 {
     public class TokenBindingDto
     {

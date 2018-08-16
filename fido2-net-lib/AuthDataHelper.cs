@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// Helper functions that implements https://w3c.github.io/webauthn/#authenticator-data

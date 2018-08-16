@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     [Serializable]
     internal class Fido2VerificationException : Exception

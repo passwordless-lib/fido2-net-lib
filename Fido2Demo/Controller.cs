@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using fido2Netlib.Objects;
-using fido2NetLib;
-using fido2NetLib.Objects;
+using Fido2NetLib.Objects;
+using Fido2NetLib;
+using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -21,11 +21,11 @@ namespace Fido2Demo
     [Route("api/[controller]")]
     public class MyController : Controller
     {
-        private Fido2NetLib _lib;
+        private Fido2NetLib.Fido2NetLib _lib;
 
         public MyController(IConfiguration config)
         {
-            _lib = new Fido2NetLib(new Fido2NetLib.Configuration
+            _lib = new Fido2NetLib.Fido2NetLib(new Fido2NetLib.Fido2NetLib.Configuration
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
@@ -53,7 +53,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredential")]
-        public Fido2NetLib.CredentialMakeResult MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
+        public Fido2NetLib.Fido2NetLib.CredentialMakeResult MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
         {
             var json = HttpContext.Session.GetString("fido2.challenge");
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
@@ -138,7 +138,7 @@ namespace Fido2Demo
          */
         private static CredentialCreateOptions CONFORMANCE_TESTING_PREV_ATT_OPTIONS;
         private static AssertionOptions CONFORMANCE_TESTING_PREV_ASRT_OPTIONS;
-        private static Fido2NetLib.CredentialMakeResult CONFORMANCE_TESTING_STORED_CREDENTIALS;
+        private static Fido2NetLib.Fido2NetLib.CredentialMakeResult CONFORMANCE_TESTING_STORED_CREDENTIALS;
 
         [HttpPost]
         [Route("/attestation/options")]

@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     public class TypedString : IEquatable<TypedString>
     {

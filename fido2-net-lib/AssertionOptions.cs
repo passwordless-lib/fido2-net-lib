@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using fido2Netlib.Objects;
+using Fido2NetLib.Objects;
 using Newtonsoft.Json;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// Sent to the browser when we want to Assert credentials and authenticate a user

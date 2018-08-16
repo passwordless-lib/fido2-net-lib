@@ -3,9 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using fido2Netlib.Objects;
+using Fido2NetLib.Objects;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// Public API for parsing and veriyfing FIDO2 attestation & assertion responses.

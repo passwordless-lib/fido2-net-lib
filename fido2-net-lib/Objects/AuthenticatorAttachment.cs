@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using fido2NetLib;
+using Fido2NetLib;
 using Newtonsoft.Json;
 
-namespace fido2NetLib.Objects
+namespace Fido2NetLib.Objects
 {
     /// <summary>
     /// This enumeration’s values describe authenticators' attachment modalities. Relying Parties use this for two purposes:

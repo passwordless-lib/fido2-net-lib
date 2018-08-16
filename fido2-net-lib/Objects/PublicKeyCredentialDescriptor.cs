@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using fido2NetLib;
+using Fido2NetLib;
 using Newtonsoft.Json;
 
-namespace fido2Netlib.Objects
+namespace Fido2NetLib.Objects
 {
     /// <summary>
     /// Lazy implementation of https://www.w3.org/TR/webauthn/#dictdef-publickeycredentialdescriptor

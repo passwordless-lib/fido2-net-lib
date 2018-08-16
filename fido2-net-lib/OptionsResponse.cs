@@ -1,12 +1,12 @@
-﻿using fido2Netlib.Objects;
-using fido2NetLib.Objects;
+﻿using Fido2NetLib.Objects;
+using Fido2NetLib.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 using System.Globalization;
-using static fido2NetLib.Fido2NetLib;
+using static Fido2NetLib.Fido2NetLib;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     public class CredentialCreateOptions
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// The AuthenticatorAttestationResponse interface represents the authenticator's response to a client’s request for the creation of a new public key credential.
