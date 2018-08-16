@@ -12,15 +12,30 @@ namespace Fido2NetLib
 
         protected AuthenticatorResponse(byte[] clientDataJson)
         {
+            if (null == clientDataJson) throw new Fido2VerificationException("clientDataJson cannot be null");
             var stringx = Encoding.UTF8.GetString(clientDataJson);
-            var response = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatorResponse>(stringx);
 
+            AuthenticatorResponse response = null;
+            try
+            {
+                response = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatorResponse>(stringx);
+            }
+            catch (System.Exception e)//Newtonsoft.Json.JsonReaderException) 
+            {
+                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                {
+                    throw new Fido2VerificationException("Malformed clientDataJson");
+                }
+                else throw;
+            }
+            
+            if (null == response) throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
             Type = response.Type;
             Challenge = response.Challenge;
             Origin = response.Origin;
             TokenBinding = response.TokenBinding;
 
-        }
+            }
 
         [JsonConstructor]
         private AuthenticatorResponse()
@@ -40,6 +55,7 @@ namespace Fido2NetLib
 
         protected void BaseVerify(string expectedOrigin, byte[] originalChallenge, byte[] requestTokenBindingId)
         {
+            if (null == Challenge) throw new Fido2VerificationException("Challenge cannot be null");
             // verify challenge is same
             if (!Challenge.SequenceEqual(originalChallenge)) throw new Fido2VerificationException();
 

@@ -38,7 +38,11 @@ namespace Fido2NetLib
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
+            if (null == rawResponse) throw new Fido2VerificationException("Expected rawResponse, got null");
+            if (null == rawResponse.Response) throw new Fido2VerificationException("Expected Response in rawResponse, got null");
+            if (null == rawResponse.Response.AttestationObject) throw new Fido2VerificationException("Expected AttestationObject in response, got null");
             var rawAttestionObj = rawResponse.Response.AttestationObject;
+            if (0 == rawAttestionObj.Length) throw new Fido2VerificationException("Empty attestation object");
             var cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawAttestionObj);
 
             var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
@@ -242,6 +246,9 @@ namespace Fido2NetLib
                     {
                         // The attestation certificate attestnCert MUST be the first element in the array.
                         var packedCert = new X509Certificate2(x5c.Values.First().GetByteString());
+                        //System.IO.File.WriteAllBytes("cert.cer", packedCert.Export(X509ContentType.Cert));
+                        
+                        //if (true != packedCert.Verify()) throw new Fido2VerificationException("Invalid certificate at head of x5c chain");
 
                         // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                         // using the attestation public key in attestnCert with the algorithm specified in alg
@@ -266,6 +273,13 @@ namespace Fido2NetLib
 
                         // id-fido-u2f-ce-transports 
                         var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(packedCert.Extensions);
+                        
+                        for (int i = 0; i == x5c.Values.Count; i++)
+                        {
+                            var leafCert = new X509Certificate2(x5c.Values.ElementAt(i).GetByteString());
+                            //System.IO.File.WriteAllBytes("cert.cer", packedCert.Export(X509ContentType.Cert));
+                            if (true != packedCert.Verify()) throw new Fido2VerificationException("Invalid certificate in leaf of x5c chain");
+                        }
                     }
                     // If ecdaaKeyId is present, then the attestation type is ECDAA
                     else if (null != ecdaaKeyId)
