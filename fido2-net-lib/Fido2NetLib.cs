@@ -36,7 +36,9 @@ namespace fido2NetLib
         /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
         /// </summary>
         /// <returns></returns>
-        public CredentialCreateOptions RequestNewCredential(User user, string requestedAttesstation, AuthenticatorSelection authenticatorSelection, List<PublicKeyCredentialDescriptor> excludeCredentials)
+        /// <param name="attestation">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
+        /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
+        public CredentialCreateOptions RequestNewCredential(User user, AuthenticatorSelection authenticatorSelection, List<PublicKeyCredentialDescriptor> excludeCredentials, string attestation = "none")
         {
             // https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptions
             // challenge.rp
@@ -52,7 +54,7 @@ namespace fido2NetLib
 
             var options = CredentialCreateOptions.Create(challenge, Config, authenticatorSelection);
             options.User = user;
-            options.Attestation = requestedAttesstation;
+            options.Attestation = attestation;
             if (excludeCredentials != null)
             {
                 options.ExcludeCredentials = excludeCredentials;

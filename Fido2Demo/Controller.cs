@@ -42,7 +42,7 @@ namespace Fido2Demo
                 Id = Encoding.UTF8.GetBytes("1")
             };
 
-            var challenge = _lib.RequestNewCredential(user, attType, null, null);
+            var challenge = _lib.RequestNewCredential(user, null, null, attType);
             HttpContext.Session.Clear();
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
@@ -150,6 +150,9 @@ namespace Fido2Demo
             };
             var attType = opts.Attestation;
 
+            var x = new AuthenticatorSelection();
+            x.UserVerification = UserVerificationRequirement.Discouraged;
+
             List<PublicKeyCredentialDescriptor> excludeCredentials = null;
 
             if (CONFORMANCE_TESTING_PREV_ATT_OPTIONS != null)
@@ -158,22 +161,19 @@ namespace Fido2Demo
 
                 // exclude existing credentials
                 // todo: move this to callback?
+                // note: Not sure how moving this to callback would simply?
                 if (user.Id.SequenceEqual(origChallange.User.Id))
                 {
                     if (CONFORMANCE_TESTING_STORED_CREDENTIALS != null)
                     {
                         excludeCredentials = new List<PublicKeyCredentialDescriptor>() {
-                            new PublicKeyCredentialDescriptor()
-                            {
-                                Id = CONFORMANCE_TESTING_STORED_CREDENTIALS.Result.CredentialId,
-                                Type = "public-key"
-                            }
+                            new PublicKeyCredentialDescriptor(CONFORMANCE_TESTING_STORED_CREDENTIALS.Result.CredentialId)
                         };
                     }
                 }
             }
 
-            var challenge = _lib.RequestNewCredential(user, attType, opts.AuthenticatorSelection, excludeCredentials);
+            var challenge = _lib.RequestNewCredential(user, opts.AuthenticatorSelection, excludeCredentials, attType);
             CONFORMANCE_TESTING_PREV_ATT_OPTIONS = challenge;
 
             return Json(challenge);
@@ -202,10 +202,7 @@ namespace Fido2Demo
             var allowedCreds = new List<PublicKeyCredentialDescriptor>();
             if (creds != null)
             {
-                allowedCreds.Add(new PublicKeyCredentialDescriptor()
-                {
-                    Id = creds.Result.CredentialId
-                });
+                allowedCreds.Add(new PublicKeyCredentialDescriptor(creds.Result.CredentialId));
             }
 
             var aoptions = _lib.GetAssertion(new User()
