@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// Helper class to handle Base64Url. Copied from https://brockallen.com/2014/10/17/base64url-encoding/

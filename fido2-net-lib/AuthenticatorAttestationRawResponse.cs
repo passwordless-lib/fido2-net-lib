@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// The raw transportation dto for <see cref="AuthenticatorAttestationResponse"/>

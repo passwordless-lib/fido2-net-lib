@@ -13,6 +13,6 @@
     <None Include="wwwroot\old\js\site.min.js" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\fido2-net-lib\fido2-net-lib.csproj" />
+    <ProjectReference Include="..\fido2-net-lib\Fido2NetLib.csproj" />
   </ItemGroup>
 </Project>

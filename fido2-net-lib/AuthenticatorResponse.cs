@@ -2,7 +2,7 @@
 using System.Text;
 using Newtonsoft.Json;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// Base class for responses sent by the Authenticator Client

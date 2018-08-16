@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using fido2NetLib;
+using Fido2NetLib.Objects;
+using Fido2NetLib;
+using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -19,77 +21,16 @@ namespace Fido2Demo
     [Route("api/[controller]")]
     public class MyController : Controller
     {
+        private Fido2NetLib.Fido2 _lib;
 
         public MyController(IConfiguration config)
         {
-            _lib = new Fido2NetLib(new Fido2NetLib.Configuration
+            _lib = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
                 Origin = config["fido2:origin"]
             });
-        }
-        // todo: Add proper config
-        private Fido2NetLib _lib;
-
-        private static string data;
-        private static Fido2NetLib.CredentialMakeResult creds;
-
-        [HttpPost]
-        [Route("/attestation/options")]
-        public JsonResult MakeCredentialOptionsTest([FromBody] OptionArgsDto opts)
-        {
-            var user = new User
-            {
-                DisplayName = opts.DisplayName,
-                Id = Base64Url.Decode(opts.Username),
-                Name = opts.Username
-            };
-            var attType = opts.Attestation;
-
-            List<PublicKeyCredentialDescriptor> excludeCredentials = null;
-
-            if (data != null)
-            {
-                var origChallange = JsonConvert.DeserializeObject<CredentialCreateOptions>(data);
-
-                // exclude existing credentials
-                if (user.Id.SequenceEqual(origChallange.User.Id))
-                {
-                    if (creds != null)
-                    {
-                        excludeCredentials = new List<PublicKeyCredentialDescriptor>() {
-                            new PublicKeyCredentialDescriptor()
-                            {
-                                Id = creds.Result.CredentialId,
-                                Type = "public-key"
-                            } };
-                    }
-
-                }
-
-            }
-
-            var challenge = _lib.RequestNewCredential(user, attType, opts.AuthenticatorSelection, excludeCredentials);
-            data = JsonConvert.SerializeObject(challenge);
-            //HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
-
-            return Json(challenge);
-        }
-
-        [HttpPost]
-        [Route("/attestation/result")]
-        public JsonResult MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse bodyRes)
-        {
-            //var json = HttpContext.Session.GetString("fido2.challenge");
-            var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(data);
-
-            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeNewCredential(bodyRes, origChallenge, requestTokenBindingId, (x) => true);
-
-            HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
-            creds = res;
-            return Json(res);
         }
 
         [HttpPost]
@@ -103,7 +44,7 @@ namespace Fido2Demo
                 Id = Encoding.UTF8.GetBytes("1")
             };
 
-            var challenge = _lib.RequestNewCredential(user, attType, null, null);
+            var challenge = _lib.RequestNewCredential(user, null, null, attType);
             HttpContext.Session.Clear();
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
@@ -112,7 +53,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredential")]
-        public Fido2NetLib.CredentialMakeResult MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
+        public Fido2NetLib.Fido2.CredentialMakeResult MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
         {
             var json = HttpContext.Session.GetString("fido2.challenge");
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
@@ -183,6 +124,131 @@ namespace Fido2Demo
                 return BadRequest("No user in HTTP Session (please register)");
             }
             return Ok();
+        }
+
+
+        /**
+         * 
+         * 
+         * 
+         * CONFORMANCE TESTING ENDPOINTS
+         * 
+         * 
+         * 
+         */
+        private static CredentialCreateOptions CONFORMANCE_TESTING_PREV_ATT_OPTIONS;
+        private static AssertionOptions CONFORMANCE_TESTING_PREV_ASRT_OPTIONS;
+        private static Fido2NetLib.Fido2.CredentialMakeResult CONFORMANCE_TESTING_STORED_CREDENTIALS;
+
+        [HttpPost]
+        [Route("/attestation/options")]
+        public JsonResult MakeCredentialOptionsTest([FromBody] OptionArgsDto opts)
+        {
+            var user = new User
+            {
+                DisplayName = opts.DisplayName,
+                Id = Base64Url.Decode(opts.Username),
+                Name = opts.Username
+            };
+            var attType = opts.Attestation;
+
+            var x = new AuthenticatorSelection();
+            x.UserVerification = UserVerificationRequirement.Discouraged;
+
+            List<PublicKeyCredentialDescriptor> excludeCredentials = null;
+
+            if (CONFORMANCE_TESTING_PREV_ATT_OPTIONS != null)
+            {
+                var origChallange = CONFORMANCE_TESTING_PREV_ATT_OPTIONS;
+
+                // exclude existing credentials
+                // todo: move this to callback?
+                // note: Not sure how moving this to callback would simply?
+                if (user.Id.SequenceEqual(origChallange.User.Id))
+                {
+                    if (CONFORMANCE_TESTING_STORED_CREDENTIALS != null)
+                    {
+                        excludeCredentials = new List<PublicKeyCredentialDescriptor>() {
+                            new PublicKeyCredentialDescriptor(CONFORMANCE_TESTING_STORED_CREDENTIALS.Result.CredentialId)
+                        };
+                    }
+                }
+            }
+
+            var challenge = _lib.RequestNewCredential(user, opts.AuthenticatorSelection, excludeCredentials, attType);
+            CONFORMANCE_TESTING_PREV_ATT_OPTIONS = challenge;
+
+            return Json(challenge);
+        }
+
+        [HttpPost]
+        [Route("/attestation/result")]
+        public JsonResult MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse bodyRes)
+        {
+            var origChallenge = CONFORMANCE_TESTING_PREV_ATT_OPTIONS;
+
+            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
+            var res = _lib.MakeNewCredential(bodyRes, origChallenge, requestTokenBindingId, (x) => true);
+
+            CONFORMANCE_TESTING_STORED_CREDENTIALS = res;
+            return Json(res);
+        }
+
+        [HttpPost]
+        [Route("/assertion/options")]
+        public JsonResult AssertionOptionsTest([FromBody] AssertionClientOptions assertionClientOptions)
+        {
+            // todo: Fetch creds for the user from database.
+
+            var creds = CONFORMANCE_TESTING_STORED_CREDENTIALS;
+            var allowedCreds = new List<PublicKeyCredentialDescriptor>();
+            if (creds != null)
+            {
+                allowedCreds.Add(new PublicKeyCredentialDescriptor(creds.Result.CredentialId));
+            }
+
+            var aoptions = _lib.GetAssertion(new User()
+            {
+                Id = Encoding.UTF8.GetBytes("1"),
+                Name = assertionClientOptions.Username,
+                DisplayName = "Display " + assertionClientOptions.Username
+            },
+            allowedCreds,
+            assertionClientOptions.UserVerification
+            );
+
+            CONFORMANCE_TESTING_PREV_ASRT_OPTIONS = aoptions;
+
+            return Json(aoptions);
+        }
+
+        [HttpPost]
+        [Route("/assertion/result")]
+        public JsonResult MakeAssertionTest([FromBody] AuthenticatorAssertionRawResponse r)
+        {
+            var origChallenge = CONFORMANCE_TESTING_PREV_ASRT_OPTIONS;
+
+            // todo: Fetch creds for the user from database.
+            var creds = CONFORMANCE_TESTING_STORED_CREDENTIALS;
+
+            byte[] existingPublicKey = creds.Result.PublicKey; // todo: read from database.
+            uint storedSignatureCounter = 0; // todo: read from database.
+
+            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
+            var res = _lib.MakeAssertion(r, origChallenge, storedSignatureCounter, existingPublicKey, requestTokenBindingId, (x) => true, (x) => true);
+            var res2 = new
+            {
+                status = "ok",
+                errormessage = "",
+                res
+            };
+            return Json(res2);
+        }
+
+        public class AssertionClientOptions
+        {
+            public string Username { get; set; }
+            public string UserVerification { get; set; }
         }
 
         public class OptionArgsDto

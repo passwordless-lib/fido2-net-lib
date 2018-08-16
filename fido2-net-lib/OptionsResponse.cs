@@ -1,10 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Fido2NetLib.Objects;
+using Fido2NetLib.Objects;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 using System.Globalization;
-using static fido2NetLib.Fido2NetLib;
+using static Fido2NetLib.Fido2;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     public class CredentialCreateOptions
     {
@@ -128,7 +130,7 @@ namespace fido2NetLib
                     RS256
                 },
                 AuthenticatorSelection = authenticatorSelection
-                
+
             };
         }
     }
@@ -169,11 +171,25 @@ namespace fido2NetLib
         public string Id { get; set; }
     }
 
+    /// <summary>
+    /// WebAuthn Relying Parties may use the AuthenticatorSelectionCriteria dictionary to specify their requirements regarding authenticator attributes.
+    /// </summary>
     public class AuthenticatorSelection
     {
-        public string AuthenticatorAttachment { get; set; }
+        /// <summary>
+        /// If this member is present, eligible authenticators are filtered to only authenticators attached with the specified §5.4.5 Authenticator Attachment enumeration (enum AuthenticatorAttachment).
+        /// </summary>
+        public AuthenticatorAttachment AuthenticatorAttachment { get; set; }
+
+        /// <summary>
+        /// This member describes the Relying Parties' requirements regarding resident credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident public key credential source when creating a public key credential.
+        /// </summary>
         public bool RequireResidentKey { get; set; }
-        public string UserVerification { get; set; }
+
+        /// <summary>
+        /// This member describes the Relying Party's requirements regarding user verification for the create() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement.
+        /// </summary>
+        public UserVerificationRequirement UserVerification { get; set; }
     }
 
     public class User

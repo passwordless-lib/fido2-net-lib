@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace fido2NetLib
+namespace Fido2NetLib
 {
     /// <summary>
     /// Holds parsed credential data
