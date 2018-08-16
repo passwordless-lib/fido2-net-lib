@@ -17,7 +17,13 @@ namespace Fido2NetLib
             {-65535, HashAlgorithmName.SHA1 },
             {-7, HashAlgorithmName.SHA256},
             {-35, HashAlgorithmName.SHA384 },
-            {-36, HashAlgorithmName.SHA512 }
+            {-36, HashAlgorithmName.SHA512 },
+            {-37, HashAlgorithmName.SHA256 },
+            {-38, HashAlgorithmName.SHA384 },
+            {-39, HashAlgorithmName.SHA512 },
+            {-257, HashAlgorithmName.SHA256 },
+            {-258, HashAlgorithmName.SHA384 },
+            {-259, HashAlgorithmName.SHA512 }
         };
 
         private AuthenticatorAttestationResponse(byte[] clientDataJson) : base(clientDataJson)
