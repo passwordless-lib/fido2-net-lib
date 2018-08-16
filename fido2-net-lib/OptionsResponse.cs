@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 using System.Globalization;
-using static Fido2NetLib.Fido2NetLib;
+using static Fido2NetLib.Fido2;
 
 namespace Fido2NetLib
 {

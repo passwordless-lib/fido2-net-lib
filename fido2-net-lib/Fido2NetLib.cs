@@ -10,7 +10,7 @@ namespace Fido2NetLib
     /// <summary>
     /// Public API for parsing and veriyfing FIDO2 attestation & assertion responses.
     /// </summary>
-    public class Fido2NetLib
+    public class Fido2
     {
         public class Configuration
         {
@@ -26,7 +26,7 @@ namespace Fido2NetLib
 
         private RandomNumberGenerator _crypto;
 
-        public Fido2NetLib(Configuration config)
+        public Fido2(Configuration config)
         {
             Config = config;
             _crypto = RandomNumberGenerator.Create();

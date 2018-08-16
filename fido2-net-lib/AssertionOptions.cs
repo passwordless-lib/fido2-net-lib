@@ -23,7 +23,7 @@ namespace Fido2NetLib
         public List<PublicKeyCredentialDescriptor> AllowCredentials { get; set; } = new List<PublicKeyCredentialDescriptor>();
         public string UserVerification { get; set; }
 
-        internal static AssertionOptions Create(byte[] challenge, List<PublicKeyCredentialDescriptor> allowedCredentials, Fido2NetLib.Configuration config)
+        internal static AssertionOptions Create(byte[] challenge, List<PublicKeyCredentialDescriptor> allowedCredentials, Fido2.Configuration config)
         {
             return new AssertionOptions()
             {
