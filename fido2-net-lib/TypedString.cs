@@ -3,6 +3,7 @@ using System;
 
 namespace Fido2NetLib
 {
+    [JsonConverter(typeof(ToStringJsonConverter))]
     public class TypedString : IEquatable<TypedString>
     {
 
@@ -15,6 +16,11 @@ namespace Fido2NetLib
         public string Value { get; private set; }
 
         public static implicit operator string(TypedString op) { return op.Value; }
+
+        public override string ToString()
+        {
+            return Value;
+        }        
 
         public bool Equals(TypedString other)
         {

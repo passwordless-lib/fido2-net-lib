@@ -53,11 +53,20 @@ namespace fido2_net_lib.Test
 
             var y1 = AuthenticatorAttachment.CrossPlatform;
             var yjson = JsonConvert.SerializeObject(y1);
-            Assert.Equal("{\"Value\":\"cross-platform\"}", yjson);
+            Assert.Equal("\"cross-platform\"", yjson);
 
             var y2 = JsonConvert.DeserializeObject<AuthenticatorAttachment>(yjson);
 
             Assert.Equal("cross-platform", y2);
+
+            // test list of typedstrings
+            var z1 = new[] { AuthenticatorTransport.Ble, AuthenticatorTransport.Usb, AuthenticatorTransport.Nfc };
+            var zjson = JsonConvert.SerializeObject(z1);
+            var z2 = JsonConvert.DeserializeObject<AuthenticatorTransport[]>(zjson);
+
+            Assert.All(z2, (x) => z1.Contains(x));
+            Assert.True(z1.SequenceEqual(z2));
+
         }
 
         [Fact]
