@@ -130,12 +130,19 @@ namespace Fido2NetLib
             // The identifier of the ECDAA-Issuer public key
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
 
+            if (false == AuthDataHelper.HasAttested(AttestionObject.AuthData)) throw new Fido2VerificationException("Attestation flag not set on attestation data");
             var attData = AuthDataHelper.GetAttestionData(AttestionObject.AuthData);
             var credentialId = attData.credId.ToArray();
             var credentialPublicKeyBytes = attData.credentialPublicKey.ToArray();
             PeterO.Cbor.CBORObject credentialPublicKey = null;
-            if (0 != credentialPublicKeyBytes.Length) credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
-
+            try
+            {
+                credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
+            }
+            catch (PeterO.Cbor.CBORException)
+            {
+                throw new Fido2VerificationException("Malformed credentialPublicKey");
+            }
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
@@ -250,7 +257,9 @@ namespace Fido2NetLib
                     if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), algMap[COSE_alg])) throw new Fido2VerificationException();
                     break;
                 case "packed":
-
+                    if (0 == AttestionObject.AttStmt.Keys.Count || 0 == AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
+                    if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || true == sig.IsNull) throw new Fido2VerificationException("Invalid packed attestation signature");
+                    if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type || true == alg.IsNull) throw new Fido2VerificationException("Invalid packed attestation algorithm");
                     var packedParsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
                     byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
                     AttestionObject.AuthData.CopyTo(data, 0);
@@ -259,6 +268,7 @@ namespace Fido2NetLib
                     // If x5c is present, this indicates that the attestation type is not ECDAA
                     if (null != x5c)
                     {
+                        if (PeterO.Cbor.CBORType.Array != x5c.Type || 0 == x5c.Count) throw new Fido2VerificationException("Malformed x5c array in packed attestation statement");
                         // The attestation certificate attestnCert MUST be the first element in the array.
                         var packedCert = new X509Certificate2(x5c.Values.First().GetByteString());
                         //System.IO.File.WriteAllBytes("cert.cer", packedCert.Export(X509ContentType.Cert));
@@ -268,6 +278,7 @@ namespace Fido2NetLib
                         // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                         // using the attestation public key in attestnCert with the algorithm specified in alg
                         var packedPubKey = (ECDsaCng)packedCert.GetECDsaPublicKey(); // attestation public key
+                        if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type|| false == algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
                         if (true != packedPubKey.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException();
 
                         // 2b. Version MUST be set to 3
@@ -306,12 +317,23 @@ namespace Fido2NetLib
                     // If neither x5c nor ecdaaKeyId is present, self attestation is in use
                     else
                     {
-                        var packedCert = new X509Certificate2(attData.credentialPublicKey.ToArray());
-                        var packedPubKey = (ECDsaCng)packedCert.GetECDsaPublicKey();
                         // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-                        if (true != algMap[alg.AsInt32()].Equals(packedPubKey.Key.Algorithm)) throw new Fido2VerificationException();
+                        var COSE_kty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
+                        if (!credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)].Equals(alg)) throw new Fido2VerificationException("Algorithm mismatch");
+                        var COSE_crv = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
+                        var x = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                        var y = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                        var cng = ECDsaCng.Create(new ECParameters
+                        {
+                            Curve = ECCurve.NamedCurves.nistP256,
+                            Q = new ECPoint
+                            {
+                                X = x.ToArray(),
+                                Y = y
+                            }
+                        });
                         // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
-                        if (true != packedPubKey.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException();
+                        if (true != cng.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException();
                     }
                     break;
 
