@@ -17,7 +17,13 @@ namespace Fido2NetLib
             {-65535, HashAlgorithmName.SHA1 },
             {-7, HashAlgorithmName.SHA256},
             {-35, HashAlgorithmName.SHA384 },
-            {-36, HashAlgorithmName.SHA512 }
+            {-36, HashAlgorithmName.SHA512 },
+            {-37, HashAlgorithmName.SHA256 },
+            {-38, HashAlgorithmName.SHA384 },
+            {-39, HashAlgorithmName.SHA512 },
+            {-257, HashAlgorithmName.SHA256 },
+            {-258, HashAlgorithmName.SHA384 },
+            {-259, HashAlgorithmName.SHA512 }
         };
 
         private AuthenticatorAttestationResponse(byte[] clientDataJson) : base(clientDataJson)
@@ -32,10 +38,28 @@ namespace Fido2NetLib
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
-            var rawAttestionObj = rawResponse.Response.AttestationObject;
-            var cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawAttestionObj);
+            if (null == rawResponse || null == rawResponse.Response) throw new Fido2VerificationException("Expected rawResponse, got null");
+            
+            if (null == rawResponse.Response.AttestationObject || 0 == rawResponse.Response.AttestationObject.Length) throw new Fido2VerificationException("Missing AttestationObject");
+            PeterO.Cbor.CBORObject cborAttestion = null;
+            try
+            {
+                cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawResponse.Response.AttestationObject);
+            }
+            catch (PeterO.Cbor.CBORException)
+            {
+                throw new Fido2VerificationException("Malformed AttestationObject");
+            }
 
-            var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
+            if (    null == cborAttestion["fmt"] ||
+                    PeterO.Cbor.CBORType.TextString != cborAttestion["fmt"].Type || 
+                    null == cborAttestion["attStmt"] ||
+                    PeterO.Cbor.CBORType.Map != cborAttestion["attStmt"].Type || 
+                    null == cborAttestion["authData"] ||
+                    PeterO.Cbor.CBORType.ByteString != cborAttestion["authData"].Type
+                    )   throw new Fido2VerificationException("Malformed AttestationObject");
+
+            AuthenticatorAttestationResponse response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
             {
                 Raw = rawResponse,
                 AttestionObject = new ParsedAttestionObject()
@@ -45,7 +69,6 @@ namespace Fido2NetLib
                     AuthData = cborAttestion["authData"].GetByteString()
                 }
             };
-
             return response;
         }
 
@@ -63,6 +86,8 @@ namespace Fido2NetLib
             if (Raw.Id == null || Raw.Id.Length == 0) throw new Fido2VerificationException("AttestionResponse is missing Id");
 
             if (Raw.Type != "public-key") throw new Fido2VerificationException("AttestionResponse is missing type with value 'public-key'");
+
+            if (null == AttestionObject.AuthData || 0 == AttestionObject.AuthData.Length) throw new Fido2VerificationException("Missing or malformed authData");
 
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
@@ -106,10 +131,10 @@ namespace Fido2NetLib
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
 
             var attData = AuthDataHelper.GetAttestionData(AttestionObject.AuthData);
-
             var credentialId = attData.credId.ToArray();
             var credentialPublicKeyBytes = attData.credentialPublicKey.ToArray();
-            var credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
+            PeterO.Cbor.CBORObject credentialPublicKey = null;
+            if (0 != credentialPublicKeyBytes.Length) credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
 
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
@@ -236,6 +261,9 @@ namespace Fido2NetLib
                     {
                         // The attestation certificate attestnCert MUST be the first element in the array.
                         var packedCert = new X509Certificate2(x5c.Values.First().GetByteString());
+                        //System.IO.File.WriteAllBytes("cert.cer", packedCert.Export(X509ContentType.Cert));
+                        
+                        //if (true != packedCert.Verify()) throw new Fido2VerificationException("Invalid certificate at head of x5c chain");
 
                         // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                         // using the attestation public key in attestnCert with the algorithm specified in alg
@@ -260,6 +288,13 @@ namespace Fido2NetLib
 
                         // id-fido-u2f-ce-transports 
                         var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(packedCert.Extensions);
+                        
+                        for (int i = 0; i == x5c.Values.Count; i++)
+                        {
+                            var leafCert = new X509Certificate2(x5c.Values.ElementAt(i).GetByteString());
+                            //System.IO.File.WriteAllBytes("cert.cer", packedCert.Export(X509ContentType.Cert));
+                            if (true != packedCert.Verify()) throw new Fido2VerificationException("Invalid certificate in leaf of x5c chain");
+                        }
                     }
                     // If ecdaaKeyId is present, then the attestation type is ECDAA
                     else if (null != ecdaaKeyId)

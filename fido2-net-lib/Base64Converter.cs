@@ -18,7 +18,18 @@ namespace Fido2NetLib
 
         public override byte[] ReadJson(JsonReader reader, Type objectType, byte[] existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            return Base64Url.Decode((string)reader.Value);
+            byte[] ret = null;
+            if (null == reader.Value) throw new Fido2VerificationException("json value must not be null");
+            if (Type.GetType("System.String") != reader.ValueType) throw new Fido2VerificationException("json valuetype must be string");
+            try
+            {
+                ret = Base64Url.Decode((string)reader.Value);
+            }
+            catch (System.FormatException)
+            {
+                throw new Fido2VerificationException("json value must be valid base64 encoded string");
+            }
+            return ret;
         }
     }
 }

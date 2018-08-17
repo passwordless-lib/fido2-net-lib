@@ -59,14 +59,47 @@ namespace Fido2NetLib
             Type = "public-key",
             Alg = -7
         };
-
+        private static PubKeyCredParam ES384 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -35
+        };
+        private static PubKeyCredParam ES512 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -36
+        };
         private static PubKeyCredParam RS256 = new PubKeyCredParam()
         {
             // Windows Hello supports the RS256 algorithm
             Type = "public-key",
             Alg = -257
         };
-
+        private static PubKeyCredParam RS384 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -258
+        };
+        private static PubKeyCredParam RS512 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -259
+        };
+        private static PubKeyCredParam PS256 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -37
+        };
+        private static PubKeyCredParam PS384 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -38
+        };
+        private static PubKeyCredParam PS512 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -39
+        };
         /// <summary>
         /// This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance.The default is none.
         /// </summary>
@@ -92,7 +125,8 @@ namespace Fido2NetLib
                 Timeout = config.Timeout,
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    ES256, // todo: support more formats tha es256
+                    // Add additional as appropriate
+                    ES256,
                     RS256
                 },
                 AuthenticatorSelection = authenticatorSelection

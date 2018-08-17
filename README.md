@@ -1,4 +1,4 @@
-# FIDO2 .net library (WebAuthn)
+# FIDO2 .NET library (WebAuthn)
 A working (maybe still proof of concept) implementation library + demo for fido2 and WebAuthn using .NET (Work in progress)
 
 Demo: https://fido2.azurewebsites.net/login.html
@@ -23,7 +23,7 @@ Feedback, issues and pull requests are VERY welcome.
 ✅ Fido 2 Security Keys  
 ✅ Backwards compatability with Fido-u2f.  
 ✅ Windows Hello support  
-✅ ES256 Public Key format (no other public key formats yet)  
+✅ ES256 Public Key format  
 ✅ "none", "fido-u2f" & "packed" attestation formats  
 ❌ "tpm", "android-key", "android-safetynet"  
 ❌ Extensions
