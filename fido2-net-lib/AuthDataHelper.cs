@@ -206,19 +206,23 @@ namespace Fido2NetLib
             Memory<byte> aaguid = null;
             if ((offset + 16) <= ad.Length)
             {
-                aaguid = ad.Slice(offset, 16);
-                offset += 16;
+                aaguid = GetSizedByteArray(ad, ref offset, 16);
             }
             var credId = GetSizedByteArray(ad, ref offset);
             var hasExtensions = AuthDataHelper.HasExtensions(ad.Span);
             Memory<byte> credentialPublicKey = null;
-            if ((ad.Length - offset) > 0 ) credentialPublicKey = ad.Slice(offset, (ad.Length - offset)).ToArray();
+            if ((ad.Length - offset) > 0) credentialPublicKey = GetSizedByteArray(ad, ref offset, (ushort)(ad.Length - offset)).ToArray();
+
+            if (true == aaguid.IsEmpty || 
+                null == credId || 
+                true == credentialPublicKey.IsEmpty)
+                throw new Fido2VerificationException("Malformed attestation data");
+
             return (aaguid, credId, credentialPublicKey);
         }
-        public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset)
+        public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset, UInt16 len = 0)
         {
-            var len = 0;
-            if ((offset + 2) <= ab.Length)
+            if ((0 == len) && ((offset + 2) <= ab.Length))
             {
                 len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray());
                 offset += 2;
@@ -296,24 +300,17 @@ namespace Fido2NetLib
         public static (Memory<byte> extraData, Memory<byte> attested) ParseCertInfo(Memory<byte> certInfo)
         {
             var offset = 0;
-            var magic = certInfo.Slice(offset, 4);
+            var magic = GetSizedByteArray(certInfo, ref offset, 4);
             if (0xff544347 != BitConverter.ToUInt32(magic.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad magic number " + magic.ToString());
-            offset += 4;
-            var type = certInfo.Slice(offset, 2);
+            var type = GetSizedByteArray(certInfo, ref offset, 2);
             if (0x8017 != BitConverter.ToUInt16(type.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad structure tag " + type.ToString());
-            offset += 2;
             var qualifiedSigner = GetSizedByteArray(certInfo, ref offset);
             var extraData = GetSizedByteArray(certInfo, ref offset);
-            var clock = certInfo.Slice(offset, 8);
-            offset += 8;
-            var resetCount = BitConverter.ToInt32(certInfo.Slice(offset, 4).ToArray().Reverse().ToArray());
-            offset += 4;
-            var restartCount = BitConverter.ToInt32(certInfo.Slice(offset, 4).ToArray().Reverse().ToArray());
-            offset += 4;
-            var safe = certInfo.Slice(offset, 1);
-            offset += 1;
-            var firmwareVersion = certInfo.Slice(offset, 8);
-            offset += 8;
+            var clock = GetSizedByteArray(certInfo, ref offset, 8);
+            var resetCount = GetSizedByteArray(certInfo, ref offset, 4);
+            var restartCount = GetSizedByteArray(certInfo, ref offset, 4);
+            var safe = GetSizedByteArray(certInfo, ref offset, 1);
+            var firmwareVersion = GetSizedByteArray(certInfo, ref offset, 8);
             var attestedNameBuffer = GetSizedByteArray(certInfo, ref offset);
             var tmp = NameFromTPM2BName(attestedNameBuffer);
             var alg = tmp.size; // TPM_ALG_ID
@@ -322,40 +319,46 @@ namespace Fido2NetLib
             if (certInfo.Length != offset) throw new Fido2VerificationException("Leftover bits decoding certInfo");
             return (extraData, attestedName);
         }
-        public static (Memory<byte> alg, int exponent, Memory<byte> unique) ParsePubArea(Memory<byte> pubArea)
+        public static (Memory<byte> alg, Int32 exponent, Memory<byte> curveID, Memory<byte> kdf, Memory<byte> unique) ParsePubArea(Memory<byte> pubArea)
         {
             var offset = 0;
-            var type = pubArea.Slice(offset, 2);
-            offset += 2;
-            var alg = pubArea.Slice(offset, 2);
+            var tmp = GetSizedByteArray(pubArea, ref offset, 2);
+            Int16 type = 0;
+            if (null != tmp)
+            {
+                type = BitConverter.ToInt16(tmp.ToArray().Reverse().ToArray());
+            }
+            var alg = GetSizedByteArray(pubArea, ref offset, 2);
             TpmAlg tmpalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(alg.ToArray().Reverse().ToArray()).ToString());
-            offset += 2;
-            var atts = pubArea.Slice(offset, 4);
-            offset += 4;
+            var atts = GetSizedByteArray(pubArea, ref offset, 4);
             var policy = GetSizedByteArray(pubArea, ref offset);
-            var symmetric = pubArea.Slice(offset, 2);
-            offset += 2;
-            var scheme = pubArea.Slice(offset, 2);
-            offset += 2;
-            //if (0x0001 == BitConverter.ToInt16(type.ToArray().Reverse().ToArray()))
-            //{
-            var keyBits = pubArea.Slice(offset, 2);
-            offset += 2;
-            var tmp = pubArea.Slice(offset, 4);
-            offset += 4;
-            var exponent = BitConverter.ToInt32(tmp.ToArray());
-            if (0x0 == exponent) exponent = 65537;
-            //}
-            //else if (0x0023 == BitConverter.ToInt16(type.ToArray().Reverse().ToArray()))
-            //{
-            //    var curveID = pubArea.Slice(offset, 2);
-            //    offset += 2;
-            //    var kdf = pubArea.Slice(offset, 2);
-            //    offset += 2;
-            //}
+            var symmetric = GetSizedByteArray(pubArea, ref offset, 2);
+            var scheme = GetSizedByteArray(pubArea, ref offset, 2);
+
+            Memory<byte> keyBits = null;
+            Int32 exponent = 0;
+            Memory<byte> curveID = null;
+            Memory<byte> kdf = null;
+
+            if (0x0001 == type)
+            {
+                keyBits = GetSizedByteArray(pubArea, ref offset, 2);
+                tmp = GetSizedByteArray(pubArea, ref offset, 4);
+                if (null != tmp)
+                {
+                    exponent = BitConverter.ToInt32(tmp.ToArray());
+                    if (0x0 == exponent) exponent = 65537;
+                }
+            }
+            
+            if (0x0023 == type)
+            {
+                curveID = GetSizedByteArray(pubArea, ref offset, 2);
+                kdf = GetSizedByteArray(pubArea, ref offset, 2);
+            }
             var unique = GetSizedByteArray(pubArea, ref offset);
             if (pubArea.Length != offset) throw new Fido2VerificationException("Leftover bits decoding pubArea");
-            return (alg, exponent, unique);
+            return (alg, exponent, curveID, kdf, unique);
         }
     }
 }
