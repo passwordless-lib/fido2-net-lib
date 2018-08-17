@@ -1,6 +1,8 @@
 # FIDO2 .NET library (WebAuthn)
 A working (maybe still proof of concept) implementation library + demo for fido2 and WebAuthn using .NET (Work in progress)
 
+**Purpose**: Provide a developer friendly and well tested .NET server side library for easy validation (attestment & assertment) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating Phising attacks.
+
 Demo: https://fido2.azurewebsites.net/
 
 To run the demo locally: Start Fido2Demo (SSL, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
@@ -29,6 +31,7 @@ Feedback, issues and pull requests are VERY welcome.
 ❌ Extensions  
 ✅ Intellisense documentation  
 ❌ Formal documentation & examples
+❌ Recommended usage patterns
 
 ## Conformance testing tool
 To run a suit of test of different verifcations and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
