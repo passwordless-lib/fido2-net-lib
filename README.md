@@ -26,8 +26,8 @@ Feedback, issues and pull requests are VERY welcome.
 ✅ ES256 Public Key format  
 ✅ "none", "fido-u2f" & "packed" attestation formats  
 ❌ "tpm", "android-key", "android-safetynet"  
-❌ Extensions
-✅ Intellisense documentation
+❌ Extensions  
+✅ Intellisense documentation  
 ❌ Formal documentation & examples
 
 ## Conformance testing tool
