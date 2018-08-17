@@ -1,6 +1,5 @@
 ﻿using Fido2NetLib.Objects;
 using Fido2NetLib;
-using Fido2NetLib.Objects;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;

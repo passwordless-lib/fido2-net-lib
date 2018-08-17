@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib.Objects;
 using Fido2NetLib;
-using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
