@@ -70,23 +70,30 @@ namespace Fido2Demo
         public JsonResult AssertionOptions(string username)
         {
             // todo: Fetch creds for the user from database.
-            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
+            var jsonCreds = HttpContext.Session.GetString("fido2.creds");            
             var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
-            var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
+
+            // get ID and displayname from DB
+            var fakeUser = new User()
+            {
+                Id = Encoding.UTF8.GetBytes("1"),
+                Name = username,
+                DisplayName = "Display " + username
+            };
+
+            // get expected credentials from db 
+            var allowedCredentials = new List<PublicKeyCredentialDescriptor>() {
                     new PublicKeyCredentialDescriptor()
                     {
                         Id = creds.CredentialId,
                         Type = "public-key"
                     }
-                };
+            };
 
-            var aoptions = _lib.GetAssertion(new User()
-            {
-                Id = Encoding.UTF8.GetBytes("1"),
-                Name = username,
-                DisplayName = "Display " + username
-            },
-            allowedCreds
+            var aoptions = _lib.GetAssertion(
+                fakeUser,
+                allowedCredentials,
+                userVerification: UserVerificationRequirement.Preferred
             );
 
             HttpContext.Session.SetString("fido2.options", JsonConvert.SerializeObject(aoptions));
@@ -196,7 +203,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/assertion/options")]
-        public JsonResult AssertionOptionsTest([FromBody] AssertionClientOptions assertionClientOptions)
+        public JsonResult AssertionOptionsTest([FromBody] TEST_AssertionClientOptions assertionClientOptions)
         {
             // todo: Fetch creds for the user from database.
 
@@ -245,10 +252,13 @@ namespace Fido2Demo
             return Json(res2);
         }
 
-        public class AssertionClientOptions
+        /// <summary>
+        /// For testing
+        /// </summary>
+        public class TEST_AssertionClientOptions
         {
             public string Username { get; set; }
-            public string UserVerification { get; set; }
+            public UserVerificationRequirement UserVerification { get; set; }
         }
 
         public class OptionArgsDto

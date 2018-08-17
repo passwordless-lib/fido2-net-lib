@@ -89,17 +89,14 @@ namespace Fido2NetLib
         /// Returns AssertionOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public AssertionOptions GetAssertion(User user, List<PublicKeyCredentialDescriptor> allowedCredentials, string userVerification = "x")
+        public AssertionOptions GetAssertion(User user, List<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification)
         {
-
             var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
 
             var options = AssertionOptions.Create(challenge, allowedCredentials, Config);
             options.UserVerification = userVerification;
             return options;
-
-
         }
 
         /// <summary>
