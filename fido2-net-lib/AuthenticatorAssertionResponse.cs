@@ -97,7 +97,7 @@ namespace Fido2NetLib
 
             // 12 If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.
             var userIsVerified = AuthDataHelper.IsUserVerified(AuthenticatorData);
-            if (isUserVerificationRequired && !userIsVerified) throw new Fido2VerificationException();
+            if (isUserVerificationRequired && !userIsVerified) throw new Fido2VerificationException("User verification is required");
 
             // 13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.
             if (!isUserVerificationRequired)
@@ -128,9 +128,9 @@ namespace Fido2NetLib
 
             // 17.
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
-            if (counter <= storedSignatureCounter)
+            if (counter > 0 && counter <= storedSignatureCounter)
             {
-                throw new Fido2VerificationException("SignatureCounter was not greather than storedC SignatureCounter");
+                throw new Fido2VerificationException("SignatureCounter was not greater than stored SignatureCounter");
             }
             storeSignatureCounterCallback(new StoreSignaturecounterParams(Raw.Id, counter));
         }
