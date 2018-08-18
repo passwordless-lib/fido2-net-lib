@@ -146,10 +146,10 @@ namespace Fido2NetLib
     /// </summary>
     public class CredentialIdUserHandleParams
     {
-        public string UserHandle { get; }
+        public byte[] UserHandle { get; }
         public byte[] CredentialId { get; }
 
-        public CredentialIdUserHandleParams(byte[] credentialId, string userHandle)
+        public CredentialIdUserHandleParams(byte[] credentialId, byte[] userHandle)
         {
             CredentialId = credentialId;
             UserHandle = userHandle;

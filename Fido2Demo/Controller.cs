@@ -215,7 +215,7 @@ namespace Fido2Demo
 
             var aoptions = _lib.GetAssertion(new User()
             {
-                Id = Encoding.UTF8.GetBytes("1"),
+                Id = Base64Url.Decode(assertionClientOptions.Username),
                 Name = assertionClientOptions.Username,
                 DisplayName = "Display " + assertionClientOptions.Username
             },

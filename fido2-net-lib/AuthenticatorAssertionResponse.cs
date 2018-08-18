@@ -20,7 +20,7 @@ namespace Fido2NetLib
 
         public byte[] AuthenticatorData { get; set; }
         public byte[] Signature { get; set; }
-        public string UserHandle { get; set; }
+        public byte[] UserHandle { get; set; }
 
         internal static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
         {
@@ -29,7 +29,8 @@ namespace Fido2NetLib
                 // we will need to access raw in Verify()
                 Raw = rawResponse,
                 AuthenticatorData = rawResponse.Response.AuthenticatorData,
-                Signature = AuthDataHelper.ParseSigData(rawResponse.Response.Signature).ToArray()
+                Signature = AuthDataHelper.ParseSigData(rawResponse.Response.Signature).ToArray(),
+                UserHandle = rawResponse.Response.UserHandle
             };
 
             return response;
@@ -58,6 +59,7 @@ namespace Fido2NetLib
             // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
             if (UserHandle != null)
             {
+                if (UserHandle.Length == 0) throw new Fido2VerificationException("Userhandle was empty DOMString. It should either be null or have a value.");
                 if (false == isUserHandleOwnerOfCredId(new CredentialIdUserHandleParams(Raw.Id, UserHandle)))
                 {
                     throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
