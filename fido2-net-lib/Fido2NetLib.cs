@@ -74,12 +74,10 @@ namespace Fido2NetLib
         public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
-            //Func<byte[], User, bool> isCredentialIdUniqueToUser = isCredentialIdUniqueToUser
-            // add overload/null check and user config then maybe?
-            var res = parsedResponse.Verify(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
+            var success = parsedResponse.Verify(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
 
             // todo: Set Errormessage etc.
-            return new CredentialMakeResult { Status = "ok", ErrorMessage = "", Result = res };
+            return new CredentialMakeResult { Status = "ok", ErrorMessage = "", Result = success };
         }
 
         /// <summary>
