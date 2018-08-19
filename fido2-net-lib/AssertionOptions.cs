@@ -20,17 +20,18 @@ namespace Fido2NetLib
         public byte[] Challenge { get; set; }
         public uint Timeout { get; set; }
         public string RpId { get; set; }
-        public List<PublicKeyCredentialDescriptor> AllowCredentials { get; set; } = new List<PublicKeyCredentialDescriptor>();
+        public IEnumerable<PublicKeyCredentialDescriptor> AllowCredentials { get; set; }
         public UserVerificationRequirement UserVerification { get; set; }
 
-        internal static AssertionOptions Create(byte[] challenge, List<PublicKeyCredentialDescriptor> allowedCredentials, Fido2.Configuration config)
+        internal static AssertionOptions Create(Fido2.Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification)
         {
             return new AssertionOptions()
             {
                 Challenge = challenge,
                 Timeout = config.Timeout,
                 RpId = config.ServerDomain,
-                AllowCredentials = allowedCredentials ?? new List<PublicKeyCredentialDescriptor>()
+                AllowCredentials = allowedCredentials ?? new List<PublicKeyCredentialDescriptor>(),
+                UserVerification = userVerification
             };
         }
 

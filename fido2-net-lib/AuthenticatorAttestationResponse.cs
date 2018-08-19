@@ -72,11 +72,11 @@ namespace Fido2NetLib
             return response;
         }
 
-        public AttestationVerificationData Verify(CredentialCreateOptions options, string expectedOrigin, byte[] requestTokenBindingId, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
+        public AttestationVerificationData Verify(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
         {
             var result = new AttestationVerificationData();
 
-            BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
+            BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
             // verify origin
             // done in baseclass
@@ -101,7 +101,7 @@ namespace Fido2NetLib
             using (var sha = SHA256.Create())
             {
                 hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
-                hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(options.Rp.Id));
+                hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
             }
 
             // 9 
@@ -357,7 +357,7 @@ namespace Fido2NetLib
              * Check that the credentialId is not yet registered to any other user.
              * If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
              * */
-            if (!isCredentialIdUniqueToUser(new CredentialIdUserParams(credentialId, options.User)))
+            if (!isCredentialIdUniqueToUser(new CredentialIdUserParams(credentialId, originalOptions.User)))
             {
                 throw new Fido2VerificationException("CredentialId is not unique to this user");
             }

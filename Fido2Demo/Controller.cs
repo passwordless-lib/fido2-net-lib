@@ -43,7 +43,7 @@ namespace Fido2Demo
                 Id = Encoding.UTF8.GetBytes("1")
             };
 
-            var challenge = _lib.RequestNewCredential(user, null, null, attType);
+            var challenge = _lib.RequestNewCredential(user, null, null, AttestationConveyancePreference.Parse(attType));
             HttpContext.Session.Clear();
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 
@@ -58,7 +58,7 @@ namespace Fido2Demo
             var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
 
             var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeNewCredential(bodyRes, origChallenge, requestTokenBindingId, (x) => true);
+            var res = _lib.MakeNewCredential(bodyRes, origChallenge, (x) => true, requestTokenBindingId);
 
             HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
             return res;
@@ -69,7 +69,7 @@ namespace Fido2Demo
         public JsonResult AssertionOptions(string username)
         {
             // todo: Fetch creds for the user from database.
-            var jsonCreds = HttpContext.Session.GetString("fido2.creds");            
+            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
             var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
 
             // get ID and displayname from DB
@@ -89,10 +89,9 @@ namespace Fido2Demo
                     }
             };
 
-            var aoptions = _lib.GetAssertion(
-                fakeUser,
+            var aoptions = _lib.GetAssertionOptions(
                 allowedCredentials,
-                userVerification: UserVerificationRequirement.Preferred
+                UserVerificationRequirement.Preferred
             );
 
             HttpContext.Session.SetString("fido2.options", JsonConvert.SerializeObject(aoptions));
@@ -102,10 +101,10 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeAssertion")]
-        public JsonResult MakeAssertion([FromBody] AuthenticatorAssertionRawResponse r)
+        public JsonResult MakeAssertion([FromBody] AuthenticatorAssertionRawResponse clientResponse)
         {
             var json = HttpContext.Session.GetString("fido2.options");
-            var origChallenge = JsonConvert.DeserializeObject<AssertionOptions>(json);
+            var originalChallenge = JsonConvert.DeserializeObject<AssertionOptions>(json);
 
             // todo: Fetch creds for the user from database.
             var jsonCreds = HttpContext.Session.GetString("fido2.creds");
@@ -115,7 +114,7 @@ namespace Fido2Demo
             uint storedSignatureCounter = 0; // todo: read from database.
 
             var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeAssertion(r, origChallenge, storedSignatureCounter, existingPublicKey, requestTokenBindingId, (x) => true, (x) => true);
+            var res = _lib.MakeAssertion(clientResponse, originalChallenge, existingPublicKey, storedSignatureCounter, (x) => true, requestTokenBindingId);
             return Json(res);
         }
 
@@ -194,7 +193,7 @@ namespace Fido2Demo
             var origChallenge = CONFORMANCE_TESTING_PREV_ATT_OPTIONS;
 
             var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeNewCredential(bodyRes, origChallenge, requestTokenBindingId, (x) => true);
+            var res = _lib.MakeNewCredential(bodyRes, origChallenge, (x) => true, requestTokenBindingId);
 
             CONFORMANCE_TESTING_STORED_CREDENTIALS = res;
             return Json(res);
@@ -207,20 +206,15 @@ namespace Fido2Demo
             // todo: Fetch creds for the user from database.
 
             var creds = CONFORMANCE_TESTING_STORED_CREDENTIALS;
-            var allowedCreds = new List<PublicKeyCredentialDescriptor>();
+            var allowedCredentials = new List<PublicKeyCredentialDescriptor>();
             if (creds != null)
             {
-                allowedCreds.Add(new PublicKeyCredentialDescriptor(creds.Result.CredentialId));
+                allowedCredentials.Add(new PublicKeyCredentialDescriptor(creds.Result.CredentialId));
             }
 
-            var aoptions = _lib.GetAssertion(new User()
-            {
-                Id = Base64Url.Decode(assertionClientOptions.Username),
-                Name = assertionClientOptions.Username,
-                DisplayName = "Display " + assertionClientOptions.Username
-            },
-            allowedCreds,
-            assertionClientOptions.UserVerification
+            var aoptions = _lib.GetAssertionOptions(
+                allowedCredentials,
+                assertionClientOptions.UserVerification
             );
 
             CONFORMANCE_TESTING_PREV_ASRT_OPTIONS = aoptions;
@@ -241,7 +235,7 @@ namespace Fido2Demo
             uint storedSignatureCounter = 0; // todo: read from database.
 
             var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeAssertion(r, origChallenge, storedSignatureCounter, existingPublicKey, requestTokenBindingId, (x) => true, (x) => true);
+            var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey, storedSignatureCounter, (x) => true, requestTokenBindingId);
             var res2 = new
             {
                 status = "ok",
@@ -264,7 +258,7 @@ namespace Fido2Demo
         {
             public string DisplayName { get; set; }
             public string Username { get; set; }
-            public string Attestation { get; set; }
+            public AttestationConveyancePreference Attestation { get; set; }
             public AuthenticatorSelection AuthenticatorSelection { get; set; }
         }
     }
