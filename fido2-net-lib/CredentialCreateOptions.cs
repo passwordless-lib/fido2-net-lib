@@ -52,6 +52,43 @@ namespace Fido2NetLib
 
         // todo: add more members from https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-pubkeycredparams
 
+        /// <summary>
+        /// This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance.The default is none.
+        /// </summary>
+        [JsonProperty("attestation")]
+        public AttestationConveyancePreference Attestation { get; set; } = AttestationConveyancePreference.None;
+
+        public AuthenticatorSelection AuthenticatorSelection { get; set; }
+
+        /// <summary>
+        /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
+        /// </summary>
+        [JsonProperty("excludeCredentials")]
+        public List<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; }
+
+        public static CredentialCreateOptions Create(Configuration config, byte[] challenge, User user, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationConveyancePreference, List<PublicKeyCredentialDescriptor> excludeCredentials)
+        {
+            return new CredentialCreateOptions
+            {
+                Status = "ok",
+                ErrorMessage = string.Empty,
+                Challenge = challenge,
+                Rp = new Rp(config.ServerDomain, config.ServerName),
+                Timeout = config.Timeout,
+                User = user,
+                PubKeyCredParams = new List<PubKeyCredParam>()
+                {
+                    // Add additional as appropriate
+                    ES256,
+                    RS256
+                },
+                AuthenticatorSelection = authenticatorSelection,
+                Attestation = attestationConveyancePreference,
+                ExcludeCredentials = excludeCredentials ?? new List<PublicKeyCredentialDescriptor>()
+
+            };
+        }
+
         private static PubKeyCredParam ES256 = new PubKeyCredParam()
         {
             // External authenticators support the ES256 algorithm
@@ -99,39 +136,6 @@ namespace Fido2NetLib
             Type = "public-key",
             Alg = -39
         };
-        /// <summary>
-        /// This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance.The default is none.
-        /// </summary>
-        [JsonProperty("attestation")]
-        public string Attestation { get; set; } = "none";
-
-        public AuthenticatorSelection AuthenticatorSelection { get; set; }
-
-        /// <summary>
-        /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
-        /// </summary>
-        [JsonProperty("excludeCredentials")]
-        public List<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; } = new List<PublicKeyCredentialDescriptor>();
-
-        public static CredentialCreateOptions Create(byte[] challenge, Configuration config, AuthenticatorSelection authenticatorSelection)
-        {
-            return new CredentialCreateOptions
-            {
-                Status = "ok",
-                ErrorMessage = string.Empty,
-                Challenge = challenge,
-                Rp = new Rp(config.ServerDomain, config.ServerName),
-                Timeout = config.Timeout,
-                PubKeyCredParams = new List<PubKeyCredParam>()
-                {
-                    // Add additional as appropriate
-                    ES256,
-                    RS256
-                },
-                AuthenticatorSelection = authenticatorSelection
-
-            };
-        }
     }
 
     public class PubKeyCredParam
@@ -157,17 +161,18 @@ namespace Fido2NetLib
             Id = id;
         }
 
-        /// <summary>
-        /// A human-readable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
-        /// </summary>
-        [JsonProperty("name")]
-        public string Name { get; set; }
 
         /// <summary>
         /// A unique identifier for the Relying Party entity, which sets the RP ID.
         /// </summary>
         [JsonProperty("id")]
         public string Id { get; set; }
+
+        /// <summary>
+        /// A human-readable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
+        /// </summary>
+        [JsonProperty("name")]
+        public string Name { get; set; }
     }
 
     /// <summary>
