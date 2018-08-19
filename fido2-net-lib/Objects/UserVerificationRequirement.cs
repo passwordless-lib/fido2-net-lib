@@ -21,7 +21,6 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public static readonly UserVerificationRequirement Discouraged = new UserVerificationRequirement("discouraged");
 
-        [JsonConstructor]
         private UserVerificationRequirement(string value) : base(value)
         {
         }

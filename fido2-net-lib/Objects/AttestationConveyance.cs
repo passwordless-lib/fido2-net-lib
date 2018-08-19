@@ -22,7 +22,7 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public static readonly AttestationConveyancePreference Direct = new AttestationConveyancePreference("direct");
 
-        [JsonConstructor]
+        
         private AttestationConveyancePreference(string value) : base(value)
         {
         }
