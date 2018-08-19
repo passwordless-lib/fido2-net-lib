@@ -43,7 +43,8 @@ namespace Fido2Demo
                 Id = Encoding.UTF8.GetBytes("1")
             };
 
-            var challenge = _lib.RequestNewCredential(user, AuthenticatorSelection.Default, null, AttestationConveyancePreference.Parse(attType));
+            List<PublicKeyCredentialDescriptor> excludeCredentials = null;
+            var challenge = _lib.RequestNewCredential(user, excludeCredentials, AuthenticatorSelection.Default, AttestationConveyancePreference.Parse(attType));
             HttpContext.Session.Clear();
             HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
 

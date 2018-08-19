@@ -74,7 +74,7 @@ namespace Fido2Demo
                 }
             }
 
-            var challenge = _lib.RequestNewCredential(user, opts.AuthenticatorSelection, excludeCredentials, attType);
+            var challenge = _lib.RequestNewCredential(user, excludeCredentials, opts.AuthenticatorSelection, attType);
             CONFORMANCE_TESTING_PREV_ATT_OPTIONS = challenge;
 
             return Json(challenge);
