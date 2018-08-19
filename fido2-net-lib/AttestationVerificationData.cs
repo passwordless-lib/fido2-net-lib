@@ -5,7 +5,7 @@ namespace Fido2NetLib
     /// <summary>
     /// Holds parsed credential data
     /// </summary>
-    public class AttestationVerificationData
+    public class AttestationVerificationSuccess
     {
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] PublicKey { get; set; }

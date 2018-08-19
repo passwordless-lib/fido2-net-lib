@@ -62,7 +62,7 @@ namespace Fido2NetLib
             if (UserHandle != null)
             {
                 if (UserHandle.Length == 0) throw new Fido2VerificationException("Userhandle was empty DOMString. It should either be null or have a value.");
-                if (false == isUserHandleOwnerOfCredId(new CredentialIdUserHandleParams(Raw.Id, UserHandle)))
+                if (false == isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle)))
                 {
                     throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
                 }

@@ -70,7 +70,7 @@ namespace Fido2Demo
         {
             // todo: Fetch creds for the user from database.
             var jsonCreds = HttpContext.Session.GetString("fido2.creds");
-            var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
+            var creds = JsonConvert.DeserializeObject<AttestationVerificationSuccess>(jsonCreds);
 
             // get ID and displayname from DB
             var fakeUser = new User()
@@ -108,7 +108,7 @@ namespace Fido2Demo
 
             // todo: Fetch creds for the user from database.
             var jsonCreds = HttpContext.Session.GetString("fido2.creds");
-            var creds = JsonConvert.DeserializeObject<AttestationVerificationData>(jsonCreds);
+            var creds = JsonConvert.DeserializeObject<AttestationVerificationSuccess>(jsonCreds);
 
             byte[] existingPublicKey = creds.PublicKey; // todo: read from database.
             uint storedSignatureCounter = 0; // todo: read from database.
