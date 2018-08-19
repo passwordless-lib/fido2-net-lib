@@ -184,6 +184,11 @@ function makeCredential() {
             // Turn ID into a UInt8Array Buffer for some reason
             makeCredentialOptions.user.id = coerceToArrayBuffer(makeCredentialOptions.user.id);
 
+            makeCredentialOptions.excludeCredentials = makeCredentialOptions.excludeCredentials.map((c) => {
+                c.id = coerceToArrayBuffer(c.id);
+                return c;
+            });
+
             console.log("Credential Options Formatted");
             console.log(makeCredentialOptions);
 
@@ -199,6 +204,7 @@ function makeCredential() {
             }).catch(function (err) {
                 console.log(err);
                 swal.closeModal();
+                showErrorAlert(err);
             });
         });
 }
@@ -233,11 +239,11 @@ function registerNewCredential(newCredential) {
         .then(response => {
             console.log('Success:', response);
             if (response.status === "ok") {
-                swal(
-                    'Good job!',
-                    'You\'re registrered successfully',
-                    'success'
-                );
+                //swal(
+                //    'Good job!',
+                //    'You\'re registrered successfully',
+                //    'success'
+                //);
                 //window.location.href = "/dashboard/" + state.user.displayName;
             } else {
                 console.log("Error creating credential");
@@ -262,54 +268,61 @@ function getAssertion() {
         return;
     }
     setUser();
-    fetch('/user/' + state.user.name).then(function () {
-        $.post('/assertionOptions', {
-            username: state.user.name
-        }, null, 'json')
-            .done(function (makeAssertionOptions) {
-                const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
-                makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
+    var data = new FormData();
+    data.append('username', state.user.name);
 
-                makeAssertionOptions.allowCredentials.forEach(function (listItem) {
-                    var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+")
-                    listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
-                });
-                console.log(makeAssertionOptions);
-                navigator.credentials.get({ publicKey: makeAssertionOptions })
-                    .then(function (credential) {
-                        console.log(credential);
-                        verifyAssertion(credential);
-                        swal.clickConfirm();
-                    }).catch(function (err) {
-                        console.log(err);
-                        showErrorAlert(err.message);
-                        swal.closeModal();
-                    });
+    fetch('/assertionOptions', {
+        method: 'POST', // or 'PUT'
+        body: data, // data can be `string` or {object}!
+        headers: {
+            'Accept': 'application/json',
+        }
+
+    }).then((response) => {
+        if (response.ok) {
+            return response.json();
+        }
+        return Promise.reject(response.text());
+    })
+        .catch((error) => {
+            error.then(msg => showErrorAlert(msg));
+        })
+        .then((makeAssertionOptions) => {
+            const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
+            makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
+
+            makeAssertionOptions.allowCredentials.forEach(function (listItem) {
+                var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+")
+                listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
             });
-        swal({
-            title: 'Logging In...',
-            text: 'Tap your security key to login.',
-            imageUrl: "/images/securitykey.min.svg",
-            showCancelButton: true,
-            showConfirmButton: false,
-            focusConfirm: false,
-            focusCancel: false,
-        }).then(function () {
-            swal({
-                title: 'Logged In!',
-                text: 'You\'re logged in successfully.',
-                type: 'success',
-                timer: 2000
-            })
-        }).catch(function (error) {
-            console.log("Modal Error: " + error);
-        });
-    }).catch(function (error) {
-        showErrorAlert(error.responseText);
-        return;
-    });
+            console.log(makeAssertionOptions);
 
-    
+            swal({
+                title: 'Logging In...',
+                text: 'Tap your security key to login.',
+                imageUrl: "/images/securitykey.min.svg",
+                showCancelButton: true,
+                showConfirmButton: false,
+                focusConfirm: false,
+                focusCancel: false,
+            });
+            navigator.credentials.get({ publicKey: makeAssertionOptions })
+                .then(function (credential) {
+                    console.log(credential);
+                    verifyAssertion(credential);
+                    swal.clickConfirm();
+                    swal({
+                        title: 'Logged In!',
+                        text: 'You\'re logged in successfully.',
+                        type: 'success',
+                        timer: 2000
+                    });
+                }).catch(function (err) {
+                    console.log(err);
+                    showErrorAlert(err.message);
+                    swal.closeModal();
+                });
+        });
 }
 
 function verifyAssertion(assertedCredential) {
