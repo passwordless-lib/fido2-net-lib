@@ -194,6 +194,8 @@ namespace Fido2NetLib
         /// This member describes the Relying Party's requirements regarding user verification for the create() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement.
         /// </summary>
         public UserVerificationRequirement UserVerification { get; set; }
+
+        public static AuthenticatorSelection Default => null;
     }
 
     public class User
