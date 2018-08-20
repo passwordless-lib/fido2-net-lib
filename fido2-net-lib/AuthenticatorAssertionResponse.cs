@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -45,7 +46,7 @@ namespace Fido2NetLib
         /// <param name="options">The assertionoptions that was sent to the client</param>
         /// <param name="expectedOrigin">The expected server origin, used to verify that the signature is sent to the expected server</param>
         /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
-        public AssertionVerificationSuccess Verify(AssertionOptions options, string expectedOrigin, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredId, byte[] requestTokenBindingId)
+        public async Task<AssertionVerificationSuccess> VerifyAsync(AssertionOptions options, string expectedOrigin, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId, byte[] requestTokenBindingId)
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
@@ -62,7 +63,7 @@ namespace Fido2NetLib
             if (UserHandle != null)
             {
                 if (UserHandle.Length == 0) throw new Fido2VerificationException("Userhandle was empty DOMString. It should either be null or have a value.");
-                if (false == isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle)))
+                if (false == await isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle)))
                 {
                     throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
                 }

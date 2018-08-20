@@ -1,6 +1,7 @@
 ﻿using Fido2NetLib.Objects;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using static Fido2NetLib.Fido2;
@@ -50,8 +51,6 @@ namespace Fido2NetLib
         [JsonProperty("timeout")]
         public long Timeout { get; set; }
 
-        // todo: add more members from https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-pubkeycredparams
-
         /// <summary>
         /// This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance.The default is none.
         /// </summary>
@@ -87,6 +86,16 @@ namespace Fido2NetLib
                 ExcludeCredentials = excludeCredentials ?? new List<PublicKeyCredentialDescriptor>()
 
             };
+        }
+
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
+        public static CredentialCreateOptions FromJson(string json)
+        {
+            return JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
         }
 
         private static PubKeyCredParam ES256 = new PubKeyCredParam()

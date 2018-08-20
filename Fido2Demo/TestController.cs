@@ -82,12 +82,12 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/attestation/result")]
-        public JsonResult MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse bodyRes)
+        public async Task<JsonResult> MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse bodyRes)
         {
             var origChallenge = CONFORMANCE_TESTING_PREV_ATT_OPTIONS;
 
             var requestTokenBindingId = GetTokenBindingId();
-            var res = _lib.MakeNewCredential(bodyRes, origChallenge, (x) => true, requestTokenBindingId);
+            var res = await _lib.MakeNewCredentialAsync(bodyRes, origChallenge, (x) => Task.FromResult(true), requestTokenBindingId);
 
             CONFORMANCE_TESTING_STORED_CREDENTIALS = res;
             CONFORMANCE_TESTING_COUNTER[Base64Url.Encode(res.Result.CredentialId)] = 0;
@@ -119,7 +119,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/assertion/result")]
-        public JsonResult MakeAssertionTest([FromBody] AuthenticatorAssertionRawResponse r)
+        public async Task<JsonResult> MakeAssertionTest([FromBody] AuthenticatorAssertionRawResponse r)
         {
             var origChallenge = CONFORMANCE_TESTING_PREV_ASRT_OPTIONS;
 
@@ -130,7 +130,7 @@ namespace Fido2Demo
             uint storedSignatureCounter = CONFORMANCE_TESTING_COUNTER[Base64Url.Encode(r.Id)];
 
             var requestTokenBindingId = GetTokenBindingId();
-            var res = _lib.MakeAssertion(r, origChallenge, existingPublicKey, storedSignatureCounter, (x) => true, requestTokenBindingId);
+            var res = await _lib.MakeAssertionAsync(r, origChallenge, existingPublicKey, storedSignatureCounter, (x) => Task.FromResult(true), requestTokenBindingId);
 
             CONFORMANCE_TESTING_COUNTER[Base64Url.Encode(creds.Result.CredentialId)] = res.Counter;
 
@@ -141,7 +141,7 @@ namespace Fido2Demo
                 res
             };
             return Json(res2);
-        }        
+        }
 
         private byte[] GetTokenBindingId()
         {

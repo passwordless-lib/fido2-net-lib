@@ -3,12 +3,12 @@
     /// <summary>
     /// Paramters used for callback function to check that the CredentialId is unique user
     /// </summary>
-    public class IsCredentialIdUniqueToUserUserParams
+    public class IsCredentialIdUniqueToUserParams
     {
         public byte[] CredentialId { get; set; }
         public User User { get; set; }
 
-        public IsCredentialIdUniqueToUserUserParams(byte[] credentialId, User user)
+        public IsCredentialIdUniqueToUserParams(byte[] credentialId, User user)
         {
             CredentialId = credentialId;
             User = user;

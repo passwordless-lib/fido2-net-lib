@@ -87,10 +87,10 @@ namespace Fido2NetLib
         /// <param name="attestionResponse"></param>
         /// <param name="origChallenge"></param>
         /// <returns></returns>
-        public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
+        public async Task<CredentialMakeResult> MakeNewCredentialAsync(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
-            var success = parsedResponse.Verify(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
+            var success = await parsedResponse.VerifyAsync(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
 
             // todo: Set Errormessage etc.
             return new CredentialMakeResult { Status = "ok", ErrorMessage = "", Result = success };
@@ -113,11 +113,11 @@ namespace Fido2NetLib
         /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public AssertionVerificationSuccess MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions originalOptions, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredentialIdCallback, byte[] requestTokenBindingId = null)
+        public async Task<AssertionVerificationSuccess> MakeAssertionAsync(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions originalOptions, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 
-            var result = parsedResponse.Verify(originalOptions, Config.Origin, storedPublicKey, storedSignatureCounter, isUserHandleOwnerOfCredentialIdCallback, requestTokenBindingId);
+            var result = await parsedResponse.VerifyAsync(originalOptions, Config.Origin, storedPublicKey, storedSignatureCounter, isUserHandleOwnerOfCredentialIdCallback, requestTokenBindingId);
 
             return result;
         }
@@ -140,11 +140,11 @@ namespace Fido2NetLib
     /// </summary>
     /// <param name="credentialIdUserParams"></param>
     /// <returns></returns>
-    public delegate bool IsCredentialIdUniqueToUserDelegate(IsCredentialIdUniqueToUserUserParams credentialIdUserParams);
+    public delegate Task<bool> IsCredentialIdUniqueToUserAsyncDelegate(IsCredentialIdUniqueToUserParams credentialIdUserParams);
     /// <summary>
     /// Callback function used to validate that the Userhandle is indeed owned of the CrendetialId
     /// </summary>
     /// <param name="credentialIdUserHandleParams"></param>
     /// <returns></returns>
-    public delegate bool IsUserHandleOwnerOfCredentialId(IsUserHandleOwnerOfCredentialIdParams credentialIdUserHandleParams);
+    public delegate Task<bool> IsUserHandleOwnerOfCredentialIdAsync(IsUserHandleOwnerOfCredentialIdParams credentialIdUserHandleParams);
 }

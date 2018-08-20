@@ -12,7 +12,7 @@ namespace Fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
-        public static ReadOnlySpan<byte> AaguidFromAttnCertExts(X509ExtensionCollection exts)
+        public static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
         {
             byte[] aaguid = null;
             foreach (var ext in exts)
@@ -32,7 +32,7 @@ namespace Fido2NetLib
             }
             return aaguid;
         }
-        public static ReadOnlySpan<byte> SANFromAttnCertExts(X509ExtensionCollection exts)
+        public static byte[] SANFromAttnCertExts(X509ExtensionCollection exts)
         {
             var SAN = new byte[0];
             foreach (var ext in exts)
@@ -44,7 +44,7 @@ namespace Fido2NetLib
             }
             return SAN;
         }
-        public static ReadOnlySpan<byte> EKUFromAttnCertExts(X509ExtensionCollection exts)
+        public static byte[] EKUFromAttnCertExts(X509ExtensionCollection exts)
         {
             var EKU = new byte[0];
             foreach (var ext in exts)
@@ -110,7 +110,7 @@ namespace Fido2NetLib
             return (publicKeyU2F, COSE_alg.AsInt32());
         }
 
-        public static ReadOnlySpan<byte> ParseSigData(ReadOnlySpan<byte> sigData)
+        public static byte[] ParseSigData(ReadOnlySpan<byte> sigData)
         {
             /*
              *  Ecdsa-Sig-Value  ::=  SEQUENCE  {
@@ -157,10 +157,10 @@ namespace Fido2NetLib
             return sig;
         }
 
-        public static ReadOnlySpan<byte> GetRpIdHash(ReadOnlySpan<byte> authData)
+        public static byte[] GetRpIdHash(ReadOnlySpan<byte> authData)
         {
             // todo: Switch to spans
-            return authData.Slice(0, 32);
+            return authData.Slice(0, 32).ToArray();
         }
 
         public static bool IsUserPresent(ReadOnlySpan<byte> authData)

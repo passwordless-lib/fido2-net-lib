@@ -54,6 +54,16 @@ namespace Fido2NetLib
             };
         }
 
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+
+        public static AssertionOptions FromJson(string json)
+        {
+            return JsonConvert.DeserializeObject<AssertionOptions>(json);
+        }
+
         // todo: Add Extensions
     }
 

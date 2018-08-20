@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -74,10 +75,8 @@ namespace Fido2NetLib
             return response;
         }
 
-        public AttestationVerificationSuccess Verify(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
+        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
         {
-            var result = new AttestationVerificationSuccess();
-
             BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
             // verify origin
@@ -224,7 +223,7 @@ namespace Fido2NetLib
                 case "fido-u2f":
 
                     // veirfy that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
-                    var EMPTY_16_BYTES = new Span<byte>(new byte[16]);
+                    var EMPTY_16_BYTES = new byte[16];
                     if (false == attData.aaguid.Span.SequenceEqual(EMPTY_16_BYTES)) throw new Fido2VerificationException("aaguid was not empty");
 
                     var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
@@ -359,7 +358,7 @@ namespace Fido2NetLib
              * Check that the credentialId is not yet registered to any other user.
              * If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
              * */
-            if (!isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserUserParams(credentialId, originalOptions.User)))
+            if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(credentialId, originalOptions.User)))
             {
                 throw new Fido2VerificationException("CredentialId is not unique to this user");
             }
@@ -378,8 +377,12 @@ namespace Fido2NetLib
              * */
             // todo: implement (this is not for attfmt none)
 
-            result.CredentialId = credentialId;
-            result.PublicKey = credentialPublicKeyBytes;
+            var result = new AttestationVerificationSuccess()
+            {
+                CredentialId = credentialId,
+                PublicKey = credentialPublicKeyBytes,
+                User = originalOptions.User
+            };            
 
             return result;
         }

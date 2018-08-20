@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Fido2NetLib.Development;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -21,6 +22,7 @@ namespace Fido2Demo
     public class MyController : Controller
     {
         private Fido2NetLib.Fido2 _lib;
+        private static readonly DevelopmentInMemoryStore Storage = new DevelopmentInMemoryStore();
 
         public MyController(IConfiguration config)
         {
@@ -36,86 +38,112 @@ namespace Fido2Demo
         [Route("/makeCredentialOptions")]
         public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType)
         {
-            var user = new User
+            // 1. Get user from DB by username (in our example, auto create missing users)
+            var user = Storage.GetOrAddUser(username, () => new User
             {
                 DisplayName = "Display " + username,
                 Name = username,
-                Id = Encoding.UTF8.GetBytes("1")
-            };
+                Id = Encoding.UTF8.GetBytes(username) // byte representation of userID is required
+            });
 
-            List<PublicKeyCredentialDescriptor> excludeCredentials = null;
-            var challenge = _lib.RequestNewCredential(user, excludeCredentials, AuthenticatorSelection.Default, AttestationConveyancePreference.Parse(attType));
-            HttpContext.Session.Clear();
-            HttpContext.Session.SetString("fido2.challenge", JsonConvert.SerializeObject(challenge));
+            // 2. Get user existing keys by username
+            List<PublicKeyCredentialDescriptor> existingKeys = Storage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
-            return Json(challenge);
+            // 3. Create options
+            var options = _lib.RequestNewCredential(user, existingKeys, AuthenticatorSelection.Default, AttestationConveyancePreference.Parse(attType));
+
+            // 4. Temporarily store options, session/in-memory cache/redis/db
+            HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
+
+            // 5. return options to client
+            return Json(options);
         }
 
         [HttpPost]
         [Route("/makeCredential")]
-        public Fido2NetLib.Fido2.CredentialMakeResult MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
+        public async Task<JsonResult> MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
         {
-            var json = HttpContext.Session.GetString("fido2.challenge");
-            var origChallenge = JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
+            // 1. get the options we sent the client
+            var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
+            var options = CredentialCreateOptions.FromJson(jsonOptions);
 
-            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeNewCredential(bodyRes, origChallenge, (x) => true, requestTokenBindingId);
+            // 2. Create callback so that lib can verify credential id is unique to this user
+            IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
+            {
+                List<User> users = await Storage.GetUsersByCredentialIdAsync(args.CredentialId);
+                if (users.Count > 0) return false;
 
-            HttpContext.Session.SetString("fido2.creds", JsonConvert.SerializeObject(res.Result));
-            return res;
+                return true;
+            };
+
+            // 2. Verify and make the credentials
+            var success = await _lib.MakeNewCredentialAsync(bodyRes, options, callback);
+
+            // 3. Store the credentials in db
+            Storage.AddCredentialToUser(options.User, new StoredCredential
+            {
+                Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
+                PublicKey = success.Result.PublicKey,
+                UserHandle = success.Result.User.Id
+            });
+
+            // 4. return "ok" to the client
+            return Json(success);
         }
 
         [HttpPost]
         [Route("/assertionOptions")]
-        public JsonResult AssertionOptions(string username)
+        public ActionResult AssertionOptionsPost([FromForm] string username)
         {
-            // todo: Fetch creds for the user from database.
-            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
-            var creds = JsonConvert.DeserializeObject<AttestationVerificationSuccess>(jsonCreds);
+            // 1. Get user from DB
+            var user = Storage.GetUser(username);
+            if (user == null) return NotFound("username was not registered");
 
-            // get ID and displayname from DB
-            var fakeUser = new User()
-            {
-                Id = Encoding.UTF8.GetBytes("1"),
-                Name = username,
-                DisplayName = "Display " + username
-            };
+            // 2. Get registered credentials from database
+            List<PublicKeyCredentialDescriptor> existingCredentials = Storage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
-            // get expected credentials from db 
-            var allowedCredentials = new List<PublicKeyCredentialDescriptor>() {
-                    new PublicKeyCredentialDescriptor()
-                    {
-                        Id = creds.CredentialId,
-                        Type = "public-key"
-                    }
-            };
-
-            var aoptions = _lib.GetAssertionOptions(
-                allowedCredentials,
-                UserVerificationRequirement.Preferred
+            // 3. Create options
+            var options = _lib.GetAssertionOptions(
+                existingCredentials,
+                UserVerificationRequirement.Discouraged
             );
 
-            HttpContext.Session.SetString("fido2.options", JsonConvert.SerializeObject(aoptions));
+            // 4. Temporarily store options, session/in-memory cache/redis/db
+            HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
 
-            return Json(aoptions);
+            // 5. Return options to client
+            return Json(options);
         }
 
         [HttpPost]
         [Route("/makeAssertion")]
-        public JsonResult MakeAssertion([FromBody] AuthenticatorAssertionRawResponse clientResponse)
+        public async Task<JsonResult> MakeAssertion([FromBody] AuthenticatorAssertionRawResponse clientResponse)
         {
-            var json = HttpContext.Session.GetString("fido2.options");
-            var originalChallenge = JsonConvert.DeserializeObject<AssertionOptions>(json);
 
-            // todo: Fetch creds for the user from database.
-            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
-            var creds = JsonConvert.DeserializeObject<AttestationVerificationSuccess>(jsonCreds);
+            // 1. Get the assertion options we sent the client
+            var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions");
+            var options = AssertionOptions.FromJson(jsonOptions);
 
-            byte[] existingPublicKey = creds.PublicKey; // todo: read from database.
-            uint storedSignatureCounter = 0; // todo: read from database.
+            // 2. Get registered credential from database
+            StoredCredential creds = Storage.GetCredentialById(clientResponse.Id);
 
-            var requestTokenBindingId = Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
-            var res = _lib.MakeAssertion(clientResponse, originalChallenge, existingPublicKey, storedSignatureCounter, (x) => true, requestTokenBindingId);
+            // 3. Get credential counter from database
+            var storedCounter = creds.SignatureCounter;
+
+            // 4. Create callback to check if userhandle owns the credentialId
+            IsUserHandleOwnerOfCredentialIdAsync callback = async (args) =>
+            {
+                List<StoredCredential> storedCreds = await Storage.GetCredentialsByUserHandleAsync(args.UserHandle);
+                return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
+            };
+
+            // 5. Make the assertion
+            var res = await _lib.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
+
+            // 6. Store the updated counter
+            Storage.UpdateCounter(res.CredentialId, res.Counter);
+
+            // 7. return OK to client
             return Json(res);
         }
 
@@ -133,6 +161,6 @@ namespace Fido2Demo
         }
 
 
-        
+
     }
 }

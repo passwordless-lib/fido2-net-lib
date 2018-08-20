@@ -15,4 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\fido2-net-lib\Fido2NetLib.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Fido2NetLib\" />
+  </ItemGroup>
 </Project>

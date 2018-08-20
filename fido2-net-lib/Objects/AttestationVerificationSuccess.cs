@@ -12,5 +12,7 @@ namespace Fido2NetLib.Objects
 
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] CredentialId { get; set; }
+
+        public User User { get; set; }
     }
 }

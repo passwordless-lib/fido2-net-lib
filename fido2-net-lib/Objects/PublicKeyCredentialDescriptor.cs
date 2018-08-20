@@ -27,7 +27,7 @@ namespace Fido2NetLib.Objects
         /// <summary>
         /// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator of the public key credential the caller is referring to.
         /// </summary>
-        public string[] Transports { get; set; } = new[] { "usb", "nfc", "ble" }; // Allow all transports for now
+        public AuthenticatorTransport[] Transports { get; set; } = new AuthenticatorTransport[] { };
 
         public PublicKeyCredentialDescriptor(byte[] credentialId)
         {
