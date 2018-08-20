@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Fido2NetLib.Development;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -21,12 +20,12 @@ namespace Fido2Demo
     [Route("api/[controller]")]
     public class MyController : Controller
     {
-        private Fido2NetLib.Fido2 _lib;
-        private static readonly DevelopmentInMemoryStore Storage = new DevelopmentInMemoryStore();
+        private Fido2 _lib;
+        private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         public MyController(IConfiguration config)
         {
-            _lib = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration
+            _lib = new Fido2(new Fido2.Configuration
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
@@ -39,7 +38,7 @@ namespace Fido2Demo
         public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType)
         {
             // 1. Get user from DB by username (in our example, auto create missing users)
-            var user = Storage.GetOrAddUser(username, () => new User
+            var user = DemoStorage.GetOrAddUser(username, () => new User
             {
                 DisplayName = "Display " + username,
                 Name = username,
@@ -47,7 +46,7 @@ namespace Fido2Demo
             });
 
             // 2. Get user existing keys by username
-            List<PublicKeyCredentialDescriptor> existingKeys = Storage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+            List<PublicKeyCredentialDescriptor> existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
             // 3. Create options
             var options = _lib.RequestNewCredential(user, existingKeys, AuthenticatorSelection.Default, AttestationConveyancePreference.Parse(attType));
@@ -61,7 +60,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredential")]
-        public async Task<JsonResult> MakeCredential([FromBody] AuthenticatorAttestationRawResponse bodyRes)
+        public async Task<JsonResult> MakeCredential([FromBody] AuthenticatorAttestationRawResponse attestationResponse)
         {
             // 1. get the options we sent the client
             var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
@@ -70,17 +69,17 @@ namespace Fido2Demo
             // 2. Create callback so that lib can verify credential id is unique to this user
             IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
             {
-                List<User> users = await Storage.GetUsersByCredentialIdAsync(args.CredentialId);
+                List<User> users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
                 if (users.Count > 0) return false;
 
                 return true;
             };
 
             // 2. Verify and make the credentials
-            var success = await _lib.MakeNewCredentialAsync(bodyRes, options, callback);
+            var success = await _lib.MakeNewCredentialAsync(attestationResponse, options, callback);
 
             // 3. Store the credentials in db
-            Storage.AddCredentialToUser(options.User, new StoredCredential
+            DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
                 Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
                 PublicKey = success.Result.PublicKey,
@@ -96,11 +95,11 @@ namespace Fido2Demo
         public ActionResult AssertionOptionsPost([FromForm] string username)
         {
             // 1. Get user from DB
-            var user = Storage.GetUser(username);
+            var user = DemoStorage.GetUser(username);
             if (user == null) return NotFound("username was not registered");
 
             // 2. Get registered credentials from database
-            List<PublicKeyCredentialDescriptor> existingCredentials = Storage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+            List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
             // 3. Create options
             var options = _lib.GetAssertionOptions(
@@ -125,7 +124,7 @@ namespace Fido2Demo
             var options = AssertionOptions.FromJson(jsonOptions);
 
             // 2. Get registered credential from database
-            StoredCredential creds = Storage.GetCredentialById(clientResponse.Id);
+            StoredCredential creds = DemoStorage.GetCredentialById(clientResponse.Id);
 
             // 3. Get credential counter from database
             var storedCounter = creds.SignatureCounter;
@@ -133,7 +132,7 @@ namespace Fido2Demo
             // 4. Create callback to check if userhandle owns the credentialId
             IsUserHandleOwnerOfCredentialIdAsync callback = async (args) =>
             {
-                List<StoredCredential> storedCreds = await Storage.GetCredentialsByUserHandleAsync(args.UserHandle);
+                List<StoredCredential> storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
                 return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
             };
 
@@ -141,26 +140,10 @@ namespace Fido2Demo
             var res = await _lib.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
 
             // 6. Store the updated counter
-            Storage.UpdateCounter(res.CredentialId, res.Counter);
+            DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
 
             // 7. return OK to client
             return Json(res);
         }
-
-        [HttpGet]
-        [Route("/user/{username}")]
-        public ActionResult GetUser(string username)
-        {
-            var jsonCreds = HttpContext.Session.GetString("fido2.creds");
-            if (string.IsNullOrEmpty(jsonCreds))
-            {
-                Response.StatusCode = 401;
-                return BadRequest("No user in HTTP Session (please register)");
-            }
-            return Ok();
-        }
-
-
-
     }
 }
