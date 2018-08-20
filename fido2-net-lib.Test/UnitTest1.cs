@@ -1,6 +1,5 @@
 ﻿using Fido2NetLib.Objects;
 using Fido2NetLib;
-using Fido2NetLib.Objects;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using Xunit;
+using System.Threading.Tasks;
 
 namespace fido2_net_lib.Test
 {
@@ -70,7 +70,7 @@ namespace fido2_net_lib.Test
         }
 
         [Fact]
-        public void TestFido2Assertion()
+        public async Task TestFido2AssertionAsync()
         {
             //var existingKey = "45-43-53-31-20-00-00-00-0E-B4-F3-73-C2-AC-7D-F7-7E-7D-17-D3-A3-A2-CC-AB-E5-C6-B1-42-ED-10-AC-7C-15-72-39-8D-75-C6-5B-B9-76-09-33-A0-30-F2-44-51-C8-31-AF-72-9B-4F-7B-AB-4F-85-2D-7D-1F-E0-B5-BD-A3-3D-0E-D6-18-04-CD-98";
 
@@ -87,7 +87,7 @@ namespace fido2_net_lib.Test
             });
 
             var o = AuthenticatorAttestationResponse.Parse(response);
-            o.Verify(options, "https://localhost:44329", null, (x) => true);
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
 
             var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
             var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
@@ -112,7 +112,7 @@ namespace fido2_net_lib.Test
         }
 
         [Fact]
-        public void TestParsing()
+        public async Task TestParsingAsync()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./json1.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./options1.json"));
@@ -121,7 +121,7 @@ namespace fido2_net_lib.Test
 
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            o.Verify(options, "https://localhost:44329", requestTokenBindingId: null, isCredentialIdUniqueToUser: (x) => true);
+            await o.VerifyAsync(options, "https://localhost:44329", isCredentialIdUniqueToUser: (x) => Task.FromResult(true), requestTokenBindingId: null);
         }
 
         [Fact]
@@ -142,7 +142,7 @@ namespace fido2_net_lib.Test
 
             Assert.NotNull(jsonPost);
 
-            var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
+            var fido2 = new Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             ReadOnlySpan<byte> ad = o.AttestionObject.AuthData;
 
@@ -184,47 +184,47 @@ namespace fido2_net_lib.Test
         }
 
         [Fact]
-        public void TestU2FAttestation()
+        public async Task TestU2FAttestationAsync()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsU2F.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsU2F.json"));
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            o.Verify(options, "https://localhost:44329", null, (x) => true);
-            ReadOnlySpan<byte> ad = o.AttestionObject.AuthData;
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
+            byte[] ad = o.AttestionObject.AuthData;
             Assert.True(AuthDataHelper.IsUserPresent(ad));
             Assert.False(AuthDataHelper.IsUserVerified(ad));
         }
         [Fact]
-        public void TestPackedAttestation()
+        public async Task TestPackedAttestationAsync()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsPacked.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsPacked.json"));
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            o.Verify(options, "https://localhost:44329", null, (x) => true);
-            ReadOnlySpan<byte> ad = o.AttestionObject.AuthData;
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
+            byte[] ad = o.AttestionObject.AuthData;
             Assert.True(AuthDataHelper.IsUserPresent(ad));
             Assert.True(AuthDataHelper.IsUserVerified(ad));
         }
         [Fact]
-        public void TestNoneAttestation()
+        public async Task TestNoneAttestationAsync()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsNone.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsNone.json"));
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            o.Verify(options, "https://localhost:44329", null, (x) => true);
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
         }
         [Fact]
-        public void TestTPMAttestation()
+        public async Task TestTPMAttestationAsync()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationTPMResponse.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationTPMOptions.json"));
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            o.Verify(options, "https://localhost:44329", null, (x) => true);
-            ReadOnlySpan<byte> ad = o.AttestionObject.AuthData;
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
+            byte[] ad = o.AttestionObject.AuthData;
             Assert.True(AuthDataHelper.IsUserPresent(ad));
             Assert.False(AuthDataHelper.IsUserVerified(ad));
         }

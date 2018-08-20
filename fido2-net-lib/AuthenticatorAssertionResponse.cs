@@ -2,6 +2,8 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
+using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
 {
@@ -20,7 +22,8 @@ namespace Fido2NetLib
 
         public byte[] AuthenticatorData { get; set; }
         public byte[] Signature { get; set; }
-        public string UserHandle { get; set; }
+        public byte[] UserHandle { get; set; }
+        public object CredentialId { get; private set; }
 
         internal static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
         {
@@ -29,7 +32,8 @@ namespace Fido2NetLib
                 // we will need to access raw in Verify()
                 Raw = rawResponse,
                 AuthenticatorData = rawResponse.Response.AuthenticatorData,
-                Signature = AuthDataHelper.ParseSigData(rawResponse.Response.Signature).ToArray()
+                Signature = AuthDataHelper.ParseSigData(rawResponse.Response.Signature).ToArray(),
+                UserHandle = rawResponse.Response.UserHandle
             };
 
             return response;
@@ -39,26 +43,27 @@ namespace Fido2NetLib
         /// <summary>
         /// Implements alghoritm from https://www.w3.org/TR/webauthn/#verifying-assertion
         /// </summary>
-        /// <param name="options"></param>
-        /// <param name="expectedOrigin"></param>
-        /// <param name="storedCounter"></param>
-        public void Verify(AssertionOptions options, string expectedOrigin, uint storedSignatureCounter, bool isUserVerificationRequired, byte[] storedPublicKey, byte[] requestTokenBindingId, IsUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredId, StoreSignatureCounter storeSignatureCounterCallback)
+        /// <param name="options">The assertionoptions that was sent to the client</param>
+        /// <param name="expectedOrigin">The expected server origin, used to verify that the signature is sent to the expected server</param>
+        /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
+        public async Task<AssertionVerificationSuccess> VerifyAsync(AssertionOptions options, string expectedOrigin, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId, byte[] requestTokenBindingId)
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
             if (Raw.Type != "public-key") throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
 
             // 1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
-            if (options.AllowCredentials != null && options.AllowCredentials.Count > 0)
+            if (options.AllowCredentials != null && options.AllowCredentials.Count() > 0)
             {
                 // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
-                if (!options.AllowCredentials.Exists(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException();
+                if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException();
             }
 
             // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
             if (UserHandle != null)
             {
-                if (false == isUserHandleOwnerOfCredId(new CredentialIdUserHandleParams(Raw.Id, UserHandle)))
+                if (UserHandle.Length == 0) throw new Fido2VerificationException("Userhandle was empty DOMString. It should either be null or have a value.");
+                if (false == await isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle)))
                 {
                     throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
                 }
@@ -95,7 +100,8 @@ namespace Fido2NetLib
 
             // 12 If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.
             var userIsVerified = AuthDataHelper.IsUserVerified(AuthenticatorData);
-            if (isUserVerificationRequired && !userIsVerified) throw new Fido2VerificationException();
+            var isUserVerificationRequired = options.UserVerification == UserVerificationRequirement.Required;
+            if (isUserVerificationRequired && !userIsVerified) throw new Fido2VerificationException("User verification is required");
 
             // 13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.
             if (!isUserVerificationRequired)
@@ -126,11 +132,16 @@ namespace Fido2NetLib
 
             // 17.
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
-            if (counter <= storedSignatureCounter)
+            if (counter > 0 && counter <= storedSignatureCounter)
             {
-                throw new Fido2VerificationException("SignatureCounter was not greather than storedC SignatureCounter");
+                throw new Fido2VerificationException("SignatureCounter was not greater than stored SignatureCounter");
             }
-            storeSignatureCounterCallback(new StoreSignaturecounterParams(Raw.Id, counter));
+
+            return new AssertionVerificationSuccess()
+            {
+                CredentialId = Raw.Id,
+                Counter = counter
+            };
         }
 
         /// <summary>

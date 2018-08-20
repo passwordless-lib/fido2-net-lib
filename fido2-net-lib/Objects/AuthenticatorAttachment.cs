@@ -25,7 +25,6 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public static readonly AuthenticatorAttachment CrossPlatform = new AuthenticatorAttachment("cross-platform");
 
-        [JsonConstructor]
         private AuthenticatorAttachment(string value) : base(value)
         {
         }

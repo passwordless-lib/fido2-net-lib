@@ -24,7 +24,7 @@ namespace Fido2Demo
             services.AddMvc();
             // Adds a default in-memory implementation of IDistributedCache.
             services.AddDistributedMemoryCache();
-            
+
             services.AddSession(options =>
             {
                 // Set a short timeout for easy testing.
@@ -47,9 +47,8 @@ namespace Fido2Demo
             }
 
             app.UseSession();
-
-            app.UseStaticFiles();
-
+            app.UseDefaultFiles(new DefaultFilesOptions() { DefaultFileNames = new List<string> { "login.html" } });
+            app.UseStaticFiles();            
             app.UseMvc();
         }
     }

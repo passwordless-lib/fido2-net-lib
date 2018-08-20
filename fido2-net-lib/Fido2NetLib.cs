@@ -14,11 +14,34 @@ namespace Fido2NetLib
     {
         public class Configuration
         {
+            /// <summary>
+            /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.This is treated as a hint, and MAY be overridden by the client
+            /// </summary>
             public uint Timeout { get; set; } = 60000;
+
+            /// <summary>
+            /// The size of the challenges sent to the client
+            /// </summary>
             public int ChallengeSize { get; set; } = 64;
+
+            /// <summary>
+            /// The effetive domain of the RP. Should be unique and will be used as the identity for the RP.
+            /// </summary>
             public string ServerDomain { get; set; }
+
+            /// <summary>
+            ///  A human friendly name of the RP
+            /// </summary>
             public string ServerName { get; set; }
+
+            /// <summary>
+            /// A serialized URL which resolves to an image associated with the entity.For example, this could be a user’s avatar or a Relying Party's logo. This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of needing more storage.
+            /// </summary>
             public string ServerIcon { get; set; }
+
+            /// <summary>
+            /// Server origin, including protocol host and port.
+            /// </summary>
             public string Origin { get; set; }
         }
 
@@ -30,37 +53,31 @@ namespace Fido2NetLib
         {
             Config = config;
             _crypto = RandomNumberGenerator.Create();
-
         }
 
         /// <summary>
         /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
         /// </summary>
         /// <returns></returns>
-        /// <param name="attestation">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
         /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
-        public CredentialCreateOptions RequestNewCredential(User user, AuthenticatorSelection authenticatorSelection, List<PublicKeyCredentialDescriptor> excludeCredentials, string attestation = "none")
+        public CredentialCreateOptions RequestNewCredential(User user, List<PublicKeyCredentialDescriptor> excludeCredentials)
         {
-            // https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptions
-            // challenge.rp
-            // challenge.user
-            // challenge.excludeCredentials
-            // challenge.authenticatorSelection
-            // challenge.attestation
-            // challenge.extensions
+            return RequestNewCredential(user, excludeCredentials, AuthenticatorSelection.Default, AttestationConveyancePreference.None);
+        }
 
+        /// <summary>
+        /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
+        /// </summary>
+        /// <returns></returns>
+        /// <param name="attestationPreference">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
+        /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
+        public CredentialCreateOptions RequestNewCredential(User user, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationPreference)
+        {
             // note: I have no idea if this crypto is ok...
             var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
 
-            var options = CredentialCreateOptions.Create(challenge, Config, authenticatorSelection);
-            options.User = user;
-            options.Attestation = attestation;
-            if (excludeCredentials != null)
-            {
-                options.ExcludeCredentials = excludeCredentials;
-            }
-
+            var options = CredentialCreateOptions.Create(Config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials);
             return options;
         }
 
@@ -70,50 +87,39 @@ namespace Fido2NetLib
         /// <param name="attestionResponse"></param>
         /// <param name="origChallenge"></param>
         /// <returns></returns>
-        public CredentialMakeResult MakeNewCredential(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, byte[] requestTokenBindingId, IsCredentialIdUniqueToUserDelegate isCredentialIdUniqueToUser)
+        public async Task<CredentialMakeResult> MakeNewCredentialAsync(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
-            //Func<byte[], User, bool> isCredentialIdUniqueToUser = isCredentialIdUniqueToUser
-            // add overload/null check and user config then maybe?
-            var res = parsedResponse.Verify(origChallenge, Config.Origin, requestTokenBindingId, isCredentialIdUniqueToUser);
-
-
-            var pk = BitConverter.ToString(res.PublicKey);
-            var cid = BitConverter.ToString(res.CredentialId);
+            var success = await parsedResponse.VerifyAsync(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
 
             // todo: Set Errormessage etc.
-            return new CredentialMakeResult { Status = "ok", ErrorMessage = "", Result = res };
+            return new CredentialMakeResult { Status = "ok", ErrorMessage = "", Result = success };
         }
 
         /// <summary>
         /// Returns AssertionOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public AssertionOptions GetAssertion(User user, List<PublicKeyCredentialDescriptor> allowedCredentials, string userVerification = "x")
+        public AssertionOptions GetAssertionOptions(IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification)
         {
-
             var challenge = new byte[Config.ChallengeSize];
             _crypto.GetBytes(challenge);
 
-            var options = AssertionOptions.Create(challenge, allowedCredentials, Config);
-            options.UserVerification = userVerification;
+            var options = AssertionOptions.Create(Config, challenge, allowedCredentials, userVerification);
             return options;
-
-
         }
 
         /// <summary>
         /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        /// <param name="storeSignatureCounterCallback">Span<byte> credentialId, uint signatureCounter</param>
-        public bool MakeAssertion(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions origOptions, uint storedSignatureCounter, byte[] existingPublicKey, byte[] requestTokenBindingId, IsUserHandleOwnerOfCredentialId isUserHandleOwnerOfCredentialIdCallback, StoreSignatureCounter storeSignatureCounterCallback)
+        public async Task<AssertionVerificationSuccess> MakeAssertionAsync(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions originalOptions, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 
-            parsedResponse.Verify(origOptions, Config.Origin, storedSignatureCounter, false, existingPublicKey, requestTokenBindingId, isUserHandleOwnerOfCredentialIdCallback, storeSignatureCounterCallback);
+            var result = await parsedResponse.VerifyAsync(originalOptions, Config.Origin, storedPublicKey, storedSignatureCounter, isUserHandleOwnerOfCredentialIdCallback, requestTokenBindingId);
 
-            return true;
+            return result;
         }
 
         /// <summary>
@@ -123,53 +129,9 @@ namespace Fido2NetLib
         {
             public string Status { get; set; }
             public string ErrorMessage { get; set; }
-            public AttestationVerificationData Result { get; internal set; }
+            public AttestationVerificationSuccess Result { get; internal set; }
 
             // todo: add debuginfo?
-        }
-    }
-
-    /// <summary>
-    /// Paramters used for callback function
-    /// </summary>
-    public class CredentialIdUserParams
-    {
-        public byte[] CredentialId { get; set; }
-        public User User { get; set; }
-
-        public CredentialIdUserParams(byte[] credentialId, User user)
-        {
-            CredentialId = credentialId;
-            User = user;
-        }
-    }
-
-    /// <summary>
-    /// Paramters used for callback function
-    /// </summary>
-    public class CredentialIdUserHandleParams
-    {
-        public string UserHandle { get; }
-        public byte[] CredentialId { get; }
-
-        public CredentialIdUserHandleParams(byte[] credentialId, string userHandle)
-        {
-            CredentialId = credentialId;
-            UserHandle = userHandle;
-        }
-    }
-    /// <summary>
-    /// Paramters used for callback function
-    /// </summary>
-    public class StoreSignaturecounterParams
-    {
-        public byte[] CredentialID { get; }
-        public uint SignatureCounter { get; }
-
-        public StoreSignaturecounterParams(byte[] credentialID, uint signatureCounter)
-        {
-            CredentialID = credentialID;
-            SignatureCounter = signatureCounter;
         }
     }
 
@@ -178,17 +140,11 @@ namespace Fido2NetLib
     /// </summary>
     /// <param name="credentialIdUserParams"></param>
     /// <returns></returns>
-    public delegate bool IsCredentialIdUniqueToUserDelegate(CredentialIdUserParams credentialIdUserParams);
+    public delegate Task<bool> IsCredentialIdUniqueToUserAsyncDelegate(IsCredentialIdUniqueToUserParams credentialIdUserParams);
     /// <summary>
     /// Callback function used to validate that the Userhandle is indeed owned of the CrendetialId
     /// </summary>
     /// <param name="credentialIdUserHandleParams"></param>
     /// <returns></returns>
-    public delegate bool IsUserHandleOwnerOfCredentialId(CredentialIdUserHandleParams credentialIdUserHandleParams);
-    /// <summary>
-    /// Callback function for storing the updates siganture counter
-    /// </summary>
-    /// <param name="storeSignaturecounterParams"></param>
-    /// <returns></returns>
-    public delegate bool StoreSignatureCounter(StoreSignaturecounterParams storeSignaturecounterParams);
+    public delegate Task<bool> IsUserHandleOwnerOfCredentialIdAsync(IsUserHandleOwnerOfCredentialIdParams credentialIdUserHandleParams);
 }

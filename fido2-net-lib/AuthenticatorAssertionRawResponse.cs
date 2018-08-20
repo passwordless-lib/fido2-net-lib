@@ -28,7 +28,9 @@ namespace Fido2NetLib
             [JsonConverter(typeof(Base64UrlConverter))]
             public byte[] ClientDataJson { get; set; }
 
-            public string UserHandle { get; set; }
+            [JsonProperty("userHandle")]
+            [JsonConverter(typeof(Base64UrlConverter), Required.AllowNull)]
+            public byte[] UserHandle { get; set; }
         }
     }
 }

@@ -30,8 +30,6 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public static readonly AuthenticatorTransport Internal = new AuthenticatorTransport("internal");
 
-
-        [JsonConstructor]
         private AuthenticatorTransport(string value) : base(value)
         {
         }
