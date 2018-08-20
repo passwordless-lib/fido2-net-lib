@@ -32,7 +32,8 @@ namespace Fido2NetLib
         private AuthenticatorAttestationResponse(byte[] clientDataJson) : base(clientDataJson)
         {
         }
-
+        private CertInfo certInfo;
+        private PubArea pubArea;
         public string HashAlgorithm { get; set; }
         public Dictionary<string, object> ClientExtensions { get; set; }
 
@@ -89,7 +90,7 @@ namespace Fido2NetLib
             if (Raw.Type != "public-key") throw new Fido2VerificationException("AttestionResponse is missing type with value 'public-key'");
 
             if (null == AttestionObject.AuthData || 0 == AttestionObject.AuthData.Length) throw new Fido2VerificationException("Missing or malformed authData");
-
+            
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
             // This id done in BaseVerify.
@@ -159,37 +160,42 @@ namespace Fido2NetLib
                 case "tpm":
 
                     if ("2.0" != AttestionObject.AttStmt["ver"].AsString()) throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
+                    if (null != AttestionObject.AttStmt["certInfo"] && PeterO.Cbor.CBORType.ByteString == AttestionObject.AttStmt["certInfo"].Type)
+                    {
+                        certInfo = new CertInfo(AttestionObject.AttStmt["certInfo"].GetByteString());
+                    }
 
+                    if (null != AttestionObject.AttStmt["pubArea"] && PeterO.Cbor.CBORType.ByteString == AttestionObject.AttStmt["pubArea"].Type)
+                    {
+                        pubArea = new PubArea(AttestionObject.AttStmt["pubArea"].GetByteString());
+                    }
                     // Verify that the public key specified by the parameters and unique fields of pubArea is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
-                    var pubArea = AttestionObject.AttStmt["pubArea"].GetByteString();
-                    var pubInfo = AuthDataHelper.ParsePubArea(pubArea);
                     var coseKty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 3 == RSA
                     var coseAlg = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -257 == RS256 signature 
                     var coseMod = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(); // modulus 
                     var coseExp = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(); // exponent
-                    if (!coseMod.ToArray().SequenceEqual(pubInfo.unique.ToArray())) throw new Fido2VerificationException("Public key mismatch");
+                    if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray())) throw new Fido2VerificationException("Public key mismatch");
                     byte[] expBytes = { 0x00, 0x00, 0x00, 0x00 };
                     Array.Copy(coseExp.Reverse().ToArray(), expBytes, coseExp.Length);
-                    if (BitConverter.ToInt32(expBytes) != pubInfo.exponent) throw new Fido2VerificationException("Public key exponent mismatch");
+                    if (BitConverter.ToInt32(expBytes) != pubArea.Exponent) throw new Fido2VerificationException("Public key exponent mismatch");
                     // Concatenate authenticatorData and clientDataHash to form attToBeSigned.
                     byte[] attToBeSigned = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
                     AttestionObject.AuthData.CopyTo(attToBeSigned, 0);
                     hashedClientDataJson.CopyTo(attToBeSigned, AttestionObject.AuthData.Length);
                     // Validate that certInfo is valid
-                    var certInfo = AttestionObject.AttStmt["certInfo"].GetByteString();
+                    if (null == certInfo) throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
                     // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY (handled in parser)
-                    var parsedCertInfo = AuthDataHelper.ParseCertInfo(certInfo);
                     // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-                    if (!SHA256.Create().ComputeHash(attToBeSigned).SequenceEqual(parsedCertInfo.extraData.ToArray())) throw new Fido2VerificationException("Hash value mismatch");
+                    if (!SHA1.Create().ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch");
                     // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-                    if (!SHA256.Create().ComputeHash(pubArea).SequenceEqual(parsedCertInfo.attested.ToArray())) throw new Fido2VerificationException("Hash value mismatch");
+                    if (!SHA256.Create().ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch");
                     // If x5c is present, this indicates that the attestation type is not ECDAA
                     if (null != x5c)
                     {
                         // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                         var aikCert = new X509Certificate2(x5c.Values.First().GetByteString());
                         var aikPublicKey = aikCert.GetRSAPublicKey();
-                        if (true != aikPublicKey.VerifyData(certInfo.ToArray(), sig.GetByteString(), algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
+                        if (true != aikPublicKey.VerifyData(certInfo.Raw, sig.GetByteString(), algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
                         // Verify that aikCert meets the TPM attestation statement certificate requirements
                         // Version MUST be set to 3
                         if (3 != aikCert.Version) throw new Fido2VerificationException("aikCert must be V3");
@@ -205,7 +211,7 @@ namespace Fido2NetLib
                         if (AuthDataHelper.IsAttnCertCACert(aikCert.Extensions)) throw new Fido2VerificationException("aikCert Basic Constraints extension CA component must be false");
                         // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                         var aaguid = AuthDataHelper.AaguidFromAttnCertExts(aikCert.Extensions);
-                        if ((!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(attData.aaguid.ToArray()))) throw new Fido2VerificationException();
+                        if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(attData.aaguid.ToArray()))) throw new Fido2VerificationException();
                         // If successful, return attestation type AttCA and attestation trust path x5c.
                     }
                     break;
