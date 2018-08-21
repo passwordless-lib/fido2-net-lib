@@ -102,7 +102,7 @@ DemoStorage.AddCredentialToUser(options.User, new StoredCredential
 return Json(success);
 ```
 
-## Create Assertion options
+### Create Assertion options
 
 When a user wants to log a user in, we do an assertion based on the registered credentials.
 
@@ -130,7 +130,7 @@ HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
 return Json(options);
 ```
 
-## Verify the assertion response
+### Verify the assertion response
 When the client returns a response, we verify it and accepts the login.
 
 ```
@@ -164,3 +164,7 @@ return Json(res);
 ## Nuget package
 
 Coming when lib has matured.
+
+## Other
+
+A complimentary [blog post](http://ideasof.andersaberg.com/development/fido2-net-library) with some lessons learned since starting this library
