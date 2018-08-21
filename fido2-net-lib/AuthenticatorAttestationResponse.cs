@@ -26,8 +26,30 @@ namespace Fido2NetLib
             {-39, HashAlgorithmName.SHA512 },
             {-257, HashAlgorithmName.SHA256 },
             {-258, HashAlgorithmName.SHA384 },
-            {-259, HashAlgorithmName.SHA512 }
+            {-259, HashAlgorithmName.SHA512 },
+            {4, HashAlgorithmName.SHA1 },
+            {11, HashAlgorithmName.SHA256 },
+            {12, HashAlgorithmName.SHA384 },
+            {13, HashAlgorithmName.SHA512 }
         };
+
+
+        private static HashAlgorithm GetHasher(HashAlgorithmName hashName)
+        {
+            switch (hashName.Name)
+            {
+                case "SHA1":
+                    return SHA1.Create();
+                case "SHA256":
+                    return SHA256.Create();
+                case "SHA384":
+                    return SHA384.Create();
+                case "SHA512":
+                    return SHA512.Create();
+                default:
+                    throw new ArgumentOutOfRangeException("hashName");
+            }
+        }
 
         private AuthenticatorAttestationResponse(byte[] clientDataJson) : base(clientDataJson)
         {
@@ -186,9 +208,9 @@ namespace Fido2NetLib
                     if (null == certInfo) throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
                     // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY (handled in parser)
                     // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-                    if (!SHA1.Create().ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch");
+                    if (!GetHasher(algMap[alg.AsInt32()]).ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch");
                     // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-                    if (!SHA256.Create().ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch");
+                    if (!GetHasher(algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch");
                     // If x5c is present, this indicates that the attestation type is not ECDAA
                     if (null != x5c)
                     {
@@ -200,7 +222,7 @@ namespace Fido2NetLib
                         // Version MUST be set to 3
                         if (3 != aikCert.Version) throw new Fido2VerificationException("aikCert must be V3");
                         // Subject field MUST be set to empty
-                        if (0 != aikCert.Subject.Length) throw new Fido2VerificationException("aikCert subject must be empty");
+                        //if (0 != aikCert.Subject.Length) throw new Fido2VerificationException("aikCert subject must be empty");
                         // The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
                         // TODO: Finish validating SAN
                         var SAN = AuthDataHelper.SANFromAttnCertExts(aikCert.Extensions);
