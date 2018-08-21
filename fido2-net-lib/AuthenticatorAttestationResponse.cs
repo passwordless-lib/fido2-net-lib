@@ -208,9 +208,9 @@ namespace Fido2NetLib
                     if (null == certInfo) throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
                     // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY (handled in parser)
                     // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-                    if (!GetHasher(algMap[alg.AsInt32()]).ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch");
+                    if (!GetHasher(algMap[alg.AsInt32()]).ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
                     // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-                    if (!GetHasher(algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch");
+                    if (!GetHasher(algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
                     // If x5c is present, this indicates that the attestation type is not ECDAA
                     if (null != x5c)
                     {
@@ -227,8 +227,9 @@ namespace Fido2NetLib
                         // TODO: Finish validating SAN
                         var SAN = AuthDataHelper.SANFromAttnCertExts(aikCert.Extensions);
                         // The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
-                        // TODO: Finish validating EKU
+                        // OID is 2.23.133.8.3 TODO: Finish validating EKU
                         var EKU = AuthDataHelper.EKUFromAttnCertExts(aikCert.Extensions);
+                        if (null == EKU || 0 != EKU.CompareTo("Attestation Identity Key Certificate (2.23.133.8.3)")) throw new Fido2VerificationException("Invalid EKU on AIK certificate");
                         // The Basic Constraints extension MUST have the CA component set to false.
                         if (AuthDataHelper.IsAttnCertCACert(aikCert.Extensions)) throw new Fido2VerificationException("aikCert Basic Constraints extension CA component must be false");
                         // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
