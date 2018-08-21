@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
+
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -220,6 +220,7 @@ namespace Fido2NetLib
 
             return (aaguid, credId, credentialPublicKey);
         }
+
         public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset, UInt16 len = 0)
         {
             if ((0 == len) && ((offset + 2) <= ab.Length))
@@ -235,130 +236,52 @@ namespace Fido2NetLib
             }
             return result;
         }
-
-        public static readonly Dictionary<TpmAlg, Int32> tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, Int32>
+    }
+        // https://w3c.github.io/webauthn/#authenticator-data
+    public class AuthenticatorData
+    {
+        public AuthenticatorData(byte[] authData)
         {
-            {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-            {TpmAlg.TPM_ALG_SHA256, (256/8) },
-            {TpmAlg.TPM_ALG_SHA384, (384/8) },
-            {TpmAlg.TPM_ALG_SHA512, (512/8) }
-        };
-
-        public static (int size, byte[] name) NameFromTPM2BName(Memory<byte> ab)
-        {
-            // This buffer holds a Name for any entity type. 
-            // The type of Name in the structure is determined by context and the size parameter. 
-            var size = BitConverter.ToUInt16(ab.Slice(0, 2).ToArray().Reverse().ToArray());
-            // If size is four, then the Name is a handle. 
-            if (4 == size) throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
-            // If size is zero, then no Name is present. 
-            if (0 == size) throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
-            // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
-            TpmAlg tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), size.ToString());
-            var name = ab.Slice(2, tpmAlgToDigestSizeMap[tpmalg]).ToArray();
-            return (size, name);
-        }
-        // TPM_ALG_ID 
-        public enum TpmAlg : UInt16
-        {
-            TPM_ALG_ERROR, // 0
-            TPM_ALG_RSA, // 1
-            TPM_ALG_SHA1 = 4, // 4
-            TPM_ALG_HMAC, // 5
-            TPM_ALG_AES, // 6
-            TPM_ALG_MGF1, // 7
-            TPM_ALG_KEYEDHASH, // 8
-            TPM_ALG_XOR = 0xA, // A
-            TPM_ALG_SHA256, // B
-            TPM_ALG_SHA384, // C
-            TPM_ALG_SHA512, // D
-            TPM_ALG_NULL = 0x10, // 10
-            TPM_ALG_SM3_256 = 0x12, // 12
-            TPM_ALG_SM4, // 13
-            TPM_ALG_RSASSA, // 14
-            TPM_ALG_RSAES, // 15
-            TPM_ALG_RSAPSS, // 16
-            TPM_ALG_OAEP, // 17
-            TPM_ALG_ECDSA, // 18
-            TPM_ALG_ECDH, // 19
-            TPM_ALG_ECDAA, // 1A
-            TPM_ALG_SM2, // 1B
-            TPM_ALG_ECSCHNORR, // 1C
-            TPM_ALG_ECMQV, // 1D
-            TPM_ALG_KDF1_SP800_56A = 0x20, 
-            TPM_ALG_KDF2, // 21
-            TPM_ALG_KDF1_SP800_108, // 22
-            TPM_ALG_ECC, // 23
-            TPM_ALG_SYMCIPHER = 0x25,
-            TPM_ALG_CAMELLIA, // 26
-            TPM_ALG_CTR = 0x40,
-            TPM_ALG_OFB, // 41
-            TPM_ALG_CBC, // 42 
-            TPM_ALG_CFB, // 43
-            TPM_ALG_ECB // 44
-        };
-        public static (Memory<byte> extraData, Memory<byte> attested) ParseCertInfo(Memory<byte> certInfo)
-        {
+            if (null == authData || authData.Length < 37) throw new Fido2VerificationException("Authenticator data is invalid");
             var offset = 0;
-            var magic = GetSizedByteArray(certInfo, ref offset, 4);
-            if (0xff544347 != BitConverter.ToUInt32(magic.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad magic number " + magic.ToString());
-            var type = GetSizedByteArray(certInfo, ref offset, 2);
-            if (0x8017 != BitConverter.ToUInt16(type.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad structure tag " + type.ToString());
-            var qualifiedSigner = GetSizedByteArray(certInfo, ref offset);
-            var extraData = GetSizedByteArray(certInfo, ref offset);
-            var clock = GetSizedByteArray(certInfo, ref offset, 8);
-            var resetCount = GetSizedByteArray(certInfo, ref offset, 4);
-            var restartCount = GetSizedByteArray(certInfo, ref offset, 4);
-            var safe = GetSizedByteArray(certInfo, ref offset, 1);
-            var firmwareVersion = GetSizedByteArray(certInfo, ref offset, 8);
-            var attestedNameBuffer = GetSizedByteArray(certInfo, ref offset);
-            var tmp = NameFromTPM2BName(attestedNameBuffer);
-            var alg = tmp.size; // TPM_ALG_ID
-            var attestedName = tmp.name;
-            var attestedQualifiedNameBuffer = GetSizedByteArray(certInfo, ref offset);
-            if (certInfo.Length != offset) throw new Fido2VerificationException("Leftover bits decoding certInfo");
-            return (extraData, attestedName);
+            RpIdHash = AuthDataHelper.GetSizedByteArray(authData, ref offset, 32);
+            Flags = AuthDataHelper.GetSizedByteArray(authData, ref offset, 1)[0];
+            SignCount = AuthDataHelper.GetSizedByteArray(authData, ref offset, 4);
+            if (false == AttestedCredentialDataPresent && false == ExtensionsPresent && 37 != authData.Length) throw new Fido2VerificationException("Authenticator data flags and data mismatch");
+            AttData = null;
+            if (true == AttestedCredentialDataPresent && false == ExtensionsPresent) AttData = new AttestedCredentialData(authData, ref offset);
+            Extensions = null;
+            if (false == AttestedCredentialDataPresent && true == ExtensionsPresent) Extensions = AuthDataHelper.GetSizedByteArray(authData, ref offset, (UInt16) (authData.Length - offset));
+            // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
+            if (true == AttestedCredentialDataPresent && true == ExtensionsPresent) throw new Fido2VerificationException("Not yet implemented");
+            if (authData.Length != offset) throw new Fido2VerificationException("Leftover bits decoding AuthenticatorData");
         }
-        public static (Memory<byte> alg, Int32 exponent, Memory<byte> curveID, Memory<byte> kdf, Memory<byte> unique) ParsePubArea(Memory<byte> pubArea)
+        public byte[] RpIdHash { get; private set; }
+        public byte Flags { get; private set; }
+        public byte[] SignCount { get; private set; }
+        public AttestedCredentialData AttData { get; private set; }
+        public byte[] Extensions { get; private set; }
+        public bool UserPresent { get { return ((Flags & (1 << 0)) != 0); } }
+        public bool Reserved1 { get { return ((Flags & (1 << 1)) != 0); } }
+        public bool UserVerified { get { return ((Flags & (1 << 2)) != 0); } }
+        public bool Reserved2 { get { return ((Flags & (1 << 3)) != 0); } }
+        public bool Reserved3 { get { return ((Flags & (1 << 4)) != 0); } }
+        public bool Reserved4 { get { return ((Flags & (1 << 5)) != 0); } }
+        public bool AttestedCredentialDataPresent { get { return ((Flags & (1 << 6)) != 0); } }
+        public bool ExtensionsPresent { get { return ((Flags & (1 << 7)) != 0); } }
+    }
+    // https://w3c.github.io/webauthn/#attested-credential-data
+    public class AttestedCredentialData
+    {
+        public AttestedCredentialData(byte[] attData, ref int offset)
         {
-            var offset = 0;
-            var tmp = GetSizedByteArray(pubArea, ref offset, 2);
-            Int16 type = 0;
-            if (null != tmp)
-            {
-                type = BitConverter.ToInt16(tmp.ToArray().Reverse().ToArray());
-            }
-            var alg = GetSizedByteArray(pubArea, ref offset, 2);
-            TpmAlg tmpalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(alg.ToArray().Reverse().ToArray()).ToString());
-            var atts = GetSizedByteArray(pubArea, ref offset, 4);
-            var policy = GetSizedByteArray(pubArea, ref offset);
-            var symmetric = GetSizedByteArray(pubArea, ref offset, 2);
-            var scheme = GetSizedByteArray(pubArea, ref offset, 2);
-
-            Memory<byte> keyBits = null;
-            Int32 exponent = 0;
-            Memory<byte> curveID = null;
-            Memory<byte> kdf = null;
-
-            if (0x0001 == type)
-            {
-                keyBits = GetSizedByteArray(pubArea, ref offset, 2);
-                tmp = GetSizedByteArray(pubArea, ref offset, 4);
-                if (null != tmp)
-                {
-                    exponent = BitConverter.ToInt32(tmp.ToArray());
-                    if (0x0 == exponent) exponent = 65537;
-                }
-            }
-            
-            if (0x0023 == type)
-            {
-                curveID = GetSizedByteArray(pubArea, ref offset, 2);
-                kdf = GetSizedByteArray(pubArea, ref offset, 2);
-            }
-            var unique = GetSizedByteArray(pubArea, ref offset);
-            if (pubArea.Length != offset) throw new Fido2VerificationException("Leftover bits decoding pubArea");
-            return (alg, exponent, curveID, kdf, unique);
+            Aaguid = AuthDataHelper.GetSizedByteArray(attData, ref offset, 16);
+            CredentialID = AuthDataHelper.GetSizedByteArray(attData, ref offset);
+            CredentialPublicKey = AuthDataHelper.GetSizedByteArray(attData, ref offset, (UInt16)(attData.Length - offset));
+            if (null == Aaguid || null == CredentialID || null == CredentialPublicKey) throw new Fido2VerificationException("Attested credential data is invalid");
         }
+        public byte[] Aaguid { get; private set; }
+        public byte[] CredentialID { get; private set; }
+        public byte[] CredentialPublicKey { get; private set; }
     }
 }
