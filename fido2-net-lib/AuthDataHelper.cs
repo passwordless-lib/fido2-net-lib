@@ -39,7 +39,7 @@ namespace Fido2NetLib
                 if (ext.Oid.Value.Equals("2.5.29.17")) // subject alternative name
                 {
                     var asn = new AsnEncodedData(ext.Oid, ext.RawData);
-                    return asn.Format(false);
+                    return asn.Format(true);
                 }
             }
             return null;
@@ -130,7 +130,7 @@ namespace Fido2NetLib
             if (sigData.IsEmpty) return null;
 
             var ms = new System.IO.MemoryStream(sigData.ToArray());
-            if (0x30 != ms.ReadByte()) throw new Fido2VerificationException(); // DER SEQUENCE
+            if (0x30 != ms.ReadByte()) throw new Fido2VerificationException("Invalid DER sequence"); // DER SEQUENCE
             var dataLen = ms.ReadByte(); // length of r + s
             if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
             var rLen = ms.ReadByte(); // length of r
