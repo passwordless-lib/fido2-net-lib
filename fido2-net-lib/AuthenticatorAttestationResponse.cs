@@ -374,9 +374,7 @@ namespace Fido2NetLib
                                     Exponent = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
                                 }
                                 );
-                            RSAPKCS1SignatureDeformatter rSASD = new RSAPKCS1SignatureDeformatter(rsa);
-                            rSASD.SetHashAlgorithm(algMap[alg.AsInt32()].Name);
-                            var verify = rSASD.VerifySignature(data, sig.GetByteString());
+                            var verify = rsa.VerifyData(data, algMap[alg.AsInt32()].Name, sig.GetByteString());
                         }
                         
                     }
