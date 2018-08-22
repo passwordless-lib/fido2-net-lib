@@ -32,29 +32,30 @@ namespace Fido2NetLib
             }
             return aaguid;
         }
-        public static byte[] SANFromAttnCertExts(X509ExtensionCollection exts)
+        public static string SANFromAttnCertExts(X509ExtensionCollection exts)
         {
-            var SAN = new byte[0];
             foreach (var ext in exts)
             {
                 if (ext.Oid.Value.Equals("2.5.29.17")) // subject alternative name
                 {
-                    return ext.RawData.ToArray();
+                    var asn = new AsnEncodedData(ext.Oid, ext.RawData);
+                    return asn.Format(true);
                 }
             }
-            return SAN;
+            return null;
         }
-        public static byte[] EKUFromAttnCertExts(X509ExtensionCollection exts)
+        public static string EKUFromAttnCertExts(X509ExtensionCollection exts)
         {
             var EKU = new byte[0];
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value.Equals("2.5.29.37")) // subject alternative name
+                if (ext.Oid.Value.Equals("2.5.29.37")) // EKU
                 {
-                    return ext.RawData.ToArray();
+                    var asn = new AsnEncodedData(ext.Oid, ext.RawData);
+                    return asn.Format(false);
                 }
             }
-            return EKU;
+            return null;
         }
         public static bool IsAttnCertCACert(X509ExtensionCollection exts)
         {
@@ -129,7 +130,7 @@ namespace Fido2NetLib
             if (sigData.IsEmpty) return null;
 
             var ms = new System.IO.MemoryStream(sigData.ToArray());
-            if (0x30 != ms.ReadByte()) throw new Fido2VerificationException(); // DER SEQUENCE
+            if (0x30 != ms.ReadByte()) throw new Fido2VerificationException("Invalid DER sequence"); // DER SEQUENCE
             var dataLen = ms.ReadByte(); // length of r + s
             if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
             var rLen = ms.ReadByte(); // length of r

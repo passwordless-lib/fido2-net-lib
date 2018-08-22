@@ -217,10 +217,10 @@ namespace fido2_net_lib.Test
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
         }
         [Fact]
-        public async Task TestTPMAttestationAsync()
+        public async Task TestTPMSHA256AttestationAsync()
         {
-            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationTPMResponse.json"));
-            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationTPMOptions.json"));
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationTPMSHA256Response.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationTPMSHA256Options.json"));
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
@@ -228,7 +228,18 @@ namespace fido2_net_lib.Test
             Assert.True(AuthDataHelper.IsUserPresent(ad));
             Assert.False(AuthDataHelper.IsUserVerified(ad));
         }
-
+        [Fact]
+        public async Task TestTPMSHA1AttestationAsync()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationTPMSHA1Response.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationTPMSHA1Options.json"));
+            var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
+            byte[] ad = o.AttestionObject.AuthData;
+            Assert.True(AuthDataHelper.IsUserPresent(ad));
+            Assert.False(AuthDataHelper.IsUserVerified(ad));
+        }
         //public void TestHasCorrentAAguid()
         //{
         //    var expectedAaguid = new Uint8Array([

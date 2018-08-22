@@ -1,0 +1,28 @@
+{
+  "status": "ok",
+  "errorMessage": "",
+  "rp": {
+    "name": "Fido2 test",
+    "id": "localhost"
+  },
+  "user": {
+    "name": "TaKac2idYI0u6PhIqDE0",
+    "id": "TaKac2idYI0u6PhIqDE0",
+    "displayName": "aseigler"
+  },
+  "challenge": "gHrAk4pNe2VlB0HLeKclI2P6QEa83PuGeijTHMtpbhY9KlybyhlwF_VzRe7yhabXagWuY6rkDWfvvhNqgh2o7A",
+  "pubKeyCredParams": [
+    {
+      "type": "public-key",
+      "alg": -7
+    },
+    {
+      "type": "public-key",
+      "alg": -257
+    }
+  ],
+  "timeout": 60000,
+  "attestation": "direct",
+  "authenticatorSelection": null,
+  "excludeCredentials": []
+}
