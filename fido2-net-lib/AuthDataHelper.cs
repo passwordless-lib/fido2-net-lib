@@ -127,27 +127,41 @@ namespace Fido2NetLib
              *  number is not negative."
              *  
              */
-            if (sigData.IsEmpty) return null;
+            if (sigData.IsEmpty || (sigData.Length > Math.Pow(2, 1008))) return null;
 
             var ms = new System.IO.MemoryStream(sigData.ToArray());
             if (0x30 != ms.ReadByte()) throw new Fido2VerificationException("Invalid DER sequence"); // DER SEQUENCE
             var dataLen = ms.ReadByte(); // length of r + s
+            bool longForm = (dataLen > 127);
+            var longLen = 0;
+            if (true == longForm)
+            {
+                longLen = ms.ReadByte();
+                var mask = 1 << 7;
+                longLen &= ~mask;
+            }
             if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
             var rLen = ms.ReadByte(); // length of r
-            if (0 != (rLen % 8)) // must be on 8 byte boundary
+            if (false == longForm)
             {
-                if (0 == ms.ReadByte()) rLen--; // strip leading 0x00
-                else throw new Fido2VerificationException();
+                if (0 != (rLen % 8)) // must be on 8 byte boundary
+                {
+                    if (0 == ms.ReadByte()) rLen--; // strip leading 0x00
+                    else throw new Fido2VerificationException();
+                }
             }
             var r = new byte[rLen]; // r
             ms.Read(r, 0, r.Length);
 
             if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
             var sLen = ms.ReadByte(); // length of s
-            if (0 != (sLen % 8)) // must be on 8 byte boundary
+            if (false == longForm)
             {
-                if (0 == ms.ReadByte()) sLen--; // strip leading 0x00
-                else throw new Fido2VerificationException();
+                if (0 != (sLen % 8)) // must be on 8 byte boundary
+                {
+                    if (0 == ms.ReadByte()) sLen--; // strip leading 0x00
+                        else throw new Fido2VerificationException();
+                }
             }
             var s = new byte[sLen]; // s
             ms.Read(s, 0, s.Length);

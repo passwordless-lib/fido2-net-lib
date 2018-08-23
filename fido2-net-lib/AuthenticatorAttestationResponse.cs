@@ -33,6 +33,82 @@ namespace Fido2NetLib
             {13, HashAlgorithmName.SHA512 }
         };
 
+        private static string CoseToFido(Int32 kty, Int32 alg, Int32 crv)
+        {
+            switch (kty) // https://www.iana.org/assignments/cose/cose.xhtml#key-type
+            {
+                case 1: // OKP
+                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    {
+                        case -8:
+                            switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                            {
+                                case 6:
+                                    return "ALG_SIGN_ED25519_EDDSA_SHA256_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        default:
+                            throw new ArgumentOutOfRangeException("alg");
+                    }
+                case 2: // EC2
+                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    {
+                        case -7:
+                            switch (crv)
+                            {
+                                case 1:
+                                    return "ALG_SIGN_SECP256R1_ECDSA_SHA256_RAW";
+                                case 8:
+                                    return "ALG_SIGN_SECP256K1_ECDSA_SHA256_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        case -35:
+                            switch (crv)
+                            {
+                                case 2:
+                                    return "ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        case -36:
+                            switch (crv)
+                            {
+                                case 3:
+                                    return "ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        default:
+                            throw new ArgumentOutOfRangeException("alg");
+                    }
+                case 3: // RSA
+                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    {
+                        case -37:
+                            return "ALG_SIGN_RSASSA_PSS_SHA256_RAW";
+                        case -38:
+                            return "ALG_SIGN_RSASSA_PSS_SHA384_RAW";
+                        case -39:
+                            return "ALG_SIGN_RSASSA_PSS_SHA512_RAW";
+                        case -65535:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA1_RAW";
+                        case -257:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA256_RAW";
+                        case -258:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA384_RAW";
+                        case -259:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA512_RAW";
+                        default:
+                            throw new ArgumentOutOfRangeException("alg");
+                    }
+                case 4: // Symmetric
+                    throw new Fido2VerificationException("Symmetric keys not supported");
+                default:
+                    throw new ArgumentOutOfRangeException("kty");
+            }
+        }
 
         private static HashAlgorithm GetHasher(HashAlgorithmName hashName)
         {
@@ -243,12 +319,10 @@ namespace Fido2NetLib
                 case "android-key":
                     // TODO: Implement Android Key attestation validation
                     throw new Fido2VerificationException("Not yet implemented");
-                    break;
 
                 case "android-safetynet":
                     // TODO: Implement Android SafetyNet attestation validation
                     throw new Fido2VerificationException("Not yet implemented");
-                    break;
 
                 case "fido-u2f":
 
@@ -291,7 +365,7 @@ namespace Fido2NetLib
                     if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid packed attestation signature");
                     if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type) throw new Fido2VerificationException("Invalid packed attestation algorithm");
                     byte[] packedParsedSignature = null;
-                    if (-7 == alg.AsInt32())
+                    if (-7 == alg.AsInt32() || -35 == alg.AsInt32() || -36 == alg.AsInt32())
                     {
                         packedParsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
                     }
@@ -346,16 +420,22 @@ namespace Fido2NetLib
                     else
                     {
                         // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-                        var COSE_kty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
-                        if (2 == COSE_kty.AsInt32())
+                        var packedKty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+                        var packedAlg = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
+                        if (packedAlg != alg.AsInt32()) throw new Fido2VerificationException("Algorithm mismatch");
+                        var packedCrv = 0;
+                        if (1 == packedKty || 2 == packedKty) packedCrv = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].AsInt32();
+                        var FidoAlg = CoseToFido(packedKty, packedAlg, packedCrv);
+                        if (2 == packedKty)
                         {
-                            if (!credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)].Equals(alg)) throw new Fido2VerificationException("Algorithm mismatch");
-                            var COSE_crv = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
                             var x = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
                             var y = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                            var curve = ECCurve.NamedCurves.nistP256;
+                            if (FidoAlg.Equals("ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW")) curve = ECCurve.NamedCurves.nistP384;
+                            if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) curve = ECCurve.NamedCurves.nistP521;
                             var cng = ECDsaCng.Create(new ECParameters
                             {
-                                Curve = ECCurve.NamedCurves.nistP256,
+                                Curve = curve,
                                 Q = new ECPoint
                                 {
                                     X = x,
@@ -363,20 +443,26 @@ namespace Fido2NetLib
                                 }
                             });
                             // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
-                            if (true != cng.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException();
+                            if (true != cng.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException("EC Signature not successfully verified");
                         }
-                        else if (3 == COSE_kty.AsInt32())
+                        else if (3 == packedKty)
                         {
-                            RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
+                            RSACng rsa = new RSACng();
                             rsa.ImportParameters(
                                 new RSAParameters() {
                                     Modulus = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
                                     Exponent = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
                                 }
                                 );
-                            var verify = rsa.VerifyData(data, algMap[alg.AsInt32()].Name, sig.GetByteString());
+                            bool verify = false;
+                            if (FidoAlg.Contains("RSASSA_PKCSV15"))
+                                verify = rsa.VerifyData(data, sig.GetByteString(), algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1);
+                            if (FidoAlg.Contains("RSASSA_PSS"))
+                                verify = rsa.VerifyData(data, sig.GetByteString(), algMap[alg.AsInt32()], RSASignaturePadding.Pss);
+
+                            if (true != verify) throw new Fido2VerificationException("RSA Signature not successfully verified");
                         }
-                        
+                        else throw new Fido2VerificationException("Signature not successfully verified");
                     }
                     break;
 
