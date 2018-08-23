@@ -15,123 +15,11 @@ namespace Fido2NetLib
     /// </summary>
     public class AuthenticatorAttestationResponse : AuthenticatorResponse
     {
-        public static readonly Dictionary<int, HashAlgorithmName> algMap = new Dictionary<int, HashAlgorithmName>
-        {
-            {-65535, HashAlgorithmName.SHA1 },
-            {-7, HashAlgorithmName.SHA256},
-            {-35, HashAlgorithmName.SHA384 },
-            {-36, HashAlgorithmName.SHA512 },
-            {-37, HashAlgorithmName.SHA256 },
-            {-38, HashAlgorithmName.SHA384 },
-            {-39, HashAlgorithmName.SHA512 },
-            {-257, HashAlgorithmName.SHA256 },
-            {-258, HashAlgorithmName.SHA384 },
-            {-259, HashAlgorithmName.SHA512 },
-            {4, HashAlgorithmName.SHA1 },
-            {11, HashAlgorithmName.SHA256 },
-            {12, HashAlgorithmName.SHA384 },
-            {13, HashAlgorithmName.SHA512 }
-        };
 
-        private static string CoseToFido(Int32 kty, Int32 alg, Int32 crv)
-        {
-            switch (kty) // https://www.iana.org/assignments/cose/cose.xhtml#key-type
-            {
-                case 1: // OKP
-                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case -8:
-                            switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
-                            {
-                                case 6:
-                                    return "ALG_SIGN_ED25519_EDDSA_SHA256_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        default:
-                            throw new ArgumentOutOfRangeException("alg");
-                    }
-                case 2: // EC2
-                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case -7:
-                            switch (crv)
-                            {
-                                case 1:
-                                    return "ALG_SIGN_SECP256R1_ECDSA_SHA256_RAW";
-                                case 8:
-                                    return "ALG_SIGN_SECP256K1_ECDSA_SHA256_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        case -35:
-                            switch (crv)
-                            {
-                                case 2:
-                                    return "ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        case -36:
-                            switch (crv)
-                            {
-                                case 3:
-                                    return "ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        default:
-                            throw new ArgumentOutOfRangeException("alg");
-                    }
-                case 3: // RSA
-                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case -37:
-                            return "ALG_SIGN_RSASSA_PSS_SHA256_RAW";
-                        case -38:
-                            return "ALG_SIGN_RSASSA_PSS_SHA384_RAW";
-                        case -39:
-                            return "ALG_SIGN_RSASSA_PSS_SHA512_RAW";
-                        case -65535:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA1_RAW";
-                        case -257:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA256_RAW";
-                        case -258:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA384_RAW";
-                        case -259:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA512_RAW";
-                        default:
-                            throw new ArgumentOutOfRangeException("alg");
-                    }
-                case 4: // Symmetric
-                    throw new Fido2VerificationException("Symmetric keys not supported");
-                default:
-                    throw new ArgumentOutOfRangeException("kty");
-            }
-        }
-
-        private static HashAlgorithm GetHasher(HashAlgorithmName hashName)
-        {
-            switch (hashName.Name)
-            {
-                case "SHA1":
-                    return SHA1.Create();
-                case "SHA256":
-                    return SHA256.Create();
-                case "SHA384":
-                    return SHA384.Create();
-                case "SHA512":
-                    return SHA512.Create();
-                default:
-                    throw new ArgumentOutOfRangeException("hashName");
-            }
-        }
 
         private AuthenticatorAttestationResponse(byte[] clientDataJson) : base(clientDataJson)
         {
         }
-        public string HashAlgorithm { get; set; }
-        public Dictionary<string, object> ClientExtensions { get; set; }
 
         public ParsedAttestionObject AttestionObject { get; set; }
         public AuthenticatorAttestationRawResponse Raw { get; private set; }
@@ -179,14 +67,14 @@ namespace Fido2NetLib
             // verify origin
             // done in baseclass
 
-            if (Type != "webauthn.create") throw new Fido2VerificationException();
+            if (Type != "webauthn.create") throw new Fido2VerificationException("AttestionResponse is not type webauthn.create");
 
             if (Raw.Id == null || Raw.Id.Length == 0) throw new Fido2VerificationException("AttestionResponse is missing Id");
 
             if (Raw.Type != "public-key") throw new Fido2VerificationException("AttestionResponse is missing type with value 'public-key'");
 
             if (null == AttestionObject.AuthData || 0 == AttestionObject.AuthData.Length) throw new Fido2VerificationException("Missing or malformed authData");
-            
+            AuthenticatorData authData = new AuthenticatorData(AttestionObject.AuthData);
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
             // This id done in BaseVerify.
@@ -204,16 +92,15 @@ namespace Fido2NetLib
 
             // 9 
             // Verify that the RP ID hash in authData is indeed the SHA - 256 hash of the RP ID expected by the RP.
-            var hash = AuthDataHelper.GetRpIdHash(AttestionObject.AuthData);
-            if (!hash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException();
+            if (false == authData.RpIdHash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException("Hash mismatch RPID");
 
             // 10
             // Verify that the User Present bit of the flags in authData is set.
-            if (!AuthDataHelper.IsUserPresent(AttestionObject.AuthData)) throw new Fido2VerificationException();
+            if (false == authData.UserPresent) throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 11 
             // If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
-            var userVerified = AuthDataHelper.IsUserVerified(AttestionObject.AuthData);
+            var userVerified = authData.UserVerified;
 
             // 12
             // Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected
@@ -228,19 +115,23 @@ namespace Fido2NetLib
             // The identifier of the ECDAA-Issuer public key
             var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
 
-            if (false == AuthDataHelper.HasAttested(AttestionObject.AuthData)) throw new Fido2VerificationException("Attestation flag not set on attestation data");
-            var attData = AuthDataHelper.GetAttestionData(AttestionObject.AuthData);
-            var credentialId = attData.credId.ToArray();
-            var credentialPublicKeyBytes = attData.credentialPublicKey.ToArray();
+            if (false == authData.AttestedCredentialDataPresent) throw new Fido2VerificationException("Attestation flag not set on attestation data");
+            var credentialId = authData.AttData.CredentialID;
+            var credentialPublicKeyBytes = authData.AttData.CredentialPublicKey.ToArray();
             PeterO.Cbor.CBORObject credentialPublicKey = null;
+            var coseKty = 0;
+            var coseAlg = 0;
             try
             {
-                credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(credentialPublicKeyBytes);
+                credentialPublicKey = PeterO.Cbor.CBORObject.DecodeFromBytes(authData.AttData.CredentialPublicKey);
+                coseKty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+                coseAlg = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
             }
             catch (PeterO.Cbor.CBORException)
             {
                 throw new Fido2VerificationException("Malformed credentialPublicKey");
             }
+
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
@@ -270,8 +161,6 @@ namespace Fido2NetLib
                         pubArea = new PubArea(AttestionObject.AttStmt["pubArea"].GetByteString());
                     }
                     // Verify that the public key specified by the parameters and unique fields of pubArea is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
-                    var coseKty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 3 == RSA
-                    var coseAlg = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -257 == RS256 signature 
                     var coseMod = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(); // modulus 
                     var coseExp = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(); // exponent
                     if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray())) throw new Fido2VerificationException("Public key mismatch");
@@ -286,15 +175,15 @@ namespace Fido2NetLib
                     if (null == certInfo) throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
                     // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY (handled in parser)
                     // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-                    if (!GetHasher(algMap[alg.AsInt32()]).ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
+                    if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[alg.AsInt32()]).ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
                     // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-                    if (!GetHasher(algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+                    if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
                     // If x5c is present, this indicates that the attestation type is not ECDAA
                     if (null == x5c || PeterO.Cbor.CBORType.Array != x5c.Type || 0 == x5c.Count) throw new Fido2VerificationException("Malformed x5c");
                     // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                     var aikCert = new X509Certificate2(x5c.Values.First().GetByteString());
                     var aikPublicKey = aikCert.GetRSAPublicKey();
-                    if (true != aikPublicKey.VerifyData(certInfo.Raw, sig.GetByteString(), algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
+                    if (true != aikPublicKey.VerifyData(certInfo.Raw, sig.GetByteString(), AuthDataHelper.algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
                     // Verify that aikCert meets the TPM attestation statement certificate requirements
                     // Version MUST be set to 3
                     if (3 != aikCert.Version) throw new Fido2VerificationException("aikCert must be V3");
@@ -311,7 +200,7 @@ namespace Fido2NetLib
                     if (AuthDataHelper.IsAttnCertCACert(aikCert.Extensions)) throw new Fido2VerificationException("aikCert Basic Constraints extension CA component must be false");
                     // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                     var aaguid = AuthDataHelper.AaguidFromAttnCertExts(aikCert.Extensions);
-                    if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(attData.aaguid.ToArray()))) throw new Fido2VerificationException();
+                    if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(authData.AttData.Aaguid.ToArray()))) throw new Fido2VerificationException();
                     // If successful, return attestation type AttCA and attestation trust path x5c.
 
                     break;
@@ -327,9 +216,8 @@ namespace Fido2NetLib
                 case "fido-u2f":
 
                     // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
-                    if (false == attData.aaguid.Span.SequenceEqual(Guid.Empty.ToByteArray())) throw new Fido2VerificationException("aaguid was not empty");
+                    if (false == authData.AttData.Aaguid.SequenceEqual(Guid.Empty.ToByteArray())) throw new Fido2VerificationException("aaguid was not empty");
 
-                    var parsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
                     // validate format
                     if (!(
                         AttestionObject.AttStmt.ContainsKey("x5c") &&
@@ -346,19 +234,20 @@ namespace Fido2NetLib
                     var pubKey = (ECDsaCng)cert.GetECDsaPublicKey();
                     if (CngAlgorithm.ECDsaP256 != pubKey.Key.Algorithm) throw new Fido2VerificationException();
 
+                    var parsedSignature = AuthDataHelper.SigFromEcDsaSig(sig.GetByteString());
+
                     // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
                     // done above
 
                     // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
-                    var publicKeyU2F = AuthDataHelper.U2FKeyFromCOSEKey(credentialPublicKey).publicKeyU2F.ToArray();
-                    var COSE_alg = AuthDataHelper.U2FKeyFromCOSEKey(credentialPublicKey).COSE_alg;
+                    var publicKeyU2F = AuthDataHelper.U2FKeyFromCOSEKey(credentialPublicKey);
 
                     // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
                     var verificationData = new byte[1] { 0x00 };
-                    verificationData = verificationData.Concat(hashedRpId).Concat(hashedClientDataJson).Concat(credentialId).Concat(publicKeyU2F).ToArray();
+                    verificationData = verificationData.Concat(hashedRpId).Concat(hashedClientDataJson).Concat(credentialId).Concat(publicKeyU2F.ToArray()).ToArray();
 
                     // 6. Verify the sig using verificationData and certificate public key
-                    if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), algMap[COSE_alg])) throw new Fido2VerificationException();
+                    if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), AuthDataHelper.algMap[coseAlg])) throw new Fido2VerificationException();
                     break;
                 case "packed":
                     if (0 == AttestionObject.AttStmt.Keys.Count || 0 == AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
@@ -367,7 +256,7 @@ namespace Fido2NetLib
                     byte[] packedParsedSignature = null;
                     if (-7 == alg.AsInt32() || -35 == alg.AsInt32() || -36 == alg.AsInt32())
                     {
-                        packedParsedSignature = AuthDataHelper.ParseSigData(sig.GetByteString());
+                         packedParsedSignature = AuthDataHelper.SigFromEcDsaSig(sig.GetByteString());
                     }
                     else packedParsedSignature = sig.GetByteString();
                     byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
@@ -387,8 +276,8 @@ namespace Fido2NetLib
                         // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                         // using the attestation public key in attestnCert with the algorithm specified in alg
                         var packedPubKey = (ECDsaCng)packedCert.GetECDsaPublicKey(); // attestation public key
-                        if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type|| false == algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
-                        if (true != packedPubKey.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid full packed signature");
+                        if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type|| false == AuthDataHelper.algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
+                        if (true != packedPubKey.VerifyData(data, packedParsedSignature, AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid full packed signature");
 
                         // 2b. Version MUST be set to 3
                         if (3 != packedCert.Version) throw new Fido2VerificationException();
@@ -401,7 +290,7 @@ namespace Fido2NetLib
                         // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
                         // verify that the value of this extension matches the aaguid in authenticatorData
                         aaguid = AuthDataHelper.AaguidFromAttnCertExts(packedCert.Extensions);
-                        if (aaguid != null && !aaguid.SequenceEqual(attData.aaguid.ToArray())) throw new Fido2VerificationException("aaguid present in packed attestation but does not match aaguid from authData");
+                        if (aaguid != null && !aaguid.SequenceEqual(authData.AttData.Aaguid.ToArray())) throw new Fido2VerificationException("aaguid present in packed attestation but does not match aaguid from authData");
 
                         // 2d. The Basic Constraints extension MUST have the CA component set to false
                         if (AuthDataHelper.IsAttnCertCACert(packedCert.Extensions)) throw new Fido2VerificationException();
@@ -414,55 +303,14 @@ namespace Fido2NetLib
                     {
                         var packedCert = new X509Certificate2(ecdaaKeyId.GetByteString());
                         var packedPubKey = (ECDsaCng)packedCert.GetECDsaPublicKey();
-                        if (true != packedPubKey.VerifyData(data, packedParsedSignature.ToArray(), algMap[alg.AsInt32()])) throw new Fido2VerificationException();
+                        if (true != packedPubKey.VerifyData(data, packedParsedSignature.ToArray(), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException();
                     }
                     // If neither x5c nor ecdaaKeyId is present, self attestation is in use
                     else
                     {
                         // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-                        var packedKty = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
-                        var packedAlg = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
-                        if (packedAlg != alg.AsInt32()) throw new Fido2VerificationException("Algorithm mismatch");
-                        var packedCrv = 0;
-                        if (1 == packedKty || 2 == packedKty) packedCrv = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].AsInt32();
-                        var FidoAlg = CoseToFido(packedKty, packedAlg, packedCrv);
-                        if (2 == packedKty)
-                        {
-                            var x = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
-                            var y = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
-                            var curve = ECCurve.NamedCurves.nistP256;
-                            if (FidoAlg.Equals("ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW")) curve = ECCurve.NamedCurves.nistP384;
-                            if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) curve = ECCurve.NamedCurves.nistP521;
-                            var cng = ECDsaCng.Create(new ECParameters
-                            {
-                                Curve = curve,
-                                Q = new ECPoint
-                                {
-                                    X = x,
-                                    Y = y
-                                }
-                            });
-                            // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
-                            if (true != cng.VerifyData(data, packedParsedSignature, algMap[alg.AsInt32()])) throw new Fido2VerificationException("EC Signature not successfully verified");
-                        }
-                        else if (3 == packedKty)
-                        {
-                            RSACng rsa = new RSACng();
-                            rsa.ImportParameters(
-                                new RSAParameters() {
-                                    Modulus = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
-                                    Exponent = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
-                                }
-                                );
-                            bool verify = false;
-                            if (FidoAlg.Contains("RSASSA_PKCSV15"))
-                                verify = rsa.VerifyData(data, sig.GetByteString(), algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1);
-                            if (FidoAlg.Contains("RSASSA_PSS"))
-                                verify = rsa.VerifyData(data, sig.GetByteString(), algMap[alg.AsInt32()], RSASignaturePadding.Pss);
-
-                            if (true != verify) throw new Fido2VerificationException("RSA Signature not successfully verified");
-                        }
-                        else throw new Fido2VerificationException("Signature not successfully verified");
+                        var success = AuthDataHelper.VerifySigWithCoseKey(data, credentialPublicKey, sig.GetByteString());
+                        if (true != success) throw new Fido2VerificationException("Failed to validate signature");
                     }
                     break;
 

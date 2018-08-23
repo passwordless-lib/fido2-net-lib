@@ -32,7 +32,7 @@ namespace Fido2NetLib
                 // we will need to access raw in Verify()
                 Raw = rawResponse,
                 AuthenticatorData = rawResponse.Response.AuthenticatorData,
-                Signature = AuthDataHelper.ParseSigData(rawResponse.Response.Signature).ToArray(),
+                Signature = rawResponse.Response.Signature,
                 UserHandle = rawResponse.Response.UserHandle
             };
 
@@ -72,6 +72,15 @@ namespace Fido2NetLib
             // 3. Using credential’s id attribute(or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.
             // public key inserted via parameter.
 
+            // 4. Let cData, authData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.
+            //var cData = Raw.Response.ClientDataJson;
+            var authData = new AuthenticatorData(Raw.Response.AuthenticatorData);
+            //var sig = Raw.Response.Signature;
+
+            // 5. Let JSONtext be the result of running UTF-8 decode on the value of cData.
+            //var JSONtext = Encoding.UTF8.GetBytes(cData.ToString());
+            
+
             // 7. Verify that the value of C.type is the string webauthn.get.
             if (Type != "webauthn.get") throw new Fido2VerificationException();
 
@@ -95,39 +104,28 @@ namespace Fido2NetLib
                 hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
             }
 
-            var hash = AuthDataHelper.GetRpIdHash(AuthenticatorData);
-            if (!hash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException();
+            if (false == authData.RpIdHash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException("Hash mismatch RPID");
+            // 12. Verify that the User Present bit of the flags in authData is set.
+            if (false == authData.UserPresent) throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
-            // 12 If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.
-            var userIsVerified = AuthDataHelper.IsUserVerified(AuthenticatorData);
+            // 13 If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.
             var isUserVerificationRequired = options.UserVerification == UserVerificationRequirement.Required;
-            if (isUserVerificationRequired && !userIsVerified) throw new Fido2VerificationException("User verification is required");
-
-            // 13. If user verification is not required for this assertion, verify that the User Present bit of the flags in aData is set.
-            if (!isUserVerificationRequired)
-            {
-                if (!AuthDataHelper.IsUserPresent(AuthenticatorData)) throw new Fido2VerificationException();
-            }
+            if (true == isUserVerificationRequired &&  false == authData.UserVerified) throw new Fido2VerificationException("User verification is required");
 
             // 14. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call.In particular, any extension identifier values in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
             // todo: Verify this (and implement extensions on options)
+            if ((true == authData.ExtensionsPresent) && ((null == authData.Extensions) || (0 == authData.Extensions.Length))) throw new Fido2VerificationException("Extionsions flag present, malformed extensions detected");
+            if ((false == authData.ExtensionsPresent) && (null != authData.Extensions)) throw new Fido2VerificationException("Extionsions flag not present, but extensions detected");
 
             // 15.
-            // Done earlier
+            // Done earlier, hashedClientDataJson
 
             // 16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.
             var concatedBytes = Raw.Response.AuthenticatorData.Concat(hashedClientDataJson).ToArray();
 
-            // todo: Add support for more keyformats (https://www.w3.org/TR/webauthn/#sctn-encoded-credPubKey-examples)
-            var u2fFormattedKey = AuthDataHelper.U2FKeyFromCOSEKey(PeterO.Cbor.CBORObject.DecodeFromBytes(storedPublicKey));
-            var pubKey = LoadPublicKey(u2fFormattedKey.publicKeyU2F.Span);
-
-            // note: is this ok? At least it works.
-            var pubKeyAlgo = $"{pubKey.SignatureAlgorithm.ToUpperInvariant()}_P{pubKey.KeySize}";
-
-            if (CngAlgorithm.ECDsaP256.ToString() != pubKeyAlgo) throw new Fido2VerificationException();
-
-            var signatureMatch = pubKey.VerifyData(concatedBytes, Signature, HashAlgorithmName.SHA256);
+            if (null == storedPublicKey || 0 == storedPublicKey.Length) throw new Fido2VerificationException("Stored public key is null or empty");
+            var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(storedPublicKey);
+            var signatureMatch = AuthDataHelper.VerifySigWithCoseKey(concatedBytes, coseKey, Signature);
             if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
 
             // 17.
@@ -142,30 +140,6 @@ namespace Fido2NetLib
                 CredentialId = Raw.Id,
                 Counter = counter
             };
-        }
-
-        /// <summary>
-        /// Parses the bytes to a ECDSa signature alg
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        private static ECDsa LoadPublicKey(Span<byte> key)
-        {
-            // .net ECDsa expects two 32 byte arays for X/Y.
-            // skip first byte which should alawys be (0x4).
-            var pubKeyX = key.Slice(1, 32);
-            var pubKeyY = key.Slice(33, 32);
-
-            // add support for more than nistp256 by checking alg (https://www.w3.org/TR/webauthn/#sctn-encoded-credPubKey-examples)
-            return ECDsa.Create(new ECParameters
-            {
-                Curve = ECCurve.NamedCurves.nistP256,
-                Q = new ECPoint
-                {
-                    X = pubKeyX.ToArray(),
-                    Y = pubKeyY.ToArray()
-                }
-            });
         }
     }
 }

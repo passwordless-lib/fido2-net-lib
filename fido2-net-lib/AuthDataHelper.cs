@@ -1,7 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
-
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -12,6 +11,169 @@ namespace Fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
+        public static HashAlgorithm GetHasher(HashAlgorithmName hashName)
+        {
+            switch (hashName.Name)
+            {
+                case "SHA1":
+                    return SHA1.Create();
+                case "SHA256":
+                    return SHA256.Create();
+                case "SHA384":
+                    return SHA384.Create();
+                case "SHA512":
+                    return SHA512.Create();
+                default:
+                    throw new ArgumentOutOfRangeException("hashName");
+            }
+        }
+        public static readonly Dictionary<int, HashAlgorithmName> algMap = new Dictionary<int, HashAlgorithmName>
+        {
+            {-65535, HashAlgorithmName.SHA1 },
+            {-7, HashAlgorithmName.SHA256},
+            {-35, HashAlgorithmName.SHA384 },
+            {-36, HashAlgorithmName.SHA512 },
+            {-37, HashAlgorithmName.SHA256 },
+            {-38, HashAlgorithmName.SHA384 },
+            {-39, HashAlgorithmName.SHA512 },
+            {-257, HashAlgorithmName.SHA256 },
+            {-258, HashAlgorithmName.SHA384 },
+            {-259, HashAlgorithmName.SHA512 },
+            {4, HashAlgorithmName.SHA1 },
+            {11, HashAlgorithmName.SHA256 },
+            {12, HashAlgorithmName.SHA384 },
+            {13, HashAlgorithmName.SHA512 }
+        };
+        public static string CoseToFido(Int32 kty, Int32 alg, Int32 crv)
+        {
+            switch (kty) // https://www.iana.org/assignments/cose/cose.xhtml#key-type
+            {
+                case 1: // OKP
+                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    {
+                        case -8:
+                            switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                            {
+                                case 6:
+                                    return "ALG_SIGN_ED25519_EDDSA_SHA256_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        default:
+                            throw new ArgumentOutOfRangeException("alg");
+                    }
+                case 2: // EC2
+                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    {
+                        case -7:
+                            switch (crv)
+                            {
+                                case 1:
+                                    return "ALG_SIGN_SECP256R1_ECDSA_SHA256_RAW";
+                                case 8:
+                                    return "ALG_SIGN_SECP256K1_ECDSA_SHA256_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        case -35:
+                            switch (crv)
+                            {
+                                case 2:
+                                    return "ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        case -36:
+                            switch (crv)
+                            {
+                                case 3:
+                                    return "ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW";
+                                default:
+                                    throw new ArgumentOutOfRangeException("crv");
+                            }
+                        default:
+                            throw new ArgumentOutOfRangeException("alg");
+                    }
+                case 3: // RSA
+                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    {
+                        case -37:
+                            return "ALG_SIGN_RSASSA_PSS_SHA256_RAW";
+                        case -38:
+                            return "ALG_SIGN_RSASSA_PSS_SHA384_RAW";
+                        case -39:
+                            return "ALG_SIGN_RSASSA_PSS_SHA512_RAW";
+                        case -65535:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA1_RAW";
+                        case -257:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA256_RAW";
+                        case -258:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA384_RAW";
+                        case -259:
+                            return "ALG_SIGN_RSASSA_PKCSV15_SHA512_RAW";
+                        default:
+                            throw new ArgumentOutOfRangeException("alg");
+                    }
+                case 4: // Symmetric
+                    throw new Fido2VerificationException("Symmetric keys not supported");
+                default:
+                    throw new ArgumentOutOfRangeException("kty");
+            }
+        }
+        public static bool VerifySigWithCoseKey(byte[] data, PeterO.Cbor.CBORObject coseKey, byte[] sig)
+        {
+            var success = false;
+            // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
+            var coseKty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+            var coseAlg = coseKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
+            var packedCrv = 0;
+            if (1 == coseKty || 2 == coseKty) packedCrv = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].AsInt32();
+            var FidoAlg = CoseToFido(coseKty, coseAlg, packedCrv);
+            if (1 == coseKty)
+            {
+                if (true == FidoAlg.Equals("ALG_SIGN_ED25519_EDDSA_SHA512_RAW")) throw new Fido2VerificationException("ALG_SIGN_ED25519_EDDSA_SHA512_RAW support not yet implmented");
+                else throw new Fido2VerificationException("Unknown algorithm");
+            }
+            else if (2 == coseKty)
+            {
+                var x = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                var y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                var curve = ECCurve.NamedCurves.nistP256;
+                if (FidoAlg.Equals("ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW")) curve = ECCurve.NamedCurves.nistP384;
+                if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) curve = ECCurve.NamedCurves.nistP521;
+                var cng = ECDsaCng.Create(new ECParameters
+                {
+                    Curve = curve,
+                    Q = new ECPoint
+                    {
+                        X = x,
+                        Y = y
+                    }
+                });
+                var ecsig = SigFromEcDsaSig(sig);
+                // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
+                success = cng.VerifyData(data, ecsig, algMap[coseAlg]);
+            }
+            else if (3 == coseKty)
+            {
+                RSACng rsa = new RSACng();
+                rsa.ImportParameters(
+                    new RSAParameters()
+                    {
+                        Modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
+                        Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
+                    }
+                    );
+
+                if (FidoAlg.Contains("RSASSA_PKCSV15"))
+                    success = rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pkcs1);
+                if (FidoAlg.Contains("RSASSA_PSS"))
+                    success = rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pss);
+            }
+            else throw new Fido2VerificationException("Missing or unknown keytype");
+
+            return success;
+        }
         public static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
         {
             byte[] aaguid = null;
@@ -99,34 +261,18 @@ namespace Fido2NetLib
                 "Authenticator Attestation" == dictSubject["OU"].ToString());
         }
 
-        public static (Memory<byte> publicKeyU2F, int COSE_alg) U2FKeyFromCOSEKey(PeterO.Cbor.CBORObject COSEKey)
+        public static Memory<byte> U2FKeyFromCOSEKey(PeterO.Cbor.CBORObject COSEKey)
         {
-            var COSE_kty = COSEKey[PeterO.Cbor.CBORObject.FromObject(1)]; // 2 == EC2
-            var COSE_alg = COSEKey[PeterO.Cbor.CBORObject.FromObject(3)]; // -7 == ES256 signature 
-            var COSE_crv = COSEKey[PeterO.Cbor.CBORObject.FromObject(-1)]; // 1 == P-256 curve 
             var x = COSEKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
             var y = COSEKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
             var publicKeyU2F = new byte[1] { 0x4 }; // uncompressed
             publicKeyU2F = publicKeyU2F.Concat(x).Concat(y).ToArray();
-            return (publicKeyU2F, COSE_alg.AsInt32());
+            return publicKeyU2F;
         }
 
         public static byte[] ParseSigData(ReadOnlySpan<byte> sigData)
         {
-            /*
-             *  Ecdsa-Sig-Value  ::=  SEQUENCE  {
-             *       r     INTEGER,
-             *       s     INTEGER  } 
-             *       
-             *  From: https://docs.microsoft.com/en-us/windows/desktop/seccertenroll/about-integer
-             *  
-             *  "Integer values are encoded into a TLV triplet that begins with a Tag value of 0x02. 
-             *  The Value field of the TLV triplet contains the encoded integer if it is positive, 
-             *  or its two's complement if it is negative. If the integer is positive but the high 
-             *  order bit is set to 1, a leading 0x00 is added to the content to indicate that the
-             *  number is not negative."
-             *  
-             */
+
             if (sigData.IsEmpty || (sigData.Length > Math.Pow(2, 1008))) return null;
 
             var ms = new System.IO.MemoryStream(sigData.ToArray());
@@ -250,6 +396,80 @@ namespace Fido2NetLib
                 offset += len;
             }
             return result;
+        }
+        public static byte[] SigFromEcDsaSig(byte[] ecDsaSig)
+        {
+            /*
+             *  Ecdsa-Sig-Value  ::=  SEQUENCE  {
+             *       r     INTEGER,
+             *       s     INTEGER  } 
+             *       
+             *  From: https://docs.microsoft.com/en-us/windows/desktop/seccertenroll/about-integer
+             *  
+             *  "Integer values are encoded into a TLV triplet that begins with a Tag value of 0x02. 
+             *  The Value field of the TLV triplet contains the encoded integer if it is positive, 
+             *  or its two's complement if it is negative. If the integer is positive but the high 
+             *  order bit is set to 1, a leading 0x00 is added to the content to indicate that the
+             *  number is not negative."
+             *  
+             */
+            if (null == ecDsaSig || 0 == ecDsaSig.Length || ecDsaSig.Length > Math.Pow(2, 1008)) throw new Fido2VerificationException("Invalid ECDsa signature value");
+            var offset = 0;
+            var uint16Buffer = new byte[2];
+            var derSequence = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == derSequence || 0x30 != derSequence[0]) throw new Fido2VerificationException("ECDsa signature not a valid DER sequence");
+            var dataLen = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == dataLen) throw new Fido2VerificationException("ECDsa signature has invalid length");
+            var longForm = (dataLen[0] > 0x7f);
+            var longLen = 0;
+            if (true == longForm)
+            {
+                var longLenByte = GetSizedByteArray(ecDsaSig, ref offset, 1);
+                if (null == longLenByte) throw new Fido2VerificationException("ECDsa signature has invalid long form length");
+                Buffer.BlockCopy(longLenByte, 0, uint16Buffer, 0, 1); 
+                longLen = BitConverter.ToUInt16(uint16Buffer);
+                longLen &= (1 << 7);
+            }
+
+            // Get R value
+            var derInt = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("ECDsa signature R sequence does not contain integer value"); // DER INTEGER
+            var rLenByte = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == rLenByte) throw new Fido2VerificationException("ECDsa signature R integer size invalid");
+            Buffer.BlockCopy(rLenByte, 0, uint16Buffer, 0, 1);
+            var rLen = BitConverter.ToUInt16(uint16Buffer);
+            if (false == longForm)
+            {
+                if ((0x00 == ecDsaSig[offset]) && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
+                {
+                    offset++;
+                    rLen--;
+                }
+            }
+            var r = GetSizedByteArray(ecDsaSig, ref offset, rLen);
+            if (null == r) throw new Fido2VerificationException("ECDsa signature R integer value invalid");
+            // Get S value
+            derInt = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("ECDsa signature S sequence does not contain integer value"); // DER INTEGER
+            var sLenByte = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == sLenByte) throw new Fido2VerificationException("ECDsa signature S integer size invalid");
+            Buffer.BlockCopy(sLenByte, 0, uint16Buffer, 0, 1);
+            var sLen = BitConverter.ToUInt16(uint16Buffer);
+            if (false == longForm)
+            {
+                if ((0x00 == ecDsaSig[offset]) && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
+                {
+                    offset++;
+                    sLen--;
+                }
+            }
+            var s = GetSizedByteArray(ecDsaSig, ref offset, sLen);
+            if (null == s) throw new Fido2VerificationException("ECDsa signature S integer value invalid");
+            if (ecDsaSig.Length != offset) throw new Fido2VerificationException("ECDsa signature has bytes leftover after parsing R and S values");
+            var sig = new byte[rLen + sLen];
+            r.CopyTo(sig, 0);
+            s.CopyTo(sig, rLen);
+            return sig;
         }
     }
         // https://w3c.github.io/webauthn/#authenticator-data
