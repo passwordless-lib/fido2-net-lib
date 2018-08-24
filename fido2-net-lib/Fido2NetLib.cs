@@ -22,7 +22,7 @@ namespace Fido2NetLib
             /// <summary>
             /// The size of the challenges sent to the client
             /// </summary>
-            public int ChallengeSize { get; set; } = 64;
+            public int ChallengeSize { get; set; } = 16;
 
             /// <summary>
             /// The effetive domain of the RP. Should be unique and will be used as the identity for the RP.
