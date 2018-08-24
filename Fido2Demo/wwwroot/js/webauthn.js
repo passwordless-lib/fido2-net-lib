@@ -387,3 +387,7 @@ function showSuccessAlert(msg) {
 function hideErrorAlert() {
     $("#user-alert").hide();
 }
+
+if (window.location.protocol !== "https:") {
+    showErrorAlert("Please use HTTPS");
+}

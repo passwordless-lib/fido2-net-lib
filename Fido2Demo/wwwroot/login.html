@@ -1,84 +1,84 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 
-    <head>
-        <title>WebAuthn.io</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<head>
+    <title>WebAuthn.io</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-        <script type="text/javascript" src="/js/webauthn.js"></script>
-        <script type="text/javascript" src="/js/cbor.js"></script>
-        <script type="text/javascript" src="/js/base64.js"></script>
-        <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
-        
-        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>        
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>        
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
 
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.1/sweetalert2.min.css" />
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">        
-        <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
-    </head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.1/sweetalert2.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
+</head>
 
-    <body>
-        <div class="container">
-            <div class="login-wrapper">
-                <form class="form-signin mb-">
-                    <h2 class="form-signin-heading text-center">WebAuthn.io</h2>                    
-                    <br>
-                    <p class="">
-                        This site can be used to test the <a href="https://www.w3.org/TR/webauthn/">WebAuthn spec</a> on the Chrome, Firefox, and Edge browsers.
-                        Currently, the WebAuthn spec supports credential creation and assertion best using U2F Token, like those provided by Yubico and Feitian.
-                        The code for this demo can be found at the <a href="https://github.com/abergs/fido2-net-lib">Fido2.net-lib repo</a> and the original source <a href="https://github.com/duo-labs/webauthn">here</a>.
-                    </p>                    
-                    <p>
-                        To see what's happening under the hood when you create a test user and login using WebAuthn below, you can open your web browser's console and
-                        see the output of the necessary credential objects being used.
-                    </p>
-                    <br>                    
-                    <div class="row" id="inputEmailRow">
-                        <div class="mx-auto">
-                            <div class="input-group">
-                                <input type="text" class="form-control" placeholder="Username" autofocus aria-label="email" id="input-email">
-                                <div class="input-group-append">
-                                    <span class="input-group-text" id="email-site">@example.com</span>
-                                </div>
-                            </div>                
-                        </div>                            
-                    </div>
-                    <br>
-                    <div class="row" id="inputAttestation"> 
-                        <div class="mx-auto"> 
-                            <div class="input-group"> 
-                                <div class="input-group-prepend">
-                                    <label class="input-group-text" for="attestationType">
-                                        Attestation Type
-                                    </label>
-                                </div>
-                                <select class="custom-select" id="select-attestation">                                    
-                                    <option selected value="none">None</option>
-                                    <option value="indirect">Indirect</option>
-                                    <option value="direct">Direct</option>
-                                </select>
+<body>
+    <div class="container">
+        <div class="login-wrapper">
+            <form class="form-signin mb-">
+                <h2 class="form-signin-heading text-center">WebAuthn.io</h2>
+                <br>
+                <p class="">
+                    This site can be used to test the <a href="https://www.w3.org/TR/webauthn/">WebAuthn spec</a> on the Chrome, Firefox, and Edge browsers.
+                    Currently, the WebAuthn spec supports credential creation and assertion best using U2F Token, like those provided by Yubico and Feitian.
+                    The code for this demo can be found at the <a href="https://github.com/abergs/fido2-net-lib">Fido2.net-lib repo</a> and the original source <a href="https://github.com/duo-labs/webauthn">here</a>.
+                </p>
+                <p>
+                    To see what's happening under the hood when you create a test user and login using WebAuthn below, you can open your web browser's console and
+                    see the output of the necessary credential objects being used.
+                </p>
+                <br>
+                <div class="row" id="inputEmailRow">
+                    <div class="mx-auto">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Username" autofocus aria-label="email" id="input-email">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="email-site">@example.com</span>
                             </div>
                         </div>
-                    </div>                   
-                </form>
-                <div class="alert-wrapper" id="user-alert" style="display:none">
-                    <div class="alert alert-danger" id="alert-msg" role="alert">
-                        <strong>Holy guacamole!</strong> You should check in on some of those fields below.
                     </div>
                 </div>
-                <div class="text-center buttons">                    
-                    <button class="btn btn-lg btn-primary" type="button" onclick="makeCredential()">Register a User/Credential</button>
-                    <button class="btn btn-lg btn-primary" type="button" onclick="getAssertion()">Login with Credential</button>
-                   
-                </div>  
+                <br>
+                <div class="row" id="inputAttestation">
+                    <div class="mx-auto">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="attestationType">
+                                    Attestation Type
+                                </label>
+                            </div>
+                            <select class="custom-select" id="select-attestation">
+                                <option selected value="none">None</option>
+                                <option value="indirect">Indirect</option>
+                                <option value="direct">Direct</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="alert-wrapper" id="user-alert" style="display:none">
+                <div class="alert alert-danger" id="alert-msg" role="alert">
+                    <strong>Holy guacamole!</strong> You should check in on some of those fields below.
+                </div>
             </div>
-            <div class="footer text-center fixed-bottom">
-                <span>Made with <3 by <a href="https://twitter.com/duo_labs">Duo Labs</a></span>
+            <div class="text-center buttons">
+                <button class="btn btn-lg btn-primary" type="button" onclick="makeCredential()">Register a User/Credential</button>
+                <button class="btn btn-lg btn-primary" type="button" onclick="getAssertion()">Login with Credential</button>
+
             </div>
         </div>
-    </body>
+        <div class="footer text-center fixed-bottom">
+            <span>Made with <3 by <a href="https://twitter.com/duo_labs">Duo Labs</a></span>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/js/cbor.js"></script>
+    <script type="text/javascript" src="/js/base64.js"></script>
+    <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/js/webauthn.js"></script>
+</body>
 
 </html>
