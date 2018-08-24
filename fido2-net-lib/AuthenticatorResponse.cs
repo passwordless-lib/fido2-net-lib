@@ -28,14 +28,14 @@ namespace Fido2NetLib
                 }
                 else throw;
             }
-            
+
             if (null == response) throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
             Type = response.Type;
             Challenge = response.Challenge;
             Origin = response.Origin;
             TokenBinding = response.TokenBinding;
 
-            }
+        }
 
         [JsonConstructor]
         private AuthenticatorResponse()
@@ -61,7 +61,7 @@ namespace Fido2NetLib
 
             if (Origin != expectedOrigin) throw new Fido2VerificationException("Origin not equal to original origin");
 
-            if (Type != "webauthn.create" && Type != "webauthn.get") throw new Fido2VerificationException("Type not equal to webauthn.create or webauthn.get");
+            if (Type != "webauthn.create" && Type != "webauthn.get") throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
 
             if (TokenBinding != null)
             {
