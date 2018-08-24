@@ -57,11 +57,11 @@ namespace Fido2NetLib
         {
             if (null == Challenge) throw new Fido2VerificationException("Challenge cannot be null");
             // verify challenge is same
-            if (!Challenge.SequenceEqual(originalChallenge)) throw new Fido2VerificationException();
+            if (!Challenge.SequenceEqual(originalChallenge)) throw new Fido2VerificationException("Challenge not equal to original challenge");
 
-            if (Origin != expectedOrigin) throw new Fido2VerificationException();
+            if (Origin != expectedOrigin) throw new Fido2VerificationException("Origin not equal to original origin");
 
-            if (Type != "webauthn.create" && Type != "webauthn.get") throw new Fido2VerificationException();
+            if (Type != "webauthn.create" && Type != "webauthn.get") throw new Fido2VerificationException("Type not equal to webauthn.create or webauthn.get");
 
             if (TokenBinding != null)
             {
