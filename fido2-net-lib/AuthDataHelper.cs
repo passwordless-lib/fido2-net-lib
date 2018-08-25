@@ -122,7 +122,6 @@ namespace Fido2NetLib
         }
         public static bool VerifySigWithCoseKey(byte[] data, PeterO.Cbor.CBORObject coseKey, byte[] sig)
         {
-            var success = false;
             // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
             var coseKty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
             var coseAlg = coseKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
@@ -152,7 +151,7 @@ namespace Fido2NetLib
                 });
                 var ecsig = SigFromEcDsaSig(sig);
                 // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
-                success = cng.VerifyData(data, ecsig, algMap[coseAlg]);
+                return cng.VerifyData(data, ecsig, algMap[coseAlg]);
             }
             else if (3 == coseKty)
             {
@@ -166,13 +165,12 @@ namespace Fido2NetLib
                     );
 
                 if (FidoAlg.Contains("RSASSA_PKCSV15"))
-                    success = rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pkcs1);
+                    return rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pkcs1);
                 if (FidoAlg.Contains("RSASSA_PSS"))
-                    success = rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pss);
+                    return rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pss);
             }
             else throw new Fido2VerificationException("Missing or unknown keytype");
-
-            return success;
+            return false;
         }
         public static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
         {
@@ -266,8 +264,7 @@ namespace Fido2NetLib
             var x = COSEKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
             var y = COSEKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
             var publicKeyU2F = new byte[1] { 0x4 }; // uncompressed
-            publicKeyU2F = publicKeyU2F.Concat(x).Concat(y).ToArray();
-            return publicKeyU2F;
+            return  publicKeyU2F.Concat(x).Concat(y).ToArray();
         }
 
         public static byte[] ParseSigData(ReadOnlySpan<byte> sigData)

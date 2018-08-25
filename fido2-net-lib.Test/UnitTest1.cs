@@ -5,9 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using Xunit;
 using System.Threading.Tasks;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace fido2_net_lib.Test
 {
@@ -240,11 +243,30 @@ namespace fido2_net_lib.Test
             Assert.True(AuthDataHelper.IsUserPresent(ad));
             Assert.False(AuthDataHelper.IsUserVerified(ad));
         }
-        //public void TestHasCorrentAAguid()
-        //{
-        //    var expectedAaguid = new Uint8Array([
-        //    0x42, 0x38, 0x32, 0x45, 0x44, 0x37, 0x33, 0x43, 0x38, 0x46, 0x42, 0x34, 0x45, 0x35, 0x41, 0x32
-        //]).buffer;
-        //}
+        [Fact]
+        public async Task TestMdsParsing()
+        {
+            Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+            var toc2 = File.ReadAllText("./mds2Toc.jwt");
+            X509Certificate2 cert = new X509Certificate2("./mdsSigning.cer");
+            var pub = (ECDsaCng)cert.GetECDsaPublicKey();
+            var ecdsaSecurityKey = new ECDsaSecurityKey(pub);
+            var validationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = false,
+                IssuerSigningKey = ecdsaSecurityKey,
+                ValidateLifetime = false,
+                ValidateAudience = false
+            };
+            SecurityToken validatedToken;
+            var principal = new JwtSecurityTokenHandler().ValidateToken(toc2, validationParameters, out validatedToken);
+        }
+    //public void TestHasCorrentAAguid()
+    //{
+    //    var expectedAaguid = new Uint8Array([
+    //    0x42, 0x38, 0x32, 0x45, 0x44, 0x37, 0x33, 0x43, 0x38, 0x46, 0x42, 0x34, 0x45, 0x35, 0x41, 0x32
+    //]).buffer;
+    //}
     }
 }
