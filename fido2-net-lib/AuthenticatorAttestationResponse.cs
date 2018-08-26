@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -206,12 +207,46 @@ namespace Fido2NetLib
                     break;
 
                 case "android-key":
-                    // TODO: Implement Android Key attestation validation
-                    throw new Fido2VerificationException("Not yet implemented");
-
+                    // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
+                    if (0 == AttestionObject.AttStmt.Keys.Count || 0 == AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
+                    if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid packed attestation signature");
+                    if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type) throw new Fido2VerificationException("Invalid packed attestation algorithm");
+                    // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
+                    // using the attestation public key in attestnCert with the algorithm specified in alg
+                    byte[] androidKeyData = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
+                    AttestionObject.AuthData.CopyTo(androidKeyData, 0);
+                    hashedClientDataJson.CopyTo(androidKeyData, AttestionObject.AuthData.Length);
+                    var androidKeyCert = new X509Certificate2(x5c.Values.First().GetByteString());
+                    var androidKeyPubKey = (ECDsaCng)androidKeyCert.GetECDsaPublicKey(); // attestation public key
+                    if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type || false == AuthDataHelper.algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
+                    if (true != androidKeyPubKey.VerifyData(androidKeyData, AuthDataHelper.SigFromEcDsaSig(sig.GetByteString()), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid full packed signature");
+                    // TODO: erify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData
+                    // if (true != androidKeyPubKey.Key.Equals(credentialPublicKeyBytes)) throw new Fido2VerificationException("mismatch");
+                    // TODO:  Verify that in the attestation certificate extension data:
+                    // 1. The value of the attestationChallenge field is identical to clientDataHash.
+                    // 2. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID.
+                    // 3. The value in the AuthorizationList.origin field is equal to KM_TAG_GENERATED.
+                    // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
+                    break;
                 case "android-safetynet":
-                    // TODO: Implement Android SafetyNet attestation validation
-                    throw new Fido2VerificationException("Not yet implemented");
+                    var ver = AttestionObject.AttStmt["ver"].AsString();
+                    var response = AttestionObject.AttStmt["response"].GetByteString();
+                    var jwtToken = new JwtSecurityToken(Encoding.UTF8.GetString(response));
+                    byte[] androidSafetyNetData = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
+                    var nonce = "";
+                    // TODO: parse x5c header out of jwtToken.Header and make sure attestation cert subject matches "attest.android.com"
+                    foreach (var claim in jwtToken.Claims)
+                    {
+                        if (("nonce" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#string" == claim.ValueType) && (0 != claim.Value.Length)) nonce = claim.Value;
+                        if (("ctsProfileMatch" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#boolean" == claim.ValueType))
+                        {
+                            if ("true" != claim.Value) throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");
+                        }
+                    }
+                    AttestionObject.AuthData.CopyTo(androidSafetyNetData, 0);
+                    hashedClientDataJson.CopyTo(androidSafetyNetData, AttestionObject.AuthData.Length);
+                    if (!AuthDataHelper.GetHasher(HashAlgorithmName.SHA256).ComputeHash(androidSafetyNetData).SequenceEqual(Convert.FromBase64String(nonce))) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+                    break;
 
                 case "fido-u2f":
 
