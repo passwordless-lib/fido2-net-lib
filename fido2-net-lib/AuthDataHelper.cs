@@ -135,8 +135,6 @@ namespace Fido2NetLib
             }
             else if (2 == coseKty)
             {
-                var x = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
-                var y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
                 var curve = ECCurve.NamedCurves.nistP256;
                 if (FidoAlg.Equals("ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW")) curve = ECCurve.NamedCurves.nistP384;
                 if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) curve = ECCurve.NamedCurves.nistP521;
@@ -145,8 +143,8 @@ namespace Fido2NetLib
                     Curve = curve,
                     Q = new ECPoint
                     {
-                        X = x,
-                        Y = y
+                        X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
+                        Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
                     }
                 });
                 if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) System.Diagnostics.Debug.WriteLine(BitConverter.ToString(sig).Replace("-", ""));
@@ -164,7 +162,7 @@ namespace Fido2NetLib
                         Modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
                         Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
                     }
-                    );
+                );
 
                 if (FidoAlg.Contains("RSASSA_PKCSV15"))
                     return rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pkcs1);
@@ -279,70 +277,6 @@ namespace Fido2NetLib
             return  publicKeyU2F.Concat(x).Concat(y).ToArray();
         }
 
-        public static byte[] GetRpIdHash(ReadOnlySpan<byte> authData)
-        {
-            // todo: Switch to spans
-            return authData.Slice(0, 32).ToArray();
-        }
-
-        public static bool IsUserPresent(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x01) != 0;
-        }
-
-        public static bool HasExtensions(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x80) != 0;
-        }
-
-        public static bool HasAttested(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x40) != 0;
-        }
-
-        public static bool IsUserVerified(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x04) != 0;
-        }
-
-        public static uint GetSignCount(ReadOnlySpan<byte> ad)
-        {
-            var bytes = ad.Slice(33, 4);
-            var reversebytes = bytes.ToArray().Reverse().ToArray();
-            return BitConverter.ToUInt32(reversebytes);
-            //return BitConverter.ToUInt32(ad.Slice(33, 4),);
-            //using (var ms = new MemoryStream(ad.ToArray()))
-            //using (var br = new BinaryReader(ms))
-            //{
-            //    var pos = br.BaseStream.Seek(33, SeekOrigin.Current);
-            //    var x = br.ReadUInt32();
-            //    // https://w3c.github.io/webauthn/#attestedcredentialdata
-            //    
-            //    return x;
-            //}
-        }
-
-        public static (Memory<byte> aaguid, Memory<byte> credId, Memory<byte> credentialPublicKey) GetAttestionData(Memory<byte> ad)
-        {
-            int offset = 37; // https://w3c.github.io/webauthn/#attestedcredentialdata
-            Memory<byte> aaguid = null;
-            if ((offset + 16) <= ad.Length)
-            {
-                aaguid = GetSizedByteArray(ad, ref offset, 16);
-            }
-            var credId = GetSizedByteArray(ad, ref offset);
-            var hasExtensions = AuthDataHelper.HasExtensions(ad.Span);
-            Memory<byte> credentialPublicKey = null;
-            if ((ad.Length - offset) > 0) credentialPublicKey = GetSizedByteArray(ad, ref offset, (ushort)(ad.Length - offset)).ToArray();
-
-            if (true == aaguid.IsEmpty || 
-                null == credId || 
-                true == credentialPublicKey.IsEmpty)
-                throw new Fido2VerificationException("Malformed attestation data");
-
-            return (aaguid, credId, credentialPublicKey);
-        }
-
         public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset, UInt16 len = 0)
         {
             if ((0 == len) && ((offset + 2) <= ab.Length))
@@ -390,7 +324,7 @@ namespace Fido2NetLib
 
             return null;
         }
-        public static byte[] SigValue(byte[] ecDsaSig, ref int offset, bool longForm)
+        public static byte[] GetEcDsaSigValue(byte[] ecDsaSig, ref int offset, bool longForm)
         {
             var derInt = GetSizedByteArray(ecDsaSig, ref offset, 1);
             if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("ECDsa signature coordinate sequence does not contain DER integer value"); // DER INTEGER
@@ -434,8 +368,8 @@ namespace Fido2NetLib
             var dataLen = GetSizedByteArray(ecDsaSig, ref offset, 1);
             if (null == dataLen) throw new Fido2VerificationException("ECDsa signature has invalid length");
             // long form, first byte, bit 8 is set, rest of bits indicate the length of the data length
-            var longForm = (0 != (dataLen[0] & (1 << 7)));
             // so if bit 8 is on...
+            var longForm = (0 != (dataLen[0] & (1 << 7)));
             if (true == longForm)
             {
                 // rest of bits indicate the length of the data length
@@ -451,11 +385,11 @@ namespace Fido2NetLib
             }
 
             // Get R value
-            var r = SigValue(ecDsaSig, ref offset, longForm);
+            var r = GetEcDsaSigValue(ecDsaSig, ref offset, longForm);
             if (null == r) throw new Fido2VerificationException("ECDsa signature R integer value invalid");
             
             // Get S value
-            var s = SigValue(ecDsaSig, ref offset, longForm);
+            var s = GetEcDsaSigValue(ecDsaSig, ref offset, longForm);
             if (null == s) throw new Fido2VerificationException("ECDsa signature S integer value invalid");
 
             // make sure we are at the end
@@ -493,11 +427,11 @@ namespace Fido2NetLib
         public AttestedCredentialData AttData { get; private set; }
         public byte[] Extensions { get; private set; }
         public bool UserPresent { get { return ((Flags & (1 << 0)) != 0); } }
-        public bool Reserved1 { get { return ((Flags & (1 << 1)) != 0); } }
+        //public bool Reserved1 { get { return ((Flags & (1 << 1)) != 0); } }
         public bool UserVerified { get { return ((Flags & (1 << 2)) != 0); } }
-        public bool Reserved2 { get { return ((Flags & (1 << 3)) != 0); } }
-        public bool Reserved3 { get { return ((Flags & (1 << 4)) != 0); } }
-        public bool Reserved4 { get { return ((Flags & (1 << 5)) != 0); } }
+        //public bool Reserved2 { get { return ((Flags & (1 << 3)) != 0); } }
+        //public bool Reserved3 { get { return ((Flags & (1 << 4)) != 0); } }
+        //public bool Reserved4 { get { return ((Flags & (1 << 5)) != 0); } }
         public bool AttestedCredentialDataPresent { get { return ((Flags & (1 << 6)) != 0); } }
         public bool ExtensionsPresent { get { return ((Flags & (1 << 7)) != 0); } }
     }
