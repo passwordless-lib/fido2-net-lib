@@ -135,8 +135,6 @@ namespace Fido2NetLib
             }
             else if (2 == coseKty)
             {
-                var x = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
-                var y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
                 var curve = ECCurve.NamedCurves.nistP256;
                 if (FidoAlg.Equals("ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW")) curve = ECCurve.NamedCurves.nistP384;
                 if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) curve = ECCurve.NamedCurves.nistP521;
@@ -145,11 +143,13 @@ namespace Fido2NetLib
                     Curve = curve,
                     Q = new ECPoint
                     {
-                        X = x,
-                        Y = y
+                        X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
+                        Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
                     }
                 });
+                if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) System.Diagnostics.Debug.WriteLine(BitConverter.ToString(sig).Replace("-", ""));
                 var ecsig = SigFromEcDsaSig(sig);
+                if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) System.Diagnostics.Debug.WriteLine(BitConverter.ToString(ecsig).Replace("-", ""));
                 // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
                 return cng.VerifyData(data, ecsig, algMap[coseAlg]);
             }
@@ -162,7 +162,7 @@ namespace Fido2NetLib
                         Modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
                         Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
                     }
-                    );
+                );
 
                 if (FidoAlg.Contains("RSASSA_PKCSV15"))
                     return rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pkcs1);
@@ -206,7 +206,6 @@ namespace Fido2NetLib
         }
         public static string EKUFromAttnCertExts(X509ExtensionCollection exts)
         {
-            var EKU = new byte[0];
             foreach (var ext in exts)
             {
                 if (ext.Oid.Value.Equals("2.5.29.37")) // EKU
@@ -228,6 +227,17 @@ namespace Fido2NetLib
                 }
             }
             return true;
+        }
+        public static byte[] AttestationExtensionBytes(X509ExtensionCollection exts)
+        {
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("1.3.6.1.4.1.11129.2.1.17")) // AttestionRecordOid
+                {
+                    return ext.RawData;
+                }
+            }
+            return null;
         }
 
         public static int U2FTransportsFromAttnCert(X509ExtensionCollection exts)
@@ -267,118 +277,6 @@ namespace Fido2NetLib
             return  publicKeyU2F.Concat(x).Concat(y).ToArray();
         }
 
-        public static byte[] ParseSigData(ReadOnlySpan<byte> sigData)
-        {
-
-            if (sigData.IsEmpty || (sigData.Length > Math.Pow(2, 1008))) return null;
-
-            var ms = new System.IO.MemoryStream(sigData.ToArray());
-            if (0x30 != ms.ReadByte()) throw new Fido2VerificationException("Invalid DER sequence"); // DER SEQUENCE
-            var dataLen = ms.ReadByte(); // length of r + s
-            bool longForm = (dataLen > 127);
-            var longLen = 0;
-            if (true == longForm)
-            {
-                longLen = ms.ReadByte();
-                var mask = 1 << 7;
-                longLen &= ~mask;
-            }
-            if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
-            var rLen = ms.ReadByte(); // length of r
-            if (false == longForm)
-            {
-                if (0 != (rLen % 8)) // must be on 8 byte boundary
-                {
-                    if (0 == ms.ReadByte()) rLen--; // strip leading 0x00
-                    else throw new Fido2VerificationException();
-                }
-            }
-            var r = new byte[rLen]; // r
-            ms.Read(r, 0, r.Length);
-
-            if (0x2 != ms.ReadByte()) throw new Fido2VerificationException(); // DER INTEGER
-            var sLen = ms.ReadByte(); // length of s
-            if (false == longForm)
-            {
-                if (0 != (sLen % 8)) // must be on 8 byte boundary
-                {
-                    if (0 == ms.ReadByte()) sLen--; // strip leading 0x00
-                        else throw new Fido2VerificationException();
-                }
-            }
-            var s = new byte[sLen]; // s
-            ms.Read(s, 0, s.Length);
-
-            var sig = new byte[r.Length + s.Length];
-            r.CopyTo(sig, 0);
-            s.CopyTo(sig, r.Length);
-            return sig;
-        }
-
-        public static byte[] GetRpIdHash(ReadOnlySpan<byte> authData)
-        {
-            // todo: Switch to spans
-            return authData.Slice(0, 32).ToArray();
-        }
-
-        public static bool IsUserPresent(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x01) != 0;
-        }
-
-        public static bool HasExtensions(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x80) != 0;
-        }
-
-        public static bool HasAttested(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x40) != 0;
-        }
-
-        public static bool IsUserVerified(ReadOnlySpan<byte> authData)
-        {
-            return (authData[32] & 0x04) != 0;
-        }
-
-        public static uint GetSignCount(ReadOnlySpan<byte> ad)
-        {
-            var bytes = ad.Slice(33, 4);
-            var reversebytes = bytes.ToArray().Reverse().ToArray();
-            return BitConverter.ToUInt32(reversebytes);
-            //return BitConverter.ToUInt32(ad.Slice(33, 4),);
-            //using (var ms = new MemoryStream(ad.ToArray()))
-            //using (var br = new BinaryReader(ms))
-            //{
-            //    var pos = br.BaseStream.Seek(33, SeekOrigin.Current);
-            //    var x = br.ReadUInt32();
-            //    // https://w3c.github.io/webauthn/#attestedcredentialdata
-            //    
-            //    return x;
-            //}
-        }
-
-        public static (Memory<byte> aaguid, Memory<byte> credId, Memory<byte> credentialPublicKey) GetAttestionData(Memory<byte> ad)
-        {
-            int offset = 37; // https://w3c.github.io/webauthn/#attestedcredentialdata
-            Memory<byte> aaguid = null;
-            if ((offset + 16) <= ad.Length)
-            {
-                aaguid = GetSizedByteArray(ad, ref offset, 16);
-            }
-            var credId = GetSizedByteArray(ad, ref offset);
-            var hasExtensions = AuthDataHelper.HasExtensions(ad.Span);
-            Memory<byte> credentialPublicKey = null;
-            if ((ad.Length - offset) > 0) credentialPublicKey = GetSizedByteArray(ad, ref offset, (ushort)(ad.Length - offset)).ToArray();
-
-            if (true == aaguid.IsEmpty || 
-                null == credId || 
-                true == credentialPublicKey.IsEmpty)
-                throw new Fido2VerificationException("Malformed attestation data");
-
-            return (aaguid, credId, credentialPublicKey);
-        }
-
         public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset, UInt16 len = 0)
         {
             if ((0 == len) && ((offset + 2) <= ab.Length))
@@ -394,78 +292,113 @@ namespace Fido2NetLib
             }
             return result;
         }
-        public static byte[] SigFromEcDsaSig(byte[] ecDsaSig)
+        public static byte[] GetAttestionChallenge(byte[] attExtBytes)
         {
-            /*
-             *  Ecdsa-Sig-Value  ::=  SEQUENCE  {
-             *       r     INTEGER,
-             *       s     INTEGER  } 
-             *       
-             *  From: https://docs.microsoft.com/en-us/windows/desktop/seccertenroll/about-integer
-             *  
-             *  "Integer values are encoded into a TLV triplet that begins with a Tag value of 0x02. 
-             *  The Value field of the TLV triplet contains the encoded integer if it is positive, 
-             *  or its two's complement if it is negative. If the integer is positive but the high 
-             *  order bit is set to 1, a leading 0x00 is added to the content to indicate that the
-             *  number is not negative."
-             *  
-             */
-            if (null == ecDsaSig || 0 == ecDsaSig.Length || ecDsaSig.Length > Math.Pow(2, 1008)) throw new Fido2VerificationException("Invalid ECDsa signature value");
+            System.Diagnostics.Debug.WriteLine(BitConverter.ToString(attExtBytes).Replace("-", ""));
+            if (null == attExtBytes || 0 == attExtBytes.Length || attExtBytes.Length > Math.Pow(2, 1008)) throw new Fido2VerificationException("Invalid attExtBytes signature value");
             var offset = 0;
             var uint16Buffer = new byte[2];
-            var derSequence = GetSizedByteArray(ecDsaSig, ref offset, 1);
-            if (null == derSequence || 0x30 != derSequence[0]) throw new Fido2VerificationException("ECDsa signature not a valid DER sequence");
-            var dataLen = GetSizedByteArray(ecDsaSig, ref offset, 1);
-            if (null == dataLen) throw new Fido2VerificationException("ECDsa signature has invalid length");
+            var derSequence = GetSizedByteArray(attExtBytes, ref offset, 1);
+            if (null == derSequence || 0x30 != derSequence[0]) throw new Fido2VerificationException("attExtBytes signature not a valid DER sequence");
+            var dataLen = GetSizedByteArray(attExtBytes, ref offset, 1);
+            if (null == dataLen) throw new Fido2VerificationException("attExtBytes signature has invalid length");
             var longForm = (dataLen[0] > 0x7f);
             var longLen = 0;
             if (true == longForm)
             {
-                var longLenByte = GetSizedByteArray(ecDsaSig, ref offset, 1);
-                if (null == longLenByte) throw new Fido2VerificationException("ECDsa signature has invalid long form length");
-                Buffer.BlockCopy(longLenByte, 0, uint16Buffer, 0, 1); 
+                var longLenByte = GetSizedByteArray(attExtBytes, ref offset, 1);
+                if (null == longLenByte) throw new Fido2VerificationException("attExtBytes signature has invalid long form length");
+                Buffer.BlockCopy(longLenByte, 0, uint16Buffer, 0, 1);
                 longLen = BitConverter.ToUInt16(uint16Buffer);
                 longLen &= (1 << 7);
             }
+            // attestationVersion          
+            var derInt = GetSizedByteArray(attExtBytes, ref offset, 1);
+            if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("attExtBytes sequence does not contain integer value"); // DER INTEGER
+            var lenVersion = GetSizedByteArray(attExtBytes, ref offset, 1);
+            if (null == lenVersion) throw new Fido2VerificationException("attExtBytes version length invalid");
+            Buffer.BlockCopy(lenVersion, 0, uint16Buffer, 0, 1);
+            var version = GetSizedByteArray(attExtBytes, ref offset, BitConverter.ToUInt16(uint16Buffer));
+
+            // attestationSecurityLevel   
+
+            return null;
+        }
+        public static byte[] GetEcDsaSigValue(byte[] ecDsaSig, ref int offset, bool longForm)
+        {
+            var derInt = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("ECDsa signature coordinate sequence does not contain DER integer value"); // DER INTEGER
+            var lenByte = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == lenByte) throw new Fido2VerificationException("ECDsa signature coordinate integer size invalid");
+            var len = (UInt16) lenByte[0];
+            if (false == longForm)
+            {
+                /*
+                 *  Ecdsa-Sig-Value  ::=  SEQUENCE  {
+                 *       r     INTEGER,
+                 *       s     INTEGER  } 
+                 *       
+                 *  From: https://docs.microsoft.com/en-us/windows/desktop/seccertenroll/about-integer
+                 *  
+                 *  "Integer values are encoded into a TLV triplet that begins with a Tag value of 0x02. 
+                 *  The Value field of the TLV triplet contains the encoded integer if it is positive, 
+                 *  or its two's complement if it is negative. If the integer is positive but the high 
+                 *  order bit is set to 1, a leading 0x00 is added to the content to indicate that the
+                 *  number is not negative."
+                 *  
+                 */
+                if ((0x00 == ecDsaSig[offset]) && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
+                {
+                    offset++;
+                    len--;
+                }
+            }
+            return GetSizedByteArray(ecDsaSig, ref offset, len);
+        }
+        public static byte[] SigFromEcDsaSig(byte[] ecDsaSig)
+        {
+            // sanity check of input data
+            if (null == ecDsaSig || 0 == ecDsaSig.Length || ecDsaSig.Length > UInt16.MaxValue) throw new Fido2VerificationException("Invalid ECDsa signature value");
+            // first byte should be DER sequence marker
+            var offset = 0;
+            var derSequence = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == derSequence || 0x30 != derSequence[0]) throw new Fido2VerificationException("ECDsa signature not a valid DER sequence");
+            // two forms of length, short form and long form
+            // short form, one byte, bit 8 not set, rest of the bits indicate data length
+            var dataLen = GetSizedByteArray(ecDsaSig, ref offset, 1);
+            if (null == dataLen) throw new Fido2VerificationException("ECDsa signature has invalid length");
+            // long form, first byte, bit 8 is set, rest of bits indicate the length of the data length
+            // so if bit 8 is on...
+            var longForm = (0 != (dataLen[0] & (1 << 7)));
+            if (true == longForm)
+            {
+                // rest of bits indicate the length of the data length
+                var longLen = (dataLen[0] & ~(1 << 7));
+                // sanity check of input data
+                if (UInt16.MinValue > longLen || UInt16.MaxValue < longLen) throw new Fido2VerificationException("ECDsa signature has invalid long form length");
+                // total length of remaining data
+                var longLenByte = GetSizedByteArray(ecDsaSig, ref offset, (UInt16) longLen);
+                if (null == longLenByte) throw new Fido2VerificationException("ECDsa signature has invalid long form length");
+                longLen = (UInt16)longLenByte[0];
+                // sanity check the length
+                if (ecDsaSig.Length != (offset + longLen)) throw new Fido2VerificationException("ECDsa signature has invalid long form length");
+            }
 
             // Get R value
-            var derInt = GetSizedByteArray(ecDsaSig, ref offset, 1);
-            if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("ECDsa signature R sequence does not contain integer value"); // DER INTEGER
-            var rLenByte = GetSizedByteArray(ecDsaSig, ref offset, 1);
-            if (null == rLenByte) throw new Fido2VerificationException("ECDsa signature R integer size invalid");
-            Buffer.BlockCopy(rLenByte, 0, uint16Buffer, 0, 1);
-            var rLen = BitConverter.ToUInt16(uint16Buffer);
-            if (false == longForm)
-            {
-                if ((0x00 == ecDsaSig[offset]) && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
-                {
-                    offset++;
-                    rLen--;
-                }
-            }
-            var r = GetSizedByteArray(ecDsaSig, ref offset, rLen);
+            var r = GetEcDsaSigValue(ecDsaSig, ref offset, longForm);
             if (null == r) throw new Fido2VerificationException("ECDsa signature R integer value invalid");
+            
             // Get S value
-            derInt = GetSizedByteArray(ecDsaSig, ref offset, 1);
-            if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("ECDsa signature S sequence does not contain integer value"); // DER INTEGER
-            var sLenByte = GetSizedByteArray(ecDsaSig, ref offset, 1);
-            if (null == sLenByte) throw new Fido2VerificationException("ECDsa signature S integer size invalid");
-            Buffer.BlockCopy(sLenByte, 0, uint16Buffer, 0, 1);
-            var sLen = BitConverter.ToUInt16(uint16Buffer);
-            if (false == longForm)
-            {
-                if ((0x00 == ecDsaSig[offset]) && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
-                {
-                    offset++;
-                    sLen--;
-                }
-            }
-            var s = GetSizedByteArray(ecDsaSig, ref offset, sLen);
+            var s = GetEcDsaSigValue(ecDsaSig, ref offset, longForm);
             if (null == s) throw new Fido2VerificationException("ECDsa signature S integer value invalid");
+
+            // make sure we are at the end
             if (ecDsaSig.Length != offset) throw new Fido2VerificationException("ECDsa signature has bytes leftover after parsing R and S values");
-            var sig = new byte[rLen + sLen];
-            r.CopyTo(sig, 0);
-            s.CopyTo(sig, rLen);
+
+            // combine the coordinates and return the raw sign
+            var sig = new byte[s.Length + r.Length];
+            Buffer.BlockCopy(r, 0, sig, 0, r.Length);
+            Buffer.BlockCopy(s, 0, sig, r.Length, s.Length);
             return sig;
         }
     }
@@ -494,11 +427,11 @@ namespace Fido2NetLib
         public AttestedCredentialData AttData { get; private set; }
         public byte[] Extensions { get; private set; }
         public bool UserPresent { get { return ((Flags & (1 << 0)) != 0); } }
-        public bool Reserved1 { get { return ((Flags & (1 << 1)) != 0); } }
+        //public bool Reserved1 { get { return ((Flags & (1 << 1)) != 0); } }
         public bool UserVerified { get { return ((Flags & (1 << 2)) != 0); } }
-        public bool Reserved2 { get { return ((Flags & (1 << 3)) != 0); } }
-        public bool Reserved3 { get { return ((Flags & (1 << 4)) != 0); } }
-        public bool Reserved4 { get { return ((Flags & (1 << 5)) != 0); } }
+        //public bool Reserved2 { get { return ((Flags & (1 << 3)) != 0); } }
+        //public bool Reserved3 { get { return ((Flags & (1 << 4)) != 0); } }
+        //public bool Reserved4 { get { return ((Flags & (1 << 5)) != 0); } }
         public bool AttestedCredentialDataPresent { get { return ((Flags & (1 << 6)) != 0); } }
         public bool ExtensionsPresent { get { return ((Flags & (1 << 7)) != 0); } }
     }
