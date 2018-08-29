@@ -92,7 +92,7 @@ namespace Fido2NetLib
                 hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
                 hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
             }
-
+            
             // 9 
             // Verify that the RP ID hash in authData is indeed the SHA - 256 hash of the RP ID expected by the RP.
             if (false == authData.RpIdHash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException("Hash mismatch RPID");
@@ -134,7 +134,9 @@ namespace Fido2NetLib
             {
                 throw new Fido2VerificationException("Malformed credentialPublicKey");
             }
-
+            byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
+            Buffer.BlockCopy(AttestionObject.AuthData, 0, data, 0, AttestionObject.AuthData.Length);
+            Buffer.BlockCopy(hashedClientDataJson, 0, data, AttestionObject.AuthData.Length, hashedClientDataJson.Length);
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
@@ -169,20 +171,17 @@ namespace Fido2NetLib
                     var coseMod = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(); // modulus 
                     var coseExp = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(); // exponent
                     if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray())) throw new Fido2VerificationException("Public key mismatch");
-                    byte[] expBytes = { 0x00, 0x00, 0x00, 0x00 };
-                    Array.Copy(coseExp.Reverse().ToArray(), expBytes, coseExp.Length);
-                    if (BitConverter.ToInt32(expBytes) != pubArea.Exponent) throw new Fido2VerificationException("Public key exponent mismatch");
+                    if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent) throw new Fido2VerificationException("Public key exponent mismatch");
                     // Concatenate authenticatorData and clientDataHash to form attToBeSigned.
-                    byte[] attToBeSigned = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
-                    AttestionObject.AuthData.CopyTo(attToBeSigned, 0);
-                    hashedClientDataJson.CopyTo(attToBeSigned, AttestionObject.AuthData.Length);
                     // Validate that certInfo is valid
                     if (null == certInfo) throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
                     // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY (handled in parser)
                     // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-                    if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[alg.AsInt32()]).ComputeHash(attToBeSigned).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
+                    if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[alg.AsInt32()]).ComputeHash(data).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
                     // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-                    if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+                    // TODO: Test server processing "tpm" attestation
+                    // P-3 Send a valid ServerAuthenticatorAttestationResponse with "tpm" attestation pubArea.nameAlg is not matching algorithm used for generate attested.name, and check that server succeeds
+                    //if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
                     // If x5c is present, this indicates that the attestation type is not ECDAA
                     if (null == x5c || PeterO.Cbor.CBORType.Array != x5c.Type || 0 == x5c.Count) throw new Fido2VerificationException("Malformed x5c");
                     // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
@@ -218,21 +217,31 @@ namespace Fido2NetLib
                     if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type) throw new Fido2VerificationException("Invalid packed attestation algorithm");
                     // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                     // using the attestation public key in attestnCert with the algorithm specified in alg
-                    byte[] androidKeyData = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
-                    AttestionObject.AuthData.CopyTo(androidKeyData, 0);
-                    hashedClientDataJson.CopyTo(androidKeyData, AttestionObject.AuthData.Length);
+                    
                     var androidKeyCert = new X509Certificate2(x5c.Values.First().GetByteString());
                     var androidKeyPubKey = (ECDsaCng)androidKeyCert.GetECDsaPublicKey(); // attestation public key
                     if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type || false == AuthDataHelper.algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
-                    if (true != androidKeyPubKey.VerifyData(androidKeyData, AuthDataHelper.SigFromEcDsaSig(sig.GetByteString()), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid full packed signature");
-                    // TODO: erify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData
-                    // if (true != androidKeyPubKey.Key.Equals(credentialPublicKeyBytes)) throw new Fido2VerificationException("mismatch");
+                    if (true != androidKeyPubKey.VerifyData(data, AuthDataHelper.SigFromEcDsaSig(sig.GetByteString()), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
+                    var cng = ECDsaCng.Create(new ECParameters
+                    {
+                        Curve = ECCurve.NamedCurves.nistP256,
+                        Q = new ECPoint
+                        {
+                            X = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
+                            Y = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
+                        }
+                    });
+                    // Verify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
+                    if (true != cng.VerifyData(data, AuthDataHelper.SigFromEcDsaSig(sig.GetByteString()), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
                     // TODO:  Verify that in the attestation certificate extension data:
+                    var attExtBytes = AuthDataHelper.AttestationExtensionBytes(androidKeyCert.Extensions);
                     // 1. The value of the attestationChallenge field is identical to clientDataHash.
+                    var attestationChallenge = AuthDataHelper.GetAttestionChallenge(attExtBytes);
                     // 2. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID.
                     // 3. The value in the AuthorizationList.origin field is equal to KM_TAG_GENERATED.
                     // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
                     attnType = "Basic";
+                    var tmp = attExtBytes.ToString();
                     //trustPath = x5c;
                     break;
                 case "android-safetynet":
@@ -247,7 +256,7 @@ namespace Fido2NetLib
                         .Select(x => new X509SecurityKey(
                             new X509Certificate2(Convert.FromBase64String(x))))
                         .ToArray();
-
+                    if ((null == keys) ||(0 == keys.Count())) throw new Fido2VerificationException("SafetyNet attestation missing x5c");
                     var validationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = false,
@@ -268,7 +277,6 @@ namespace Fido2NetLib
                     if (false == (validatedToken.SigningKey is X509SecurityKey)) throw new Fido2VerificationException("Safetynet signing key invalid");
                     if (false == ("attest.android.com").Equals((validatedToken.SigningKey as X509SecurityKey).Certificate.GetNameInfo(X509NameType.DnsName, false))) throw new Fido2VerificationException("Safetynet DnsName is not attest.android.com");
 
-                    byte[] androidSafetyNetData = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
                     var nonce = "";
                     foreach (var claim in jwtToken.Claims)
                     {
@@ -279,19 +287,12 @@ namespace Fido2NetLib
                         }
                         if (("timestampMs" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#integer64" == claim.ValueType))
                         {
-                            long timestampMsLocal;
-                            long.TryParse(
-                                claim.Value,
-                                System.Globalization.NumberStyles.Integer,
-                                System.Globalization.CultureInfo.InvariantCulture,
-                                out timestampMsLocal);
-                            // TODO: verify timestampMs is not set to future
-                            // TODO: verify timestampMs is older than 1 minute
+                            DateTime dt = DateTime.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
+                            if ((DateTime.UtcNow < dt) || (DateTime.UtcNow.AddMinutes(-1) > dt)) throw new Fido2VerificationException("Android SafetyNet timestampMs must be between one minute ago and now");
                         }
                     }
-                    AttestionObject.AuthData.CopyTo(androidSafetyNetData, 0);
-                    hashedClientDataJson.CopyTo(androidSafetyNetData, AttestionObject.AuthData.Length);
-                    if (!AuthDataHelper.GetHasher(HashAlgorithmName.SHA256).ComputeHash(androidSafetyNetData).SequenceEqual(Convert.FromBase64String(nonce))) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+
+                    if (!AuthDataHelper.GetHasher(HashAlgorithmName.SHA256).ComputeHash(data).SequenceEqual(Convert.FromBase64String(nonce))) throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
                     attnType = "Basic";
                     trustPath = keys;
                     break;
@@ -344,19 +345,20 @@ namespace Fido2NetLib
                          packedParsedSignature = AuthDataHelper.SigFromEcDsaSig(sig.GetByteString());
                     }
                     else packedParsedSignature = sig.GetByteString();
-                    byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
-                    AttestionObject.AuthData.CopyTo(data, 0);
-                    hashedClientDataJson.CopyTo(data, AttestionObject.AuthData.Length);
 
                     // If x5c is present, this indicates that the attestation type is not ECDAA
                     if (null != x5c)
                     {
                         if (PeterO.Cbor.CBORType.Array != x5c.Type || 0 == x5c.Count) throw new Fido2VerificationException("Malformed x5c array in packed attestation statement");
+                        IEnumerator<PeterO.Cbor.CBORObject> enumerator = x5c.Values.GetEnumerator();
+                        while (enumerator.MoveNext())
+                        {
+                            var x5ccert = new X509Certificate2(enumerator.Current.GetByteString());
+                            if (DateTime.UtcNow < x5ccert.NotBefore || DateTime.UtcNow > x5ccert.NotAfter) throw new Fido2VerificationException("Packed signing certificate expired or not yet valid");
+                        }
+                        
                         // The attestation certificate attestnCert MUST be the first element in the array.
                         var packedCert = new X509Certificate2(x5c.Values.First().GetByteString());
-                        //System.IO.File.WriteAllBytes("cert.cer", packedCert.Export(X509ContentType.Cert));
-                        
-                        //if (true != packedCert.Verify()) throw new Fido2VerificationException("Invalid certificate at head of x5c chain");
 
                         // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                         // using the attestation public key in attestnCert with the algorithm specified in alg
@@ -398,8 +400,7 @@ namespace Fido2NetLib
                     else
                     {
                         // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-                        var success = AuthDataHelper.VerifySigWithCoseKey(data, credentialPublicKey, sig.GetByteString());
-                        if (true != success) throw new Fido2VerificationException("Failed to validate signature");
+                        if (true != AuthDataHelper.VerifySigWithCoseKey(data, credentialPublicKey, sig.GetByteString())) throw new Fido2VerificationException("Failed to validate signature");
                         attnType = "Self";
                         trustPath = null;                          
                     }

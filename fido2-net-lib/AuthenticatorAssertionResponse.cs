@@ -121,12 +121,13 @@ namespace Fido2NetLib
             // Done earlier, hashedClientDataJson
 
             // 16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.
-            var concatedBytes = Raw.Response.AuthenticatorData.Concat(hashedClientDataJson).ToArray();
+            byte[] data = new byte[Raw.Response.AuthenticatorData.Length + hashedClientDataJson.Length];
+            Buffer.BlockCopy(Raw.Response.AuthenticatorData, 0, data, 0, Raw.Response.AuthenticatorData.Length);
+            Buffer.BlockCopy(hashedClientDataJson, 0, data, Raw.Response.AuthenticatorData.Length, hashedClientDataJson.Length);
 
             if (null == storedPublicKey || 0 == storedPublicKey.Length) throw new Fido2VerificationException("Stored public key is null or empty");
             var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(storedPublicKey);
-            var signatureMatch = AuthDataHelper.VerifySigWithCoseKey(concatedBytes, coseKey, Signature);
-            if (!signatureMatch) throw new Fido2VerificationException("Signature did not match");
+            if (true != AuthDataHelper.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
 
             // 17.
             var counter = AuthDataHelper.GetSignCount(AuthenticatorData);
