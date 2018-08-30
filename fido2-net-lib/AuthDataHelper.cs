@@ -78,7 +78,7 @@ namespace Fido2NetLib
                             X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
                             Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
                         };
-                        ECCurve curve = ECCurve.NamedCurves.nistP256;
+                        ECCurve curve;
                         switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                         {
                             case -7:
@@ -86,6 +86,7 @@ namespace Fido2NetLib
                                 {
                                     case 1:
                                     case 8:
+                                        curve = ECCurve.NamedCurves.nistP256;
                                         break;
                                     default:
                                         throw new ArgumentOutOfRangeException("crv");
@@ -134,13 +135,14 @@ namespace Fido2NetLib
                                 Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
                             }
                         );
-                        RSASignaturePadding padding = RSASignaturePadding.Pss;
+                        RSASignaturePadding padding;
                         switch (alg)
                         {
 
                             case -37:
                             case -38:
                             case -39:
+                                padding = RSASignaturePadding.Pss;
                                 break;
 
                             case -65535:

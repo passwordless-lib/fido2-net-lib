@@ -90,22 +90,24 @@ namespace Fido2NetLib
         }
         public CertInfo(byte[] certInfo)
         {
+            if (null == certInfo || 0 == certInfo.Length) throw new Fido2VerificationException("Malformed certInfo bytes");
             Raw = certInfo;
             var offset = 0;
             Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-            if (0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad magic number " + Magic.ToString());
+            if (null == Magic || 0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad magic number in certInfo");
             Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
-            if (0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad structure tag " + Type.ToString());
+            if (null == Type || 0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad structure tag in certInfo");
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
+            if (null == ExtraData || 0 == ExtraData.Length) throw new Fido2VerificationException("Bad extraData in certInfo");
             Clock = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
             ResetCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
             RestartCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
             Safe = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 1);
             FirmwareVersion = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
-            var tmp = NameFromTPM2BName(certInfo, ref offset);
-            Alg = tmp.size; // TPM_ALG_ID
-            AttestedName = tmp.name;
+            var TPM2BName = NameFromTPM2BName(certInfo, ref offset);
+            Alg = TPM2BName.size; // TPM_ALG_ID
+            AttestedName = TPM2BName.name;
             AttestedQualifiedNameBuffer = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             if (certInfo.Length != offset) throw new Fido2VerificationException("Leftover bits decoding certInfo");
         }
