@@ -287,7 +287,7 @@ namespace Fido2NetLib
                         }
                         if (("timestampMs" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#integer64" == claim.ValueType))
                         {
-                            DateTime dt = DateTime.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
+                            DateTime dt = DateTimeHelper.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
                             if ((DateTime.UtcNow < dt) || (DateTime.UtcNow.AddMinutes(-1) > dt)) throw new Fido2VerificationException("Android SafetyNet timestampMs must be between one minute ago and now");
                         }
                     }

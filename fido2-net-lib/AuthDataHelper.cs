@@ -246,7 +246,7 @@ namespace Fido2NetLib
 
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
-            var dictSubject = attnCertSubj.Split(", ").Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
+            var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None).Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
             return (0 != dictSubject["C"].Length ||
                 0 != dictSubject["O"].Length ||
                 0 != dictSubject["OU"].Length ||
@@ -266,7 +266,7 @@ namespace Fido2NetLib
         {
             if ((0 == len) && ((offset + 2) <= ab.Length))
             {
-                len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray());
+                len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray(), 0);
                 offset += 2;
             }
             byte[] result = null;
@@ -294,7 +294,7 @@ namespace Fido2NetLib
                 var longLenByte = GetSizedByteArray(attExtBytes, ref offset, 1);
                 if (null == longLenByte) throw new Fido2VerificationException("attExtBytes signature has invalid long form length");
                 Buffer.BlockCopy(longLenByte, 0, uint16Buffer, 0, 1);
-                longLen = BitConverter.ToUInt16(uint16Buffer);
+                longLen = BitConverter.ToUInt16(uint16Buffer, 0);
                 longLen &= (1 << 7);
             }
             // attestationVersion          
@@ -303,7 +303,7 @@ namespace Fido2NetLib
             var lenVersion = GetSizedByteArray(attExtBytes, ref offset, 1);
             if (null == lenVersion) throw new Fido2VerificationException("attExtBytes version length invalid");
             Buffer.BlockCopy(lenVersion, 0, uint16Buffer, 0, 1);
-            var version = GetSizedByteArray(attExtBytes, ref offset, BitConverter.ToUInt16(uint16Buffer));
+            var version = GetSizedByteArray(attExtBytes, ref offset, BitConverter.ToUInt16(uint16Buffer, 0));
 
             // attestationSecurityLevel   
 
