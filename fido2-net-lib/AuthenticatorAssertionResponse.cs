@@ -133,7 +133,7 @@ namespace Fido2NetLib
             if (true != AuthDataHelper.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
 
             // 17.
-            var counter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray());
+            var counter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray(), 0);
             if (counter > 0 && counter <= storedSignatureCounter)
             {
                 throw new Fido2VerificationException("SignatureCounter was not greater than stored SignatureCounter");
