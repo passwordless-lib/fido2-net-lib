@@ -27,6 +27,7 @@ namespace Fido2NetLib
                     throw new ArgumentOutOfRangeException("hashName");
             }
         }
+
         public static readonly Dictionary<int, HashAlgorithmName> algMap = new Dictionary<int, HashAlgorithmName>
         {
             {-65535, HashAlgorithmName.SHA1 },
@@ -44,133 +45,117 @@ namespace Fido2NetLib
             {12, HashAlgorithmName.SHA384 },
             {13, HashAlgorithmName.SHA512 }
         };
-        public static string CoseToFido(Int32 kty, Int32 alg, Int32 crv)
-        {
-            switch (kty) // https://www.iana.org/assignments/cose/cose.xhtml#key-type
-            {
-                case 1: // OKP
-                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case -8:
-                            switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
-                            {
-                                case 6:
-                                    return "ALG_SIGN_ED25519_EDDSA_SHA256_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        default:
-                            throw new ArgumentOutOfRangeException("alg");
-                    }
-                case 2: // EC2
-                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case -7:
-                            switch (crv)
-                            {
-                                case 1:
-                                    return "ALG_SIGN_SECP256R1_ECDSA_SHA256_RAW";
-                                case 8:
-                                    return "ALG_SIGN_SECP256K1_ECDSA_SHA256_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        case -35:
-                            switch (crv)
-                            {
-                                case 2:
-                                    return "ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        case -36:
-                            switch (crv)
-                            {
-                                case 3:
-                                    return "ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW";
-                                default:
-                                    throw new ArgumentOutOfRangeException("crv");
-                            }
-                        default:
-                            throw new ArgumentOutOfRangeException("alg");
-                    }
-                case 3: // RSA
-                    switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case -37:
-                            return "ALG_SIGN_RSASSA_PSS_SHA256_RAW";
-                        case -38:
-                            return "ALG_SIGN_RSASSA_PSS_SHA384_RAW";
-                        case -39:
-                            return "ALG_SIGN_RSASSA_PSS_SHA512_RAW";
-                        case -65535:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA1_RAW";
-                        case -257:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA256_RAW";
-                        case -258:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA384_RAW";
-                        case -259:
-                            return "ALG_SIGN_RSASSA_PKCSV15_SHA512_RAW";
-                        default:
-                            throw new ArgumentOutOfRangeException("alg");
-                    }
-                case 4: // Symmetric
-                    throw new Fido2VerificationException("Symmetric keys not supported");
-                default:
-                    throw new ArgumentOutOfRangeException("kty");
-            }
-        }
+
         public static bool VerifySigWithCoseKey(byte[] data, PeterO.Cbor.CBORObject coseKey, byte[] sig)
         {
             // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-            var coseKty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
-            var coseAlg = coseKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
-            var packedCrv = 0;
-            if (1 == coseKty || 2 == coseKty) packedCrv = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].AsInt32();
-            var FidoAlg = CoseToFido(coseKty, coseAlg, packedCrv);
-            if (1 == coseKty)
+            var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+            var alg = coseKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
+            var crv = 0;
+            if (1 == kty || 2 == kty) crv = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].AsInt32();
+            switch (kty) // https://www.iana.org/assignments/cose/cose.xhtml#key-type
             {
-                if (true == FidoAlg.Equals("ALG_SIGN_ED25519_EDDSA_SHA512_RAW")) throw new Fido2VerificationException("ALG_SIGN_ED25519_EDDSA_SHA512_RAW support not yet implmented");
-                else throw new Fido2VerificationException("Unknown algorithm");
-            }
-            else if (2 == coseKty)
-            {
-                var curve = ECCurve.NamedCurves.nistP256;
-                if (FidoAlg.Equals("ALG_SIGN_SECP384R1_ECDSA_SHA384_RAW")) curve = ECCurve.NamedCurves.nistP384;
-                if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) curve = ECCurve.NamedCurves.nistP521;
-                var cng = ECDsaCng.Create(new ECParameters
-                {
-                    Curve = curve,
-                    Q = new ECPoint
+                case 1: // OKP
                     {
-                        X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
-                        Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
+                        switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                        {
+                            case -8:
+                                switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                                {
+                                    case 6:
+                                        throw new Fido2VerificationException("ALG_SIGN_ED25519_EDDSA_SHA512_RAW support not yet implmented");
+                                    default:
+                                        throw new ArgumentOutOfRangeException("crv");
+                                }
+                            default:
+                                throw new ArgumentOutOfRangeException("alg");
+                        }
                     }
-                });
-                if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) System.Diagnostics.Debug.WriteLine(BitConverter.ToString(sig).Replace("-", ""));
-                var ecsig = SigFromEcDsaSig(sig);
-                if (FidoAlg.Equals("ALG_SIGN_SECP521R1_ECDSA_SHA512_RAW")) System.Diagnostics.Debug.WriteLine(BitConverter.ToString(ecsig).Replace("-", ""));
-                // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the credential public key with alg
-                return cng.VerifyData(data, ecsig, algMap[coseAlg]);
-            }
-            else if (3 == coseKty)
-            {
-                RSACng rsa = new RSACng();
-                rsa.ImportParameters(
-                    new RSAParameters()
+                case 2: // EC2
                     {
-                        Modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
-                        Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
+                        var point = new ECPoint
+                        {
+                            X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
+                            Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
+                        };
+                        ECCurve curve = ECCurve.NamedCurves.nistP256;
+                        switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                        {
+                            case -7:
+                                switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                                {
+                                    case 1:
+                                    case 8:
+                                        break;
+                                    default:
+                                        throw new ArgumentOutOfRangeException("crv");
+                                }
+                                break;
+                            case -35:
+                                switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                                {
+                                    case 2:
+                                        curve = ECCurve.NamedCurves.nistP384;
+                                        break;
+                                    default:
+                                        throw new ArgumentOutOfRangeException("crv");
+                                }
+                                break;
+                            case -36:
+                                switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                                {
+                                    case 3:
+                                        curve = ECCurve.NamedCurves.nistP521;
+                                        System.Diagnostics.Debug.WriteLine(BitConverter.ToString(sig).Replace("-", ""));
+                                        break;
+                                    default:
+                                        throw new ArgumentOutOfRangeException("crv");
+                                }
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException("alg");
+                        }
+                        var cng = ECDsaCng.Create(new ECParameters
+                        {
+                            Q = point,
+                            Curve = curve
+                        });
+                        var ecsig = SigFromEcDsaSig(sig);
+                        System.Diagnostics.Debug.WriteLine(BitConverter.ToString(ecsig).Replace("-", ""));
+                        return cng.VerifyData(data, ecsig, algMap[alg]);
                     }
-                );
+                case 3: // RSA
+                    {
+                        RSACng rsa = new RSACng();
+                        rsa.ImportParameters(
+                            new RSAParameters()
+                            {
+                                Modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
+                                Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
+                            }
+                        );
+                        RSASignaturePadding padding = RSASignaturePadding.Pss;
+                        switch (alg)
+                        {
 
-                if (FidoAlg.Contains("RSASSA_PKCSV15"))
-                    return rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pkcs1);
-                if (FidoAlg.Contains("RSASSA_PSS"))
-                    return rsa.VerifyData(data, sig, algMap[coseAlg], RSASignaturePadding.Pss);
+                            case -37:
+                            case -38:
+                            case -39:
+                                break;
+
+                            case -65535:
+                            case -257:
+                            case -258:
+                            case -259:
+                                padding = RSASignaturePadding.Pkcs1;
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException("alg");
+                        }
+                        return rsa.VerifyData(data, sig, algMap[alg], padding);
+                    }
             }
-            else throw new Fido2VerificationException("Missing or unknown keytype");
-            return false;
+            throw new Fido2VerificationException("Missing or unknown keytype");
         }
         public static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
         {
@@ -347,7 +332,7 @@ namespace Fido2NetLib
                  *  number is not negative."
                  *  
                  */
-                if ((0x00 == ecDsaSig[offset]) && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
+                if (0x00 == ecDsaSig[offset])// && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
                 {
                     offset++;
                     len--;
