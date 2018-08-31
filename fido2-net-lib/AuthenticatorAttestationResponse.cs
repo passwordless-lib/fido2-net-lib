@@ -236,7 +236,7 @@ namespace Fido2NetLib
 
                             // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                             var aaguid = AuthDataHelper.AaguidFromAttnCertExts(aikCert.Extensions);
-                            if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(authData.AttData.Aaguid.ToArray()))) throw new Fido2VerificationException();
+                            if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(authData.AttData.Aaguid.ToArray()))) throw new Fido2VerificationException("aaguid malformed");
 
                             // If successful, return attestation type AttCA and attestation trust path x5c.
                             attnType = AttestationType.AttCa;
@@ -249,7 +249,7 @@ namespace Fido2NetLib
                             // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
                             throw new Fido2VerificationException("ECDAA support for TPM attestation is not yet implemented");
                             // If successful, return attestation type ECDAA and the identifier of the ECDAA-Issuer public key ecdaaKeyId.
-                            //attnType = "ECDAA";
+                            attnType = AttestationType.ECDAA;
                             //trustPath = ecdaaKeyId;
                         }
                         else throw new Fido2VerificationException("Neither x5c nor ECDAA were found in the TPM attestation statement");
@@ -386,7 +386,7 @@ namespace Fido2NetLib
 
                         // 2b. If certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve, terminate this algorithm and return an appropriate error
                         var pubKey = (ECDsaCng)cert.GetECDsaPublicKey();
-                        if (CngAlgorithm.ECDsaP256 != pubKey.Key.Algorithm) throw new Fido2VerificationException();
+                        if (CngAlgorithm.ECDsaP256 != pubKey.Key.Algorithm) throw new Fido2VerificationException("attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
 
                         // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
                         // done above
@@ -402,7 +402,7 @@ namespace Fido2NetLib
                         if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
                         var ecsig = AuthDataHelper.SigFromEcDsaSig(sig.GetByteString());
                         if (null == ecsig) throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
-                        if (true != pubKey.VerifyData(verificationData, ecsig, AuthDataHelper.algMap[coseAlg])) throw new Fido2VerificationException();
+                        if (true != pubKey.VerifyData(verificationData, ecsig, AuthDataHelper.algMap[coseAlg])) throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
                         attnType = AttestationType.Basic;
                         //trustPath = x5c;
                     }
@@ -458,7 +458,7 @@ namespace Fido2NetLib
                             if (aaguid != null && !aaguid.SequenceEqual(authData.AttData.Aaguid.ToArray())) throw new Fido2VerificationException("aaguid present in packed attestation but does not match aaguid from authData");
 
                             // 2d. The Basic Constraints extension MUST have the CA component set to false
-                            if (AuthDataHelper.IsAttnCertCACert(attestnCert.Extensions)) throw new Fido2VerificationException();
+                            if (AuthDataHelper.IsAttnCertCACert(attestnCert.Extensions)) throw new Fido2VerificationException("Attestion certificate has CA cert flag present");
 
                             // id-fido-u2f-ce-transports 
                             var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(attestnCert.Extensions);
@@ -474,7 +474,7 @@ namespace Fido2NetLib
 
                             throw new Fido2VerificationException("ECDAA is not yet implemented");
                             // If successful, return attestation type ECDAA and attestation trust path ecdaaKeyId.
-                            //attnType = "ECDAA";
+                            attnType = AttestationType.ECDAA;
                             //trustPath = ecdaaKeyId;
                         }
                         // If neither x5c nor ecdaaKeyId is present, self attestation is in use

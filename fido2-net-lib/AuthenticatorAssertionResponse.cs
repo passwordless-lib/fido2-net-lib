@@ -59,7 +59,7 @@ namespace Fido2NetLib
             if (options.AllowCredentials != null && options.AllowCredentials.Count() > 0)
             {
                 // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
-                if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException();
+                if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException("Invalid");
             }
 
             // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
