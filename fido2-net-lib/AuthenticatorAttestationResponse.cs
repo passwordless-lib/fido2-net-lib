@@ -63,7 +63,7 @@ namespace Fido2NetLib
 
         public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
         {
-            string attnType = "invalid";
+            AttestationType attnType;
             X509SecurityKey[] trustPath = null;
             BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
@@ -150,7 +150,7 @@ namespace Fido2NetLib
                         // https://www.w3.org/TR/webauthn/#none-attestation
 
                         if (0 != AttestionObject.AttStmt.Keys.Count && 0 != AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format none should have no attestation statement");
-                        attnType = "None";
+                        attnType = AttestationType.None;
                         trustPath = null;
                     }
                     break;
@@ -535,7 +535,9 @@ namespace Fido2NetLib
             {
                 CredentialId = credentialId,
                 PublicKey = credentialPublicKeyBytes,
-                User = originalOptions.User
+                User = originalOptions.User,
+                AttestationType = attnType,
+                //TrustPath = trustPath
             };            
 
             return result;

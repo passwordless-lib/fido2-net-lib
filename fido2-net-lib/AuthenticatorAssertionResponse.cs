@@ -52,6 +52,9 @@ namespace Fido2NetLib
 
             if (Raw.Type != "public-key") throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
 
+            if (Raw.Id == null) throw new Fido2VerificationException("Id is missing");
+            if (Raw.RawId == null) throw new Fido2VerificationException("RawId is missing");
+
             // 1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
             if (options.AllowCredentials != null && options.AllowCredentials.Count() > 0)
             {
@@ -130,7 +133,7 @@ namespace Fido2NetLib
             if (true != AuthDataHelper.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
 
             // 17.
-            var counter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray());
+            var counter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray(), 0);
             if (counter > 0 && counter <= storedSignatureCounter)
             {
                 throw new Fido2VerificationException("SignatureCounter was not greater than stored SignatureCounter");

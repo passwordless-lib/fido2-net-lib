@@ -62,13 +62,13 @@ namespace Fido2NetLib
             UInt16 totalSize = 0;
             if (null != totalBytes)
             {
-                totalSize = BitConverter.ToUInt16(totalBytes.ToArray().Reverse().ToArray());
+                totalSize = BitConverter.ToUInt16(totalBytes.ToArray().Reverse().ToArray(), 0);
             }
             UInt16 size = 0;
             var bytes = AuthDataHelper.GetSizedByteArray(ab, ref offset, 2);
             if (null != bytes)
             {
-                size = BitConverter.ToUInt16(bytes.ToArray().Reverse().ToArray());
+                size = BitConverter.ToUInt16(bytes.ToArray().Reverse().ToArray(), 0);
             }
             // If size is four, then the Name is a handle. 
             if (4 == size) throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
@@ -94,9 +94,9 @@ namespace Fido2NetLib
             Raw = certInfo;
             var offset = 0;
             Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-            if (null == Magic || 0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad magic number in certInfo");
+            if (0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray(), 0)) throw new Fido2VerificationException("Bad magic number " + Magic.ToString());
             Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
-            if (null == Type || 0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray())) throw new Fido2VerificationException("Bad structure tag in certInfo");
+            if (0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0)) throw new Fido2VerificationException("Bad structure tag " + Type.ToString());
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             if (null == ExtraData || 0 == ExtraData.Length) throw new Fido2VerificationException("Bad extraData in certInfo");
@@ -135,7 +135,7 @@ namespace Fido2NetLib
 
             // TPMI_ALG_PUBLIC
             Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            TpmAlg tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray()).ToString());
+            TpmAlg tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0).ToString());
 
             // TPMI_ALG_HASH 
             Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
@@ -177,7 +177,7 @@ namespace Fido2NetLib
                 var tmp = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 4);
                 if (null != tmp)
                 {
-                    Exponent = BitConverter.ToUInt32(tmp.ToArray());
+                    Exponent = BitConverter.ToUInt32(tmp.ToArray(), 0);
                     if (0 == Exponent) Exponent = System.Convert.ToUInt32(Math.Pow(2, 16) + 1);
                 }
             }
