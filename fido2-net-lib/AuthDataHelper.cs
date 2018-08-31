@@ -219,7 +219,7 @@ namespace Fido2NetLib
         {
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value.Equals("1.3.6.1.4.1.11129.2.1.17")) // AttestionRecordOid
+                if (ext.Oid.Value.Equals("1.3.6.1.4.1.11129.2.1.17")) // AttestationRecordOid
                 {
                     return ext.RawData;
                 }
@@ -279,7 +279,7 @@ namespace Fido2NetLib
             }
             return result;
         }
-        public static byte[] GetAttestionChallenge(byte[] attExtBytes)
+        public static byte[] GetAttestationChallenge(byte[] attExtBytes)
         {
             System.Diagnostics.Debug.WriteLine(BitConverter.ToString(attExtBytes).Replace("-", ""));
             if (null == attExtBytes || 0 == attExtBytes.Length || attExtBytes.Length > Math.Pow(2, 1008)) throw new Fido2VerificationException("Invalid attExtBytes signature value");

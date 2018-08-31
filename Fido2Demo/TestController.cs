@@ -118,10 +118,12 @@ namespace Fido2Demo
             // 2. Get registered credentials from database
             List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
+            var uv = assertionClientParams.UserVerification;
+            if (null != assertionClientParams.authenticatorSelection && null == assertionClientParams.UserVerification) uv = assertionClientParams.authenticatorSelection.UserVerification;
             // 3. Create options
             var options = _lib.GetAssertionOptions(
                 existingCredentials,
-                assertionClientParams.UserVerification
+                uv
             );
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
@@ -180,6 +182,7 @@ namespace Fido2Demo
         {
             public string Username { get; set; }
             public UserVerificationRequirement UserVerification { get; set; }
+            public AuthenticatorSelection authenticatorSelection { get; set; }
         }
 
         public class TEST_MakeCredentialParams

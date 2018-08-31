@@ -22,7 +22,7 @@ namespace Fido2NetLib
         {
         }
 
-        public ParsedAttestionObject AttestionObject { get; set; }
+        public ParsedAttestationObject AttestationObject { get; set; }
         public AuthenticatorAttestationRawResponse Raw { get; private set; }
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
@@ -30,32 +30,32 @@ namespace Fido2NetLib
             if (null == rawResponse || null == rawResponse.Response) throw new Fido2VerificationException("Expected rawResponse, got null");
             
             if (null == rawResponse.Response.AttestationObject || 0 == rawResponse.Response.AttestationObject.Length) throw new Fido2VerificationException("Missing AttestationObject");
-            PeterO.Cbor.CBORObject cborAttestion = null;
+            PeterO.Cbor.CBORObject cborAttestation = null;
             try
             {
-                cborAttestion = PeterO.Cbor.CBORObject.DecodeFromBytes(rawResponse.Response.AttestationObject);
+                cborAttestation = PeterO.Cbor.CBORObject.DecodeFromBytes(rawResponse.Response.AttestationObject);
             }
             catch (PeterO.Cbor.CBORException)
             {
                 throw new Fido2VerificationException("Malformed AttestationObject");
             }
 
-            if (    null == cborAttestion["fmt"] ||
-                    PeterO.Cbor.CBORType.TextString != cborAttestion["fmt"].Type || 
-                    null == cborAttestion["attStmt"] ||
-                    PeterO.Cbor.CBORType.Map != cborAttestion["attStmt"].Type || 
-                    null == cborAttestion["authData"] ||
-                    PeterO.Cbor.CBORType.ByteString != cborAttestion["authData"].Type
+            if (    null == cborAttestation["fmt"] ||
+                    PeterO.Cbor.CBORType.TextString != cborAttestation["fmt"].Type || 
+                    null == cborAttestation["attStmt"] ||
+                    PeterO.Cbor.CBORType.Map != cborAttestation["attStmt"].Type || 
+                    null == cborAttestation["authData"] ||
+                    PeterO.Cbor.CBORType.ByteString != cborAttestation["authData"].Type
                     )   throw new Fido2VerificationException("Malformed AttestationObject");
 
             AuthenticatorAttestationResponse response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
             {
                 Raw = rawResponse,
-                AttestionObject = new ParsedAttestionObject()
+                AttestationObject = new ParsedAttestationObject()
                 {
-                    Fmt = cborAttestion["fmt"].AsString(),
-                    AttStmt = cborAttestion["attStmt"], // convert to dictionary?
-                    AuthData = cborAttestion["authData"].GetByteString()
+                    Fmt = cborAttestation["fmt"].AsString(),
+                    AttStmt = cborAttestation["attStmt"], // convert to dictionary?
+                    AuthData = cborAttestation["authData"].GetByteString()
                 }
             };
             return response;
@@ -70,14 +70,14 @@ namespace Fido2NetLib
             // verify origin
             // done in baseclass
 
-            if (Type != "webauthn.create") throw new Fido2VerificationException("AttestionResponse is not type webauthn.create");
+            if (Type != "webauthn.create") throw new Fido2VerificationException("AttestationResponse is not type webauthn.create");
 
-            if (Raw.Id == null || Raw.Id.Length == 0) throw new Fido2VerificationException("AttestionResponse is missing Id");
+            if (Raw.Id == null || Raw.Id.Length == 0) throw new Fido2VerificationException("AttestationResponse is missing Id");
 
-            if (Raw.Type != "public-key") throw new Fido2VerificationException("AttestionResponse is missing type with value 'public-key'");
+            if (Raw.Type != "public-key") throw new Fido2VerificationException("AttestationResponse is missing type with value 'public-key'");
 
-            if (null == AttestionObject.AuthData || 0 == AttestionObject.AuthData.Length) throw new Fido2VerificationException("Missing or malformed authData");
-            AuthenticatorData authData = new AuthenticatorData(AttestionObject.AuthData);
+            if (null == AttestationObject.AuthData || 0 == AttestationObject.AuthData.Length) throw new Fido2VerificationException("Missing or malformed authData");
+            AuthenticatorData authData = new AuthenticatorData(AttestationObject.AuthData);
             // 6
             //todo:  Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
             // This id done in BaseVerify.
@@ -110,13 +110,13 @@ namespace Fido2NetLib
             // todo: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
 
             // A COSEAlgorithmIdentifier containing the identifier of the algorithm used to generate the attestation signature
-            var alg = AttestionObject.AttStmt["alg"];
+            var alg = AttestationObject.AttStmt["alg"];
             // A byte string containing the attestation signature
-            var sig = AttestionObject.AttStmt["sig"];
+            var sig = AttestationObject.AttStmt["sig"];
             // The elements of this array contain attestnCert and its certificate chain, each encoded in X.509 format
-            var x5c = AttestionObject.AttStmt["x5c"];
+            var x5c = AttestationObject.AttStmt["x5c"];
             // The identifier of the ECDAA-Issuer public key
-            var ecdaaKeyId = AttestionObject.AttStmt["ecdaaKeyId"];
+            var ecdaaKeyId = AttestationObject.AttStmt["ecdaaKeyId"];
 
             if (false == authData.AttestedCredentialDataPresent) throw new Fido2VerificationException("Attestation flag not set on attestation data");
             var credentialId = authData.AttData.CredentialID;
@@ -134,13 +134,13 @@ namespace Fido2NetLib
             {
                 throw new Fido2VerificationException("Malformed credentialPublicKey");
             }
-            byte[] data = new byte[AttestionObject.AuthData.Length + hashedClientDataJson.Length];
-            Buffer.BlockCopy(AttestionObject.AuthData, 0, data, 0, AttestionObject.AuthData.Length);
-            Buffer.BlockCopy(hashedClientDataJson, 0, data, AttestionObject.AuthData.Length, hashedClientDataJson.Length);
+            byte[] data = new byte[AttestationObject.AuthData.Length + hashedClientDataJson.Length];
+            Buffer.BlockCopy(AttestationObject.AuthData, 0, data, 0, AttestationObject.AuthData.Length);
+            Buffer.BlockCopy(hashedClientDataJson, 0, data, AttestationObject.AuthData.Length, hashedClientDataJson.Length);
             // 13
             // Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. The up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the in the IANA registry of the same name [WebAuthn-Registries].
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
-            switch (AttestionObject.Fmt)
+            switch (AttestationObject.Fmt)
             {
                 // 14
                 // validate the attStmt
@@ -149,7 +149,7 @@ namespace Fido2NetLib
                     {
                         // https://www.w3.org/TR/webauthn/#none-attestation
 
-                        if (0 != AttestionObject.AttStmt.Keys.Count && 0 != AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format none should have no attestation statement");
+                        if (0 != AttestationObject.AttStmt.Keys.Count && 0 != AttestationObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format none should have no attestation statement");
                         attnType = AttestationType.None;
                         trustPath = null;
                     }
@@ -160,13 +160,13 @@ namespace Fido2NetLib
                         // https://www.w3.org/TR/webauthn/#tpm-attestation
 
                         if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid TPM attestation signature");
-                        if ("2.0" != AttestionObject.AttStmt["ver"].AsString()) throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
+                        if ("2.0" != AttestationObject.AttStmt["ver"].AsString()) throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
 
                         // Verify that the public key specified by the parameters and unique fields of pubArea is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
                         PubArea pubArea = null;
-                        if (null != AttestionObject.AttStmt["pubArea"] && PeterO.Cbor.CBORType.ByteString == AttestionObject.AttStmt["pubArea"].Type && 0 != AttestionObject.AttStmt["pubArea"].GetByteString().Length)
+                        if (null != AttestationObject.AttStmt["pubArea"] && PeterO.Cbor.CBORType.ByteString == AttestationObject.AttStmt["pubArea"].Type && 0 != AttestationObject.AttStmt["pubArea"].GetByteString().Length)
                         {
-                            pubArea = new PubArea(AttestionObject.AttStmt["pubArea"].GetByteString());
+                            pubArea = new PubArea(AttestationObject.AttStmt["pubArea"].GetByteString());
                         }
 
                         var coseMod = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(); // modulus 
@@ -181,9 +181,9 @@ namespace Fido2NetLib
 
                         // Validate that certInfo is valid
                         CertInfo certInfo = null;
-                        if (null != AttestionObject.AttStmt["certInfo"] && PeterO.Cbor.CBORType.ByteString == AttestionObject.AttStmt["certInfo"].Type && 0 != AttestionObject.AttStmt["certInfo"].GetByteString().Length)
+                        if (null != AttestationObject.AttStmt["certInfo"] && PeterO.Cbor.CBORType.ByteString == AttestationObject.AttStmt["certInfo"].Type && 0 != AttestationObject.AttStmt["certInfo"].GetByteString().Length)
                         {
-                            certInfo = new CertInfo(AttestionObject.AttStmt["certInfo"].GetByteString());
+                            certInfo = new CertInfo(AttestationObject.AttStmt["certInfo"].GetByteString());
                         }
                         if (null == certInfo || null == certInfo.ExtraData || 0 == certInfo.ExtraData.Length) throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
                         // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY 
@@ -261,7 +261,7 @@ namespace Fido2NetLib
                         // https://www.w3.org/TR/webauthn/#android-key-attestation
 
                         // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
-                        if (0 == AttestionObject.AttStmt.Keys.Count || 0 == AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
+                        if (0 == AttestationObject.AttStmt.Keys.Count || 0 == AttestationObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
                         if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid packed attestation signature");
                         if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type) throw new Fido2VerificationException("Invalid packed attestation algorithm");
 
@@ -289,7 +289,7 @@ namespace Fido2NetLib
                         var attExtBytes = AuthDataHelper.AttestationExtensionBytes(androidKeyCert.Extensions);
 
                         // 1. The value of the attestationChallenge field is identical to clientDataHash.
-                        var attestationChallenge = AuthDataHelper.GetAttestionChallenge(attExtBytes);
+                        var attestationChallenge = AuthDataHelper.GetAttestationChallenge(attExtBytes);
                         // 2. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID.
                         // 3. The value in the AuthorizationList.origin field is equal to KM_TAG_GENERATED.
                         // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
@@ -305,13 +305,13 @@ namespace Fido2NetLib
                         // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
 
                         // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
-                        if ((PeterO.Cbor.CBORType.TextString != AttestionObject.AttStmt["ver"].Type) || (0 == AttestionObject.AttStmt["ver"].AsString().Length)) throw new Fido2VerificationException("Invalid version in SafetyNet data");
+                        if ((PeterO.Cbor.CBORType.TextString != AttestationObject.AttStmt["ver"].Type) || (0 == AttestationObject.AttStmt["ver"].AsString().Length)) throw new Fido2VerificationException("Invalid version in SafetyNet data");
 
                         // Verify that response is a valid SafetyNet response of version ver
-                        var ver = AttestionObject.AttStmt["ver"].AsString();
+                        var ver = AttestationObject.AttStmt["ver"].AsString();
 
-                        if ((PeterO.Cbor.CBORType.ByteString != AttestionObject.AttStmt["response"].Type) || (0 == AttestionObject.AttStmt["response"].GetByteString().Length)) throw new Fido2VerificationException("Invalid response in SafetyNet data");
-                        var response = AttestionObject.AttStmt["response"].GetByteString();
+                        if ((PeterO.Cbor.CBORType.ByteString != AttestationObject.AttStmt["response"].Type) || (0 == AttestationObject.AttStmt["response"].GetByteString().Length)) throw new Fido2VerificationException("Invalid response in SafetyNet data");
+                        var response = AttestationObject.AttStmt["response"].GetByteString();
                         var signedAttestationStatement = Encoding.UTF8.GetString(response);
                         var jwtToken = new JwtSecurityToken(signedAttestationStatement);
                         X509SecurityKey[] keys = (jwtToken.Header["x5c"] as JArray)
@@ -413,7 +413,7 @@ namespace Fido2NetLib
                         // https://www.w3.org/TR/webauthn/#packed-attestation
 
                         // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
-                        if (0 == AttestionObject.AttStmt.Keys.Count || 0 == AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
+                        if (0 == AttestationObject.AttStmt.Keys.Count || 0 == AttestationObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
                         if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid packed attestation signature");
                         if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type) throw new Fido2VerificationException("Invalid packed attestation algorithm");
                         byte[] packedParsedSignature = null;
@@ -546,7 +546,7 @@ namespace Fido2NetLib
         /// <summary>
         /// The AttestationObject after CBOR parsing
         /// </summary>
-        public class ParsedAttestionObject
+        public class ParsedAttestationObject
         {
             public string Fmt { get; set; }
             public byte[] AuthData { get; set; }
