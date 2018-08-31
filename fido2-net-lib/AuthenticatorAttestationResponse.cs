@@ -239,7 +239,7 @@ namespace Fido2NetLib
                             if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(authData.AttData.Aaguid.ToArray()))) throw new Fido2VerificationException();
 
                             // If successful, return attestation type AttCA and attestation trust path x5c.
-                            attnType = "AttCA";
+                            attnType = AttestationType.AttCa;
                             //trustPath = x5c;
                         }
                         // If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -294,7 +294,7 @@ namespace Fido2NetLib
                         // 3. The value in the AuthorizationList.origin field is equal to KM_TAG_GENERATED.
                         // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
 
-                        attnType = "Basic";
+                        attnType = AttestationType.Basic;
                         var tmp = attExtBytes.ToString();
                         //trustPath = x5c;
                     }
@@ -350,7 +350,7 @@ namespace Fido2NetLib
                             }
                             if (("timestampMs" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#integer64" == claim.ValueType))
                             {
-                                DateTime dt = DateTime.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
+                                DateTime dt = DateTimeHelper.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
                                 if ((DateTime.UtcNow < dt) || (DateTime.UtcNow.AddMinutes(-1) > dt)) throw new Fido2VerificationException("Android SafetyNet timestampMs must be between one minute ago and now");
                             }
                         }
@@ -365,7 +365,7 @@ namespace Fido2NetLib
                         // Verify that the ctsProfileMatch attribute in the payload of response is true
                         if (true != payload) throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");
 
-                        attnType = "Basic";
+                        attnType = AttestationType.Basic;
                         trustPath = keys;
                     }
                     break;
@@ -403,7 +403,7 @@ namespace Fido2NetLib
                         var ecsig = AuthDataHelper.SigFromEcDsaSig(sig.GetByteString());
                         if (null == ecsig) throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
                         if (true != pubKey.VerifyData(verificationData, ecsig, AuthDataHelper.algMap[coseAlg])) throw new Fido2VerificationException();
-                        attnType = "Basic";
+                        attnType = AttestationType.Basic;
                         //trustPath = x5c;
                     }
                     break;
@@ -462,7 +462,7 @@ namespace Fido2NetLib
 
                             // id-fido-u2f-ce-transports 
                             var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(attestnCert.Extensions);
-                            attnType = "Basic";
+                            attnType = AttestationType.Basic;
                             //trustPath = x5c;
                         }
                         // If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -486,7 +486,7 @@ namespace Fido2NetLib
                             if (true != AuthDataHelper.VerifySigWithCoseKey(data, credentialPublicKey, sig.GetByteString())) throw new Fido2VerificationException("Failed to validate signature");
 
                             // If successful, return attestation type Self and empty attestation trust path.
-                            attnType = "Self";
+                            attnType = AttestationType.Self;
                             trustPath = null;
                         }
                     }
