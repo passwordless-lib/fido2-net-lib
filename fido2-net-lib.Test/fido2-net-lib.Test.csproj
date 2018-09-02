@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-
+    <UserSecretsId>fido2-net-lib.Test-72797092-61BA-45E3-836A-53F282CFFAF3</UserSecretsId>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -25,7 +25,6 @@
     <None Remove="attestionNoneResponse.json" />
     <None Remove="json1.json" />
     <None Remove="json2.json" />
-    <None Remove="mds2Toc.jwt" />
     <None Remove="mdsCA.cer" />
     <None Remove="mdsRoot.cer" />
     <None Remove="mdsSigning.cer" />
@@ -77,9 +76,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="json2.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="mds2Toc.jwt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="mdsCA.cer">

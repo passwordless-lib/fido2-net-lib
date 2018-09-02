@@ -11,12 +11,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Newtonsoft.Json.Linq;
 
 namespace fido2_net_lib.Test
 {
     // todo: Create tests and name Facts and json files better.
     public class UnitTest1
     {
+
         public static byte[] StringToByteArray(string hex)
         {
             hex = hex.Replace("-", "");
@@ -186,24 +188,84 @@ namespace fido2_net_lib.Test
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
             byte[] ad = o.AttestationObject.AuthData;
         }
+        public class StatusReport
+        {
+            public StatusReport(string status, string url, string certificate, DateTime dateTime)
+            {
+                Status = status;
+                Url = url;
+                Certificate = certificate;
+                EffectiveDate = dateTime;
+            }
+            public string Status { get; set; }  = string.Empty;
+            public string Url { get; set; } = string.Empty;
+            public string Certificate { get; set; } = string.Empty;
+            public DateTime EffectiveDate { get; set; } = DateTime.MaxValue;
+        }
+        public class MDSEntry
+        {
+            [JsonProperty("url")]
+            public string Url { get; set; } = string.Empty;
+            [JsonProperty("timeOfLastStatusChange")]
+            public DateTime LastChanged { get; set; } = DateTime.MinValue;
+            [JsonProperty("hash")]
+            public string Hash { get; set; } = string.Empty;
+            [JsonProperty("aaid")]
+            public string Aaid { get; set; }
+            [JsonProperty("statusReport")]
+            public StatusReport statusReport { get; set; }
+        }
         [Fact]
         public async Task TestMdsParsing()
         {
+            string toc = System.IO.File.ReadAllText(@"P:\MDS\toc.txt");
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
-            var toc2 = File.ReadAllText("./mds2Toc.jwt");
-            X509Certificate2 cert = new X509Certificate2("./mdsSigning.cer");
-            var pub = (ECDsaCng)cert.GetECDsaPublicKey();
-            var ecdsaSecurityKey = new ECDsaSecurityKey(pub);
-            var validationParameters = new TokenValidationParameters()
+            var tocPrefix = "https://mds2.fidoalliance.org/?token=";
+            // Not a valid access token, demo token taken from https://fidoalliance.org/mds/
+            var accessToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
+
+            //accessToken = MDSAccessToken;
+            var tocURL = tocPrefix + accessToken;
+            //string toc;
+            using (var client = new System.Net.WebClient())
             {
-                ValidateIssuerSigningKey = true,
+                //toc = client.DownloadString(tocURL);
+            }
+            var jwtToken = new JwtSecurityToken(toc);
+            var keys = (jwtToken.Header["x5c"] as JArray)
+                .Values<string>()
+                .Select(x => new ECDsaSecurityKey (
+                    (ECDsaCng)(new X509Certificate2(Convert.FromBase64String(x)).GetECDsaPublicKey())))
+                .ToArray();
+
+            var validationParameters = new TokenValidationParameters
+            {
                 ValidateIssuer = false,
-                IssuerSigningKey = ecdsaSecurityKey,
+                ValidateAudience = false,
                 ValidateLifetime = false,
-                ValidateAudience = false
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKeys = keys,
             };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken validatedToken;
-            var principal = new JwtSecurityTokenHandler().ValidateToken(toc2, validationParameters, out validatedToken);
+
+            tokenHandler.ValidateToken(
+                toc,
+                validationParameters,
+                out validatedToken);
+
+            MDSEntry entries;
+
+            foreach (var claim in ((JwtSecurityToken) validatedToken).Claims)
+            {
+                if (claim.Type == "entries")
+                {
+                    entries = JsonConvert.DeserializeObject<MDSEntry>(claim.Value);
+                }
+
+            }
+            //System.IO.File.WriteAllText(@"P:\MDS\toc.txt", toc);
         }
     //public void TestHasCorrentAAguid()
     //{
