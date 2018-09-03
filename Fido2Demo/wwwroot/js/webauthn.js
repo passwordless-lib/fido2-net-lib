@@ -146,33 +146,29 @@ function makeCredential() {
         return;
     }
     setUser();
-    var credential = null;
-    swal({
-        title: 'Registering...',
-        text: 'Tap your security key to finish registration.',
-        imageUrl: "/images/securitykey.min.svg",
-        showCancelButton: true,
-        showConfirmButton: false,
-        focusConfirm: false,
-        focusCancel: false,
-    }).then(function () {
-        swal({
-            title: 'Registration Successful!',
-            text: 'You\'ve registered successfully.',
-            type: 'success',
-            timer: 2000
-        })
-    }).catch(function (error) {
-        console.log("Modal Error: " + error);
-    });
 
     var attestation_type = $('#select-attestation').find(':selected').val();
 
-    $.post('/makeCredentialOptions', {
-        username: state.user.name,
-        attType: attestation_type
-    }, null, 'json')
-        .done(function (makeCredentialOptions) {
+    var data = new FormData();
+    data.append('username', state.user.name);
+    data.append('attType', attestation_type);
+
+    fetch('/makeCredentialOptions', {
+        method: 'POST', // or 'PUT'
+        body: data, // data can be `string` or {object}!
+        headers: {
+            'Accept': 'application/json',
+        }
+    }).then((response) => {
+        if (response.ok) {
+            return response.json();
+        }
+        return Promise.reject(response.text());
+    })
+        .catch((error) => {
+            error.then(msg => showErrorAlert(msg));
+        })
+        .then((makeCredentialOptions) => {
             console.log("Credential Options Object");
             console.log(makeCredentialOptions);
 
@@ -191,6 +187,29 @@ function makeCredential() {
 
             console.log("Credential Options Formatted");
             console.log(makeCredentialOptions);
+
+            swal({
+                title: 'Registering...',
+                text: 'Tap your security key to finish registration.',
+                imageUrl: "/images/securitykey.min.svg",
+                showCancelButton: true,
+                showConfirmButton: false,
+                focusConfirm: false,
+                focusCancel: false,
+            }).then(function (result) {
+                if (result.value) {
+                    swal({
+                        title: 'Registration Successful!',
+                        text: 'You\'ve registered successfully.',
+                        type: 'success',
+                        timer: 2000
+                    });
+                } else {
+                    console.log('Registration cancelled');
+                }
+            }).catch(function (error) {
+                console.log("Modal Error: " + error);
+            });
 
             console.log("Creating PublicKeyCredential");
             navigator.credentials.create({
@@ -277,7 +296,6 @@ function getAssertion() {
         headers: {
             'Accept': 'application/json',
         }
-
     }).then((response) => {
         if (response.ok) {
             return response.json();
