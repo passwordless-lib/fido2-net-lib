@@ -63,7 +63,7 @@ namespace Fido2NetLib
 
         public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
         {
-            string attnType = "invalid";
+            AttestationType attnType;
             X509SecurityKey[] trustPath = null;
             BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
@@ -147,7 +147,7 @@ namespace Fido2NetLib
 
                 case "none":
                     if (0 != AttestionObject.AttStmt.Keys.Count && 0 != AttestionObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format none should have no attestation statement");
-                    attnType = "None";
+                    attnType = AttestationType.None;
                     trustPath = null;
                     break;
 
@@ -206,7 +206,7 @@ namespace Fido2NetLib
                     var aaguid = AuthDataHelper.AaguidFromAttnCertExts(aikCert.Extensions);
                     if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(authData.AttData.Aaguid.ToArray()))) throw new Fido2VerificationException();
                     // If successful, return attestation type AttCA and attestation trust path x5c.
-                    attnType = "AttCA";
+                    attnType = AttestationType.AttCa;
                     //trustPath = x5c;
                     break;
 
@@ -240,7 +240,7 @@ namespace Fido2NetLib
                     // 2. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID.
                     // 3. The value in the AuthorizationList.origin field is equal to KM_TAG_GENERATED.
                     // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
-                    attnType = "Basic";
+                    attnType = AttestationType.Basic;
                     var tmp = attExtBytes.ToString();
                     //trustPath = x5c;
                     break;
@@ -293,7 +293,7 @@ namespace Fido2NetLib
                     }
 
                     if (!AuthDataHelper.GetHasher(HashAlgorithmName.SHA256).ComputeHash(data).SequenceEqual(Convert.FromBase64String(nonce))) throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
-                    attnType = "Basic";
+                    attnType = AttestationType.Basic;
                     trustPath = keys;
                     break;
 
@@ -332,7 +332,7 @@ namespace Fido2NetLib
 
                     // 6. Verify the sig using verificationData and certificate public key
                     if (true != pubKey.VerifyData(verificationData, parsedSignature.ToArray(), AuthDataHelper.algMap[coseAlg])) throw new Fido2VerificationException();
-                    attnType = "Basic";
+                    attnType = AttestationType.Basic;
                     //trustPath = x5c;
                     break;
                 case "packed":
@@ -384,7 +384,7 @@ namespace Fido2NetLib
 
                         // id-fido-u2f-ce-transports 
                         var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(packedCert.Extensions);
-                        attnType = "Basic";
+                        attnType = AttestationType.Basic;
                         //trustPath = x5c;
                     }
                     // If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -393,7 +393,7 @@ namespace Fido2NetLib
                         var packedCert = new X509Certificate2(ecdaaKeyId.GetByteString());
                         var packedPubKey = (ECDsaCng)packedCert.GetECDsaPublicKey();
                         if (true != packedPubKey.VerifyData(data, packedParsedSignature.ToArray(), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException();
-                        attnType = "ECDAA";
+                        attnType = AttestationType.ECDAA;
                         //trustPath = ecdaaKeyId;
                     }
                     // If neither x5c nor ecdaaKeyId is present, self attestation is in use
@@ -401,7 +401,7 @@ namespace Fido2NetLib
                     {
                         // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                         if (true != AuthDataHelper.VerifySigWithCoseKey(data, credentialPublicKey, sig.GetByteString())) throw new Fido2VerificationException("Failed to validate signature");
-                        attnType = "Self";
+                        attnType = AttestationType.Self;
                         trustPath = null;                          
                     }
                     break;
@@ -449,7 +449,9 @@ namespace Fido2NetLib
             {
                 CredentialId = credentialId,
                 PublicKey = credentialPublicKeyBytes,
-                User = originalOptions.User
+                User = originalOptions.User,
+                AttestationType = attnType,
+                //TrustPath = trustPath
             };            
 
             return result;
