@@ -163,7 +163,7 @@ return Json(res);
 
 ## Nuget package
 
-Coming when lib has matured.
+Coming when lib has matured. (https://www.nuget.org/packages/Fido2/)
 
 ## Other
 
