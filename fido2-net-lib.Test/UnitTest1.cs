@@ -200,10 +200,10 @@ namespace fido2_net_lib.Test
             //accessToken = MDSAccessToken;
             var tocURL = tocPrefix + accessToken;
             //string toc;
-            using (var client = new System.Net.WebClient())
-            {
+            //using (var client = new System.Net.WebClient())
+            //{
                 //toc = client.DownloadString(tocURL);
-            }
+            //}
             var jwtToken = new JwtSecurityToken(toc);
             var keys = (jwtToken.Header["x5c"] as JArray)
                 .Values<string>()
@@ -230,6 +230,14 @@ namespace fido2_net_lib.Test
 
             var payload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
             var metadataTOC = JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
+            var client = new System.Net.WebClient();
+            foreach (var entry in metadataTOC.Entries)
+            {
+                var statementUrl = entry.Url + "/?token=" + accessToken;
+                var statement = client.DownloadString(statementUrl);
+                var fileName = entry.Aaid;
+                //System.IO.File.WriteAllText(@"P:\MDS\" + fileName + @".txt", statement);
+            }
             
             //System.IO.File.WriteAllText(@"P:\MDS\toc.txt", toc);
         }
