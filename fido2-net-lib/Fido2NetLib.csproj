@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>1.0.0-alpha</Version>
+    <Description>FIDO2 .NET library (WebAuthn)</Description>
+    <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
+    <RepositoryType>github</RepositoryType>
+    <PackageTags>fido2 webauthn</PackageTags>
+    <PackageReleaseNotes>Initial testrelease</PackageReleaseNotes>
+    <PackageId>Fido2</PackageId>
+    <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
