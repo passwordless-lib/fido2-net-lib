@@ -11,12 +11,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using Newtonsoft.Json.Linq;
 
 namespace fido2_net_lib.Test
 {
     // todo: Create tests and name Facts and json files better.
     public class UnitTest1
     {
+
         public static byte[] StringToByteArray(string hex)
         {
             hex = hex.Replace("-", "");
@@ -80,8 +82,8 @@ namespace fido2_net_lib.Test
             //var key2 = "45-43-53-31-20-00-00-00-1D-60-44-D7-92-A0-0C-1E-3B-F9-58-5A-28-43-92-FD-F6-4F-BB-7F-8E-86-33-38-30-A4-30-5D-4E-2C-71-E3-53-3C-7B-98-81-99-FE-A9-DA-D9-24-8E-04-BD-C7-86-40-D3-03-1E-6E-00-81-7D-85-C3-A2-19-C9-21-85-8D";
             //var key2 = "45-43-53-31-20-00-00-00-A9-E9-12-2A-37-8A-F0-74-E7-BA-52-54-B0-91-55-46-DB-21-E5-2C-01-B8-FB-69-CD-E5-ED-02-B6-C3-16-E3-1A-59-16-C1-43-87-0D-04-B9-94-7F-CF-56-E5-AA-5E-96-8C-5B-27-8F-83-F4-E2-50-AB-B3-F6-28-A1-F8-9E";
 
-            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestionNoneOptions.json"));
-            var response = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestionNoneResponse.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./AttestationNoneOptions.json"));
+            var response = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./AttestationNoneResponse.json"));
 
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration()
             {
@@ -145,7 +147,7 @@ namespace fido2_net_lib.Test
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
-            byte[] ad = o.AttestionObject.AuthData;
+            byte[] ad = o.AttestationObject.AuthData;
         }
         [Fact]
         public async Task TestPackedAttestationAsync()
@@ -155,7 +157,7 @@ namespace fido2_net_lib.Test
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
-            byte[] ad = o.AttestionObject.AuthData;
+            byte[] ad = o.AttestationObject.AuthData;
         }
         [Fact]
         public async Task TestNoneAttestationAsync()
@@ -174,7 +176,7 @@ namespace fido2_net_lib.Test
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
-            byte[] ad = o.AttestionObject.AuthData;
+            byte[] ad = o.AttestationObject.AuthData;
         }
         [Fact]
         public async Task TestTPMSHA1AttestationAsync()
@@ -184,26 +186,60 @@ namespace fido2_net_lib.Test
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
-            byte[] ad = o.AttestionObject.AuthData;
+            byte[] ad = o.AttestationObject.AuthData;
         }
         [Fact]
         public async Task TestMdsParsing()
         {
+            string toc = System.IO.File.ReadAllText(@"P:\MDS\toc.txt");
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
-            var toc2 = File.ReadAllText("./mds2Toc.jwt");
-            X509Certificate2 cert = new X509Certificate2("./mdsSigning.cer");
-            var pub = (ECDsaCng)cert.GetECDsaPublicKey();
-            var ecdsaSecurityKey = new ECDsaSecurityKey(pub);
-            var validationParameters = new TokenValidationParameters()
+            var tocPrefix = "https://mds2.fidoalliance.org/?token=";
+            // Not a valid access token, demo token taken from https://fidoalliance.org/mds/
+            var accessToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
+
+            //accessToken = MDSAccessToken;
+            var tocURL = tocPrefix + accessToken;
+            //string toc;
+            //using (var client = new System.Net.WebClient())
+            //{
+                //toc = client.DownloadString(tocURL);
+            //}
+            var jwtToken = new JwtSecurityToken(toc);
+            var keys = (jwtToken.Header["x5c"] as JArray)
+                .Values<string>()
+                .Select(x => new ECDsaSecurityKey (
+                    (ECDsaCng)(new X509Certificate2(Convert.FromBase64String(x)).GetECDsaPublicKey())))
+                .ToArray();
+
+            var validationParameters = new TokenValidationParameters
             {
-                ValidateIssuerSigningKey = true,
                 ValidateIssuer = false,
-                IssuerSigningKey = ecdsaSecurityKey,
+                ValidateAudience = false,
                 ValidateLifetime = false,
-                ValidateAudience = false
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKeys = keys,
             };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken validatedToken;
-            var principal = new JwtSecurityTokenHandler().ValidateToken(toc2, validationParameters, out validatedToken);
+
+            tokenHandler.ValidateToken(
+                toc,
+                validationParameters,
+                out validatedToken);
+
+            var payload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+            var metadataTOC = JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
+            var client = new System.Net.WebClient();
+            foreach (var entry in metadataTOC.Entries)
+            {
+                var statementUrl = entry.Url + "/?token=" + accessToken;
+                var statement = client.DownloadString(statementUrl);
+                var fileName = entry.Aaid;
+                //System.IO.File.WriteAllText(@"P:\MDS\" + fileName + @".txt", statement);
+            }
+            
+            //System.IO.File.WriteAllText(@"P:\MDS\toc.txt", toc);
         }
     //public void TestHasCorrentAAguid()
     //{

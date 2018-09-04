@@ -78,7 +78,7 @@ namespace Fido2NetLib
                             X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
                             Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
                         };
-                        ECCurve curve = ECCurve.NamedCurves.nistP256;
+                        ECCurve curve;
                         switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                         {
                             case -7:
@@ -86,6 +86,7 @@ namespace Fido2NetLib
                                 {
                                     case 1:
                                     case 8:
+                                        curve = ECCurve.NamedCurves.nistP256;
                                         break;
                                     default:
                                         throw new ArgumentOutOfRangeException("crv");
@@ -134,13 +135,14 @@ namespace Fido2NetLib
                                 Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
                             }
                         );
-                        RSASignaturePadding padding = RSASignaturePadding.Pss;
+                        RSASignaturePadding padding;
                         switch (alg)
                         {
 
                             case -37:
                             case -38:
                             case -39:
+                                padding = RSASignaturePadding.Pss;
                                 break;
 
                             case -65535:
@@ -167,12 +169,12 @@ namespace Fido2NetLib
                     aaguid = new byte[16];
                     var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
                     // OCTET STRING
-                    if (0x4 != ms.ReadByte()) throw new Fido2VerificationException();
+                    if (0x4 != ms.ReadByte()) throw new Fido2VerificationException("Expected octet string value");
                     // AAGUID
-                    if (0x10 != ms.ReadByte()) throw new Fido2VerificationException();
+                    if (0x10 != ms.ReadByte()) throw new Fido2VerificationException("Unexpected length for aaguid");
                     ms.Read(aaguid, 0, 0x10);
                     //The extension MUST NOT be marked as critical
-                    if (true == ext.Critical) throw new Fido2VerificationException();
+                    if (true == ext.Critical) throw new Fido2VerificationException("extension MUST NOT be marked as critical");
                 }
             }
             return aaguid;
@@ -217,7 +219,7 @@ namespace Fido2NetLib
         {
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value.Equals("1.3.6.1.4.1.11129.2.1.17")) // AttestionRecordOid
+                if (ext.Oid.Value.Equals("1.3.6.1.4.1.11129.2.1.17")) // AttestationRecordOid
                 {
                     return ext.RawData;
                 }
@@ -234,8 +236,8 @@ namespace Fido2NetLib
                 {
                     var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
                     // BIT STRING
-                    if (0x3 != ms.ReadByte()) throw new Fido2VerificationException();
-                    if (0x2 != ms.ReadByte()) throw new Fido2VerificationException();
+                    if (0x3 != ms.ReadByte()) throw new Fido2VerificationException("Expected bit string");
+                    if (0x2 != ms.ReadByte()) throw new Fido2VerificationException("Expected integer value");
                     var unused = ms.ReadByte(); // unused byte
                     // https://fidoalliance.org/specs/fido-u2f-v1.1-id-20160915/fido-u2f-authenticator-transports-extension-v1.1-id-20160915.html#fido-u2f-certificate-transports-extension
                     u2ftransports = ms.ReadByte(); // do something with this?
@@ -277,7 +279,7 @@ namespace Fido2NetLib
             }
             return result;
         }
-        public static byte[] GetAttestionChallenge(byte[] attExtBytes)
+        public static byte[] GetAttestationChallenge(byte[] attExtBytes)
         {
             System.Diagnostics.Debug.WriteLine(BitConverter.ToString(attExtBytes).Replace("-", ""));
             if (null == attExtBytes || 0 == attExtBytes.Length || attExtBytes.Length > Math.Pow(2, 1008)) throw new Fido2VerificationException("Invalid attExtBytes signature value");

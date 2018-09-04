@@ -59,7 +59,7 @@ namespace Fido2NetLib
             if (options.AllowCredentials != null && options.AllowCredentials.Count() > 0)
             {
                 // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
-                if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException();
+                if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException("Invalid");
             }
 
             // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
@@ -109,11 +109,17 @@ namespace Fido2NetLib
 
             if (false == authData.RpIdHash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException("Hash mismatch RPID");
             // 12. Verify that the User Present bit of the flags in authData is set.
-            if (false == authData.UserPresent) throw new Fido2VerificationException("User Present flag not set in authenticator data");
+            // UNLESS...userVerification is set to preferred or discouraged?
+            // See Server-ServerAuthenticatorAssertionResponse-Resp3 Test server processing authenticatorData
+            // P-5 Send a valid ServerAuthenticatorAssertionResponse both authenticatorData.flags.UV and authenticatorData.flags.UP are not set, for userVerification set to "preferred", and check that server succeeds
+            // P-8 Send a valid ServerAuthenticatorAssertionResponse both authenticatorData.flags.UV and authenticatorData.flags.UP are not set, for userVerification set to "discouraged", and check that server succeeds
+            if ((false == authData.UserPresent) && (options.UserVerification != UserVerificationRequirement.Discouraged && options.UserVerification != UserVerificationRequirement.Preferred)) throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 13 If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.
-            var isUserVerificationRequired = options.UserVerification == UserVerificationRequirement.Required;
-            if (true == isUserVerificationRequired &&  false == authData.UserVerified) throw new Fido2VerificationException("User verification is required");
+            // UNLESS...userPresent is true?
+            // see ee Server-ServerAuthenticatorAssertionResponse-Resp3 Test server processing authenticatorData
+            // P-8 Send a valid ServerAuthenticatorAssertionResponse both authenticatorData.flags.UV and authenticatorData.flags.UP are not set, for userVerification set to "discouraged", and check that server succeeds
+            if (UserVerificationRequirement.Required == options.UserVerification && false == authData.UserVerified && false == authData.UserPresent) throw new Fido2VerificationException("User verification is required");
 
             // 14. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call.In particular, any extension identifier values in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
             // todo: Verify this (and implement extensions on options)

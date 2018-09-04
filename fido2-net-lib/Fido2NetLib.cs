@@ -84,12 +84,12 @@ namespace Fido2NetLib
         /// <summary>
         /// Verifies the response from the browser/authr after creating new credentials
         /// </summary>
-        /// <param name="attestionResponse"></param>
+        /// <param name="attestationResponse"></param>
         /// <param name="origChallenge"></param>
         /// <returns></returns>
-        public async Task<CredentialMakeResult> MakeNewCredentialAsync(AuthenticatorAttestationRawResponse attestionResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
+        public async Task<CredentialMakeResult> MakeNewCredentialAsync(AuthenticatorAttestationRawResponse attestationResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
         {
-            var parsedResponse = AuthenticatorAttestationResponse.Parse(attestionResponse);
+            var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
             var success = await parsedResponse.VerifyAsync(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
 
             // todo: Set Errormessage etc.

@@ -1,14 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-
+    <UserSecretsId>fido2-net-lib.Test-72797092-61BA-45E3-836A-53F282CFFAF3</UserSecretsId>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="assertionNoneOptions.json" />
     <None Remove="assertionNoneResponse.json" />
+    <None Remove="attestationNoneOptions.json" />
+    <None Remove="attestationNoneResponse.json" />
     <None Remove="attestationOptionsNone.json" />
     <None Remove="attestationOptionsPacked.json" />
     <None Remove="attestationOptionsU2F.json" />
@@ -23,7 +25,6 @@
     <None Remove="attestionNoneResponse.json" />
     <None Remove="json1.json" />
     <None Remove="json2.json" />
-    <None Remove="mds2Toc.jwt" />
     <None Remove="mdsCA.cer" />
     <None Remove="mdsRoot.cer" />
     <None Remove="mdsSigning.cer" />
@@ -36,6 +37,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="assertionNoneResponse.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationNoneOptions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationNoneResponse.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="attestationOptionsNone.json">
@@ -68,16 +75,7 @@
     <Content Include="attestationTPMSHA256Response.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="attestionNoneOptions.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="attestionNoneResponse.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="json2.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="mds2Toc.jwt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="mdsCA.cer">
