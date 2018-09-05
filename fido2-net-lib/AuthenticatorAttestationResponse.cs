@@ -222,10 +222,13 @@ namespace Fido2NetLib
                             //if (0 != aikCert.Subject.Length) throw new Fido2VerificationException("aikCert subject must be empty");
 
                             // The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
-                            // TODO: Finish validating SAN per https://www.w3.org/TR/webauthn/#tpm-cert-requirements
+                            // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
                             var SAN = AuthDataHelper.SANFromAttnCertExts(aikCert.Extensions);
                             if (null == SAN || 0 == SAN.Length) throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
-
+                            // From https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf
+                            // The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryNameform within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty and SHOULD be non-critical if subject is non-empty.   
+                            // Best I can figure to do for now?
+                            if (false == SAN.Contains("TPMManufacturer") || false == SAN.Contains("TPMModel") || false == SAN.Contains("TPMVersion")) throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersopm from TPM attestation certificate");
                             // The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
                             // OID is 2.23.133.8.3
                             var EKU = AuthDataHelper.EKUFromAttnCertExts(aikCert.Extensions);
