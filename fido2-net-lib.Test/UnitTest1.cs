@@ -191,61 +191,23 @@ namespace fido2_net_lib.Test
         [Fact]
         public async Task TestMdsParsing()
         {
-            string toc = System.IO.File.ReadAllText(@"P:\MDS\toc.txt");
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
-            var tocPrefix = "https://mds2.fidoalliance.org/?token=";
-            // Not a valid access token, demo token taken from https://fidoalliance.org/mds/
-            var accessToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
-
-            //accessToken = MDSAccessToken;
-            var tocURL = tocPrefix + accessToken;
-            //string toc;
-            //using (var client = new System.Net.WebClient())
-            //{
-                //toc = client.DownloadString(tocURL);
-            //}
-            var jwtToken = new JwtSecurityToken(toc);
-            var keys = (jwtToken.Header["x5c"] as JArray)
-                .Values<string>()
-                .Select(x => new ECDsaSecurityKey (
-                    (ECDsaCng)(new X509Certificate2(Convert.FromBase64String(x)).GetECDsaPublicKey())))
-                .ToArray();
-
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                ValidateLifetime = false,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKeys = keys,
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken validatedToken;
-
-            tokenHandler.ValidateToken(
-                toc,
-                validationParameters,
-                out validatedToken);
-
-            var payload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
-            var metadataTOC = JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
-            var client = new System.Net.WebClient();
-            foreach (var entry in metadataTOC.Entries)
-            {
-                var statementUrl = entry.Url + "/?token=" + accessToken;
-                var statement = client.DownloadString(statementUrl);
-                var fileName = entry.Aaid;
-                //System.IO.File.WriteAllText(@"P:\MDS\" + fileName + @".txt", statement);
-            }
-            
-            //System.IO.File.WriteAllText(@"P:\MDS\toc.txt", toc);
+            /*
+                SECTION MDS1
+            */
+            var mds1TocUrl = "https://mds.fidoalliance.org/";
+            var mds2TocUrl = "https://mds2.fidoalliance.org/";
+            var mds = new MDSMetadata();
+            mds.TOCPayloadFromCache(@"P:\MDS", "1");
+            mds.TOCPayloadFromCache(@"P:\MDS", "2");
+            //mds.TOCPayloadFromURL(mds1TocUrl, "1", @"P:\MDS");
+            //mds.TOCPayloadFromURL(mds2TocUrl, "2", @"P:\MDS");
         }
-    //public void TestHasCorrentAAguid()
-    //{
-    //    var expectedAaguid = new Uint8Array([
-    //    0x42, 0x38, 0x32, 0x45, 0x44, 0x37, 0x33, 0x43, 0x38, 0x46, 0x42, 0x34, 0x45, 0x35, 0x41, 0x32
-    //]).buffer;
-    //}
+        //public void TestHasCorrentAAguid()
+        //{
+        //    var expectedAaguid = new Uint8Array([
+        //    0x42, 0x38, 0x32, 0x45, 0x44, 0x37, 0x33, 0x43, 0x38, 0x46, 0x42, 0x34, 0x45, 0x35, 0x41, 0x32
+        //]).buffer;
+        //}
     }
 }

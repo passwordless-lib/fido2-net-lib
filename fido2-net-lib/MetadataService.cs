@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
@@ -61,7 +65,7 @@ namespace Fido2NetLib
         [JsonProperty("aaid")]
         public string Aaid { get; set; }
         [JsonProperty("aaguid")]
-        public string Aaguid { get; set; }
+        public string AaGuid { get; set; }
         [JsonProperty("attestationCertificateKeyIdentifiers")]
         public string[] AttestationCertificateKeyIdentifiers { get; set; }
         [JsonProperty("hash")]
@@ -78,6 +82,9 @@ namespace Fido2NetLib
         public string RogueListURL { get; set; }
         [JsonProperty("rogueListHash")]
         public string RogueListHash { get; set; }
+        [JsonProperty("MetadataStatement")]
+        [JsonConverter(typeof(Base64UrlConverter))]
+        public MetadataStatement MetadataStatement { get; set; }
     }
     public class RogueListEntry
     {
@@ -97,6 +104,20 @@ namespace Fido2NetLib
         [JsonProperty("entries", Required = Required.Always)]
         public MetadataTOCPayloadEntry[] Entries { get; set; }
     }
+
+    public class AlternativeDescriptions
+    {
+        [JsonProperty("alternativeDescriptions")]
+        public System.Collections.Generic.Dictionary<string, string> IETFLanguageCodesMembers { get; set; }
+    }
+
+    public class Version
+    {
+        [JsonProperty("major")]
+        public ushort Major { get; set; }
+        [JsonProperty("minor")]
+        public ushort Minor { get; set; }
+    }
     public class CodeAccuracyDescriptor
     {
         [JsonProperty("base", Required = Required.Always)]
@@ -106,7 +127,7 @@ namespace Fido2NetLib
         [JsonProperty("maxRetries")]
         public ushort MaxRetries { get; set; }
         [JsonProperty("blockSlowdown")]
-        public ushort blockSlowdown { get; set; }
+        public ushort BlockSlowdown { get; set; }
     }
     public class BiometricAccuracyDescriptor
     {
@@ -119,7 +140,7 @@ namespace Fido2NetLib
         [JsonProperty("maxRetries")]
         public ushort MaxRetries { get; set; }
         [JsonProperty("blockSlowdown")]
-        public ushort blockSlowdown { get; set; }
+        public ushort BlockSlowdown { get; set; }
     }
     public class PatternAccuracyDescriptor
     {
@@ -141,14 +162,19 @@ namespace Fido2NetLib
         [JsonProperty("paDesc")]
         public PatternAccuracyDescriptor PaDesc { get; set; }
     }
+    public class VerificationMethodANDCombinations
+    {
+        [JsonProperty("VerificationMethodANDCombinations")]
+        public VerificationMethodDescriptor[] VerificationMethodAndCombinations { get; set; }
+    }
     public class rgbPaletteEntry
     {
         [JsonProperty("r", Required = Required.Always)]
-        public ushort r { get; set; }
+        public ushort R { get; set; }
         [JsonProperty("g", Required = Required.Always)]
-        public ushort g { get; set; }
+        public ushort G { get; set; }
         [JsonProperty("b", Required = Required.Always)]
-        public ushort b { get; set; }
+        public ushort B { get; set; }
     }
     public class DisplayPNGCharacteristicsDescriptor
     {
@@ -167,7 +193,7 @@ namespace Fido2NetLib
         [JsonProperty("interlace", Required = Required.Always)]
         public byte Interlace { get; set; }
         [JsonProperty("plte")]
-        public rgbPaletteEntry[] plte { get; set; } 
+        public rgbPaletteEntry[] Plte { get; set; } 
     }
     public class EcdaaTrustAnchor
     {
@@ -195,22 +221,27 @@ namespace Fido2NetLib
         [JsonProperty("fail_if_unknown", Required = Required.Always)]
         public bool Fail_If_Unknown { get; set; }
     }
+
     public class MetadataStatement
     {
         [JsonProperty("legalHeader")]
         public string LegalHeader { get; set; }
-        //[JsonProperty("aaid")]
-        //[JsonProperty("aaguid")]
+        [JsonProperty("aaid")]
+        public string Aaid { get; set; }
+        [JsonProperty("aaguid")]
+        public string AaGuid { get; set; }
         [JsonProperty("attestationCertificateKeyIdentifiers")]
         public string[] AttestationCertificateKeyIdentifiers { get; set; }
         [JsonProperty("description", Required = Required.Always)]
         public string Description { get; set; }
-        //[JsonProperty("alternativeDescriptions")]
+        [JsonProperty("alternativeDescriptions")]
+        public AlternativeDescriptions IETFLanguageCodesMembers { get; set; }
         [JsonProperty("authenticatorVersion", Required = Required.Always)]
         public ushort AuthenticatorVersion { get; set; }
         [JsonProperty("protocolFamily")]
         public string ProtocolFamily { get; set; }
-        //[JsonProperty("upv", Required = Required.Always)]
+        [JsonProperty("upv", Required = Required.Always)]
+        public Version[] Upv { get; set; }
         [JsonProperty("assertionScheme", Required = Required.Always)]
         public string AssertionScheme { get; set; }
         [JsonProperty("authenticationAlgorithm", Required = Required.Always)]
@@ -223,7 +254,8 @@ namespace Fido2NetLib
         public ushort[] PublicKeyAlgAndEncodings { get; set; }
         [JsonProperty("attestationTypes", Required = Required.Always)]
         public ushort[] AttestationTypes { get; set; }
-        //[JsonProperty("userVerificationDetails", Required = Required.Always)]
+        [JsonProperty("userVerificationDetails", Required = Required.Always)]
+        public VerificationMethodDescriptor[][] UserVerificationDetails { get; set; }
         [JsonProperty("keyProtection", Required = Required.Always)]
         public ushort KeyProtection { get; set; }
         [JsonProperty("isKeyRestricted")]
@@ -253,6 +285,93 @@ namespace Fido2NetLib
         [JsonProperty("icon")]
         public string Icon { get; set; }
         [JsonProperty("supportedExtensions[]")]
-        public ExtensionDescriptor supportedExtensions { get; set; }
+        public ExtensionDescriptor SupportedExtensions { get; set; }
+    }
+    public class MDSMetadata
+    {
+        public MetadataTOCPayload mds1payload { get; set; }
+        public MetadataTOCPayload mds2payload { get; set; }
+        private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc)
+        {
+            var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(mdsToc);
+            var keys = (jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray)
+                .Values<string>()
+                .Select(x => new ECDsaSecurityKey(
+                    (ECDsaCng)(new System.Security.Cryptography.X509Certificates.X509Certificate2(System.Convert.FromBase64String(x)).GetECDsaPublicKey())))
+                .ToArray();
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKeys = keys,
+            };
+            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            SecurityToken validatedToken;
+
+            tokenHandler.ValidateToken(
+                mdsToc,
+                validationParameters,
+                out validatedToken);
+            var payload = ((System.IdentityModel.Tokens.Jwt.JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+
+            return JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
+        }
+        private MetadataStatement GetMetadataStatement(MetadataTOCPayloadEntry entry, string version, bool fromCache, string folder)
+        {
+            var rawStatement = "";
+            if (false == fromCache)
+            {
+                var client = new System.Net.WebClient();
+                rawStatement = client.DownloadString(entry.Url);
+            }
+            string filename = "";
+            if (null != entry.Aaid) // UAF
+            {
+                filename = folder + @"\" + version + @"\" + entry.Aaid + @".txt";
+            }
+            else if (null != entry.AaGuid) // FIDO2
+            {
+                filename = folder + @"\" + version + @"\" + entry.AaGuid + @".txt";
+            }
+            else if (null != entry.AttestationCertificateKeyIdentifiers) // U2F
+            {
+                filename = folder + @"\" + version + @"\" + entry.AttestationCertificateKeyIdentifiers[0] + @".txt";
+            }
+            if (false == fromCache) System.IO.File.WriteAllText(filename, rawStatement);
+            else rawStatement = System.IO.File.ReadAllText(filename);
+            var statementBytes = Base64Url.Decode(rawStatement);
+            var statement = System.Text.Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
+            return JsonConvert.DeserializeObject<MetadataStatement>(statement);
+        }
+        public void TOCPayloadFromURL(string url, string version, string folder)
+        {
+            var client = new System.Net.WebClient();
+
+            var mdsToc = client.DownloadString(url);
+
+            var metadataTOC = ValidatedTOCFromJwtSecurityToken(mdsToc);
+
+            foreach (var entry in metadataTOC.Entries)
+            {
+                entry.MetadataStatement = GetMetadataStatement(entry, version, false, folder);
+            }
+            System.IO.File.WriteAllText(folder + @"\" + version + @"\" + "mds.txt", JsonConvert.SerializeObject(metadataTOC));
+            if ("1" == version) mds1payload = metadataTOC;
+            if ("2" == version) mds2payload = metadataTOC;
+        }
+        public void TOCPayloadFromCache(string folder, string version)
+        {
+            var mdsToc = System.IO.File.ReadAllText(folder + @"\" + version + @"\" + "toc.txt");
+            var metadataTOC = ValidatedTOCFromJwtSecurityToken(mdsToc);
+            foreach (var entry in metadataTOC.Entries)
+            {
+                entry.MetadataStatement = GetMetadataStatement(entry, version, true, folder);
+            }
+            if ("1" == version) mds1payload = metadataTOC;
+            if ("2" == version) mds2payload = metadataTOC;
+        }
     }
 }
