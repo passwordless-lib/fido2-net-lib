@@ -300,6 +300,15 @@ namespace Fido2NetLib
                     (ECDsaCng)(new System.Security.Cryptography.X509Certificates.X509Certificate2(System.Convert.FromBase64String(x)).GetECDsaPublicKey())))
                 .ToArray();
 
+            var client = new System.Net.WebClient();
+            var rootFile = client.DownloadData("https://mds.fidoalliance.org/Root.cer");
+            var root = new X509Certificate2(rootFile);
+            //var root = new X509Certificate2(@"P:\MDS\Root.cer"); // https://mds.fidoalliance.org/Root.cer
+
+            var chain = new X509Chain();
+            chain.ChainPolicy.ExtraStore.Add(root);
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = false,
@@ -316,6 +325,30 @@ namespace Fido2NetLib
                 validationParameters,
                 out validatedToken);
             var payload = ((System.IdentityModel.Tokens.Jwt.JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+            chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(System.Convert.FromBase64String((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Values<string>().Last())));
+            var valid = chain.Build(new X509Certificate2(System.Convert.FromBase64String((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Values<string>().First())));
+            // if the root is trusted in the context we are running in, valid should be true here
+            if (false == valid)
+            {
+                // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
+                if (root.Thumbprint == chain.ChainElements[chain.ChainElements.Count - 1].Certificate.Thumbprint && 
+                    // and that the number of elements in the chain accounts for what was in x5c plus the root we added
+                    chain.ChainElements.Count == ((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Count + 1) &&
+                    // and that the root cert has exactly one status listed against it
+                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                    // and that that status is a status of exactly UntrustedRoot
+                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                {
+                    // if we are good so far, that is a good sign
+                    valid = true;
+                    for (var i = 0; i < chain.ChainElements.Count - 1; i++)
+                    {
+                        // check each non-root cert to verify zero status listed against it, otherwise, invalidate chain
+                        if (0 != chain.ChainElements[i].ChainElementStatus.Length)
+                            valid = false;
+                    }
+                }
+            }
 
             return JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
         }
