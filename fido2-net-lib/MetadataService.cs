@@ -349,7 +349,7 @@ namespace Fido2NetLib
                     }
                 }
             }
-
+            if (false == valid) throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
             return JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
         }
         private MetadataStatement GetMetadataStatement(MetadataTOCPayloadEntry entry, string version, bool fromCache, string folder)
