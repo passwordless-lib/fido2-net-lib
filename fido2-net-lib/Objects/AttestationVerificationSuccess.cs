@@ -14,8 +14,5 @@ namespace Fido2NetLib.Objects
         public byte[] CredentialId { get; set; }
 
         public User User { get; set; }
-
-        public AttestationType AttestationType { get; set; }
-        public byte[][] TrustPath { get; set; }
     }
 }

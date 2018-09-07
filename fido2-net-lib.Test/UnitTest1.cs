@@ -192,9 +192,6 @@ namespace fido2_net_lib.Test
         public async Task TestMdsParsing()
         {
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
-            /*
-                SECTION MDS1
-            */
             var mds1TocUrl = "https://mds.fidoalliance.org/";
             var mds2TocUrl = "https://mds2.fidoalliance.org/";
             var mds = new MDSMetadata();

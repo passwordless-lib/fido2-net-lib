@@ -64,7 +64,7 @@ namespace Fido2NetLib
         public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
         {
             AttestationType attnType;
-            X509SecurityKey[] trustPath = null;
+            X509Certificate2[] trustPath = null;
             BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
             // verify origin
@@ -243,7 +243,9 @@ namespace Fido2NetLib
 
                             // If successful, return attestation type AttCA and attestation trust path x5c.
                             attnType = AttestationType.AttCa;
-                            //trustPath = x5c;
+                            trustPath = x5c.Values
+                                .Select(x =>  new X509Certificate2(x.GetByteString()))
+                                .ToArray();
                         }
                         // If ecdaaKeyId is present, then the attestation type is ECDAA
                         else if (null != ecdaaKeyId)
@@ -252,7 +254,7 @@ namespace Fido2NetLib
                             // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
                             throw new Fido2VerificationException("ECDAA support for TPM attestation is not yet implemented");
                             // If successful, return attestation type ECDAA and the identifier of the ECDAA-Issuer public key ecdaaKeyId.
-                            attnType = AttestationType.ECDAA;
+                            //attnType = AttestationType.ECDAA;
                             //trustPath = ecdaaKeyId;
                         }
                         else throw new Fido2VerificationException("Neither x5c nor ECDAA were found in the TPM attestation statement");
@@ -298,8 +300,9 @@ namespace Fido2NetLib
                         // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
 
                         attnType = AttestationType.Basic;
-                        var tmp = attExtBytes.ToString();
-                        //trustPath = x5c;
+                        trustPath = x5c.Values
+                            .Select(x => new X509Certificate2(x.GetByteString()))
+                            .ToArray(); ;
                     }
                     break;
 
@@ -369,7 +372,10 @@ namespace Fido2NetLib
                         if (true != payload) throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");
 
                         attnType = AttestationType.Basic;
-                        trustPath = keys;
+                        trustPath = (jwtToken.Header["x5c"] as JArray)
+                            .Values<string>()
+                            .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                            .ToArray();
                     }
                     break;
 
@@ -407,7 +413,9 @@ namespace Fido2NetLib
                         if (null == ecsig) throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
                         if (true != pubKey.VerifyData(verificationData, ecsig, AuthDataHelper.algMap[coseAlg])) throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
                         attnType = AttestationType.Basic;
-                        //trustPath = x5c;
+                        trustPath = x5c.Values
+                            .Select(x => new X509Certificate2(x.GetByteString()))
+                            .ToArray();
                     }
                     break;
 
@@ -466,7 +474,9 @@ namespace Fido2NetLib
                             // id-fido-u2f-ce-transports 
                             var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(attestnCert.Extensions);
                             attnType = AttestationType.Basic;
-                            //trustPath = x5c;
+                            trustPath = x5c.Values
+                            .Select(x => new X509Certificate2(x.GetByteString()))
+                            .ToArray();
                         }
                         // If ecdaaKeyId is present, then the attestation type is ECDAA
                         else if (null != ecdaaKeyId)
@@ -477,7 +487,7 @@ namespace Fido2NetLib
 
                             throw new Fido2VerificationException("ECDAA is not yet implemented");
                             // If successful, return attestation type ECDAA and attestation trust path ecdaaKeyId.
-                            attnType = AttestationType.ECDAA;
+                            //attnType = AttestationType.ECDAA;
                             //trustPath = ecdaaKeyId;
                         }
                         // If neither x5c nor ecdaaKeyId is present, self attestation is in use
@@ -502,13 +512,15 @@ namespace Fido2NetLib
              * 15
              * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
              * */
-            // todo: implement (this is not for attfmt none)
+            // MetadataService
 
             /* 
              * 16 
              * Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows: https://www.w3.org/TR/webauthn/#registering-a-new-credential
              * */
             // todo: implement (this is not for attfmt none)
+            // use aaguid (authData.AttData.Aaguid) to find root certs in metadata
+            // use root plus trustPath to build trust chain
 
             /* 
              * 17
@@ -539,8 +551,6 @@ namespace Fido2NetLib
                 CredentialId = credentialId,
                 PublicKey = credentialPublicKeyBytes,
                 User = originalOptions.User,
-                AttestationType = attnType,
-                //TrustPath = trustPath
             };            
 
             return result;
