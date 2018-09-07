@@ -207,6 +207,7 @@ namespace Fido2NetLib
                             // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                             var aikCert = new X509Certificate2(x5c.Values.First().GetByteString());
                             var aikPublicKey = aikCert.GetRSAPublicKey();
+                            // TODO: will TPM always be using this signature padding, or could is use PSS in some cases?
                             if (true != aikPublicKey.VerifyData(certInfo.Raw, sig.GetByteString(), AuthDataHelper.algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
 
                             // Verify that aikCert meets the TPM attestation statement certificate requirements
