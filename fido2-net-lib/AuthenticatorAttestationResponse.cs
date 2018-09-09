@@ -64,7 +64,7 @@ namespace Fido2NetLib
         public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
         {
             AttestationType attnType;
-            X509SecurityKey[] trustPath = null;
+            X509Certificate2[] trustPath = null;
             BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
             // verify origin
@@ -207,6 +207,7 @@ namespace Fido2NetLib
                             // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                             var aikCert = new X509Certificate2(x5c.Values.First().GetByteString());
                             var aikPublicKey = aikCert.GetRSAPublicKey();
+                            // TODO: will TPM always be using this signature padding, or could is use PSS in some cases?
                             if (true != aikPublicKey.VerifyData(certInfo.Raw, sig.GetByteString(), AuthDataHelper.algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
 
                             // Verify that aikCert meets the TPM attestation statement certificate requirements
@@ -222,10 +223,13 @@ namespace Fido2NetLib
                             //if (0 != aikCert.Subject.Length) throw new Fido2VerificationException("aikCert subject must be empty");
 
                             // The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
-                            // TODO: Finish validating SAN per https://www.w3.org/TR/webauthn/#tpm-cert-requirements
+                            // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
                             var SAN = AuthDataHelper.SANFromAttnCertExts(aikCert.Extensions);
                             if (null == SAN || 0 == SAN.Length) throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
-
+                            // From https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf
+                            // The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryNameform within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty and SHOULD be non-critical if subject is non-empty.   
+                            // Best I can figure to do for now?
+                            if (false == SAN.Contains("TPMManufacturer") || false == SAN.Contains("TPMModel") || false == SAN.Contains("TPMVersion")) throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersopm from TPM attestation certificate");
                             // The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
                             // OID is 2.23.133.8.3
                             var EKU = AuthDataHelper.EKUFromAttnCertExts(aikCert.Extensions);
@@ -240,7 +244,9 @@ namespace Fido2NetLib
 
                             // If successful, return attestation type AttCA and attestation trust path x5c.
                             attnType = AttestationType.AttCa;
-                            //trustPath = x5c;
+                            trustPath = x5c.Values
+                                .Select(x =>  new X509Certificate2(x.GetByteString()))
+                                .ToArray();
                         }
                         // If ecdaaKeyId is present, then the attestation type is ECDAA
                         else if (null != ecdaaKeyId)
@@ -249,7 +255,7 @@ namespace Fido2NetLib
                             // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
                             throw new Fido2VerificationException("ECDAA support for TPM attestation is not yet implemented");
                             // If successful, return attestation type ECDAA and the identifier of the ECDAA-Issuer public key ecdaaKeyId.
-                            attnType = AttestationType.ECDAA;
+                            //attnType = AttestationType.ECDAA;
                             //trustPath = ecdaaKeyId;
                         }
                         else throw new Fido2VerificationException("Neither x5c nor ECDAA were found in the TPM attestation statement");
@@ -295,8 +301,9 @@ namespace Fido2NetLib
                         // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
 
                         attnType = AttestationType.Basic;
-                        var tmp = attExtBytes.ToString();
-                        //trustPath = x5c;
+                        trustPath = x5c.Values
+                            .Select(x => new X509Certificate2(x.GetByteString()))
+                            .ToArray(); ;
                     }
                     break;
 
@@ -366,7 +373,10 @@ namespace Fido2NetLib
                         if (true != payload) throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");
 
                         attnType = AttestationType.Basic;
-                        trustPath = keys;
+                        trustPath = (jwtToken.Header["x5c"] as JArray)
+                            .Values<string>()
+                            .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                            .ToArray();
                     }
                     break;
 
@@ -404,7 +414,9 @@ namespace Fido2NetLib
                         if (null == ecsig) throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
                         if (true != pubKey.VerifyData(verificationData, ecsig, AuthDataHelper.algMap[coseAlg])) throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
                         attnType = AttestationType.Basic;
-                        //trustPath = x5c;
+                        trustPath = x5c.Values
+                            .Select(x => new X509Certificate2(x.GetByteString()))
+                            .ToArray();
                     }
                     break;
 
@@ -463,7 +475,9 @@ namespace Fido2NetLib
                             // id-fido-u2f-ce-transports 
                             var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(attestnCert.Extensions);
                             attnType = AttestationType.Basic;
-                            //trustPath = x5c;
+                            trustPath = x5c.Values
+                            .Select(x => new X509Certificate2(x.GetByteString()))
+                            .ToArray();
                         }
                         // If ecdaaKeyId is present, then the attestation type is ECDAA
                         else if (null != ecdaaKeyId)
@@ -474,7 +488,7 @@ namespace Fido2NetLib
 
                             throw new Fido2VerificationException("ECDAA is not yet implemented");
                             // If successful, return attestation type ECDAA and attestation trust path ecdaaKeyId.
-                            attnType = AttestationType.ECDAA;
+                            //attnType = AttestationType.ECDAA;
                             //trustPath = ecdaaKeyId;
                         }
                         // If neither x5c nor ecdaaKeyId is present, self attestation is in use
@@ -499,13 +513,15 @@ namespace Fido2NetLib
              * 15
              * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
              * */
-            // todo: implement (this is not for attfmt none)
+            // MetadataService
 
             /* 
              * 16 
              * Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows: https://www.w3.org/TR/webauthn/#registering-a-new-credential
              * */
             // todo: implement (this is not for attfmt none)
+            // use aaguid (authData.AttData.Aaguid) to find root certs in metadata
+            // use root plus trustPath to build trust chain
 
             /* 
              * 17
@@ -536,8 +552,6 @@ namespace Fido2NetLib
                 CredentialId = credentialId,
                 PublicKey = credentialPublicKeyBytes,
                 User = originalOptions.User,
-                AttestationType = attnType,
-                //TrustPath = trustPath
             };            
 
             return result;

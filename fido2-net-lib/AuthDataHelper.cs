@@ -136,8 +136,8 @@ namespace Fido2NetLib
                             }
                         );
                         RSASignaturePadding padding;
-                        switch (alg)
-                        {
+                        switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    {
 
                             case -37:
                             case -38:
@@ -392,6 +392,17 @@ namespace Fido2NetLib
         // https://w3c.github.io/webauthn/#authenticator-data
     public class AuthenticatorData
     {
+        enum authDataFlags
+        {
+            UP,
+            RFU1,
+            UV,
+            RFU2,
+            RFU3,
+            RFU4,
+            AT,
+            ED
+        }
         public AuthenticatorData(byte[] authData)
         {
             if (null == authData || authData.Length < 37) throw new Fido2VerificationException("Authenticator data is invalid");
