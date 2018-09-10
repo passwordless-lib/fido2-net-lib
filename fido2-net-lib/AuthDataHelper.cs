@@ -412,12 +412,11 @@ namespace Fido2NetLib
             SignCount = AuthDataHelper.GetSizedByteArray(authData, ref offset, 4);
             if (false == AttestedCredentialDataPresent && false == ExtensionsPresent && 37 != authData.Length) throw new Fido2VerificationException("Authenticator data flags and data mismatch");
             AttData = null;
-            if (true == AttestedCredentialDataPresent && false == ExtensionsPresent) AttData = new AttestedCredentialData(authData, ref offset);
             Extensions = null;
-            if (false == AttestedCredentialDataPresent && true == ExtensionsPresent) Extensions = AuthDataHelper.GetSizedByteArray(authData, ref offset, (UInt16) (authData.Length - offset));
             // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
-            if (true == AttestedCredentialDataPresent && true == ExtensionsPresent) throw new Fido2VerificationException("Not yet implemented");
-            if (authData.Length != offset) throw new Fido2VerificationException("Leftover bits decoding AuthenticatorData");
+            if (true == AttestedCredentialDataPresent) AttData = new AttestedCredentialData(authData, ref offset);
+            if (true == ExtensionsPresent) Extensions = AuthDataHelper.GetSizedByteArray(authData, ref offset, (UInt16) (authData.Length - offset));
+            if (authData.Length != offset) throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
         }
         public byte[] RpIdHash { get; private set; }
         public byte Flags { get; private set; }
@@ -440,7 +439,13 @@ namespace Fido2NetLib
         {
             Aaguid = AuthDataHelper.GetSizedByteArray(attData, ref offset, 16);
             CredentialID = AuthDataHelper.GetSizedByteArray(attData, ref offset);
-            CredentialPublicKey = AuthDataHelper.GetSizedByteArray(attData, ref offset, (UInt16)(attData.Length - offset));
+            // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
+            var ms = new System.IO.MemoryStream(attData, offset, attData.Length - offset);
+            // PeterO.Cbor.CBORObject.Read: This method will read from the stream until the end of the CBOR object is reached or an error occurs, whichever happens first.
+            var tmp = PeterO.Cbor.CBORObject.Read(ms);
+            var aCD = tmp.EncodeToBytes();
+            var aCDLen = aCD.Length;
+            CredentialPublicKey = AuthDataHelper.GetSizedByteArray(attData, ref offset, (UInt16)(aCDLen));
             if (null == Aaguid || null == CredentialID || null == CredentialPublicKey) throw new Fido2VerificationException("Attested credential data is invalid");
         }
         public byte[] Aaguid { get; private set; }
