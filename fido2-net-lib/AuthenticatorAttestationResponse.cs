@@ -269,8 +269,6 @@ namespace Fido2NetLib
                         // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
                         if (0 == AttestationObject.AttStmt.Keys.Count || 0 == AttestationObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
                         if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid packed attestation signature");
-                        if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type) throw new Fido2VerificationException("Invalid packed attestation algorithm");
-
                         // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                         // using the attestation public key in attestnCert with the algorithm specified in alg
                         if (null == x5c && PeterO.Cbor.CBORType.Array != x5c.Type && 0 == x5c.Count) throw new Fido2VerificationException("Malformed x5c in android-key attestation");
@@ -303,7 +301,7 @@ namespace Fido2NetLib
                         attnType = AttestationType.Basic;
                         trustPath = x5c.Values
                             .Select(x => new X509Certificate2(x.GetByteString()))
-                            .ToArray(); ;
+                            .ToArray();
                     }
                     break;
 
