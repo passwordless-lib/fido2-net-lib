@@ -279,12 +279,11 @@ namespace Fido2NetLib
             }
             return result;
         }
-        public static byte[] GetAttestationChallenge(byte[] attExtBytes)
+        public static byte[] GetASN1ObjectAtIndex(byte[] attExtBytes, int index)
         {
             System.Diagnostics.Debug.WriteLine(BitConverter.ToString(attExtBytes).Replace("-", ""));
             if (null == attExtBytes || 0 == attExtBytes.Length || attExtBytes.Length > Math.Pow(2, 1008)) throw new Fido2VerificationException("Invalid attExtBytes signature value");
             var offset = 0;
-            var uint16Buffer = new byte[2];
             var derSequence = GetSizedByteArray(attExtBytes, ref offset, 1);
             if (null == derSequence || 0x30 != derSequence[0]) throw new Fido2VerificationException("attExtBytes signature not a valid DER sequence");
             var dataLen = GetSizedByteArray(attExtBytes, ref offset, 1);
@@ -295,21 +294,92 @@ namespace Fido2NetLib
             {
                 var longLenByte = GetSizedByteArray(attExtBytes, ref offset, 1);
                 if (null == longLenByte) throw new Fido2VerificationException("attExtBytes signature has invalid long form length");
-                Buffer.BlockCopy(longLenByte, 0, uint16Buffer, 0, 1);
-                longLen = BitConverter.ToUInt16(uint16Buffer, 0);
+                longLen = longLenByte[0];
                 longLen &= (1 << 7);
             }
-            // attestationVersion          
-            var derInt = GetSizedByteArray(attExtBytes, ref offset, 1);
-            if (null == derInt || 0x02 != derInt[0]) throw new Fido2VerificationException("attExtBytes sequence does not contain integer value"); // DER INTEGER
-            var lenVersion = GetSizedByteArray(attExtBytes, ref offset, 1);
-            if (null == lenVersion) throw new Fido2VerificationException("attExtBytes version length invalid");
-            Buffer.BlockCopy(lenVersion, 0, uint16Buffer, 0, 1);
-            var version = GetSizedByteArray(attExtBytes, ref offset, BitConverter.ToUInt16(uint16Buffer, 0));
+            
+            for (var i = 0; i < index; i++)
+            {
+                var derId = GetSizedByteArray(attExtBytes, ref offset, 1);
+                if (null == derId) throw new Fido2VerificationException("Ran out of bytes in attExtBytes sequence without finding the first octet string");
+                var lenValue = GetSizedByteArray(attExtBytes, ref offset, 1);
+                if (null == lenValue) throw new Fido2VerificationException("attExtBytes lenValue invalid");
+                if (0 < lenValue[0])
+                {
+                    var value = GetSizedByteArray(attExtBytes, ref offset, lenValue[0]);
+                    if (null == value) throw new Fido2VerificationException("Ran out of bytes in attExtBytes sequence without finding the first octet string");
+                }
+            }
 
-            // attestationSecurityLevel   
+            var asn1Id = GetSizedByteArray(attExtBytes, ref offset, 1);
+            if (null == asn1Id) throw new Fido2VerificationException("Ran out of bytes in attExtBytes sequence without finding the first octet string");
+            var lenAsn1value = GetSizedByteArray(attExtBytes, ref offset, 1);
+            if (null == lenAsn1value) throw new Fido2VerificationException("lenAttestationChallenge version length invalid");
+            return GetSizedByteArray(attExtBytes, ref offset, lenAsn1value[0]);
+        }
+        public static byte[] GetAttestationChallenge(byte[] attExtBytes)
+        {
+            // skip attestationVersion, attestationSecurityLevel, keymasterVersion, keymasterSecurityLevel
+            return GetASN1ObjectAtIndex(attExtBytes, 4);
+        }
+        public static byte[] GetSoftwareEnforcedAuthorizationList(byte[] attExtBytes)
+        {
+            return GetASN1ObjectAtIndex(attExtBytes, 6);
+        }
+        public static byte[] GetTeeEnforcedAuthorizationList(byte[] attExtBytes)
+        {
+            return GetASN1ObjectAtIndex(attExtBytes, 7);
+        }
 
-            return null;
+        public static bool FindAllApplicationsField(byte[] attExtBytes)
+        {
+            var software = GetSoftwareEnforcedAuthorizationList(attExtBytes);
+            var tee = GetTeeEnforcedAuthorizationList(attExtBytes);
+            var ignore = -1;
+            return (GetDERTagValue(software, 600, ref ignore) && GetDERTagValue(tee, 600, ref ignore));
+        }
+        public static bool GetDERTagValue(byte[] authList, int tag, ref int result)
+        {
+            for (int i = 0; i < authList.Length;)
+            {
+                var Class2Constructed = (authList[i] & 0xA0) == 0xA0;
+                var Full = (authList[i] & 0x1F) == 0x1F;
+                var FoundTag = 0;
+                if (false == Full)
+                {
+                    FoundTag = (authList[i] &~ 0xA0);
+                    i++;
+                }
+                else
+                {
+                    FoundTag = ((authList[i + 1] & ~0x80) << 7) + (authList[i + 2]);
+                    i += 3;
+                }
+                if (tag == FoundTag)
+                {
+                    if (5 == authList[i] && 0x31 == authList[i + 1]) i += 2;
+                    if (3 == authList[i] && 2 == authList[i + 1] && 1 == authList[i + 2])
+                    {
+                        result = authList[i + 3];
+                        return true;
+                    }
+                }
+                else if (i < authList.Length) i += authList[i] + 1;
+            }
+            return false;
+        }
+
+        public static bool IsOriginGenerated(byte[] attExtBytes)
+        {
+            var tagValue = -1;
+            var result = GetDERTagValue(GetTeeEnforcedAuthorizationList(attExtBytes), 702, ref tagValue);
+            return (0 == tagValue && true == result);
+        }
+        public static bool IsPurposeSign(byte[] attExtBytes)
+        {
+            var tagValue = -1;
+            var result = GetDERTagValue(GetTeeEnforcedAuthorizationList(attExtBytes), 1, ref tagValue);
+            return (2 == tagValue && true == result);
         }
         public static byte[] GetEcDsaSigValue(byte[] ecDsaSig, ref int offset, bool longForm)
         {
@@ -334,7 +404,7 @@ namespace Fido2NetLib
                  *  number is not negative."
                  *  
                  */
-                if (0x00 == ecDsaSig[offset])// && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
+                if (0x00 == ecDsaSig[offset] && ((ecDsaSig[offset + 1] & (1 << 7)) != 0))
                 {
                     offset++;
                     len--;
@@ -442,9 +512,17 @@ namespace Fido2NetLib
             // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
             var ms = new System.IO.MemoryStream(attData, offset, attData.Length - offset);
             // PeterO.Cbor.CBORObject.Read: This method will read from the stream until the end of the CBOR object is reached or an error occurs, whichever happens first.
-            var tmp = PeterO.Cbor.CBORObject.Read(ms);
-            var aCD = tmp.EncodeToBytes();
-            var aCDLen = aCD.Length;
+            PeterO.Cbor.CBORObject tmp = null;
+            try
+            {
+                tmp = PeterO.Cbor.CBORObject.Read(ms);
+            }
+            catch (Exception ex)
+            {
+                throw new Fido2VerificationException("Failed to read credential public key from attested credential data");
+            }
+            var aCDLen = tmp.EncodeToBytes().Length;
+            
             CredentialPublicKey = AuthDataHelper.GetSizedByteArray(attData, ref offset, (UInt16)(aCDLen));
             if (null == Aaguid || null == CredentialID || null == CredentialPublicKey) throw new Fido2VerificationException("Attested credential data is invalid");
         }

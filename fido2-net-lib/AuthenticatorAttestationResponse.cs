@@ -273,8 +273,17 @@ namespace Fido2NetLib
                         // using the attestation public key in attestnCert with the algorithm specified in alg
                         if (null == x5c && PeterO.Cbor.CBORType.Array != x5c.Type && 0 == x5c.Count) throw new Fido2VerificationException("Malformed x5c in android-key attestation");
                         if (null == x5c.Values || 0 == x5c.Values.Count || PeterO.Cbor.CBORType.ByteString != x5c.Values.First().Type || 0 == x5c.Values.First().GetByteString().Length) throw new Fido2VerificationException("Malformed x5c in android-key attestation");
-                        var androidKeyCert = new X509Certificate2(x5c.Values.First().GetByteString());
-                        var androidKeyPubKey = (ECDsaCng)androidKeyCert.GetECDsaPublicKey(); // attestation public key
+                        X509Certificate2 androidKeyCert = null;
+                        ECDsaCng androidKeyPubKey = null;
+                        try
+                        {
+                            androidKeyCert = new X509Certificate2(x5c.Values.First().GetByteString());
+                            androidKeyPubKey = (ECDsaCng)androidKeyCert.GetECDsaPublicKey(); // attestation public key
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new Fido2VerificationException("Failed to extract public key from android key" + ex.Message);
+                        }
                         if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type || false == AuthDataHelper.algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
                         if (true != androidKeyPubKey.VerifyData(data, AuthDataHelper.SigFromEcDsaSig(sig.GetByteString()), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
                         var cng = ECDsaCng.Create(new ECParameters
@@ -294,10 +303,13 @@ namespace Fido2NetLib
 
                         // 1. The value of the attestationChallenge field is identical to clientDataHash.
                         var attestationChallenge = AuthDataHelper.GetAttestationChallenge(attExtBytes);
+                        if (false == hashedClientDataJson.SequenceEqual(attestationChallenge)) throw new Fido2VerificationException("Mismatched between attestationChallenge and hashedClientDataJson verifying android key attestation certificate extension");
                         // 2. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID.
-                        // 3. The value in the AuthorizationList.origin field is equal to KM_TAG_GENERATED.
-                        // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN.
-
+                        if (true == AuthDataHelper.FindAllApplicationsField(attExtBytes)) throw new Fido2VerificationException("Found all applications field in android key attestation certificate extension");
+                        // 3. The value in the AuthorizationList.origin field is equal to KM_ORIGIN_GENERATED ( which == 0).
+                        if (false == AuthDataHelper.IsOriginGenerated(attExtBytes)) throw new Fido2VerificationException("Found origin field not set to KM_ORIGIN_GENERATED in android key attestation certificate extension");
+                        // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
+                        if (false == AuthDataHelper.IsPurposeSign(attExtBytes)) throw new Fido2VerificationException("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
                         attnType = AttestationType.Basic;
                         trustPath = x5c.Values
                             .Select(x => new X509Certificate2(x.GetByteString()))
@@ -440,6 +452,7 @@ namespace Fido2NetLib
                             IEnumerator<PeterO.Cbor.CBORObject> enumerator = x5c.Values.GetEnumerator();
                             while (enumerator.MoveNext())
                             {
+                                if (null == enumerator || null == enumerator.Current || PeterO.Cbor.CBORType.ByteString != enumerator.Current.Type || 0 == enumerator.Current.GetByteString().Length) throw new Fido2VerificationException("Malformed x5c cert found in packed attestation statement");
                                 var x5ccert = new X509Certificate2(enumerator.Current.GetByteString());
                                 if (DateTime.UtcNow < x5ccert.NotBefore || DateTime.UtcNow > x5ccert.NotAfter) throw new Fido2VerificationException("Packed signing certificate expired or not yet valid");
                             }

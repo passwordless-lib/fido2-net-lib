@@ -189,6 +189,16 @@ namespace fido2_net_lib.Test
             byte[] ad = o.AttestationObject.AuthData;
         }
         [Fact]
+        public async Task TestAndroidKeyAttestationAsync()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationAndroidKeyResponse.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationAndroidKeyOptions.json"));
+            var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration());
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
+            byte[] ad = o.AttestationObject.AuthData;
+        }
+        [Fact]
         public async Task TestMdsParsing()
         {
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
