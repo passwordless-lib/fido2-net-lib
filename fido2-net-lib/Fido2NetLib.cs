@@ -93,7 +93,7 @@ namespace Fido2NetLib
             var success = await parsedResponse.VerifyAsync(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
 
             // todo: Set Errormessage etc.
-            return new CredentialMakeResult { Status = "ok", ErrorMessage = "", Result = success };
+            return new CredentialMakeResult { Status = "ok", ErrorMessage = string.Empty, Result = success };
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace Fido2NetLib
         /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public async Task<AssertionVerificationSuccess> MakeAssertionAsync(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions originalOptions, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback, byte[] requestTokenBindingId = null)
+        public async Task<AssertionVerificationResult> MakeAssertionAsync(AuthenticatorAssertionRawResponse assertionResponse, AssertionOptions originalOptions, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 
@@ -125,10 +125,8 @@ namespace Fido2NetLib
         /// <summary>
         /// Result of parsing and verifying attestation. Used to transport Public Key back to RP
         /// </summary>
-        public class CredentialMakeResult
+        public class CredentialMakeResult : Fido2ResponseBase
         {
-            public string Status { get; set; }
-            public string ErrorMessage { get; set; }
             public AttestationVerificationSuccess Result { get; internal set; }
 
             // todo: add debuginfo?
