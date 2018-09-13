@@ -298,18 +298,22 @@ namespace Fido2NetLib
                         // Verify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
                         if (true != cng.VerifyData(data, AuthDataHelper.SigFromEcDsaSig(sig.GetByteString()), AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
 
-                        // TODO:  Verify that in the attestation certificate extension data:
+                        // Verify that in the attestation certificate extension data:
                         var attExtBytes = AuthDataHelper.AttestationExtensionBytes(androidKeyCert.Extensions);
 
                         // 1. The value of the attestationChallenge field is identical to clientDataHash.
                         var attestationChallenge = AuthDataHelper.GetAttestationChallenge(attExtBytes);
                         if (false == hashedClientDataJson.SequenceEqual(attestationChallenge)) throw new Fido2VerificationException("Mismatched between attestationChallenge and hashedClientDataJson verifying android key attestation certificate extension");
+                        
                         // 2. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID.
                         if (true == AuthDataHelper.FindAllApplicationsField(attExtBytes)) throw new Fido2VerificationException("Found all applications field in android key attestation certificate extension");
+                        
                         // 3. The value in the AuthorizationList.origin field is equal to KM_ORIGIN_GENERATED ( which == 0).
                         if (false == AuthDataHelper.IsOriginGenerated(attExtBytes)) throw new Fido2VerificationException("Found origin field not set to KM_ORIGIN_GENERATED in android key attestation certificate extension");
+                        
                         // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
                         if (false == AuthDataHelper.IsPurposeSign(attExtBytes)) throw new Fido2VerificationException("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
+
                         attnType = AttestationType.Basic;
                         trustPath = x5c.Values
                             .Select(x => new X509Certificate2(x.GetByteString()))
