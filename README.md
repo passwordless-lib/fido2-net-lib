@@ -26,8 +26,7 @@ Feedback, issues and pull requests are VERY welcome.
 - ✅ Backwards compatibility with Fido-u2f.  
 - ✅ Windows Hello support  
 - ✅ ES256 Public Key format  
-- ✅ "none", "fido-u2f", "android-safetynet", "TPM" & "packed" attestation formats  
-- ❌ "android-key" attestation formats mostly done, still in progress
+- ✅ "none", "fido-u2f", "android-key", "android-safetynet", "tpm" & "packed" attestation formats
 - ❌ Extensions  
 - ✅ Examples & demo's
 - ✅ Intellisense documentation  
