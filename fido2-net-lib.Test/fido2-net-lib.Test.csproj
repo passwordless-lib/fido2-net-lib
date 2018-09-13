@@ -9,6 +9,8 @@
   <ItemGroup>
     <None Remove="assertionNoneOptions.json" />
     <None Remove="assertionNoneResponse.json" />
+    <None Remove="attestationAndroidKeyOptions.json" />
+    <None Remove="attestationAndroidKeyResponse.json" />
     <None Remove="attestationNoneOptions.json" />
     <None Remove="attestationNoneResponse.json" />
     <None Remove="attestationOptionsNone.json" />
@@ -37,6 +39,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="assertionNoneResponse.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationAndroidKeyOptions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="attestationAndroidKeyResponse.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="attestationNoneOptions.json">
