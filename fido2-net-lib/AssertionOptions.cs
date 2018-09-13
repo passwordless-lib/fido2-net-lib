@@ -8,14 +8,8 @@ namespace Fido2NetLib
     /// <summary>
     /// Sent to the browser when we want to Assert credentials and authenticate a user
     /// </summary>
-    public class AssertionOptions
+    public class AssertionOptions : Fido2ResponseBase
     {
-        [JsonProperty("status")]
-        public string Status { get; set; } = "ok";
-
-        [JsonProperty("errorMessage")]
-        public string ErrorMessage { get; set; } = string.Empty;
-
         /// <summary>
         /// This member represents a challenge that the selected authenticator signs, along with other data, when producing an authentication assertion.See the §13.1 Cryptographic Challenges security consideration.
         /// </summary>
@@ -46,6 +40,8 @@ namespace Fido2NetLib
         {
             return new AssertionOptions()
             {
+                Status = "ok",
+                ErrorMessage = string.Empty,
                 Challenge = challenge,
                 Timeout = config.Timeout,
                 RpId = config.ServerDomain,
