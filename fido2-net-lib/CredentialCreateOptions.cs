@@ -8,14 +8,8 @@ using static Fido2NetLib.Fido2;
 
 namespace Fido2NetLib
 {
-    public class CredentialCreateOptions
+    public class CredentialCreateOptions : Fido2ResponseBase
     {
-        [JsonProperty("status")]
-        public string Status { get; set; }
-
-        [JsonProperty("errorMessage")]
-        public string ErrorMessage { get; set; }
-
         /// <summary>
         /// 
         /// This member contains data about the Relying Party responsible for the request.

@@ -172,6 +172,13 @@ function makeCredential() {
             console.log("Credential Options Object");
             console.log(makeCredentialOptions);
 
+            if (makeCredentialOptions.status !== "ok") {
+                console.log("Error creating credential options");
+                console.log(makeCredentialOptions.errorMessage);
+                showErrorAlert(makeCredentialOptions.errorMessage);
+                return;
+            }
+
             // base64url to base64
             //const challenge = makeCredentialOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
 
@@ -197,14 +204,7 @@ function makeCredential() {
                 focusConfirm: false,
                 focusCancel: false,
             }).then(function (result) {
-                if (result.value) {
-                    swal({
-                        title: 'Registration Successful!',
-                        text: 'You\'ve registered successfully.',
-                        type: 'success',
-                        timer: 2000
-                    });
-                } else {
+                if (!result.value) {
                     console.log('Registration cancelled');
                 }
             }).catch(function (error) {
@@ -219,7 +219,6 @@ function makeCredential() {
                 console.log(newCredential);
                 state.createResponse = newCredential;
                 registerNewCredential(newCredential);
-                swal.clickConfirm()
             }).catch(function (err) {
                 console.log(err);
                 swal.closeModal();
@@ -256,18 +255,24 @@ function registerNewCredential(newCredential) {
         .catch(error => console.error('Error:', error))
         //.then(response => console.log('Success:', response))
         .then(response => {
-            console.log('Success:', response);
-            if (response.status === "ok") {
-                //swal(
-                //    'Good job!',
-                //    'You\'re registrered successfully',
-                //    'success'
-                //);
-                //window.location.href = "/dashboard/" + state.user.displayName;
-            } else {
+            console.log("Credential Object");
+            console.log(response);
+
+            if (response.status !== "ok") {
                 console.log("Error creating credential");
-                console.log(response);
+                console.log(response.errorMessage);
+                swal.closeModal();
+                showErrorAlert(response.errorMessage);
+                return;
             }
+
+            swal({
+                title: 'Registration Successful!',
+                text: 'You\'ve registered successfully.',
+                type: 'success',
+                timer: 2000
+            });
+            //window.location.href = "/dashboard/" + state.user.displayName;
         });
 }
 
@@ -306,6 +311,16 @@ function getAssertion() {
             error.then(msg => showErrorAlert(msg));
         })
         .then((makeAssertionOptions) => {
+            console.log("Assertion Options Object");
+            console.log(makeAssertionOptions);
+
+            if (makeAssertionOptions.status !== "ok") {
+                console.log("Error creating assertion options");
+                console.log(makeAssertionOptions.errorMessage);
+                showErrorAlert(makeAssertionOptions.errorMessage);
+                return;
+            }
+
             const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
             makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
 
@@ -323,18 +338,18 @@ function getAssertion() {
                 showConfirmButton: false,
                 focusConfirm: false,
                 focusCancel: false,
+            }).then(function (result) {
+                if (!result.value) {
+                    console.log('Login cancelled');
+                }
+            }).catch(function (error) {
+                console.log("Modal Error: " + error);
             });
+
             navigator.credentials.get({ publicKey: makeAssertionOptions })
                 .then(function (credential) {
                     console.log(credential);
                     verifyAssertion(credential);
-                    swal.clickConfirm();
-                    swal({
-                        title: 'Logged In!',
-                        text: 'You\'re logged in successfully.',
-                        type: 'success',
-                        timer: 2000
-                    });
                 }).catch(function (err) {
                     console.log(err);
                     showErrorAlert(err.message);
@@ -368,23 +383,27 @@ function verifyAssertion(assertedCredential) {
             'Content-Type': 'application/json'
         }
     })
-        //.then(r => r.json())
-        .catch(e => console.error(e))
-        .then(function (r) {
-            //var response = r.json();
-            //console.log(response)
+        .then(res => res.json())
+        .catch(error => console.error('Error:', error))
+        .then((response) => {
+            console.log("Assertion Object");
+            console.log(response);
 
-            if (r.status === 200) {
-                //swal(
-                //    'Good job!',
-                //    'You\'re registrered in successfully',
-                //    'success'
-                //);
-                //window.location.href = "/dashboard/" + state.user.displayName;
-            } else {
-                showErrorAlert("Error Doing Assertion");
+            if (response.status !== "ok") {
+                console.log("Error doing assertion");
+                console.log(response.errorMessage);
                 swal.closeModal();
+                showErrorAlert(response.errorMessage);
+                return;
             }
+
+            swal({
+                title: 'Logged In!',
+                text: 'You\'re logged in successfully.',
+                type: 'success',
+                timer: 2000
+            });
+            //window.location.href = "/dashboard/" + state.user.displayName;
         });
 }
 

@@ -46,7 +46,7 @@ namespace Fido2NetLib
         /// <param name="options">The assertionoptions that was sent to the client</param>
         /// <param name="expectedOrigin">The expected server origin, used to verify that the signature is sent to the expected server</param>
         /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
-        public async Task<AssertionVerificationSuccess> VerifyAsync(AssertionOptions options, string expectedOrigin, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId, byte[] requestTokenBindingId)
+        public async Task<AssertionVerificationResult> VerifyAsync(AssertionOptions options, string expectedOrigin, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId, byte[] requestTokenBindingId)
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
@@ -145,8 +145,10 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("SignatureCounter was not greater than stored SignatureCounter");
             }
 
-            return new AssertionVerificationSuccess()
+            return new AssertionVerificationResult()
             {
+                Status = "ok",
+                ErrorMessage = string.Empty,
                 CredentialId = Raw.Id,
                 Counter = counter
             };
