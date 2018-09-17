@@ -98,7 +98,8 @@ namespace Fido2Demo
                 {
                     Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
                     PublicKey = success.Result.PublicKey,
-                    UserHandle = success.Result.User.Id
+                    UserHandle = success.Result.User.Id,
+                    SignatureCounter = success.Result.SignatureCounter
                 });
 
                 // 4. return "ok" to the client

@@ -28,7 +28,7 @@ namespace Fido2NetLib
     {
         [JsonProperty("status", Required = Required.Always)]
         public AuthenticatorStatus Status { get; set; }
-        [JsonProperty("effictiveDate")]
+        [JsonProperty("effectiveDate")]
         public string EffectiveDate { get; set; }
         [JsonProperty("certificate")]
         public string Certificate { get; set; }
@@ -391,7 +391,7 @@ namespace Fido2NetLib
             {
                 entry.MetadataStatement = GetMetadataStatement(entry, version, false, folder);
             }
-            System.IO.File.WriteAllText(folder + @"\" + version + @"\" + "mds.txt", JsonConvert.SerializeObject(metadataTOC));
+            //System.IO.File.WriteAllText(folder + @"\" + version + @"\" + "mds.txt", JsonConvert.SerializeObject(metadataTOC));
             if ("1" == version) mds1payload = metadataTOC;
             if ("2" == version) mds2payload = metadataTOC;
         }

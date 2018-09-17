@@ -567,6 +567,7 @@ namespace Fido2NetLib
                 CredentialId = credentialId,
                 PublicKey = credentialPublicKeyBytes,
                 User = originalOptions.User,
+                SignatureCounter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray(), 0)
             };            
 
             return result;
