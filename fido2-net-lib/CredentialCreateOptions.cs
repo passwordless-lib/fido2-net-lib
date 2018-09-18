@@ -73,7 +73,15 @@ namespace Fido2NetLib
                 {
                     // Add additional as appropriate
                     ES256,
-                    RS256
+                    RS256,
+                    PS256,
+                    ES384,
+                    RS384,
+                    PS384,
+                    ES512,
+                    RS512,
+                    PS512,
+                    RS1
                 },
                 AuthenticatorSelection = authenticatorSelection,
                 Attestation = attestationConveyancePreference,
@@ -107,6 +115,11 @@ namespace Fido2NetLib
         {
             Type = "public-key",
             Alg = -36
+        };
+        private static PubKeyCredParam RS1 = new PubKeyCredParam()
+        {
+            Type = "public-key",
+            Alg = -65535
         };
         private static PubKeyCredParam RS256 = new PubKeyCredParam()
         {

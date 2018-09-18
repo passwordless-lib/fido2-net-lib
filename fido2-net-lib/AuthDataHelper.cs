@@ -538,14 +538,14 @@ namespace Fido2NetLib
         public byte[] SignCount { get; private set; }
         public AttestedCredentialData AttData { get; private set; }
         public byte[] Extensions { get; private set; }
-        public bool UserPresent { get { return ((Flags & (1 << 0)) != 0); } }
-        //public bool Reserved1 { get { return ((Flags & (1 << 1)) != 0); } }
-        public bool UserVerified { get { return ((Flags & (1 << 2)) != 0); } }
-        //public bool Reserved2 { get { return ((Flags & (1 << 3)) != 0); } }
-        //public bool Reserved3 { get { return ((Flags & (1 << 4)) != 0); } }
-        //public bool Reserved4 { get { return ((Flags & (1 << 5)) != 0); } }
-        public bool AttestedCredentialDataPresent { get { return ((Flags & (1 << 6)) != 0); } }
-        public bool ExtensionsPresent { get { return ((Flags & (1 << 7)) != 0); } }
+        public bool UserPresent { get { return ((Flags & (1 << (int) authDataFlags.UP)) != 0); } }
+        public bool Reserved1 { get { return ((Flags & (1 << (int) authDataFlags.RFU1)) != 0); } }
+        public bool UserVerified { get { return ((Flags & (1 << (int) authDataFlags.UV)) != 0); } }
+        public bool Reserved2 { get { return ((Flags & (1 << (int) authDataFlags.RFU2)) != 0); } }
+        public bool Reserved3 { get { return ((Flags & (1 << (int) authDataFlags.RFU3)) != 0); } }
+        public bool Reserved4 { get { return ((Flags & (1 << (int) authDataFlags.RFU4)) != 0); } }
+        public bool AttestedCredentialDataPresent { get { return ((Flags & (1 << (int) authDataFlags.AT)) != 0); } }
+        public bool ExtensionsPresent { get { return ((Flags & (1 << (int) authDataFlags.ED)) != 0); } }
     }
     // https://w3c.github.io/webauthn/#attested-credential-data
     public class AttestedCredentialData
