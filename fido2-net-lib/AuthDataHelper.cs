@@ -562,7 +562,7 @@ namespace Fido2NetLib
             {
                 tmp = PeterO.Cbor.CBORObject.Read(ms);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new Fido2VerificationException("Failed to read credential public key from attested credential data");
             }

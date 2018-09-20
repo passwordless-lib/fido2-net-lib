@@ -41,7 +41,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredentialOptions")]
-        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType)
+        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType, [FromForm] string authType)
         {
             try
             {
@@ -57,7 +57,16 @@ namespace Fido2Demo
                 List<PublicKeyCredentialDescriptor> existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
                 // 3. Create options
-                var options = _lib.RequestNewCredential(user, existingKeys, AuthenticatorSelection.Default, AttestationConveyancePreference.Parse(attType));
+                var authenticatorSelection =
+                    string.IsNullOrEmpty(authType) ?
+                    AuthenticatorSelection.Default :
+                    new AuthenticatorSelection
+                    {
+                        AuthenticatorAttachment = AuthenticatorAttachment.Parse(authType),
+                        RequireResidentKey = false,
+                        UserVerification = UserVerificationRequirement.Preferred
+                    };
+                var options = _lib.RequestNewCredential(user, existingKeys, authenticatorSelection, AttestationConveyancePreference.Parse(attType));
 
                 // 4. Temporarily store options, session/in-memory cache/redis/db
                 HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
