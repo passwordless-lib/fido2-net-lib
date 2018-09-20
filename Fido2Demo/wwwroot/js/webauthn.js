@@ -253,7 +253,7 @@ function makeCredential() {
             }).catch(function (err) {
                 console.log(err);
                 swal.closeModal();
-                showErrorAlert(err);
+                showErrorAlert(err.message ? err.message : err);
             });
         });
 }
@@ -383,7 +383,7 @@ function getAssertion() {
                     verifyAssertion(credential);
                 }).catch(function (err) {
                     console.log(err);
-                    showErrorAlert(err.message);
+                    showErrorAlert(err.message ? err.message : err);
                     swal.closeModal();
                 });
         });

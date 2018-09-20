@@ -128,7 +128,7 @@ namespace Fido2Demo
             {
                 // 1. Get user from DB
                 var user = DemoStorage.GetUser(username);
-                if (user == null) return NotFound("username was not registered");
+                if (user == null) throw new ArgumentException("Username was not registered");
 
                 // 2. Get registered credentials from database
                 List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
