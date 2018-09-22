@@ -302,6 +302,7 @@ namespace Fido2NetLib
         public static readonly string mds2url = "https://mds2.fidoalliance.org";
         public static readonly string tokenParamName = "/?token=";
         private static string _accessToken;
+        private static string _cacheDir;
 
         private MDSMetadata()
         {
@@ -319,11 +320,12 @@ namespace Fido2NetLib
             }
             Configuration = builder.Build();
             _accessToken = Configuration["MDSAccessToken"];
-            //TOCPayloadFromURL(mds1url, "1", @"P:\MDS");
-            //TOCPayloadFromURL(mds2url + tokenParamName + _accessToken, "2", @"P:\MDS");
-            TOCPayloadFromCache(@"P:\MDS", "1");
-            TOCPayloadFromCache(@"P:\MDS", "2");
-            CustomTOCPayloadFromCache(@"P:\MDS", "Custom");
+            _cacheDir = Configuration["CacheDir"];
+            //TOCPayloadFromURL(mds1url, "1", _cacheDir);
+            //TOCPayloadFromURL(mds2url + tokenParamName + _accessToken, "2", _cacheDir);
+            TOCPayloadFromCache(_cacheDir, "1");
+            TOCPayloadFromCache(_cacheDir, "2");
+            CustomTOCPayloadFromCache(_cacheDir, "Custom");
         }
         public static MDSMetadata Instance()
         {
@@ -351,9 +353,9 @@ namespace Fido2NetLib
                 .ToArray();
 
             var client = new System.Net.WebClient();
-            //var rootFile = client.DownloadData("https://mds.fidoalliance.org/Root.cer");
-            //var root = new X509Certificate2(rootFile);
-            var root = new X509Certificate2(@"P:\MDS\Root.cer"); // https://mds.fidoalliance.org/Root.cer
+            var rootFile = client.DownloadData("https://mds.fidoalliance.org/Root.cer");
+            var root = new X509Certificate2(rootFile);
+            //var root = new X509Certificate2(@"P:\MDS\Root.cer"); // https://mds.fidoalliance.org/Root.cer
 
             var chain = new X509Chain();
             chain.ChainPolicy.ExtraStore.Add(root);
