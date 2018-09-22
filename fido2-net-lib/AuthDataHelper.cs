@@ -550,9 +550,27 @@ namespace Fido2NetLib
     // https://w3c.github.io/webauthn/#attested-credential-data
     public class AttestedCredentialData
     {
+        public static Guid FromBigEndian(byte[] Aaguid)
+        {
+            byte[] guid = new byte[16];
+            for (int i = 8; i < 16; i++)
+            {
+                guid[i] = Aaguid[i];
+            }
+            guid[3] = Aaguid[0];
+            guid[2] = Aaguid[1];
+            guid[1] = Aaguid[2];
+            guid[0] = Aaguid[3];
+            guid[5] = Aaguid[4];
+            guid[4] = Aaguid[5];
+            guid[6] = Aaguid[7];
+            guid[7] = Aaguid[6];
+            return new Guid(guid);
+        }
         public AttestedCredentialData(byte[] attData, ref int offset)
         {
             Aaguid = AuthDataHelper.GetSizedByteArray(attData, ref offset, 16);
+            GuidAaguid = FromBigEndian(Aaguid);
             CredentialID = AuthDataHelper.GetSizedByteArray(attData, ref offset);
             // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
             var ms = new System.IO.MemoryStream(attData, offset, attData.Length - offset);
@@ -571,6 +589,7 @@ namespace Fido2NetLib
             CredentialPublicKey = AuthDataHelper.GetSizedByteArray(attData, ref offset, (UInt16)(aCDLen));
             if (null == Aaguid || null == CredentialID || null == CredentialPublicKey) throw new Fido2VerificationException("Attested credential data is invalid");
         }
+        public Guid GuidAaguid { get; private set; }
         public byte[] Aaguid { get; private set; }
         public byte[] CredentialID { get; private set; }
         public byte[] CredentialPublicKey { get; private set; }

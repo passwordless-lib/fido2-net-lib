@@ -12,13 +12,31 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace fido2_net_lib.Test
 {
     // todo: Create tests and name Facts and json files better.
     public class UnitTest1
     {
+        private static IConfiguration Configuration;
+        
+        public UnitTest1()
+        {
+            string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            if (string.IsNullOrWhiteSpace(env))
+            {
+                env = "Development";
+            }
 
+            var builder = new ConfigurationBuilder();
+
+            if (env == "Development")
+            {
+                builder.AddUserSecrets<UnitTest1>();
+            }
+            Configuration = builder.Build();
+        }
         public static byte[] StringToByteArray(string hex)
         {
             hex = hex.Replace("-", "");
@@ -88,7 +106,7 @@ namespace fido2_net_lib.Test
             var fido2 = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2.Configuration()
             {
                 ServerDomain = "localhost",
-                Origin = "https://localhost:44329"
+                Origin = "https://localhost:44329",
             });
 
             var o = AuthenticatorAttestationResponse.Parse(response);
@@ -197,18 +215,6 @@ namespace fido2_net_lib.Test
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null);
             byte[] ad = o.AttestationObject.AuthData;
-        }
-        [Fact]
-        public async Task TestMdsParsing()
-        {
-            Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
-            var mds1TocUrl = "https://mds.fidoalliance.org/";
-            var mds2TocUrl = "https://mds2.fidoalliance.org/";
-            var mds = new MDSMetadata();
-            mds.TOCPayloadFromCache(@"P:\MDS", "1");
-            mds.TOCPayloadFromCache(@"P:\MDS", "2");
-            //mds.TOCPayloadFromURL(mds1TocUrl, "1", @"P:\MDS");
-            //mds.TOCPayloadFromURL(mds2TocUrl, "2", @"P:\MDS");
         }
         //public void TestHasCorrentAAguid()
         //{
