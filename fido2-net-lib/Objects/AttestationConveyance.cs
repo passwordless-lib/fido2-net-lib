@@ -38,7 +38,7 @@ namespace Fido2NetLib.Objects
                 case "direct":
                     return Direct;
                 default:
-                    throw new InvalidOperationException("Could parse value");
+                    throw new InvalidOperationException("Could not parse value");
             }
         }
     }

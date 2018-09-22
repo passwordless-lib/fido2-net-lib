@@ -15,7 +15,7 @@
     <link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />
 </head>
 
-<body>
+<body onload="detectFIDOSupport()">
     <div class="container">
         <div class="login-wrapper">
             <form class="form-signin mb-">
@@ -55,6 +55,16 @@
                                 <option value="indirect">Indirect</option>
                                 <option value="direct">Direct</option>
                             </select>
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="authenticatorType">
+                                    Authenticator Type
+                                </label>
+                            </div>
+                            <select class="custom-select" id="select-authenticator">
+                                <option selected value="">Not specified</option>
+                                <option value="cross-platform">Cross Platform (Token)</option>
+                                <option id="platform-authenticator" value="platform">Platform (TPM)</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -64,9 +74,17 @@
                     <strong>Holy guacamole!</strong> You should check in on some of those fields below.
                 </div>
             </div>
+            <div class="warning-wrapper" id="user-warning" style="display:none">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <span id="warning-msg"></span>
+                    <button type="button" class="close" aria-label="Close" onclick="hideWarningAlert()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
             <div class="text-center buttons">
-                <button class="btn btn-lg btn-primary" type="button" onclick="makeCredential()">Register a User/Credential</button>
-                <button class="btn btn-lg btn-primary" type="button" onclick="getAssertion()">Login with Credential</button>
+                <button id="register-button" class="btn btn-lg btn-primary" type="button" onclick="makeCredential()">Register a User/Credential</button>
+                <button id="login-button" class="btn btn-lg btn-primary" type="button" onclick="getAssertion()">Login with Credential</button>
 
             </div>
         </div>

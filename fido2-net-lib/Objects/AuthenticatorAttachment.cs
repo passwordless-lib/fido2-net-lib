@@ -28,5 +28,18 @@ namespace Fido2NetLib.Objects
         private AuthenticatorAttachment(string value) : base(value)
         {
         }
+
+        public static AuthenticatorAttachment Parse(string value)
+        {
+            switch (value)
+            {
+                case "platform":
+                    return Platform;
+                case "cross-platform":
+                    return CrossPlatform;
+                default:
+                    throw new InvalidOperationException("Could not parse value");
+            }
+        }
     }
 }
