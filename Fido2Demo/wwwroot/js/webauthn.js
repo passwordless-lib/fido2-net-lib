@@ -1,3 +1,32 @@
+function markPlatformAuthenticatorUnavailable() {
+    
+    $('#platform-authenticator').attr("disabled", true);
+    showWarningAlert("Platform (TPM) authenticators not available");
+}
+
+function detectFIDOSupport() {
+    if (window.PublicKeyCredential === undefined ||
+        typeof window.PublicKeyCredential !== "function") {
+        $('#register-button').attr("disabled", true);
+        $('#login-button').attr("disabled", true);
+        showErrorAlert("WebAuthn is not currently supported by this browser");
+        return;
+    }
+
+    if (window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
+        markPlatformAuthenticatorUnavailable();
+    } else if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function") {
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function(available) {
+            if (!available) {
+                markPlatformAuthenticatorUnavailable();
+            }
+        }).catch(function(e) {
+            markPlatformAuthenticatorUnavailable();
+        });
+    }
+}
+
+
 function hexEncode(buf) {
     return Array.from(buf)
         .map(function (x) {
@@ -148,10 +177,12 @@ function makeCredential() {
     setUser();
 
     var attestation_type = $('#select-attestation').find(':selected').val();
+    var authenticator_attachment = $('#select-authenticator').find(':selected').val();
 
     var data = new FormData();
     data.append('username', state.user.name);
     data.append('attType', attestation_type);
+    data.append('authType', authenticator_attachment);
 
     fetch('/makeCredentialOptions', {
         method: 'POST', // or 'PUT'
@@ -222,7 +253,7 @@ function makeCredential() {
             }).catch(function (err) {
                 console.log(err);
                 swal.closeModal();
-                showErrorAlert(err);
+                showErrorAlert(err.message ? err.message : err);
             });
         });
 }
@@ -352,7 +383,7 @@ function getAssertion() {
                     verifyAssertion(credential);
                 }).catch(function (err) {
                     console.log(err);
-                    showErrorAlert(err.message);
+                    showErrorAlert(err.message ? err.message : err);
                     swal.closeModal();
                 });
         });
@@ -415,6 +446,15 @@ function setCurrentUser(userResponse) {
 function showErrorAlert(msg) {
     $("#alert-msg").text(msg);
     $("#user-alert").show();
+}
+
+function showWarningAlert(msg) {
+    $("#warning-msg").text(msg);
+    $("#user-warning").show();
+}
+
+function hideWarningAlert() {
+    $("#user-warning").fadeOut(200);
 }
 
 function showSuccessAlert(msg) {

@@ -51,6 +51,7 @@ namespace Fido2NetLib
         [JsonProperty("attestation")]
         public AttestationConveyancePreference Attestation { get; set; } = AttestationConveyancePreference.None;
 
+        [JsonProperty("authenticatorSelection")]
         public AuthenticatorSelection AuthenticatorSelection { get; set; }
 
         /// <summary>

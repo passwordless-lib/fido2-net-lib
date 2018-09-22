@@ -88,7 +88,7 @@ namespace Fido2NetLib
         public string RogueListURL { get; set; }
         [JsonProperty("rogueListHash")]
         public string RogueListHash { get; set; }
-        [JsonProperty("MetadataStatement")]
+        [JsonProperty("metadataStatement")]
         [JsonConverter(typeof(Base64UrlConverter))]
         public MetadataStatement MetadataStatement { get; set; }
     }
@@ -170,7 +170,7 @@ namespace Fido2NetLib
     }
     public class VerificationMethodANDCombinations
     {
-        [JsonProperty("VerificationMethodANDCombinations")]
+        [JsonProperty("verificationMethodANDCombinations")]
         public VerificationMethodDescriptor[] VerificationMethodAndCombinations { get; set; }
     }
     public class rgbPaletteEntry
@@ -290,8 +290,8 @@ namespace Fido2NetLib
         public EcdaaTrustAnchor[] EcdaaTrustAnchors { get; set; }
         [JsonProperty("icon")]
         public string Icon { get; set; }
-        [JsonProperty("supportedExtensions[]")]
-        public ExtensionDescriptor SupportedExtensions { get; set; }
+        [JsonProperty("supportedExtensions")]
+        public ExtensionDescriptor[] SupportedExtensions { get; set; }
     }
     public sealed class MDSMetadata
     {

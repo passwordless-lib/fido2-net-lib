@@ -16,17 +16,20 @@ namespace Fido2NetLib.Objects
         /// <summary>
         /// This member contains the type of the public key credential the caller is referring to.
         /// </summary>
+        [JsonProperty("type")]
         public string Type { get; set; } = "public-key";
 
         /// <summary>
         /// This member contains the credential ID of the public key credential the caller is referring to.
         /// </summary>
         [JsonConverter(typeof(Base64UrlConverter))]
+        [JsonProperty("id")]
         public byte[] Id { get; set; }
 
         /// <summary>
         /// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator of the public key credential the caller is referring to.
         /// </summary>
+        [JsonProperty("transports")]
         public AuthenticatorTransport[] Transports { get; set; } = new AuthenticatorTransport[] { };
 
         public PublicKeyCredentialDescriptor(byte[] credentialId)
