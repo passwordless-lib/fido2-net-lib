@@ -544,30 +544,11 @@ namespace Fido2NetLib
             var metadata = MDSMetadata.Instance();
             if (null != metadata)
             {
-                var metadata1Result = (from entry in metadata.mds1payload.Entries
-                                       where (null != entry.AaGuid)
-                                       where new Guid(entry.AaGuid) == authData.AttData.GuidAaguid
-                                       select entry);
-                if (null != metadata1Result.FirstOrDefault())
-                {
-                    metadataStatement = metadata1Result.FirstOrDefault().MetadataStatement;
+                if (true == metadata.payload.ContainsKey(authData.AttData.GuidAaguid))
+                { 
+                    metadataStatement = metadata.payload[authData.AttData.GuidAaguid].MetadataStatement;
                 }
-                var metadata2Result = (from entry in metadata.mds2payload.Entries
-                                       where (null != entry.AaGuid)
-                                       where new Guid(entry.AaGuid) == authData.AttData.GuidAaguid
-                                       select entry);
-                if (null != metadata2Result.FirstOrDefault())
-                {
-                    metadataStatement = metadata2Result.FirstOrDefault().MetadataStatement;
-                }
-                var metadataCustomResult = (from entry in metadata.mdsCustomPayload.Entries
-                                            where (null != entry.AaGuid)
-                                            where new Guid(entry.AaGuid) == authData.AttData.GuidAaguid
-                                            select entry);
-                if (null != metadataCustomResult.FirstOrDefault())
-                {
-                    metadataStatement = metadataCustomResult.FirstOrDefault().MetadataStatement;
-                }
+                
                 if (null != metadataStatement)
                 {
                     var hasBasicFull = metadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
@@ -575,8 +556,8 @@ namespace Fido2NetLib
                         null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
                 }
             }
-
             */
+            
             /* 
              * 17
              * Check that the credentialId is not yet registered to any other user.

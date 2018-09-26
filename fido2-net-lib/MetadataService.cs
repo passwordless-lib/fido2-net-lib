@@ -323,9 +323,25 @@ namespace Fido2NetLib
             _cacheDir = Configuration["CacheDir"];
             //TOCPayloadFromURL(mds1url, "1", _cacheDir);
             //TOCPayloadFromURL(mds2url + tokenParamName + _accessToken, "2", _cacheDir);
+            payload = new System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry>();
             TOCPayloadFromCache(_cacheDir, "1");
+            foreach (MetadataTOCPayloadEntry entry in mds1payload.Entries)
+            {
+                if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
+            }
             TOCPayloadFromCache(_cacheDir, "2");
+            foreach (MetadataTOCPayloadEntry entry in mds2payload.Entries)
+            {
+                if (null != entry.AaGuid)
+                {
+                    payload.Add(new System.Guid(entry.AaGuid), entry);
+                }
+            }
             CustomTOCPayloadFromCache(_cacheDir, "Custom");
+            foreach (MetadataTOCPayloadEntry entry in mdsCustomPayload.Entries)
+            {
+                if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
+            }
         }
         public static MDSMetadata Instance()
         {
@@ -339,10 +355,10 @@ namespace Fido2NetLib
             }
             return mDSMetadata;
         }
-
-        public MetadataTOCPayload mds1payload { get; set; }
-        public MetadataTOCPayload mds2payload { get; set; }
-        public MetadataTOCPayload mdsCustomPayload { get; set; }
+        public System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry> payload { get; set; }
+        private MetadataTOCPayload mds1payload { get; set; }
+        private MetadataTOCPayload mds2payload { get; set; }
+        private MetadataTOCPayload mdsCustomPayload { get; set; }
         private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc)
         {
             var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(mdsToc);
@@ -352,9 +368,22 @@ namespace Fido2NetLib
                     (ECDsaCng)(new System.Security.Cryptography.X509Certificates.X509Certificate2(System.Convert.FromBase64String(x)).GetECDsaPublicKey())))
                 .ToArray();
 
-            var client = new System.Net.WebClient();
-            var rootFile = client.DownloadData("https://mds.fidoalliance.org/Root.cer");
-            var root = new X509Certificate2(rootFile);
+            //var client = new System.Net.WebClient();
+            //var rootFile = client.DownloadData("https://mds.fidoalliance.org/Root.cer");
+            var rootFile =  "MIICQzCCAcigAwIBAgIORqmxkzowRM99NQZJurcwCgYIKoZIzj0EAwMwUzELMAkG" +
+                            "A1UEBhMCVVMxFjAUBgNVBAoTDUZJRE8gQWxsaWFuY2UxHTAbBgNVBAsTFE1ldGFk" +
+                            "YXRhIFRPQyBTaWduaW5nMQ0wCwYDVQQDEwRSb290MB4XDTE1MDYxNzAwMDAwMFoX" +
+                            "DTQ1MDYxNzAwMDAwMFowUzELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUZJRE8gQWxs" +
+                            "aWFuY2UxHTAbBgNVBAsTFE1ldGFkYXRhIFRPQyBTaWduaW5nMQ0wCwYDVQQDEwRS" +
+                            "b290MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEFEoo+6jdxg6oUuOloqPjK/nVGyY+" +
+                            "AXCFz1i5JR4OPeFJs+my143ai0p34EX4R1Xxm9xGi9n8F+RxLjLNPHtlkB3X4ims" +
+                            "rfIx7QcEImx1cMTgu5zUiwxLX1ookVhIRSoso2MwYTAOBgNVHQ8BAf8EBAMCAQYw" +
+                            "DwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQU0qUfC6f2YshA1Ni9udeO0VS7vEYw" +
+                            "HwYDVR0jBBgwFoAU0qUfC6f2YshA1Ni9udeO0VS7vEYwCgYIKoZIzj0EAwMDaQAw" +
+                            "ZgIxAKulGbSFkDSZusGjbNkAhAkqTkLWo3GrN5nRBNNk2Q4BlG+AvM5q9wa5WciW" +
+                            "DcMdeQIxAMOEzOFsxX9Bo0h4LOFE5y5H8bdPFYW+l5gy1tQiJv+5NUyM2IBB55XU" +
+                            "YjdBz56jSA==";
+            var root = new X509Certificate2(System.Convert.FromBase64String(rootFile));
             //var root = new X509Certificate2(@"P:\MDS\Root.cer"); // https://mds.fidoalliance.org/Root.cer
 
             var chain = new X509Chain();
