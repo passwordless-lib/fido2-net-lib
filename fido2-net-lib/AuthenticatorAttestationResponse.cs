@@ -197,7 +197,7 @@ namespace Fido2NetLib
                         // Conformance test Server-ServerAuthenticatorAttestationResponse-Resp-9 Test server processing "tpm" attestation
                         // P-3 Send a valid ServerAuthenticatorAttestationResponse with "tpm" attestation pubArea.nameAlg is not matching algorithm used for generate attested.name, and check that server succeeds
                         // fails with this on
-                        //if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[BitConverter.ToInt16(pubArea.Alg.Reverse().ToArray())]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+                        //if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[(int)(pubArea.Alg.Reverse().ToArray())[0]]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
 
                         // If x5c is present, this indicates that the attestation type is not ECDAA
                         if (null != x5c && PeterO.Cbor.CBORType.Array == x5c.Type && 0 != x5c.Count)
@@ -538,6 +538,26 @@ namespace Fido2NetLib
             // use aaguid (authData.AttData.Aaguid) to find root certs in metadata
             // use root plus trustPath to build trust chain
 
+            // uncomment this area for metadata testing
+            /*
+            MetadataStatement metadataStatement = null;
+            var metadata = MDSMetadata.Instance();
+            if (null != metadata)
+            {
+                if (true == metadata.payload.ContainsKey(authData.AttData.GuidAaguid))
+                { 
+                    metadataStatement = metadata.payload[authData.AttData.GuidAaguid].MetadataStatement;
+                }
+                
+                if (null != metadataStatement)
+                {
+                    var hasBasicFull = metadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
+                    if (false == hasBasicFull &&
+                        null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
+                }
+            }
+            */
+            
             /* 
              * 17
              * Check that the credentialId is not yet registered to any other user.
@@ -567,7 +587,7 @@ namespace Fido2NetLib
                 CredentialId = credentialId,
                 PublicKey = credentialPublicKeyBytes,
                 User = originalOptions.User,
-                SignatureCounter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray(), 0)
+                Counter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray(), 0)
             };            
 
             return result;
