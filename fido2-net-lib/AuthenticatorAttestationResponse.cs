@@ -194,9 +194,6 @@ namespace Fido2NetLib
                         if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[alg.AsInt32()]).ComputeHash(data).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
 
                         // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-                        // Conformance test Server-ServerAuthenticatorAttestationResponse-Resp-9 Test server processing "tpm" attestation
-                        // P-3 Send a valid ServerAuthenticatorAttestationResponse with "tpm" attestation pubArea.nameAlg is not matching algorithm used for generate attested.name, and check that server succeeds
-                        // fails with this on
                         if (false == AuthDataHelper.GetHasher(AuthDataHelper.algMap[(int)certInfo.Alg]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
 
                         // If x5c is present, this indicates that the attestation type is not ECDAA
@@ -208,6 +205,7 @@ namespace Fido2NetLib
                             var aikCert = new X509Certificate2(x5c.Values.First().GetByteString());
                             var aikPublicKey = aikCert.GetRSAPublicKey();
                             // TODO: will TPM always be using this signature padding, or could is use PSS in some cases?
+                            // TODO: Not only can it be different signature padding, it can be EC2. Have not seen, but in spec.
                             if (true != aikPublicKey.VerifyData(certInfo.Raw, sig.GetByteString(), AuthDataHelper.algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
 
                             // Verify that aikCert meets the TPM attestation statement certificate requirements
@@ -215,12 +213,8 @@ namespace Fido2NetLib
                             // Version MUST be set to 3
                             if (3 != aikCert.Version) throw new Fido2VerificationException("aikCert must be V3");
 
-                            // Subject field MUST be set to empty
-                            // Conformance test Server-ServerAuthenticatorAttestationResponse-Resp-9 Test server processing "tpm" attestation
-                            // P-1 Send a valid ServerAuthenticatorAttestationResponse with "tpm" attestation for SHA-256, and check that server succeeds
-                            // P-2 Send a valid ServerAuthenticatorAttestationResponse with "tpm" attestation for SHA-1, and check that server succeeds
-                            // Both fail with this on
-                            //if (0 != aikCert.Subject.Length) throw new Fido2VerificationException("aikCert subject must be empty");
+                            // Subject field MUST be set to empty - they actually mean subject name
+                            if (0 != aikCert.SubjectName.Name.Length) throw new Fido2VerificationException("aikCert subject must be empty");
 
                             // The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
                             // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
