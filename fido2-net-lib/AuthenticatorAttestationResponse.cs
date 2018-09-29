@@ -197,7 +197,7 @@ namespace Fido2NetLib
                         // Conformance test Server-ServerAuthenticatorAttestationResponse-Resp-9 Test server processing "tpm" attestation
                         // P-3 Send a valid ServerAuthenticatorAttestationResponse with "tpm" attestation pubArea.nameAlg is not matching algorithm used for generate attested.name, and check that server succeeds
                         // fails with this on
-                        //if (!AuthDataHelper.GetHasher(AuthDataHelper.algMap[(int)(pubArea.Alg.Reverse().ToArray())[0]]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+                        if (false == AuthDataHelper.GetHasher(AuthDataHelper.algMap[(int)certInfo.Alg]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
 
                         // If x5c is present, this indicates that the attestation type is not ECDAA
                         if (null != x5c && PeterO.Cbor.CBORType.Array == x5c.Type && 0 != x5c.Count)
@@ -537,26 +537,32 @@ namespace Fido2NetLib
             // todo: implement (this is not for attfmt none)
             // use aaguid (authData.AttData.Aaguid) to find root certs in metadata
             // use root plus trustPath to build trust chain
-
-            // uncomment this area for metadata testing
-            /*
-            MetadataStatement metadataStatement = null;
+            
+            MetadataTOCPayloadEntry entry = null;
             var metadata = MDSMetadata.Instance();
             if (null != metadata)
             {
                 if (true == metadata.payload.ContainsKey(authData.AttData.GuidAaguid))
                 { 
-                    metadataStatement = metadata.payload[authData.AttData.GuidAaguid].MetadataStatement;
+                    entry = metadata.payload[authData.AttData.GuidAaguid];
                 }
-                
-                if (null != metadataStatement)
+                if (null != entry)
                 {
-                    var hasBasicFull = metadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
-                    if (false == hasBasicFull &&
-                        null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
+                    if (null != entry.MetadataStatement)
+                    {
+                        var hasBasicFull = entry.MetadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
+                        if (false == hasBasicFull &&
+                            null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
+                    }
+                    if (null != entry.StatusReports)
+                    {
+                        foreach (StatusReport report in entry.StatusReports)
+                        {
+                            if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), report.Status)) throw new Fido2VerificationException("Authenticator found with undesirable status");
+                        }
+                    }
                 }
             }
-            */
             
             /* 
              * 17
