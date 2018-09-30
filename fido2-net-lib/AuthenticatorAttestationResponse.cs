@@ -542,6 +542,7 @@ namespace Fido2NetLib
                 }
                 if (null != entry)
                 {
+                    if (entry.Hash != entry.MetadataStatement.Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
                     if (null != entry.MetadataStatement)
                     {
                         var hasBasicFull = entry.MetadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
