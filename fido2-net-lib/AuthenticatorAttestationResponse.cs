@@ -548,13 +548,29 @@ namespace Fido2NetLib
                         var hasBasicFull = entry.MetadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
                         if (false == hasBasicFull &&
                             null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
-                    }
-                    if (null != entry.StatusReports)
-                    {
-                        foreach (StatusReport report in entry.StatusReports)
+                        if (true == hasBasicFull && null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
                         {
-                            if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), report.Status)) throw new Fido2VerificationException("Authenticator found with undesirable status");
+                            var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
+                            var chain = new X509Chain();
+                            chain.ChainPolicy.ExtraStore.Add(root);
+                            if (trustPath.Length > 1)
+                            {
+                                foreach (X509Certificate2 cert in trustPath.Skip(1).Reverse())
+                                {
+                                    chain.ChainPolicy.ExtraStore.Add(cert);
+                                }
+                            }
+                            var valid = chain.Build(trustPath[0]);
+                            if (false == valid)
+                            {
+                                
+                            }
                         }
+                    }
+
+                    foreach (StatusReport report in entry.StatusReports)
+                    {
+                        if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), (UndesiredAuthenticatorStatus) report.Status)) throw new Fido2VerificationException("Authenticator found with undesirable status");
                     }
                 }
             }

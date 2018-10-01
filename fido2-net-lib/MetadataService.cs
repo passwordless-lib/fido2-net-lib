@@ -347,7 +347,7 @@ namespace Fido2NetLib
             {
                 try
                 {
-                    TOCPayloadFromCache();
+                    GetTOCPayload(true);
                 }
                 catch (System.Exception ex)
                 {
@@ -359,7 +359,7 @@ namespace Fido2NetLib
             // If the payload count is still zero and we have what looks like a good access token, load from MDS
             if (0 == payload.Count && 0x30 == _accessToken.Length)
             {
-                TOCPayloadFromURL();
+                GetTOCPayload(false);
             }
             // If the payload count is zero, we've failed to load metadata
             if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
@@ -488,34 +488,26 @@ namespace Fido2NetLib
             ret.Hash = Base64Url.Encode(AuthDataHelper.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawStatement)));
             return ret;
         }
-        public void TOCPayloadFromURL()
+        public void GetTOCPayload(bool fromCache)
         {
             var client = new System.Net.WebClient();
-
-            string mdsToc = client.DownloadString(mds2url + tokenParamName + _accessToken);
-
-            if (3 < _cacheDir.Length)
+            var mdsToc = "";
+            if (false == fromCache)
             {
-                if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
-                System.IO.File.WriteAllText(_cacheDir + @"\" + "mdstoc.jwt", mdsToc, System.Text.Encoding.UTF8);
-            }
+                mdsToc = client.DownloadString(mds2url + tokenParamName + _accessToken);
 
-            var metadataTOC = ValidatedTOCFromJwtSecurityToken(mdsToc);
-
-            foreach (var entry in metadataTOC.Entries)
-            {
-                if (null != entry.AaGuid)
+                if (3 < _cacheDir.Length)
                 {
-                    entry.MetadataStatement = GetMetadataStatement(entry, false);
-                    payload.Add(new System.Guid(entry.AaGuid), entry);
+                    if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
+                    System.IO.File.WriteAllText(_cacheDir + @"\" + "mdstoc.jwt", mdsToc, System.Text.Encoding.UTF8);
                 }
             }
-        }
-        public void TOCPayloadFromCache()
-        {
-            var mdsToc = System.IO.File.ReadAllText(_cacheDir + @"\mdstoc.jwt");
+            else mdsToc = System.IO.File.ReadAllText(_cacheDir + @"\mdstoc.jwt");
+
             var metadataTOC = ValidatedTOCFromJwtSecurityToken(mdsToc);
-            if (System.DateTime.Now > System.DateTime.Parse(metadataTOC.NextUpdate)) throw new Fido2VerificationException("Cached metadataTOC is expired, reload from MDS");
+
+            if (true == fromCache && System.DateTime.Now > System.DateTime.Parse(metadataTOC.NextUpdate)) throw new Fido2VerificationException("Cached metadataTOC is expired, reload from MDS");
+
             foreach (var entry in metadataTOC.Entries)
             {
                 if (null != entry.AaGuid)
@@ -524,8 +516,7 @@ namespace Fido2NetLib
                     payload.Add(new System.Guid(entry.AaGuid), entry);
                 }
             }
-            
-            CustomTOCPayloadFromCache();
+            if (true == fromCache) CustomTOCPayloadFromCache();
         }
         public void CustomTOCPayloadFromCache()
         {
@@ -538,6 +529,7 @@ namespace Fido2NetLib
                     var entry = new MetadataTOCPayloadEntry();
                     entry.AaGuid = statement.AaGuid;
                     entry.MetadataStatement = statement;
+                    entry.StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }; 
                     if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
                 }
             }
