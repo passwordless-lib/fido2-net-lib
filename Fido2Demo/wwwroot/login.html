@@ -60,11 +60,29 @@
                                     Authenticator Type
                                 </label>
                             </div>
-                            <select class="custom-select" id="select-authenticator">
+                            <select class="custom-select" id="select-authenticator" onchange="detectFIDOUserVerifyingPlatformSupport()">
                                 <option selected value="">Not specified</option>
                                 <option value="cross-platform">Cross Platform (Token)</option>
-                                <option id="platform-authenticator" value="platform">Platform (TPM)</option>
+                                <option value="platform">Platform (TPM)</option>
                             </select>
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="userVerification">
+                                    User Verification
+                                </label>
+                            </div>
+                            <select class="custom-select" id="select-userVerification" onchange="detectFIDOUserVerifyingPlatformSupport()">
+                                <option value="required">Required</option>
+                                <option selected value="preferred">Preferred</option>
+                                <option value="discouraged">Discouraged</option>
+                            </select>
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="residentCredentials">
+                                    Resident Credentials
+                                </label>
+                            </div>
+                            <div class="input-group-text" style="background-color: #fff">
+                                <input type="checkbox" class="custom-checkbox" id="checkbox-residentCredentials" value="residentCredentials" />
+                            </div>
                         </div>
                     </div>
                 </div>

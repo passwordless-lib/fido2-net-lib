@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace Fido2NetLib.Objects
 {
@@ -23,6 +24,21 @@ namespace Fido2NetLib.Objects
 
         private UserVerificationRequirement(string value) : base(value)
         {
+        }
+
+        public static UserVerificationRequirement Parse(string value)
+        {
+            switch (value)
+            {
+                case "required":
+                    return Required;
+                case "preferred":
+                    return Preferred;
+                case "discouraged":
+                    return Discouraged;
+                default:
+                    throw new InvalidOperationException("Could not parse value");
+            }
         }
     }
 }
