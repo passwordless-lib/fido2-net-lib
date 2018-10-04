@@ -518,7 +518,7 @@ namespace Fido2NetLib
             {
                 if (null != entry.AaGuid)
                 {
-                    entry.MetadataStatement = GetMetadataStatement(entry, true);
+                    entry.MetadataStatement = GetMetadataStatement(entry, fromCache);
                     payload.Add(new System.Guid(entry.AaGuid), entry);
                 }
             }
