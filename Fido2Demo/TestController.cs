@@ -35,7 +35,7 @@ namespace Fido2Demo
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
                 Origin = config["fido2:origin"],
-                MetadataService = MDSMetadata.Instance(config["fido2:MDSAccessKey"], config["fido2:MDSCacheDir"])
+                MetadataService = MDSMetadata.Instance(config["fido2:MDSAccessKey"], config["fido2:MDSCacheDirPath"])
             });
         }
 
