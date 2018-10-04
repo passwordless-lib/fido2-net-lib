@@ -43,6 +43,23 @@ namespace Fido2NetLib
             /// Server origin, including protocol host and port.
             /// </summary>
             public string Origin { get; set; }
+
+            /// <summary>
+            /// MetdataService to verify metadata statements https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html
+            /// </summary>
+            public IMetadataService MetadataService { get; set; }
+
+            /// <summary>
+            /// Create the configuration for Fido2
+            /// </summary>
+            public Configuration()
+            {
+            }
+
+            public Configuration(IMetadataService metadataService)
+            {
+                MetadataService = metadataService;
+            }
         }
 
         private Configuration Config { get; }
@@ -90,7 +107,7 @@ namespace Fido2NetLib
         public async Task<CredentialMakeResult> MakeNewCredentialAsync(AuthenticatorAttestationRawResponse attestationResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-            var success = await parsedResponse.VerifyAsync(origChallenge, Config.Origin, isCredentialIdUniqueToUser, requestTokenBindingId);
+            var success = await parsedResponse.VerifyAsync(origChallenge, Config.Origin, isCredentialIdUniqueToUser, Config.MetadataService, requestTokenBindingId);
 
             // todo: Set Errormessage etc.
             return new CredentialMakeResult { Status = "ok", ErrorMessage = string.Empty, Result = success };

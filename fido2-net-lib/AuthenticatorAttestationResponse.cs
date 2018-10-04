@@ -61,7 +61,7 @@ namespace Fido2NetLib
             return response;
         }
 
-        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId)
+        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
         {
             AttestationType attnType;
             X509Certificate2[] trustPath = null;
@@ -532,14 +532,10 @@ namespace Fido2NetLib
             // use aaguid (authData.AttData.Aaguid) to find root certs in metadata
             // use root plus trustPath to build trust chain
             
-            MetadataTOCPayloadEntry entry = null;
-            var metadata = MDSMetadata.Instance();
-            if (null != metadata)
+            if (null != metadataService)
             {
-                if (true == metadata.payload.ContainsKey(authData.AttData.GuidAaguid))
-                { 
-                    entry = metadata.payload[authData.AttData.GuidAaguid];
-                }
+                MetadataTOCPayloadEntry entry = metadataService.GetEntry(authData.AttData.GuidAaguid);
+                
                 if (null != entry)
                 {
                     if (entry.Hash != entry.MetadataStatement.Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
