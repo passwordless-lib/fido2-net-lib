@@ -1,7 +1,11 @@
 function markPlatformAuthenticatorUnavailable() {
-    
-    $('#platform-authenticator').attr("disabled", true);
-    showWarningAlert("Platform (TPM) authenticators not available");
+
+    var authenticator_attachment = $('#select-authenticator').find(':selected').val();
+    var user_verification = $('#select-userVerification').find(':selected').val();
+
+    if (authenticator_attachment === "platform" && user_verification === "required") {
+        showWarningAlert("User verifying platform authenticators are not currently supported by this browser");
+    }
 }
 
 function detectFIDOSupport() {
@@ -12,15 +16,17 @@ function detectFIDOSupport() {
         showErrorAlert("WebAuthn is not currently supported by this browser");
         return;
     }
+}
 
+function detectFIDOUserVerifyingPlatformSupport() {
     if (window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
         markPlatformAuthenticatorUnavailable();
-    } else if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function") {
-        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function(available) {
+    } else if (typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === "function") {
+        window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function (available) {
             if (!available) {
                 markPlatformAuthenticatorUnavailable();
             }
-        }).catch(function(e) {
+        }).catch(function (e) {
             markPlatformAuthenticatorUnavailable();
         });
     }
@@ -178,11 +184,15 @@ function makeCredential() {
 
     var attestation_type = $('#select-attestation').find(':selected').val();
     var authenticator_attachment = $('#select-authenticator').find(':selected').val();
+    var user_verification = $('#select-userVerification').find(':selected').val();
+    var require_resident_key = $("#checkbox-residentCredentials").is(':checked');
 
     var data = new FormData();
     data.append('username', state.user.name);
     data.append('attType', attestation_type);
     data.append('authType', authenticator_attachment);
+    data.append('userVerifcation', user_verification);
+    data.append('requireResidentKey', require_resident_key);
 
     fetch('/makeCredentialOptions', {
         method: 'POST', // or 'PUT'
@@ -222,6 +232,8 @@ function makeCredential() {
                 c.id = coerceToArrayBuffer(c.id);
                 return c;
             });
+
+            if (makeCredentialOptions.authenticatorSelection.authenticatorAttachment === null) makeCredentialOptions.authenticatorSelection.authenticatorAttachment = undefined;
 
             console.log("Credential Options Formatted");
             console.log(makeCredentialOptions);
