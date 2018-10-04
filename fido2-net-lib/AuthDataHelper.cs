@@ -18,10 +18,22 @@ namespace Fido2NetLib
                 case "SHA1":
                     return SHA1.Create();
                 case "SHA256":
+                case "HS256" :
+                case "RS256" :
+                case "ES256" :
+                case "PS256" :
                     return SHA256.Create();
                 case "SHA384":
+                case "HS384":
+                case "RS384":
+                case "ES384":
+                case "PS384":
                     return SHA384.Create();
                 case "SHA512":
+                case "HS512":
+                case "RS512":
+                case "ES512":
+                case "PS512":
                     return SHA512.Create();
                 default:
                     throw new ArgumentOutOfRangeException("hashName");
@@ -570,6 +582,7 @@ namespace Fido2NetLib
         public AttestedCredentialData(byte[] attData, ref int offset)
         {
             Aaguid = AuthDataHelper.GetSizedByteArray(attData, ref offset, 16);
+            if (null == Aaguid) throw new Fido2VerificationException("Attested credential data is invalid");
             GuidAaguid = FromBigEndian(Aaguid);
             CredentialID = AuthDataHelper.GetSizedByteArray(attData, ref offset);
             // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
@@ -587,7 +600,7 @@ namespace Fido2NetLib
             var aCDLen = tmp.EncodeToBytes().Length;
             
             CredentialPublicKey = AuthDataHelper.GetSizedByteArray(attData, ref offset, (UInt16)(aCDLen));
-            if (null == Aaguid || null == CredentialID || null == CredentialPublicKey) throw new Fido2VerificationException("Attested credential data is invalid");
+            if (null == CredentialID || null == CredentialPublicKey) throw new Fido2VerificationException("Attested credential data is invalid");
         }
         public Guid GuidAaguid { get; private set; }
         public byte[] Aaguid { get; private set; }

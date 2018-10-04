@@ -25,6 +25,15 @@ namespace Fido2NetLib
         FIDO_CERTIFIED_L3,
         FIDO_CERTIFIED_L3plus
     };
+
+    public enum UndesiredAuthenticatorStatus
+    {
+        ATTESTATION_KEY_COMPROMISE = AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE,
+        USER_VERIFICATION_BYPASS = AuthenticatorStatus.USER_VERIFICATION_BYPASS,
+        USER_KEY_REMOTE_COMPROMISE = AuthenticatorStatus.USER_KEY_REMOTE_COMPROMISE,
+        USER_KEY_PHYSICAL_COMPROMISE = AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
+        REVOKED = AuthenticatorStatus.REVOKED
+    };
     public enum MetadataAttestationType
     {
         ATTESTATION_BASIC_FULL = 0x3e07,
@@ -292,6 +301,7 @@ namespace Fido2NetLib
         public string Icon { get; set; }
         [JsonProperty("supportedExtensions")]
         public ExtensionDescriptor[] SupportedExtensions { get; set; }
+        public string Hash { get; set; }
     }
     public sealed class MDSMetadata
     {
@@ -303,9 +313,12 @@ namespace Fido2NetLib
         public static readonly string tokenParamName = "/?token=";
         private static string _accessToken;
         private static string _cacheDir;
+        private string tocAlg;
 
         private MDSMetadata()
         {
+            // Extract app secrets for development
+            // https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.1&tabs=windows
             string env = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             if (string.IsNullOrWhiteSpace(env))
             {
@@ -319,29 +332,37 @@ namespace Fido2NetLib
                 builder.AddUserSecrets<MDSMetadata>();
             }
             Configuration = builder.Build();
+
+            // We need either an access token or a cache directory, but prefer both
+            // If we have only an access token, we can get metadata from directly from MDS and only cache in memory
+            // If we have only a cache directory, we can read cached data (as long as it is not expired)
+            // If we have both, we can read from either and update cache as necessary
             _accessToken = Configuration["MDSAccessToken"];
             _cacheDir = Configuration["CacheDir"];
-            //TOCPayloadFromURL(mds1url, "1", _cacheDir);
-            //TOCPayloadFromURL(mds2url + tokenParamName + _accessToken, "2", _cacheDir);
+            if (0x30 != _accessToken.Length && 3 > _cacheDir.Length) throw new Fido2VerificationException("Either MDSAccessToken or CacheDir is required to instantiate Metadata instance");
+
             payload = new System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry>();
-            TOCPayloadFromCache(_cacheDir, "1");
-            foreach (MetadataTOCPayloadEntry entry in mds1payload.Entries)
+            // If we have a cache directory, let's try that first
+            if (true == System.IO.Directory.Exists(_cacheDir))
             {
-                if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
-            }
-            TOCPayloadFromCache(_cacheDir, "2");
-            foreach (MetadataTOCPayloadEntry entry in mds2payload.Entries)
-            {
-                if (null != entry.AaGuid)
+                try
                 {
-                    payload.Add(new System.Guid(entry.AaGuid), entry);
+                    GetTOCPayload(true);
+                }
+                catch (System.Exception ex)
+                {
+                    if (ex is Fido2VerificationException || ex is System.IO.FileNotFoundException) { }
+                    else throw;
+                    // Something wrong with cached data, revert to MDS
                 }
             }
-            CustomTOCPayloadFromCache(_cacheDir, "Custom");
-            foreach (MetadataTOCPayloadEntry entry in mdsCustomPayload.Entries)
+            // If the payload count is still zero and we have what looks like a good access token, load from MDS
+            if (0 == payload.Count && 0x30 == _accessToken.Length)
             {
-                if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
+                GetTOCPayload(false);
             }
+            // If the payload count is zero, we've failed to load metadata
+            if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
         }
         public static MDSMetadata Instance()
         {
@@ -356,16 +377,14 @@ namespace Fido2NetLib
             return mDSMetadata;
         }
         public System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry> payload { get; set; }
-        private MetadataTOCPayload mds1payload { get; set; }
-        private MetadataTOCPayload mds2payload { get; set; }
-        private MetadataTOCPayload mdsCustomPayload { get; set; }
         private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc)
         {
             var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(mdsToc);
+            tocAlg = jwtToken.Header["alg"] as string;
             var keys = (jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray)
                 .Values<string>()
                 .Select(x => new ECDsaSecurityKey(
-                    (ECDsaCng)(new System.Security.Cryptography.X509Certificates.X509Certificate2(System.Convert.FromBase64String(x)).GetECDsaPublicKey())))
+                    (ECDsaCng)(new X509Certificate2(System.Convert.FromBase64String(x)).GetECDsaPublicKey())))
                 .ToArray();
 
             //var client = new System.Net.WebClient();
@@ -384,8 +403,22 @@ namespace Fido2NetLib
                             "DcMdeQIxAMOEzOFsxX9Bo0h4LOFE5y5H8bdPFYW+l5gy1tQiJv+5NUyM2IBB55XU" +
                             "YjdBz56jSA==";
             var root = new X509Certificate2(System.Convert.FromBase64String(rootFile));
-            //var root = new X509Certificate2(@"P:\MDS\Root.cer"); // https://mds.fidoalliance.org/Root.cer
-
+            /*
+            var conformanceRootFile =   "MIICYjCCAeigAwIBAgIPBIdvCXPXJiuD7VW0mgRQMAoGCCqGSM49BAMDMGcxCzAJ" +
+                                        "BgNVBAYTAlVTMRYwFAYDVQQKDA1GSURPIEFsbGlhbmNlMScwJQYDVQQLDB5GQUtF" +
+                                        "IE1ldGFkYXRhIFRPQyBTaWduaW5nIEZBS0UxFzAVBgNVBAMMDkZBS0UgUm9vdCBG" +
+                                        "QUtFMB4XDTE3MDIwMTAwMDAwMFoXDTQ1MDEzMTIzNTk1OVowZzELMAkGA1UEBhMC" +
+                                        "VVMxFjAUBgNVBAoMDUZJRE8gQWxsaWFuY2UxJzAlBgNVBAsMHkZBS0UgTWV0YWRh" +
+                                        "dGEgVE9DIFNpZ25pbmcgRkFLRTEXMBUGA1UEAwwORkFLRSBSb290IEZBS0UwdjAQ" +
+                                        "BgcqhkjOPQIBBgUrgQQAIgNiAARcVLd6r4fnNHzs5K2zfbg//4X9/oBqmsdRVtZ9" +
+                                        "iXhlgM9vFYaKviYtqmwkq0D3Lihg3qefeZgXXYi4dFgvzU7ZLBapSNM3CT8RDBe/" +
+                                        "MBJqsPwaRQbIsGmmItmt/ESNQD6jWjBYMAsGA1UdDwQEAwIBBjAPBgNVHRMBAf8E" +
+                                        "BTADAQH/MBsGA1UdDgQU3feayBzv4V/ToevbM18w9GoZmVkwGwYDVR0jBBTd95rI" +
+                                        "HO/hX9Oh69szXzD0ahmZWTAKBggqhkjOPQQDAwNoADBlAjAfT9m8LabIuGS6tXiJ" +
+                                        "mRB91SjJ49dk+sPsn+AKx1/PS3wbHEGnGxDIIcQplYDFcXICMQDi33M/oUlb7RDA" +
+                                        "mapRBjJxKK+oh7hlSZv4djmZV3YV0JnF1Ed5E4I0f3C04eP0bjw=";
+            var conformanceRoot = new X509Certificate2(System.Convert.FromBase64String(conformanceRootFile));
+            */
             var chain = new X509Chain();
             chain.ChainPolicy.ExtraStore.Add(root);
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
@@ -433,83 +466,73 @@ namespace Fido2NetLib
             if (false == valid) throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
             return JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
         }
-        private MetadataStatement GetMetadataStatement(MetadataTOCPayloadEntry entry, string version, bool fromCache, string folder)
+        private MetadataStatement GetMetadataStatement(MetadataTOCPayloadEntry entry, bool fromCache)
         {
             var rawStatement = "";
             if (false == fromCache)
             {
                 var client = new System.Net.WebClient();
-                var urlToFetch = entry.Url;
-                if ("2" == version) urlToFetch = urlToFetch + tokenParamName + _accessToken;
-                rawStatement = client.DownloadString(urlToFetch);
+                rawStatement = client.DownloadString(entry.Url + tokenParamName + _accessToken);
             }
-            string filename = "";
-            if (null != entry.Aaid) // UAF
+            if (3 < _cacheDir.Length)
             {
-                filename = folder + @"\" + version + @"\" + entry.Aaid + @".txt";
+                if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
+                var filename = _cacheDir + @"\"  + entry.AaGuid + @".jwt";
+                if (false == fromCache) System.IO.File.WriteAllText(filename, rawStatement, System.Text.Encoding.UTF8);
+                else rawStatement = System.IO.File.ReadAllText(filename);
             }
-            else if (null != entry.AaGuid) // FIDO2
-            {
-                filename = folder + @"\" + version + @"\" + entry.AaGuid + @".txt";
-            }
-            else if (null != entry.AttestationCertificateKeyIdentifiers) // U2F
-            {
-                filename = folder + @"\" + version + @"\" + entry.AttestationCertificateKeyIdentifiers[0] + @".txt";
-            }
-            if (false == fromCache) System.IO.File.WriteAllText(filename, rawStatement, System.Text.Encoding.UTF8);
-            else rawStatement = System.IO.File.ReadAllText(filename);
 
-            var statementBytes = new byte[0];
-            statementBytes = Base64Url.Decode(rawStatement);
-
+            var statementBytes = Base64Url.Decode(rawStatement);
             var statement = System.Text.Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
-            return JsonConvert.DeserializeObject<MetadataStatement>(statement);
+            var ret = JsonConvert.DeserializeObject<MetadataStatement>(statement);
+            ret.Hash = Base64Url.Encode(AuthDataHelper.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawStatement)));
+            return ret;
         }
-        public void TOCPayloadFromURL(string url, string version, string folder)
+        public void GetTOCPayload(bool fromCache)
         {
             var client = new System.Net.WebClient();
+            var mdsToc = "";
+            if (false == fromCache)
+            {
+                mdsToc = client.DownloadString(mds2url + tokenParamName + _accessToken);
 
-            var mdsToc = client.DownloadString(url);
-
-            System.IO.File.WriteAllText(folder + @"\" + version + @"\" + "mdstoc.txt", mdsToc, System.Text.Encoding.UTF8);
+                if (3 < _cacheDir.Length)
+                {
+                    if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
+                    System.IO.File.WriteAllText(_cacheDir + @"\" + "mdstoc.jwt", mdsToc, System.Text.Encoding.UTF8);
+                }
+            }
+            else mdsToc = System.IO.File.ReadAllText(_cacheDir + @"\mdstoc.jwt");
 
             var metadataTOC = ValidatedTOCFromJwtSecurityToken(mdsToc);
 
+            if (true == fromCache && System.DateTime.Now > System.DateTime.Parse(metadataTOC.NextUpdate)) throw new Fido2VerificationException("Cached metadataTOC is expired, reload from MDS");
+
             foreach (var entry in metadataTOC.Entries)
             {
-                entry.MetadataStatement = GetMetadataStatement(entry, version, false, folder);
+                if (null != entry.AaGuid)
+                {
+                    entry.MetadataStatement = GetMetadataStatement(entry, true);
+                    payload.Add(new System.Guid(entry.AaGuid), entry);
+                }
             }
-
-            if ("1" == version) mds1payload = metadataTOC;
-            if ("2" == version) mds2payload = metadataTOC;
+            if (true == fromCache) CustomTOCPayloadFromCache();
         }
-        public void TOCPayloadFromCache(string folder, string version)
+        public void CustomTOCPayloadFromCache()
         {
-            var mdsToc = System.IO.File.ReadAllText(folder + @"\" + version + @"\" + "mdstoc.txt");
-            var metadataTOC = ValidatedTOCFromJwtSecurityToken(mdsToc);
-            foreach (var entry in metadataTOC.Entries)
+            if (true == System.IO.Directory.Exists(_cacheDir + @"\Custom"))
             {
-                entry.MetadataStatement = GetMetadataStatement(entry, version, true, folder);
+                foreach (string filename in System.IO.Directory.GetFiles(_cacheDir + @"\Custom"))
+                {
+                    var rawStatement = System.IO.File.ReadAllText(filename);
+                    var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
+                    var entry = new MetadataTOCPayloadEntry();
+                    entry.AaGuid = statement.AaGuid;
+                    entry.MetadataStatement = statement;
+                    entry.StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }; 
+                    if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
+                }
             }
-            if ("1" == version) mds1payload = metadataTOC;
-            if ("2" == version) mds2payload = metadataTOC;
-        }
-        public void CustomTOCPayloadFromCache(string folder, string version)
-        {
-            var customEntries = new System.Collections.Generic.List<MetadataTOCPayloadEntry>();
-            
-            foreach (string filename in System.IO.Directory.GetFiles(folder + @"\" + version))
-            {
-                var rawStatement = System.IO.File.ReadAllText(filename);
-                var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
-                var entry = new MetadataTOCPayloadEntry();
-                entry.AaGuid = statement.AaGuid;
-                entry.MetadataStatement = statement;
-                customEntries.Add(entry);
-            }
-            mdsCustomPayload = new MetadataTOCPayload();
-            mdsCustomPayload.Entries = customEntries.ToArray();
-
         }
     }
 }

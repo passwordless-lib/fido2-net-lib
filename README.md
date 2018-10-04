@@ -7,6 +7,8 @@ Demo: https://fido2.azurewebsites.net/
 
 To run the demo locally: Start Fido2Demo (SSL, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
 
+In order to utilize the metadata provided from FIDO Alliance Metadata Service you must register for an access token (https://fidoalliance.org/mds/).  Set the MDSAccessToken app secret value to your access token, and the CacheDir app secret value to a local directory to cache metadata.  See https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets for more information on app secret usage.
+
 If you want to have a look at the code, the most interesting is these files for now:
 
 * [Controller.cs](https://github.com/abergs/fido2-net-lib/blob/master/Fido2Demo/Controller.cs)
