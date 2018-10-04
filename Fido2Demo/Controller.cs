@@ -26,11 +26,12 @@ namespace Fido2Demo
 
         public MyController(IConfiguration config)
         {
-            _lib = new Fido2(new Fido2.Configuration
+            _lib = new Fido2(new Fido2.Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
-                Origin = config["fido2:origin"]
+                Origin = config["fido2:origin"],
+                MetadataService = MDSMetadata.Instance(config["fido2:MDSAccessKey"], config["fido2:MDSCacheDir"])
             });
         }
 

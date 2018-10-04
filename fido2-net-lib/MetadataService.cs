@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
@@ -303,11 +304,16 @@ namespace Fido2NetLib
         public ExtensionDescriptor[] SupportedExtensions { get; set; }
         public string Hash { get; set; }
     }
-    public sealed class MDSMetadata
+
+    public interface IMetadataService
+    {
+        MetadataTOCPayloadEntry GetEntry(Guid aaguid);
+    }
+
+    public sealed class MDSMetadata : IMetadataService
     {
         private static volatile MDSMetadata mDSMetadata;
         private static object syncRoot = new System.Object();
-        public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; }
         public static readonly string mds1url = "https://mds.fidoalliance.org";
         public static readonly string mds2url = "https://mds2.fidoalliance.org";
         public static readonly string tokenParamName = "/?token=";
@@ -315,30 +321,30 @@ namespace Fido2NetLib
         private static string _cacheDir;
         private string tocAlg;
 
-        private MDSMetadata()
+        private MDSMetadata(string accessToken, string cachedirPath)
         {
-            // Extract app secrets for development
-            // https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.1&tabs=windows
-            string env = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            if (string.IsNullOrWhiteSpace(env))
-            {
-                env = "Development";
-            }
+            //// Extract app secrets for development
+            //// https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.1&tabs=windows
+            //string env = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            //if (string.IsNullOrWhiteSpace(env))
+            //{
+            //    env = "Development";
+            //}
 
-            var builder = new Microsoft.Extensions.Configuration.ConfigurationBuilder();
+            //var builder = new Microsoft.Extensions.Configuration.ConfigurationBuilder();
 
-            if (env == "Development")
-            {
-                builder.AddUserSecrets<MDSMetadata>();
-            }
-            Configuration = builder.Build();
+            //if (env == "Development")
+            //{
+            //    builder.AddUserSecrets<MDSMetadata>();
+            //}
+            //Configuration = builder.Build();
 
             // We need either an access token or a cache directory, but prefer both
             // If we have only an access token, we can get metadata from directly from MDS and only cache in memory
             // If we have only a cache directory, we can read cached data (as long as it is not expired)
             // If we have both, we can read from either and update cache as necessary
-            _accessToken = Configuration["MDSAccessToken"];
-            _cacheDir = Configuration["CacheDir"];
+            _accessToken = accessToken;
+            _cacheDir = cachedirPath;
             if (0x30 != _accessToken.Length && 3 > _cacheDir.Length) throw new Fido2VerificationException("Either MDSAccessToken or CacheDir is required to instantiate Metadata instance");
 
             payload = new System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry>();
@@ -364,14 +370,14 @@ namespace Fido2NetLib
             // If the payload count is zero, we've failed to load metadata
             if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
         }
-        public static MDSMetadata Instance()
+        public static IMetadataService Instance(string accesskey, string cachedir)
         {
             if (null == mDSMetadata)
             {
                 lock (syncRoot)
                 {
                     if (null == mDSMetadata)
-                        mDSMetadata = new MDSMetadata();
+                        mDSMetadata = new MDSMetadata(accesskey, cachedir);
                 }
             }
             return mDSMetadata;
@@ -533,6 +539,12 @@ namespace Fido2NetLib
                     if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
                 }
             }
+        }
+
+        public MetadataTOCPayloadEntry GetEntry(Guid aaguid)
+        {
+            mDSMetadata.payload.TryGetValue(aaguid, out var entry);
+            return entry;
         }
     }
 }
