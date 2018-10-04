@@ -370,14 +370,20 @@ namespace Fido2NetLib
             // If the payload count is zero, we've failed to load metadata
             if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
         }
-        public static IMetadataService Instance(string accesskey, string cachedir)
+        /// <summary>
+        /// Returns or creates an instance of the MetadataSerivce. The paramters will only be used when the singleton is not alreayd created.
+        /// </summary>
+        /// <param name="accesskey"></param>
+        /// <param name="cachedirPath"></param>
+        /// <returns></returns>
+        public static IMetadataService Instance(string accesskey, string cachedirPath)
         {
             if (null == mDSMetadata)
             {
                 lock (syncRoot)
                 {
                     if (null == mDSMetadata)
-                        mDSMetadata = new MDSMetadata(accesskey, cachedir);
+                        mDSMetadata = new MDSMetadata(accesskey, cachedirPath);
                 }
             }
             return mDSMetadata;
