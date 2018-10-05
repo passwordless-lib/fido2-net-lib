@@ -345,7 +345,7 @@ namespace Fido2NetLib
             // If we have both, we can read from either and update cache as necessary
             _accessToken = accessToken;
             _cacheDir = cachedirPath;
-            if (0x30 != _accessToken.Length && 3 > _cacheDir.Length) throw new Fido2VerificationException("Either MDSAccessToken or CacheDir is required to instantiate Metadata instance");
+            if (null != _accessToken && 0x30 != _accessToken.Length && null != _cacheDir && 3 > _cacheDir.Length) throw new Fido2VerificationException("Either MDSAccessToken or CacheDir is required to instantiate Metadata instance");
 
             payload = new System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry>();
             // If we have a cache directory, let's try that first
@@ -363,7 +363,7 @@ namespace Fido2NetLib
                 }
             }
             // If the payload count is still zero and we have what looks like a good access token, load from MDS
-            if (0 == payload.Count && 0x30 == _accessToken.Length)
+            if (0 == payload.Count && null != _accessToken && 0x30 == _accessToken.Length)
             {
                 GetTOCPayload(false);
             }
@@ -486,7 +486,7 @@ namespace Fido2NetLib
                 var client = new System.Net.WebClient();
                 rawStatement = client.DownloadString(entry.Url + tokenParamName + _accessToken);
             }
-            if (3 < _cacheDir.Length)
+            if (null != _cacheDir && 3 < _cacheDir.Length)
             {
                 if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
                 var filename = _cacheDir + @"\"  + entry.AaGuid + @".jwt";
@@ -508,7 +508,7 @@ namespace Fido2NetLib
             {
                 mdsToc = client.DownloadString(mds2url + tokenParamName + _accessToken);
 
-                if (3 < _cacheDir.Length)
+                if (null != _cacheDir && 3 < _cacheDir.Length)
                 {
                     if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
                     System.IO.File.WriteAllText(_cacheDir + @"\" + "mdstoc.jwt", mdsToc, System.Text.Encoding.UTF8);
