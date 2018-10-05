@@ -545,6 +545,14 @@ namespace Fido2NetLib
                     if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
                 }
             }
+            else
+            {
+                var entry = new MetadataTOCPayloadEntry();
+                entry.AaGuid = "2b2ecbb4-59b4-44fa-868d-a072485d8ae0";
+                entry.StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } };
+                entry.MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort) MetadataAttestationType.ATTESTATION_BASIC_FULL } };
+                payload.Add(new System.Guid(entry.AaGuid), entry);
+            }
         }
 
         public MetadataTOCPayloadEntry GetEntry(Guid aaguid)
