@@ -6,7 +6,7 @@ Provide a developer friendly and well tested .NET server side library for easy v
 
 ### Demo
 * **Online example**: https://fido2.azurewebsites.net/
-* [Code examples](#Examples)
+* [Code examples](#examples)
 
 **To run the demo locally**: Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
 You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
