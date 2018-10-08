@@ -4,6 +4,8 @@ A working implementation library + demo for fido2 and WebAuthn using .NET
 ### Purpose
 Provide a developer friendly and well tested .NET server side library for easy validation (attestation & assertion) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating phishing attacks.
 
+```Install-Package Fido2 -Version 1.0.0-preview ```
+
 ### Demo
 * **Online example**: https://fido2.azurewebsites.net/
 * [Code examples](#examples)
@@ -171,7 +173,9 @@ return Json(res);
 
 ## Nuget package
 
-Coming when lib has matured. (https://www.nuget.org/packages/Fido2/)
+```Install-Package Fido2 -Version 1.0.0-preview ```
+
+https://www.nuget.org/packages/Fido2/
 
 ## Other
 
