@@ -44,9 +44,6 @@ Feedback, issues and pull requests are VERY welcome.
 * `fido2:MDSAccessKey` - App Secret / environment variable that holds the FIDO2 MDS AccessKey. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 * `fido2:MDSCacheDirPath` - App Secret / environment variable that sets the cache path for the MDS. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 
-## Conformance testing tool
-To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
-
 ## Examples
 
 Please see the [demo controller](https://github.com/abergs/fido2-net-lib/blob/master/Fido2Demo/Controller.cs) for full examples of both Attestation & Assertion.
@@ -176,6 +173,9 @@ return Json(res);
 ```Install-Package Fido2 -Version 1.0.0-preview ```
 
 https://www.nuget.org/packages/Fido2/
+
+## Conformance testing tool
+To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
 
 ## Other
 
