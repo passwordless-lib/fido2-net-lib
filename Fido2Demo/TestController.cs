@@ -39,11 +39,6 @@ namespace Fido2Demo
             });
         }
 
-        private static CredentialCreateOptions CONFORMANCE_TESTING_PREV_ATT_OPTIONS;
-        private static AssertionOptions CONFORMANCE_TESTING_PREV_ASRT_OPTIONS;
-        private static Fido2NetLib.Fido2.CredentialMakeResult CONFORMANCE_TESTING_STORED_CREDENTIALS;
-        private static Dictionary<string, uint> CONFORMANCE_TESTING_COUNTER = new Dictionary<string, uint>();
-
         [HttpPost]
         [Route("/attestation/options")]
         public JsonResult MakeCredentialOptionsTest([FromBody] TEST_MakeCredentialParams opts)

@@ -1,21 +1,19 @@
 # FIDO2 .NET library (WebAuthn)
-A working (maybe still proof of concept) implementation library + demo for fido2 and WebAuthn using .NET (Work in progress)
+A working implementation library + demo for fido2 and WebAuthn using .NET 
 
-**Purpose**: Provide a developer friendly and well tested .NET server side library for easy validation (attestation & assertion) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating phishing attacks.
+### Purpose
+Provide a developer friendly and well tested .NET server side library for easy validation (attestation & assertion) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating phishing attacks.
 
-Demo: https://fido2.azurewebsites.net/
+### Demo
+* **Online example**: https://fido2.azurewebsites.net/
+* [Code examples](#examples)
 
-To run the demo locally: Start Fido2Demo (SSL, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
+**To run the demo locally**: Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
+You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
 
-In order to utilize the metadata provided from FIDO Alliance Metadata Service you must register for an access token (https://fidoalliance.org/mds/).  Set the MDSAccessToken app secret value to your access token, and the CacheDir app secret value to a local directory to cache metadata.  See https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets for more information on app secret usage.
+In order to utilize the metadata provided from FIDO Alliance Metadata Service you must register for an access token (https://fidoalliance.org/mds/).  Set the `fido2:MDSAccessKey` app secret value to your access token, and the `fido2:MDSCacheDirPath` app secret value to a local directory to cache metadata. See https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets for more information on app secret usage.
 
-If you want to have a look at the code, the most interesting is these files for now:
-
-* [Controller.cs](https://github.com/abergs/fido2-net-lib/blob/master/Fido2Demo/Controller.cs)
-* [Fido2NetLib.cs](https://github.com/abergs/fido2-net-lib/blob/master/fido2-net-lib/Fido2NetLib.cs)
-* [AuthenticatorAttestationResponse.cs](https://github.com/abergs/fido2-net-lib/blob/master/fido2-net-lib/AuthenticatorAttestationResponse.cs)
-
-The HTML and javascript is copied (more or less as-is) from WebAuthn.io.
+The HTML and javascript is copied (and then updated) from WebAuthn.io.
 
 Feedback, issues and pull requests are VERY welcome.
 
@@ -23,17 +21,26 @@ Feedback, issues and pull requests are VERY welcome.
 ## Supported features
 
 - ✅ Attestation API & verification (Register and verify credentials/authenticators)  
-- ✅ Assertion API & verification (Authenticate users)  
+- ✅ Assertion API & verification (Authenticate users)
+- ✅ 100% success rate in conformance testing ([results](https://github.com/abergs/fido2-net-lib/issues/13))
 - ✅ Fido 2 Security Keys  
 - ✅ Backwards compatibility with Fido-u2f.  
 - ✅ Windows Hello support  
 - ✅ ES256 Public Key format  
 - ✅ "none", "fido-u2f", "android-key", "android-safetynet", "tpm" & "packed" attestation formats
-- ❌ Extensions  
 - ✅ Examples & demo's
 - ✅ Intellisense documentation  
-- ❌ Formal documentation
-- ❌ Recommended usage patterns
+- 💤 [Formal documentation](https://github.com/abergs/fido2-net-lib/issues/53)
+- 💤 Recommended [usage patterns](https://github.com/abergs/fido2-net-lib/issues/54)
+- ❌ [Extensions](https://github.com/abergs/fido2-net-lib/issues/55)
+
+
+## Configuration
+
+  *Only some options are mention here, see the [Configuration](https://github.com/abergs/fido2-net-lib/blob/master/fido2-net-lib/Fido2NetLib.cs) class for all options*
+
+* `fido2:MDSAccessKey` - App Secret / environment variable that holds the FIDO2 MDS AccessKey. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
+* `fido2:MDSCacheDirPath` - App Secret / environment variable that sets the cache path for the MDS. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 
 ## Conformance testing tool
 To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
