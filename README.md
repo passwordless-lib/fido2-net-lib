@@ -4,19 +4,17 @@ A working implementation library + demo for fido2 and WebAuthn using .NET
 ### Purpose
 Provide a developer friendly and well tested .NET server side library for easy validation (attestation & assertion) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating phishing attacks.
 
+```Install-Package Fido2 -Version 1.0.0-preview ```
+
 ### Demo
 * **Online example**: https://fido2.azurewebsites.net/
 * [Code examples](#examples)
 
-**To run the demo locally**: Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
-You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
+## What is FIDO2?
+**The passwordless web is coming.**  
+FIDO2 / WebAuthn is a new open authentication standard, supported by browsers and many large tech companies such as  Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating *passwordless flows* or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to Active Directory and native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & platform. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
 
-In order to utilize the metadata provided from FIDO Alliance Metadata Service you must register for an access token (https://fidoalliance.org/mds/).  Set the `fido2:MDSAccessKey` app secret value to your access token, and the `fido2:MDSCacheDirPath` app secret value to a local directory to cache metadata. See https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets for more information on app secret usage.
-
-The HTML and javascript is copied (and then updated) from WebAuthn.io.
-
-Feedback, issues and pull requests are VERY welcome.
-
+Read more about FIDO2 at [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113), [FIDO2 Alliance](https://fidoalliance.org/fido2/) and [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/).
 
 ## Supported features
 
@@ -41,9 +39,6 @@ Feedback, issues and pull requests are VERY welcome.
 
 * `fido2:MDSAccessKey` - App Secret / environment variable that holds the FIDO2 MDS AccessKey. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 * `fido2:MDSCacheDirPath` - App Secret / environment variable that sets the cache path for the MDS. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
-
-## Conformance testing tool
-To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
 
 ## Examples
 
@@ -171,7 +166,24 @@ return Json(res);
 
 ## Nuget package
 
-Coming when lib has matured. (https://www.nuget.org/packages/Fido2/)
+```Install-Package Fido2 -Version 1.0.0-preview ```
+
+https://www.nuget.org/packages/Fido2/
+
+## To run the project locally
+
+Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
+You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
+
+In order to utilize the metadata provided from FIDO Alliance Metadata Service you must register for an access token (https://fidoalliance.org/mds/).  Set the `fido2:MDSAccessKey` app secret value to your access token, and the `fido2:MDSCacheDirPath` app secret value to a local directory to cache metadata. See https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets for more information on app secret usage.
+
+The HTML and javascript is copied (and then updated) from WebAuthn.io.
+
+Feedback, issues and pull requests are VERY welcome.
+
+
+## Conformance testing tool
+To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
 
 ## Other
 
