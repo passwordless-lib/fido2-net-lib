@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.Configuration;
+using PeterO.Cbor;
 
 namespace fido2_net_lib.Test
 {
@@ -144,7 +145,7 @@ namespace fido2_net_lib.Test
         public void TestAuthenticatorDataPa2rsing()
         {
             var bs = new byte[] { 1, 2, 3 };
-            var x = PeterO.Cbor.CBORObject.NewMap().Add("bytes", bs);
+            var x = CBORObject.NewMap().Add("bytes", bs);
             var s = x["bytes"].GetByteString();
 
             Assert.Equal(s, bs);
