@@ -204,6 +204,14 @@ namespace fido2_net_lib.Test
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null, null);
             byte[] ad = o.AttestationObject.AuthData;
         }
+        [Fact]
+        public async Task TestEdDsaAttestationAsync()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationEdDsaResponse.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationEdDsaOptions.json"));
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null, null);
+        }
         //public void TestHasCorrentAAguid()
         //{
         //    var expectedAaguid = new Uint8Array([
