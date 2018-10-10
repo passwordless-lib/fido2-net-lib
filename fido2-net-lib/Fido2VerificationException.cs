@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace Fido2NetLib
 {
     [Serializable]
-    internal class Fido2VerificationException : Exception
+    public class Fido2VerificationException : Exception
     {
         public Fido2VerificationException()
         {
