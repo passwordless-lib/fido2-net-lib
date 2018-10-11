@@ -4,6 +4,12 @@
     <UserSecretsId>25a6110a-0f77-440c-a747-e8aa31be258d</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Fido2NetLib\**" />
+    <Content Remove="Fido2NetLib\**" />
+    <EmbeddedResource Remove="Fido2NetLib\**" />
+    <None Remove="Fido2NetLib\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.2.4" />
   </ItemGroup>
@@ -12,8 +18,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\fido2-net-lib\Fido2NetLib.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Fido2NetLib\" />
   </ItemGroup>
 </Project>

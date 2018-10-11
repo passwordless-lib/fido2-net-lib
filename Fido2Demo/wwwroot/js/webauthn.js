@@ -32,25 +32,8 @@ function detectFIDOUserVerifyingPlatformSupport() {
     }
 }
 
-
-function hexEncode(buf) {
-    return Array.from(buf)
-        .map(function (x) {
-            return ("0" + x.toString(16)).substr(-2)
-        })
-        .join("");
-}
-
-function hexDecode(str) {
-    return new Uint8Array(str.match(/../g).map(function (x) { return parseInt(x, 16) }));
-}
-
 function b64enc(buf) {
     return coerceToBase64Url(buf, "something");
-    //return base64js.fromByteArray(buf)
-    //    .replace(/\+/g, "-")
-    //    .replace(/\//g, "_")
-    //    .replace(/=/g, "");
 }
 
 coerceToBase64Url = function (thing, name) {
@@ -120,27 +103,6 @@ coerceToArrayBuffer = function (thing, name) {
 // Don't drop any blanks
 function b64RawEnc(buf) {
     return b64enc(buf);
-    //return base64js.fromByteArray(buf)
-    //    //.replace(/\+/g, "-")
-    //    //.replace(/\//g, "_")
-    //    .replace(/\+/g, "-")
-    //    .replace(/\//g, "_")
-    //    .replace(/=*$/g, "")
-}
-
-function string2buffer(str) {
-    return (new Uint8Array(str.length)).map(function (x, i) {
-        return str.charCodeAt(i)
-    });
-}
-
-function buffer2string(buf) {
-    let str = "";
-    if (!(buf.constructor === Uint8Array)) {
-        buf = new Uint8Array(buf);
-    }
-    buf.map(function (x) { return str += String.fromCharCode(x) });
-    return str;
 }
 
 var state = {
@@ -149,28 +111,14 @@ var state = {
     credential: null,
     user: {
         name: "testuser@example.com",
-        displayName: "testuser",
-    },
-}
+        displayName: "testuser"
+    }
+};
 
 function setUser() {
     username = $("#input-email").val();
     state.user.name = username.toLowerCase().replace(/\s/g, '') + "@example.com";
     state.user.displayName = username.toLowerCase();
-}
-
-function checkUserExists() {
-    $.get('/user/' + state.user.name, {}, null, 'json')
-        .done(function (response) {
-            return true;
-        }).catch(function () { return false; });
-}
-
-function getCredentials() {
-    $.get('/credential/' + state.user.name, {}, null, 'json')
-        .done(function (response) {
-            console.log(response)
-        });
 }
 
 function makeCredential() {
@@ -198,7 +146,7 @@ function makeCredential() {
         method: 'POST', // or 'PUT'
         body: data, // data can be `string` or {object}!
         headers: {
-            'Accept': 'application/json',
+            'Accept': 'application/json'
         }
     }).then((response) => {
         if (response.ok) {
@@ -219,12 +167,9 @@ function makeCredential() {
                 showErrorAlert(makeCredentialOptions.errorMessage);
                 return;
             }
-
-            // base64url to base64
-            //const challenge = makeCredentialOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
-
+                        
             // Turn the challenge back into the accepted format
-            makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge); // Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
+            makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge);
             // Turn ID into a UInt8Array Buffer for some reason
             makeCredentialOptions.user.id = coerceToArrayBuffer(makeCredentialOptions.user.id);
 
@@ -245,7 +190,7 @@ function makeCredential() {
                 showCancelButton: true,
                 showConfirmButton: false,
                 focusConfirm: false,
-                focusCancel: false,
+                focusCancel: false
             }).then(function (result) {
                 if (!result.value) {
                     console.log('Registration cancelled');
@@ -342,7 +287,7 @@ function getAssertion() {
         method: 'POST', // or 'PUT'
         body: data, // data can be `string` or {object}!
         headers: {
-            'Accept': 'application/json',
+            'Accept': 'application/json'
         }
     }).then((response) => {
         if (response.ok) {
@@ -368,7 +313,7 @@ function getAssertion() {
             makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
 
             makeAssertionOptions.allowCredentials.forEach(function (listItem) {
-                var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+")
+                var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+");
                 listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
             });
             console.log(makeAssertionOptions);
@@ -380,7 +325,7 @@ function getAssertion() {
                 showCancelButton: true,
                 showConfirmButton: false,
                 focusConfirm: false,
-                focusCancel: false,
+                focusCancel: false
             }).then(function (result) {
                 if (!result.value) {
                     console.log('Login cancelled');
@@ -450,11 +395,6 @@ function verifyAssertion(assertedCredential) {
         });
 }
 
-function setCurrentUser(userResponse) {
-    state.user.name = userResponse.name;
-    state.user.displayName = userResponse.display_name;
-}
-
 function showErrorAlert(msg) {
     $("#alert-msg").text(msg);
     $("#user-alert").show();
@@ -467,10 +407,6 @@ function showWarningAlert(msg) {
 
 function hideWarningAlert() {
     $("#user-warning").fadeOut(200);
-}
-
-function showSuccessAlert(msg) {
-    swal()
 }
 
 function hideErrorAlert() {
