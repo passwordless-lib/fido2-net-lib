@@ -4,7 +4,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -136,7 +135,7 @@ namespace Fido2NetLib
             Buffer.BlockCopy(hashedClientDataJson, 0, data, Raw.Response.AuthenticatorData.Length, hashedClientDataJson.Length);
 
             if (null == storedPublicKey || 0 == storedPublicKey.Length) throw new Fido2VerificationException("Stored public key is null or empty");
-            var coseKey = CBORObject.DecodeFromBytes(storedPublicKey);
+            var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(storedPublicKey);
             if (true != AuthDataHelper.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
 
             // 17.

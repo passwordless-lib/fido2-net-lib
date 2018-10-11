@@ -3,7 +3,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -59,13 +58,13 @@ namespace Fido2NetLib
             {13, HashAlgorithmName.SHA512 }
         };
 
-        public static bool VerifySigWithCoseKey(byte[] data, CBORObject coseKey, byte[] sig)
+        public static bool VerifySigWithCoseKey(byte[] data, PeterO.Cbor.CBORObject coseKey, byte[] sig)
         {
             // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-            var kty = coseKey[CBORObject.FromObject(1)].AsInt32();
-            var alg = coseKey[CBORObject.FromObject(3)].AsInt32();
+            var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+            var alg = coseKey[PeterO.Cbor.CBORObject.FromObject(3)].AsInt32();
             var crv = 0;
-            if (1 == kty || 2 == kty) crv = coseKey[CBORObject.FromObject(-1)].AsInt32();
+            if (1 == kty || 2 == kty) crv = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].AsInt32();
             switch (kty) // https://www.iana.org/assignments/cose/cose.xhtml#key-type
             {
                 case 1: // OKP
@@ -88,8 +87,8 @@ namespace Fido2NetLib
                     {
                         var point = new ECPoint
                         {
-                            X = coseKey[CBORObject.FromObject(-2)].GetByteString(),
-                            Y = coseKey[CBORObject.FromObject(-3)].GetByteString()
+                            X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(),
+                            Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString()
                         };
                         ECCurve curve;
                         switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
@@ -144,8 +143,8 @@ namespace Fido2NetLib
                         rsa.ImportParameters(
                             new RSAParameters()
                             {
-                                Modulus = coseKey[CBORObject.FromObject(-1)].GetByteString(),
-                                Exponent = coseKey[CBORObject.FromObject(-2)].GetByteString()
+                                Modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(),
+                                Exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString()
                             }
                         );
                         RSASignaturePadding padding;
@@ -269,10 +268,10 @@ namespace Fido2NetLib
                 "Authenticator Attestation" == dictSubject["OU"].ToString());
         }
 
-        public static Memory<byte> U2FKeyFromCOSEKey(CBORObject COSEKey)
+        public static Memory<byte> U2FKeyFromCOSEKey(PeterO.Cbor.CBORObject COSEKey)
         {
-            var x = COSEKey[CBORObject.FromObject(-2)].GetByteString();
-            var y = COSEKey[CBORObject.FromObject(-3)].GetByteString();
+            var x = COSEKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+            var y = COSEKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
             var publicKeyU2F = new byte[1] { 0x4 }; // uncompressed
             return  publicKeyU2F.Concat(x).Concat(y).ToArray();
         }
@@ -588,11 +587,11 @@ namespace Fido2NetLib
             CredentialID = AuthDataHelper.GetSizedByteArray(attData, ref offset);
             // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
             var ms = new System.IO.MemoryStream(attData, offset, attData.Length - offset);
-            // CBORObject.Read: This method will read from the stream until the end of the CBOR object is reached or an error occurs, whichever happens first.
-            CBORObject tmp = null;
+            // PeterO.Cbor.CBORObject.Read: This method will read from the stream until the end of the CBOR object is reached or an error occurs, whichever happens first.
+            PeterO.Cbor.CBORObject tmp = null;
             try
             {
-                tmp = CBORObject.Read(ms);
+                tmp = PeterO.Cbor.CBORObject.Read(ms);
             }
             catch (Exception)
             {
