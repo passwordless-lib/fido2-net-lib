@@ -76,7 +76,7 @@ namespace Fido2NetLib
                                 switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                                 {
                                     case 6:
-                                        return Chaos.NaCl.Ed25519.Verify(sig, GetHasher(HashAlgorithmName.SHA512).ComputeHash(data), coseKey[CBORObject.FromObject(-2)].GetByteString());
+                                        throw new Fido2VerificationException("ALG_SIGN_ED25519_EDDSA_SHA512_RAW support not yet implmented");
                                     default:
                                         throw new ArgumentOutOfRangeException("crv");
                                 }

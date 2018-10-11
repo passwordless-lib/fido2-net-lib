@@ -16,8 +16,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CBOR", "CBOR\CBOR\CBOR.csproj", "{1D590BC5-7954-4A2E-B5B5-9A4B4AE1B3F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chaos.NaCl", "Chaos.NaCl\Chaos.NaCl\Chaos.NaCl.csproj", "{AE28FD14-7985-4707-A963-C94B8597AE50}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,10 +38,6 @@ Global
 		{1D590BC5-7954-4A2E-B5B5-9A4B4AE1B3F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D590BC5-7954-4A2E-B5B5-9A4B4AE1B3F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D590BC5-7954-4A2E-B5B5-9A4B4AE1B3F7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AE28FD14-7985-4707-A963-C94B8597AE50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AE28FD14-7985-4707-A963-C94B8597AE50}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AE28FD14-7985-4707-A963-C94B8597AE50}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AE28FD14-7985-4707-A963-C94B8597AE50}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

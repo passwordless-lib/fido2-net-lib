@@ -11,8 +11,6 @@
     <None Remove="assertionNoneResponse.json" />
     <None Remove="attestationAndroidKeyOptions.json" />
     <None Remove="attestationAndroidKeyResponse.json" />
-    <None Remove="attestationEDDSAOptions.json" />
-    <None Remove="attestationEDDSAResponse.json" />
     <None Remove="attestationNoneOptions.json" />
     <None Remove="attestationNoneResponse.json" />
     <None Remove="attestationOptionsNone.json" />
@@ -47,12 +45,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="attestationAndroidKeyResponse.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="attestationEdDsaOptions.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="attestationEdDsaResponse.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="attestationNoneOptions.json">
