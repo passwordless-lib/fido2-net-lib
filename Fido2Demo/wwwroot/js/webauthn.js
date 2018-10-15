@@ -139,7 +139,7 @@ function makeCredential() {
     data.append('username', state.user.name);
     data.append('attType', attestation_type);
     data.append('authType', authenticator_attachment);
-    data.append('userVerifcation', user_verification);
+    data.append('userVerification', user_verification);
     data.append('requireResidentKey', require_resident_key);
 
     fetch('/makeCredentialOptions', {
