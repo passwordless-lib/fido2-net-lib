@@ -42,7 +42,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredentialOptions")]
-        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerifcation)
+        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace Fido2Demo
                 {
                     AuthenticatorAttachment = !string.IsNullOrEmpty(authType) ? AuthenticatorAttachment.Parse(authType) : null,
                     RequireResidentKey = requireResidentKey,
-                    UserVerification = UserVerificationRequirement.Parse(userVerifcation)
+                    UserVerification = UserVerificationRequirement.Parse(userVerification)
                 };
                 var options = _lib.RequestNewCredential(user, existingKeys, authenticatorSelection, AttestationConveyancePreference.Parse(attType));
 
