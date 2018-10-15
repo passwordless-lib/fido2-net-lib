@@ -168,14 +168,25 @@ namespace Fido2NetLib
                         {
                             pubArea = new PubArea(AttestationObject.AttStmt["pubArea"].GetByteString());
                         }
-
-                        var coseMod = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(); // modulus 
-                        var coseExp = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(); // exponent
-
                         if (null == pubArea || null == pubArea.Unique || 0 == pubArea.Unique.Length) throw new Fido2VerificationException("Missing or malformed pubArea");
-                        if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray())) throw new Fido2VerificationException("Public key mismatch");
-                        if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent) throw new Fido2VerificationException("Public key exponent mismatch");
+                        if (3 == coseKty) // RSA
+                        {
+                            var coseMod = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString(); // modulus 
+                            var coseExp = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString(); // exponent
 
+                            if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray())) throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
+                            if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent) throw new Fido2VerificationException("Public key exponent mismatch between pubArea and credentialPublicKey");
+                        }
+                        else if (2 == coseKty) // ECC
+                        {
+                            var curve = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-1)].AsInt32();
+                            var X = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                            var Y = credentialPublicKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                            
+                            if (pubArea.EccCurve != AuthDataHelper.CoseCurveToTpm[curve]) throw new Fido2VerificationException("Curve mismatch between pubArea and credentialPublicKey");
+                            if (!pubArea.ECPoint.X.SequenceEqual(X)) throw new Fido2VerificationException("X-coordinate mismatch between pubArea and credentialPublicKey");
+                            if (!pubArea.ECPoint.Y.SequenceEqual(Y)) throw new Fido2VerificationException("Y-coordinate mismatch between pubArea and credentialPublicKey");
+                        }
                         // Concatenate authenticatorData and clientDataHash to form attToBeSigned.
                         // see data variable
 
@@ -203,10 +214,10 @@ namespace Fido2NetLib
 
                             // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                             var aikCert = new X509Certificate2(x5c.Values.First().GetByteString());
-                            var aikPublicKey = aikCert.GetRSAPublicKey();
-                            // TODO: will TPM always be using this signature padding, or could is use PSS in some cases?
-                            // TODO: Not only can it be different signature padding, it can be EC2. Have not seen, but in spec.
-                            if (true != aikPublicKey.VerifyData(certInfo.Raw, sig.GetByteString(), AuthDataHelper.algMap[alg.AsInt32()], RSASignaturePadding.Pkcs1)) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
+
+                            PeterO.Cbor.CBORObject coseKey = AuthDataHelper.CoseKeyFromCertAndAlg(aikCert, alg.AsInt32());
+
+                            if (true != AuthDataHelper.VerifySigWithCoseKey(certInfo.Raw, coseKey, sig.GetByteString())) throw new Fido2VerificationException("Bad signature in TPM with aikCert");
 
                             // Verify that aikCert meets the TPM attestation statement certificate requirements
                             // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
@@ -436,12 +447,6 @@ namespace Fido2NetLib
                         if (0 == AttestationObject.AttStmt.Keys.Count || 0 == AttestationObject.AttStmt.Values.Count) throw new Fido2VerificationException("Attestation format packed must have attestation statement");
                         if (null == sig || PeterO.Cbor.CBORType.ByteString != sig.Type || 0 == sig.GetByteString().Length) throw new Fido2VerificationException("Invalid packed attestation signature");
                         if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type) throw new Fido2VerificationException("Invalid packed attestation algorithm");
-                        byte[] packedParsedSignature = null;
-                        if (-7 == alg.AsInt32() || -35 == alg.AsInt32() || -36 == alg.AsInt32())
-                        {
-                            packedParsedSignature = AuthDataHelper.SigFromEcDsaSig(sig.GetByteString());
-                        }
-                        else packedParsedSignature = sig.GetByteString();
 
                         // If x5c is present, this indicates that the attestation type is not ECDAA
                         if (null != x5c)
@@ -461,8 +466,11 @@ namespace Fido2NetLib
                             // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                             // using the attestation public key in attestnCert with the algorithm specified in alg
                             var packedPubKey = (ECDsaCng)attestnCert.GetECDsaPublicKey(); // attestation public key
-                            if (null == alg || PeterO.Cbor.CBORType.Number != alg.Type || false == AuthDataHelper.algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
-                            if (true != packedPubKey.VerifyData(data, packedParsedSignature, AuthDataHelper.algMap[alg.AsInt32()])) throw new Fido2VerificationException("Invalid full packed signature");
+                            if (false == AuthDataHelper.algMap.ContainsKey(alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
+                            
+                            var coseKey = AuthDataHelper.CoseKeyFromCertAndAlg(attestnCert, alg.AsInt32());
+
+                            if (true != AuthDataHelper.VerifySigWithCoseKey(data, coseKey, sig.GetByteString())) throw new Fido2VerificationException("Invalid full packed signature");                            
 
                             // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
                             // 2b. Version MUST be set to 3

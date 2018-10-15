@@ -4,6 +4,19 @@ using System.Collections.Generic;
 
 namespace Fido2NetLib
 {
+    public enum TpmEccCurve : UInt16
+    {
+        // TCG TPM Rev 2.0, part 2, structures, section 6.4, TPM_ECC_CURVE
+        TPM_ECC_NONE,       // 0x0000
+        TPM_ECC_NIST_P192,  // 0x0001
+        TPM_ECC_NIST_P224,  // 0x0002
+        TPM_ECC_NIST_P256,  // 0x0003
+        TPM_ECC_NIST_P384,  // 0x0004
+        TPM_ECC_NIST_P521,  // 0x0005  
+        TPM_ECC_BN_P256,    // 0x0010 curve to support ECDAA
+        TPM_ECC_BN_P638,    // 0x0011 curve to support ECDAA
+        TPM_ECC_SM2_P256    // 0x0020 
+    }
     public enum TpmAlg : UInt16
     {
         // TCG TPM Rev 2.0, part 2, structures, section 6.3, TPM_ALG_ID
@@ -135,7 +148,7 @@ namespace Fido2NetLib
 
             // TPMI_ALG_PUBLIC
             Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            TpmAlg tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0).ToString());
+            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0).ToString());
 
             // TPMI_ALG_HASH 
             Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
@@ -198,7 +211,17 @@ namespace Fido2NetLib
 
             // TPMU_PUBLIC_ID
             Unique = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
-            if (pubArea.Length != offset) throw new Fido2VerificationException("Leftover bits decoding pubArea");
+            if (pubArea.Length != offset) throw new Fido2VerificationException("Leftover bytes decoding pubArea");
+                        if (null != CurveID)
+            {
+                var point = new System.Security.Cryptography.ECPoint();
+                var uniqueOffset = 0;
+                var size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
+                point.X = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BitConverter.ToUInt16(size.Reverse().ToArray(), 0));
+                size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
+                point.Y = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BitConverter.ToUInt16(size.Reverse().ToArray(), 0));
+                ECPoint = point;
+            }
         }
         public byte[] Raw { get; private set; }
         public byte[] Type { get; private set; }
@@ -210,7 +233,9 @@ namespace Fido2NetLib
         public byte[] KeyBits { get; private set; }
         public UInt32 Exponent { get; private set; }
         public byte[] CurveID { get; private set; }
+        public TpmEccCurve EccCurve { get; private set; }
         public byte[] KDF { get; private set; }
         public byte[] Unique { get; private set; }
+        public System.Security.Cryptography.ECPoint ECPoint { get; private set; }
     }
 }

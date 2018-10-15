@@ -57,7 +57,41 @@ namespace Fido2NetLib
             {12, HashAlgorithmName.SHA384 },
             {13, HashAlgorithmName.SHA512 }
         };
-
+                public static readonly Dictionary<string, int> CoseKeyTypeFromOid = new Dictionary<string, int>
+        {
+            { "1.2.840.10045.2.1", 2 }, // ECC
+            { "1.2.840.113549.1.1.1", 3} // RSA
+        };
+        public static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
+        {
+            { 1, TpmEccCurve.TPM_ECC_NIST_P256},
+            { 2, TpmEccCurve.TPM_ECC_NIST_P384},
+            { 3, TpmEccCurve.TPM_ECC_NIST_P521} 
+        };
+        public static PeterO.Cbor.CBORObject CoseKeyFromCertAndAlg(X509Certificate2 cert, Int32 alg)
+        {
+            var coseKey = PeterO.Cbor.CBORObject.NewMap();
+            var kty = AuthDataHelper.CoseKeyTypeFromOid[cert.GetKeyAlgorithm()];
+            coseKey.Add(1, kty);
+            coseKey.Add(3, alg);
+            if (3 == kty)
+            {
+                var keyParams = cert.GetRSAPublicKey().ExportParameters(false);
+                coseKey.Add(-1, keyParams.Modulus);
+                coseKey.Add(-2, keyParams.Exponent);
+            }
+            if (2 == kty)
+            {
+                var ecDsaPubKey = (ECDsaCng)cert.GetECDsaPublicKey();
+                var keyParams = ecDsaPubKey.ExportParameters(false);
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName)) coseKey.Add(-1, 1);
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName)) coseKey.Add(-1, 2);
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName)) coseKey.Add(-1, 3);
+                coseKey.Add(-2, keyParams.Q.X);
+                coseKey.Add(-3, keyParams.Q.Y);
+            }
+            return coseKey;
+        }
         public static bool VerifySigWithCoseKey(byte[] data, PeterO.Cbor.CBORObject coseKey, byte[] sig)
         {
             // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
