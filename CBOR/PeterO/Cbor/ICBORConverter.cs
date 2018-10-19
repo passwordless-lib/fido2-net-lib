@@ -9,11 +9,11 @@ using System;
 
 namespace PeterO.Cbor {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="T:PeterO.Cbor.ICBORConverter`1"]/*'/>
+    /// path='docs/doc[@name="T:ICBORConverter`1"]/*'/>
   public interface ICBORConverter<T>
   {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.ICBORConverter`1.ToCBORObject(`0)"]/*'/>
+    /// path='docs/doc[@name="M:ICBORConverter`1.ToCBORObject(`0)"]/*'/>
     CBORObject ToCBORObject(T obj);
   }
 }

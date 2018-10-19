@@ -32,7 +32,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORTag37.ToCBORObject(System.Guid)"]/*'/>
+    /// path='docs/doc[@name="M:CBORTag37.ToCBORObject(System.Guid)"]/*'/>
     public CBORObject ToCBORObject(Guid obj) {
       byte[] bytes = PropertyMap.UUIDToBytes(obj);
       return CBORObject.FromObjectAndTag(bytes, (int)37);

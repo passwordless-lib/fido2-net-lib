@@ -10,7 +10,7 @@ using System;
 #pragma warning disable 618
 namespace PeterO.Cbor {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="T:PeterO.Cbor.CBORTagGenericString"]/*'/>
+    /// path='docs/doc[@name="T:CBORTagGenericString"]/*'/>
   internal class CBORTagGenericString : ICBORTag
   {
     public CBORTypeFilter GetTypeFilter() {

@@ -277,14 +277,14 @@
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORDataUtilities">
+<doc name="T:CBORDataUtilities">
 
             <summary>Contains methods useful for reading and writing data, with a focus on
       CBOR.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORDataUtilities.ParseJSONNumber(System.String)">
+<doc name="M:CBORDataUtilities.ParseJSONNumber(System.String)">
 
             <summary>Parses a number whose format follows the JSON specification. See
       #ParseJSONNumber(String, integersOnly, parseOnly) for more information.
@@ -297,7 +297,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORDataUtilities.ParseJSONNumber(System.String,System.Boolean,System.Boolean)">
+<doc name="M:CBORDataUtilities.ParseJSONNumber(System.String,System.Boolean,System.Boolean)">
 
             <summary>Parses a number whose format follows the JSON specification (RFC 8259).
       Roughly speaking, a valid number consists of an optional minus sign, one
@@ -317,7 +317,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORDataUtilities.ParseJSONNumber(System.String,System.Boolean,System.Boolean,System.Boolean)">
+<doc name="M:CBORDataUtilities.ParseJSONNumber(System.String,System.Boolean,System.Boolean,System.Boolean)">
 
             <summary>Parses a number whose format follows the JSON specification (RFC 8259).
       Roughly speaking, a valid number consists of an optional minus sign, one
@@ -338,21 +338,21 @@
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBOREncodeOptions">
+<doc name="T:CBOREncodeOptions">
 
             <summary>Specifies options for encoding and decoding CBOR objects.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBOREncodeOptions.#ctor">
+<doc name="M:CBOREncodeOptions.#ctor">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.CBOREncodeOptions'/> class.
+            <summary>Initializes a new instance of the <see cref='T:CBOREncodeOptions'/> class.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBOREncodeOptions.#ctor(System.Boolean,System.Boolean)">
+<doc name="M:CBOREncodeOptions.#ctor(System.Boolean,System.Boolean)">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.CBOREncodeOptions'/> class.
+            <summary>Initializes a new instance of the <see cref='T:CBOREncodeOptions'/> class.
     </summary><param name='useIndefLengthStrings'>A value indicating whether to always encode strings with a
       definite-length encoding.
     </param><param name='allowDuplicateKeys'>A value indicating whether to disallow duplicate keys when reading CBOR
@@ -360,16 +360,16 @@
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBOREncodeOptions.#ctor(System.Boolean,System.Boolean,System.Boolean)">
+<doc name="M:CBOREncodeOptions.#ctor(System.Boolean,System.Boolean,System.Boolean)">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.CBOREncodeOptions'/> class.</summary><param name='useIndefLengthStrings'>A value indicating whether to
+            <summary>Initializes a new instance of the <see cref='T:CBOREncodeOptions'/> class.</summary><param name='useIndefLengthStrings'>A value indicating whether to
             always encode strings with a definite-length encoding.</param><param name='allowDuplicateKeys'>A value indicating whether to
             disallow duplicate keys when reading CBOR objects from a data
             stream.</param><param name='ctap2Canonical'>Either <c>true</c> or <c>false</c>
             .</param>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBOREncodeOptions.AllowDuplicateKeys">
+<doc name="P:CBOREncodeOptions.AllowDuplicateKeys">
 
             <summary>Gets a value indicating whether to disallow duplicate keys when reading
       CBOR objects from a data stream. Used only when decoding CBOR objects.
@@ -378,7 +378,7 @@
     </value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBOREncodeOptions.And(PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBOREncodeOptions.And(CBOREncodeOptions)">
 
             <summary>Returns an options object containing the flags shared by this and another
       options object.
@@ -389,7 +389,7 @@
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBOREncodeOptions.Ctap2Canonical">
+<doc name="P:CBOREncodeOptions.Ctap2Canonical">
 
             <summary>Gets a value indicating whether CBOR objects are written
             out using the CTAP2 canonical CBOR encoding form. In this form,
@@ -403,7 +403,7 @@
             numbers.</value>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBOREncodeOptions.Default">
+<doc name="F:CBOREncodeOptions.Default">
 
             <summary>Default options for CBOR objects. Disallow duplicate keys, and always
       encode strings using definite-length encoding. These are recommended
@@ -412,27 +412,27 @@
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBOREncodeOptions.NoDuplicateKeys">
+<doc name="F:CBOREncodeOptions.NoDuplicateKeys">
 
             <summary>Disallow duplicate keys when reading CBOR objects from a data stream.
       Used only when decoding CBOR objects. Value: 2.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBOREncodeOptions.NoIndefLengthStrings">
+<doc name="F:CBOREncodeOptions.NoIndefLengthStrings">
 
             <summary>Always encode strings with a definite-length encoding. Used only when
       encoding CBOR objects. Value: 1.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBOREncodeOptions.None">
+<doc name="F:CBOREncodeOptions.None">
 
             <summary>No special options for encoding/decoding. Value: 0.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBOREncodeOptions.Or(PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBOREncodeOptions.Or(CBOREncodeOptions)">
 
             <summary>Returns an options object containing the combined flags of this and
       another options object.
@@ -443,7 +443,7 @@
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBOREncodeOptions.UseIndefLengthStrings">
+<doc name="P:CBOREncodeOptions.UseIndefLengthStrings">
 
             <summary>Gets a value indicating whether to always encode strings with a
       definite-length encoding.
@@ -452,36 +452,36 @@
     </value>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBOREncodeOptions.Value">
+<doc name="P:CBOREncodeOptions.Value">
 <summary>Gets this options object's value.
     </summary>
     <value>This options object&apos;s value.
     </value>
 </doc>
-<doc name="T:PeterO.Cbor.CBORException">
+<doc name="T:CBORException">
 
             <summary>Exception thrown for errors involving CBOR data.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORException.#ctor">
+<doc name="M:CBORException.#ctor">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.CBORException'/> class.
+            <summary>Initializes a new instance of the <see cref='T:CBORException'/> class.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORException.#ctor(System.String)">
+<doc name="M:CBORException.#ctor(System.String)">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.CBORException'/> class.
+            <summary>Initializes a new instance of the <see cref='T:CBORException'/> class.
     </summary><param name='message'>The parameter
       <paramref name='message'/>
        is a text string.
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORException.#ctor(System.String,System.Exception)">
+<doc name="M:CBORException.#ctor(System.String,System.Exception)">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.CBORException'/> class. Uses the given message and inner exception.
+            <summary>Initializes a new instance of the <see cref='T:CBORException'/> class. Uses the given message and inner exception.
     </summary><param name='message'>The parameter
       <paramref name='message'/>
        is a text string.
@@ -491,7 +491,7 @@
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORMapper.AddConverter``1(System.Type,PeterO.Cbor.ICBORConverter{``0})">
+<doc name="M:CBORMapper.AddConverter``1(System.Type,ICBORConverter{``0})">
 <summary>Registers an object that converts objects of a given type to CBOR objects
       (called a CBOR converter).
     </summary>
@@ -516,7 +516,7 @@
     <exception cref='T:System.ArgumentException'>"Converter doesn't contain a proper ToCBORObject method".
     </exception>
 </doc>
-<doc name="T:PeterO.Cbor.CBORObject">
+<doc name="T:CBORObject">
 
             <summary><para>Represents an object in Concise Binary Object Representation (CBOR) and
       contains methods for reading and writing CBOR data. CBOR is defined in RFC
@@ -624,14 +624,14 @@
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Abs">
+<doc name="M:CBORObject.Abs">
 
             <summary>Gets this object's absolute value.</summary><returns>This object's absolute without its negative
             sign.</returns><exception cref='T:System.InvalidOperationException'>This object's
             type is not a number type.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Add(PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Add(CBORObject)">
 
             <summary><para>Adds a new object to the end of this array. (Used to
             throw ArgumentNullException on a null reference, but now converts
@@ -657,7 +657,7 @@
             </example>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Add(System.Object)">
+<doc name="M:CBORObject.Add(System.Object)">
 
             <summary><para>Converts an object to a CBOR object and adds it to
             the end of this array.</para>
@@ -680,7 +680,7 @@
             </example>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Add(System.Object,System.Object)">
+<doc name="M:CBORObject.Add(System.Object,System.Object)">
 
             <summary><para>Adds a new key and its value to this CBOR map, or adds the
             value if the key doesn't exist.</para>
@@ -695,7 +695,7 @@
             unsupported type.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AddConverter``1(System.Type,PeterO.Cbor.ICBORConverter{``0})">
+<doc name="M:CBORObject.AddConverter``1(System.Type,ICBORConverter{``0})">
 
             <summary>Registers an object that converts objects of a given type
              to CBOR objects (called a CBOR converter).</summary><param name='type'>A Type object specifying the type that the
@@ -707,7 +707,7 @@
              proper ToCBORObject method".</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AddTagHandler(PeterO.BigInteger,PeterO.Cbor.ICBORTag)">
+<doc name="M:CBORObject.AddTagHandler(PeterO.BigInteger,ICBORTag)">
 
             <summary>Registers an object that validates CBOR objects with new
             tags.</summary><param name='bigintTag'>An arbitrary-precision integer.</param><param name='handler'>The parameter <paramref name='handler'/> is
@@ -718,7 +718,7 @@
             (2^64-1).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AddTagHandler(PeterO.Numbers.EInteger,PeterO.Cbor.ICBORTag)">
+<doc name="M:CBORObject.AddTagHandler(PeterO.Numbers.EInteger,ICBORTag)">
 
             <summary>Registers an object that validates CBOR objects with new
             tags.</summary><param name='bigintTag'>An arbitrary-precision integer.</param><param name='handler'>The parameter <paramref name='handler'/> is
@@ -729,7 +729,7 @@
             (2^64-1).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Addition(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Addition(CBORObject,CBORObject)">
 
             <summary>Finds the sum of two CBOR numbers.</summary><param name='first'>The parameter <paramref name='first'/> is a
             CBOR object.</param><param name='second'>The parameter <paramref name='second'/> is a
@@ -738,7 +738,7 @@
             NaN).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsBigInteger">
+<doc name="M:CBORObject.AsBigInteger">
 
             <summary>Converts this object to an arbitrary-precision integer.
             Fractional values are truncated to an integer.</summary><returns>The closest big integer to this object.</returns><exception cref='T:System.InvalidOperationException'>This object's
@@ -747,7 +747,7 @@
             infinity or not-a-number (NaN).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsBoolean">
+<doc name="M:CBORObject.AsBoolean">
 
             <summary>Returns false if this object is False, Null, or Undefined;
       otherwise,true.
@@ -755,7 +755,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsByte">
+<doc name="M:CBORObject.AsByte">
 
             <summary>Converts this object to a byte (0 to 255). Floating point
             values are truncated to an integer.</summary><returns>The closest byte-sized integer to this object.</returns><exception cref='T:System.InvalidOperationException'>This object's
@@ -764,7 +764,7 @@
             255 when truncated to an integer).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsDecimal">
+<doc name="M:CBORObject.AsDecimal">
 
             <summary>Converts this object to a .NET decimal.
     </summary><returns>The closest big integer to this object.
@@ -773,7 +773,7 @@
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsDouble">
+<doc name="M:CBORObject.AsDouble">
 
             <summary>Converts this object to a 64-bit floating point
             number.</summary><returns>The closest 64-bit floating point number to this object.
@@ -783,7 +783,7 @@
             type is not a number type.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsEDecimal">
+<doc name="M:CBORObject.AsEDecimal">
 
             <summary>Converts this object to a decimal number.</summary><returns>A decimal number for this object's value. If this object
             is a rational number with a nonterminating decimal expansion,
@@ -792,7 +792,7 @@
             CBORObject.Null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsEFloat">
+<doc name="M:CBORObject.AsEFloat">
 
             <summary>Converts this object to an arbitrary-precision binary
             floating point number.</summary><returns>An arbitrary-precision binary floating point number for
@@ -805,7 +805,7 @@
             CBORObject.Null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsEInteger">
+<doc name="M:CBORObject.AsEInteger">
 
             <summary>Converts this object to an arbitrary-precision integer.
             Fractional values are truncated to an integer.</summary><returns>The closest big integer to this object.</returns><exception cref='T:System.InvalidOperationException'>This object's
@@ -814,14 +814,14 @@
             infinity or not-a-number (NaN).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsERational">
+<doc name="M:CBORObject.AsERational">
 
             <summary>Converts this object to a rational number.</summary><returns>A rational number for this object's value.</returns><exception cref='T:System.InvalidOperationException'>This object's
             type is not a number type, including if this object is
             CBORObject.Null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsExtendedDecimal">
+<doc name="M:CBORObject.AsExtendedDecimal">
 
             <summary>Converts this object to a decimal number.</summary><returns>A decimal number for this object's value. If this object
             is a rational number with a nonterminating decimal expansion,
@@ -830,7 +830,7 @@
             CBORObject.Null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsExtendedFloat">
+<doc name="M:CBORObject.AsExtendedFloat">
 
             <summary>Converts this object to an arbitrary-precision binary
             floating point number.</summary><returns>An arbitrary-precision binary floating point number for
@@ -843,14 +843,14 @@
             CBORObject.Null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsExtendedRational">
+<doc name="M:CBORObject.AsExtendedRational">
 
             <summary>Converts this object to a rational number.</summary><returns>A rational number for this object's value.</returns><exception cref='T:System.InvalidOperationException'>This object's
             type is not a number type, including if this object is
             CBORObject.Null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsInt16">
+<doc name="M:CBORObject.AsInt16">
 
             <summary>Converts this object to a 16-bit signed integer. Floating
             point values are truncated to an integer.</summary><returns>The closest 16-bit signed integer to this
@@ -859,7 +859,7 @@
             exceeds the range of a 16-bit signed integer.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsInt32">
+<doc name="M:CBORObject.AsInt32">
 <summary>Converts this object to a 32-bit signed integer. Non-integer number values
       are truncated to an integer. (NOTE: To determine whether this method call
       can succeed, call the
@@ -886,7 +886,7 @@
       </code>
     </example>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsInt64">
+<doc name="M:CBORObject.AsInt64">
 <summary>Converts this object to a 64-bit signed integer. Non-integer numbers are
       truncated to an integer. (NOTE: To determine whether this method call can
       succeed, call the
@@ -913,14 +913,14 @@
       </code>
     </example>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsSByte">
+<doc name="M:CBORObject.AsSByte">
 
             <summary>Converts this object to an 8-bit signed integer.
     </summary><returns>An 8-bit signed integer.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsSingle">
+<doc name="M:CBORObject.AsSingle">
 
             <summary>Converts this object to a 32-bit floating point
             number.</summary><returns>The closest 32-bit floating point number to this object.
@@ -930,7 +930,7 @@
             type is not a number type.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsString">
+<doc name="M:CBORObject.AsString">
 
             <summary>Gets the value of this object as a text string.</summary><returns>Gets this object's string.</returns><exception cref='T:System.InvalidOperationException'>This object's
             type is not a string, including if this object is
@@ -945,7 +945,7 @@
             </example>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsUInt16">
+<doc name="M:CBORObject.AsUInt16">
 
             <summary>Converts this object to a 16-bit unsigned integer. The return value will
       be truncated as necessary.
@@ -954,7 +954,7 @@
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsUInt32">
+<doc name="M:CBORObject.AsUInt32">
 
             <summary>Converts this object to a 32-bit unsigned integer. The return value will
       be truncated as necessary.
@@ -963,7 +963,7 @@
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.AsUInt64">
+<doc name="M:CBORObject.AsUInt64">
 
             <summary>Converts this object to a 64-bit unsigned integer. Non-integer values are
       truncated to an integer.
@@ -973,7 +973,7 @@
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CanFitInDouble">
+<doc name="M:CBORObject.CanFitInDouble">
 
             <summary>Returns whether this object's value can be converted to a 64-bit floating
       point number without its value being rounded to another numerical value.
@@ -984,7 +984,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CanFitInInt32">
+<doc name="M:CBORObject.CanFitInInt32">
 
             <summary>Returns whether this object's numerical value is an integer, is -(2^31) or
       greater, and is less than 2^31.
@@ -995,7 +995,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CanFitInInt64">
+<doc name="M:CBORObject.CanFitInInt64">
 
             <summary>Returns whether this object's numerical value is an integer, is -(2^63) or
       greater, and is less than 2^63.
@@ -1006,7 +1006,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CanFitInSingle">
+<doc name="M:CBORObject.CanFitInSingle">
 
             <summary>Returns whether this object's value can be converted to a 32-bit floating
       point number without its value being rounded to another numerical value.
@@ -1017,7 +1017,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CanTruncatedIntFitInInt32">
+<doc name="M:CBORObject.CanTruncatedIntFitInInt32">
 
             <summary>Returns whether this object's value, truncated to an integer, would be
       -(2^31) or greater, and less than 2^31.
@@ -1028,7 +1028,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CanTruncatedIntFitInInt64">
+<doc name="M:CBORObject.CanTruncatedIntFitInInt64">
 
             <summary>Returns whether this object's value, truncated to an integer, would be
       -(2^63) or greater, and less than 2^63.
@@ -1039,14 +1039,14 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Clear">
+<doc name="M:CBORObject.Clear">
 <summary>Removes all items from this CBOR array or all keys and values from this
       CBOR map.
     </summary>
     <exception cref='InvalidOperationException'>This object is not a CBOR array or CBOR map.
     </exception>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CompareTo(PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.CompareTo(CBORObject)">
 
             <summary>Compares two CBOR objects.
              <para>In this implementation:</para>
@@ -1089,7 +1089,7 @@
              null.</returns><exception cref='T:System.ArgumentException'>An internal error occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.CompareToIgnoreTags(PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.CompareToIgnoreTags(CBORObject)">
 
             <summary>Compares this object and another CBOR object, ignoring the tags they
       have, if any. See the CompareTo method for more information on the
@@ -1101,7 +1101,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ContainsKey(PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.ContainsKey(CBORObject)">
 
             <summary>Determines whether a value of the given key exists in this
             object.</summary><param name='key'>An object that serves as the key.</param><returns><c>true</c> if the given key is found, or false if the
@@ -1109,7 +1109,7 @@
             opposed to CBORObject.Null).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ContainsKey(System.String)">
+<doc name="M:CBORObject.ContainsKey(System.String)">
 
             <summary>Determines whether a value of the given key exists in this
             object.</summary><param name='key'>A string that serves as the key.</param><returns><c>true</c> if the given key (as a CBOR object) is found,
@@ -1118,20 +1118,20 @@
             null.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.ConverterInfo.Converter">
+<doc name="P:CBORObject.ConverterInfo.Converter">
 
             <summary>Gets or sets the ICBORConverter object.
     </summary><value>The ICBORConverter object.
     </value>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.ConverterInfo.ToObject">
+<doc name="P:CBORObject.ConverterInfo.ToObject">
 <summary>Gets or sets the converter's ToCBORObject method.
     </summary>
     <value>The converter&apos;s ToCBORObject method.
     </value>
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Count">
+<doc name="P:CBORObject.Count">
 
             <summary>Gets the number of keys in this map, or the number of items in this
       array, or 0 if this item is neither an array nor a map.
@@ -1140,17 +1140,17 @@
     </value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.DecodeFromBytes(System.Byte[])">
+<doc name="M:CBORObject.DecodeFromBytes(System.Byte[])">
 
             <summary><para><b>At the moment, use the overload of this method that takes
             a
-            <see cref='T:PeterO.Cbor.CBOREncodeOptions'/> object. The object
+            <see cref='T:CBOREncodeOptions'/> object. The object
             <c>CBOREncodeOptions.Default</c> contains recommended settings for
             CBOREncodeOptions, and those settings may be adopted by this
             overload (without a CBOREncodeOptions argument) in the next major
             version.</b></para>
             <para>Generates a CBOR object from an array of CBOR-encoded
-            bytes.</para></summary><param name='data'>A byte array in which a single CBOR object is encoded.</param><returns>A CBOR object decoded from the given byte array.</returns><exception cref='T:PeterO.Cbor.CBORException'>There was an error in
+            bytes.</para></summary><param name='data'>A byte array in which a single CBOR object is encoded.</param><returns>A CBOR object decoded from the given byte array.</returns><exception cref='T:CBORException'>There was an error in
             reading or parsing the data. This includes cases where not all of
             the byte array represents a CBOR object. This exception is also
             thrown if the parameter <paramref name='data'/> is
@@ -1158,7 +1158,7 @@
             <paramref name='data'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.DecodeFromBytes(System.Byte[],PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.DecodeFromBytes(System.Byte[],CBOREncodeOptions)">
 <summary>Generates a CBOR object from an array of CBOR-encoded bytes, using the
       given
       <c>CBOREncodeOptions</c>
@@ -1172,7 +1172,7 @@
     </param>
     <returns>A CBOR object decoded from the given byte array.
     </returns>
-    <exception cref='T:PeterO.Cbor.CBORException'>There was an error in reading or parsing the data. This includes cases
+    <exception cref='T:CBORException'>There was an error in reading or parsing the data. This includes cases
       where not all of the byte array represents a CBOR object. This exception
       is also thrown if the parameter
       <paramref name='data'/>
@@ -1197,7 +1197,7 @@
       </code>
     </example>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Divide(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Divide(CBORObject,CBORObject)">
 
             <summary>Divides a CBORObject object by the value of a CBORObject object.
     </summary><param name='first'>The parameter
@@ -1210,10 +1210,10 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.EncodeToBytes">
+<doc name="M:CBORObject.EncodeToBytes">
 
             <summary><para><b>At the moment, use the overload of this method that takes a
-          <see cref='T:PeterO.Cbor.CBOREncodeOptions'/>
+          <see cref='T:CBOREncodeOptions'/>
            object. The object
           <c>CBOREncodeOptions.Default</c>
            contains recommended settings for CBOREncodeOptions, and those
@@ -1224,14 +1224,14 @@
         array of that representation. If the CBOR object contains CBOR maps, or
         is a CBOR map itself, the keys to the map are written out to the byte
         array in an undefined order. The example code given in
-        <see cref='M:PeterO.Cbor.CBORObject.WriteTo(System.IO.Stream)'/>
+        <see cref='M:CBORObject.WriteTo(System.IO.Stream)'/>
          can be used to write out certain keys of a CBOR map in a given order.
       </para>
     </summary><returns>A byte array in CBOR format.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.EncodeToBytes(PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.EncodeToBytes(CBOREncodeOptions)">
 
             <summary>Writes the binary representation of this CBOR object and
             returns a byte array of that representation, using the specified
@@ -1239,14 +1239,14 @@
             contains CBOR maps, or is a CBOR map itself, the keys to the map
             are written out to the byte array in an undefined order. The
             example code given in
-            <see cref='M:PeterO.Cbor.CBORObject.WriteTo(System.IO.Stream)'/>
+            <see cref='M:CBORObject.WriteTo(System.IO.Stream)'/>
             can be used to write out certain keys of a CBOR map in a given
             order.</summary><param name='options'>Options for encoding the data to
             CBOR.</param><returns>A byte array in CBOR format.</returns><exception cref='T:System.ArgumentNullException'>The parameter
             <paramref name='options'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Equals(PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Equals(CBORObject)">
 
             <summary>Compares the equality of two CBOR objects. Not-a-number values can be
       considered equal by this method.
@@ -1257,7 +1257,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Equals(System.Object)">
+<doc name="M:CBORObject.Equals(System.Object)">
 
             <summary>Determines whether this object and another object are equal and have the
       same type. Not-a-number values can be considered equal by this method.
@@ -1270,17 +1270,17 @@
     </returns>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.False">
+<doc name="F:CBORObject.False">
 
             <summary>Represents the value false.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromJSONString(System.String)">
+<doc name="M:CBORObject.FromJSONString(System.String)">
 
             <summary><para><b>At the moment, use the overload of this method that takes
             a
-            <see cref='T:PeterO.Cbor.CBOREncodeOptions'/> object. The object
+            <see cref='T:CBOREncodeOptions'/> object. The object
             <c>CBOREncodeOptions.Default</c> contains recommended settings for
             CBOREncodeOptions, and those settings may be adopted by this
             overload (without a CBOREncodeOptions argument) in the next major
@@ -1291,11 +1291,11 @@
             will be used for each duplicated key.</para></summary><param name='str'>A string in JSON format. The entire string must
             contain a single JSON object and not multiple objects. The string
             may not begin with a byte-order mark (U+FEFF).</param><returns>A CBORObject object.</returns><exception cref='T:System.ArgumentNullException'>The parameter
-            <paramref name='str'/> is null.</exception><exception cref='T:PeterO.Cbor.CBORException'>The string is not in
+            <paramref name='str'/> is null.</exception><exception cref='T:CBORException'>The string is not in
             JSON format.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromJSONString(System.String,PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.FromJSONString(System.String,CBOREncodeOptions)">
 
             <summary>Generates a CBOR object from a text string in JavaScript
             Object Notation (JSON) format, using the specified options to
@@ -1305,11 +1305,11 @@
             contain a single JSON object and not multiple objects. The string
             may not begin with a byte-order mark (U+FEFF).</param><param name='options'>The parameter <paramref name='options'/> is a
             CBOREncodeOptions object.</param><returns>A CBORObject object.</returns><exception cref='T:System.ArgumentNullException'>The parameter
-            <paramref name='str'/> is null.</exception><exception cref='T:PeterO.Cbor.CBORException'>The string is not in
+            <paramref name='str'/> is null.</exception><exception cref='T:CBORException'>The string is not in
             JSON format.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.BigInteger)">
+<doc name="M:CBORObject.FromObject(PeterO.BigInteger)">
 
             <summary>Generates a CBOR object from an arbitrary-precision integer.
     </summary><param name='bigintValue'>An arbitrary-precision value.
@@ -1317,7 +1317,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.FromObject(CBORObject)">
 
             <summary>Generates a CBOR object from a CBOR object.
     </summary><param name='value'>The parameter
@@ -1327,7 +1327,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.Cbor.CBORObject[])">
+<doc name="M:CBORObject.FromObject(CBORObject[])">
 
             <summary>Generates a CBOR object from an array of CBOR objects.
     </summary><param name='array'>An array of CBOR objects.
@@ -1336,7 +1336,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.ExtendedDecimal)">
+<doc name="M:CBORObject.FromObject(PeterO.ExtendedDecimal)">
 
             <summary>Generates a CBOR object from a decimal number.
     </summary><param name='otherValue'>An arbitrary-precision decimal number.
@@ -1344,7 +1344,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.ExtendedFloat)">
+<doc name="M:CBORObject.FromObject(PeterO.ExtendedFloat)">
 
             <summary>Generates a CBOR object from an arbitrary-precision binary floating-point
       number.
@@ -1353,7 +1353,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.ExtendedRational)">
+<doc name="M:CBORObject.FromObject(PeterO.ExtendedRational)">
 
             <summary>Generates a CBOR object from an arbitrary-precision binary floating-point
       number.
@@ -1362,7 +1362,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.Numbers.EDecimal)">
+<doc name="M:CBORObject.FromObject(PeterO.Numbers.EDecimal)">
 
             <summary>Generates a CBOR object from a decimal number.
     </summary><param name='otherValue'>An arbitrary-precision decimal number.
@@ -1370,7 +1370,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.Numbers.EFloat)">
+<doc name="M:CBORObject.FromObject(PeterO.Numbers.EFloat)">
 
             <summary>Generates a CBOR object from an arbitrary-precision binary floating-point
       number.
@@ -1379,7 +1379,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.Numbers.EInteger)">
+<doc name="M:CBORObject.FromObject(PeterO.Numbers.EInteger)">
 
             <summary>Generates a CBOR object from an arbitrary-precision integer.
     </summary><param name='bigintValue'>An arbitrary-precision value.
@@ -1387,7 +1387,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(PeterO.Numbers.ERational)">
+<doc name="M:CBORObject.FromObject(PeterO.Numbers.ERational)">
 
             <summary>Generates a CBOR object from a rational number.
     </summary><param name='bigValue'>A rational number.
@@ -1395,7 +1395,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Boolean)">
+<doc name="M:CBORObject.FromObject(System.Boolean)">
 
             <summary>Returns the CBOR true value or false value, depending on "value".
     </summary><param name='value'>Either True or False.
@@ -1403,7 +1403,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Byte)">
+<doc name="M:CBORObject.FromObject(System.Byte)">
 
             <summary>Generates a CBOR object from a byte (0 to 255).
     </summary><param name='value'>The parameter
@@ -1413,7 +1413,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Byte[])">
+<doc name="M:CBORObject.FromObject(System.Byte[])">
 
             <summary><para>Generates a CBOR object from a byte array. The byte
             array is copied to a new byte array. (This method can't be used to
@@ -1445,7 +1445,7 @@
             </example>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Char)">
+<doc name="M:CBORObject.FromObject(System.Char)">
 
             <summary>Generates a CBOR string object from a Unicode
             character.</summary><param name='value'>The parameter <paramref name='value'/> is a
@@ -1455,7 +1455,7 @@
             to convert them to integers instead.</remarks>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Decimal)">
+<doc name="M:CBORObject.FromObject(System.Decimal)">
 
             <summary>Converts a .NET decimal to a CBOR object.
     </summary><param name='value'>The parameter
@@ -1465,7 +1465,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Double)">
+<doc name="M:CBORObject.FromObject(System.Double)">
 
             <summary>Generates a CBOR object from a 64-bit floating-point number.
     </summary><param name='value'>The parameter
@@ -1475,7 +1475,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Int16)">
+<doc name="M:CBORObject.FromObject(System.Int16)">
 
             <summary>Generates a CBOR object from a 16-bit signed integer.
     </summary><param name='value'>The parameter
@@ -1485,7 +1485,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Int32)">
+<doc name="M:CBORObject.FromObject(System.Int32)">
 
             <summary>Generates a CBOR object from a 32-bit signed integer.
     </summary><param name='value'>The parameter
@@ -1495,7 +1495,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Int32[])">
+<doc name="M:CBORObject.FromObject(System.Int32[])">
 
             <summary>Generates a CBOR object from an array of 32-bit integers.
     </summary><param name='array'>An array of 32-bit integers.
@@ -1504,7 +1504,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Int64)">
+<doc name="M:CBORObject.FromObject(System.Int64)">
 
             <summary>Generates a CBOR object from a 64-bit signed integer.
     </summary><param name='value'>The parameter
@@ -1514,7 +1514,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Int64[])">
+<doc name="M:CBORObject.FromObject(System.Int64[])">
 
             <summary>Generates a CBOR object from an array of 64-bit integers.
     </summary><param name='array'>An array of 64-bit integers.
@@ -1523,7 +1523,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Object)">
+<doc name="M:CBORObject.FromObject(System.Object)">
 
             <summary>Generates a CBORObject from an arbitrary object. See the overload of this
       method that takes a PODOptions argument.
@@ -1535,7 +1535,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Object,PeterO.Cbor.PODOptions)">
+<doc name="M:CBORObject.FromObject(System.Object,PODOptions)">
 
             <summary><para>Generates a CBORObject from an arbitrary object, using the
              given options to control how certain objects are converted to CBOR
@@ -1581,7 +1581,7 @@
              instead.).</para>
 
 <para>If the input is a text string, a CBOR text string object will be created.  To create a CBOR byte string object from a text string, see the example given in
-<see cref='M:PeterO.Cbor.CBORObject.FromObject(System.Byte[])'/>.</para>
+<see cref='M:CBORObject.FromObject(System.Byte[])'/>.</para>
 <para>REMARK: The behavior of this method is likely to change in the next major version (4.0).  There are certain inconsistencies between the ToObject method and the FromObject method as well as between the .NET and Java versions of FromObject.  For one thing, DateTime/Date objects are converted differently between the two versions -- either as CBOR maps with their "get" properties (Java) or as tag-0 strings (.NET) -- this difference has to remain for backward compatibility with version 3.0.  For another thing, the treatment of properties/getters starting with "Is" is subtly inconsistent between the .NET and Java versions of FromObject, especially when using certain PODOptions.  A certain consistency between .NET and Java and between FromObject and ToObject are sought for version 4.0.  It is also hoped that--</para><list>
 <item>the ToObject method will support deserializing to objects consisting of fields and not getters ("getX()" methods), both in .NET and in Java, and</item>
 <item>both FromObject and ToObject will be better designed, in version 4.0, so that backward-compatible improvements are easier to make.</item></list>
@@ -1591,7 +1591,7 @@
              CBORObject.Null if the object is null.</returns><exception cref='T:System.ArgumentNullException'>The parameter <paramref name='options'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.SByte)">
+<doc name="M:CBORObject.FromObject(System.SByte)">
 
             <summary>Converts a signed 8-bit integer to a CBOR object.
     </summary><param name='value'>The parameter
@@ -1601,7 +1601,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.Single)">
+<doc name="M:CBORObject.FromObject(System.Single)">
 
             <summary>Generates a CBOR object from a 32-bit floating-point number.
     </summary><param name='value'>The parameter
@@ -1611,14 +1611,14 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.String)">
+<doc name="M:CBORObject.FromObject(System.String)">
 
             <summary>Generates a CBOR object from a text string.</summary><param name='strValue'>A string value. Can be null.</param><returns>A CBOR object representing the string, or CBORObject.Null
             if stringValue is null.</returns><exception cref='T:System.ArgumentException'>The string contains an
             unpaired surrogate code point.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.UInt16)">
+<doc name="M:CBORObject.FromObject(System.UInt16)">
 
             <summary>Converts a 16-bit unsigned integer to a CBOR object.
     </summary><param name='value'>A 16-bit unsigned integer.
@@ -1626,7 +1626,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.UInt32)">
+<doc name="M:CBORObject.FromObject(System.UInt32)">
 
             <summary>Converts a 32-bit unsigned integer to a CBOR object.
     </summary><param name='value'>A 32-bit unsigned integer.
@@ -1634,7 +1634,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject(System.UInt64)">
+<doc name="M:CBORObject.FromObject(System.UInt64)">
 
             <summary>Converts a 64-bit unsigned integer to a CBOR object.
     </summary><param name='value'>A 64-bit unsigned integer.
@@ -1642,7 +1642,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObjectAndTag(System.Object,PeterO.BigInteger)">
+<doc name="M:CBORObject.FromObjectAndTag(System.Object,PeterO.BigInteger)">
 
             <summary>Generates a CBOR object from an arbitrary object and gives
             the resulting object a tag.</summary><param name='valueOb'>An arbitrary object. If the tag number is 2
@@ -1659,7 +1659,7 @@
             <paramref name='bigintTag'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObjectAndTag(System.Object,PeterO.Numbers.EInteger)">
+<doc name="M:CBORObject.FromObjectAndTag(System.Object,PeterO.Numbers.EInteger)">
 
             <summary>Generates a CBOR object from an arbitrary object and gives
             the resulting object a tag.</summary><param name='valueOb'>An arbitrary object. If the tag number is 2
@@ -1676,7 +1676,7 @@
             <paramref name='bigintTag'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObjectAndTag(System.Object,System.Int32)">
+<doc name="M:CBORObject.FromObjectAndTag(System.Object,System.Int32)">
 
             <summary>Generates a CBOR object from an arbitrary object and gives
             the resulting object a tag.</summary><param name='valueObValue'>An arbitrary object. If the tag number
@@ -1692,7 +1692,7 @@
             <paramref name='smallTag'/> is less than 0 or <paramref name='valueObValue'/> 's type is unsupported.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObjectAndTag(System.Object,System.UInt64)">
+<doc name="M:CBORObject.FromObjectAndTag(System.Object,System.UInt64)">
 
             <summary>Generates a CBOR object from an arbitrary object and gives the resulting
       object a tag.
@@ -1710,7 +1710,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject``1(System.Collections.Generic.IEnumerable{``0})">
+<doc name="M:CBORObject.FromObject``1(System.Collections.Generic.IEnumerable{``0})">
 
             <summary>Generates a CBOR object from an enumerable set of objects.
     </summary><param name='value'>An object that implements the IEnumerable interface. In the .NET version,
@@ -1724,7 +1724,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject``1(System.Collections.Generic.IList{``0})">
+<doc name="M:CBORObject.FromObject``1(System.Collections.Generic.IList{``0})">
 
             <summary>Generates a CBOR object from a list of objects.
     </summary><param name='value'>An array of CBOR objects. Can be null.
@@ -1736,7 +1736,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromObject``2(System.Collections.Generic.IDictionary{``0,``1})">
+<doc name="M:CBORObject.FromObject``2(System.Collections.Generic.IDictionary{``0,``1})">
 
             <summary>Generates a CBOR object from a map of objects.
     </summary><param name='dic'>A map of CBOR objects.
@@ -1751,7 +1751,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.FromSimpleValue(System.Int32)">
+<doc name="M:CBORObject.FromSimpleValue(System.Int32)">
 
             <summary>Creates a CBOR object from a simple value
             number.</summary><param name='simpleValue'>The parameter <paramref name='simpleValue'/> is a 32-bit signed integer.</param><returns>A CBORObject object.</returns><exception cref='T:System.ArgumentException'>The parameter
@@ -1759,14 +1759,14 @@
             from 24 through 31.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.GetAllTags">
+<doc name="M:CBORObject.GetAllTags">
 
             <summary>Gets a list of all tags, from outermost to innermost.
     </summary><returns>An array of tags, or the empty string if this object is untagged.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.GetByteString">
+<doc name="M:CBORObject.GetByteString">
 
             <summary>Gets the byte array used in this object, if this object is
             a byte string, without copying the data to a new one. This method's
@@ -1775,7 +1775,7 @@
             not a byte string.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.GetHashCode">
+<doc name="M:CBORObject.GetHashCode">
 
             <summary>Calculates the hash code of this object. No application or process IDs
       are used in the hash code calculation.
@@ -1783,14 +1783,14 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.GetTags">
+<doc name="M:CBORObject.GetTags">
 
             <summary>Gets a list of all tags, from outermost to innermost.
     </summary><returns>An array of tags, or the empty string if this object is untagged.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.HasTag(PeterO.BigInteger)">
+<doc name="M:CBORObject.HasTag(PeterO.BigInteger)">
 
             <summary>Returns whether this object has a tag of the given
             number.</summary><param name='bigTagValue'>The tag value to search for.</param><returns><c>true</c> if this object has a tag of the given number; otherwise, <c>false</c>.</returns><exception cref='T:System.ArgumentNullException'>BigTagValue is
@@ -1798,7 +1798,7 @@
             than 0.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.HasTag(PeterO.Numbers.EInteger)">
+<doc name="M:CBORObject.HasTag(PeterO.Numbers.EInteger)">
 
             <summary>Returns whether this object has a tag of the given
             number.</summary><param name='bigTagValue'>The tag value to search for.</param><returns><c>true</c> if this object has a tag of the given number; otherwise, <c>false</c>.</returns><exception cref='T:System.ArgumentNullException'>BigTagValue is
@@ -1806,7 +1806,7 @@
             than 0.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.HasTag(System.Int32)">
+<doc name="M:CBORObject.HasTag(System.Int32)">
 
             <summary>Returns whether this object has a tag of the given
             number.</summary><param name='tagValue'>The tag value to search for.</param><returns><c>true</c> if this object has a tag of the given number; otherwise, <c>false</c>.</returns><exception cref='T:System.ArgumentException'>TagValue is less than
@@ -1814,7 +1814,7 @@
             "obj" is null.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.InnermostTag">
+<doc name="P:CBORObject.InnermostTag">
 
             <summary>Gets the last defined tag for this CBOR data item, or -1 if the item is
       untagged.
@@ -1823,7 +1823,7 @@
     </value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Insert(System.Int32,System.Object)">
+<doc name="M:CBORObject.Insert(System.Int32,System.Object)">
 
             <summary>Inserts an object at the specified position in this CBOR
             array.</summary><param name='index'>Zero-based index to insert at.</param><param name='valueOb'>An object representing the value, which will
@@ -1833,7 +1833,7 @@
             <paramref name='valueOb'/> has an unsupported type; or <paramref name='index'/> is not a valid index into this array.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsFalse">
+<doc name="P:CBORObject.IsFalse">
 
             <summary>Gets a value indicating whether this value is a CBOR false value.
     </summary><value><c>true</c>
@@ -1843,14 +1843,14 @@
     </value>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsFinite">
+<doc name="P:CBORObject.IsFinite">
 
             <summary>Gets a value indicating whether this CBOR object
              represents a finite number.</summary><value><c>true</c> If this CBOR object represents a finite number;
              otherwise, . <c>false</c>.</value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.IsInfinity">
+<doc name="M:CBORObject.IsInfinity">
 
             <summary>Gets a value indicating whether this CBOR object represents infinity.
     </summary><returns><c>true</c>
@@ -1859,7 +1859,7 @@
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsIntegral">
+<doc name="P:CBORObject.IsIntegral">
 
             <summary>Gets a value indicating whether this object represents an
              integral number, that is, a number without a fractional part.
@@ -1868,7 +1868,7 @@
              <c>false</c>.</value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.IsNaN">
+<doc name="M:CBORObject.IsNaN">
 
             <summary>Gets a value indicating whether this CBOR object represents a
       not-a-number value (as opposed to whether this object's type is not a
@@ -1880,7 +1880,7 @@
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsNegative">
+<doc name="P:CBORObject.IsNegative">
 
             <summary>Gets a value indicating whether this object is a negative number.
     </summary><value><c>true</c>
@@ -1890,7 +1890,7 @@
     </value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.IsNegativeInfinity">
+<doc name="M:CBORObject.IsNegativeInfinity">
 
             <summary>Gets a value indicating whether this CBOR object represents negative
       infinity.
@@ -1900,14 +1900,14 @@
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsNull">
+<doc name="P:CBORObject.IsNull">
 
             <summary>Gets a value indicating whether this value is a CBOR null
              value.</summary><value><c>true</c> If this value is a CBOR null value; otherwise, .
              <c>false</c>.</value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.IsPositiveInfinity">
+<doc name="M:CBORObject.IsPositiveInfinity">
 
             <summary>Gets a value indicating whether this CBOR object represents positive
       infinity.
@@ -1917,28 +1917,28 @@
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsTagged">
+<doc name="P:CBORObject.IsTagged">
 
             <summary>Gets a value indicating whether this data item has at
              least one tag.</summary><value><c>true</c> If this data item has at least one tag;
              otherwise, . <c>false</c>.</value>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsTrue">
+<doc name="P:CBORObject.IsTrue">
 
             <summary>Gets a value indicating whether this value is a CBOR true
              value.</summary><value><c>true</c> If this value is a CBOR true value; otherwise, .
              <c>false</c>.</value>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsUndefined">
+<doc name="P:CBORObject.IsUndefined">
 
             <summary>Gets a value indicating whether this value is a CBOR
              undefined value.</summary><value><c>true</c> If this value is a CBOR undefined value;
              otherwise, . <c>false</c>.</value>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.IsZero">
+<doc name="P:CBORObject.IsZero">
 <summary>Gets a value indicating whether this object's value equals 0.
     </summary>
     <value><c>true</c>
@@ -1947,7 +1947,7 @@
        .
     </value>
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Item(PeterO.Cbor.CBORObject)">
+<doc name="P:CBORObject.Item(CBORObject)">
 
             <summary>Gets the value of a CBOR object in this map, using a CBOR
             object as the key.</summary><param name='key'>The parameter <paramref name='key'/> is a CBOR
@@ -1957,7 +1957,7 @@
             not a map.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Item(System.Int32)">
+<doc name="P:CBORObject.Item(System.Int32)">
 
             <summary>Gets the value of a CBOR object by integer index in this
             array.</summary><param name='index'>Zero-based index of the element.</param><returns>A CBORObject object.</returns><exception cref='T:System.InvalidOperationException'>This object is
@@ -1965,7 +1965,7 @@
             "value" is null (as opposed to CBORObject.Null).</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Item(System.String)">
+<doc name="P:CBORObject.Item(System.String)">
 
             <summary>Gets the value of a CBOR object in this map, using a
             string as the key.</summary><param name='key'>A key that points to the desired value.</param><returns>A CBORObject object.</returns><exception cref='T:System.ArgumentNullException'>The key is
@@ -1973,14 +1973,14 @@
             not a map.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Keys">
+<doc name="P:CBORObject.Keys">
 
             <summary>Gets a collection of the keys of this CBOR object in an
             undefined order.</summary><value>A collection of the keys of this CBOR object.</value><exception cref='T:System.InvalidOperationException'>This object is
             not a map.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.MostInnerTag">
+<doc name="P:CBORObject.MostInnerTag">
 
             <summary>Gets the last defined tag for this CBOR data item, or -1 if the item is
       untagged.
@@ -1989,7 +1989,7 @@
     </value>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.MostOuterTag">
+<doc name="P:CBORObject.MostOuterTag">
 
             <summary>Gets the outermost tag for this CBOR data item, or -1 if the item is
       untagged.
@@ -1998,7 +1998,7 @@
     </value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Multiply(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Multiply(CBORObject,CBORObject)">
 
             <summary>Multiplies two CBOR numbers.</summary><param name='first'>The parameter <paramref name='first'/> is a
             CBOR object.</param><param name='second'>The parameter <paramref name='second'/> is a
@@ -2007,45 +2007,45 @@
             NaN).</exception>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.NaN">
+<doc name="F:CBORObject.NaN">
 
             <summary>A not-a-number value.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Negate">
+<doc name="M:CBORObject.Negate">
 
             <summary>Gets this object's value with the sign reversed.</summary><returns>The reversed-sign form of this number.</returns><exception cref='T:System.InvalidOperationException'>This object's
             type is not a number type.</exception>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.NegativeInfinity">
+<doc name="F:CBORObject.NegativeInfinity">
 
             <summary>The value negative infinity.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.NewArray">
+<doc name="M:CBORObject.NewArray">
 
             <summary>Creates a new empty CBOR array.
     </summary><returns>A new CBOR array.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.NewMap">
+<doc name="M:CBORObject.NewMap">
 
             <summary>Creates a new empty CBOR map.
     </summary><returns>A new CBOR map.
     </returns>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.Null">
+<doc name="F:CBORObject.Null">
 
             <summary>Represents the value null.
     </summary>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.OutermostTag">
+<doc name="P:CBORObject.OutermostTag">
 
             <summary>Gets the outermost tag for this CBOR data item, or -1 if the item is
       untagged.
@@ -2054,17 +2054,17 @@
     </value>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.PositiveInfinity">
+<doc name="F:CBORObject.PositiveInfinity">
 
             <summary>The value positive infinity.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Read(System.IO.Stream)">
+<doc name="M:CBORObject.Read(System.IO.Stream)">
 
             <summary><para><b>At the moment, use the overload of this method that takes
             a
-            <see cref='T:PeterO.Cbor.CBOREncodeOptions'/> object. The object
+            <see cref='T:CBOREncodeOptions'/> object. The object
             <c>CBOREncodeOptions.Default</c> contains recommended settings for
             CBOREncodeOptions, and those settings may be adopted by this
             overload (without a CBOREncodeOptions argument) in the next major
@@ -2073,22 +2073,22 @@
             method will read from the stream until the end of the CBOR object
             is reached or an error occurs, whichever happens
             first.</para></summary><param name='stream'>A readable data stream.</param><returns>A CBOR object that was read.</returns><exception cref='T:System.ArgumentNullException'>The parameter
-            <paramref name='stream'/> is null.</exception><exception cref='T:PeterO.Cbor.CBORException'>There was an error in
+            <paramref name='stream'/> is null.</exception><exception cref='T:CBORException'>There was an error in
             reading or parsing the data.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Read(System.IO.Stream,PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.Read(System.IO.Stream,CBOREncodeOptions)">
 
             <summary>Reads an object in CBOR format from a data stream, using
             the specified options to control the decoding process. This method
             will read from the stream until the end of the CBOR object is
             reached or an error occurs, whichever happens first.</summary><param name='stream'>A readable data stream.</param><param name='options'>The parameter <paramref name='options'/> is a
             CBOREncodeOptions object.</param><returns>A CBOR object that was read.</returns><exception cref='T:System.ArgumentNullException'>The parameter
-            <paramref name='stream'/> is null.</exception><exception cref='T:PeterO.Cbor.CBORException'>There was an error in
+            <paramref name='stream'/> is null.</exception><exception cref='T:CBORException'>There was an error in
             reading or parsing the data.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ReadJSON(System.IO.Stream)">
+<doc name="M:CBORObject.ReadJSON(System.IO.Stream)">
 
             <summary>Generates a CBOR object from a data stream in JavaScript
             Object Notation (JSON) format. The JSON stream may begin with a
@@ -2102,11 +2102,11 @@
             read from the data stream must contain a single JSON object and not
             multiple objects.</param><returns>A CBORObject object.</returns><exception cref='T:System.ArgumentNullException'>The parameter
             <paramref name='stream'/> is null.</exception><exception cref='T:System.IO.IOException'>An I/O error
-            occurred.</exception><exception cref='T:PeterO.Cbor.CBORException'>The data stream
+            occurred.</exception><exception cref='T:CBORException'>The data stream
             contains invalid encoding or is not in JSON format.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ReadJSON(System.IO.Stream,PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.ReadJSON(System.IO.Stream,CBOREncodeOptions)">
 
             <summary>Generates a CBOR object from a data stream in JavaScript
             Object Notation (JSON) format, using the specified options to
@@ -2122,11 +2122,11 @@
             multiple objects.</param><param name='options'>The parameter <paramref name='options'/> is a
             CBOREncodeOptions object.</param><returns>A CBORObject object.</returns><exception cref='T:System.ArgumentNullException'>The parameter
             <paramref name='stream'/> is null.</exception><exception cref='T:System.IO.IOException'>An I/O error
-            occurred.</exception><exception cref='T:PeterO.Cbor.CBORException'>The data stream
+            occurred.</exception><exception cref='T:CBORException'>The data stream
             contains invalid encoding or is not in JSON format.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Remainder(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Remainder(CBORObject,CBORObject)">
 
             <summary>Finds the remainder that results when a CBORObject object is divided by
       the value of a CBORObject object.
@@ -2140,7 +2140,7 @@
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Remove(PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Remove(CBORObject)">
 
             <summary>If this object is an array, removes the first instance of
             the specified item from the array. If this object is a map, removes
@@ -2150,7 +2150,7 @@
             not an array or map.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Remove(System.Object)">
+<doc name="M:CBORObject.Remove(System.Object)">
 
             <summary>If this object is an array, removes the first instance of
             the specified item (once converted to a CBOR object) from the array. If this object is a map, removes
@@ -2160,7 +2160,7 @@
             not an array or map.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.RemoveAt(System.Int32)">
+<doc name="M:CBORObject.RemoveAt(System.Int32)">
 <summary>Removes the item at the given index of this CBOR array.
     </summary>
     <param name='index'>The index, starting at 0, of the item to remove.
@@ -2172,7 +2172,7 @@
     <exception cref='InvalidOperationException'>This object is not a CBOR array.
     </exception>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Set(System.Object,System.Object)">
+<doc name="M:CBORObject.Set(System.Object,System.Object)">
 
             <summary>Maps an object to a key in this CBOR map, or adds the
             value if the key doesn't exist.</summary><param name='key'>An object representing the key, which will be
@@ -2185,7 +2185,7 @@
             unsupported type.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Sign">
+<doc name="P:CBORObject.Sign">
 <summary>Gets this value's sign: -1 if negative; 1 if positive; 0 if zero.
     </summary>
     <value>This value&#x27;s sign: -1 if negative; 1 if positive; 0 if zero.
@@ -2194,7 +2194,7 @@
       not-a-number value (NaN).
     </exception>
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.SimpleValue">
+<doc name="P:CBORObject.SimpleValue">
 
             <summary>Gets the simple value ID of this object, or -1 if this object is not a
       simple value (including if the value is a floating-point number).
@@ -2203,7 +2203,7 @@
     </value>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Subtract(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.Subtract(CBORObject,CBORObject)">
 
             <summary>Finds the difference between two CBOR number
             objects.</summary><param name='first'>The parameter <paramref name='first'/> is a
@@ -2213,7 +2213,7 @@
             NaN).</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToJSONString">
+<doc name="M:CBORObject.ToJSONString">
 
             <summary>Converts this object to a string in JavaScript Object
              Notation (JSON) format, using the specified options to control the
@@ -2222,12 +2222,12 @@
              <para>If the CBOR object contains CBOR maps, or is a CBOR map
              itself, the keys to the map are written out to the JSON string in
              an undefined order. The example code given in
-             <see cref='M:PeterO.Cbor.CBORObject.ToJSONString(PeterO.Cbor.JSONOptions)'/>
+             <see cref='M:CBORObject.ToJSONString(JSONOptions)'/>
              can be used to write out certain keys of a CBOR map in a given
              order to a JSON string.</para></summary><returns>A text string.</returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToJSONString(PeterO.Cbor.JSONOptions)">
+<doc name="M:CBORObject.ToJSONString(JSONOptions)">
 <summary>Converts this object to a string in JavaScript Object Notation (JSON)
       format, using the specified options to control the encoding process. This
       function works not only with arrays and maps, but also integers, strings,
@@ -2304,7 +2304,7 @@
        is null.
     </exception>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject(System.Type)">
+<doc name="M:CBORObject.ToObject(System.Type)">
 <summary>Converts this CBOR object to an object of an arbitrary type. See the
       documentation for the overload of this method taking a CBORTypeMapper
       parameter for more information. This method (without a CBORTypeMapper
@@ -2358,7 +2358,7 @@
       </code>
     </example>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject(System.Type,PeterO.Cbor.CBORTypeMapper)">
+<doc name="M:CBORObject.ToObject(System.Type,CBORTypeMapper)">
 
             <summary>Converts this CBOR object to an object of an arbitrary
             type. See the documentation for the overload of this method taking
@@ -2384,7 +2384,7 @@
             object.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject(System.Type,PeterO.Cbor.CBORTypeMapper,PeterO.Cbor.PODOptions)">
+<doc name="M:CBORObject.ToObject(System.Type,CBORTypeMapper,PODOptions)">
 <summary><para>Converts this CBOR object to an object of an arbitrary type. The
         following cases are checked in the logical order given (rather than the
         strict order in which they are implemented by this library):
@@ -2581,7 +2581,7 @@
           eligible setter with the corresponding value in the CBOR map, if any.
           Key names in the map are matched to eligible setters according to the
           rules described in the
-          <see cref='T:PeterO.Cbor.PODOptions'/>
+          <see cref='T:PODOptions'/>
            documentation. Note that for security reasons, certain types are not
           supported even if they contain eligible setters.
         </item>
@@ -2653,7 +2653,7 @@
       </code>
     </example>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject(System.Type,PeterO.Cbor.PODOptions)">
+<doc name="M:CBORObject.ToObject(System.Type,PODOptions)">
 
             <summary>Converts this CBOR object to an object of an arbitrary
             type. See the documentation for the overload of this method taking
@@ -2681,9 +2681,9 @@
             object.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject``1">
+<doc name="M:CBORObject.ToObject``1">
 
-            <summary><para>Converts this CBOR object to an object of an arbitrary type.  See <see cref='M:PeterO.Cbor.CBORObject.ToObject(System.Type)'/> for further information.</para>
+            <summary><para>Converts this CBOR object to an object of an arbitrary type.  See <see cref='M:CBORObject.ToObject(System.Type)'/> for further information.</para>
 </summary><typeparam name='T'>The type, class, or interface that this method's return value will belong
       to. <b>Note:</b> For security reasons,
       an application should not base this parameter on user input or other externally supplied
@@ -2694,11 +2694,11 @@
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject``1(PeterO.Cbor.CBORTypeMapper)">
+<doc name="M:CBORObject.ToObject``1(CBORTypeMapper)">
 
             <summary><para>Converts this CBOR object to an object of an arbitrary type.
             See
-            <see cref='M:PeterO.Cbor.CBORObject.ToObject(System.Type)'/> for
+            <see cref='M:CBORObject.ToObject(System.Type)'/> for
             further information.</para></summary><param name='mapper'>This parameter controls which data types are eligible for Plain-Old-Data
       deserialization and includes custom converters from CBOR objects to
       certain data types.
@@ -2714,11 +2714,11 @@
             "T", or this object's CBOR type, is not supported.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject``1(PeterO.Cbor.CBORTypeMapper,PeterO.Cbor.PODOptions)">
+<doc name="M:CBORObject.ToObject``1(CBORTypeMapper,PODOptions)">
 
             <summary><para>Converts this CBOR object to an object of an arbitrary type.
             See
-            <see cref='M:PeterO.Cbor.CBORObject.ToObject(System.Type)'/> for
+            <see cref='M:CBORObject.ToObject(System.Type)'/> for
             further information.</para></summary><param name='mapper'>This parameter controls which data types are eligible for Plain-Old-Data
       deserialization and includes custom converters from CBOR objects to
       certain data types.
@@ -2735,11 +2735,11 @@
             "T", or this object's CBOR type, is not supported.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToObject``1(PeterO.Cbor.PODOptions)">
+<doc name="M:CBORObject.ToObject``1(PODOptions)">
 
             <summary><para>Converts this CBOR object to an object of an arbitrary type.
             See
-            <see cref='M:PeterO.Cbor.CBORObject.ToObject(System.Type)'/> for
+            <see cref='M:CBORObject.ToObject(System.Type)'/> for
             further information.</para></summary><param name='options'>Specifies options for controlling deserialization of CBOR objects.
     </param><typeparam name='T'>The type, class, or interface that this
             method's return value will belong to. <b>Note:</b> For security
@@ -2753,37 +2753,37 @@
             "T", or this object's CBOR type, is not supported.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.ToString">
+<doc name="M:CBORObject.ToString">
 
             <summary>Returns this CBOR object in string form. The format is intended to be
       human-readable, not machine-readable, the format is not intended to be
       parsed, and the format may change at any time.  The returned string
 is not necessarily in JavaScript Object Notation (JSON); to convert
-CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSONString(PeterO.Cbor.JSONOptions)'/> method instead.
+CBOR objects to JSON strings, use the <see cref='M:CBORObject.ToJSONString(JSONOptions)'/> method instead.
     </summary><returns>A text representation of this object.
     </returns>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.True">
+<doc name="F:CBORObject.True">
 
             <summary>Represents the value true.
     </summary>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Type">
+<doc name="P:CBORObject.Type">
 
             <summary>Gets the general data type of this CBOR object.
     </summary><value>The general data type of this CBOR object.
     </value>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.Undefined">
+<doc name="F:CBORObject.Undefined">
 
             <summary>Represents the value undefined.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Untag">
+<doc name="M:CBORObject.Untag">
 
             <summary>Gets an object with the same value as this one but without the tags it
       has, if any. If this object is an array, map, or byte string, the data
@@ -2793,7 +2793,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.UntagOne">
+<doc name="M:CBORObject.UntagOne">
 
             <summary>Gets an object with the same value as this one but without this object's
       outermost tag, if any. If this object is an array, map, or byte string,
@@ -2803,7 +2803,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORObject.Values">
+<doc name="P:CBORObject.Values">
 
             <summary>Gets a collection of the values of this CBOR object, if
             it's a map or an array. If this object is a map, returns one value
@@ -2815,7 +2815,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             not a map or an array.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.BigInteger,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.BigInteger,System.IO.Stream)">
 
             <summary>Writes a big integer in CBOR format to a data
             stream.</summary><param name='bigint'>Big integer to write. Can be null.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2823,13 +2823,13 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.Cbor.CBORObject,System.IO.Stream)">
+<doc name="M:CBORObject.Write(CBORObject,System.IO.Stream)">
 
             <summary>Writes a CBOR object to a CBOR data stream.</summary><param name='value'>The value to write. Can be null.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
             <paramref name='stream'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.ExtendedDecimal,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.ExtendedDecimal,System.IO.Stream)">
 
             <summary>Writes a decimal floating-point number in CBOR format to a
             data stream, as follows:
@@ -2849,7 +2849,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.ExtendedFloat,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.ExtendedFloat,System.IO.Stream)">
 
             <summary>Writes a binary floating-point number in CBOR format to a
             data stream as follows:
@@ -2868,7 +2868,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.ExtendedRational,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.ExtendedRational,System.IO.Stream)">
 
             <summary>Writes a rational number in CBOR format to a data
             stream.</summary><param name='rational'>An arbitrary-precision rational
@@ -2877,7 +2877,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.Numbers.EDecimal,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.Numbers.EDecimal,System.IO.Stream)">
 
             <summary>Writes a decimal floating-point number in CBOR format to a
             data stream, as follows:
@@ -2897,7 +2897,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.Numbers.EFloat,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.Numbers.EFloat,System.IO.Stream)">
 
             <summary>Writes a binary floating-point number in CBOR format to a
             data stream as follows:
@@ -2916,7 +2916,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.Numbers.EInteger,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.Numbers.EInteger,System.IO.Stream)">
 
             <summary>Writes a big integer in CBOR format to a data
             stream.</summary><param name='bigint'>Big integer to write. Can be null.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2924,7 +2924,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(PeterO.Numbers.ERational,System.IO.Stream)">
+<doc name="M:CBORObject.Write(PeterO.Numbers.ERational,System.IO.Stream)">
 
             <summary>Writes a rational number in CBOR format to a data
             stream.</summary><param name='rational'>An arbitrary-precision rational
@@ -2933,7 +2933,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Boolean,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Boolean,System.IO.Stream)">
 
             <summary>Writes a Boolean value in CBOR format to a data
             stream.</summary><param name='value'>The value to write.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2941,7 +2941,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Byte,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Byte,System.IO.Stream)">
 
             <summary>Writes a byte (0 to 255) in CBOR format to a data stream.
             If the value is less than 24, writes that byte. If the value is 25
@@ -2950,7 +2950,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Char,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Char,System.IO.Stream)">
 
             <summary>Writes a Unicode character as a string in CBOR format to a
             data stream.</summary><param name='value'>The value to write.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2961,7 +2961,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             to convert them to integers instead.</remarks>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Double,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Double,System.IO.Stream)">
 
             <summary>Writes a 64-bit floating-point number in CBOR format to a
             data stream.</summary><param name='value'>The value to write.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2969,7 +2969,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Int16,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Int16,System.IO.Stream)">
 
             <summary>Writes a 16-bit signed integer in CBOR format to a data
             stream.</summary><param name='value'>The value to write.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2977,7 +2977,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Int32,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Int32,System.IO.Stream)">
 
             <summary>Writes a 32-bit signed integer in CBOR format to a data
             stream.</summary><param name='value'>The value to write.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2985,7 +2985,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Int64,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Int64,System.IO.Stream)">
 
             <summary>Writes a 64-bit signed integer in CBOR format to a data
             stream.</summary><param name='value'>The value to write.</param><param name='stream'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -2993,10 +2993,10 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Object,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Object,System.IO.Stream)">
 
             <summary><para><b>At the moment, use the overload of this method that takes a
-          <see cref='T:PeterO.Cbor.CBOREncodeOptions'/>
+          <see cref='T:CBOREncodeOptions'/>
            object. The object
           <c>CBOREncodeOptions.Default</c>
            contains recommended settings for CBOREncodeOptions, and those
@@ -3013,7 +3013,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Object,System.IO.Stream,PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.Write(System.Object,System.IO.Stream,CBOREncodeOptions)">
 
             <summary>Writes an arbitrary object to a CBOR data stream, using
             the specified options for controlling how the object is encoded to
@@ -3021,7 +3021,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             CBOR object that contains CBOR maps, the keys to those maps are
             written out to the data stream in an undefined order. The example
             code given in
-            <see cref='M:PeterO.Cbor.CBORObject.WriteTo(System.IO.Stream)'/>
+            <see cref='M:CBORObject.WriteTo(System.IO.Stream)'/>
             can be used to write out certain keys of a CBOR map in a given
             order. Currently, the following objects are supported:
             <list type=''>
@@ -3043,7 +3043,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.SByte,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.SByte,System.IO.Stream)">
 
             <summary>Writes an 8-bit signed integer in CBOR format to a data stream.
     </summary><param name='value'>The parameter
@@ -3053,7 +3053,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.Single,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.Single,System.IO.Stream)">
 
             <summary>Writes a 32-bit floating-point number in CBOR format to a
             data stream.</summary><param name='value'>The value to write.</param><param name='s'>A writable data stream.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -3061,11 +3061,11 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.String,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.String,System.IO.Stream)">
 
             <summary><para><b>At the moment, use the overload of this method that takes
             a
-            <see cref='T:PeterO.Cbor.CBOREncodeOptions'/> object. The object
+            <see cref='T:CBOREncodeOptions'/> object. The object
             <c>CBOREncodeOptions.Default</c> contains recommended settings for
             CBOREncodeOptions, and those settings may be adopted by this
             overload (without a CBOREncodeOptions argument) in the next major
@@ -3078,7 +3078,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.String,System.IO.Stream,PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.Write(System.String,System.IO.Stream,CBOREncodeOptions)">
 
             <summary>Writes a string in CBOR format to a data stream, using the
             given options to control the encoding process.</summary><param name='str'>The string to write. Can be null.</param><param name='stream'>A writable data stream.</param><param name='options'>Options for encoding the data to
@@ -3087,7 +3087,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             occurred.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.UInt16,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.UInt16,System.IO.Stream)">
 
             <summary>Writes a 16-bit unsigned integer in CBOR format to a data stream.
     </summary><param name='value'>A 16-bit unsigned integer.
@@ -3095,7 +3095,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.UInt32,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.UInt32,System.IO.Stream)">
 
             <summary>Writes a 32-bit unsigned integer in CBOR format to a data stream.
     </summary><param name='value'>A 32-bit unsigned integer.
@@ -3103,7 +3103,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.Write(System.UInt64,System.IO.Stream)">
+<doc name="M:CBORObject.Write(System.UInt64,System.IO.Stream)">
 
             <summary>Writes a 64-bit unsigned integer in CBOR format to a data stream.
     </summary><param name='value'>A 64-bit unsigned integer.
@@ -3114,14 +3114,14 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteJSON(System.Object,System.IO.Stream)">
+<doc name="M:CBORObject.WriteJSON(System.Object,System.IO.Stream)">
 
             <summary>Converts an arbitrary object to a string in JavaScript Object Notation
       (JSON) format, as in the ToJSONString method, and writes that string to a
       data stream in UTF-8. If the object is convertible to a CBOR map, or to a
       CBOR object that contains CBOR maps, the keys to those maps are written
       out to the JSON string in an undefined order. The example code given in
-      <see cref='M:PeterO.Cbor.CBORObject.ToJSONString(PeterO.Cbor.JSONOptions)'/>
+      <see cref='M:CBORObject.ToJSONString(JSONOptions)'/>
        can be used to write out certain keys of a CBOR map in a given order to a
       JSON string.
     </summary><param name='obj'>The parameter
@@ -3131,21 +3131,21 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
     </param>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteJSONTo(System.IO.Stream)">
+<doc name="M:CBORObject.WriteJSONTo(System.IO.Stream)">
 
             <summary>Converts this object to a string in JavaScript Object
             Notation (JSON) format, as in the ToJSONString method, and writes
             that string to a data stream in UTF-8. If the CBOR object contains
             CBOR maps, or is a CBOR map, the keys to the map are written out to
             the JSON string in an undefined order. The example code given in
-            <see cref='M:PeterO.Cbor.CBORObject.ToJSONString(PeterO.Cbor.JSONOptions)'/>
+            <see cref='M:CBORObject.ToJSONString(JSONOptions)'/>
             can be used to write out certain keys of a CBOR map in a given
             order to a JSON string.</summary><param name='outputStream'>A writable data stream.</param><exception cref='T:System.IO.IOException'>An I/O error
             occurred.</exception><exception cref='T:System.ArgumentNullException'>The parameter
             <paramref name='outputStream'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteJSONTo(System.IO.Stream,PeterO.Cbor.JSONOptions)">
+<doc name="M:CBORObject.WriteJSONTo(System.IO.Stream,JSONOptions)">
 
             <summary>Converts this object to a string in JavaScript Object
             Notation (JSON) format, as in the ToJSONString method, and writes
@@ -3153,7 +3153,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             to control the encoding process. If the CBOR object contains CBOR
             maps, or is a CBOR map, the keys to the map are written out to the
             JSON string in an undefined order. The example code given in
-            <see cref='M:PeterO.Cbor.CBORObject.ToJSONString(PeterO.Cbor.JSONOptions)'/>
+            <see cref='M:CBORObject.ToJSONString(JSONOptions)'/>
             can be used to write out certain keys of a CBOR map in a given
             order to a JSON string.</summary><param name='outputStream'>A writable data stream.</param><param name='options'>An object containing the options to control
             writing the CBOR object to JSON.</param><exception cref='T:System.IO.IOException'>An I/O error
@@ -3161,9 +3161,9 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             <paramref name='outputStream'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteTo(System.IO.Stream)">
+<doc name="M:CBORObject.WriteTo(System.IO.Stream)">
 <summary><para><b>At the moment, use the overload of this method that takes a
-          <see cref='T:PeterO.Cbor.CBOREncodeOptions'/>
+          <see cref='T:CBOREncodeOptions'/>
            object. The object
           <c>CBOREncodeOptions.Default</c>
            contains recommended settings for CBOREncodeOptions, and those
@@ -3241,14 +3241,14 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
       </code>
     </example>
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteTo(System.IO.Stream,PeterO.Cbor.CBOREncodeOptions)">
+<doc name="M:CBORObject.WriteTo(System.IO.Stream,CBOREncodeOptions)">
 
             <summary>Writes this CBOR object to a data stream, using the
              specified options for encoding the data to CBOR format. If the CBOR
              object contains CBOR maps, or is a CBOR map, the keys to the map
              are written out to the data stream in an undefined order. The
              example code given in
-             <see cref='M:PeterO.Cbor.CBORObject.WriteTo(System.IO.Stream)'/>
+             <see cref='M:CBORObject.WriteTo(System.IO.Stream)'/>
              can be used to write out certain keys of a CBOR map in a given
              order.</summary><param name='stream'>A writable data stream.</param><param name='options'>Options for encoding the data to
              CBOR.</param><exception cref='T:System.ArgumentNullException'>The parameter
@@ -3257,7 +3257,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
              type".</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteValue(System.IO.Stream,System.Int32,PeterO.Numbers.EInteger)">
+<doc name="M:CBORObject.WriteValue(System.IO.Stream,System.Int32,PeterO.Numbers.EInteger)">
 
             <summary>Writes a CBOR major type number and an integer 0 or
             greater associated with it to a data stream, where that integer is
@@ -3283,7 +3283,7 @@ CBOR objects to JSON strings, use the <see cref='M:PeterO.Cbor.CBORObject.ToJSON
             null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteValue(System.IO.Stream,System.Int32,System.Int32)">
+<doc name="M:CBORObject.WriteValue(System.IO.Stream,System.Int32,System.Int32)">
 
             <summary>Writes a CBOR major type number and an integer 0 or
             greater associated with it to a data stream, where that integer is
@@ -3327,7 +3327,7 @@ stream.Write(bytes, 0, bytes.Length);
             </example>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteValue(System.IO.Stream,System.Int32,System.Int64)">
+<doc name="M:CBORObject.WriteValue(System.IO.Stream,System.Int32,System.Int64)">
 
             <summary>Writes a CBOR major type number and an integer 0 or
             greater associated with it to a data stream, where that integer is
@@ -3350,7 +3350,7 @@ stream.Write(bytes, 0, bytes.Length);
             and major type is 7.</exception><exception cref='T:System.ArgumentNullException'>The parameter <paramref name='outputStream'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt32)">
+<doc name="M:CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt32)">
 
             <summary>Writes a CBOR major type number and an integer 0 or
             greater associated with it to a data stream, where that integer is
@@ -3372,7 +3372,7 @@ stream.Write(bytes, 0, bytes.Length);
             stream.</returns><exception cref='T:System.ArgumentNullException'>The parameter <paramref name='outputStream'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt64)">
+<doc name="M:CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt64)">
 
             <summary>Writes a CBOR major type number and an integer 0 or
             greater associated with it to a data stream, where that integer is
@@ -3396,13 +3396,13 @@ stream.Write(bytes, 0, bytes.Length);
             255.</exception><exception cref='T:System.ArgumentNullException'>The parameter <paramref name='outputStream'/> is null.</exception>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORObject.Zero">
+<doc name="F:CBORObject.Zero">
 
             <summary>Gets a CBOR object for the number zero.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.op_Addition(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.op_Addition(CBORObject,CBORObject)">
 
             <summary>Adds two CBOR objects and returns their result.
     </summary><param name='a'>The parameter
@@ -3415,7 +3415,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.op_Division(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.op_Division(CBORObject,CBORObject)">
 
             <summary>Divides a CBORObject object by the value of a CBORObject object.
     </summary><param name='a'>The parameter
@@ -3428,7 +3428,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.op_Modulus(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.op_Modulus(CBORObject,CBORObject)">
 
             <summary>Finds the remainder that results when a CBORObject object is divided by
       the value of a CBORObject object.
@@ -3442,7 +3442,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.op_Multiply(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.op_Multiply(CBORObject,CBORObject)">
 
             <summary>Multiplies a CBORObject object by the value of a CBORObject object.
     </summary><param name='a'>The parameter
@@ -3455,7 +3455,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORObject.op_Subtraction(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)">
+<doc name="M:CBORObject.op_Subtraction(CBORObject,CBORObject)">
 
             <summary>Subtracts a CBORObject object from a CBORObject object.
     </summary><param name='a'>The parameter
@@ -3468,19 +3468,19 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORObjectMath">
+<doc name="T:CBORObjectMath">
 
             <summary>Implements arithmetic operations with CBOR objects.
     </summary>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORTag3">
+<doc name="T:CBORTag3">
 
             <summary>Implements CBOR tag 3.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTag37.ToCBORObject(System.Guid)">
+<doc name="M:CBORTag37.ToCBORObject(System.Guid)">
 
             <summary>Converts a UUID to a CBOR object.
     </summary><param name='obj'>A UUID.
@@ -3488,43 +3488,43 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORTagGenericString">
+<doc name="T:CBORTagGenericString">
 
             <summary>A generic CBOR tag class for strings.
     </summary>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORType">
+<doc name="T:CBORType">
 
             <summary>Represents a type that a CBOR object can have.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORType.Array">
+<doc name="F:CBORType.Array">
 
             <summary>An array of CBOR objects.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORType.Boolean">
+<doc name="F:CBORType.Boolean">
 
             <summary>The simple values true and false.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORType.ByteString">
+<doc name="F:CBORType.ByteString">
 
             <summary>An array of bytes.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORType.Map">
+<doc name="F:CBORType.Map">
 
             <summary>A map of CBOR objects.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORType.Number">
+<doc name="F:CBORType.Number">
 
             <summary>A number of any kind, including integers, big integers, floating point
       numbers, and decimal numbers. The floating-point value Not-a-Number is
@@ -3532,19 +3532,19 @@ stream.Write(bytes, 0, bytes.Length);
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORType.SimpleValue">
+<doc name="F:CBORType.SimpleValue">
 
             <summary>A "simple value" other than floating point values, true, and false.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORType.TextString">
+<doc name="F:CBORType.TextString">
 
             <summary>A text string.
     </summary>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORTypeFilter">
+<doc name="T:CBORTypeFilter">
 
             <summary>Specifies what kinds of CBOR objects a tag can be. This class is used
       when a CBOR object is being read from a data stream. This class can't be
@@ -3553,13 +3553,13 @@ stream.Write(bytes, 0, bytes.Length);
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORTypeFilter.Any">
+<doc name="F:CBORTypeFilter.Any">
 
             <summary>A filter that allows any CBOR object.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.ArrayIndexAllowed(System.Int32)">
+<doc name="M:CBORTypeFilter.ArrayIndexAllowed(System.Int32)">
 
             <summary>Determines whether this type filter allows CBOR arrays and the given
       array index is allowed under this type filter.
@@ -3571,7 +3571,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.ArrayLengthMatches(PeterO.Numbers.EInteger)">
+<doc name="M:CBORTypeFilter.ArrayLengthMatches(PeterO.Numbers.EInteger)">
 
             <summary>Returns whether an array's length is allowed under a filter.
     </summary><param name='bigLength'>An arbitrary-precision integer.
@@ -3585,7 +3585,7 @@ stream.Write(bytes, 0, bytes.Length);
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.ArrayLengthMatches(System.Int32)">
+<doc name="M:CBORTypeFilter.ArrayLengthMatches(System.Int32)">
 
             <summary>Returns whether an array's length is allowed under this filter.
     </summary><param name='length'>The length of a CBOR array.
@@ -3596,7 +3596,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.ArrayLengthMatches(System.Int64)">
+<doc name="M:CBORTypeFilter.ArrayLengthMatches(System.Int64)">
 
             <summary>Returns whether an array's length is allowed under a filter.
     </summary><param name='length'>The length of a CBOR array.
@@ -3607,13 +3607,13 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORTypeFilter.ByteString">
+<doc name="F:CBORTypeFilter.ByteString">
 
             <summary>A filter that allows byte strings.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.GetSubFilter(System.Int32)">
+<doc name="M:CBORTypeFilter.GetSubFilter(System.Int32)">
 
             <summary>Gets the type filter for this array filter by its index.
     </summary><param name='index'>A zero-based index of the filter to retrieve.
@@ -3623,7 +3623,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.GetSubFilter(System.Int64)">
+<doc name="M:CBORTypeFilter.GetSubFilter(System.Int64)">
 
             <summary>Gets the type filter for this array filter by its index.
     </summary><param name='index'>A zero-based index of the filter to retrieve.
@@ -3633,7 +3633,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.MajorTypeMatches(System.Int32)">
+<doc name="M:CBORTypeFilter.MajorTypeMatches(System.Int32)">
 
             <summary>Returns whether the given CBOR major type matches a major type allowed by
       this filter.
@@ -3644,13 +3644,13 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORTypeFilter.NegativeInteger">
+<doc name="F:CBORTypeFilter.NegativeInteger">
 
             <summary>A filter that allows negative integers.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.NonFPSimpleValueAllowed">
+<doc name="M:CBORTypeFilter.NonFPSimpleValueAllowed">
 
             <summary>Returns whether this filter allows simple values that are not
       floating-point numbers.
@@ -3660,13 +3660,13 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORTypeFilter.None">
+<doc name="F:CBORTypeFilter.None">
 
             <summary>A filter that allows no CBOR types.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.TagAllowed(PeterO.Numbers.EInteger)">
+<doc name="M:CBORTypeFilter.TagAllowed(PeterO.Numbers.EInteger)">
 
             <summary>Gets a value indicating whether CBOR objects can have the given tag
       number.
@@ -3680,7 +3680,7 @@ stream.Write(bytes, 0, bytes.Length);
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.TagAllowed(System.Int32)">
+<doc name="M:CBORTypeFilter.TagAllowed(System.Int32)">
 
             <summary>Gets a value indicating whether CBOR objects can have the given tag
       number.
@@ -3691,7 +3691,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.TagAllowed(System.Int64)">
+<doc name="M:CBORTypeFilter.TagAllowed(System.Int64)">
 
             <summary>Gets a value indicating whether CBOR objects can have the given tag
       number.
@@ -3702,26 +3702,26 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORTypeFilter.TextString">
+<doc name="F:CBORTypeFilter.TextString">
 
             <summary>A filter that allows text strings.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.CBORTypeFilter.UnsignedInteger">
+<doc name="F:CBORTypeFilter.UnsignedInteger">
 
             <summary>A filter that allows unsigned integers.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithArrayAnyLength">
+<doc name="M:CBORTypeFilter.WithArrayAnyLength">
 
             <summary>Copies this filter and includes arrays of any length in the new filter.
     </summary><returns>A CBORTypeFilter object.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithArrayExactLength(System.Int32,PeterO.Cbor.CBORTypeFilter[])">
+<doc name="M:CBORTypeFilter.WithArrayExactLength(System.Int32,CBORTypeFilter[])">
 
             <summary>Copies this filter and includes CBOR arrays with an exact length to the
       new filter.
@@ -3736,7 +3736,7 @@ stream.Write(bytes, 0, bytes.Length);
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithArrayMinLength(System.Int32,PeterO.Cbor.CBORTypeFilter[])">
+<doc name="M:CBORTypeFilter.WithArrayMinLength(System.Int32,CBORTypeFilter[])">
 
             <summary>Copies this filter and includes CBOR arrays with at least a given length
       to the new filter.
@@ -3751,14 +3751,14 @@ stream.Write(bytes, 0, bytes.Length);
     </exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithByteString">
+<doc name="M:CBORTypeFilter.WithByteString">
 
             <summary>Copies this filter and includes byte strings in the new filter.
     </summary><returns>A CBORTypeFilter object.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithFloatingPoint">
+<doc name="M:CBORTypeFilter.WithFloatingPoint">
 
             <summary>Copies this filter and includes floating-point numbers in the new filter.
 
@@ -3766,21 +3766,21 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithMap">
+<doc name="M:CBORTypeFilter.WithMap">
 
             <summary>Copies this filter and includes maps in the new filter.
     </summary><returns>A CBORTypeFilter object.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithNegativeInteger">
+<doc name="M:CBORTypeFilter.WithNegativeInteger">
 
             <summary>Copies this filter and includes negative integers in the new filter.
     </summary><returns>A CBORTypeFilter object.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithTags(System.Int32[])">
+<doc name="M:CBORTypeFilter.WithTags(System.Int32[])">
 
             <summary>Copies this filter and includes a set of valid CBOR tags in the new
       filter.
@@ -3789,21 +3789,21 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithTextString">
+<doc name="M:CBORTypeFilter.WithTextString">
 
             <summary>Copies this filter and includes text strings in the new filter.
     </summary><returns>A CBORTypeFilter object.
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeFilter.WithUnsignedInteger">
+<doc name="M:CBORTypeFilter.WithUnsignedInteger">
 
             <summary>Copies this filter and includes unsigned integers in the new filter.
     </summary><returns>A CBORTypeFilter object.
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORTypeMapper">
+<doc name="T:CBORTypeMapper">
 
             <summary>Holds converters to customize the serialization and
             deserialization behavior of <c>CBORObject.FromObject</c> and
@@ -3811,7 +3811,7 @@ stream.Write(bytes, 0, bytes.Length);
             <c>ToObject</c></summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeMapper.AddConverter``1(System.Type,PeterO.Cbor.ICBORConverter{``0})">
+<doc name="M:CBORTypeMapper.AddConverter``1(System.Type,ICBORConverter{``0})">
 
             <summary>Registers an object that converts objects of a given type
              to CBOR objects (called a CBOR converter).</summary><param name='type'>A Type object specifying the type that the
@@ -3825,33 +3825,33 @@ stream.Write(bytes, 0, bytes.Length);
              null.</exception><exception cref='T:System.ArgumentException'>"Converter doesn't contain a
              proper ToCBORObject method".</exception>
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeMapper.AddTypeName(System.String)">
+<doc name="M:CBORTypeMapper.AddTypeName(System.String)">
 
             <summary>Adds the fully qualified name of a Java or .NET type for use in type matching.</summary><param name='name'>The fully qualified name of a Java or .NET class (e.g., <c>java.math.BigInteger</c> or <c>System.Globalization.CultureInfo</c>).</param><returns>This object.</returns><exception cref='T:System.ArgumentNullException'>The parameter <paramref name='name'/> is null.</exception><exception cref='T:System.ArgumentException'>The parameter <paramref name='name'/> is empty.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeMapper.AddTypePrefix(System.String)">
+<doc name="M:CBORTypeMapper.AddTypePrefix(System.String)">
 
             <summary>Adds a prefix of a Java or .NET type for use in type matching.  A type matches a prefix if its fully qualified name is or begins with that prefix, using codepoint-by-codepoint (case-sensitive) matching.</summary><param name='prefix'>The prefix of a Java or .NET type (e.g., `java.math.` or `System.Globalization`).</param><returns>This object.</returns><exception cref='T:System.ArgumentNullException'>The parameter <paramref name='prefix'/> is null.</exception><exception cref='T:System.ArgumentException'>The parameter <paramref name='prefix'/> is empty.</exception>
 
 </doc>
-<doc name="P:PeterO.Cbor.CBORTypeMapper.ConverterInfo.Converter">
+<doc name="P:CBORTypeMapper.ConverterInfo.Converter">
 <summary>Gets an internal API value.</summary>
             <value>An internal API value.</value>
 </doc>
-<doc name="M:PeterO.Cbor.CBORTypeMapper.FilterTypeName(System.String)">
+<doc name="M:CBORTypeMapper.FilterTypeName(System.String)">
 
             <summary>Returns whether the given Java or .NET type name fits the filters given in this mapper.</summary><param name='typeName'>The fully qualified name of a Java or .NET class (e.g., <c>java.math.BigInteger</c> or <c>System.Globalization.CultureInfo</c>).</param><returns>Either <c>true</c> if the given Java or .NET type name fits the filters given in this mapper, or <c>false</c> otherwise.</returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.CBORUtilities">
+<doc name="T:CBORUtilities">
 
             <summary>Contains utility methods that may have use outside of the CBORObject
       class.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.FastInteger2.Multiply(System.Int32)">
+<doc name="M:FastInteger2.Multiply(System.Int32)">
 
             <summary>Sets this object's value to the current value times another integer.
     </summary><param name='val'>The integer to multiply by.
@@ -3859,14 +3859,14 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="P:PeterO.Cbor.FastInteger2.Sign">
+<doc name="P:FastInteger2.Sign">
 
             <summary>Gets the sign of this object's value.
     </summary><value>1 if positive, -1 if negative, 0 if zero.
     </value>
 
 </doc>
-<doc name="M:PeterO.Cbor.FastInteger2.Subtract(PeterO.Cbor.FastInteger2)">
+<doc name="M:FastInteger2.Subtract(FastInteger2)">
 
             <summary>Sets this object's value to the current value minus the given FastInteger
       value.
@@ -3875,7 +3875,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.FastInteger2.SubtractInt(System.Int32)">
+<doc name="M:FastInteger2.SubtractInt(System.Int32)">
 
             <summary>Sets this object's value to the current value minus the given integer.
     </summary><param name='val'>The subtrahend.
@@ -3883,7 +3883,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.ICBORConverter`1">
+<doc name="T:ICBORConverter`1">
 
             <summary>Interface implemented by classes that convert objects of arbitrary types
       to CBOR objects.
@@ -3892,7 +3892,7 @@ stream.Write(bytes, 0, bytes.Length);
     </typeparam>
 
 </doc>
-<doc name="M:PeterO.Cbor.ICBORConverter`1.ToCBORObject(`0)">
+<doc name="M:ICBORConverter`1.ToCBORObject(`0)">
 
             <summary>Converts an object to a CBOR object.
     </summary><param name='obj'>An object to convert to a CBOR object.
@@ -3900,7 +3900,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.ICBORObjectConverter`1">
+<doc name="T:ICBORObjectConverter`1">
 <summary>Interface implemented by classes that convert objects of arbitrary types
       to and from CBOR objects.
     </summary>
@@ -3909,7 +3909,7 @@ stream.Write(bytes, 0, bytes.Length);
       from CBOR objects.
     </typeparam>
 </doc>
-<doc name="M:PeterO.Cbor.ICBORObjectConverter`1.FromCBORObject(PeterO.Cbor.CBORObject)">
+<doc name="M:ICBORObjectConverter`1.FromCBORObject(CBORObject)">
 <summary>Converts a CBOR object to an object of a type supported by the
       implementing class.
     </summary>
@@ -3917,18 +3917,18 @@ stream.Write(bytes, 0, bytes.Length);
     </param>
     <returns>The converted object.
     </returns>
-    <exception cref='T:PeterO.Cbor.CBORException'>An error occurred in the conversion; for example, the conversion doesn't
+    <exception cref='T:CBORException'>An error occurred in the conversion; for example, the conversion doesn't
       support the given CBOR object.
     </exception>
 </doc>
-<doc name="T:PeterO.Cbor.ICBORTag">
+<doc name="T:ICBORTag">
 
             <summary>Implemented by classes that validate CBOR objects belonging to a specific
       tag.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.ICBORTag.GetTypeFilter">
+<doc name="M:ICBORTag.GetTypeFilter">
 
             <summary>Gets a type filter specifying what kinds of CBOR objects are supported by
       this tag.
@@ -3936,7 +3936,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.ICBORTag.ValidateObject(PeterO.Cbor.CBORObject)">
+<doc name="M:ICBORTag.ValidateObject(CBORObject)">
 
             <summary>Generates a CBOR object based on the data of another object. If the data
       is not valid, should throw a CBORException.
@@ -3946,13 +3946,13 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.ICharacterInput">
+<doc name="T:ICharacterInput">
 
             <summary>An interface for reading Unicode characters from a data source.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.ICharacterInput.Read(System.Int32[],System.Int32,System.Int32)">
+<doc name="M:ICharacterInput.Read(System.Int32[],System.Int32,System.Int32)">
 
             <summary>Reads a sequence of Unicode code points from a data source.
     </summary><param name='chars'>Output buffer.
@@ -3963,7 +3963,7 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.ICharacterInput.ReadChar">
+<doc name="M:ICharacterInput.ReadChar">
 
             <summary>Reads a Unicode character from a data source.
     </summary><returns>Either a Unicode code point (from 0-0xd7ff or from 0xe000 to 0x10ffff),
@@ -3971,52 +3971,52 @@ stream.Write(bytes, 0, bytes.Length);
     </returns>
 
 </doc>
-<doc name="T:PeterO.Cbor.JSONOptions">
+<doc name="T:JSONOptions">
 
-            <seealso cref='M:PeterO.Cbor.CBORObject.ToJSONString'/><summary>Includes options to control how CBOR objects are converted
+            <seealso cref='M:CBORObject.ToJSONString'/><summary>Includes options to control how CBOR objects are converted
              to JSON.</summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.JSONOptions.#ctor">
+<doc name="M:JSONOptions.#ctor">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.JSONOptions'/> class with default options.
+            <summary>Initializes a new instance of the <see cref='T:JSONOptions'/> class with default options.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.JSONOptions.#ctor(System.Boolean)">
+<doc name="M:JSONOptions.#ctor(System.Boolean)">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.JSONOptions'/> class with the given values for the options.
+            <summary>Initializes a new instance of the <see cref='T:JSONOptions'/> class with the given values for the options.
     </summary><param name='base64Padding'>Whether padding is included when writing data in base64url or traditional
       base64 format to JSON.
     </param>
 
 </doc>
-<doc name="P:PeterO.Cbor.JSONOptions.Base64Padding">
+<doc name="P:JSONOptions.Base64Padding">
 
             <summary>Gets a value indicating whether padding is written out when writing base64url or traditional base64 to JSON.</summary><value>The default is false, no padding.</value><remarks>The padding character is '='.</remarks>
 
 </doc>
-<doc name="F:PeterO.Cbor.JSONOptions.Default">
+<doc name="F:JSONOptions.Default">
 
             <summary>The default options for converting CBOR objects to JSON.
     </summary>
 
 </doc>
-<doc name="T:PeterO.Cbor.PODOptions">
+<doc name="T:PODOptions">
 
             <summary>Options for converting "plain old data" objects to CBOR objects.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.PODOptions.#ctor">
+<doc name="M:PODOptions.#ctor">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.PODOptions'/> class.
+            <summary>Initializes a new instance of the <see cref='T:PODOptions'/> class.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.PODOptions.#ctor(System.Boolean,System.Boolean)">
+<doc name="M:PODOptions.#ctor(System.Boolean,System.Boolean)">
 
-            <summary>Initializes a new instance of the <see cref='T:PeterO.Cbor.PODOptions'/> class.
+            <summary>Initializes a new instance of the <see cref='T:PODOptions'/> class.
     </summary><param name='removeIsPrefix'>If set to
       <c>true</c>
        remove is prefix. NOTE: May be ignored in future versions of this library.
@@ -4026,34 +4026,34 @@ stream.Write(bytes, 0, bytes.Length);
     </param>
 
 </doc>
-<doc name="F:PeterO.Cbor.PODOptions.Default">
+<doc name="F:PODOptions.Default">
 
             <summary>The default settings for "plain old data" options.
     </summary>
 
 </doc>
-<doc name="P:PeterO.Cbor.PODOptions.RemoveIsPrefix">
+<doc name="P:PODOptions.RemoveIsPrefix">
 
             <summary>Gets a value indicating whether the "Is" prefix in
             property names is removed before they are used as keys.</summary><value><c>true</c> If the prefix is removed; otherwise, .
             <c>false</c>.</value>
 
 </doc>
-<doc name="P:PeterO.Cbor.PODOptions.UseCamelCase">
+<doc name="P:PODOptions.UseCamelCase">
 
             <summary>Gets a value indicating whether property names are
             converted to camel case before they are used as keys.</summary><value><c>true</c> If the names are converted to camel case;
             otherwise, . <c>false</c>.</value>
 
 </doc>
-<doc name="T:PeterO.Cbor.StringRefs">
+<doc name="T:StringRefs">
 
             <summary>Implements CBOR string references, described at
       <c>http://cbor.schmorp.de/stringref</c>
     </summary>
 
 </doc>
-<doc name="T:PeterO.Cbor.URIUtility">
+<doc name="T:URIUtility">
 
             <summary>Contains utility methods for processing Uniform Resource Identifiers
       (URIs) and Internationalized Resource Identifiers (IRIs) under RFC3986 and
@@ -4081,7 +4081,7 @@ vnd.shootproof+json</item>
      </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.EncodeStringForURI(System.String)">
+<doc name="M:URIUtility.EncodeStringForURI(System.String)">
 <summary>Encodes characters other than "unreserved" characters for URIs.
     </summary>
     <param name='s'>A string to encode.
@@ -4093,14 +4093,14 @@ vnd.shootproof+json</item>
        is null.
     </exception>
 </doc>
-<doc name="T:PeterO.Cbor.URIUtility.ParseMode">
+<doc name="T:URIUtility.ParseMode">
 
             <summary>Specifies whether certain characters are allowed when parsing IRIs and
       URIs.
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.URIUtility.ParseMode.IRILenient">
+<doc name="F:URIUtility.ParseMode.IRILenient">
 
             <summary>The rules only check for the appropriate delimiters when splitting the
       path, without checking if all the characters in each component are valid.
@@ -4109,7 +4109,7 @@ vnd.shootproof+json</item>
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.URIUtility.ParseMode.IRIStrict">
+<doc name="F:URIUtility.ParseMode.IRIStrict">
 
             <summary>The rules follow the syntax for parsing IRIs. In particular, many code
       points outside the Basic Latin range (U+0000 to U+007F) are allowed.
@@ -4117,7 +4117,7 @@ vnd.shootproof+json</item>
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.URIUtility.ParseMode.IRISurrogateLenient">
+<doc name="F:URIUtility.ParseMode.IRISurrogateLenient">
 
             <summary>The rules only check for the appropriate delimiters when splitting the
       path, without checking if all the characters in each component are valid.
@@ -4127,7 +4127,7 @@ vnd.shootproof+json</item>
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.URIUtility.ParseMode.URILenient">
+<doc name="F:URIUtility.ParseMode.URILenient">
 
             <summary>The rules only check for the appropriate delimiters when splitting the
       path, without checking if all the characters in each component are valid.
@@ -4136,14 +4136,14 @@ vnd.shootproof+json</item>
     </summary>
 
 </doc>
-<doc name="F:PeterO.Cbor.URIUtility.ParseMode.URIStrict">
+<doc name="F:URIUtility.ParseMode.URIStrict">
 
             <summary>The rules follow the syntax for parsing IRIs, except that code points
       outside the Basic Latin range (U+0000 to U+007F) are not allowed.
     </summary>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.PercentDecode(System.String)">
+<doc name="M:URIUtility.PercentDecode(System.String)">
 <summary>Decodes percent-encoding (of the form "%XX" where X is a hexadecimal
       digit) in the given string. Successive percent-encoded bytes are assumed
       to form characters in UTF-8.
@@ -4153,7 +4153,7 @@ vnd.shootproof+json</item>
     <returns>The string in which percent-encoding was decoded.
     </returns>
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.PercentDecode(System.String,System.Int32,System.Int32)">
+<doc name="M:URIUtility.PercentDecode(System.String,System.Int32,System.Int32)">
 <summary>Decodes percent-encoding (of the form "%XX" where X is a hexadecimal
       digit) in the given portion of a string. Successive percent-encoded bytes
       are assumed to form characters in UTF-8.
@@ -4174,7 +4174,7 @@ vnd.shootproof+json</item>
        is ull.
     </returns>
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.escapeURI(System.String,System.Int32)">
+<doc name="M:URIUtility.escapeURI(System.String,System.Int32)">
 
             <summary>Escapes characters that can't appear in URIs or IRIs. The function is
       idempotent; that is, calling the function again on the result with the
@@ -4187,7 +4187,7 @@ vnd.shootproof+json</item>
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.hasScheme(System.String)">
+<doc name="M:URIUtility.hasScheme(System.String)">
 
             <summary>Determines whether the string is a valid IRI with a scheme component.
       This can be used to check for relative IRI references.
@@ -4205,7 +4205,7 @@ vnd.shootproof+json</item>
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.hasSchemeForURI(System.String)">
+<doc name="M:URIUtility.hasSchemeForURI(System.String)">
 
             <summary>Determines whether the string is a valid URI with a scheme component.
       This can be used to check for relative URI references. The following cases
@@ -4222,7 +4222,7 @@ vnd.shootproof+json</item>
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.isValidCurieReference(System.String,System.Int32,System.Int32)">
+<doc name="M:URIUtility.isValidCurieReference(System.String,System.Int32,System.Int32)">
 
             <summary>Determines whether the substring is a valid CURIE
              reference under RDFA 1.1. (The CURIE reference is the part after
@@ -4235,7 +4235,7 @@ vnd.shootproof+json</item>
              <paramref name='length'/>.</exception><exception cref='T:System.ArgumentNullException'>The parameter <paramref name='s'/> is null.</exception>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.relativeResolve(System.String,System.String)">
+<doc name="M:URIUtility.relativeResolve(System.String,System.String)">
 
             <summary>Resolves a URI or IRI relative to another URI or IRI.
     </summary><param name='refValue'>A string representing a URI or IRI reference. Example:
@@ -4254,7 +4254,7 @@ vnd.shootproof+json</item>
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.relativeResolve(System.String,System.String,PeterO.Cbor.URIUtility.ParseMode)">
+<doc name="M:URIUtility.relativeResolve(System.String,System.String,URIUtility.ParseMode)">
 
             <summary>Resolves a URI or IRI relative to another URI or IRI.
     </summary><param name='refValue'>A string representing a URI or IRI reference. Example:
@@ -4273,7 +4273,7 @@ vnd.shootproof+json</item>
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.splitIRI(System.String)">
+<doc name="M:URIUtility.splitIRI(System.String)">
 
             <summary>Parses an Internationalized Resource Identifier (IRI) reference under
       RFC3987. If the IRI reference is syntactically valid, splits the string
@@ -4291,7 +4291,7 @@ vnd.shootproof+json</item>
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.splitIRI(System.String,PeterO.Cbor.URIUtility.ParseMode)">
+<doc name="M:URIUtility.splitIRI(System.String,URIUtility.ParseMode)">
 
             <summary>Parses an Internationalized Resource Identifier (IRI) reference under
       RFC3987. If the IRI is syntactically valid, splits the string into its
@@ -4312,7 +4312,7 @@ vnd.shootproof+json</item>
     </returns>
 
 </doc>
-<doc name="M:PeterO.Cbor.URIUtility.splitIRI(System.String,System.Int32,System.Int32,PeterO.Cbor.URIUtility.ParseMode)">
+<doc name="M:URIUtility.splitIRI(System.String,System.Int32,System.Int32,URIUtility.ParseMode)">
 
             <summary>Parses a substring that represents an Internationalized
             Resource Identifier (IRI) under RFC3987. If the IRI is

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PeterO.Cbor {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="T:PeterO.Cbor.CBORTypeMapper"]/*'/>
+    /// path='docs/doc[@name="T:CBORTypeMapper"]/*'/>
   public sealed class CBORTypeMapper {
     private readonly IList<string> typePrefixes;
     private readonly IList<string> typeNames;
@@ -98,7 +98,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORTypeMapper.FilterTypeName(System.String)"]/*'/>
+    /// path='docs/doc[@name="M:CBORTypeMapper.FilterTypeName(System.String)"]/*'/>
     public bool FilterTypeName(string typeName) {
       if (String.IsNullOrEmpty(typeName)) {
         return false;
@@ -118,7 +118,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORTypeMapper.AddTypePrefix(System.String)"]/*'/>
+    /// path='docs/doc[@name="M:CBORTypeMapper.AddTypePrefix(System.String)"]/*'/>
     public CBORTypeMapper AddTypePrefix(string prefix) {
       if (prefix == null) {
         throw new ArgumentNullException(nameof(prefix));
@@ -131,7 +131,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORTypeMapper.AddTypeName(System.String)"]/*'/>
+    /// path='docs/doc[@name="M:CBORTypeMapper.AddTypeName(System.String)"]/*'/>
     public CBORTypeMapper AddTypeName(string name) {
       if (name == null) {
         throw new ArgumentNullException(nameof(name));
@@ -145,7 +145,7 @@ namespace PeterO.Cbor {
 
     internal sealed class ConverterInfo {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="P:PeterO.Cbor.CBORObject.ConverterInfo.ToObject"]/*'/>
+    /// path='docs/doc[@name="P:CBORObject.ConverterInfo.ToObject"]/*'/>
       public object ToObject { get; set; }
 
       public object FromObject { get; set; }

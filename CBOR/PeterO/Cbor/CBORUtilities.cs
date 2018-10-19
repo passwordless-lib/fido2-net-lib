@@ -12,7 +12,7 @@ using PeterO.Numbers;
 
 namespace PeterO.Cbor {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="T:PeterO.Cbor.CBORUtilities"]/*'/>
+    /// path='docs/doc[@name="T:CBORUtilities"]/*'/>
   internal static class CBORUtilities {
     private const string HexAlphabet = "0123456789ABCDEF";
 

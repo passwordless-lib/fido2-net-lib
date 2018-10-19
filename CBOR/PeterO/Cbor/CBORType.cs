@@ -9,34 +9,34 @@ using System;
 
 namespace PeterO.Cbor {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="T:PeterO.Cbor.CBORType"]/*'/>
+    /// path='docs/doc[@name="T:CBORType"]/*'/>
   public enum CBORType {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="F:PeterO.Cbor.CBORType.Number"]/*'/>
+    /// path='docs/doc[@name="F:CBORType.Number"]/*'/>
     Number,
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="F:PeterO.Cbor.CBORType.Boolean"]/*'/>
+    /// path='docs/doc[@name="F:CBORType.Boolean"]/*'/>
     Boolean,
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="F:PeterO.Cbor.CBORType.SimpleValue"]/*'/>
+    /// path='docs/doc[@name="F:CBORType.SimpleValue"]/*'/>
     SimpleValue,
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="F:PeterO.Cbor.CBORType.ByteString"]/*'/>
+    /// path='docs/doc[@name="F:CBORType.ByteString"]/*'/>
     ByteString,
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="F:PeterO.Cbor.CBORType.TextString"]/*'/>
+    /// path='docs/doc[@name="F:CBORType.TextString"]/*'/>
     TextString,
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="F:PeterO.Cbor.CBORType.Array"]/*'/>
+    /// path='docs/doc[@name="F:CBORType.Array"]/*'/>
     Array,
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="F:PeterO.Cbor.CBORType.Map"]/*'/>
+    /// path='docs/doc[@name="F:CBORType.Map"]/*'/>
     Map
   }
 }

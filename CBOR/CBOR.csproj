@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.0</TargetFramework>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Version>3.4.0-beta1</Version>
     <Owners>Peter Occil</Owners>
     <Description>A C# implementation of Concise Binary Object Representation (CBOR), a general-purpose binary data format defined in RFC 7049.</Description>
@@ -32,7 +32,7 @@ Version 3.4.0-alpha1:
 
 </PackageReleaseNotes>
     <PackageTags>cbor data serialization binary json</PackageTags>
-    <SignAssembly>True</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>PeterO.snk</AssemblyOriginatorKeyFile>
     <Title>CBOR (Concise Binary Object Representation)</Title>
     <PackOnBuild>true</PackOnBuild>

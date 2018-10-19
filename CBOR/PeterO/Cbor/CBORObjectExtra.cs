@@ -15,7 +15,7 @@ namespace PeterO.Cbor {
   // are specific to the .NET framework.
   public sealed partial class CBORObject {
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.AsUInt16"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.AsUInt16"]/*'/>
     [CLSCompliant(false)]
     public ushort AsUInt16() {
       int v = this.AsInt32();
@@ -26,7 +26,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.AsUInt32"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.AsUInt32"]/*'/>
     [CLSCompliant(false)]
     public uint AsUInt32() {
       ulong v = this.AsUInt64();
@@ -37,7 +37,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.AsSByte"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.AsSByte"]/*'/>
     [CLSCompliant(false)]
     public sbyte AsSByte() {
       int v = this.AsInt32();
@@ -48,7 +48,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt32)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt32)"]/*'/>
     [CLSCompliant(false)]
   public static int WriteValue(
   Stream outputStream,
@@ -61,7 +61,7 @@ namespace PeterO.Cbor {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt64)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.WriteValue(System.IO.Stream,System.Int32,System.UInt64)"]/*'/>
     [CLSCompliant(false)]
  public static int WriteValue(
   Stream outputStream,
@@ -110,7 +110,7 @@ if (majorType > 7) {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.AsDecimal"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.AsDecimal"]/*'/>
     [CLSCompliant(false)]
     public decimal AsDecimal() {
       return (this.ItemType == CBORObjectTypeInteger) ?
@@ -121,7 +121,7 @@ if (majorType > 7) {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.AsUInt64"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.AsUInt64"]/*'/>
     [CLSCompliant(false)]
     public ulong AsUInt64() {
       ICBORNumber cn = NumberInterfaces[this.ItemType];
@@ -136,14 +136,14 @@ if (majorType > 7) {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.Write(System.SByte,System.IO.Stream)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.Write(System.SByte,System.IO.Stream)"]/*'/>
     [CLSCompliant(false)]
     public static void Write(sbyte value, Stream stream) {
       Write((long)value, stream);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.Write(System.UInt64,System.IO.Stream)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.Write(System.UInt64,System.IO.Stream)"]/*'/>
     [CLSCompliant(false)]
     public static void Write(ulong value, Stream stream) {
       if (stream == null) {
@@ -165,27 +165,27 @@ if (majorType > 7) {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.FromObject(System.Decimal)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.FromObject(System.Decimal)"]/*'/>
     public static CBORObject FromObject(decimal value) {
       return FromObject((EDecimal)value);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.Write(System.UInt32,System.IO.Stream)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.Write(System.UInt32,System.IO.Stream)"]/*'/>
     [CLSCompliant(false)]
     public static void Write(uint value, Stream stream) {
       Write((ulong)value, stream);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.Write(System.UInt16,System.IO.Stream)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.Write(System.UInt16,System.IO.Stream)"]/*'/>
     [CLSCompliant(false)]
     public static void Write(ushort value, Stream stream) {
       Write((ulong)value, stream);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.FromObject(System.SByte)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.FromObject(System.SByte)"]/*'/>
     [CLSCompliant(false)]
     public static CBORObject FromObject(sbyte value) {
       return FromObject((long)value);
@@ -207,83 +207,83 @@ if (majorType > 7) {
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.FromObject(System.UInt64)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.FromObject(System.UInt64)"]/*'/>
     [CLSCompliant(false)]
     public static CBORObject FromObject(ulong value) {
       return CBORObject.FromObject(UInt64ToEInteger(value));
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.FromObject(System.UInt32)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.FromObject(System.UInt32)"]/*'/>
     [CLSCompliant(false)]
     public static CBORObject FromObject(uint value) {
       return FromObject((long)(Int64)value);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.FromObject(System.UInt16)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.FromObject(System.UInt16)"]/*'/>
     [CLSCompliant(false)]
     public static CBORObject FromObject(ushort value) {
       return FromObject((long)(Int64)value);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.FromObjectAndTag(System.Object,System.UInt64)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.FromObjectAndTag(System.Object,System.UInt64)"]/*'/>
     [CLSCompliant(false)]
     public static CBORObject FromObjectAndTag(Object o, ulong tag) {
       return FromObjectAndTag(o, UInt64ToEInteger(tag));
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.ToObject``1"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.ToObject``1"]/*'/>
     public T ToObject<T>() {
       return (T)this.ToObject(typeof(T));
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.ToObject``1(PeterO.Cbor.CBORTypeMapper)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.ToObject``1(CBORTypeMapper)"]/*'/>
     public T ToObject<T>(CBORTypeMapper mapper) {
       return (T)this.ToObject(typeof(T), mapper);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.ToObject``1(PeterO.Cbor.PODOptions)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.ToObject``1(PODOptions)"]/*'/>
     public T ToObject<T>(PODOptions options) {
       return (T)this.ToObject(typeof(T), options);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.ToObject``1(PeterO.Cbor.CBORTypeMapper,PeterO.Cbor.PODOptions)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.ToObject``1(CBORTypeMapper,PODOptions)"]/*'/>
     public T ToObject<T>(CBORTypeMapper mapper, PODOptions options) {
       return (T)this.ToObject(typeof(T), mapper, options);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.op_Addition(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.op_Addition(CBORObject,CBORObject)"]/*'/>
     public static CBORObject operator +(CBORObject a, CBORObject b) {
       return Addition(a, b);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.op_Subtraction(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.op_Subtraction(CBORObject,CBORObject)"]/*'/>
     public static CBORObject operator -(CBORObject a, CBORObject b) {
       return Subtract(a, b);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.op_Multiply(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.op_Multiply(CBORObject,CBORObject)"]/*'/>
     public static CBORObject operator *(CBORObject a, CBORObject b) {
       return Multiply(a, b);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.op_Division(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.op_Division(CBORObject,CBORObject)"]/*'/>
     public static CBORObject operator /(CBORObject a, CBORObject b) {
       return Divide(a, b);
     }
 
     /// <include file='../../docs.xml'
-    /// path='docs/doc[@name="M:PeterO.Cbor.CBORObject.op_Modulus(PeterO.Cbor.CBORObject,PeterO.Cbor.CBORObject)"]/*'/>
+    /// path='docs/doc[@name="M:CBORObject.op_Modulus(CBORObject,CBORObject)"]/*'/>
     public static CBORObject operator %(CBORObject a, CBORObject b) {
       return Remainder(a, b);
     }
