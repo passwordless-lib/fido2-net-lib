@@ -545,35 +545,36 @@ namespace Fido2NetLib
             {
                 MetadataTOCPayloadEntry entry = metadataService.GetEntry(authData.AttData.GuidAaguid);
                 
-                if (null != entry)
+                if (null != entry && null != entry.MetadataStatement)
                 {
                     if (entry.Hash != entry.MetadataStatement.Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
-                    if (null != entry.MetadataStatement)
+                    
+                    var hasBasicFull = entry.MetadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
+                    if (false == hasBasicFull &&
+                        null != trustPath && 
+                        trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
+                    if (true == hasBasicFull && null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
                     {
-                        var hasBasicFull = entry.MetadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
-                        if (false == hasBasicFull &&
-                            null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
-                        if (true == hasBasicFull && null != trustPath && trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
+                        var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
+                        var chain = new X509Chain();
+                        chain.ChainPolicy.ExtraStore.Add(root);
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                        if (trustPath.Length > 1)
                         {
-                            var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
-                            var chain = new X509Chain();
-                            chain.ChainPolicy.ExtraStore.Add(root);
-                            if (trustPath.Length > 1)
+                            foreach (var cert in trustPath.Skip(1).Reverse())
                             {
-                                foreach (X509Certificate2 cert in trustPath.Skip(1).Reverse())
-                                {
-                                    chain.ChainPolicy.ExtraStore.Add(cert);
-                                }
+                                chain.ChainPolicy.ExtraStore.Add(cert);
                             }
-                            var valid = chain.Build(trustPath[0]);
-                            if (false == valid)
-                            {
+                        }
+                        var valid = chain.Build(trustPath[0]);
+                        if (false == valid)
+                        {
                                 
-                            }
                         }
                     }
 
-                    foreach (StatusReport report in entry.StatusReports)
+                    foreach (var report in entry.StatusReports)
                     {
                         if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), (UndesiredAuthenticatorStatus) report.Status)) throw new Fido2VerificationException("Authenticator found with undesirable status");
                     }
