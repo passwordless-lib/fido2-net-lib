@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Version>3.4.0-beta1</Version>
+    <Owners>Peter Occil</Owners>
+    <Description>A C# implementation of Concise Binary Object Representation (CBOR), a general-purpose binary data format defined in RFC 7049.</Description>
+    <Summary>A C# implementation of Concise Binary Object Representation (CBOR), a general-purpose binary data format defined in RFC 7049. </Summary>
+    <Copyright>Written by Peter O. in 2013-2018.  Any copyright is released to the Public Domain.</Copyright>
+    <Authors>Peter Occil</Authors>
+    <PackageId>PeterO.Cbor</PackageId>
+    <PackageLicenseUrl>http://creativecommons.org/publicdomain/zero/1.0/</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/peteroupc/CBOR</PackageProjectUrl>
+    <PackageReleaseNotes>
+Version 3.4.0-beta1:
+
+- Improved implemenation of new ToObject method.
+- Bugs in multidimensional array serialization by FromObject were fixed.
+- URI parsing restored to 3.0 version for backward compatibility.
+- Remove method disallows null for backward compatibility.
+- ICBORObjectConverter renamed to ICBORToFromConverter.
+- Several APIs were obsoleted.
+
+Version 3.4.0-alpha1:
+
+- Add ToObject method for deserializing CBOR objects.
+- Add ICBORObjectConverter interface.
+- Add HasMostOuterTag method to CBORObject class.
+- Add CTAP2 canonicalization support to CBOR object encoding.
+- Added examples in several places in documentation.
+
+</PackageReleaseNotes>
+    <PackageTags>cbor data serialization binary json</PackageTags>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>PeterO.snk</AssemblyOriginatorKeyFile>
+    <Title>CBOR (Concise Binary Object Representation)</Title>
+    <PackOnBuild>true</PackOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DocumentationFile>bin\Debug\netstandard1.0\CBOR.xml</DocumentationFile>
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>Custom</type>
+          <name>Signing Workaround</name>
+          <command>sn -R bin/Debug/netstandard1.0/CBOR.dll PeterO.snk</command>
+          <workingdir>${ProjectDir}</workingdir>
+          <externalConsole>True</externalConsole>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType></DebugType>
+    <DocumentationFile>bin\Release\netstandard1.0\CBOR.xml</DocumentationFile>
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>Custom</type>
+          <name>Signing Workaround</name>
+          <command>sn -R bin/Release/netstandard1.0/CBOR.dll PeterO.snk</command>
+          <workingdir>${ProjectDir}</workingdir>
+          <externalConsole>True</externalConsole>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="PeterO.Numbers" Version="1.1.2" />
+  </ItemGroup>
+</Project>
