@@ -323,23 +323,9 @@ namespace Fido2NetLib
 
         private MDSMetadata(string accessToken, string cachedirPath)
         {
-            //// Extract app secrets for development
-            //// https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.1&tabs=windows
-            //string env = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            //if (string.IsNullOrWhiteSpace(env))
-            //{
-            //    env = "Development";
-            //}
-
-            //var builder = new Microsoft.Extensions.Configuration.ConfigurationBuilder();
-
-            //if (env == "Development")
-            //{
-            //    builder.AddUserSecrets<MDSMetadata>();
-            //}
-            //Configuration = builder.Build();
-
             // We need either an access token or a cache directory, but prefer both
+            if (null == accessToken && null == cachedirPath) return;
+            
             // If we have only an access token, we can get metadata from directly from MDS and only cache in memory
             // If we have only a cache directory, we can read cached data (as long as it is not expired)
             // If we have both, we can read from either and update cache as necessary
