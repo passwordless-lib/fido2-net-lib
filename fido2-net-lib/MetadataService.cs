@@ -313,8 +313,7 @@ namespace Fido2NetLib
     public sealed class MDSMetadata : IMetadataService
     {
         private static volatile MDSMetadata mDSMetadata;
-        private static object syncRoot = new System.Object();
-        public static readonly string mds1url = "https://mds.fidoalliance.org";
+        private static object syncRoot = new object();
         public static readonly string mds2url = "https://mds2.fidoalliance.org";
         public static readonly string tokenParamName = "/?token=";
         private static string _accessToken;
@@ -341,7 +340,7 @@ namespace Fido2NetLib
                 {
                     GetTOCPayload(true);
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     if (ex is Fido2VerificationException || ex is System.IO.FileNotFoundException) { }
                     else throw;
@@ -483,7 +482,7 @@ namespace Fido2NetLib
             var statementBytes = Base64Url.Decode(rawStatement);
             var statement = System.Text.Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
             var ret = JsonConvert.DeserializeObject<MetadataStatement>(statement);
-            ret.Hash = Base64Url.Encode(AuthDataHelper.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawStatement)));
+            ret.Hash = Base64Url.Encode(CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawStatement)));
             return ret;
         }
         public void GetTOCPayload(bool fromCache)
