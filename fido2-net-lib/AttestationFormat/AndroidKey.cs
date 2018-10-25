@@ -10,6 +10,17 @@ namespace Fido2NetLib.AttestationFormat
 {
     class AndroidKey : AttestationFormat
     {
+        public static byte[] AttestationExtensionBytes(X509ExtensionCollection exts)
+        {
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("1.3.6.1.4.1.11129.2.1.17")) // AttestationRecordOid
+                {
+                    return ext.RawData;
+                }
+            }
+            return null;
+        }
         public static byte[] GetASN1ObjectAtIndex(byte[] attExtBytes, int index)
         {
             // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
@@ -209,7 +220,7 @@ namespace Fido2NetLib.AttestationFormat
                 throw new Fido2VerificationException("Invalid android key signature");
 
             // Verify that in the attestation certificate extension data:
-            var attExtBytes = AuthDataHelper.AttestationExtensionBytes(androidKeyCert.Extensions);
+            var attExtBytes = AttestationExtensionBytes(androidKeyCert.Extensions);
 
             // 1. The value of the attestationChallenge field is identical to clientDataHash.
             var attestationChallenge = GetAttestationChallenge(attExtBytes);

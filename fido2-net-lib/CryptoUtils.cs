@@ -59,12 +59,7 @@ namespace Fido2NetLib
             { "1.2.840.10045.2.1", 2 }, // ECC
             { "1.2.840.113549.1.1.1", 3} // RSA
         };
-        public static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
-        {
-            { 1, TpmEccCurve.TPM_ECC_NIST_P256},
-            { 2, TpmEccCurve.TPM_ECC_NIST_P384},
-            { 3, TpmEccCurve.TPM_ECC_NIST_P521}
-        };
+
         public static CBORObject CoseKeyFromCertAndAlg(X509Certificate2 cert, int alg)
         {
             var coseKey = CBORObject.NewMap();
@@ -151,6 +146,10 @@ namespace Fido2NetLib
                                     case 3:
                                         curve = ECCurve.NamedCurves.nistP521;
                                         System.Diagnostics.Debug.WriteLine(BitConverter.ToString(sig).Replace("-", ""));
+                                        System.Diagnostics.Debug.WriteLine(BitConverter.ToString(sig));
+                                        System.Diagnostics.Debug.WriteLine(BitConverter.ToString(point.X));
+                                        System.Diagnostics.Debug.WriteLine(BitConverter.ToString(point.Y));
+                                        System.Diagnostics.Debug.WriteLine(BitConverter.ToString(data));
                                         break;
                                     default:
                                         throw new ArgumentOutOfRangeException("crv");
@@ -170,7 +169,7 @@ namespace Fido2NetLib
                     }
                 case 3: // RSA
                     {
-                        RSACng rsa = new RSACng();
+                        var rsa = new RSACng();
                         rsa.ImportParameters(
                             new RSAParameters()
                             {

@@ -12,6 +12,33 @@ namespace Fido2NetLib.AttestationFormat
         public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
         {
         }
+        public static int U2FTransportsFromAttnCert(X509ExtensionCollection exts)
+        {
+            var u2ftransports = 0;
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.2.1.1"))
+                {
+                    var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
+                    // BIT STRING
+                    if (0x3 != ms.ReadByte()) throw new Fido2VerificationException("Expected bit string");
+                    if (0x2 != ms.ReadByte()) throw new Fido2VerificationException("Expected integer value");
+                    var unused = ms.ReadByte(); // unused byte
+                    // https://fidoalliance.org/specs/fido-u2f-v1.1-id-20160915/fido-u2f-authenticator-transports-extension-v1.1-id-20160915.html#fido-u2f-certificate-transports-extension
+                    u2ftransports = ms.ReadByte(); // do something with this?
+                }
+            }
+            return u2ftransports;
+        }
+        public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
+        {
+            var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None).Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
+            return (0 != dictSubject["C"].Length ||
+                0 != dictSubject["O"].Length ||
+                0 != dictSubject["OU"].Length ||
+                0 != dictSubject["CN"].Length ||
+                "Authenticator Attestation" == dictSubject["OU"].ToString());
+        }
         public override AttestationFormatVerificationResult Verify()
         {
             // Verify that attStmt is valid CBOR conforming to the syntax defined above and 
@@ -65,22 +92,22 @@ namespace Fido2NetLib.AttestationFormat
 
                 // Subject field MUST contain C, O, OU, CN
                 // OU must match "Authenticator Attestation"
-                if (true != AuthDataHelper.IsValidPackedAttnCertSubject(attestnCert.Subject))
+                if (true != IsValidPackedAttnCertSubject(attestnCert.Subject))
                     throw new Fido2VerificationException("Invalid attestation cert subject");
 
                 // 2c. If the related attestation root certificate is used for multiple authenticator models, 
                 // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
                 // verify that the value of this extension matches the aaguid in authenticatorData
-                var aaguid = AuthDataHelper.AaguidFromAttnCertExts(attestnCert.Extensions);
+                var aaguid = AaguidFromAttnCertExts(attestnCert.Extensions);
                 if (aaguid != null && !aaguid.SequenceEqual(AuthData.AttData.Aaguid.ToArray()))
                     throw new Fido2VerificationException("aaguid present in packed attestation but does not match aaguid from authData");
 
                 // 2d. The Basic Constraints extension MUST have the CA component set to false
-                if (AuthDataHelper.IsAttnCertCACert(attestnCert.Extensions))
+                if (IsAttnCertCACert(attestnCert.Extensions))
                     throw new Fido2VerificationException("Attestion certificate has CA cert flag present");
 
                 // id-fido-u2f-ce-transports 
-                var u2ftransports = AuthDataHelper.U2FTransportsFromAttnCert(attestnCert.Extensions);
+                var u2ftransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
 
                 return new AttestationFormatVerificationResult()
                 {
