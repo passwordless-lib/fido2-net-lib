@@ -14,7 +14,7 @@ Provide a developer friendly and well tested .NET server side library for easy v
 **The passwordless web is coming.**  
 FIDO2 / WebAuthn is a new open authentication standard, supported by browsers and many large tech companies such as  Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating *passwordless flows* or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to Active Directory and native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & platform. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
 
-Read more about FIDO2 at [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113), [FIDO2 Alliance](https://fidoalliance.org/fido2/) and [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/).
+Read more about FIDO2: [Why it's exciting](http://ideasof.andersaberg.com/development/the-passwordless-web), [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113), [FIDO2 Alliance](https://fidoalliance.org/fido2/) and [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/).
 
 ## Supported features
 
