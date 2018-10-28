@@ -26,12 +26,15 @@ namespace Fido2Demo
 
         public MyController(IConfiguration config)
         {
+            var MDSAccessKey = config["fido2:MDSAccessKey"];
+
             _lib = new Fido2(new Fido2.Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
                 Origin = config["fido2:origin"],
-                MetadataService = MDSMetadata.Instance(config["fido2:MDSAccessKey"], config["fido2:MDSCacheDirPath"])
+                // Only create and use Metadataservice if we have and acesskey
+                MetadataService = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, config["fido2:MDSCacheDirPath"])
             });
         }
 
