@@ -7,36 +7,12 @@ using System.IO;
 using System.Linq;
 using Xunit;
 using System.Threading.Tasks;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography.X509Certificates;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
-using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Configuration;
 
 namespace fido2_net_lib.Test
 {
     // todo: Create tests and name Facts and json files better.
     public class UnitTest1
     {
-        private static IConfiguration Configuration;
-        
-        public UnitTest1()
-        {
-            string env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            if (string.IsNullOrWhiteSpace(env))
-            {
-                env = "Development";
-            }
-
-            var builder = new ConfigurationBuilder();
-
-            if (env == "Development")
-            {
-                builder.AddUserSecrets<UnitTest1>();
-            }
-            Configuration = builder.Build();
-        }
         public static byte[] StringToByteArray(string hex)
         {
             hex = hex.Replace("-", "");
