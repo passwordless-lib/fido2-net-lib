@@ -203,6 +203,15 @@ namespace fido2_net_lib.Test
             await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null, null);
             byte[] ad = o.AttestationObject.AuthData;
         }
+        [Fact]
+        public async Task TaskPackedAttestation512()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsPacked512.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsPacked512.json"));
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null, null);
+            byte[] ad = o.AttestationObject.AuthData;
+        }
         //public void TestHasCorrentAAguid()
         //{
         //    var expectedAaguid = new Uint8Array([

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Fido2NetLib.Objects;
 using Newtonsoft.Json;
 
@@ -65,7 +64,7 @@ namespace Fido2NetLib
             return JsonConvert.DeserializeObject<AssertionOptions>(json);
         }
 
-        // todo: Add Extensions
+        // TODO: Add Extensions
     }
 
     

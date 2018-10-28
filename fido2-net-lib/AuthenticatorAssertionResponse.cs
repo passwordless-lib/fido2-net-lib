@@ -136,14 +136,12 @@ namespace Fido2NetLib
 
             if (null == storedPublicKey || 0 == storedPublicKey.Length) throw new Fido2VerificationException("Stored public key is null or empty");
             var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(storedPublicKey);
-            if (true != AuthDataHelper.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
+            if (true != CryptoUtils.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
 
             // 17.
             var counter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray(), 0);
             if (counter > 0 && counter <= storedSignatureCounter)
-            {
                 throw new Fido2VerificationException("SignatureCounter was not greater than stored SignatureCounter");
-            }
 
             return new AssertionVerificationResult()
             {

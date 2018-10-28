@@ -313,8 +313,7 @@ namespace Fido2NetLib
     public sealed class MDSMetadata : IMetadataService
     {
         private static volatile MDSMetadata mDSMetadata;
-        private static object syncRoot = new System.Object();
-        public static readonly string mds1url = "https://mds.fidoalliance.org";
+        private static object syncRoot = new object();
         public static readonly string mds2url = "https://mds2.fidoalliance.org";
         public static readonly string tokenParamName = "/?token=";
         private static string _accessToken;
@@ -323,23 +322,9 @@ namespace Fido2NetLib
 
         private MDSMetadata(string accessToken, string cachedirPath)
         {
-            //// Extract app secrets for development
-            //// https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-2.1&tabs=windows
-            //string env = System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            //if (string.IsNullOrWhiteSpace(env))
-            //{
-            //    env = "Development";
-            //}
-
-            //var builder = new Microsoft.Extensions.Configuration.ConfigurationBuilder();
-
-            //if (env == "Development")
-            //{
-            //    builder.AddUserSecrets<MDSMetadata>();
-            //}
-            //Configuration = builder.Build();
-
             // We need either an access token or a cache directory, but prefer both
+            if (null == accessToken && null == cachedirPath) return;
+            
             // If we have only an access token, we can get metadata from directly from MDS and only cache in memory
             // If we have only a cache directory, we can read cached data (as long as it is not expired)
             // If we have both, we can read from either and update cache as necessary
@@ -355,7 +340,7 @@ namespace Fido2NetLib
                 {
                     GetTOCPayload(true);
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     if (ex is Fido2VerificationException || ex is System.IO.FileNotFoundException) { }
                     else throw;
@@ -497,7 +482,7 @@ namespace Fido2NetLib
             var statementBytes = Base64Url.Decode(rawStatement);
             var statement = System.Text.Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
             var ret = JsonConvert.DeserializeObject<MetadataStatement>(statement);
-            ret.Hash = Base64Url.Encode(AuthDataHelper.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawStatement)));
+            ret.Hash = Base64Url.Encode(CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawStatement)));
             return ret;
         }
         public void GetTOCPayload(bool fromCache)
@@ -534,24 +519,57 @@ namespace Fido2NetLib
         {
             if (true == System.IO.Directory.Exists(_cacheDir + @"\Custom"))
             {
-                foreach (string filename in System.IO.Directory.GetFiles(_cacheDir + @"\Custom"))
+                foreach (var filename in System.IO.Directory.GetFiles(_cacheDir + @"\Custom"))
                 {
                     var rawStatement = System.IO.File.ReadAllText(filename);
                     var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
-                    var entry = new MetadataTOCPayloadEntry();
-                    entry.AaGuid = statement.AaGuid;
-                    entry.MetadataStatement = statement;
-                    entry.StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }; 
+                    var entry = new MetadataTOCPayloadEntry
+                    {
+                        AaGuid = statement.AaGuid,
+                        MetadataStatement = statement,
+                        StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }
+                    };
                     if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
                 }
             }
             else
             {
-                var entry = new MetadataTOCPayloadEntry();
-                entry.AaGuid = "2b2ecbb4-59b4-44fa-868d-a072485d8ae0";
-                entry.StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } };
-                entry.MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort) MetadataAttestationType.ATTESTATION_BASIC_FULL } };
+                var entry = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "2b2ecbb4-59b4-44fa-868d-a072485d8ae0",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "" }
+                };
                 payload.Add(new System.Guid(entry.AaGuid), entry);
+
+                // from https://developers.yubico.com/U2F/yubico-u2f-ca-certs.txt
+                var yubicoRoot =    "MIIDHjCCAgagAwIBAgIEG0BT9zANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZ" +
+                                    "dWJpY28gVTJGIFJvb3QgQ0EgU2VyaWFsIDQ1NzIwMDYzMTAgFw0xNDA4MDEwMDAw" +
+                                    "MDBaGA8yMDUwMDkwNDAwMDAwMFowLjEsMCoGA1UEAxMjWXViaWNvIFUyRiBSb290" +
+                                    "IENBIFNlcmlhbCA0NTcyMDA2MzEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK" +
+                                    "AoIBAQC/jwYuhBVlqaiYWEMsrWFisgJ+PtM91eSrpI4TK7U53mwCIawSDHy8vUmk" +
+                                    "5N2KAj9abvT9NP5SMS1hQi3usxoYGonXQgfO6ZXyUA9a+KAkqdFnBnlyugSeCOep" +
+                                    "8EdZFfsaRFtMjkwz5Gcz2Py4vIYvCdMHPtwaz0bVuzneueIEz6TnQjE63Rdt2zbw" +
+                                    "nebwTG5ZybeWSwbzy+BJ34ZHcUhPAY89yJQXuE0IzMZFcEBbPNRbWECRKgjq//qT" +
+                                    "9nmDOFVlSRCt2wiqPSzluwn+v+suQEBsUjTGMEd25tKXXTkNW21wIWbxeSyUoTXw" +
+                                    "LvGS6xlwQSgNpk2qXYwf8iXg7VWZAgMBAAGjQjBAMB0GA1UdDgQWBBQgIvz0bNGJ" +
+                                    "hjgpToksyKpP9xv9oDAPBgNVHRMECDAGAQH/AgEAMA4GA1UdDwEB/wQEAwIBBjAN" +
+                                    "BgkqhkiG9w0BAQsFAAOCAQEAjvjuOMDSa+JXFCLyBKsycXtBVZsJ4Ue3LbaEsPY4" +
+                                    "MYN/hIQ5ZM5p7EjfcnMG4CtYkNsfNHc0AhBLdq45rnT87q/6O3vUEtNMafbhU6kt" +
+                                    "hX7Y+9XFN9NpmYxr+ekVY5xOxi8h9JDIgoMP4VB1uS0aunL1IGqrNooL9mmFnL2k" +
+                                    "LVVee6/VR6C5+KSTCMCWppMuJIZII2v9o4dkoZ8Y7QRjQlLfYzd3qGtKbw7xaF1U" +
+                                    "sG/5xUb/Btwb2X2g4InpiB/yt/3CpQXpiWX/K4mBvUKiGn05ZsqeY1gx4g0xLBqc" +
+                                    "U9psmyPzK+Vsgw2jeRQ5JlKDyqE0hebfC1tvFu0CCrJFcw==";
+
+                var yubico = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "f8a011f3-8c0a-4d15-8006-17111f9edc7d",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                };
+                payload.Add(new System.Guid(yubico.AaGuid), yubico);
             }
         }
 
