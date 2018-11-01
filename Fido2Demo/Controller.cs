@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib.Objects;
 using Fido2NetLib;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Fido2NetLib.Development;
@@ -22,7 +18,8 @@ namespace Fido2Demo
     public class MyController : Controller
     {
         private Fido2 _lib;
-        private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
+        //private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
+        ActiveDirectoryStore adStore = new ActiveDirectoryStore();
 
         public MyController(IConfiguration config)
         {
@@ -50,15 +47,12 @@ namespace Fido2Demo
             try
             {
                 // 1. Get user from DB by username (in our example, auto create missing users)
-                var user = DemoStorage.GetOrAddUser(username, () => new User
-                {
-                    DisplayName = "Display " + username,
-                    Name = username,
-                    Id = Encoding.UTF8.GetBytes(username) // byte representation of userID is required
-                });
+                //var user = DemoStorage.GetOrAddUser(username, () => new User
+                var user = adStore.GetUser(username);
 
                 // 2. Get user existing keys by username
-                List<PublicKeyCredentialDescriptor> existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                //var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                var existingKeys = adStore.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
                 // 3. Create options
                 var authenticatorSelection = new AuthenticatorSelection
@@ -94,7 +88,8 @@ namespace Fido2Demo
                 // 2. Create callback so that lib can verify credential id is unique to this user
                 IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
                 {
-                    List<User> users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
+                    //var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
+                    var users = await adStore.GetUsersByCredentialIdAsync(args.CredentialId);
                     if (users.Count > 0) return false;
 
                     return true;
@@ -104,7 +99,8 @@ namespace Fido2Demo
                 var success = await _lib.MakeNewCredentialAsync(attestationResponse, options, callback);
 
                 // 3. Store the credentials in db
-                DemoStorage.AddCredentialToUser(options.User, new StoredCredential
+                //DemoStorage.AddCredentialToUser(options.User, new StoredCredential
+                adStore.AddCredentialToUser(options.User, new StoredCredential
                 {
                     Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
                     PublicKey = success.Result.PublicKey,
@@ -128,12 +124,13 @@ namespace Fido2Demo
             try
             {
                 // 1. Get user from DB
-                var user = DemoStorage.GetUser(username);
+                //var user = DemoStorage.GetUser(username);
+                var user = adStore.GetUser(username);
                 if (user == null) throw new ArgumentException("Username was not registered");
 
                 // 2. Get registered credentials from database
-                List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
-
+                //List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                var existingCredentials = adStore.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
                 // 3. Create options
                 var options = _lib.GetAssertionOptions(
                     existingCredentials,
@@ -164,23 +161,26 @@ namespace Fido2Demo
                 var options = AssertionOptions.FromJson(jsonOptions);
 
                 // 2. Get registered credential from database
-                StoredCredential creds = DemoStorage.GetCredentialById(clientResponse.Id);
+                var creds = adStore.GetCredentialById(clientResponse.Id);
+                //StoredCredential creds = DemoStorage.GetCredentialById(clientResponse.Id);
 
                 // 3. Get credential counter from database
                 var storedCounter = creds.SignatureCounter;
 
                 // 4. Create callback to check if userhandle owns the credentialId
-                IsUserHandleOwnerOfCredentialIdAsync callback = async (args) =>
+                async Task<bool> callback(IsUserHandleOwnerOfCredentialIdParams args)
                 {
-                    List<StoredCredential> storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
+                    //var storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
+                    var storedCreds = await adStore.GetCredentialsByUserHandleAsync(args.UserHandle);
                     return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
-                };
+                }
 
                 // 5. Make the assertion
                 var res = await _lib.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
 
                 // 6. Store the updated counter
-                DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
+                //DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
+                adStore.UpdateCounter(res.CredentialId, res.Counter);
 
                 // 7. return OK to client
                 return Json(res);
