@@ -111,20 +111,24 @@ namespace Fido2NetLib
             {
                 return deviceresult.GetDirectoryEntry();
             }
-            throw new Fido2VerificationException("Device not found");
+            return null;
         }
         public void UpdateCounter(byte[] credentialId, uint counter)
         {
             var device = GetDevice(credentialId);
             if (null != device)
             {
-                device.Properties["logonCount"].Value = counter;
+                device.Properties["logonCount"].Value = Convert.ToInt32(counter);
                 device.CommitChanges();
             }
         }
         DirectorySearcher GetSearcher(string filter, DirectoryEntry searchBase = null)
         {
-            var entry = new DirectoryEntry(searchBase);
+            DirectoryEntry entry;
+            if (null == searchBase)
+                entry = new DirectoryEntry();
+            else entry = searchBase;
+
             var search = new DirectorySearcher(entry)
             {
                 Filter = filter
@@ -175,7 +179,7 @@ namespace Fido2NetLib
                         Type = "public-key"
                     },
                     PublicKey = (byte[]) device.Properties["userCertificate"][0],
-                    SignatureCounter = (uint) device.Properties["logonCount"][0],
+                    SignatureCounter = Convert.ToUInt32(device.Properties["logonCount"][0]),
                     UserHandle = userHandle,
                     UserId = userHandle
                 };
@@ -212,12 +216,20 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("User not found in active directory");
             else return result.GetDirectoryEntry();
         }
+        private DirectoryEntry GetUserEntry(byte[] objectGuid)
+        {
+            var userGuid = new Guid(objectGuid);
+            var userentry = new DirectoryEntry("LDAP://<GUID=" + userGuid.ToString("D") + ">");
+            if (null == userentry)
+                throw new Fido2VerificationException("User not found in active directory");
+            else return userentry;
+        }
         DirectoryEntry AddDevicesContainerIfNotExists(DirectoryEntry entry)
         {
             var devicesresult = GetObjectFromFilter("(objectCategory=fIDOAuthenticatorDevices)", entry);
             if (null == devicesresult)
             {
-                var devices = entry.Children.Add("FIDO Authenticator Devices", "fIDOAuthenticatorDevices");
+                var devices = entry.Children.Add("CN=FIDO Authenticator Devices", "fIDOAuthenticatorDevices");
                 devices.CommitChanges();
                 return devices;
             }
@@ -225,7 +237,7 @@ namespace Fido2NetLib
         }
         public void AddCredentialToUser(User user, StoredCredential credential)
         {
-            var result = GetUserEntry(user.Id.ToString());
+            var result = GetUserEntry(user.Id);
             if (null != result)
             {
                 var devices = AddDevicesContainerIfNotExists(result);
@@ -236,12 +248,12 @@ namespace Fido2NetLib
 
                     else
                     {
-                            var device = devices.Children.Add("FIDO Authenticator Device", "fIDOAuthenticatorDevice");
-                            devices.CommitChanges();
-                            device.Properties["fIDOAuthenticatorCredentialId"].Value = credential.Descriptor.Id;
-                            device.Properties["userCertificate"].Value = credential.PublicKey;
-                            device.Properties["logonCount"].Value = credential.SignatureCounter;
-                            device.CommitChanges();
+                        var device = devices.Children.Add("CN=" + BitConverter.ToString(credential.Descriptor.Id, 0, 32).Replace("-", ""), "fIDOAuthenticatorDevice");
+                        device.CommitChanges();
+                        device.Properties["fIDOAuthenticatorCredentialId"].Value = credential.Descriptor.Id;
+                        device.Properties["userCertificate"].Value = credential.PublicKey;
+                        device.Properties["logonCount"].Value = Convert.ToInt32(credential.SignatureCounter);
+                        device.CommitChanges();
                     }
                 }
                 else throw new Fido2VerificationException("Unable to create devices container");
@@ -290,7 +302,7 @@ namespace Fido2NetLib
                             Type = "public-key"
                         },
                         PublicKey = (byte[])device.Properties["userCertificate"].Value,
-                        SignatureCounter = (uint)device.Properties["logonCount"].Value,
+                        SignatureCounter = Convert.ToUInt32(device.Properties["logonCount"].Value),
                         UserHandle = device.Parent.Parent.Guid.ToByteArray(),
                         UserId = device.Parent.Parent.Guid.ToByteArray()
                     };
