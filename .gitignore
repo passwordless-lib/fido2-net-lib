@@ -328,3 +328,5 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/fido2-net-lib.Test/TPMOptions.json
+/fido2-net-lib.Test/TPMResponse.json
