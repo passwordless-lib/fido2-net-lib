@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib.Objects;
@@ -66,7 +65,6 @@ namespace Fido2NetLib
 
         public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
         {
-            AttestationFormatVerificationResult attFmtVerificationResult;
             BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
             // verify origin
@@ -157,13 +155,13 @@ namespace Fido2NetLib
 
                 case "packed":
                         // https://www.w3.org/TR/webauthn/#packed-attestation
-                        verifier = new Packed(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                        verifier = new Packed(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
                     break;
 
                 default: throw new Fido2VerificationException("Missing or unknown attestation type");
             }
 
-            attFmtVerificationResult = verifier.Verify();
+            verifier.Verify();
             /* 
              * 15
              * If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) 
@@ -177,51 +175,10 @@ namespace Fido2NetLib
              * 16 
              * Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows: https://www.w3.org/TR/webauthn/#registering-a-new-credential
              * */
-            // todo: implement (this is not for attfmt none)
             // use aaguid (authData.AttData.Aaguid) to find root certs in metadata
             // use root plus trustPath to build trust chain
+            // implemented for AttestationObject.Fmt == "packed" in packed specific verifier
 
-            if (null != metadataService)
-            {
-                var entry = metadataService.GetEntry(authData.AttData.GuidAaguid);
-                
-                if (null != entry && null != entry.MetadataStatement)
-                {
-                    if (entry.Hash != entry.MetadataStatement.Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
-                    
-                    var hasBasicFull = entry.MetadataStatement.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL);
-                    if (false == hasBasicFull &&
-                        null != attFmtVerificationResult.trustPath &&
-                        attFmtVerificationResult.trustPath.FirstOrDefault().Subject != attFmtVerificationResult.trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authentictor that does not support full attestation");
-                    if (true == hasBasicFull && null != attFmtVerificationResult.trustPath && attFmtVerificationResult.trustPath.FirstOrDefault().Subject != attFmtVerificationResult.trustPath.FirstOrDefault().Issuer)
-                    {
-                        var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
-                        var chain = new X509Chain();
-                        chain.ChainPolicy.ExtraStore.Add(root);
-                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                        if (attFmtVerificationResult.trustPath.Length > 1)
-                        {
-                            foreach (var cert in attFmtVerificationResult.trustPath.Skip(1).Reverse())
-                            {
-                                chain.ChainPolicy.ExtraStore.Add(cert);
-                            }
-                        }
-                        var valid = chain.Build(attFmtVerificationResult.trustPath[0]);
-                        if (false == valid)
-                        {
-                                
-                        }
-                    }
-
-                    foreach (var report in entry.StatusReports)
-                    {
-                        if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), (UndesiredAuthenticatorStatus) report.Status))
-                            throw new Fido2VerificationException("Authenticator found with undesirable status");
-                    }
-                }
-            }
-            
             /* 
              * 17
              * Check that the credentialId is not yet registered to any other user.
@@ -264,7 +221,7 @@ namespace Fido2NetLib
         {
             public string Fmt { get; set; }
             public byte[] AuthData { get; set; }
-            public PeterO.Cbor.CBORObject AttStmt { get; set; }
+            public CBORObject AttStmt { get; set; }
         }
     }
 }

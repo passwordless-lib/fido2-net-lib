@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib.Objects;
 using Fido2NetLib;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Fido2NetLib.Development;
@@ -28,7 +26,7 @@ namespace Fido2Demo
         {
             var MDSAccessKey = config["fido2:MDSAccessKey"];
 
-            _lib = new Fido2(new Fido2.Configuration()
+            _lib = new Fido2(new Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
@@ -58,7 +56,7 @@ namespace Fido2Demo
                 });
 
                 // 2. Get user existing keys by username
-                List<PublicKeyCredentialDescriptor> existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
                 // 3. Create options
                 var authenticatorSelection = new AuthenticatorSelection
@@ -94,7 +92,7 @@ namespace Fido2Demo
                 // 2. Create callback so that lib can verify credential id is unique to this user
                 IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
                 {
-                    List<User> users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
+                    var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
                     if (users.Count > 0) return false;
 
                     return true;
@@ -132,7 +130,7 @@ namespace Fido2Demo
                 if (user == null) throw new ArgumentException("Username was not registered");
 
                 // 2. Get registered credentials from database
-                List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
                 // 3. Create options
                 var options = _lib.GetAssertionOptions(
@@ -164,7 +162,7 @@ namespace Fido2Demo
                 var options = AssertionOptions.FromJson(jsonOptions);
 
                 // 2. Get registered credential from database
-                StoredCredential creds = DemoStorage.GetCredentialById(clientResponse.Id);
+                var creds = DemoStorage.GetCredentialById(clientResponse.Id);
 
                 // 3. Get credential counter from database
                 var storedCounter = creds.SignatureCounter;
@@ -172,7 +170,7 @@ namespace Fido2Demo
                 // 4. Create callback to check if userhandle owns the credentialId
                 IsUserHandleOwnerOfCredentialIdAsync callback = async (args) =>
                 {
-                    List<StoredCredential> storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
+                    var storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
                     return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
                 };
 

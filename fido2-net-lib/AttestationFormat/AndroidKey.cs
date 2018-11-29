@@ -3,7 +3,6 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -171,7 +170,7 @@ namespace Fido2NetLib.AttestationFormat
         public AndroidKey(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
         {
         }
-        public override AttestationFormatVerificationResult Verify()
+        public override void Verify()
         {
             // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
             if (0 == attStmt.Keys.Count || 0 == attStmt.Values.Count)
@@ -238,14 +237,6 @@ namespace Fido2NetLib.AttestationFormat
             // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
             if (false == IsPurposeSign(attExtBytes))
                 throw new Fido2VerificationException("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
-
-            return new AttestationFormatVerificationResult()
-            {
-                attnType = AttestationType.Basic,
-                trustPath = X5c.Values
-                .Select(x => new X509Certificate2(x.GetByteString()))
-                .ToArray()
-            };
         }
     }
 }

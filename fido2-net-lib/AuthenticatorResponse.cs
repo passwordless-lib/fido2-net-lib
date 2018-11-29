@@ -22,7 +22,7 @@ namespace Fido2NetLib
             }
             catch (System.Exception e)//Newtonsoft.Json.JsonReaderException) 
             {
-                if (e is Newtonsoft.Json.JsonReaderException || e is Newtonsoft.Json.JsonSerializationException)
+                if (e is JsonReaderException || e is JsonSerializationException)
                 {
                     throw new Fido2VerificationException("Malformed clientDataJson");
                 }

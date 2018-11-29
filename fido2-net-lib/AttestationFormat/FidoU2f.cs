@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -14,7 +11,7 @@ namespace Fido2NetLib.AttestationFormat
         public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
         {
         }
-        public override AttestationFormatVerificationResult Verify()
+        public override void Verify()
         {
             // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
             if (false == AuthData.AttData.Aaguid.SequenceEqual(Guid.Empty.ToByteArray()))
@@ -62,12 +59,6 @@ namespace Fido2NetLib.AttestationFormat
 
             if (true != pubKey.VerifyData(verificationData, ecsig, CryptoUtils.algMap[CredentialPublicKey[CBORObject.FromObject(3)].AsInt32()]))
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
-
-            return new AttestationFormatVerificationResult()
-            {
-                attnType = AttestationType.None,
-                trustPath = null
-            };
         }
     }
 }

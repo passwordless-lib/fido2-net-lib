@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
 {
@@ -39,7 +36,7 @@ namespace Fido2NetLib
             {
                 ret = Base64Url.Decode((string)reader.Value);
             }
-            catch (System.FormatException)
+            catch (FormatException)
             {
                 throw new Fido2VerificationException("json value must be valid base64 encoded string");
             }

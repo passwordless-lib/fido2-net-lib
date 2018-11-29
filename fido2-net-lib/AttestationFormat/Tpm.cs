@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -377,7 +376,7 @@ namespace Fido2NetLib.AttestationFormat
             //{"id:524F4343", "ROCC"},
             //{"id:474F4F47", "GOOG"}
     };
-        public override AttestationFormatVerificationResult Verify()
+        public override void Verify()
         {
             if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid TPM attestation signature");
@@ -515,15 +514,6 @@ namespace Fido2NetLib.AttestationFormat
                 // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
                 if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(AuthData.AttData.Aaguid.ToArray()))) throw new Fido2VerificationException("aaguid malformed");
-
-                // If successful, return attestation type AttCA and attestation trust path x5c.
-                return new AttestationFormatVerificationResult()
-                {
-                    attnType = AttestationType.AttCa,
-                    trustPath = X5c.Values
-                    .Select(x => new X509Certificate2(x.GetByteString()))
-                    .ToArray()
-                };
             }
             // If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (null != EcdaaKeyId)
@@ -792,11 +782,11 @@ namespace Fido2NetLib.AttestationFormat
         public byte[] KDF { get; private set; }
         public byte[] Unique { get; private set; }
         public TpmEccCurve EccCurve { get { return (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BitConverter.ToUInt16(CurveID.Reverse().ToArray(), 0).ToString()); }}
-        public System.Security.Cryptography.ECPoint ECPoint
+        public ECPoint ECPoint
         {
             get
             {
-                var point = new System.Security.Cryptography.ECPoint();
+                var point = new ECPoint();
                 var uniqueOffset = 0;
                 var size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
                 point.X = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BitConverter.ToUInt16(size.Reverse().ToArray(), 0));

@@ -1,5 +1,4 @@
-﻿using Fido2NetLib.Objects;
-using PeterO.Cbor;
+﻿using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
 {
@@ -9,16 +8,10 @@ namespace Fido2NetLib.AttestationFormat
         {
         }
 
-        public override AttestationFormatVerificationResult Verify()
+        public override void Verify()
         {
             if (0 != attStmt.Keys.Count && 0 != attStmt.Values.Count)
                 throw new Fido2VerificationException("Attestation format none should have no attestation statement");
-
-            return new AttestationFormatVerificationResult()
-            {
-                attnType = AttestationType.None,
-                trustPath = null
-            };
         }
     }
 }
