@@ -16,6 +16,9 @@ namespace Fido2NetLib.AttestationFormat
 
         public static readonly Dictionary<string, X509Certificate2[]> TPMManufacturerRootMap = new Dictionary<string, X509Certificate2[]>
         {
+            {"id:FFFFF1D0", new X509Certificate2[]{
+                new X509Certificate2(Convert.FromBase64String(""
+            ))}},
             {"id:414D4400", new X509Certificate2[]{
                 new X509Certificate2(Convert.FromBase64String(
                 "MIIEiDCCA3CgAwIBAgIQJk05ojzrXVtJ1hAETuvRITANBgkqhkiG9w0BAQsFADB2" +
@@ -478,6 +481,27 @@ namespace Fido2NetLib.AttestationFormat
                     false == SAN.Contains("TPMVersion"))
                     throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
                 var tpmManufacturer = SAN.Substring(SAN.IndexOf("TPMManufacturer"), 27).Split('=').Last();
+                if (false == TPMManufacturerRootMap.ContainsKey(tpmManufacturer)) throw new Fido2VerificationException("Invalid TPM manufacturer found parsing TPM attestation");
+                var tpmRoots = TPMManufacturerRootMap[tpmManufacturer];
+                var valid = false;
+                var i = 0;
+                while (valid == false && i <= tpmRoots.Length)
+                {
+                    var chain = new X509Chain();
+                    chain.ChainPolicy.ExtraStore.Add(tpmRoots[i]);
+                    i++;
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    if (X5c.Values.Count > 1)
+                    {
+                        foreach (var cert in X5c.Values.Skip(1).Reverse())
+                        {
+                            chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(cert.GetByteString()));
+                        }
+                    }
+                    valid = chain.Build(new X509Certificate2(X5c.Values.First().GetByteString()));
+                }
+                if (false == valid) throw new Fido2VerificationException("TPM attestation failed chain validation");
                 // The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
                 // OID is 2.23.133.8.3
                 var EKU = EKUFromAttnCertExts(aikCert.Extensions);
