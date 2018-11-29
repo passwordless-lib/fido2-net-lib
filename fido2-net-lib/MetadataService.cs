@@ -568,6 +568,25 @@ namespace Fido2NetLib
                     MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
                 };
                 payload.Add(new Guid(yubico.AaGuid), yubico);
+
+                // YubiKey 5 USB and NFC AAGUID values from https://support.yubico.com/support/solutions/articles/15000014219-yubikey-5-series-technical-manual#AAGUID_Valuesxf002do
+                var yubikey5usb = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "cb69481e-8ff7-4039-93ec-0a2729a154a8",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                };
+                payload.Add(new Guid(yubikey5usb.AaGuid), yubikey5usb);
+
+                var yubikey5nfc = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "fa2b99dc-9e39-4257-8f92-4a30d23c4118",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                };
+                payload.Add(new Guid(yubikey5nfc.AaGuid), yubikey5nfc);
             }
         }
 
