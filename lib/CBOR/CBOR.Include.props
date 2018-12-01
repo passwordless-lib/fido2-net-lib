@@ -1,0 +1,11 @@
+<Project>
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)**/*.cs">
+            <Link>CBOR\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </Compile>
+        <None Include="$(MSBuildThisFileDirectory)**/*">
+            <Link>CBOR\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </None>
+        <PackageReference Include="PeterO.Numbers" Version="1.1.2" />
+    </ItemGroup>
+</Project>

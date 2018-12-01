@@ -1,20 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../lib/CBOR/CBOR.Include.props" />
+  <Import Project="../lib/Chaos.NaCL/Chaos.NaCL.Include.props" />
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net472;netcoreapp2.0</TargetFrameworks>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>Fido2</PackageId>
     <Version>1.0.0-preview</Version>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
-    <RepositoryType>github</RepositoryType>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>fido2 webauthn</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
-    <PackageId>Fido2</PackageId>
     <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <UserSecretsId>fido2-net-lib-72797092-61BA-45E3-836A-53F282CFFAF3</UserSecretsId>
     <PackageLicenseUrl>https://github.com/abergs/fido2-net-lib/blob/master/LICENSE.txt</PackageLicenseUrl>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <UserSecretsId>fido2-net-lib-72797092-61BA-45E3-836A-53F282CFFAF3</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,12 +27,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.2.4" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
+    
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\CBOR\CBOR.csproj" />
-    <ProjectReference Include="..\Chaos.NaCl\Chaos.NaCl.csproj" />
-  </ItemGroup>
-
 </Project>
