@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <UserSecretsId>fido2-net-lib.Test-72797092-61BA-45E3-836A-53F282CFFAF3</UserSecretsId>
     <TargetFrameworks>netcoreapp2.1;net462</TargetFrameworks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -17,10 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0-preview-20180816-01" />
-    <PackageReference Include="xunit" Version="2.4.1-pre.build.4059" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1-pre.build.4059" />
-    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -19,7 +19,6 @@
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/abergs/fido2-net-lib/blob/master/LICENSE.txt</PackageLicenseUrl>
-    <UserSecretsId>fido2-net-lib-72797092-61BA-45E3-836A-53F282CFFAF3</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
