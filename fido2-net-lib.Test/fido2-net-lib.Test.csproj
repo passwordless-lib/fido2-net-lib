@@ -34,8 +34,6 @@
     <None Remove="mdsSigning.cer" />
     <None Remove="options1.json" />
     <None Remove="options2.json" />
-    <None Remove="TPMOptions.json" />
-    <None Remove="TPMResponse.json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -112,12 +110,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="json1.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TPMOptions.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="TPMResponse.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

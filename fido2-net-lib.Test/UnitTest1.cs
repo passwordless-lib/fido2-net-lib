@@ -171,15 +171,6 @@ namespace fido2_net_lib.Test
             byte[] ad = o.AttestationObject.AuthData;
         }
         [Fact]
-        public async Task TestTPMSHAAttestationAsync()
-        {
-            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./TPMResponse.json"));
-            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./TPMOptions.json"));
-            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, "https://localhost:44329", (x) => Task.FromResult(true), null, null);
-            byte[] ad = o.AttestationObject.AuthData;
-        }
-        [Fact]
         public async Task TestAndroidKeyAttestationAsync()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationAndroidKeyResponse.json"));

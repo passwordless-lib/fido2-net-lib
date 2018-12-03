@@ -16,7 +16,41 @@ namespace Fido2NetLib.AttestationFormat
         public static readonly Dictionary<string, X509Certificate2[]> TPMManufacturerRootMap = new Dictionary<string, X509Certificate2[]>
         {
             {"id:FFFFF1D0", new X509Certificate2[]{
-                new X509Certificate2(Convert.FromBase64String(""
+                new X509Certificate2(Convert.FromBase64String(
+                "MIIGSDCCBDCgAwIBAgIJANLAiKUvCLEqMA0GCSqGSIb3DQEBCwUAMIG/MQswCQYD" +
+                "VQQGEwJVUzELMAkGA1UECAwCTVkxEjAQBgNVBAcMCVdha2VmaWVsZDEWMBQGA1UE" +
+                "CgwNRklETyBBbGxpYW5jZTEMMAoGA1UECwwDQ1dHMTYwNAYDVQQDDC1GSURPIEZh" +
+                "a2UgVFBNIFJvb3QgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IDIwMTgxMTAvBgkqhkiG" +
+                "9w0BCQEWImNvbmZvcm1hbmNlLXRvb2xzQGZpZG9hbGxpYW5jZS5vcmcwHhcNMTgw" +
+                "NTI5MTQzMjU5WhcNNDUxMDE0MTQzMjU5WjCBvzELMAkGA1UEBhMCVVMxCzAJBgNV" +
+                "BAgMAk1ZMRIwEAYDVQQHDAlXYWtlZmllbGQxFjAUBgNVBAoMDUZJRE8gQWxsaWFu" +
+                "Y2UxDDAKBgNVBAsMA0NXRzE2MDQGA1UEAwwtRklETyBGYWtlIFRQTSBSb290IENl" +
+                "cnRpZmljYXRlIEF1dGhvcml0eSAyMDE4MTEwLwYJKoZIhvcNAQkBFiJjb25mb3Jt" +
+                "YW5jZS10b29sc0BmaWRvYWxsaWFuY2Uub3JnMIICIjANBgkqhkiG9w0BAQEFAAOC" +
+                "Ag8AMIICCgKCAgEAyCtbMw6ckWpylo7ZCboe3khforOB1eUb0DZg4mLsf460nKnZ" +
+                "JbztZh/3qqLQTUBEb1kxeGW31QiJ5UoiAcPAoo9aHIADVfjJEPvr865fOqt85f/q" +
+                "O2qsF6ZjVpNk1/zQRP4xPRLZPhawQvZsnmV20vteV8K4KL9kWw/Yjo+m9LKt90OM" +
+                "1tf7+F/uh1alocxc+WPmfpXxSHDfySTvnq6m8cQySAn3LyjAg1pYnT4P9QC0HbNK" +
+                "z0KoL+EFylsmvps7wjAeRqNetu0BdmvBLtYC7AMxGpCzAuF5tYl+9/hWMI544QGn" +
+                "ZrQnhIXfq704brI04NsUtBmCfZ5rEuc+Gzrz/asAPo6JSXyj9OSq+yPiWXen3g98" +
+                "/BI7f7gZoV6rqrdCojkFlWZVBJgWgHio0JEy7OB4RPO0SIKichjKbvIyTcE+J7oP" +
+                "Cgz5UCjBbSo94sJ8hs35W2y8aVYriRZ94z5w9IM/T/tZLkZDOzI03uot+PO2d1xX" +
+                "K8YQ/QVzKnNcxXeve9l3x/CNzgknbp+IiL/NH509Zcn0YiGLfInHLPpEQ3p1PSU5" +
+                "vtx+mWWpoRWvzwYpQD907skC9exZjm16F1ZKu+cvboeA1AHAHC/tE26Lxema5F/p" +
+                "KXVFSu2XqK8JS6hO3EauL5ONaWxVIsQX4CIOxFdvS6mdmp8n+9SWr9FOuSMCAwEA" +
+                "AaNFMEMwEgYDVR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAoQwHQYDVR0O" +
+                "BBYEFEMRFpma7p1QN8JP/uJbFckJMz8yMA0GCSqGSIb3DQEBCwUAA4ICAQBlMRmP" +
+                "NnAWOxnkQ5L/rFfrNxelNv65g1igxu9ADtLpTvgoDauoT3JdaIeano3jbXxEvOPK" +
+                "oI0dwDmioYGZoZcTrMFtCLuygotZHVn+m5Lz1M+22mnR/REhrWzifDzqttEy0N1a" +
+                "OOATF3cc2RMupn1LUci5Tl+Mlx5QzfOL36UduWO6Mt3wRBmMua7vRbxU3GScIUTW" +
+                "aWUMT3MUdlYIITkMXon5S4zXvc2Z/xn98/Lj0GR/h3VnDlg+mZnIyKdHBJ/racTD" +
+                "FH1kvlU4LEvY9K6yJIi7GQvlN0JvsL7XDetnOENJrRrq5N8xSu9X9puNFaFBufuA" +
+                "NmE0EsF7MMybD4YfIhBWE4qSPEgaoa136Paf/pCPXz/BwSTlmCXoRJeybfgJsNoj" +
+                "K72heXSpJrwGI2RPKRg0UJ2Bw7GRkzubuaAB9apvBVurCngZ8n28bkCG+12v0qMh" +
+                "UwYKdlPP5mozrxK7shg+y9LBNO2x3b85Uu9hWZl3xys4P7hOtoG3y0IN05aCSvou" +
+                "l3YCmR+NJ5aK1PePq2qvSaWfBZyZBwNFlWTZb+pxLjXwul+m2Pg/9bMp0oPK7XZt" +
+                "Ar+IZ5HN+Tld2RL142d5ElizNNpiGDXlFTIqg7YzodejASdKNtn/S1z8yzHUuHE6" +
+                "ogcYf5q/tvBkp/uRH9i6L+xUSMoGHkXP2Bj9AQ=="
             ))}},
             {"id:414D4400", new X509Certificate2[]{
                 new X509Certificate2(Convert.FromBase64String(
@@ -484,13 +518,17 @@ namespace Fido2NetLib.AttestationFormat
                 var tpmRoots = TPMManufacturerRootMap[tpmManufacturer];
                 var valid = false;
                 var i = 0;
-                while (valid == false && i <= tpmRoots.Length)
+                while (valid == false && i < tpmRoots.Length)
                 {
                     var chain = new X509Chain();
                     chain.ChainPolicy.ExtraStore.Add(tpmRoots[i]);
                     i++;
                     chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    if (tpmManufacturer == "id:FFFFF1D0")
+                    {
+                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority | X509VerificationFlags.IgnoreInvalidBasicConstraints;
+                    }
+                    else chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
                     if (X5c.Values.Count > 1)
                     {
                         foreach (var cert in X5c.Values.Skip(1).Reverse())
