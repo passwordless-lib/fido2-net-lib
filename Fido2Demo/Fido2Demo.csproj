@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <UserSecretsId>25a6110a-0f77-440c-a747-e8aa31be258d</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Fido2NetLib\**" />
