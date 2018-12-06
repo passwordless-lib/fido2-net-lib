@@ -1,5 +1,4 @@
 ﻿using PeterO.Cbor;
-using Fido2NetLib.Objects;
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
@@ -65,6 +64,6 @@ namespace Fido2NetLib.AttestationFormat
             }
             return true;
         }
-        public abstract AttestationFormatVerificationResult Verify();
+        public abstract void Verify();
     }
 }

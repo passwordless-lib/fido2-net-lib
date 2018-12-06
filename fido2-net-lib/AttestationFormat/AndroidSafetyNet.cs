@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Fido2NetLib.Objects;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
@@ -17,7 +15,7 @@ namespace Fido2NetLib.AttestationFormat
         public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
         {
         }
-        public override AttestationFormatVerificationResult Verify()
+        public override void Verify()
         {
 
             // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
@@ -52,12 +50,11 @@ namespace Fido2NetLib.AttestationFormat
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken validatedToken;
 
             tokenHandler.ValidateToken(
                 signedAttestationStatement,
                 validationParameters,
-                out validatedToken);
+                out var validatedToken);
 
             if (false == (validatedToken.SigningKey is X509SecurityKey)) throw new Fido2VerificationException("Safetynet signing key invalid");
 
@@ -86,14 +83,6 @@ namespace Fido2NetLib.AttestationFormat
 
             // Verify that the ctsProfileMatch attribute in the payload of response is true
             if (true != payload) throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");
-            return new AttestationFormatVerificationResult()
-            {
-                attnType = AttestationType.Basic,
-                trustPath = (jwtToken.Header["x5c"] as JArray)
-                            .Values<string>()
-                            .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                            .ToArray()
-            };
         }
     }
 }

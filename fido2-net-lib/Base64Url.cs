@@ -29,7 +29,7 @@ namespace Fido2NetLib
                 case 0: break; // No pad chars in this case
                 case 2: s += "=="; break; // Two pad chars
                 case 3: s += "="; break; // One pad char
-                default: throw new System.FormatException();
+                default: throw new FormatException();
             }
 
             return Convert.FromBase64String(s); // Standard base64 decoder

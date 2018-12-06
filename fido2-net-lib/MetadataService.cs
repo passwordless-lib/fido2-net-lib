@@ -331,7 +331,7 @@ namespace Fido2NetLib
             _cacheDir = cachedirPath;
             if (null != _accessToken && 0x30 != _accessToken.Length && null != _cacheDir && 3 > _cacheDir.Length) throw new Fido2VerificationException("Either MDSAccessToken or CacheDir is required to instantiate Metadata instance");
 
-            payload = new System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry>();
+            payload = new System.Collections.Generic.Dictionary<Guid, MetadataTOCPayloadEntry>();
             // If we have a cache directory, let's try that first
             if (true == System.IO.Directory.Exists(_cacheDir))
             {
@@ -372,7 +372,7 @@ namespace Fido2NetLib
             }
             return mDSMetadata;
         }
-        public System.Collections.Generic.Dictionary<System.Guid, MetadataTOCPayloadEntry> payload { get; set; }
+        public System.Collections.Generic.Dictionary<Guid, MetadataTOCPayloadEntry> payload { get; set; }
         private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc)
         {
             var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(mdsToc);
@@ -428,12 +428,11 @@ namespace Fido2NetLib
                 IssuerSigningKeys = keys,
             };
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            SecurityToken validatedToken;
 
             tokenHandler.ValidateToken(
                 mdsToc,
                 validationParameters,
-                out validatedToken);
+                out var validatedToken);
             var payload = ((System.IdentityModel.Tokens.Jwt.JwtSecurityToken)validatedToken).Payload.SerializeToJson();
             chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(System.Convert.FromBase64String((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Values<string>().Last())));
             var valid = chain.Build(new X509Certificate2(System.Convert.FromBase64String((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Values<string>().First())));
@@ -509,7 +508,7 @@ namespace Fido2NetLib
                 if (null != entry.AaGuid)
                 {
                     entry.MetadataStatement = GetMetadataStatement(entry, fromCache);
-                    payload.Add(new System.Guid(entry.AaGuid), entry);
+                    payload.Add(new Guid(entry.AaGuid), entry);
                 }
             }
             if (true == fromCache) CustomTOCPayloadFromCache();
@@ -528,7 +527,7 @@ namespace Fido2NetLib
                         MetadataStatement = statement,
                         StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }
                     };
-                    if (null != entry.AaGuid) payload.Add(new System.Guid(entry.AaGuid), entry);
+                    if (null != entry.AaGuid) payload.Add(new Guid(entry.AaGuid), entry);
                 }
             }
             else
@@ -540,7 +539,7 @@ namespace Fido2NetLib
                     StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
                     MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "" }
                 };
-                payload.Add(new System.Guid(entry.AaGuid), entry);
+                payload.Add(new Guid(entry.AaGuid), entry);
 
                 // from https://developers.yubico.com/U2F/yubico-u2f-ca-certs.txt
                 var yubicoRoot =    "MIIDHjCCAgagAwIBAgIEG0BT9zANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZ" +
@@ -568,7 +567,26 @@ namespace Fido2NetLib
                     StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
                     MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
                 };
-                payload.Add(new System.Guid(yubico.AaGuid), yubico);
+                payload.Add(new Guid(yubico.AaGuid), yubico);
+
+                // YubiKey 5 USB and NFC AAGUID values from https://support.yubico.com/support/solutions/articles/15000014219-yubikey-5-series-technical-manual#AAGUID_Valuesxf002do
+                var yubikey5usb = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "cb69481e-8ff7-4039-93ec-0a2729a154a8",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                };
+                payload.Add(new Guid(yubikey5usb.AaGuid), yubikey5usb);
+
+                var yubikey5nfc = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "fa2b99dc-9e39-4257-8f92-4a30d23c4118",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                };
+                payload.Add(new Guid(yubikey5nfc.AaGuid), yubikey5nfc);
             }
         }
 

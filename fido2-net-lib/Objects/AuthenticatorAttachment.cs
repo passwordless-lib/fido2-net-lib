@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Fido2NetLib;
-using Newtonsoft.Json;
 
 namespace Fido2NetLib.Objects
 {
