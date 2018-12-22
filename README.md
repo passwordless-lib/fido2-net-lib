@@ -170,6 +170,8 @@ return Json(res);
 
 https://www.nuget.org/packages/Fido2/
 
+# Contributing
+
 ## To run the project locally
 
 Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
@@ -180,6 +182,14 @@ In order to utilize the metadata provided from FIDO Alliance Metadata Service yo
 The HTML and javascript is copied (and then updated) from WebAuthn.io.
 
 Feedback, issues and pull requests are VERY welcome.
+
+## Build
+
+[![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
+
+All PR's and the master branch is built with Azure Devops.
+
+Scripts to build, pack and publish a nuget package is located in ./scripts/
 
 
 ## Conformance testing tool
