@@ -201,7 +201,7 @@ namespace Fido2NetLib.AttestationFormat
             }
 
             if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
-            if (true != androidKeyPubKey.VerifyData(Data, CryptoUtils.SigFromEcDsaSig(Sig.GetByteString()), CryptoUtils.algMap[Alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
+            if (true != androidKeyPubKey.VerifyData(Data, CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), androidKeyPubKey.KeySize), CryptoUtils.algMap[Alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
 
             var credentialPublicKey = CBORObject.DecodeFromBytes(AuthData.AttData.CredentialPublicKey);
             var cng = ECDsa.Create(new ECParameters
@@ -215,7 +215,7 @@ namespace Fido2NetLib.AttestationFormat
                 }
             });
             // Verify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
-            if (true != cng.VerifyData(Data, CryptoUtils.SigFromEcDsaSig(Sig.GetByteString()), CryptoUtils.algMap[Alg.AsInt32()]))
+            if (true != cng.VerifyData(Data, CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), cng.KeySize), CryptoUtils.algMap[Alg.AsInt32()]))
                 throw new Fido2VerificationException("Invalid android key signature");
 
             // Verify that in the attestation certificate extension data:

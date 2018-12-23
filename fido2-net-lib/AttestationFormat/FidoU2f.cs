@@ -53,7 +53,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
 
-            var ecsig = CryptoUtils.SigFromEcDsaSig(Sig.GetByteString());
+            var ecsig = CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), pubKey.KeySize);
             if (null == ecsig)
                 throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
 
