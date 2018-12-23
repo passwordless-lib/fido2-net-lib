@@ -4,7 +4,7 @@ A working implementation library + demo for fido2 and WebAuthn using .NET
 ### Purpose
 Provide a developer friendly and well tested .NET server side library for easy validation (attestation & assertion) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating phishing attacks.
 
-```Install-Package Fido2 -Version 1.0.0-preview ```
+```Install-Package Fido2 -Version 1.0.0-preview2 ```
 
 ### Demo
 * **Online example**: https://fido2.azurewebsites.net/
@@ -189,7 +189,7 @@ Feedback, issues and pull requests are VERY welcome.
 
 All PR's and the master branch is built with Azure Devops.
 
-Scripts to build, pack and publish a nuget package is located in ./scripts/
+Scripts to build, pack and publish a nuget package are located in ./scripts/
 
 
 ## Conformance testing tool
