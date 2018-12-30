@@ -48,7 +48,7 @@ Please see the [demo controller](https://github.com/abergs/fido2-net-lib/blob/ma
 
 To add fido2 credentials to an existing user account, we we perform a attestation process. It starts with returning options to the client.
 
-```
+```csharp
 // file: Controller.cs
 // 1. Get user from DB by username (in our example, auto create missing users)
 var user = DemoStorage.GetOrAddUser(username, () => new User
@@ -75,7 +75,7 @@ return Json(options);
 
 When the client returns a response, we verify and register the credentials.
 
-```
+```csharp
 // file: Controller.cs
 // 1. get the options we sent the client
 var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
@@ -111,7 +111,7 @@ When a user wants to log a user in, we do an assertion based on the registered c
 
 First we create the assertion options and return to the client.
 
-```
+```csharp
 // file: Controller.cs
 // 1. Get user from DB
 var user = DemoStorage.GetUser(username);
@@ -136,7 +136,7 @@ return Json(options);
 ### Verify the assertion response
 When the client returns a response, we verify it and accepts the login.
 
-```
+```csharp
 // 1. Get the assertion options we sent the client
 var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions");
 var options = AssertionOptions.FromJson(jsonOptions);
