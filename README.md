@@ -185,7 +185,9 @@ Feedback, issues and pull requests are VERY welcome.
 
 ## Build
 
-[![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
+Build: [![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)  
+Tests:
+[![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
 
 All PR's and the master branch is built with Azure Devops.
 
