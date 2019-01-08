@@ -1,4 +1,7 @@
 using System;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace Fido2NetLib
 {
@@ -42,6 +45,16 @@ namespace Fido2NetLib
         public static T ToEnum<T>(this string inString, T defaultValue, bool ignoreCase = true, bool throwException = false) where T : struct
         {
             return (T)ParseEnum<T>(inString, defaultValue, ignoreCase, throwException);
+        }
+
+        public static string ToEnumMemberValue<T>(this T value) where T : struct, IConvertible
+        {
+            return typeof(T)
+                .GetTypeInfo()
+                .DeclaredMembers
+                .SingleOrDefault(x => x.Name == value.ToString())
+                ?.GetCustomAttribute<EnumMemberAttribute>(false)
+                ?.Value;
         }
     }
 }

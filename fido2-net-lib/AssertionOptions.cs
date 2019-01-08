@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Fido2NetLib.Objects;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Fido2NetLib
 {
@@ -39,7 +38,6 @@ namespace Fido2NetLib
         /// This member describes the Relying Party's requirements regarding user verification for the get() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement
         /// </summary>
         [JsonProperty("userVerification")]
-        [JsonConverter(typeof(StringEnumConverter))]
         public UserVerificationRequirement UserVerification { get; set; }
 
         internal static AssertionOptions Create(Fido2.Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification)

@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -15,7 +14,6 @@ namespace Fido2NetLib
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] RawId { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
         public PublicKeyCredentialType Type { get; set; }
 
         public ResponseData Response { get; set; }

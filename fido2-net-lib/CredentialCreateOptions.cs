@@ -1,6 +1,5 @@
 ﻿using Fido2NetLib.Objects;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 using static Fido2NetLib.Fido2;
 using Fido2NetLib.Objects;
@@ -48,7 +47,6 @@ namespace Fido2NetLib
         /// This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance.The default is none.
         /// </summary>
         [JsonProperty("attestation")]
-        [JsonConverter(typeof(StringEnumConverter))]
         public AttestationConveyancePreference Attestation { get; set; } = AttestationConveyancePreference.None;
 
         [JsonProperty("authenticatorSelection")]
@@ -161,7 +159,6 @@ namespace Fido2NetLib
         /// The type member specifies the type of credential to be created.
         /// </summary>
         [JsonProperty("type")]
-        [JsonConverter(typeof(StringEnumConverter))]
         public PublicKeyCredentialType Type { get; set; }
 
         /// <summary>
@@ -201,7 +198,6 @@ namespace Fido2NetLib
         /// If this member is present, eligible authenticators are filtered to only authenticators attached with the specified §5.4.5 Authenticator Attachment enumeration (enum AuthenticatorAttachment).
         /// </summary>
         [JsonProperty("authenticatorAttachment", NullValueHandling = NullValueHandling.Ignore)]
-        [JsonConverter(typeof(StringEnumConverter))]
         public AuthenticatorAttachment? AuthenticatorAttachment { get; set; }
 
         /// <summary>
@@ -214,7 +210,6 @@ namespace Fido2NetLib
         /// This member describes the Relying Party's requirements regarding user verification for the create() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement.
         /// </summary>
         [JsonProperty("userVerification")]
-        [JsonConverter(typeof(StringEnumConverter))]
         public UserVerificationRequirement UserVerification { get; set; }
 
         public static AuthenticatorSelection Default => new AuthenticatorSelection
