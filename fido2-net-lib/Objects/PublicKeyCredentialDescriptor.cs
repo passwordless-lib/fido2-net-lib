@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Fido2NetLib.Objects
 {
@@ -13,7 +14,8 @@ namespace Fido2NetLib.Objects
         /// This member contains the type of the public key credential the caller is referring to.
         /// </summary>
         [JsonProperty("type")]
-        public string Type { get; set; } = "public-key";
+        [JsonConverter(typeof(StringEnumConverter))]
+        public PublicKeyCredentialType Type { get; set; } = PublicKeyCredentialType.PublicKey;
 
         /// <summary>
         /// This member contains the credential ID of the public key credential the caller is referring to.
@@ -25,7 +27,7 @@ namespace Fido2NetLib.Objects
         /// <summary>
         /// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator of the public key credential the caller is referring to.
         /// </summary>
-        [JsonProperty("transports")]
+        [JsonProperty("transports", ItemConverterType = typeof(StringEnumConverter))]
         public AuthenticatorTransport[] Transports { get; set; } = new AuthenticatorTransport[] { };
 
         public PublicKeyCredentialDescriptor(byte[] credentialId)

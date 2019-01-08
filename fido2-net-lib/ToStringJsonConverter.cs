@@ -23,7 +23,7 @@ namespace Fido2NetLib
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var p = objectType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic,null, new[] { typeof(string) },null);
+            var p = objectType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(string) }, null);
             if (p != null)
             {
                 return p.Invoke(new object[] { (string)reader.Value });
@@ -35,9 +35,7 @@ namespace Fido2NetLib
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             writer.WriteValue(value.ToString());
-
         }
-
 
         //public override TypedString ReadJson(JsonReader reader, Type objectType, TypedString existingValue, bool hasExistingValue, JsonSerializer serializer)
         //{

@@ -61,11 +61,14 @@ namespace Fido2Demo
                 // 3. Create options
                 var authenticatorSelection = new AuthenticatorSelection
                 {
-                    AuthenticatorAttachment = !string.IsNullOrEmpty(authType) ? AuthenticatorAttachment.Parse(authType) : null,
                     RequireResidentKey = requireResidentKey,
-                    UserVerification = UserVerificationRequirement.Parse(userVerification)
+                    UserVerification = userVerification.ToEnum<UserVerificationRequirement>()
                 };
-                var options = _lib.RequestNewCredential(user, existingKeys, authenticatorSelection, AttestationConveyancePreference.Parse(attType));
+
+                if (!string.IsNullOrEmpty(authType))
+                    authenticatorSelection.AuthenticatorAttachment = authType.ToEnum<AuthenticatorAttachment>();
+
+                var options = _lib.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>());
 
                 // 4. Temporarily store options, session/in-memory cache/redis/db
                 HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -183,7 +186,7 @@ namespace Fido2Demo
                 // 7. return OK to client
                 return Json(res);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return Json(new AssertionVerificationResult { Status = "error", ErrorMessage = FormatException(e) });
             }

@@ -28,7 +28,7 @@ namespace Fido2NetLib
         {
             if (null == rawResponse || null == rawResponse.Response)
                 throw new Fido2VerificationException("Expected rawResponse, got null");
-            
+
             if (null == rawResponse.Response.AttestationObject || 0 == rawResponse.Response.AttestationObject.Length)
                 throw new Fido2VerificationException("Missing AttestationObject");
 
@@ -42,13 +42,13 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Malformed AttestationObject");
             }
 
-            if (    null == cborAttestation["fmt"] ||
-                    CBORType.TextString != cborAttestation["fmt"].Type || 
+            if (null == cborAttestation["fmt"] ||
+                    CBORType.TextString != cborAttestation["fmt"].Type ||
                     null == cborAttestation["attStmt"] ||
-                    CBORType.Map != cborAttestation["attStmt"].Type || 
+                    CBORType.Map != cborAttestation["attStmt"].Type ||
                     null == cborAttestation["authData"] ||
                     CBORType.ByteString != cborAttestation["authData"].Type
-                    )   throw new Fido2VerificationException("Malformed AttestationObject");
+                    ) throw new Fido2VerificationException("Malformed AttestationObject");
 
             var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
             {
@@ -76,7 +76,7 @@ namespace Fido2NetLib
             if (Raw.Id == null || Raw.Id.Length == 0)
                 throw new Fido2VerificationException("AttestationResponse is missing Id");
 
-            if (Raw.Type != "public-key")
+            if (Raw.Type != PublicKeyCredentialType.PublicKey)
                 throw new Fido2VerificationException("AttestationResponse is missing type with value 'public-key'");
 
             if (null == AttestationObject.AuthData || 0 == AttestationObject.AuthData.Length)
@@ -98,7 +98,7 @@ namespace Fido2NetLib
                 clientDataHash = sha.ComputeHash(Raw.Response.ClientDataJson);
                 rpIdHash = sha.ComputeHash(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
             }
-            
+
             // 9 
             // Verify that the RP ID hash in authData is indeed the SHA - 256 hash of the RP ID expected by the RP.
             if (false == authData.RpIdHash.SequenceEqual(rpIdHash))
@@ -129,33 +129,33 @@ namespace Fido2NetLib
                 // 14
                 // validate the attStmt
                 case "none":
-                        // https://www.w3.org/TR/webauthn/#none-attestation
-                        verifier = new None(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                    // https://www.w3.org/TR/webauthn/#none-attestation
+                    verifier = new None(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
                     break;
 
                 case "tpm":
-                        // https://www.w3.org/TR/webauthn/#tpm-attestation
-                        verifier = new Tpm(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                    // https://www.w3.org/TR/webauthn/#tpm-attestation
+                    verifier = new Tpm(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
                     break;
 
                 case "android-key":
-                        // https://www.w3.org/TR/webauthn/#android-key-attestation
-                        verifier = new AndroidKey(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                    // https://www.w3.org/TR/webauthn/#android-key-attestation
+                    verifier = new AndroidKey(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
                     break;
 
                 case "android-safetynet":
-                        // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
-                        verifier = new AndroidSafetyNet(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                    // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
+                    verifier = new AndroidSafetyNet(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
                     break;
 
                 case "fido-u2f":
-                        // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
-                        verifier = new FidoU2f(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                    // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
+                    verifier = new FidoU2f(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
                     break;
 
                 case "packed":
-                        // https://www.w3.org/TR/webauthn/#packed-attestation
-                        verifier = new Packed(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
+                    // https://www.w3.org/TR/webauthn/#packed-attestation
+                    verifier = new Packed(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
                     break;
 
                 default: throw new Fido2VerificationException("Missing or unknown attestation type");
@@ -209,7 +209,7 @@ namespace Fido2NetLib
                 PublicKey = authData.AttData.CredentialPublicKey,
                 User = originalOptions.User,
                 Counter = BitConverter.ToUInt32(authData.SignCount.Reverse().ToArray(), 0)
-            };            
+            };
 
             return result;
         }

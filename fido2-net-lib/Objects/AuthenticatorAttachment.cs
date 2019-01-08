@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Runtime.Serialization;
 
 namespace Fido2NetLib.Objects
 {
@@ -9,33 +9,20 @@ namespace Fido2NetLib.Objects
     /// </summary>
     /// <remarks>
     /// Note: An authenticator attachment modality selection option is available only in the [[Create]](origin, options, sameOriginWithAncestors) operation. The Relying Party may use it to, for example, ensure the user has a roaming credential for authenticating on another client device; or to specifically register a platform credential for easier reauthentication using a particular client device. The [[DiscoverFromExternalSource]](origin, options, sameOriginWithAncestors) operation has no authenticator attachment modality selection option, so the Relying Party SHOULD accept any of the user’s registered credentials. The client and user will then use whichever is available and convenient at the time.
+    /// https://w3c.github.io/webauthn/#attachment
     /// </remarks>
-    public sealed class AuthenticatorAttachment : TypedString
+    public enum AuthenticatorAttachment
     {
         /// <summary>
         /// This value indicates platform attachment
         /// </summary>
-        public static readonly AuthenticatorAttachment Platform = new AuthenticatorAttachment("platform");
+        [EnumMember(Value = "platform")]
+        Platform,
+
         /// <summary>
         /// This value indicates cross-platform attachment.
         /// </summary>
-        public static readonly AuthenticatorAttachment CrossPlatform = new AuthenticatorAttachment("cross-platform");
-
-        private AuthenticatorAttachment(string value) : base(value)
-        {
-        }
-
-        public static AuthenticatorAttachment Parse(string value)
-        {
-            switch (value)
-            {
-                case "platform":
-                    return Platform;
-                case "cross-platform":
-                    return CrossPlatform;
-                default:
-                    throw new InvalidOperationException("Could not parse value");
-            }
-        }
+        [EnumMember(Value = "cross-platform")]
+        CrossPlatform
     }
 }

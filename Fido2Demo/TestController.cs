@@ -23,7 +23,7 @@ namespace Fido2Demo
          * 
          * 
          */
-    private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
+        private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         private Fido2 _lib;
 
@@ -42,9 +42,9 @@ namespace Fido2Demo
         [Route("/attestation/options")]
         public JsonResult MakeCredentialOptionsTest([FromBody] TEST_MakeCredentialParams opts)
         {
-            
+
             var attType = opts.Attestation;
-            
+
             var username = opts.Username;
 
             // 1. Get user from DB by username (in our example, auto create missing users)
@@ -115,7 +115,7 @@ namespace Fido2Demo
             var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
             var uv = assertionClientParams.UserVerification;
-            if (null != assertionClientParams.authenticatorSelection && null == assertionClientParams.UserVerification) uv = assertionClientParams.authenticatorSelection.UserVerification;
+            if (null != assertionClientParams.authenticatorSelection) uv = assertionClientParams.authenticatorSelection.UserVerification;
             // 3. Create options
             var options = _lib.GetAssertionOptions(
                 existingCredentials,
@@ -156,7 +156,7 @@ namespace Fido2Demo
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
 
-            var testRes = new 
+            var testRes = new
             {
                 status = "ok",
                 errorMessage = ""

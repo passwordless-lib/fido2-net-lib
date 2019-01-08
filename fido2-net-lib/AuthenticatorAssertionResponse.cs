@@ -50,7 +50,7 @@ namespace Fido2NetLib
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
-            if (Raw.Type != "public-key") throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
+            if (Raw.Type != PublicKeyCredentialType.PublicKey) throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
 
             if (Raw.Id == null) throw new Fido2VerificationException("Id is missing");
             if (Raw.RawId == null) throw new Fido2VerificationException("RawId is missing");
@@ -82,7 +82,7 @@ namespace Fido2NetLib
 
             // 5. Let JSONtext be the result of running UTF-8 decode on the value of cData.
             //var JSONtext = Encoding.UTF8.GetBytes(cData.ToString());
-            
+
 
             // 7. Verify that the value of C.type is the string webauthn.get.
             if (Type != "webauthn.get") throw new Fido2VerificationException();
