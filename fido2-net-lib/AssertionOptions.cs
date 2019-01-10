@@ -67,5 +67,5 @@ namespace Fido2NetLib
         // TODO: Add Extensions
     }
 
-    
+
 }

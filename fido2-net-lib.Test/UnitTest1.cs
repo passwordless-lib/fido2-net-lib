@@ -36,17 +36,15 @@ namespace fido2_net_lib.Test
             var json = JsonConvert.SerializeObject(x2);
             var c3 = JsonConvert.DeserializeObject<AuthenticatorSelection>(json);
 
-            Assert.Equal("discouraged", c3.UserVerification);
             Assert.Equal(UserVerificationRequirement.Discouraged, c3.UserVerification);
 
-            Assert.NotEqual("required", c3.UserVerification);
             Assert.NotEqual(UserVerificationRequirement.Required, c3.UserVerification);
 
-            Assert.True("discouraged" == UserVerificationRequirement.Discouraged);
-            Assert.False("discouraged" != UserVerificationRequirement.Discouraged);
+            // Assert.True("discouraged" == UserVerificationRequirement.Discouraged);
+            // Assert.False("discouraged" != UserVerificationRequirement.Discouraged);
 
-            Assert.False("required" == UserVerificationRequirement.Discouraged);
-            Assert.True("required" != UserVerificationRequirement.Discouraged);
+            Assert.False(UserVerificationRequirement.Required == UserVerificationRequirement.Discouraged);
+            Assert.True(UserVerificationRequirement.Required != UserVerificationRequirement.Discouraged);
 
             // testing where string and membername mismatch
 
@@ -56,7 +54,7 @@ namespace fido2_net_lib.Test
 
             var y2 = JsonConvert.DeserializeObject<AuthenticatorAttachment>(yjson);
 
-            Assert.Equal("cross-platform", y2);
+            Assert.Equal(AuthenticatorAttachment.CrossPlatform, y2);
 
             // test list of typedstrings
             var z1 = new[] { AuthenticatorTransport.Ble, AuthenticatorTransport.Usb, AuthenticatorTransport.Nfc };
@@ -87,7 +85,7 @@ namespace fido2_net_lib.Test
                     new PublicKeyCredentialDescriptor()
                     {
                         Id = StringToByteArray(credId),
-                        Type = "public-key"
+                        Type = PublicKeyCredentialType.PublicKey
                     }
                 };
 
