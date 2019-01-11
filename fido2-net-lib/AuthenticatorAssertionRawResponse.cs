@@ -17,7 +17,7 @@ namespace Fido2NetLib
 
         public AssertionResponse Response { get; set; }
 
-        public PublicKeyCredentialType Type { get; set; }
+        public PublicKeyCredentialType? Type { get; set; }
 
         public class AssertionResponse
         {
