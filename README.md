@@ -1,5 +1,8 @@
 # FIDO2 .NET library (WebAuthn)
-A working implementation library + demo for fido2 and WebAuthn using .NET 
+A working implementation library + demo for fido2 and WebAuthn using .NET  
+
+[![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
+[![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
 
 ### Purpose
 Provide a developer friendly and well tested .NET server side library for easy validation (attestation & assertion) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating phishing attacks.
@@ -185,9 +188,8 @@ Feedback, issues and pull requests are VERY welcome.
 
 ## Build
 
-Build: [![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)  
-Tests:
-[![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
+[![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
+[![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
 
 All PR's and the master branch is built with Azure Devops.
 
