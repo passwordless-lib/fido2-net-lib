@@ -8,8 +8,10 @@ namespace Fido2NetLib.AttestationFormat
 {
     class FidoU2f : AttestationFormat
     {
-        public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
+        private readonly IMetadataService MetadataService;
+        public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
         {
+            MetadataService = metadataService;
         }
         public override void Verify()
         {
@@ -28,6 +30,38 @@ namespace Fido2NetLib.AttestationFormat
                 throw new Fido2VerificationException("Malformed x5c in fido-u2f attestation");
 
             var cert = new X509Certificate2(X5c.Values.First().GetByteString());
+
+            var u2ftransports = U2FTransportsFromAttnCert(cert.Extensions);
+
+            var aaguid = AaguidFromAttnCertExts(cert.Extensions);
+
+            if (null != MetadataService && null != aaguid)
+            {
+                var guidAaguid = AttestedCredentialData.FromBigEndian(aaguid);
+                var entry = MetadataService.GetEntry(guidAaguid);
+
+                if (null != entry && null != entry.MetadataStatement)
+                {
+                    if (entry.Hash != entry.MetadataStatement.Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
+                    var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
+                    
+                    var chain = new X509Chain();
+                    chain.ChainPolicy.ExtraStore.Add(root);
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+                    var valid = chain.Build(cert);
+
+                    if ( 
+                    //  the root cert has exactly one status listed against it
+                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                    // and that that status is a status of exactly UntrustedRoot
+                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot) valid = true;
+                    if (false == valid)
+                    {
+                        throw new Fido2VerificationException("Invalid certificate chain in U2F attestation");
+                    }
+                }
+            }
 
             // 2b. If certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve, terminate this algorithm and return an appropriate error
             var pubKey = (ECDsaCng)cert.GetECDsaPublicKey();

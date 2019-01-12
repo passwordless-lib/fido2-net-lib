@@ -13,24 +13,7 @@ namespace Fido2NetLib.AttestationFormat
         {
             MetadataService = metadataService;
         }
-        public static int U2FTransportsFromAttnCert(X509ExtensionCollection exts)
-        {
-            var u2ftransports = 0;
-            foreach (var ext in exts)
-            {
-                if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.2.1.1"))
-                {
-                    var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
-                    // BIT STRING
-                    if (0x3 != ms.ReadByte()) throw new Fido2VerificationException("Expected bit string");
-                    if (0x2 != ms.ReadByte()) throw new Fido2VerificationException("Expected integer value");
-                    var unused = ms.ReadByte(); // unused byte
-                    // https://fidoalliance.org/specs/fido-u2f-v1.1-id-20160915/fido-u2f-authenticator-transports-extension-v1.1-id-20160915.html#fido-u2f-certificate-transports-extension
-                    u2ftransports = ms.ReadByte(); // do something with this?
-                }
-            }
-            return u2ftransports;
-        }
+
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
             var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None).Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
@@ -109,6 +92,7 @@ namespace Fido2NetLib.AttestationFormat
 
                 // id-fido-u2f-ce-transports 
                 var u2ftransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
+
                 var trustPath = X5c.Values
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
