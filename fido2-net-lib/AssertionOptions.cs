@@ -17,7 +17,7 @@ namespace Fido2NetLib
         public byte[] Challenge { get; set; }
 
         /// <summary>
-        /// This member represents a challenge that the selected authenticator signs, along with other data, when producing an authentication assertion.See the §13.1 Cryptographic Challenges security consideration
+        /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint, and MAY be overridden by the client.
         /// </summary>
         [JsonProperty("timeout")]
         public uint Timeout { get; set; }
@@ -40,7 +40,13 @@ namespace Fido2NetLib
         [JsonProperty("userVerification")]
         public UserVerificationRequirement UserVerification { get; set; }
 
-        internal static AssertionOptions Create(Fido2.Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification)
+        /// <summary>
+        /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
+        /// </summary>
+        [JsonProperty("extensions", NullValueHandling = NullValueHandling.Ignore)]
+        public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+
+        internal static AssertionOptions Create(Fido2.Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification, AuthenticationExtensionsClientOutputs extensions)
         {
             return new AssertionOptions()
             {
@@ -50,7 +56,8 @@ namespace Fido2NetLib
                 Timeout = config.Timeout,
                 RpId = config.ServerDomain,
                 AllowCredentials = allowedCredentials ?? new List<PublicKeyCredentialDescriptor>(),
-                UserVerification = userVerification
+                UserVerification = userVerification,
+                Extensions = extensions
             };
         }
 
@@ -63,9 +70,5 @@ namespace Fido2NetLib
         {
             return JsonConvert.DeserializeObject<AssertionOptions>(json);
         }
-
-        // TODO: Add Extensions
     }
-
-
 }

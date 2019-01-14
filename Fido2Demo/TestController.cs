@@ -116,10 +116,20 @@ namespace Fido2Demo
 
             var uv = assertionClientParams.UserVerification;
             if (null != assertionClientParams.authenticatorSelection) uv = assertionClientParams.authenticatorSelection.UserVerification;
+
+            AuthenticationExtensionsClientOutputs exts = null;
+
+            if (null != assertionClientParams.Extensions
+                && null != assertionClientParams.Extensions.ExampleExtension
+                && 0 != assertionClientParams.Extensions.ExampleExtension.Length)
+
+                exts = new AuthenticationExtensionsClientOutputs(){ ExampleExtension = assertionClientParams.Extensions.ExampleExtension };
+
             // 3. Create options
             var options = _lib.GetAssertionOptions(
                 existingCredentials,
-                uv
+                uv,
+                exts
             );
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
@@ -179,6 +189,7 @@ namespace Fido2Demo
             public string Username { get; set; }
             public UserVerificationRequirement UserVerification { get; set; }
             public AuthenticatorSelection authenticatorSelection { get; set; }
+            public AuthenticationExtensionsClientInputs Extensions { get; set; }
         }
 
         public class TEST_MakeCredentialParams
