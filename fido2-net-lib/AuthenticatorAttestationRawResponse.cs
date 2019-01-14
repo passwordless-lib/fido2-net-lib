@@ -14,7 +14,7 @@ namespace Fido2NetLib
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] RawId { get; set; }
 
-        public PublicKeyCredentialType Type { get; set; }
+        public PublicKeyCredentialType? Type { get; set; }
 
         public ResponseData Response { get; set; }
 

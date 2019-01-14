@@ -13,7 +13,7 @@ namespace Fido2NetLib.Objects
         /// This member contains the type of the public key credential the caller is referring to.
         /// </summary>
         [JsonProperty("type")]
-        public PublicKeyCredentialType Type { get; set; } = PublicKeyCredentialType.PublicKey;
+        public PublicKeyCredentialType? Type { get; set; } = PublicKeyCredentialType.PublicKey;
 
         /// <summary>
         /// This member contains the credential ID of the public key credential the caller is referring to.
