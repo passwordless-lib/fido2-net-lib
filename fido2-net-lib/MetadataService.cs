@@ -355,7 +355,7 @@ namespace Fido2NetLib
             if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
         }
         /// <summary>
-        /// Returns or creates an instance of the MetadataSerivce. The paramters will only be used when the singleton is not alreayd created.
+        /// Returns or creates an instance of the MetadataSerivce. The paramters will only be used when the singleton is not already created.
         /// </summary>
         /// <param name="accesskey"></param>
         /// <param name="cachedirPath"></param>
@@ -537,7 +537,7 @@ namespace Fido2NetLib
                     AaGuid = "2b2ecbb4-59b4-44fa-868d-a072485d8ae0",
                     Hash = "",
                     StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
-                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "" }
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Virtual Secp256R1 FIDO2 Conformance Testing CTAP2 Authenticator with Self(surrogate) attestation" }
                 };
                 payload.Add(new Guid(entry.AaGuid), entry);
 
@@ -565,7 +565,7 @@ namespace Fido2NetLib
                     AaGuid = "f8a011f3-8c0a-4d15-8006-17111f9edc7d",
                     Hash = "",
                     StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
-                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Yubico YubiKey FIDO2", AttestationRootCertificates = new string[] { yubicoRoot } }
                 };
                 payload.Add(new Guid(yubico.AaGuid), yubico);
 
@@ -575,7 +575,7 @@ namespace Fido2NetLib
                     AaGuid = "cb69481e-8ff7-4039-93ec-0a2729a154a8",
                     Hash = "",
                     StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
-                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Yubico YubiKey 5 USB", AttestationRootCertificates = new string[] { yubicoRoot } }
                 };
                 payload.Add(new Guid(yubikey5usb.AaGuid), yubikey5usb);
 
@@ -584,9 +584,42 @@ namespace Fido2NetLib
                     AaGuid = "fa2b99dc-9e39-4257-8f92-4a30d23c4118",
                     Hash = "",
                     StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
-                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", AttestationRootCertificates = new string[] { yubicoRoot } }
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Yubico YubiKey 5 NFC", AttestationRootCertificates = new string[] { yubicoRoot } }
                 };
                 payload.Add(new Guid(yubikey5nfc.AaGuid), yubikey5nfc);
+
+                var msftWhfbSoftware = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "6028B017-B1D4-4C02-B4B3-AFCDAFC96BB2",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Windows Hello software authenticator"}
+                };
+                payload.Add(new Guid(msftWhfbSoftware.AaGuid), msftWhfbSoftware);
+                var msftWhfbSoftwareVbs = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "6E96969E-A5CF-4AAD-9B56-305FE6C82795",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Windows Hello VBS software authenticator"}
+                };
+                payload.Add(new Guid(msftWhfbSoftwareVbs.AaGuid), msftWhfbSoftwareVbs);
+                var msftWhfbHardware = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "08987058-CADC-4B81-B6E1-30DE50DCBE96",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Windows Hello hardware authenticator"}
+                };
+                payload.Add(new Guid(msftWhfbHardware.AaGuid), msftWhfbHardware);
+                var msftWhfbHardwareVbs = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "9DDD1817-AF5A-4672-A2B9-3E3DD95000A9",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Windows Hello VBS hardware authenticator"}
+                };
+                payload.Add(new Guid(msftWhfbHardwareVbs.AaGuid), msftWhfbHardwareVbs);
             }
         }
 

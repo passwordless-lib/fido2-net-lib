@@ -12,5 +12,6 @@ namespace Fido2NetLib.Objects
 
         public User User { get; set; }
         public string CredType { get; set; }
+        public System.Guid Aaguid { get; set; }
     }
 }

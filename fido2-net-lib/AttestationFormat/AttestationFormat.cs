@@ -75,8 +75,8 @@ namespace Fido2NetLib.AttestationFormat
                     // BIT STRING
                     if (0x3 != ms.ReadByte()) throw new Fido2VerificationException("Expected bit string");
                     if (0x2 != ms.ReadByte()) throw new Fido2VerificationException("Expected integer value");
-                    var unused = ms.ReadByte(); // unused byte
-                    // https://fidoalliance.org/specs/fido-u2f-v1.1-id-20160915/fido-u2f-authenticator-transports-extension-v1.1-id-20160915.html#fido-u2f-certificate-transports-extension
+                    var unusedBits = ms.ReadByte(); // number of unused bits
+                    // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-authenticator-transports-extension-v1.2-ps-20170411.html
                     u2ftransports = ms.ReadByte(); // do something with this?
                 }
             }

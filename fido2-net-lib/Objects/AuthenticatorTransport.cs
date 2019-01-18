@@ -35,4 +35,13 @@ namespace Fido2NetLib.Objects
         [EnumMember(Value = "internal")]
         Internal
     }
+    [System.Flags]
+    public enum FIDOU2FTransports
+    {
+        bluetoothRadio = 128,
+        bluetoothLowEnergyRadio = 64,
+        uSB = 32,
+        nFC = 16,
+        uSBInternal = 8
+    }
 }

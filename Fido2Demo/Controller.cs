@@ -20,19 +20,20 @@ namespace Fido2Demo
     public class MyController : Controller
     {
         private Fido2 _lib;
+        private IMetadataService _mds;
         private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         public MyController(IConfiguration config)
         {
             var MDSAccessKey = config["fido2:MDSAccessKey"];
-
+            _mds = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, config["fido2:MDSCacheDirPath"]);
             _lib = new Fido2(new Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
                 Origin = config["fido2:origin"],
                 // Only create and use Metadataservice if we have and acesskey
-                MetadataService = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, config["fido2:MDSCacheDirPath"])
+                MetadataService = _mds
             });
         }
 
@@ -60,18 +61,25 @@ namespace Fido2Demo
                     "<th> Attestation Type</th>" +
                     "<th class=\"no-wrap\">Create Date</th>" +
                     "<th>Counter</th>" +
+                    "<th>AAGUID</th>" +
+                    "<th>Description</th>" +
                     "<th>Public Key</th>" +
                 "</tr>";
             foreach (var cred in existingCredentials)
             {
                 var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(cred.PublicKey);
                 var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+                var desc = "";
+                try { desc = _mds.GetEntry(cred.AaGuid).MetadataStatement.Description.ToString(); }
+                catch { Exception ex; }
 
                 content +=
                     "<tr>" +
                         "<td class=\"format no-wrap\">" + cred.CredType + "</td>" +
                         "<td class=\"no-wrap\">" + cred.RegDate + "</td>" +
                         "<td class=\"no-wrap\">" + cred.SignatureCounter.ToString() + "</td>" +
+                        "<td class=\"no-wrap\">" + cred.AaGuid.ToString() + "</td>" +
+                        "<td class=\"no-wrap\">" + desc + "</td>" +
                                             "<td>";
                 switch (kty)
                 {
@@ -194,7 +202,8 @@ namespace Fido2Demo
                     UserHandle = success.Result.User.Id,
                     SignatureCounter = success.Result.Counter,
                     CredType = success.Result.CredType,
-                    RegDate = DateTime.Now
+                    RegDate = DateTime.Now,
+                    AaGuid = success.Result.Aaguid
                 });
 
                 // 4. return "ok" to the client
