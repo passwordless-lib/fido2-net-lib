@@ -70,6 +70,7 @@ namespace Fido2NetLib.Development
         public byte[] PublicKey { get; set; }
         public byte[] UserHandle { get; set; }
         public uint SignatureCounter { get; set; }
-
+        public string CredType { get; set; }
+        public DateTime RegDate { get; set; }
     }
 }

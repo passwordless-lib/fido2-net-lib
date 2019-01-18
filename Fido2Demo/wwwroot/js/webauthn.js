@@ -260,7 +260,7 @@ function registerNewCredential(newCredential) {
                 type: 'success',
                 timer: 2000
             });
-            //window.location.href = "/dashboard/" + state.user.displayName;
+            window.location.href = "/dashboard/" + state.user.displayName;
         });
 }
 
@@ -391,7 +391,7 @@ function verifyAssertion(assertedCredential) {
                 type: 'success',
                 timer: 2000
             });
-            //window.location.href = "/dashboard/" + state.user.displayName;
+            window.location.href = "/dashboard/" + state.user.displayName;
         });
 }
 

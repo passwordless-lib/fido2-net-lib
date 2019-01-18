@@ -208,7 +208,8 @@ namespace Fido2NetLib
                 CredentialId = authData.AttData.CredentialID,
                 PublicKey = authData.AttData.CredentialPublicKey,
                 User = originalOptions.User,
-                Counter = BitConverter.ToUInt32(authData.SignCount.Reverse().ToArray(), 0)
+                Counter = BitConverter.ToUInt32(authData.SignCount.Reverse().ToArray(), 0),
+                CredType = AttestationObject.Fmt,
             };            
 
             return result;

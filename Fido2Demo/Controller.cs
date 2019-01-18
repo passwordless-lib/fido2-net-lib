@@ -41,6 +41,88 @@ namespace Fido2Demo
             return string.Format("{0}{1}", e.Message, e.InnerException != null ? " (" + e.InnerException.Message + ")" : "");
         }
 
+        [HttpGet]
+        [Route("/dashboard/{username}")]
+        public ContentResult Index(string username)
+        {
+            // 1. Get user from DB
+            var user = DemoStorage.GetUser(username + "@example.com");
+            if (user == null) throw new ArgumentException("Username was not registered");
+
+            // 2. Get registered credentials from database
+            var existingCredentials = DemoStorage.GetCredentialsByUser(user);
+
+            var content = System.IO.File.ReadAllText("wwwroot/index.html");
+
+            content += "<h3 id=\"creds\">Credentials for " + username + "</h3>" +
+            "<table class=\"table\">" + 
+                "<tr>" +
+                    "<th> Attestation Type</th>" +
+                    "<th class=\"no-wrap\">Create Date</th>" +
+                    "<th>Counter</th>" +
+                    "<th>Public Key</th>" +
+                "</tr>";
+            foreach (var cred in existingCredentials)
+            {
+                var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(cred.PublicKey);
+                var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+
+                content +=
+                    "<tr>" +
+                        "<td class=\"format no-wrap\">" + cred.CredType + "</td>" +
+                        "<td class=\"no-wrap\">" + cred.RegDate + "</td>" +
+                        "<td class=\"no-wrap\">" + cred.SignatureCounter.ToString() + "</td>" +
+                                            "<td>";
+                switch (kty)
+                {
+                    case 1:
+                        {
+                            throw new Fido2VerificationException("Where did you find this device?");
+                        }
+                    case 2:
+                        {
+                            var X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                            var Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                            content += "<table class=\"sub-table\">" +
+                                    "<tr>" +
+                                        "<td><pre>X: " + BitConverter.ToString(X).Replace("-", "") + "</pre></td>" +
+                                    "</tr>" +
+                                    "<tr>" +
+                                        "<td><pre>Y: " + BitConverter.ToString(Y).Replace("-", "") + "</pre></td>" +
+                                    "</tr>" +
+                                    "</table>";
+                            break;
+                        }
+                    case 3:
+                        {
+                            var modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString();
+                            var exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                            content += "<table class=\"sub-table\">" +
+                                    "<tr>" +
+                                        "<td><pre>Modulus: " + BitConverter.ToString(modulus).Replace("-", "") + "</pre></td>" +
+                                    "</tr>" +
+                                    "<tr>" +
+                                        "<td><pre>Exponent: " + BitConverter.ToString(exponent).Replace("-", "") + "</pre></td>" +
+                                    "</tr>" +
+                                "</table>";
+                            break;
+                        }
+                    default:
+                        {
+                            throw new Fido2VerificationException("Missing or unknown keytype");
+                        }
+                }
+                    content += "</td></tr>";
+            }
+            content += "</table></div></div></body>";
+            return new ContentResult
+            {
+                ContentType = "text/html",
+                StatusCode = (int)System.Net.HttpStatusCode.OK,
+                Content = content
+            };
+        }
+
         [HttpPost]
         [Route("/makeCredentialOptions")]
         public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
@@ -110,7 +192,9 @@ namespace Fido2Demo
                     Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
                     PublicKey = success.Result.PublicKey,
                     UserHandle = success.Result.User.Id,
-                    SignatureCounter = success.Result.Counter
+                    SignatureCounter = success.Result.Counter,
+                    CredType = success.Result.CredType,
+                    RegDate = DateTime.Now
                 });
 
                 // 4. return "ok" to the client
@@ -134,7 +218,7 @@ namespace Fido2Demo
 
                 // 2. Get registered credentials from database
                 var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
-
+                
                 // 3. Create options
                 var options = _lib.GetAssertionOptions(
                     existingCredentials,

@@ -58,7 +58,13 @@ namespace Fido2NetLib
         [JsonProperty("excludeCredentials")]
         public List<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; }
 
-        public static CredentialCreateOptions Create(Configuration config, byte[] challenge, User user, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationConveyancePreference, List<PublicKeyCredentialDescriptor> excludeCredentials)
+        /// <summary>
+        /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
+        /// </summary>
+        [JsonProperty("extensions", NullValueHandling = NullValueHandling.Ignore)]
+        public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+
+        public static CredentialCreateOptions Create(Configuration config, byte[] challenge, User user, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationConveyancePreference, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientOutputs extensions)
         {
             return new CredentialCreateOptions
             {
@@ -84,8 +90,8 @@ namespace Fido2NetLib
                 },
                 AuthenticatorSelection = authenticatorSelection,
                 Attestation = attestationConveyancePreference,
-                ExcludeCredentials = excludeCredentials ?? new List<PublicKeyCredentialDescriptor>()
-
+                ExcludeCredentials = excludeCredentials ?? new List<PublicKeyCredentialDescriptor>(),
+                Extensions = extensions
             };
         }
 

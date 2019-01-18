@@ -11,5 +11,6 @@ namespace Fido2NetLib.Objects
         public byte[] PublicKey { get; set; }
 
         public User User { get; set; }
+        public string CredType { get; set; }
     }
 }
