@@ -55,16 +55,8 @@ namespace Fido2Demo
 
             var content = System.IO.File.ReadAllText("wwwroot/index.html");
 
-            content += "<h3 id=\"creds\">Credentials for " + username + "</h3>" +
-            "<table class=\"table\">" + 
-                "<tr>" +
-                    "<th> Attestation Type</th>" +
-                    "<th class=\"no-wrap\">Create Date</th>" +
-                    "<th>Counter</th>" +
-                    "<th>AAGUID</th>" +
-                    "<th>Description</th>" +
-                    "<th>Public Key</th>" +
-                "</tr>";
+            var table = "";
+
             foreach (var cred in existingCredentials)
             {
                 var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(cred.PublicKey);
@@ -73,7 +65,7 @@ namespace Fido2Demo
                 try { desc = _mds.GetEntry(cred.AaGuid).MetadataStatement.Description.ToString(); }
                 catch { Exception ex; }
 
-                content +=
+                table +=
                     "<tr>" +
                         "<td class=\"format no-wrap\">" + cred.CredType + "</td>" +
                         "<td class=\"no-wrap\">" + cred.RegDate + "</td>" +
@@ -91,7 +83,7 @@ namespace Fido2Demo
                         {
                             var X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
                             var Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
-                            content += "<table class=\"sub-table\">" +
+                            table += "<table class=\"sub-table\">" +
                                     "<tr>" +
                                         "<td><pre>X: " + BitConverter.ToString(X).Replace("-", "") + "</pre></td>" +
                                     "</tr>" +
@@ -105,7 +97,7 @@ namespace Fido2Demo
                         {
                             var modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString();
                             var exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
-                            content += "<table class=\"sub-table\">" +
+                            table += "<table class=\"sub-table\">" +
                                     "<tr>" +
                                         "<td><pre>Modulus: " + BitConverter.ToString(modulus).Replace("-", "") + "</pre></td>" +
                                     "</tr>" +
@@ -120,14 +112,13 @@ namespace Fido2Demo
                             throw new Fido2VerificationException("Missing or unknown keytype");
                         }
                 }
-                    content += "</td></tr>";
             }
-            content += "</table></div></div></body>";
+
             return new ContentResult
             {
                 ContentType = "text/html",
                 StatusCode = (int)System.Net.HttpStatusCode.OK,
-                Content = content
+                Content = string.Format(content, username, table)
             };
         }
 

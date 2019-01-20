@@ -183,7 +183,7 @@ function makeCredential() {
             console.log("Credential Options Formatted");
             console.log(makeCredentialOptions);
 
-            swal({
+            Swal.fire({
                 title: 'Registering...',
                 text: 'Tap your security key to finish registration.',
                 imageUrl: "/images/securitykey.min.svg",
@@ -209,7 +209,7 @@ function makeCredential() {
                 registerNewCredential(newCredential);
             }).catch(function (err) {
                 console.log(err);
-                swal.closeModal();
+                Swal.closeModal();
                 showErrorAlert(err.message ? err.message : err);
             });
         });
@@ -249,12 +249,12 @@ function registerNewCredential(newCredential) {
             if (response.status !== "ok") {
                 console.log("Error creating credential");
                 console.log(response.errorMessage);
-                swal.closeModal();
+                Swal.closeModal();
                 showErrorAlert(response.errorMessage);
                 return;
             }
 
-            swal({
+            Swal.fire({
                 title: 'Registration Successful!',
                 text: 'You\'ve registered successfully.',
                 type: 'success',
@@ -318,7 +318,7 @@ function getAssertion() {
             });
             console.log(makeAssertionOptions);
 
-            swal({
+            Swal.fire({
                 title: 'Logging In...',
                 text: 'Tap your security key to login.',
                 imageUrl: "/images/securitykey.min.svg",
@@ -341,7 +341,7 @@ function getAssertion() {
                 }).catch(function (err) {
                     console.log(err);
                     showErrorAlert(err.message ? err.message : err);
-                    swal.closeModal();
+                    Swal.closeModal();
                 });
         });
 }
@@ -380,12 +380,12 @@ function verifyAssertion(assertedCredential) {
             if (response.status !== "ok") {
                 console.log("Error doing assertion");
                 console.log(response.errorMessage);
-                swal.closeModal();
+                Swal.closeModal();
                 showErrorAlert(response.errorMessage);
                 return;
             }
 
-            swal({
+            Swal.fire({
                 title: 'Logged In!',
                 text: 'You\'re logged in successfully.',
                 type: 'success',
