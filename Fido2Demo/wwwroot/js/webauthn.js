@@ -221,11 +221,11 @@ function registerNewCredential(newCredential) {
     let attestationObject = new Uint8Array(newCredential.response.attestationObject);
     let clientDataJSON = new Uint8Array(newCredential.response.clientDataJSON);
     let rawId = new Uint8Array(newCredential.rawId);
-
     const data = {
         id: newCredential.id,
         rawId: b64enc(rawId),
         type: newCredential.type,
+        extensions: newCredential.getClientExtensionResults(),
         response: {
             AttestationObject: b64RawEnc(attestationObject),
             clientDataJson: b64RawEnc(clientDataJSON)
@@ -356,6 +356,7 @@ function verifyAssertion(assertedCredential) {
         id: assertedCredential.id,
         rawId: b64enc(rawId),
         type: assertedCredential.type,
+        extensions: assertedCredential.getClientExtensionResults(),
         response: {
             authenticatorData: b64RawEnc(authData),
             clientDataJson: b64RawEnc(clientDataJSON),

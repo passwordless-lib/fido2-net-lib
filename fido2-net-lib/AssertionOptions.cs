@@ -44,9 +44,9 @@ namespace Fido2NetLib
         /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
         /// </summary>
         [JsonProperty("extensions", NullValueHandling = NullValueHandling.Ignore)]
-        public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+        public AuthenticationExtensionsClientInputs Extensions { get; set; }
 
-        internal static AssertionOptions Create(Fido2.Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification, AuthenticationExtensionsClientOutputs extensions)
+        internal static AssertionOptions Create(Fido2.Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement userVerification, AuthenticationExtensionsClientInputs extensions)
         {
             return new AssertionOptions()
             {

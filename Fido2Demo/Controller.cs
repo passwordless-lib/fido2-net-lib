@@ -21,17 +21,19 @@ namespace Fido2Demo
     {
         private Fido2 _lib;
         private IMetadataService _mds;
+        private string _origin;
         private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         public MyController(IConfiguration config)
         {
             var MDSAccessKey = config["fido2:MDSAccessKey"];
             _mds = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, config["fido2:MDSCacheDirPath"]);
+            _origin = config["fido2:origin"];
             _lib = new Fido2(new Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
-                Origin = config["fido2:origin"],
+                Origin = _origin,
                 // Only create and use Metadataservice if we have and acesskey
                 MetadataService = _mds
             });
@@ -48,7 +50,6 @@ namespace Fido2Demo
         {
             // 1. Get user from DB
             var user = DemoStorage.GetUser(username + "@example.com");
-            if (user == null) throw new ArgumentException("Username was not registered");
 
             // 2. Get registered credentials from database
             var existingCredentials = DemoStorage.GetCredentialsByUser(user);
@@ -149,7 +150,9 @@ namespace Fido2Demo
                 if (!string.IsNullOrEmpty(authType))
                     authenticatorSelection.AuthenticatorAttachment = authType.ToEnum<AuthenticatorAttachment>();
 
-                var options = _lib.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>());
+                var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true };
+
+                var options = _lib.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
 
                 // 4. Temporarily store options, session/in-memory cache/redis/db
                 HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -218,11 +221,14 @@ namespace Fido2Demo
 
                 // 2. Get registered credentials from database
                 var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
-                
+
+                var exts = new AuthenticationExtensionsClientInputs() { AppID = _origin, SimpleTransactionAuthorization = "demo!", UserVerificationIndex = true, Location = true };
+
                 // 3. Create options
                 var options = _lib.GetAssertionOptions(
                     existingCredentials,
-                    UserVerificationRequirement.Discouraged
+                    UserVerificationRequirement.Discouraged,
+                    exts
                 );
 
                 // 4. Temporarily store options, session/in-memory cache/redis/db

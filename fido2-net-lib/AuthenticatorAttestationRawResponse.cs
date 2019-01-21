@@ -18,6 +18,8 @@ namespace Fido2NetLib
 
         public ResponseData Response { get; set; }
 
+        public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+
         public class ResponseData
         {
             [JsonConverter(typeof(Base64UrlConverter))]
@@ -26,7 +28,6 @@ namespace Fido2NetLib
             public byte[] ClientDataJson { get; set; }
         }
     }
-
 
     //public class Fido2CreateResponse : Fido2Response
     //{

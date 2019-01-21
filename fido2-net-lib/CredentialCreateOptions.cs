@@ -47,7 +47,10 @@ namespace Fido2NetLib
         /// </summary>
         [JsonProperty("attestation")]
         public AttestationConveyancePreference Attestation { get; set; } = AttestationConveyancePreference.None;
-
+        
+        /// <summary>
+        /// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the create() operation.
+        /// </summary>
         [JsonProperty("authenticatorSelection")]
         public AuthenticatorSelection AuthenticatorSelection { get; set; }
 
@@ -61,9 +64,9 @@ namespace Fido2NetLib
         /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
         /// </summary>
         [JsonProperty("extensions", NullValueHandling = NullValueHandling.Ignore)]
-        public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+        public AuthenticationExtensionsClientInputs Extensions { get; set; }
 
-        public static CredentialCreateOptions Create(Configuration config, byte[] challenge, User user, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationConveyancePreference, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientOutputs extensions)
+        public static CredentialCreateOptions Create(Configuration config, byte[] challenge, User user, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationConveyancePreference, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions)
         {
             return new CredentialCreateOptions
             {

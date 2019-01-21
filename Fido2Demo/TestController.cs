@@ -58,8 +58,10 @@ namespace Fido2Demo
             // 2. Get user existing keys by username
             var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
+            var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true };
+
             // 3. Create options
-            var options = _lib.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation);
+            var options = _lib.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -117,13 +119,12 @@ namespace Fido2Demo
             var uv = assertionClientParams.UserVerification;
             if (null != assertionClientParams.authenticatorSelection) uv = assertionClientParams.authenticatorSelection.UserVerification;
 
-            AuthenticationExtensionsClientOutputs exts = null;
-
+            var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true };
             if (null != assertionClientParams.Extensions
-                && null != assertionClientParams.Extensions.ExampleExtension
-                && 0 != assertionClientParams.Extensions.ExampleExtension.Length)
+                && null != assertionClientParams.Extensions.Example
+                && 0 != assertionClientParams.Extensions.Example.Length)
 
-                exts = new AuthenticationExtensionsClientOutputs(){ ExampleExtension = assertionClientParams.Extensions.ExampleExtension };
+                exts.Example = assertionClientParams.Extensions.Example;
 
             // 3. Create options
             var options = _lib.GetAssertionOptions(

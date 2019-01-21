@@ -19,6 +19,8 @@ namespace Fido2NetLib
 
         public PublicKeyCredentialType? Type { get; set; }
 
+        public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+
         public class AssertionResponse
         {
             [JsonConverter(typeof(Base64UrlConverter))]

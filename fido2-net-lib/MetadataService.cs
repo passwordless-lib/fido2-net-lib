@@ -620,6 +620,14 @@ namespace Fido2NetLib
                     MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Windows Hello VBS hardware authenticator"}
                 };
                 payload.Add(new Guid(msftWhfbHardwareVbs.AaGuid), msftWhfbHardwareVbs);
+                var soloKeysSolo = new MetadataTOCPayloadEntry
+                {
+                    AaGuid = "1B637688-A0D4-7F42-5773-0EC71C9E0279",
+                    Hash = "",
+                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
+                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "SoloKeys Solo" }
+                };
+                payload.Add(new Guid(soloKeysSolo.AaGuid), soloKeysSolo);
             }
         }
 
