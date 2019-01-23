@@ -33,8 +33,7 @@ Read more about FIDO2: [Why it's exciting](http://ideasof.andersaberg.com/develo
 - ✅ Intellisense documentation  
 - 💤 [Formal documentation](https://github.com/abergs/fido2-net-lib/issues/53)
 - 💤 Recommended [usage patterns](https://github.com/abergs/fido2-net-lib/issues/54)
-- ❌ [Extensions](https://github.com/abergs/fido2-net-lib/issues/55)
-
+- ✅ Extensions
 
 ## Configuration
 
@@ -179,8 +178,6 @@ https://www.nuget.org/packages/Fido2/
 
 Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
 You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
-
-In order to utilize the metadata provided from FIDO Alliance Metadata Service you must register for an access token (https://fidoalliance.org/mds/).  Set the `fido2:MDSAccessKey` app secret value to your access token, and the `fido2:MDSCacheDirPath` app secret value to a local directory to cache metadata. See https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets for more information on app secret usage.
 
 The HTML and javascript is copied (and then updated) from WebAuthn.io.
 
