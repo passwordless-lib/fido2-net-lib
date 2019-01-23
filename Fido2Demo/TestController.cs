@@ -26,15 +26,20 @@ namespace Fido2Demo
         private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         private Fido2 _lib;
+        private IMetadataService _mds;
+        private string _origin;
 
         public TestController(IConfiguration config)
         {
+            var MDSAccessKey = config["fido2:MDSAccessKey"];
+            _mds = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, config["fido2:MDSCacheDirPath"]);
+            _origin = config["fido2:origin"];
             _lib = new Fido2(new Fido2.Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
-                Origin = config["fido2:origin"],
-                MetadataService = MDSMetadata.Instance(config["fido2:MDSAccessKey"], config["fido2:MDSCacheDirPath"])
+                Origin = _origin,
+                MetadataService = _mds
             });
         }
 
@@ -58,7 +63,7 @@ namespace Fido2Demo
             // 2. Get user existing keys by username
             var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
-            var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true };
+            var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
 
             // 3. Create options
             var options = _lib.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
@@ -119,7 +124,7 @@ namespace Fido2Demo
             var uv = assertionClientParams.UserVerification;
             if (null != assertionClientParams.authenticatorSelection) uv = assertionClientParams.authenticatorSelection.UserVerification;
 
-            var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true };
+            var exts = new AuthenticationExtensionsClientInputs() { AppID = _origin, SimpleTransactionAuthorization = "FIDO", GenericTransactionAuthorization = new TxAuthGenericArg { ContentType = "text/plain", Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } }, UserVerificationIndex = true, Location = true, UserVerificationMethod = true };
             if (null != assertionClientParams.Extensions
                 && null != assertionClientParams.Extensions.Example
                 && 0 != assertionClientParams.Extensions.Example.Length)

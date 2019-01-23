@@ -24,6 +24,21 @@ namespace Fido2NetLib
             }
             return result;
         }
+        public static ushort GetCBORMapLength(byte[] buffer, int index, int count)
+        {
+            var ms = new System.IO.MemoryStream(buffer, index, count);
+            // CBORObject.Read: This method will read from the stream until the end of the CBOR object is reached or an error occurs, whichever happens first.
+            CBORObject tmp = null;
+            try
+            {
+                tmp = CBORObject.Read(ms);
+            }
+            catch (Exception)
+            {
+                throw new Fido2VerificationException("Failed to read CBOR map");
+            }
+            return (ushort)tmp.EncodeToBytes().Length;
+        }
     }
     // https://www.w3.org/TR/webauthn/#sec-authenticator-data
     public class AuthenticatorData
@@ -51,7 +66,12 @@ namespace Fido2NetLib
             Extensions = null;
             // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
             if (true == AttestedCredentialDataPresent) AttData = new AttestedCredentialData(authData, ref offset);
-            if (true == ExtensionsPresent) Extensions = AuthDataHelper.GetSizedByteArray(authData, ref offset, (ushort) (authData.Length - offset));
+            if (true == ExtensionsPresent)
+            {
+                var extLen = AuthDataHelper.GetCBORMapLength(authData, offset, authData.Length - offset);
+                if (false == (extLen > 0)) throw new Fido2VerificationException("Empty extension data length with extensions flag one");
+                Extensions = AuthDataHelper.GetSizedByteArray(authData, ref offset, extLen);
+            }
             if (authData.Length != offset) throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
         }
         public byte[] RpIdHash { get; private set; }
@@ -88,25 +108,16 @@ namespace Fido2NetLib
             guid[7] = Aaguid[6];
             return new Guid(guid);
         }
+
         public AttestedCredentialData(byte[] attData, ref int offset)
         {
             Aaguid = AuthDataHelper.GetSizedByteArray(attData, ref offset, 16);
             if (null == Aaguid) throw new Fido2VerificationException("Attested credential data is invalid");
             CredentialID = AuthDataHelper.GetSizedByteArray(attData, ref offset);
+
             // Determining attested credential data's length, which is variable, involves determining credentialPublicKey’s beginning location given the preceding credentialId’s length, and then determining the credentialPublicKey’s length
-            var ms = new System.IO.MemoryStream(attData, offset, attData.Length - offset);
-            // CBORObject.Read: This method will read from the stream until the end of the CBOR object is reached or an error occurs, whichever happens first.
-            CBORObject tmp = null;
-            try
-            {
-                tmp = CBORObject.Read(ms);
-            }
-            catch (Exception)
-            {
-                throw new Fido2VerificationException("Failed to read credential public key from attested credential data");
-            }
-            var aCDLen = tmp.EncodeToBytes().Length;
-            
+            var aCDLen = AuthDataHelper.GetCBORMapLength(attData, offset, attData.Length - offset);
+
             CredentialPublicKey = AuthDataHelper.GetSizedByteArray(attData, ref offset, (ushort)(aCDLen));
             if (null == CredentialID || null == CredentialPublicKey) throw new Fido2VerificationException("Attested credential data is invalid");
         }

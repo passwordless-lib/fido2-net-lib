@@ -353,6 +353,7 @@ namespace Fido2NetLib
             }
             // If the payload count is zero, we've failed to load metadata
             if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
+            //AddConformanceTOC();
         }
         /// <summary>
         /// Returns or creates an instance of the MetadataSerivce. The paramters will only be used when the singleton is not already created.
@@ -373,7 +374,7 @@ namespace Fido2NetLib
             return mDSMetadata;
         }
         public System.Collections.Generic.Dictionary<Guid, MetadataTOCPayloadEntry> payload { get; set; }
-        private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc)
+        private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc, bool conformance = false)
         {
             var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(mdsToc);
             tocAlg = jwtToken.Header["alg"] as string;
@@ -398,8 +399,8 @@ namespace Fido2NetLib
                             "ZgIxAKulGbSFkDSZusGjbNkAhAkqTkLWo3GrN5nRBNNk2Q4BlG+AvM5q9wa5WciW" +
                             "DcMdeQIxAMOEzOFsxX9Bo0h4LOFE5y5H8bdPFYW+l5gy1tQiJv+5NUyM2IBB55XU" +
                             "YjdBz56jSA==";
-            var root = new X509Certificate2(System.Convert.FromBase64String(rootFile));
-            /*
+
+
             var conformanceRootFile =   "MIICYjCCAeigAwIBAgIPBIdvCXPXJiuD7VW0mgRQMAoGCCqGSM49BAMDMGcxCzAJ" +
                                         "BgNVBAYTAlVTMRYwFAYDVQQKDA1GSURPIEFsbGlhbmNlMScwJQYDVQQLDB5GQUtF" +
                                         "IE1ldGFkYXRhIFRPQyBTaWduaW5nIEZBS0UxFzAVBgNVBAMMDkZBS0UgUm9vdCBG" +
@@ -413,8 +414,10 @@ namespace Fido2NetLib
                                         "HO/hX9Oh69szXzD0ahmZWTAKBggqhkjOPQQDAwNoADBlAjAfT9m8LabIuGS6tXiJ" +
                                         "mRB91SjJ49dk+sPsn+AKx1/PS3wbHEGnGxDIIcQplYDFcXICMQDi33M/oUlb7RDA" +
                                         "mapRBjJxKK+oh7hlSZv4djmZV3YV0JnF1Ed5E4I0f3C04eP0bjw=";
-            var conformanceRoot = new X509Certificate2(System.Convert.FromBase64String(conformanceRootFile));
-            */
+            //var conformanceRoot = new X509Certificate2(System.Convert.FromBase64String(conformanceRootFile));
+
+            var root = conformance ? new X509Certificate2(Convert.FromBase64String(conformanceRootFile)) : new X509Certificate2(Convert.FromBase64String(rootFile));
+
             var chain = new X509Chain();
             chain.ChainPolicy.ExtraStore.Add(root);
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
@@ -490,7 +493,6 @@ namespace Fido2NetLib
             if (false == fromCache)
             {
                 mdsToc = client.DownloadString(mds2url + tokenParamName + _accessToken);
-
                 if (null != _cacheDir && 3 < _cacheDir.Length)
                 {
                     if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
@@ -512,6 +514,41 @@ namespace Fido2NetLib
                 }
             }
             if (true == fromCache) CustomTOCPayloadFromCache();
+        }
+
+        public void AddConformanceTOC()
+        {
+            var endpoints = new string[] {
+                "https://fidoalliance.co.nz/mds/execute/20c027c091eba81d2e92c6581bf42c68776dc3910cf48840b73a035e5d70f956",
+                "https://fidoalliance.co.nz/mds/execute/3e0be36ab70cdf5f32ae858b8610fcb7bf6e4f1aa47c7e53afcda5c822f5a346",
+                "https://fidoalliance.co.nz/mds/execute/55a6301b9d7a7a45dc27dceeddc9b0ae4396c7d9ea8f46757018dd865dda24c5",
+                "https://fidoalliance.co.nz/mds/execute/62c8ba89cf4f991e6890f442a606bb0b6f31f9a05946031846c4af1113046900",
+                "https://fidoalliance.co.nz/mds/execute/d352b77e801de7b0d7d9842b02721c3e708c82405353235d2c04081fff8a302a"};
+
+            var client = new System.Net.WebClient();
+            foreach (var tocURL in endpoints)
+            {
+                var rawTOC = client.DownloadString(tocURL);
+                //var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(rawTOC);
+                //var tocPayload = (jwtToken).Payload.SerializeToJson();
+                MetadataTOCPayload toc = null;
+                try { toc = ValidatedTOCFromJwtSecurityToken(rawTOC, true); }
+                catch { Exception ex; continue; }
+                
+                foreach (var entry in toc.Entries)
+                {
+                    if (null != entry.AaGuid)
+                    {
+                        var rawStatement = client.DownloadString(entry.Url);
+                        var statementBytes = Base64Url.Decode(rawStatement);
+                        var statement = System.Text.Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
+                        var metadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(statement);
+                        metadataStatement.Hash = Base64Url.Encode(CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawStatement)));
+                        entry.MetadataStatement = metadataStatement;
+                        payload.Add(new Guid(entry.AaGuid), entry);
+                    }
+                }
+            }
         }
         public void CustomTOCPayloadFromCache()
         {
