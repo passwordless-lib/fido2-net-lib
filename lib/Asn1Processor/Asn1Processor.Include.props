@@ -1,0 +1,10 @@
+<Project>
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)**/*.cs">
+            <Link>Asn1Processor\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </Compile>
+        <None Include="$(MSBuildThisFileDirectory)**/*">
+            <Link>Asn1Processor\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </None>
+    </ItemGroup>
+</Project>

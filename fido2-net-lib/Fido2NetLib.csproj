@@ -1,6 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../lib/CBOR/CBOR.Include.props" />
   <Import Project="../lib/Chaos.NaCL/Chaos.NaCL.Include.props" />
+  <Import Project="../lib/Asn1Processor/Asn1Processor.Include.props" />
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net472;netcoreapp2.0</TargetFrameworks>
@@ -26,7 +27,6 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.2.4" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
-    
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
   </ItemGroup>
 

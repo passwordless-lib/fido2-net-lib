@@ -100,6 +100,8 @@ namespace Fido2NetLib.AttestationFormat
                 if (null != MetadataService)
                 {
                     var entry = MetadataService.GetEntry(AuthData.AttData.GuidAaguid);
+                    // while conformance testing, we must reject any authenticator that we cannot get metadata for
+                    if (true == MetadataService.ConformanceTesting() && null == entry) throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
 
                     if (null != entry && null != entry.MetadataStatement)
                     {

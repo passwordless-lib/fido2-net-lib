@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using LipingShare.LCLib.Asn1Processor;
 using PeterO.Cbor;
 
 namespace Fido2NetLib
@@ -306,6 +307,47 @@ namespace Fido2NetLib
                 }
             }
             return AuthDataHelper.GetSizedByteArray(ecDsaSig, ref offset, len);
+        }
+        public static string CDPFromCertificateExts(X509ExtensionCollection exts)
+        {
+            var cdp = "";
+            foreach (var ext in exts)
+            {
+                if (ext.Oid.Value.Equals("2.5.29.31")) // id-ce-CRLDistributionPoints
+                {
+                    var asnData = new AsnEncodedData(ext.Oid, ext.RawData);
+                    cdp += asnData.Format(false).Split('=')[1];
+                }
+            }
+            return cdp;
+        }
+        public static bool IsCertInCRL(byte[] crl, X509Certificate2 cert)
+        {
+            var asnParser = new Asn1Parser();
+            var strCRL = Asn1Util.BytesToString(crl);
+
+            if (Asn1Util.IsPemFormated(strCRL))
+            {
+                asnParser.LoadData(Asn1Util.PemToStream(strCRL));
+            }
+            else asnParser.LoadData(new System.IO.MemoryStream(crl));
+
+            if (7 > asnParser.RootNode.GetChildNode(0).ChildNodeCount)
+                return false; // empty CRL
+
+            var revokedCertificates = asnParser.RootNode.GetChildNode(0).GetChildNode(5);
+
+            // throw revoked certs into a list so someday we eventually cache CRLs 
+            var revoked = new List<long>();
+            for (var i = 0;i < revokedCertificates.ChildNodeCount;i++)
+            {
+                revoked.Add(Asn1Util.BytesToLong(revokedCertificates.GetChildNode(i).GetChildNode(0).Data.Reverse().ToArray()));
+            }
+
+            if (revoked.Contains(Asn1Util.BytesToLong(cert.GetSerialNumber())))
+                return true;
+            
+            else return false;
         }
     }
 }

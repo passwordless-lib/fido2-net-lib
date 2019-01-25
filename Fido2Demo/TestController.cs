@@ -31,8 +31,9 @@ namespace Fido2Demo
 
         public TestController(IConfiguration config)
         {
-            var MDSAccessKey = config["fido2:MDSAccessKey"];
-            _mds = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, config["fido2:MDSCacheDirPath"]);
+            // Sample bogus key from https://fidoalliance.org/metadata/
+            var invalidToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
+            _mds = MDSMetadata.ConformanceInstance(invalidToken, config["fido2:MDSCacheDirPath"]);
             _origin = config["fido2:origin"];
             _lib = new Fido2(new Fido2.Configuration()
             {
@@ -50,14 +51,23 @@ namespace Fido2Demo
 
             var attType = opts.Attestation;
 
-            var username = opts.Username;
+            var username = new byte[] { };
+
+            try
+            {
+                username = Base64Url.Decode(opts.Username);
+            }
+            catch(FormatException)
+            {
+                username = System.Text.Encoding.UTF8.GetBytes(opts.Username);
+            }
 
             // 1. Get user from DB by username (in our example, auto create missing users)
-            var user = DemoStorage.GetOrAddUser(username, () => new User
+            var user = DemoStorage.GetOrAddUser(opts.Username, () => new User
             {
                 DisplayName = opts.DisplayName,
-                Name = username,
-                Id = Base64Url.Decode(username) // byte representation of userID is required
+                Name = opts.Username,
+                Id = username // byte representation of userID is required
             });
 
             // 2. Get user existing keys by username

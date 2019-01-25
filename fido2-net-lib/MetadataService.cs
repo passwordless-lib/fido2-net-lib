@@ -307,17 +307,20 @@ namespace Fido2NetLib
     public interface IMetadataService
     {
         MetadataTOCPayloadEntry GetEntry(Guid aaguid);
+        bool ConformanceTesting();
     }
 
     public sealed class MDSMetadata : IMetadataService
     {
         private static volatile MDSMetadata mDSMetadata;
+        private static volatile MDSMetadata ConformanceMetadata;
         private static object syncRoot = new object();
         public static readonly string mds2url = "https://mds2.fidoalliance.org";
         public static readonly string tokenParamName = "/?token=";
         private static string _accessToken;
         private static string _cacheDir;
         private string tocAlg;
+        public readonly bool conformance = false;
 
         private MDSMetadata(string accessToken, string cachedirPath)
         {
@@ -330,30 +333,38 @@ namespace Fido2NetLib
             _accessToken = accessToken;
             _cacheDir = cachedirPath;
             if (null != _accessToken && 0x30 != _accessToken.Length && null != _cacheDir && 3 > _cacheDir.Length) throw new Fido2VerificationException("Either MDSAccessToken or CacheDir is required to instantiate Metadata instance");
+            
+            // Sample bogus key from https://fidoalliance.org/metadata/
+            var invalidToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
+            if (_accessToken == invalidToken) conformance = true;
 
             payload = new System.Collections.Generic.Dictionary<Guid, MetadataTOCPayloadEntry>();
-            // If we have a cache directory, let's try that first
-            if (true == System.IO.Directory.Exists(_cacheDir))
+
+            if (false == conformance)
             {
-                try
+                // If we have a cache directory, let's try that first
+                if (true == System.IO.Directory.Exists(_cacheDir))
                 {
-                    GetTOCPayload(true);
+                    try
+                    {
+                        GetTOCPayload(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is Fido2VerificationException || ex is System.IO.FileNotFoundException) { }
+                        else throw;
+                        // Something wrong with cached data, revert to MDS
+                    }
                 }
-                catch (Exception ex)
+                // If the payload count is still zero and we have what looks like a good access token, load from MDS
+                if (0 == payload.Count && null != _accessToken && 0x30 == _accessToken.Length)
                 {
-                    if (ex is Fido2VerificationException || ex is System.IO.FileNotFoundException) { }
-                    else throw;
-                    // Something wrong with cached data, revert to MDS
+                    GetTOCPayload(false);
                 }
+                // If the payload count is zero, we've failed to load metadata
+                if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
             }
-            // If the payload count is still zero and we have what looks like a good access token, load from MDS
-            if (0 == payload.Count && null != _accessToken && 0x30 == _accessToken.Length)
-            {
-                GetTOCPayload(false);
-            }
-            // If the payload count is zero, we've failed to load metadata
-            if (0 == payload.Count) throw new Fido2VerificationException("Failed to load MDS metadata");
-            //AddConformanceTOC();
+            else AddConformanceTOC();
         }
         /// <summary>
         /// Returns or creates an instance of the MetadataSerivce. The paramters will only be used when the singleton is not already created.
@@ -373,8 +384,22 @@ namespace Fido2NetLib
             }
             return mDSMetadata;
         }
+
+        public static IMetadataService ConformanceInstance(string accesskey, string cachedirPath)
+        {
+            if (null == ConformanceMetadata)
+            {
+                lock (syncRoot)
+                {
+                    if (null == ConformanceMetadata)
+                        ConformanceMetadata = new MDSMetadata(accesskey, cachedirPath);
+                }
+            }
+            return ConformanceMetadata;
+        }
+
         public System.Collections.Generic.Dictionary<Guid, MetadataTOCPayloadEntry> payload { get; set; }
-        private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc, bool conformance = false)
+        private MetadataTOCPayload ValidatedTOCFromJwtSecurityToken(string mdsToc)
         {
             var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(mdsToc);
             tocAlg = jwtToken.Header["alg"] as string;
@@ -414,7 +439,7 @@ namespace Fido2NetLib
                                         "HO/hX9Oh69szXzD0ahmZWTAKBggqhkjOPQQDAwNoADBlAjAfT9m8LabIuGS6tXiJ" +
                                         "mRB91SjJ49dk+sPsn+AKx1/PS3wbHEGnGxDIIcQplYDFcXICMQDi33M/oUlb7RDA" +
                                         "mapRBjJxKK+oh7hlSZv4djmZV3YV0JnF1Ed5E4I0f3C04eP0bjw=";
-            //var conformanceRoot = new X509Certificate2(System.Convert.FromBase64String(conformanceRootFile));
+            var conformanceRoot = new X509Certificate2(System.Convert.FromBase64String(conformanceRootFile));
 
             var root = conformance ? new X509Certificate2(Convert.FromBase64String(conformanceRootFile)) : new X509Certificate2(Convert.FromBase64String(rootFile));
 
@@ -442,6 +467,17 @@ namespace Fido2NetLib
             // if the root is trusted in the context we are running in, valid should be true here
             if (false == valid)
             {
+                var client = new System.Net.WebClient();
+                foreach (var element in chain.ChainElements)
+                {
+                    if (element.Certificate.Issuer != element.Certificate.Subject)
+                    {
+                        var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
+                        var crlFile = client.DownloadData(cdp);
+                        if (true == CryptoUtils.IsCertInCRL(crlFile, element.Certificate)) throw new Fido2VerificationException(string.Format("Cert {0} found in CRL {1}", element.Certificate.Subject, cdp));
+                    }
+                }
+
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
                 if (root.Thumbprint == chain.ChainElements[chain.ChainElements.Count - 1].Certificate.Thumbprint && 
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
@@ -519,21 +555,35 @@ namespace Fido2NetLib
         public void AddConformanceTOC()
         {
             var endpoints = new string[] {
-                "https://fidoalliance.co.nz/mds/execute/20c027c091eba81d2e92c6581bf42c68776dc3910cf48840b73a035e5d70f956",
-                "https://fidoalliance.co.nz/mds/execute/3e0be36ab70cdf5f32ae858b8610fcb7bf6e4f1aa47c7e53afcda5c822f5a346",
-                "https://fidoalliance.co.nz/mds/execute/55a6301b9d7a7a45dc27dceeddc9b0ae4396c7d9ea8f46757018dd865dda24c5",
-                "https://fidoalliance.co.nz/mds/execute/62c8ba89cf4f991e6890f442a606bb0b6f31f9a05946031846c4af1113046900",
-                "https://fidoalliance.co.nz/mds/execute/d352b77e801de7b0d7d9842b02721c3e708c82405353235d2c04081fff8a302a"};
+                
+                //
+                //  Conformance endpoints for https://fido2.azurewebsites.net
+                //
+
+                "https://fidoalliance.co.nz/mds/execute/1e19e20744df09e979da4672ceffdb64be84aac59de91e76042542901475d93c",
+                "https://fidoalliance.co.nz/mds/execute/33dd72dbe49ada4bd9ec27c7f425e852a454c4311523edb2bcaf84e37915c47e",
+                "https://fidoalliance.co.nz/mds/execute/459f341ab61f84060afbdedee7dd72ff4f90d5ce16d6f6e276d92c39161fb6fa",
+                "https://fidoalliance.co.nz/mds/execute/a1fea179d1d5b089edd9cbee35b7d8216ecb5d93647706b0d9133cc50a0b09cd",
+                "https://fidoalliance.co.nz/mds/execute/dba886ea43c6ef0634d7a2c68234903b0e993e0fadab00a4f2d4169f7c139f27"
+                
+                // 
+                //  Conformance endpoints for https://localhost:44329
+                //
+
+                //"https://fidoalliance.co.nz/mds/execute/20c027c091eba81d2e92c6581bf42c68776dc3910cf48840b73a035e5d70f956",
+                //"https://fidoalliance.co.nz/mds/execute/3e0be36ab70cdf5f32ae858b8610fcb7bf6e4f1aa47c7e53afcda5c822f5a346",
+                //"https://fidoalliance.co.nz/mds/execute/55a6301b9d7a7a45dc27dceeddc9b0ae4396c7d9ea8f46757018dd865dda24c5",
+                //"https://fidoalliance.co.nz/mds/execute/62c8ba89cf4f991e6890f442a606bb0b6f31f9a05946031846c4af1113046900",
+                //"https://fidoalliance.co.nz/mds/execute/d352b77e801de7b0d7d9842b02721c3e708c82405353235d2c04081fff8a302a"
+                };
 
             var client = new System.Net.WebClient();
             foreach (var tocURL in endpoints)
             {
                 var rawTOC = client.DownloadString(tocURL);
-                //var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(rawTOC);
-                //var tocPayload = (jwtToken).Payload.SerializeToJson();
                 MetadataTOCPayload toc = null;
-                try { toc = ValidatedTOCFromJwtSecurityToken(rawTOC, true); }
-                catch { Exception ex; continue; }
+                try { toc = ValidatedTOCFromJwtSecurityToken(rawTOC); }
+                catch { continue; }
                 
                 foreach (var entry in toc.Entries)
                 {
@@ -549,34 +599,42 @@ namespace Fido2NetLib
                     }
                 }
             }
+            CustomTOCPayloadFromCache();
         }
         public void CustomTOCPayloadFromCache()
         {
-            if (true == System.IO.Directory.Exists(_cacheDir + @"\Custom"))
+            if (true == conformance && true == System.IO.Directory.Exists(_cacheDir + @"\Conformance"))
             {
-                foreach (var filename in System.IO.Directory.GetFiles(_cacheDir + @"\Custom"))
+                foreach (var filename in System.IO.Directory.GetFiles(_cacheDir + @"\Conformance"))
                 {
                     var rawStatement = System.IO.File.ReadAllText(filename);
                     var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
-                    var entry = new MetadataTOCPayloadEntry
+                    var conformanceEntry = new MetadataTOCPayloadEntry
                     {
                         AaGuid = statement.AaGuid,
                         MetadataStatement = statement,
                         StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }
                     };
-                    if (null != entry.AaGuid) payload.Add(new Guid(entry.AaGuid), entry);
+                    if (null != conformanceEntry.AaGuid) payload.Add(new Guid(conformanceEntry.AaGuid), conformanceEntry);
                 }
             }
             else
             {
-                var entry = new MetadataTOCPayloadEntry
+                if (true == System.IO.Directory.Exists(_cacheDir + @"\Custom"))
                 {
-                    AaGuid = "2b2ecbb4-59b4-44fa-868d-a072485d8ae0",
-                    Hash = "",
-                    StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
-                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Virtual Secp256R1 FIDO2 Conformance Testing CTAP2 Authenticator with Self(surrogate) attestation" }
-                };
-                payload.Add(new Guid(entry.AaGuid), entry);
+                    foreach (var filename in System.IO.Directory.GetFiles(_cacheDir + @"\Custom"))
+                    {
+                        var rawStatement = System.IO.File.ReadAllText(filename);
+                        var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
+                        var entry = new MetadataTOCPayloadEntry
+                        {
+                            AaGuid = statement.AaGuid,
+                            MetadataStatement = statement,
+                            StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }
+                        };
+                        if (null != entry.AaGuid) payload.Add(new Guid(entry.AaGuid), entry);
+                    }
+                }
 
                 // from https://developers.yubico.com/U2F/yubico-u2f-ca-certs.txt
                 var yubicoRoot =    "MIIDHjCCAgagAwIBAgIEG0BT9zANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDEyNZ" +
@@ -670,8 +728,16 @@ namespace Fido2NetLib
 
         public MetadataTOCPayloadEntry GetEntry(Guid aaguid)
         {
-            mDSMetadata.payload.TryGetValue(aaguid, out var entry);
+            MetadataTOCPayloadEntry entry;
+            if (true == conformance)
+                ConformanceMetadata.payload.TryGetValue(aaguid, out entry);
+
+            else mDSMetadata.payload.TryGetValue(aaguid, out entry);
             return entry;
+        }
+        public bool ConformanceTesting()
+        {
+            return conformance;
         }
     }
 }

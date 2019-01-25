@@ -34,7 +34,7 @@ namespace Fido2Demo
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
                 Origin = _origin,
-                // Only create and use Metadataservice if we have and acesskey
+                // Only create and use Metadataservice if we have an acesskey
                 MetadataService = _mds
             });
         }
@@ -64,7 +64,7 @@ namespace Fido2Demo
                 var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
                 var desc = "";
                 try { desc = _mds.GetEntry(cred.AaGuid).MetadataStatement.Description.ToString(); }
-                catch { Exception ex; }
+                catch { continue; }
 
                 table +=
                     "<tr>" +
