@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Fido2NetLib;
 using Fido2NetLib.Development;
@@ -33,8 +34,9 @@ namespace Fido2Demo
         {
             // Sample bogus key from https://fidoalliance.org/metadata/
             var invalidToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
-            _mds = MDSMetadata.ConformanceInstance(invalidToken, config["fido2:MDSCacheDirPath"]);
             _origin = config["fido2:origin"];
+            _mds = MDSMetadata.ConformanceInstance(invalidToken, config["fido2:MDSCacheDirPath"], _origin);
+
             _lib = new Fido2(new Fido2.Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],

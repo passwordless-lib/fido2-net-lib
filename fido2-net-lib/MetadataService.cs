@@ -319,6 +319,7 @@ namespace Fido2NetLib
         public static readonly string tokenParamName = "/?token=";
         private static string _accessToken;
         private static string _cacheDir;
+        private static string[] _endpoints;
         private string tocAlg;
         public readonly bool conformance = false;
 
@@ -384,15 +385,47 @@ namespace Fido2NetLib
             }
             return mDSMetadata;
         }
-
-        public static IMetadataService ConformanceInstance(string accesskey, string cachedirPath)
+        public class MDSGetEndpointResponse
+        {
+            [JsonProperty("status", Required = Required.Always)]
+            public string Status { get; set; }
+            [JsonProperty("result", Required = Required.Always)]
+            public string[] Result { get; set; }
+        }
+        public static IMetadataService ConformanceInstance(string accesskey, string cachedirPath, string origin)
         {
             if (null == ConformanceMetadata)
             {
                 lock (syncRoot)
                 {
                     if (null == ConformanceMetadata)
+                    {
+                        var httpWebRequest = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("https://fidoalliance.co.nz/mds/getEndpoints");
+                        httpWebRequest.ContentType = "application/json";
+                        httpWebRequest.Method = "POST";
+
+                        using (var sw = new System.IO.StreamWriter(httpWebRequest.GetRequestStream()))
+                        {
+                            var req = new
+                            {
+                                endpoint = origin
+                            };
+
+                            sw.Write(JsonConvert.SerializeObject(req));
+                            sw.Flush();
+                            sw.Close();
+                        }
+
+                        var httpResponse = (System.Net.HttpWebResponse)httpWebRequest.GetResponse();
+
+                        using (var sr = new System.IO.StreamReader(httpResponse.GetResponseStream()))
+                        {
+                            var response = JsonConvert.DeserializeObject<MDSGetEndpointResponse>(sr.ReadToEnd());
+                            _endpoints = response.Result;
+                        }
+
                         ConformanceMetadata = new MDSMetadata(accesskey, cachedirPath);
+                    }
                 }
             }
             return ConformanceMetadata;
@@ -554,31 +587,8 @@ namespace Fido2NetLib
 
         public void AddConformanceTOC()
         {
-            var endpoints = new string[] {
-                
-                //
-                //  Conformance endpoints for https://fido2.azurewebsites.net
-                //
-
-                "https://fidoalliance.co.nz/mds/execute/1e19e20744df09e979da4672ceffdb64be84aac59de91e76042542901475d93c",
-                "https://fidoalliance.co.nz/mds/execute/33dd72dbe49ada4bd9ec27c7f425e852a454c4311523edb2bcaf84e37915c47e",
-                "https://fidoalliance.co.nz/mds/execute/459f341ab61f84060afbdedee7dd72ff4f90d5ce16d6f6e276d92c39161fb6fa",
-                "https://fidoalliance.co.nz/mds/execute/a1fea179d1d5b089edd9cbee35b7d8216ecb5d93647706b0d9133cc50a0b09cd",
-                "https://fidoalliance.co.nz/mds/execute/dba886ea43c6ef0634d7a2c68234903b0e993e0fadab00a4f2d4169f7c139f27"
-                
-                // 
-                //  Conformance endpoints for https://localhost:44329
-                //
-
-                //"https://fidoalliance.co.nz/mds/execute/20c027c091eba81d2e92c6581bf42c68776dc3910cf48840b73a035e5d70f956",
-                //"https://fidoalliance.co.nz/mds/execute/3e0be36ab70cdf5f32ae858b8610fcb7bf6e4f1aa47c7e53afcda5c822f5a346",
-                //"https://fidoalliance.co.nz/mds/execute/55a6301b9d7a7a45dc27dceeddc9b0ae4396c7d9ea8f46757018dd865dda24c5",
-                //"https://fidoalliance.co.nz/mds/execute/62c8ba89cf4f991e6890f442a606bb0b6f31f9a05946031846c4af1113046900",
-                //"https://fidoalliance.co.nz/mds/execute/d352b77e801de7b0d7d9842b02721c3e708c82405353235d2c04081fff8a302a"
-                };
-
             var client = new System.Net.WebClient();
-            foreach (var tocURL in endpoints)
+            foreach (var tocURL in _endpoints)
             {
                 var rawTOC = client.DownloadString(tocURL);
                 MetadataTOCPayload toc = null;
