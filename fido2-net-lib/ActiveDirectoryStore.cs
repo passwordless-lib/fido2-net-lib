@@ -176,7 +176,7 @@ namespace Fido2NetLib
                     Descriptor = new Objects.PublicKeyCredentialDescriptor()
                     {
                         Id = (byte[]) device.Properties["fIDOAuthenticatorCredentialId"][0],
-                        Type = "public-key"
+                        Type = Objects.PublicKeyCredentialType.PublicKey
                     },
                     PublicKey = (byte[]) device.Properties["userCertificate"][0],
                     SignatureCounter = Convert.ToUInt32(device.Properties["logonCount"][0]),
@@ -253,6 +253,7 @@ namespace Fido2NetLib
                         device.Properties["fIDOAuthenticatorCredentialId"].Value = credential.Descriptor.Id;
                         device.Properties["userCertificate"].Value = credential.PublicKey;
                         device.Properties["logonCount"].Value = Convert.ToInt32(credential.SignatureCounter);
+                        device.Properties["fIDOAuthenticatorAaguid"].Value = credential.AaGuid.ToByteArray();
                         device.CommitChanges();
                     }
                 }
@@ -299,7 +300,7 @@ namespace Fido2NetLib
                         Descriptor = new Objects.PublicKeyCredentialDescriptor()
                         {
                             Id = (byte[])device.Properties["fIDOAuthenticatorCredentialId"].Value,
-                            Type = "public-key"
+                            Type = Objects.PublicKeyCredentialType.PublicKey
                         },
                         PublicKey = (byte[])device.Properties["userCertificate"].Value,
                         SignatureCounter = Convert.ToUInt32(device.Properties["logonCount"].Value),
