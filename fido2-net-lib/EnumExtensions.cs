@@ -7,49 +7,35 @@ namespace Fido2NetLib
 {
     public static class EnumExtensions
     {
-        public static T ParseEnum<T>(string inString, bool ignoreCase = true, bool throwException = true) where T : struct
+        /// <summary>
+        /// Gets the enum value from EnumMemberAttribute's value.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of enum.</typeparam>
+        /// <param name="value">The EnumMemberAttribute's value.</param>
+        /// <param name="ignoreCase">ignores the case when comparing values.</param>
+        /// <returns>TEnum.</returns>
+        /// <exception cref="System.ArgumentException">No XmlEnumAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value</exception>
+        public static TEnum ToEnum<TEnum>(this string value, bool ignoreCase = true) where TEnum : struct, IConvertible
         {
-            return (T)ParseEnum<T>(inString, default(T), ignoreCase, throwException);
-        }
-
-        public static T ParseEnum<T>(string inString, T defaultValue, bool ignoreCase = true, bool throwException = false) where T : struct
-        {
-            T returnEnum = defaultValue;
-
-            if (!typeof(T).IsEnum || string.IsNullOrEmpty(inString))
+            foreach (var o in Enum.GetValues(typeof(TEnum)))
             {
-                throw new InvalidOperationException("Invalid Enum Type or Input String 'inString'. " + typeof(T).ToString() + " must be an Enum");
+                var enumValue = (TEnum)o;
+                if (ToEnumMemberValue(enumValue).Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                    return enumValue;
             }
 
-            try
-            {
-                bool success = Enum.TryParse<T>(inString, ignoreCase, out returnEnum);
-                if (!success && throwException)
-                {
-                    throw new InvalidOperationException("Invalid Cast");
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Invalid Cast", ex);
-            }
-
-            return returnEnum;
+            throw new ArgumentException("No EnumMemberAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value);
         }
 
-        public static T ToEnum<T>(this string inString, bool ignoreCase = true, bool throwException = true) where T : struct
+        /// <summary>
+        /// Gets the EnumMemberAttribute's value from the enum's value.
+        /// </summary>
+        /// <typeparam name="TEnum">The type of enum.</typeparam>
+        /// <param name="value">The enum's value.</param>
+        /// <returns>string.</returns>
+        public static string ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, IConvertible
         {
-            return (T)ParseEnum<T>(inString, ignoreCase, throwException);
-        }
-
-        public static T ToEnum<T>(this string inString, T defaultValue, bool ignoreCase = true, bool throwException = false) where T : struct
-        {
-            return (T)ParseEnum<T>(inString, defaultValue, ignoreCase, throwException);
-        }
-
-        public static string ToEnumMemberValue<T>(this T value) where T : struct, IConvertible
-        {
-            return typeof(T)
+            return typeof(TEnum)
                 .GetTypeInfo()
                 .DeclaredMembers
                 .SingleOrDefault(x => x.Name == value.ToString())
