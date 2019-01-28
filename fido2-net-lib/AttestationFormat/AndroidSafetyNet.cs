@@ -76,10 +76,14 @@ namespace Fido2NetLib.AttestationFormat
 
             // Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
             if ("" == nonce) throw new Fido2VerificationException("Nonce value not found in Android SafetyNet attestation");
-            if (!CryptoUtils.GetHasher(HashAlgorithmName.SHA256).ComputeHash(Data).SequenceEqual(Convert.FromBase64String(nonce))) throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
+            var dataHash = CryptoUtils.GetHasher(HashAlgorithmName.SHA256).ComputeHash(Data);
+            var nonceHash = Convert.FromBase64String(nonce);
+            if (false == dataHash.SequenceEqual(nonceHash)) throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
 
             // Verify that the attestation certificate is issued to the hostname "attest.android.com"
-            if (false == ("attest.android.com").Equals((validatedToken.SigningKey as X509SecurityKey).Certificate.GetNameInfo(X509NameType.DnsName, false))) throw new Fido2VerificationException("Safetynet DnsName is not attest.android.com");
+            var attCert = (validatedToken.SigningKey as X509SecurityKey).Certificate;
+            var subject = attCert.GetNameInfo(X509NameType.DnsName, false);
+            if (false == ("attest.android.com").Equals(subject)) throw new Fido2VerificationException("Safetynet DnsName is not attest.android.com");
 
             // Verify that the ctsProfileMatch attribute in the payload of response is true
             if (true != payload) throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");

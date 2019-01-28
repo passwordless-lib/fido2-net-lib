@@ -61,7 +61,7 @@ namespace Fido2Demo
             foreach (var cred in existingCredentials)
             {
                 var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(cred.PublicKey);
-                var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(1)].AsInt32();
+                var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyCommonParameters.kty)].AsInt32();
                 var desc = "";
                 try { desc = _mds.GetEntry(cred.AaGuid).MetadataStatement.Description.ToString(); }
                 catch { continue; }
@@ -76,14 +76,20 @@ namespace Fido2Demo
                                             "<td>";
                 switch (kty)
                 {
-                    case 1:
+                    case (int) COSE.KeyTypes.OKP:
                         {
-                            throw new Fido2VerificationException("Where did you find this device?");
+                            var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString();
+                            table += "<table class=\"sub-table\">" +
+                                    "<tr>" +
+                                        "<td><pre>X: " + BitConverter.ToString(X).Replace("-", "") + "</pre></td>" +
+                                    "</tr>" +
+                                    "</table>";
+                            break;
                         }
-                    case 2:
+                    case (int) COSE.KeyTypes.EC2:
                         {
-                            var X = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
-                            var Y = coseKey[PeterO.Cbor.CBORObject.FromObject(-3)].GetByteString();
+                            var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString();
+                            var Y = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.y)].GetByteString();
                             table += "<table class=\"sub-table\">" +
                                     "<tr>" +
                                         "<td><pre>X: " + BitConverter.ToString(X).Replace("-", "") + "</pre></td>" +
@@ -94,10 +100,10 @@ namespace Fido2Demo
                                     "</table>";
                             break;
                         }
-                    case 3:
+                    case (int) COSE.KeyTypes.RSA:
                         {
-                            var modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(-1)].GetByteString();
-                            var exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(-2)].GetByteString();
+                            var modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.n)].GetByteString();
+                            var exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.e)].GetByteString();
                             table += "<table class=\"sub-table\">" +
                                     "<tr>" +
                                         "<td><pre>Modulus: " + BitConverter.ToString(modulus).Replace("-", "") + "</pre></td>" +
@@ -110,7 +116,7 @@ namespace Fido2Demo
                         }
                     default:
                         {
-                            throw new Fido2VerificationException("Missing or unknown keytype");
+                            throw new Fido2VerificationException(string.Format("Missing or unknown keytype {0}", kty.ToString()));
                         }
                 }
             }

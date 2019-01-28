@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -210,8 +211,8 @@ namespace Fido2NetLib.AttestationFormat
                 Q = new ECPoint
                 {
                     
-                    X = credentialPublicKey[CBORObject.FromObject(-2)].GetByteString(),
-                    Y = credentialPublicKey[CBORObject.FromObject(-3)].GetByteString()
+                    X = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString(),
+                    Y = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.y)].GetByteString()
                 }
             });
             // Verify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.

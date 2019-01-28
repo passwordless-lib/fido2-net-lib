@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -157,7 +158,7 @@ namespace Fido2NetLib.AttestationFormat
             {
                 // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                 var credentialPublicKey = CBORObject.DecodeFromBytes(AuthData.AttData.CredentialPublicKey);
-                var coseAlg = credentialPublicKey[CBORObject.FromObject(3)].AsInt32();
+                var coseAlg = credentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameters.alg)].AsInt32();
                 if (Alg.AsInt32() != coseAlg)
                     throw new Fido2VerificationException("Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 

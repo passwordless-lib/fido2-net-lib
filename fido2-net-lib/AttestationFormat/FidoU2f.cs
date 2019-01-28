@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -90,8 +91,11 @@ namespace Fido2NetLib.AttestationFormat
             var ecsig = CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), pubKey.KeySize);
             if (null == ecsig)
                 throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
+            
+            var coseAlg = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameters.alg)].AsInt32();
+            var hashAlg = CryptoUtils.algMap[coseAlg];
 
-            if (true != pubKey.VerifyData(verificationData, ecsig, CryptoUtils.algMap[CredentialPublicKey[CBORObject.FromObject(3)].AsInt32()]))
+            if (true != pubKey.VerifyData(verificationData, ecsig, hashAlg))
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
         }
     }
