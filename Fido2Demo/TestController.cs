@@ -75,8 +75,12 @@ namespace Fido2Demo
             // 2. Get user existing keys by username
             var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
-            var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
+            //var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
+            var exts = new AuthenticationExtensionsClientInputs() {  };
+            if (null != opts.Extensions
+                && null != opts.Extensions.Example)
 
+                exts.Example = opts.Extensions.Example;
             // 3. Create options
             var options = _lib.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
 
@@ -138,8 +142,7 @@ namespace Fido2Demo
 
             var exts = new AuthenticationExtensionsClientInputs() { AppID = _origin, SimpleTransactionAuthorization = "FIDO", GenericTransactionAuthorization = new TxAuthGenericArg { ContentType = "text/plain", Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } }, UserVerificationIndex = true, Location = true, UserVerificationMethod = true };
             if (null != assertionClientParams.Extensions
-                && null != assertionClientParams.Extensions.Example
-                && 0 != assertionClientParams.Extensions.Example.Length)
+                && null != assertionClientParams.Extensions.Example)
 
                 exts.Example = assertionClientParams.Extensions.Example;
 
@@ -207,7 +210,7 @@ namespace Fido2Demo
             public string Username { get; set; }
             public UserVerificationRequirement UserVerification { get; set; }
             public AuthenticatorSelection authenticatorSelection { get; set; }
-            public AuthenticationExtensionsClientInputs Extensions { get; set; }
+            public AuthenticationExtensionsClientOutputs Extensions { get; set; }
         }
 
         public class TEST_MakeCredentialParams
@@ -216,6 +219,7 @@ namespace Fido2Demo
             public string Username { get; set; }
             public AttestationConveyancePreference Attestation { get; set; }
             public AuthenticatorSelection AuthenticatorSelection { get; set; }
+            public AuthenticationExtensionsClientOutputs Extensions { get; set; }
         }
     }
 }

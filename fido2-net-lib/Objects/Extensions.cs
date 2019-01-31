@@ -10,7 +10,7 @@ namespace Fido2NetLib.Objects
         /// This extension allows for passing of conformance tests
         /// </summary>
         [JsonProperty("example.extension", NullValueHandling = NullValueHandling.Ignore)]
-        public string Example { get; set; }
+        public object Example { get; set; }
         /// <summary>
         /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs to request an assertion.
         /// https://www.w3.org/TR/webauthn/#sctn-appid-extension
@@ -40,25 +40,25 @@ namespace Fido2NetLib.Objects
         /// https://www.w3.org/TR/webauthn/#sctn-supported-extensions-extension
         /// </summary>
         [JsonProperty("exts", NullValueHandling = NullValueHandling.Ignore)]
-        public bool Extensions { get; set; }
+        public bool? Extensions { get; set; }
         /// <summary>
         /// This extension enables use of a user verification index.
         /// https://www.w3.org/TR/webauthn/#sctn-uvi-extension
         /// </summary>
         [JsonProperty("uvi", NullValueHandling = NullValueHandling.Ignore)]
-        public bool UserVerificationIndex { get; set; }
+        public bool? UserVerificationIndex { get; set; }
         /// <summary>
         /// This extension provides the authenticator's current location to the WebAuthn WebAuthn Relying Party.
         /// https://www.w3.org/TR/webauthn/#sctn-location-extension
         /// </summary>
         [JsonProperty("loc", NullValueHandling = NullValueHandling.Ignore)]
-        public bool Location { get; set; }
+        public bool? Location { get; set; }
         /// <summary>
         /// This extension enables use of a user verification method.
         /// https://www.w3.org/TR/webauthn/#sctn-uvm-extension
         /// </summary>
         [JsonProperty("uvm", NullValueHandling = NullValueHandling.Ignore)]
-        public bool UserVerificationMethod { get; set; }
+        public bool? UserVerificationMethod { get; set; }
         /// <summary>
         /// This extension allows WebAuthn Relying Parties to specify the desired performance bounds for selecting biometric authenticators as candidates to be employed in a registration ceremony.
         /// https://www.w3.org/TR/webauthn/#sctn-authenticator-biometric-criteria-extension
@@ -72,7 +72,7 @@ namespace Fido2NetLib.Objects
         /// This extension allows for passing of conformance tests
         /// </summary>
         [JsonProperty("example.extension", NullValueHandling = NullValueHandling.Ignore)]
-        public string Example { get; set; }
+        public object Example { get; set; }
         /// <summary>
         /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs to request an assertion.
         /// https://www.w3.org/TR/webauthn/#sctn-appid-extension
