@@ -725,12 +725,16 @@ namespace Fido2NetLib
                     MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "Windows Hello VBS hardware authenticator"}
                 };
                 payload.Add(new Guid(msftWhfbHardwareVbs.AaGuid), msftWhfbHardwareVbs);
+
+                var client = new System.Net.WebClient();
+                var solostatement = client.DownloadString("https://raw.githubusercontent.com/solokeys/solo/master/metadata/solo-FIDO2-CTAP2-Authenticator.json");
+                var soloMetadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(solostatement);
                 var soloKeysSolo = new MetadataTOCPayloadEntry
                 {
-                    AaGuid = "1B637688-A0D4-7F42-5773-0EC71C9E0279",
-                    Hash = "",
+                    AaGuid = soloMetadataStatement.AaGuid,
+                    Url = "https://raw.githubusercontent.com/solokeys/solo/master/metadata/solo-FIDO2-CTAP2-Authenticator.json",
                     StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } },
-                    MetadataStatement = new MetadataStatement() { AttestationTypes = new ushort[] { (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL }, Hash = "", Description = "SoloKeys Solo" }
+                    MetadataStatement = soloMetadataStatement
                 };
                 payload.Add(new Guid(soloKeysSolo.AaGuid), soloKeysSolo);
             }

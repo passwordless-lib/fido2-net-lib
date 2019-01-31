@@ -63,8 +63,13 @@ namespace Fido2Demo
                 var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(cred.PublicKey);
                 var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyCommonParameters.kty)].AsInt32();
                 var desc = "";
-                try { desc = _mds.GetEntry(cred.AaGuid).MetadataStatement.Description.ToString(); }
-                catch { continue; }
+                var icon = "";
+                try {
+                    var entry = _mds.GetEntry(cred.AaGuid);
+                    desc = entry.MetadataStatement.Description.ToString();
+                    icon = entry.MetadataStatement.Icon.ToString();
+                }
+                catch { }
 
                 table +=
                     "<tr>" +
@@ -73,7 +78,8 @@ namespace Fido2Demo
                         "<td class=\"no-wrap\">" + cred.SignatureCounter.ToString() + "</td>" +
                         "<td class=\"no-wrap\">" + cred.AaGuid.ToString() + "</td>" +
                         "<td class=\"no-wrap\">" + desc + "</td>" +
-                                            "<td>";
+                        "<img src=" + icon + ">" +
+                        "<td>";
                 switch (kty)
                 {
                     case (int) COSE.KeyTypes.OKP:
