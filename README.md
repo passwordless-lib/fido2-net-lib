@@ -1,11 +1,11 @@
-# FIDO2 .NET library (WebAuthn)
-A working implementation library + demo for fido2 and WebAuthn using .NET  
+# FIDO2 .NET Library (WebAuthn)
+A working implementation library + demo for [FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/) using [.NET](https://dotnet.microsoft.com/)  
 
 [![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
 [![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
 
 ### Purpose
-Provide a developer friendly and well tested .NET server side library for easy validation (attestation & assertion) of WebAuthn/FIDO2 credentials to increase the adoption of the technology, ultimately defeating phishing attacks.
+To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.com/) [FIDO2 Server](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html) / [WebAuthn relying party](https://www.w3.org/TR/webauthn/#relying-party) library for the easy validation of [registration](https://www.w3.org/TR/webauthn/#usecase-registration) ([attestation](https://www.w3.org/TR/webauthn/#attestation)) and [authentication](https://www.w3.org/TR/webauthn/#usecase-authentication) ([assertion](https://www.w3.org/TR/webauthn/#authentication-assertion)) of [FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) credentials, in order to increase the adoption of the technology, ultimately defeating phishing attacks.
 
 ```Install-Package Fido2 -Version 1.0.0-preview2 ```
 
@@ -15,40 +15,52 @@ Provide a developer friendly and well tested .NET server side library for easy v
 
 ## What is FIDO2?
 **The passwordless web is coming.**  
-FIDO2 / WebAuthn is a new open authentication standard, supported by browsers and many large tech companies such as  Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating *passwordless flows* or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to Active Directory and native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & platform. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
+[FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) is a new open authentication standard, supported by [browsers](https://www.w3.org/Consortium/Member/List) and [many large tech companies](https://fidoalliance.org/members/) such as Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating *passwordless flows* or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to Active Directory and native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & platform. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
 
-Read more about FIDO2: [Why it's exciting](http://ideasof.andersaberg.com/development/the-passwordless-web), [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113), [FIDO2 Alliance](https://fidoalliance.org/fido2/) and [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/).
+Read more: 
+- [Why it's exciting](http://ideasof.andersaberg.com/development/the-passwordless-web)
+- [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113)
+- [FIDO Alliance](https://fidoalliance.org/fido2/)
+- [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/)
+- [Duo Security's](https://duo.com/) [WebAuthn.Guide](https://webauthn.guide/)
+- [WebAuthn Awesome](https://github.com/herrjemand/WebauthnAwesome)
 
 ## Supported features
 
-- ✅ Attestation API & verification (Register and verify credentials/authenticators)  
-- ✅ Assertion API & verification (Authenticate users)
-- ✅ 100% success rate in conformance testing ([results](https://github.com/abergs/fido2-net-lib/issues/13))
-- ✅ Fido 2 Security Keys  
-- ✅ Backwards compatibility with Fido-u2f.  
-- ✅ Windows Hello support  
-- ✅ ES256 Public Key format  
-- ✅ "none", "fido-u2f", "android-key", "android-safetynet", "tpm" & "packed" attestation formats
-- ✅ Examples & demo's
-- ✅ Intellisense documentation  
+- ✅ [Attestation](https://www.w3.org/TR/webauthn/#sctn-attestation) API & verification ([Register](https://www.w3.org/TR/webauthn/#usecase-registration) and verify credentials/authenticators)  
+- ✅ [Assertion](https://www.w3.org/TR/webauthn/#verifying-assertion) API & verification ([Authenticate](https://www.w3.org/TR/webauthn/#usecase-authentication) users)
+- ✅ 100% pass rate in [conformance testing](#conformance-testing-tool) ([results](https://github.com/abergs/fido2-net-lib/issues/13#issuecomment-457318859))
+- ✅ FIDO2 security keys (aka [roaming authenticators](https://www.w3.org/TR/webauthn/#roaming-authenticators)), like the [SoloKeys](https://solokeys.com/) [Solo](https://github.com/solokeys/solo/blob/master/README.md), [Yubico](https://www.yubico.com/) [YubiKey](https://www.yubico.com/products/yubikey-hardware/), and [Feitian](https://www.ftsafe.com/) [BioPass FIDO2](https://www.ftsafe.com/Products/FIDO2)
+- ✅ Device embedded authenticators (aka [platform authenticators](https://www.w3.org/TR/webauthn/#platform-authenticators)) like [Android Key](https://source.android.com/security/keystore/attestation) and [TPM](https://trustedcomputinggroup.org/resource/trusted-platform-module-2-0-a-brief-introduction/) 
+- ✅ [Backwards compatibility with FIDO U2F authenticators](https://www.w3.org/TR/#conforming-authenticators-u2f)  
+- ✅ [Windows Hello](https://docs.microsoft.com/en-us/microsoft-edge/dev-guide/windows-integration/web-authentication) 
+- ✅ All current [required, recommended, and optional](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other) [cryptographic algorithms](https://www.w3.org/TR/webauthn/#alg-identifier) for [FIDO2 Server](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html)
+- ✅ All current [attestation formats](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html): [packed](https://www.w3.org/TR/webauthn/#packed-attestation), [tpm](https://www.w3.org/TR/webauthn/#tpm-attestation), [android-key](https://www.w3.org/TR/webauthn/#android-key-attestation), [android-safetynet](https://www.w3.org/TR/webauthn/#android-safetynet-attestation), [fido-u2f](https://www.w3.org/TR/webauthn/#fido-u2f-attestation), and [none](https://www.w3.org/TR/webauthn/#none-attestation)
+- ✅ FIDO2 Server [attestation validation](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html) via [FIDO Metadata Service](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html)
+- ✅ [Extensions](https://www.w3.org/TR/webauthn/#extensions)
+- ✅ Examples & demos
+- ✅ Intellisense documentation
 - 💤 [Formal documentation](https://github.com/abergs/fido2-net-lib/issues/53)
 - 💤 Recommended [usage patterns](https://github.com/abergs/fido2-net-lib/issues/54)
-- ✅ Extensions
 
 ## Configuration
 
-  *Only some options are mention here, see the [Configuration](https://github.com/abergs/fido2-net-lib/blob/master/fido2-net-lib/Fido2NetLib.cs) class for all options*
+  *Only some options are mentioned here, see the [Configuration](https://github.com/abergs/fido2-net-lib/blob/master/fido2-net-lib/Fido2NetLib.cs) class for all options*
 
 * `fido2:MDSAccessKey` - App Secret / environment variable that holds the FIDO2 MDS AccessKey. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 * `fido2:MDSCacheDirPath` - App Secret / environment variable that sets the cache path for the MDS. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 
 ## Examples
 
-Please see the [demo controller](https://github.com/abergs/fido2-net-lib/blob/master/Fido2Demo/Controller.cs) for full examples of both Attestation & Assertion.
+See the [demo controller](Fido2Demo/Controller.cs) for full examples of both [attestation](https://www.w3.org/TR/webauthn/#sctn-attestation) and [assertion](https://www.w3.org/TR/webauthn/#verifying-assertion).
+
+See the [test controller](Fido2Demo/TestController.cs) for examples of how to pass the [conformance tests](#conformance-testing-tool).
+
+See the [Active Directory Store information](https://github.com/abergs/fido2-net-lib/issues/68#issuecomment-451758622) and [example credential store](https://github.com/abergs/fido2-net-lib/blob/ActiveDirectory/fido2-net-lib/ActiveDirectoryStore.cs) for ideas on how to integrate this library with an on-premises Active Directory.
 
 ### Create attestation Options
 
-To add fido2 credentials to an existing user account, we we perform a attestation process. It starts with returning options to the client.
+To add FIDO2 credentials to an existing user account, we we perform a attestation process. It starts with returning options to the client.
 
 ```csharp
 // file: Controller.cs
@@ -192,9 +204,8 @@ All PR's and the master branch is built with Azure Devops.
 
 Scripts to build, pack and publish a nuget package are located in ./scripts/
 
-
 ## Conformance testing tool
-To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/test-tool-access-request/)
+To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/tool-request-agreement/)
 
 ## Other
 
