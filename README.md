@@ -27,17 +27,17 @@ Read more:
 
 ## Supported features
 
-- ✅ [Attestation](https://www.w3.org/TR/webauthn/#sctn-attestation) API & verification ([Register](https://www.w3.org/TR/webauthn/#usecase-registration) and verify credentials/authenticators)  
-- ✅ [Assertion](https://www.w3.org/TR/webauthn/#verifying-assertion) API & verification ([Authenticate](https://www.w3.org/TR/webauthn/#usecase-authentication) users)
+- ✅ Attestation API & verification (Register and verify credentials/authenticators)  
+- ✅ Assertion API & verification (Authenticate users)
 - ✅ 100% pass rate in [conformance testing](#conformance-testing-tool) ([results](https://github.com/abergs/fido2-net-lib/issues/13#issuecomment-457318859))
-- ✅ FIDO2 security keys (aka [roaming authenticators](https://www.w3.org/TR/webauthn/#roaming-authenticators)), like the [SoloKeys](https://solokeys.com/) [Solo](https://github.com/solokeys/solo/blob/master/README.md), [Yubico](https://www.yubico.com/) [YubiKey](https://www.yubico.com/products/yubikey-hardware/), and [Feitian](https://www.ftsafe.com/) [BioPass FIDO2](https://www.ftsafe.com/Products/FIDO2)
-- ✅ Device embedded authenticators (aka [platform authenticators](https://www.w3.org/TR/webauthn/#platform-authenticators)) like [Android Key](https://source.android.com/security/keystore/attestation) and [TPM](https://trustedcomputinggroup.org/resource/trusted-platform-module-2-0-a-brief-introduction/) 
-- ✅ [Backwards compatibility with FIDO U2F authenticators](https://www.w3.org/TR/#conforming-authenticators-u2f)  
+- ✅ FIDO2 security keys (aka [roaming authenticators](https://www.w3.org/TR/webauthn/#roaming-authenticators), like SoloKeys [Solo](https://github.com/solokeys/solo/blob/master/README.md), Yubico [YubiKey](https://www.yubico.com/products/yubikey-hardware/), and Feitian [BioPass FIDO2](https://www.ftsafe.com/Products/FIDO2))
+- ✅ Device embedded authenticators (aka [platform authenticators](https://www.w3.org/TR/webauthn/#platform-authenticators) like [Android Key](https://source.android.com/security/keystore/attestation) and [TPM](https://trustedcomputinggroup.org/resource/trusted-platform-module-2-0-a-brief-introduction/))
+- ✅ Backwards compatibility with FIDO U2F authenticators ([spec](https://www.w3.org/TR/#conforming-authenticators-u2f))
 - ✅ [Windows Hello](https://docs.microsoft.com/en-us/microsoft-edge/dev-guide/windows-integration/web-authentication) 
-- ✅ All current [required, recommended, and optional](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other) [cryptographic algorithms](https://www.w3.org/TR/webauthn/#alg-identifier) for [FIDO2 Server](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html)
-- ✅ All current [attestation formats](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html): [packed](https://www.w3.org/TR/webauthn/#packed-attestation), [tpm](https://www.w3.org/TR/webauthn/#tpm-attestation), [android-key](https://www.w3.org/TR/webauthn/#android-key-attestation), [android-safetynet](https://www.w3.org/TR/webauthn/#android-safetynet-attestation), [fido-u2f](https://www.w3.org/TR/webauthn/#fido-u2f-attestation), and [none](https://www.w3.org/TR/webauthn/#none-attestation)
-- ✅ FIDO2 Server [attestation validation](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html) via [FIDO Metadata Service](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html)
-- ✅ [Extensions](https://www.w3.org/TR/webauthn/#extensions)
+- ✅ All currently referenced cryptographic algorithms for FIDO2 Server ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other))
+- ✅ All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", and "none" ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html))
+- ✅ FIDO2 Server attestation validation via FIDO Metadata Service ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html))
+- ✅ WebAuthn extensions ([spec](https://www.w3.org/TR/webauthn/#extensions))
 - ✅ Examples & demos
 - ✅ Intellisense documentation
 - 💤 [Formal documentation](https://github.com/abergs/fido2-net-lib/issues/53)
