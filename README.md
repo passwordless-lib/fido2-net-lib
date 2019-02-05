@@ -22,7 +22,7 @@ Read more:
 - [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113)
 - [FIDO Alliance](https://fidoalliance.org/fido2/)
 - [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/)
-- [Duo Security's](https://duo.com/) [WebAuthn.Guide](https://webauthn.guide/)
+- [WebAuthn.Guide](https://webauthn.guide/) from Duo Security
 - [WebAuthn Awesome](https://github.com/herrjemand/WebauthnAwesome)
 
 ## Supported features
@@ -30,8 +30,8 @@ Read more:
 - ✅ Attestation API & verification (Register and verify credentials/authenticators)  
 - ✅ Assertion API & verification (Authenticate users)
 - ✅ 100% pass rate in [conformance testing](#conformance-testing-tool) ([results](https://github.com/abergs/fido2-net-lib/issues/13#issuecomment-457318859))
-- ✅ FIDO2 security keys (aka [roaming authenticators](https://www.w3.org/TR/webauthn/#roaming-authenticators), like SoloKeys [Solo](https://github.com/solokeys/solo/blob/master/README.md), Yubico [YubiKey](https://www.yubico.com/products/yubikey-hardware/), and Feitian [BioPass FIDO2](https://www.ftsafe.com/Products/FIDO2))
-- ✅ Device embedded authenticators (aka [platform authenticators](https://www.w3.org/TR/webauthn/#platform-authenticators) like [Android Key](https://source.android.com/security/keystore/attestation) and [TPM](https://trustedcomputinggroup.org/resource/trusted-platform-module-2-0-a-brief-introduction/))
+- ✅ FIDO2 security keys aka roaming authenticators ([spec](https://www.w3.org/TR/webauthn/#roaming-authenticators)), like SoloKeys [Solo](https://github.com/solokeys/solo/blob/master/README.md), Yubico [YubiKey](https://www.yubico.com/products/yubikey-hardware/), and Feitian [BioPass FIDO2](https://www.ftsafe.com/Products/FIDO2))
+- ✅ Device embedded authenticators aka platform authenticators ([spec](https://www.w3.org/TR/webauthn/#platform-authenticators)), like [Android Key](https://source.android.com/security/keystore/attestation) and [TPM](https://trustedcomputinggroup.org/resource/trusted-platform-module-2-0-a-brief-introduction/))
 - ✅ Backwards compatibility with FIDO U2F authenticators ([spec](https://www.w3.org/TR/#conforming-authenticators-u2f))
 - ✅ [Windows Hello](https://docs.microsoft.com/en-us/microsoft-edge/dev-guide/windows-integration/web-authentication) 
 - ✅ All currently referenced cryptographic algorithms for FIDO2 Server ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other))
