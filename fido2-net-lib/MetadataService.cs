@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
@@ -322,8 +323,8 @@ namespace Fido2NetLib
         private static string[] _endpoints;
         private string tocAlg;
         public readonly bool conformance = false;
-
-        private MDSMetadata(string accessToken, string cachedirPath)
+        private static System.Net.Http.HttpClient _httpClient;
+        private MDSMetadata(string accessToken, string cachedirPath, System.Net.Http.HttpClient httpClient = null)
         {
             // We need either an access token or a cache directory, but prefer both
             if (null == accessToken && null == cachedirPath) return;
@@ -333,6 +334,7 @@ namespace Fido2NetLib
             // If we have both, we can read from either and update cache as necessary
             _accessToken = accessToken;
             _cacheDir = cachedirPath;
+            _httpClient = httpClient ?? new System.Net.Http.HttpClient();
             if (null != _accessToken && 0x30 != _accessToken.Length && null != _cacheDir && 3 > _cacheDir.Length) throw new Fido2VerificationException("Either MDSAccessToken or CacheDir is required to instantiate Metadata instance");
             
             // Sample bogus key from https://fidoalliance.org/metadata/
@@ -500,13 +502,12 @@ namespace Fido2NetLib
             // if the root is trusted in the context we are running in, valid should be true here
             if (false == valid)
             {
-                var client = new System.Net.WebClient();
                 foreach (var element in chain.ChainElements)
                 {
                     if (element.Certificate.Issuer != element.Certificate.Subject)
                     {
                         var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
-                        var crlFile = client.DownloadData(cdp);
+                        var crlFile = DownloadData(cdp).Result;
                         if (true == CryptoUtils.IsCertInCRL(crlFile, element.Certificate)) throw new Fido2VerificationException(string.Format("Cert {0} found in CRL {1}", element.Certificate.Subject, cdp));
                     }
                 }
@@ -538,8 +539,7 @@ namespace Fido2NetLib
             var rawStatement = "";
             if (false == fromCache)
             {
-                var client = new System.Net.WebClient();
-                rawStatement = client.DownloadString(entry.Url + tokenParamName + _accessToken);
+                rawStatement = DownloadString(entry.Url + tokenParamName + _accessToken).Result;
             }
             if (null != _cacheDir && 3 < _cacheDir.Length)
             {
@@ -557,11 +557,10 @@ namespace Fido2NetLib
         }
         public void GetTOCPayload(bool fromCache)
         {
-            var client = new System.Net.WebClient();
             var mdsToc = "";
             if (false == fromCache)
             {
-                mdsToc = client.DownloadString(mds2url + tokenParamName + _accessToken);
+                mdsToc = DownloadString(mds2url + tokenParamName + _accessToken).Result;
                 if (null != _cacheDir && 3 < _cacheDir.Length)
                 {
                     if (false == System.IO.Directory.Exists(_cacheDir)) System.IO.Directory.CreateDirectory(_cacheDir);
@@ -585,12 +584,20 @@ namespace Fido2NetLib
             if (true == fromCache) CustomTOCPayloadFromCache();
         }
 
+        public static async Task<string> DownloadString(string url)
+        {
+            return await _httpClient.GetStringAsync(url);
+        }
+        public static async Task<byte[]> DownloadData(string url)
+        {
+            return await _httpClient.GetByteArrayAsync(url);
+        }
+
         public void AddConformanceTOC()
         {
-            var client = new System.Net.WebClient();
             foreach (var tocURL in _endpoints)
             {
-                var rawTOC = client.DownloadString(tocURL);
+                var rawTOC = DownloadString(tocURL).Result;
                 MetadataTOCPayload toc = null;
                 try { toc = ValidatedTOCFromJwtSecurityToken(rawTOC); }
                 catch { continue; }
@@ -599,7 +606,7 @@ namespace Fido2NetLib
                 {
                     if (null != entry.AaGuid)
                     {
-                        var rawStatement = client.DownloadString(entry.Url);
+                        var rawStatement = DownloadString(entry.Url).Result;
                         var statementBytes = Base64Url.Decode(rawStatement);
                         var statement = System.Text.Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
                         var metadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(statement);
@@ -726,8 +733,7 @@ namespace Fido2NetLib
                 };
                 payload.Add(new Guid(msftWhfbHardwareVbs.AaGuid), msftWhfbHardwareVbs);
 
-                var client = new System.Net.WebClient();
-                var solostatement = client.DownloadString("https://raw.githubusercontent.com/solokeys/solo/master/metadata/solo-FIDO2-CTAP2-Authenticator.json");
+                var solostatement = DownloadString("https://raw.githubusercontent.com/solokeys/solo/master/metadata/solo-FIDO2-CTAP2-Authenticator.json").Result;
                 var soloMetadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(solostatement);
                 var soloKeysSolo = new MetadataTOCPayloadEntry
                 {
