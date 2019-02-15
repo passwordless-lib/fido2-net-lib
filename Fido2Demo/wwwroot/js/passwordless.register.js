@@ -6,9 +6,6 @@ async function handleRegisterSubmit(event) {
     let username = this.username.value;
     let displayName = this.displayName.value;
 
-    // passwordfield is omitted in demo
-    // let password = this.password.value;
-
     // possible values: none, direct, indirect
     let attestation_type = "none";
     // possible values: <empty>, platform, cross-platform
