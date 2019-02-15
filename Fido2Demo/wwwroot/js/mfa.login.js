@@ -1,75 +1,56 @@
-﻿document.getElementById('register').addEventListener('submit', handleRegisterSubmit);
+﻿document.getElementById('signin').addEventListener('submit', handleSignInSubmit);
 
-async function handleRegisterSubmit(event) {
+async function handleSignInSubmit(event) {
     event.preventDefault();
 
     let username = this.username.value;
-    let displayName = this.displayName.value;
+
     // passwordfield is omitted in demo
     // let password = this.password.value;
 
-    // possible values: none, direct, indirect
-    let attestation_type = "none";
-    // possible values: <empty>, platform, cross-platform
-    let authenticator_attachment = "";
-
-    // possible values: preferred, required, discouraged
-    let user_verification = "preferred";
-
-    // possible values: true,false
-    let require_resident_key = false;
-
-
 
     // prepare form post data
-    var data = new FormData();
-    data.append('username', username);
-    data.append('displayName', displayName);
-    data.append('attType', attestation_type);
-    data.append('authType', authenticator_attachment);
-    data.append('userVerification', user_verification);
-    data.append('requireResidentKey', require_resident_key);
+    var formData = new FormData();
+    formData.append('username', username);
 
     // send to server for registering
-    let makeCredentialOptions;
+    let makeAssertionOptions;
     try {
-        makeCredentialOptions = await fetchMakeCredentialOptions(data);
+        var res = await fetch('/assertionOptions', {
+            method: 'POST', // or 'PUT'
+            body: formData, // data can be `string` or {object}!
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
 
+        makeAssertionOptions = await res.json();
     } catch (e) {
-        console.error(e);
-        let msg = "Something wen't really wrong";
-        showErrorAlert(msg);
+        showErrorAlert("Request to server failed", e);
     }
 
+    console.log("Assertion Options Object");
+    console.log(makeAssertionOptions);
 
-    console.log("Credential Options Object");
-    console.log(makeCredentialOptions);
-
-    if (makeCredentialOptions.status !== "ok") {
-        console.log("Error creating credential options");
-        console.log(makeCredentialOptions.errorMessage);
-        showErrorAlert(makeCredentialOptions.errorMessage);
+    if (makeAssertionOptions.status !== "ok") {
+        console.log("Error creating assertion options");
+        console.log(makeAssertionOptions.errorMessage);
+        showErrorAlert(makeAssertionOptions.errorMessage);
         return;
     }
 
-    // Turn the challenge back into the accepted format of padded base64
-    makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge);
-    // Turn ID into a UInt8Array Buffer for some reason
-    makeCredentialOptions.user.id = coerceToArrayBuffer(makeCredentialOptions.user.id);
+    const challenge = makeAssertionOptions.challenge.replace(/-/g, "+").replace(/_/g, "/");
+    makeAssertionOptions.challenge = Uint8Array.from(atob(challenge), c => c.charCodeAt(0));
 
-    makeCredentialOptions.excludeCredentials = makeCredentialOptions.excludeCredentials.map((c) => {
-        c.id = coerceToArrayBuffer(c.id);
-        return c;
+    makeAssertionOptions.allowCredentials.forEach(function (listItem) {
+        var fixedId = listItem.id.replace(/\_/g, "/").replace(/\-/g, "+");
+        listItem.id = Uint8Array.from(atob(fixedId), c => c.charCodeAt(0));
     });
-
-    if (makeCredentialOptions.authenticatorSelection.authenticatorAttachment === null) makeCredentialOptions.authenticatorSelection.authenticatorAttachment = undefined;
-
-    console.log("Credential Options Formatted");
-    console.log(makeCredentialOptions);
+    console.log(makeAssertionOptions);
 
     Swal.fire({
-        title: 'Registering...',
-        text: 'Tap your security key to finish registration.',
+        title: 'Logging In...',
+        text: 'Tap your security key to login.',
         imageUrl: "/images/securitykey.min.svg",
         showCancelButton: true,
         showConfirmButton: false,
@@ -77,109 +58,75 @@ async function handleRegisterSubmit(event) {
         focusCancel: false
     });
 
-    //console.log("modal", modal);
-
-    console.log("Creating PublicKeyCredential");
-
-    let newCredential;
+    let credential;
     try {
-         newCredential = await navigator.credentials.create({
-            publicKey: makeCredentialOptions
-        });
-    } catch (e) {
-        var msg = "Could not create credentials in browser. Probably because the username is already registered with your authenticator. Please change username or authenaticator."
-        console.error(msg, e);
-        showErrorAlert(msg,e);
-    }
-    
-    
-        console.log("PublicKeyCredential Created");
-        console.log(newCredential);
-        //state.createResponse = newCredential;
-    try {
-        registerNewCredential(newCredential);
-
-    } catch (e) {
-        //Swal.closeModal();
+        credential = await navigator.credentials.get({ publicKey: makeAssertionOptions })
+    } catch (err) {
         showErrorAlert(err.message ? err.message : err);
     }
-}
 
-async function fetchMakeCredentialOptions(formData) {
-    let response = await fetch('/makeCredentialOptions', {
-        method: 'POST', // or 'PUT'
-        body: formData, // data can be `string` or {object}!
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-
-    let data = await response.json();
-
-    return data;
+    try {
+        await verifyAssertionWithServer(credential);
+    } catch (e) {
+        showErrorAlert("Could not verify assertion", e);
+    }
 }
 
 
-// This should be used to verify the auth data with the server
-async function registerNewCredential(newCredential) {
+async function verifyAssertionWithServer(assertedCredential) {
     // Move data into Arrays incase it is super long
-    let attestationObject = new Uint8Array(newCredential.response.attestationObject);
-    let clientDataJSON = new Uint8Array(newCredential.response.clientDataJSON);
-    let rawId = new Uint8Array(newCredential.rawId);
-
+    let authData = new Uint8Array(assertedCredential.response.authenticatorData);
+    let clientDataJSON = new Uint8Array(assertedCredential.response.clientDataJSON);
+    let rawId = new Uint8Array(assertedCredential.rawId);
+    let sig = new Uint8Array(assertedCredential.response.signature);
     const data = {
-        id: newCredential.id,
+        id: assertedCredential.id,
         rawId: coerceToBase64Url(rawId),
-        type: newCredential.type,
-        extensions: newCredential.getClientExtensionResults(),
+        type: assertedCredential.type,
+        extensions: assertedCredential.getClientExtensionResults(),
         response: {
-            AttestationObject: coerceToBase64Url(attestationObject),
-            clientDataJson: coerceToBase64Url(clientDataJSON)
+            authenticatorData: coerceToBase64Url(authData),
+            clientDataJson: coerceToBase64Url(clientDataJSON),
+            signature: coerceToBase64Url(sig)
         }
     };
 
+
+
     let response;
     try {
-        response = await registerCredentialWithServer(data);
+        let res = await fetch("/makeAssertion", {
+            method: 'POST', // or 'PUT'
+            body: JSON.stringify(data), // data can be `string` or {object}!
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+
+        response = await res.json();
     } catch (e) {
-        showErrorAlert(e);
+        showErrorAlert("Request to server failed", e);
+        throw e;
     }
 
-    console.log("Credential Object");
-    console.log(response);
+    console.log("Assertion Object", response);
+    //console.log(response);
 
     if (response.status !== "ok") {
-        console.log("Error creating credential");
+        console.log("Error doing assertion");
         console.log(response.errorMessage);
-        // close the "Registering..."-modal;
-        Swal.closeModal();
         showErrorAlert(response.errorMessage);
         return;
     }
 
-    // show success banner (will close "registering..."-modal)
     Swal.fire({
-        title: 'Registration Successful!',
-        text: 'You\'ve registered successfully.',
+        title: 'Logged In!',
+        text: 'You\'re logged in successfully.',
         type: 'success',
         timer: 2000
     });
 
-    // redirect to dashboard?
+    // redirect?
     //window.location.href = "/dashboard/" + state.user.displayName;
-}
-
-async function registerCredentialWithServer(formData) {
-    let response = await fetch('/makeCredential', {
-        method: 'POST', // or 'PUT'
-        body: JSON.stringify(formData), // data can be `string` or {object}!
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    });
-
-    let data = await response.json();
-
-    return data;
 }

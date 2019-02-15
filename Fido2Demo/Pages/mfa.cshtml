@@ -47,7 +47,7 @@
 
                     <div class="field">
                         <label class="checkbox">
-                            <input type="checkbox" disabled checked>
+                            <input type="checkbox" disabled checked readonly>
                             Register MFA on registration
                         </label>
                     </div>
@@ -62,11 +62,11 @@
             <div class="column is-6">
 
                 <h3 class="title is-3">Sign in</h3>
-                <form action="/mfa" method="post">
+                <form action="/mfa" method="post" id="signin">
                     <div class="field">
                         <label class="label">Username</label>
                         <div class="control has-icons-left has-icons-right">
-                            <input class="input" type="text" placeholder="abergs" name="username">
+                            <input class="input" type="text" placeholder="abergs" name="username" required>
                             <span class="icon is-small is-left">
                                 <i class="fas fa-user"></i>
                             </span>
@@ -96,4 +96,4 @@
 </div>
 
 <script src="~/js/mfa.register.js"></script>
-@*<script src="~/js/mfa.register.js"></script>*@
+<script src="~/js/mfa.login.js"></script>
