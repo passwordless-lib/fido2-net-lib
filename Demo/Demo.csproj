@@ -9,7 +9,8 @@
     <None Remove="Fido2NetLib\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.All"/>
+    <PackageReference Include="Microsoft.AspNetCore.All" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.2.4" />
   </ItemGroup>
   <ItemGroup>
@@ -17,5 +18,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Src\Fido2NetLib.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\bulma\" />
   </ItemGroup>
 </Project>
