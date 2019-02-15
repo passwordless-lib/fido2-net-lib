@@ -22,4 +22,9 @@
   <ItemGroup>
     <Folder Include="wwwroot\bulma\" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Update="Pages\mfa.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
+  </ItemGroup>
 </Project>

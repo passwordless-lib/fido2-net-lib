@@ -1,0 +1,125 @@
+﻿@page "/overview"
+@model Fido2Demo.OverviewModel
+@{
+    Layout = "_Layout.cshtml";
+}
+
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-8">
+                <h1 class="title is-1">FIDO2 .NET Library (WebAuthn)</h1>
+                <div class="content">
+                    <p>
+                        A working implementation library + demo for FIDO2 and WebAuthn using .NET
+                    </p>
+                </div>
+
+                <h2 class="title is-2">Purpose</h2>
+                <div class="content">
+                    <p>To provide a developer friendly and well tested .NET FIDO2 Server / WebAuthn relying party library for the easy validation of registration (attestation) and authentication (assertion) of FIDO2 / WebAuthn credentials, in order to increase the adoption of the technology, ultimately defeating phishing attacks.</p>
+                </div>
+                <h2 class="title is-2">What is FIDO2 / WebAuthn?</h2>
+                <div class="content">
+                    <h3 class="subtitle is-6">The passwordless web is coming</h3>
+                    <p>
+                        FIDO2 / WebAuthn is a new open authentication standard, supported by browsers and many large tech companies such as Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating passwordless flows or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to Active Directory and native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & platform. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
+
+                        Read more:
+
+                        Why it's exciting
+                        Medium
+                        FIDO Alliance
+                        Yubico
+                        WebAuthn.Guide from Duo Security
+                        WebAuthn.io
+                        WebAuthn Awesome
+                    </p>
+
+
+                </div>
+                <h3 class="title is-3">Features</h3>
+                <ul>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Attestation API & verification (Register and verify credentials/authenticators)
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Assertion API & verification (Authenticate users)
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        100% pass rate in conformance testing (results)
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        FIDO2 security keys aka roaming authenticators , like SoloKeys Solo, Yubico YubiKey, and Feitian BioPass FIDO2)
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Device embedded authenticators aka platform authenticators , like Android Key and TPM)
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Backwards compatibility with FIDO U2F authenticators 
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Windows Hello
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        All currently referenced cryptographic algorithms for FIDO2 Server 
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", and "none" 
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        FIDO2 Server attestation validation via FIDO Metadata Service 
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        WebAuthn extensions 
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Examples & demos
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Intellisense documentation
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>

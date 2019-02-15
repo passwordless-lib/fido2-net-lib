@@ -153,10 +153,9 @@ function makeCredential() {
             return response.json();
         }
         return Promise.reject(response.text());
+    }).catch((error) => {
+        error.then(msg => showErrorAlert(msg));
     })
-        .catch((error) => {
-            error.then(msg => showErrorAlert(msg));
-        })
         .then((makeCredentialOptions) => {
             console.log("Credential Options Object");
             console.log(makeCredentialOptions);
@@ -167,7 +166,7 @@ function makeCredential() {
                 showErrorAlert(makeCredentialOptions.errorMessage);
                 return;
             }
-                        
+
             // Turn the challenge back into the accepted format
             makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge);
             // Turn ID into a UInt8Array Buffer for some reason
