@@ -67,11 +67,16 @@ coerceToBase64Url = function (thing) {
 
 // HELPERS
 
-function showErrorAlert(message) {
+function showErrorAlert(message, error) {
+    let footermsg = '';
+    if (error) {
+        footermsg = 'exception:' + error.toString();
+    }
     Swal.fire({
         type: 'error',
         title: 'Error',
         text: message,
+        footer: footermsg
         //footer: '<a href>Why do I have this issue?</a>'
     })
 }

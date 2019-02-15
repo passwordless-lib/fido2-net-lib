@@ -153,9 +153,10 @@ function makeCredential() {
             return response.json();
         }
         return Promise.reject(response.text());
-    }).catch((error) => {
-        error.then(msg => showErrorAlert(msg));
     })
+        .catch((error) => {
+            error.then(msg => showErrorAlert(msg));
+        })
         .then((makeCredentialOptions) => {
             console.log("Credential Options Object");
             console.log(makeCredentialOptions);
@@ -166,7 +167,7 @@ function makeCredential() {
                 showErrorAlert(makeCredentialOptions.errorMessage);
                 return;
             }
-
+                        
             // Turn the challenge back into the accepted format
             makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge);
             // Turn ID into a UInt8Array Buffer for some reason
@@ -338,7 +339,7 @@ function getAssertion() {
             navigator.credentials.get({ publicKey: makeAssertionOptions })
                 .then(function (credential) {
                     console.log(credential);
-                    verifyAssertion(credential);
+                    verifyAssertionWithServer(credential);
                 }).catch(function (err) {
                     console.log(err);
                     showErrorAlert(err.message ? err.message : err);
@@ -347,7 +348,7 @@ function getAssertion() {
         });
 }
 
-function verifyAssertion(assertedCredential) {
+function verifyAssertionWithServer(assertedCredential) {
     // Move data into Arrays incase it is super long
     let authData = new Uint8Array(assertedCredential.response.authenticatorData);
     let clientDataJSON = new Uint8Array(assertedCredential.response.clientDataJSON);
