@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -46,9 +48,19 @@ namespace Fido2Demo
             }
 
             app.UseSession();
-            app.UseDefaultFiles(new DefaultFilesOptions() { DefaultFileNames = new List<string> { "login.html" } });
-            app.UseStaticFiles();            
-            app.UseMvc();
+            app.UseRewriter(new RewriteOptions().Add(rewriteContext =>
+            {
+                var request = rewriteContext.HttpContext.Request;
+                if (request.Path == new PathString("/"))
+                {
+                    rewriteContext.HttpContext.Response.Redirect(request.PathBase + "/overview", true);
+                    rewriteContext.Result = RuleResult.EndResponse;
+                }
+            }));
+            app.UseMvc();            
+            app.UseStaticFiles();
+
+
         }
     }
 }
