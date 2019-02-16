@@ -21,13 +21,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css" rel="stylesheet" type="text/css" />
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
     <style>
-        body{
+        body {
             font-family: 'Work Sans', sans-serif;
         }
 
         .hero {
             background-color: #861657;
-background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
+            background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
         }
     </style>
     <!--<link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />-->
@@ -54,7 +54,7 @@ background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
                             <a class="navbar-item" asp-page="/overview">
                                 Home
                             </a>
-                            <a class="navbar-item" asp-page="https://github.com/abergs/fido2-net-lib#examples">
+                            <a class="navbar-item" href="https://github.com/abergs/fido2-net-lib#examples">
                                 Documentation
                             </a>
                             <span class="navbar-item">
@@ -87,16 +87,16 @@ background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
                 <div class="container">
                     <ul>
                         <li class="@isActive("/overview")">
-                            <a asp-page="/overview">Overview</a>
+                        <a asp-page="/overview">Overview</a>
                         </li>
                         <li class="@isActive("/mfa")">
-                            <a asp-page="/mfa">Use as 2FA/MFA</a>
+                        <a asp-page="/mfa">Use as 2FA/MFA</a>
                         </li>
                         <li class="@isActive("/passwordless")">
-                            <a asp-page="/passwordless">Go Passwordless</a>
+                        <a asp-page="/passwordless">Go Passwordless</a>
                         </li>
                         <li class="@isActive("/usernameless")">
-                            <a asp-page="/usernameless">Go Usernameless too</a>
+                        <a asp-page="/usernameless">Go Usernameless too</a>
                         </li>
                     </ul>
                 </div>
@@ -104,5 +104,13 @@ background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
         </div>
     </section>
     @RenderBody()
+    <footer class="footer" style="margin-top:20vh">
+        <div class="content has-text-centered">
+            <p>
+                <strong>Fido2 .NET library</strong> by <a href="https://github.com/abergs/">Anders Åberg</a>, <a href="https://github.com/aseigler">Alex Seigler</a> and <a href="https://github.com/abergs/fido2-net-lib/graphs/contributors">contributors</a>. The source code is licensed
+                <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. Available on <a href="https://github.com/abergs/fido2-net-lib">Github</a>
+            </p>
+        </div>
+    </footer>
 </body>
 </html>
