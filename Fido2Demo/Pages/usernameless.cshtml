@@ -1,23 +1,29 @@
-﻿@page "/mfa/{handler?}"
-@model Fido2Demo.MfaModel
+﻿@page "/usernameless/{handler?}"
 @{
     Layout = "_Layout.cshtml";
 }
 
 <div class="section">
     <div class="container">
-        <h1 class="title is-1">Scenario: 2FA/MFA</h1>
-        <div class="content"><p>This is scenario where we just want to use FIDO as the MFA</p></div>
+        <h1 class="title is-1">Scenario: Usernameless</h1>
+        <div class="content">
+            <p>In this scenario we have removed the need for passwords. The WebAuthn flow is exactly the same as for MFA, but for security reasons we require userVerification (this is optional).</p>
+            <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics will be used by the authenticator on the client</p>
+        </div>
+
         <div class="notification is-danger" style="display:none">
             Please note: Your browser does not seem to support WebAuthn yet. <a href="https://caniuse.com/#search=webauthn" target="_blank">Supported browsers</a>
         </div>
 
+        <div class="notification is-warning">
+            Please note: At the time of writing (Feb 2019) this is only supported by Edge on Windows.
+        </div>
         <div class="columns">
             <div class="column is-4">
 
                 <h3 class="title is-3">Register user</h3>
                 <form action="/mfa" method="post" id="register">
-                    <div class="field">
+                    @*<div class="field">
                         <label class="label">Username</label>
                         <div class="control has-icons-left has-icons-right">
                             <input class="input" type="text" placeholder="abergs" name="username" required>
@@ -25,7 +31,7 @@
                                 <i class="fas fa-user"></i>
                             </span>
                         </div>
-                    </div>
+                    </div>*@
 
                     <div class="field">
                         <label class="label">Display name</label>
@@ -35,24 +41,7 @@
                                 <i class="fas fa-user"></i>
                             </span>
                         </div>
-                    </div>
-
-                    <div class="field">
-                        <label class="label">Password</label>
-                        <div class="control has-icons-left has-icons-right">
-                            <input class="input" type="password" placeholder="Do not use something secret" name="password">
-                            <span class="icon is-small is-left">
-                                <i class="fas fa-user"></i>
-                            </span>
-                        </div>
-                        <p class="help">For demo purposes the password will not be used or stored</p>
-                    </div>
-
-                    <div class="field">
-                        <label class="checkbox">
-                            <input type="checkbox" disabled checked readonly>
-                            Register MFA on registration
-                        </label>
+                        <p class="help">Optional - but recommended.</p>
                     </div>
 
                     <div class="field">
@@ -66,8 +55,10 @@
             <div class="column is-4">
 
                 <h3 class="title is-3">Sign in</h3>
+
+
                 <form action="/mfa" method="post" id="signin">
-                    <div class="field">
+                    @*<div class="field">
                         <label class="label">Username</label>
                         <div class="control has-icons-left has-icons-right">
                             <input class="input" type="text" placeholder="abergs" name="username" required>
@@ -75,18 +66,8 @@
                                 <i class="fas fa-user"></i>
                             </span>
                         </div>
-                    </div>
+                    </div>*@
 
-                    <div class="field">
-                        <label class="label">Password</label>
-                        <div class="control has-icons-left has-icons-right">
-                            <input class="input" type="password" placeholder="Do not use something secret" name="password">
-                            <span class="icon is-small is-left">
-                                <i class="fas fa-user"></i>
-                            </span>
-                        </div>
-                        <p class="help">For demo purposes the password will not be used or stored</p>
-                    </div>
 
                     <div class="field">
                         <div class="control">
@@ -99,5 +80,5 @@
     </div>
 </div>
 
-<script src="~/js/mfa.register.js"></script>
-<script src="~/js/mfa.login.js"></script>
+<script src="~/js/usernameless.register.js"></script>
+<script src="~/js/usernameless.login.js"></script>
