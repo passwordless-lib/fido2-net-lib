@@ -69,7 +69,8 @@ namespace Fido2Demo
                 var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyCommonParameters.kty)].AsInt32();
                 var desc = "";
                 var icon = "";
-                try {
+                try
+                {
                     var entry = _mds.GetEntry(cred.AaGuid);
                     desc = entry.MetadataStatement.Description.ToString();
                     icon = entry.MetadataStatement.Icon.ToString();
@@ -87,7 +88,7 @@ namespace Fido2Demo
                         "<td>";
                 switch (kty)
                 {
-                    case (int) COSE.KeyTypes.OKP:
+                    case (int)COSE.KeyTypes.OKP:
                         {
                             var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString();
                             table += "<table class=\"sub-table\">" +
@@ -97,7 +98,7 @@ namespace Fido2Demo
                                     "</table>";
                             break;
                         }
-                    case (int) COSE.KeyTypes.EC2:
+                    case (int)COSE.KeyTypes.EC2:
                         {
                             var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString();
                             var Y = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.y)].GetByteString();
@@ -111,7 +112,7 @@ namespace Fido2Demo
                                     "</table>";
                             break;
                         }
-                    case (int) COSE.KeyTypes.RSA:
+                    case (int)COSE.KeyTypes.RSA:
                         {
                             var modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.n)].GetByteString();
                             var exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameters.e)].GetByteString();
@@ -142,14 +143,20 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredentialOptions")]
-        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
+        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string displayName, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
         {
             try
             {
+
+                if (string.IsNullOrEmpty(username))
+                {
+                    username = $"Usernameless user {displayName} - " + DateTime.UtcNow;
+                }
+
                 // 1. Get user from DB by username (in our example, auto create missing users)
                 var user = DemoStorage.GetOrAddUser(username, () => new User
                 {
-                    DisplayName = "Display " + username,
+                    DisplayName = displayName,
                     Name = username,
                     Id = Encoding.UTF8.GetBytes(username) // byte representation of userID is required
                 });
@@ -232,12 +239,17 @@ namespace Fido2Demo
         {
             try
             {
-                // 1. Get user from DB
-                var user = DemoStorage.GetUser(username);
-                if (user == null) throw new ArgumentException("Username was not registered");
+                var existingCredentials = new List<PublicKeyCredentialDescriptor>();
 
-                // 2. Get registered credentials from database
-                var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                if (!string.IsNullOrEmpty(username))
+                {
+                    // 1. Get user from DB
+                    var user = DemoStorage.GetUser(username);
+                    if (user == null) throw new ArgumentException("Username was not registered");
+
+                    // 2. Get registered credentials from database
+                    existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                }
 
                 var exts = new AuthenticationExtensionsClientInputs() { AppID = _origin, SimpleTransactionAuthorization = "FIDO", GenericTransactionAuthorization = new TxAuthGenericArg { ContentType = "text/plain", Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } }, UserVerificationIndex = true, Location = true, UserVerificationMethod = true };
 

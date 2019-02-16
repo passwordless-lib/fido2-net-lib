@@ -80,3 +80,16 @@ function showErrorAlert(message, error) {
         //footer: '<a href>Why do I have this issue?</a>'
     })
 }
+
+function detectFIDOSupport() {
+    if (window.PublicKeyCredential === undefined ||
+        typeof window.PublicKeyCredential !== "function") {
+        //$('#register-button').attr("disabled", true);
+        //$('#login-button').attr("disabled", true);
+        var el = document.getElementById("notSupportedWarning");
+        if (el) {
+            el.style.display = 'block';
+        }
+        return;
+    }
+}
