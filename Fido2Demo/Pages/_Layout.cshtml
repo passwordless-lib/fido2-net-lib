@@ -39,8 +39,8 @@ background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
         <div class="hero-head">
             <nav class="navbar">
                 <div class="container">
-                    <div class="navbar-brand">
-                        <a class="navbar-item">
+                    @*<div class="navbar-brand">
+                        @*<a class="navbar-item">
                             <img src="https://bulma.io/images/bulma-type-white.png" alt="Logo">
                         </a>
                         <span class="navbar-burger burger" data-target="navbarMenuHeroB">
@@ -48,20 +48,17 @@ background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
                             <span></span>
                             <span></span>
                         </span>
-                    </div>
+                    </div>*@
                     <div id="navbarMenuHeroB" class="navbar-menu">
                         <div class="navbar-end">
-                            <a class="navbar-item">
+                            <a class="navbar-item" asp-page="/overview">
                                 Home
                             </a>
-                            <a class="navbar-item">
-                                Examples
-                            </a>
-                            <a class="navbar-item">
+                            <a class="navbar-item" asp-page="https://github.com/abergs/fido2-net-lib#examples">
                                 Documentation
                             </a>
                             <span class="navbar-item">
-                                <a class="button is-info is-inverted">
+                                <a class="button is-info is-inverted" href="https://github.com/abergs/fido2-net-lib">
                                     <span class="icon">
                                         <i class="fab fa-github"></i>
                                     </span>
@@ -100,12 +97,6 @@ background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
                         </li>
                         <li class="@isActive("/usernameless")">
                             <a asp-page="/usernameless">Go Usernameless too</a>
-                        </li>
-                        <li>
-                            <a>Contribute</a>
-                        </li>
-                        <li>
-                            <a>Donate</a>
                         </li>
                     </ul>
                 </div>
