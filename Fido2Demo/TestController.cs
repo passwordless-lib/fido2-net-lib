@@ -208,7 +208,7 @@ namespace Fido2Demo
         public class TEST_AssertionClientParams
         {
             public string Username { get; set; }
-            public UserVerificationRequirement UserVerification { get; set; }
+            public UserVerificationRequirement? UserVerification { get; set; }
             public AuthenticatorSelection authenticatorSelection { get; set; }
             public AuthenticationExtensionsClientOutputs Extensions { get; set; }
         }
