@@ -741,19 +741,22 @@ namespace Fido2NetLib
         public MetadataTOCPayloadEntry GetEntry(Guid aaguid)
         {
             MetadataTOCPayloadEntry entry;
+            var retries = 0;
             if (true == ConformanceTesting())
             {
-                while (false == conformanceTOCReady)
+                while (false == conformanceTOCReady && retries < 60)
                 {
                     System.Threading.Thread.Sleep(1000);
+                    retries++;
                 }
                 ConformanceMetadata.payload.TryGetValue(aaguid, out entry);
             }
             else
             {
-                while (false == tOCReady)
+                while (false == tOCReady && retries < 20)
                 {
                     System.Threading.Thread.Sleep(1000);
+                    retries++;
                 }
                 mDSMetadata.payload.TryGetValue(aaguid, out entry);
             }
