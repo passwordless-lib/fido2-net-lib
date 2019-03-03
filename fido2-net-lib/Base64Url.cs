@@ -20,6 +20,11 @@ namespace Fido2NetLib
 
         public static byte[] Decode(string arg)
         {
+            if (arg is null)
+            {
+                throw new ArgumentNullException(nameof(arg));
+            }
+
             string s = arg;
             s = s.Replace('-', '+'); // 62nd char of encoding
             s = s.Replace('_', '/'); // 63rd char of encoding
@@ -29,7 +34,7 @@ namespace Fido2NetLib
                 case 0: break; // No pad chars in this case
                 case 2: s += "=="; break; // Two pad chars
                 case 3: s += "="; break; // One pad char
-                default: throw new FormatException();
+                default: throw new FormatException("The provided input is not valid base64 encoded string.");
             }
 
             return Convert.FromBase64String(s); // Standard base64 decoder
