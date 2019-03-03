@@ -15,16 +15,16 @@ namespace Fido2NetLib
         /// <param name="ignoreCase">ignores the case when comparing values.</param>
         /// <returns>TEnum.</returns>
         /// <exception cref="System.ArgumentException">No XmlEnumAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value</exception>
-        public static TEnum ToEnum<TEnum>(this string value, bool ignoreCase = true) where TEnum : struct, IConvertible
+        public static TEnum ToEnum<TEnum>(this string value, bool ignoreCase = true) where TEnum : struct, Enum
         {
-            foreach (var o in Enum.GetValues(typeof(TEnum)))
+            if (Enum.TryParse<TEnum>(value, ignoreCase, out var enumValue))
             {
-                var enumValue = (TEnum)o;
-                if (ToEnumMemberValue(enumValue).Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
-                    return enumValue;
+                return enumValue;
             }
-
-            throw new ArgumentException("No EnumMemberAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value);
+            else 
+            {
+                throw new ArgumentException($"Value '{value}' is not a valid enum name of '{typeof(TEnum)}' ({nameof(ignoreCase)}={ignoreCase}). Valid values are {string.Join(";", Enum.GetNames(typeof(TEnum)))}.");
+            }
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Fido2NetLib
         /// <typeparam name="TEnum">The type of enum.</typeparam>
         /// <param name="value">The enum's value.</param>
         /// <returns>string.</returns>
-        public static string ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, IConvertible
+        public static string ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
             return typeof(TEnum)
                 .GetTypeInfo()
