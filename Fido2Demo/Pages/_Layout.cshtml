@@ -21,6 +21,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css" rel="stylesheet" type="text/css" />
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
     <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: 'Work Sans', sans-serif;
         }
@@ -40,15 +44,15 @@
             <nav class="navbar">
                 <div class="container">
                     @*<div class="navbar-brand">
-                        @*<a class="navbar-item">
-                            <img src="https://bulma.io/images/bulma-type-white.png" alt="Logo">
-                        </a>
-                        <span class="navbar-burger burger" data-target="navbarMenuHeroB">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </span>
-                    </div>*@
+                            @*<a class="navbar-item">
+                                <img src="https://bulma.io/images/bulma-type-white.png" alt="Logo">
+                            </a>
+                            <span class="navbar-burger burger" data-target="navbarMenuHeroB">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </div>*@
                     <div id="navbarMenuHeroB" class="navbar-menu">
                         <div class="navbar-end">
                             <a class="navbar-item" asp-page="/overview">
@@ -82,21 +86,21 @@
             </div>
         </div>
 
-        <div class="hero-foot">
+        <div class="hero-foot" id="heroFoot">
             <nav class="tabs is-boxed is-fullwidth">
                 <div class="container">
                     <ul>
                         <li class="@isActive("/overview")">
-                        <a asp-page="/overview">Overview</a>
+                            <a asp-page="/overview" asp-fragment="heroFoot">Overview</a>
                         </li>
                         <li class="@isActive("/mfa")">
-                        <a asp-page="/mfa">Use as 2FA/MFA</a>
+                            <a asp-page="/mfa" asp-fragment="heroFoot">Use as 2FA/MFA</a>
                         </li>
                         <li class="@isActive("/passwordless")">
-                        <a asp-page="/passwordless">Go Passwordless</a>
+                            <a asp-page="/passwordless" asp-fragment="heroFoot">Go Passwordless</a>
                         </li>
                         <li class="@isActive("/usernameless")">
-                        <a asp-page="/usernameless">Go Usernameless too</a>
+                            <a asp-page="/usernameless" asp-fragment="heroFoot">Go Usernameless too</a>
                         </li>
                     </ul>
                 </div>
@@ -104,7 +108,7 @@
         </div>
     </section>
     @RenderBody()
-    <footer class="footer" style="margin-top:20vh">
+    <footer class="footer" style="        margin-top: 20vh">
         <div class="content has-text-centered">
             <p>
                 <strong>Fido2 .NET library</strong> by <a href="https://github.com/abergs/">Anders Åberg</a>, <a href="https://github.com/aseigler">Alex Seigler</a> and <a href="https://github.com/abergs/fido2-net-lib/graphs/contributors">contributors</a>. The source code is licensed
@@ -112,5 +116,6 @@
             </p>
         </div>
     </footer>
+    <script src="~/js/instant.js"></script>
 </body>
 </html>

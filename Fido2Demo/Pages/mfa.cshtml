@@ -96,6 +96,25 @@
                 </form>
             </div>
         </div>
+
+       
+    </div>
+</div>
+
+<div class="section">
+    <div class="container">
+        <div class="content">
+            <h1 class="title is-2">Flow explanation: 2FA/MFA with FIDO2</h1>
+            <p>In this scenario, WebAuthn is only used as second factor mechanism. MFA stands for Multi Factor Authentication which generally means it relies on <i>something the user knows</i> (username &amp; password) and <i>something the user has</i> (Authenticator Private key).
+                The flow is visualized in the figure below.
+                </p>
+            <img src="~/images/scenario1.png" alt="figure visualizing username and password sent together with assertion" />
+            <p>In this flow the Relying Party does not necessarily need to tell the Authenticator device to verify the human identity (we could set UserVerification to discourage) to minimize user interactions needed to sign in. More on UserVerification in the other scenarios.</p>
+
+            <p>
+                Read the source code for this demo here: <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/mfa.login.js")">mfa.login.js</a> and <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/mfa.login.js")">mfa.register.js</a>
+</p>
+</div>
     </div>
 </div>
 
