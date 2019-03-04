@@ -123,20 +123,22 @@
                     </li>
                 </ul>
 
-                <h3 class="title is-3">Concepts</h3>
-                <p>The following chapter will explain some of the concepts mentioned in the 3 scenarios</p>
+                <div class="content">
+                    <h3 class="title is-3">Concepts</h3>
+                    <p>The following chapter will explain some of the concepts mentioned in the 3 scenarios</p>
 
-                <h4 class="title is-4">Fido2 vs WebAuthn?</h4>
-                <p>Fido2 is the umbrella term and branding of two new w3c standards: WebAuthn and CTAP2. WebAuthn is the JS API that allows browser to talk to the operating system to generate assertions and CTAP2 is the API that allows the operating system to talk to Authenticators (usb security keys etc)</p>
+                    <h4 class="title is-4">Fido2 vs WebAuthn?</h4>
+                    <p>Fido2 is the umbrella term and branding of two new w3c standards: WebAuthn and CTAP2. WebAuthn is the JS API that allows browser to talk to the operating system to generate assertions and CTAP2 is the API that allows the operating system to talk to Authenticators (usb security keys etc)</p>
 
-                <h4 class="title is-4">Relying Party (RP)</h4>
-                <p>The Relying Party - often called RP - is the server that the browser communicates with. If you are a developer reading this, the Relying Party is probably your webserver. It's the server that runs the fido2-net-lib library.</p>
+                    <h4 class="title is-4">Relying Party (RP)</h4>
+                    <p>The Relying Party - often called RP - is the server that the browser communicates with. If you are a developer reading this, the Relying Party is probably your webserver. It's the server that runs the fido2-net-lib library.</p>
 
-                <h4 class="title is-4">User Verification</h4>
-                <p>A FIDO2 server (a.k.a the Relying Party, RP) can ask the authenticator to verify the user. This can be done either via PIN code, biometrics or other factors that securely verifies that it's the expected human in front of the device, not just any human.</p>
+                    <h4 class="title is-4">User Verification</h4>
+                    <p>A FIDO2 server (a.k.a the Relying Party, RP) can ask the authenticator to verify the user. This can be done either via PIN code, biometrics or other factors that securely verifies that it's the expected human in front of the device, not just any human.</p>
 
-                <h4 class="title is-4">Resident Credentials (RK)</h4>
-                <p>The resident credential is a credential that can be accessed simply with RP ID. When not using RK you will have to provide a list of the credentials (array of ID's) you want the authenticator to use. With RK you don’t need it because the authentication will locate all RK's (only RK credentials), and for each of them generate the assertion over the challenge and return all of them to the client. The client then will display all of the credentials to the user and user will pick one, thus returning selected credential to the relying party.</p>
+                    <h4 class="title is-4">Resident Credentials (RK)</h4>
+                    <p>The resident credential is a credential that can be accessed simply with RP ID. When not using RK you will have to provide a list of the credentials (array of ID's) you want the authenticator to use. With RK you don’t need it because the authentication will locate all RK's (only RK credentials), and for each of them generate the assertion over the challenge and return all of them to the client. The client then will display all of the credentials to the user and user will pick one, thus returning selected credential to the relying party.</p>
+                </div>
             </div>
         </div>
     </div>
