@@ -7,7 +7,7 @@
     <div class="container">
         <h1 class="title is-1">Scenario: Usernameless</h1>
         <div class="content">
-            <p>In this scenario we have removed the need for passwords. The WebAuthn flow is exactly the same as for MFA, but for security reasons we require userVerification (this is optional).</p>
+            <p>In this scenario we have removed the need for both usernames and passwords. The WebAuthn flow is very similiar to the paswordless flow, but when registering we require the resident key option. User account selection is handled by the client/authenticator. If multiple credentials are found, the user will be able to choose which credential to use.</p>
             <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics will be used by the authenticator on the client</p>
         </div>
 
@@ -24,14 +24,14 @@
                 <h3 class="title is-3">Register user</h3>
                 <form action="/mfa" method="post" id="register">
                     @*<div class="field">
-                        <label class="label">Username</label>
-                        <div class="control has-icons-left has-icons-right">
-                            <input class="input" type="text" placeholder="abergs" name="username" required>
-                            <span class="icon is-small is-left">
-                                <i class="fas fa-user"></i>
-                            </span>
-                        </div>
-                    </div>*@
+                            <label class="label">Username</label>
+                            <div class="control has-icons-left has-icons-right">
+                                <input class="input" type="text" placeholder="abergs" name="username" required>
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                            </div>
+                        </div>*@
 
                     <div class="field">
                         <label class="label">Display name</label>
@@ -59,14 +59,14 @@
 
                 <form action="/mfa" method="post" id="signin">
                     @*<div class="field">
-                        <label class="label">Username</label>
-                        <div class="control has-icons-left has-icons-right">
-                            <input class="input" type="text" placeholder="abergs" name="username" required>
-                            <span class="icon is-small is-left">
-                                <i class="fas fa-user"></i>
-                            </span>
-                        </div>
-                    </div>*@
+                            <label class="label">Username</label>
+                            <div class="control has-icons-left has-icons-right">
+                                <input class="input" type="text" placeholder="abergs" name="username" required>
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                            </div>
+                        </div>*@
 
 
                     <div class="field">
@@ -76,6 +76,25 @@
                     </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="section">
+    <div class="container">
+        <div class="content">
+            <h1 class="title is-2">Explanation: Username and paswordless login with FIDO2</h1>
+            <p>
+                In this scenario, WebAuthn is used without a username to securely authenticate the user. This requires the Authenticator to support Resident Keys.
+                The flow is visualized in the figure below.
+            </p>
+            <img src="~/images/scenario3.png" alt="figure visualizing username and challenge sent together with assertion" />
+            <p>In this flow the Relying Party should tell the Authenticator to do User Verification (set UserVerification to required) via Biometrics/pin, thus the authentication is MFA (Something the user has - the private key - and something the user knows/is - the PIN or biometrics). However in scenarios where security requirements are very low we we could discourage user verification to minimize the user interaction needed to sign in. If discouraged, only user presence will be checked (Any human is present at the device).</p>
+
+            <p>
+                Read the source code for this demo here: <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/usernameless.register.js")">usernameless.register.js</a> and <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/usernameless.login.js")">usernameless.login.js</a>
+            </p>
         </div>
     </div>
 </div>
