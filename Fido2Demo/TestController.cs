@@ -36,7 +36,9 @@ namespace Fido2Demo
             var invalidToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
             _origin = config["fido2:origin"];
             _mds = MDSMetadata.ConformanceInstance(invalidToken, config["fido2:MDSCacheDirPath"], _origin);
-
+            if (false == _mds.IsInitialized())
+                _mds.Initialize().Wait();
+            
             _lib = new Fido2(new Fido2.Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],

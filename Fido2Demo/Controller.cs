@@ -28,6 +28,8 @@ namespace Fido2Demo
         {
             var MDSAccessKey = config["fido2:MDSAccessKey"];
             _mds = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, config["fido2:MDSCacheDirPath"]);
+            if (false == _mds.IsInitialized())
+                _mds.Initialize().Wait();
             _origin = config["fido2:origin"];
             _lib = new Fido2(new Configuration()
             {
