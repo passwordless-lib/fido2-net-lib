@@ -22,6 +22,11 @@ namespace fido2_net_lib.Test
 
             // Only create and use MetadataService if we have an accesskey
             MetadataService = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, CacheDir);
+            if (null != MetadataService)
+            {
+                if (false == MetadataService.IsInitialized())
+                    MetadataService.Initialize().Wait();
+            }
         }
         public static byte[] StringToByteArray(string hex)
         {
