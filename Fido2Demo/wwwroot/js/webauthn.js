@@ -280,8 +280,10 @@ function getAssertion() {
         return;
     }
     setUser();
+    var user_verification = $('#select-userVerification').find(':selected').val();
     var data = new FormData();
     data.append('username', state.user.name);
+    data.append('userVerification', user_verification);
 
     fetch('/assertionOptions', {
         method: 'POST', // or 'PUT'

@@ -225,7 +225,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/assertionOptions")]
-        public ActionResult AssertionOptionsPost([FromForm] string username)
+        public ActionResult AssertionOptionsPost([FromForm] string username, [FromForm] string userVerification)
         {
             try
             {
@@ -239,9 +239,12 @@ namespace Fido2Demo
                 var exts = new AuthenticationExtensionsClientInputs() { AppID = _origin, SimpleTransactionAuthorization = "FIDO", GenericTransactionAuthorization = new TxAuthGenericArg { ContentType = "text/plain", Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } }, UserVerificationIndex = true, Location = true, UserVerificationMethod = true };
 
                 // 3. Create options
+                var uv = UserVerificationRequirement.Discouraged;
+                if (!string.IsNullOrEmpty(userVerification))
+                    uv = userVerification.ToEnum<UserVerificationRequirement>();
                 var options = _lib.GetAssertionOptions(
                     existingCredentials,
-                    UserVerificationRequirement.Discouraged,
+                    uv,
                     exts
                 );
 
