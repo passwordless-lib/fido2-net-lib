@@ -1,0 +1,79 @@
+﻿@page "/custom/{handler?}"
+@model Fido2Demo.CustomModel
+@{
+    Layout = "_Layout.cshtml";
+}
+
+<div class="section">
+    <div class="container">
+        <h1 class="title is-1">Custom</h1>
+        <div class="content">
+            <p>In this scenario we have removed the need for passwords. The WebAuthn flow is exactly the same as for MFA, but for security reasons we could require userVerification (this is optional).</p>
+            <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics will be used by the authenticator on the client</p>
+        </div>
+        <div class="notification is-danger" style="display:none">
+            Please note: Your browser does not seem to support WebAuthn yet. <a href="https://caniuse.com/#search=webauthn" target="_blank">Supported browsers</a>
+        </div>
+
+        <div class="columns">
+            <div class="column is-4">
+
+                <h3 class="title is-3">Register user</h3>
+                <form action="/mfa" method="post" id="register">
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="abergs" name="username" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Display name</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Anders Åberg" name="displayName">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Register user</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="column is-2"></div>
+            <div class="column is-4">
+
+                <h3 class="title is-3">Sign in</h3>
+                <form action="/mfa" method="post" id="signin">
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="abergs" name="username" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Sign in</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @Html.Partial("_options.cshtml")
+    </div>
+</div>
+
+<script src="~/js/custom.register.js"></script>
+<script src="~/js/custom.login.js"></script>

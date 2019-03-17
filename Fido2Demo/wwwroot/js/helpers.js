@@ -93,3 +93,13 @@ function detectFIDOSupport() {
         return;
     }
 }
+
+/**
+ * 
+ * Get a form value
+ * @param {any} selector
+ */
+function value(selector) {
+    var el = document.querySelector(selector);
+    return el.value;
+}
