@@ -8,8 +8,8 @@
     <div class="container">
         <h1 class="title is-1">Custom</h1>
         <div class="content">
-            <p>In this scenario we have removed the need for passwords. The WebAuthn flow is exactly the same as for MFA, but for security reasons we could require userVerification (this is optional).</p>
-            <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics will be used by the authenticator on the client</p>
+            <p>In this scenario we have removed the need for passwords. We will use the settings set by you when registering your credentials. This is useful if you want to try differences or browser support etc.</p>
+            <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics might be used by the authenticator on the client</p>
         </div>
         <div class="notification is-danger" style="display:none">
             Please note: Your browser does not seem to support WebAuthn yet. <a href="https://caniuse.com/#search=webauthn" target="_blank">Supported browsers</a>
@@ -72,6 +72,16 @@
         </div>
 
         @Html.Partial("_options.cshtml")
+
+        <div class="section">
+            <div class="container">
+                <div class="content">
+                    <p>
+                        Read the source code for this demo here: <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/custom.register.js")">custom.register.js</a> and <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/custom.login.js")">custom.login.js</a>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
