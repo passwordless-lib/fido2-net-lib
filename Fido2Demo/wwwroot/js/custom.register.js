@@ -15,7 +15,7 @@ async function handleRegisterSubmit(event) {
     let user_verification = value("#option-userverification");
 
     // possible values: true,false
-    let require_resident_key = value("#option-residentkey") === "on";
+    let require_resident_key = value("#option-residentkey");
 
 
     // prepare form post data

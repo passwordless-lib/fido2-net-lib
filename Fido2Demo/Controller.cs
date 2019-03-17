@@ -20,9 +20,9 @@ namespace Fido2Demo
     public class MyController : Controller
     {
         private Fido2 _lib;
-        private IMetadataService _mds;
+        public static IMetadataService _mds;
         private string _origin;
-        private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
+        public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         public MyController(IConfiguration config)
         {
@@ -50,7 +50,7 @@ namespace Fido2Demo
         }
 
         [HttpGet]
-        [Route("/dashboard/{username}")]
+        [Route("/dashboard-old/{username}")]
         public ContentResult Index(string username)
         {
             // 1. Get user from DB

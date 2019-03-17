@@ -1,0 +1,71 @@
+﻿@page "/dashboard/{username}"
+@model Fido2Demo.Pages.dashboardModel
+@{
+    ViewData["Title"] = "dashboard";
+    Layout = "_Layout.cshtml";
+
+    // Please know that this is not good for production:
+    var DemoStorage = MyController.DemoStorage;
+    var _mds = MyController._mds;
+
+    var username = Model.Username;
+
+    // 1. Get user from DB
+    var user = DemoStorage.GetUser(username);
+
+    // 2. Get registered credentials from database
+    var existingCredentials = DemoStorage.GetCredentialsByUser(user);
+
+
+
+}
+
+<div class="section">
+    <div class="container">
+        <h1 class="title is-1">Dashboard for: @username</h1>
+
+        <p>This page shows all registered keys on this username. Please note that keys are only persisted in memory on the dev server.</p>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <td>Date</td>
+                    <td>Desc</td>
+                    <td>Counter</td>
+                    <td>AAGuid</td>
+                    <td>UserHandle</td>
+                    <td>UserId</td>
+                    <td>Public Key</td>
+                </tr>
+            </thead>
+            @foreach (var item in existingCredentials)
+            {
+                var desc = "";
+                var icon = "";
+                try
+                {
+                    var entry = _mds.GetEntry(item.AaGuid);
+                    desc = entry.MetadataStatement.Description.ToString();
+                    icon = entry.MetadataStatement.Icon.ToString();
+                }
+                catch { }
+
+                <tr>
+                    <td>@item.RegDate</td>
+                    <td><img src="@icon" /> @desc</td>
+                    <td>@item.SignatureCounter</td>
+                    <td>@item.AaGuid</td>
+                    <td>@BitConverter.ToString(item.UserHandle)</td>
+                    <td>@BitConverter.ToString(item.UserId)</td>
+                    <td>
+                        <details>
+                            <summary>@BitConverter.ToString(@item.PublicKey).Substring(0, 10)...</summary>
+                            @BitConverter.ToString(@item.PublicKey)
+                        </details>
+                    </td>
+                </tr>
+            }
+        </table>
+
+    </div>
+</div>
