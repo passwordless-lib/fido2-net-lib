@@ -123,13 +123,13 @@ async function verifyAssertionWithServer(assertedCredential) {
     }
 
     // show success message
-    Swal.fire({
+    await Swal.fire({
         title: 'Logged In!',
         text: 'You\'re logged in successfully.',
         type: 'success',
         timer: 2000
     });
 
-    // redirect?
-    //window.location.href = "/dashboard/" + state.user.displayName;
+    // redirect to dashboard to show keys
+    window.location.href = "/dashboard/" + value("#login-username");
 }

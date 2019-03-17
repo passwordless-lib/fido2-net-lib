@@ -101,5 +101,8 @@ function detectFIDOSupport() {
  */
 function value(selector) {
     var el = document.querySelector(selector);
+    if (el.type === "checkbox") {
+        return el.checked;
+    }
     return el.value;
 }
