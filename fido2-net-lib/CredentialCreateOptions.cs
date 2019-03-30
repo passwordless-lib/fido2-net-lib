@@ -88,7 +88,6 @@ namespace Fido2NetLib
                     ES512,
                     RS512,
                     PS512,
-                    RS1
                 },
                 AuthenticatorSelection = authenticatorSelection,
                 Attestation = attestationConveyancePreference,
@@ -122,11 +121,6 @@ namespace Fido2NetLib
         {
             Type = PublicKeyCredentialType.PublicKey,
             Alg = -36
-        };
-        private static PubKeyCredParam RS1 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = -65535
         };
         private static PubKeyCredParam RS256 = new PubKeyCredParam()
         {
