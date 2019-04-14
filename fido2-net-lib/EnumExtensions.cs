@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -17,14 +18,24 @@ namespace Fido2NetLib
         /// <exception cref="System.ArgumentException">No XmlEnumAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value</exception>
         public static TEnum ToEnum<TEnum>(this string value, bool ignoreCase = true) where TEnum : struct, Enum
         {
-            if (Enum.TryParse<TEnum>(value, ignoreCase, out var enumValue))
+            // Try to parse it normally on the first try
+            if (Enum.TryParse<TEnum>(value, ignoreCase, out var result))
+                return result;
+
+            // Try with value from EnumMemberAttribute
+            foreach (var o in Enum.GetValues(typeof(TEnum)))
             {
-                return enumValue;
+                var enumValue = (TEnum)o;
+                if (ToEnumMemberValue(enumValue).Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                    return enumValue;
             }
-            else 
-            {
-                throw new ArgumentException($"Value '{value}' is not a valid enum name of '{typeof(TEnum)}' ({nameof(ignoreCase)}={ignoreCase}). Valid values are {string.Join(";", Enum.GetNames(typeof(TEnum)))}.");
-            }
+
+            // Since we got this far, lets construct a list of valid values and show it to the world...
+            var validValues = new List<string>(Enum.GetValues(typeof(TEnum)).Length);
+            foreach (var o in Enum.GetValues(typeof(TEnum)))
+                validValues.Add(ToEnumMemberValue((TEnum)o));
+
+            throw new ArgumentException($"Value '{value}' is not a valid enum name of '{typeof(TEnum)}' ({nameof(ignoreCase)}={ignoreCase}). Valid values are: {string.Join(", ", validValues)}.");
         }
 
         /// <summary>
