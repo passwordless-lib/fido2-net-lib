@@ -23,19 +23,14 @@ namespace Fido2NetLib
                 return result;
 
             // Try with value from EnumMemberAttribute
-            foreach (var o in Enum.GetValues(typeof(TEnum)))
+            var values = Enum.GetValues(typeof(TEnum)).OfType<TEnum>().ToArray();
+            foreach (var val in values)
             {
-                var enumValue = (TEnum)o;
-                if (ToEnumMemberValue(enumValue).Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
-                    return enumValue;
+                if (ToEnumMemberValue(val).Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                    return val;
             }
 
-            // Since we got this far, lets construct a list of valid values and show it to the world...
-            var validValues = new List<string>(Enum.GetValues(typeof(TEnum)).Length);
-            foreach (var o in Enum.GetValues(typeof(TEnum)))
-                validValues.Add(ToEnumMemberValue((TEnum)o));
-
-            throw new ArgumentException($"Value '{value}' is not a valid enum name of '{typeof(TEnum)}' ({nameof(ignoreCase)}={ignoreCase}). Valid values are: {string.Join(", ", validValues)}.");
+            throw new ArgumentException($"Value '{value}' is not a valid enum name of '{typeof(TEnum)}' ({nameof(ignoreCase)}={ignoreCase}). Valid values are: {string.Join(", ", values.Select(v => v.ToEnumMemberValue()))}.");
         }
 
         /// <summary>
