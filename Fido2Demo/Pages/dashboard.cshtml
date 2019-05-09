@@ -35,6 +35,7 @@
                     <td>AAGuid</td>
                     <td>UserHandle</td>
                     <td>UserId</td>
+                    <td>Attestation Type</td>
                     <td>Public Key</td>
                 </tr>
             </thead>
@@ -42,11 +43,19 @@
             {
                 var desc = "";
                 var icon = "";
+                var userHandle = System.Text.Encoding.UTF8.GetString(item.UserHandle);
+                var userId = System.Text.Encoding.UTF8.GetString(item.UserId);
+                var publicKey = System.Convert.ToBase64String(item.PublicKey);
                 try
                 {
-                    var entry = _mds.GetEntry(item.AaGuid);
-                    desc = entry.MetadataStatement.Description.ToString();
-                    icon = entry.MetadataStatement.Icon.ToString();
+
+                    if (_mds != null)
+                    {
+                        var entry = _mds.GetEntry(item.AaGuid);
+                        desc = entry.MetadataStatement.Description.ToString();
+                        icon = entry.MetadataStatement.Icon.ToString();
+                    }
+
                 }
                 catch { }
 
@@ -55,12 +64,13 @@
                     <td><img src="@icon" /> @desc</td>
                     <td>@item.SignatureCounter</td>
                     <td>@item.AaGuid</td>
-                    <td>@BitConverter.ToString(item.UserHandle)</td>
-                    <td>@BitConverter.ToString(item.UserId)</td>
+                    <td>@userHandle</td>
+                    <td>@userId</td>
+                    <td>@item.CredType</td>
                     <td>
                         <details>
-                            <summary>@BitConverter.ToString(@item.PublicKey).Substring(0, 10)...</summary>
-                            @BitConverter.ToString(@item.PublicKey)
+                            <summary>@publicKey.Substring(0, 10).Substring(0, 10)...</summary>
+                            @publicKey
                         </details>
                     </td>
                 </tr>
