@@ -150,7 +150,7 @@ namespace Fido2Demo
 
                 if (string.IsNullOrEmpty(username))
                 {
-                    username = $"Usernameless user {displayName} - " + DateTime.UtcNow;
+                    username = $"{displayName} (Usernameless user created at {DateTime.UtcNow})";
                 }
 
                 // 1. Get user from DB by username (in our example, auto create missing users)
@@ -286,6 +286,11 @@ namespace Fido2Demo
 
                 // 2. Get registered credential from database
                 var creds = DemoStorage.GetCredentialById(clientResponse.Id);
+
+                if(creds == null)
+                {
+                    throw new Exception("Unknown credentials");
+                }
 
                 // 3. Get credential counter from database
                 var storedCounter = creds.SignatureCounter;
