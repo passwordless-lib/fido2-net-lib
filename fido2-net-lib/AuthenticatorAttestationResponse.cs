@@ -63,9 +63,9 @@ namespace Fido2NetLib
             return response;
         }
 
-        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, string expectedOrigin, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
+        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, Fido2NetLib.Fido2.Configuration config, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
         {
-            BaseVerify(expectedOrigin, originalOptions.Challenge, requestTokenBindingId);
+            BaseVerify(config.Origin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected
             // verify origin
             // done in baseclass
@@ -145,7 +145,7 @@ namespace Fido2NetLib
 
                 case "android-safetynet":
                         // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
-                        verifier = new AndroidSafetyNet(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                        verifier = new AndroidSafetyNet(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, config.TimestampDriftTolerance);
                     break;
 
                 case "fido-u2f":

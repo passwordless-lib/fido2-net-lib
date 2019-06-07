@@ -40,7 +40,8 @@ namespace Fido2Demo
                 ServerName = "Fido2 test",
                 Origin = _origin,
                 // Only create and use Metadataservice if we have an acesskey
-                MetadataService = _mds
+                MetadataService = _mds,
+                TimestampDriftTolerance = config.GetValue<int>("fido2:TimestampDriftTolerance")
             });
         }
 

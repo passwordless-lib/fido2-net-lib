@@ -13,9 +13,15 @@ namespace Fido2NetLib
         public class Configuration
         {
             /// <summary>
-            /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.This is treated as a hint, and MAY be overridden by the client
+            /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. 
+            /// This is treated as a hint, and MAY be overridden by the client.
             /// </summary>
             public uint Timeout { get; set; } = 60000;
+
+            /// <summary>
+            /// TimestampDriftTolerance specifies a time in milliseconds that will be allowed for clock drift on a timestamped attestation.
+            /// </summary>
+            public int TimestampDriftTolerance { get; set; } = 0;
 
             /// <summary>
             /// The size of the challenges sent to the client
@@ -105,7 +111,7 @@ namespace Fido2NetLib
         public async Task<CredentialMakeResult> MakeNewCredentialAsync(AuthenticatorAttestationRawResponse attestationResponse, CredentialCreateOptions origChallenge, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, byte[] requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-            var success = await parsedResponse.VerifyAsync(origChallenge, Config.Origin, isCredentialIdUniqueToUser, Config.MetadataService, requestTokenBindingId);
+            var success = await parsedResponse.VerifyAsync(origChallenge, Config, isCredentialIdUniqueToUser, Config.MetadataService, requestTokenBindingId);
 
             // todo: Set Errormessage etc.
             return new CredentialMakeResult { Status = "ok", ErrorMessage = string.Empty, Result = success };

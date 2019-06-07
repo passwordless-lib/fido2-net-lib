@@ -12,8 +12,10 @@ namespace Fido2NetLib.AttestationFormat
 {
     class AndroidSafetyNet : AttestationFormat
     {
-        public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
+        private int _driftTolerance;
+        public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, int driftTolerance) : base(attStmt, authenticatorData, clientDataHash)
         {
+            _driftTolerance = driftTolerance;
         }
         public override void Verify()
         {
@@ -70,7 +72,12 @@ namespace Fido2NetLib.AttestationFormat
                 if (("timestampMs" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#integer64" == claim.ValueType))
                 {
                     var dt = DateTimeHelper.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
-                    if ((DateTime.UtcNow < dt) || (DateTime.UtcNow.AddMinutes(-1) > dt)) throw new Fido2VerificationException("Android SafetyNet timestampMs must be between one minute ago and now");
+                    var notAfter = DateTime.UtcNow.AddMilliseconds(_driftTolerance);
+                    var notBefore = DateTime.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
+                    if ((notAfter < dt) || ((notBefore) > dt))
+                    {
+                        throw new Fido2VerificationException("Android SafetyNet timestampMs must be between one minute ago and now");
+                    }
                 }
             }
 
