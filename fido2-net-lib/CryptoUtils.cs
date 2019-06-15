@@ -256,9 +256,9 @@ namespace Fido2NetLib
             // make sure we are at the end
             if (ecDsaSig.Length != offset) throw new Fido2VerificationException("ECDsa signature has bytes leftover after parsing R and S values");
 
-            // .NET requires IEEE P1393 fixed size unsigned big endian values for R and S
+            // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
             // ASN.1 requires storing positive integer values with any leading 0s removed
-            // Convert ASN.1 format to IEEE P1393 format 
+            // Convert ASN.1 format to IEEE P-1363 format 
             // determine coefficient size 
             var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
@@ -266,20 +266,20 @@ namespace Fido2NetLib
             if ((coefficientSize * 2) < (r.Length + s.Length)) throw new Fido2VerificationException("ECDsa signature has invalid length for given curve key size");
 
             // Create byte array to copy R into 
-            var P1393R = new byte[coefficientSize];
+            var P1363R = new byte[coefficientSize];
 
-            // Copy reversed ASN.1 R value to P1393R buffer, to get trailing zeroes if needed
-            Buffer.BlockCopy(r.Reverse().ToArray(), 0, P1393R, 0, r.Length);
+            // Copy reversed ASN.1 R value to P1363R buffer, to get trailing zeroes if needed
+            Buffer.BlockCopy(r.Reverse().ToArray(), 0, P1363R, 0, r.Length);
 
             // Create byte array to copy S into 
-            var P1393S = new byte[coefficientSize];
+            var P1363S = new byte[coefficientSize];
 
-            // Copy reversed ASN.1 S value to P1393S buffer, to get trailing zeroes if needed
-            Buffer.BlockCopy(s.Reverse().ToArray(), 0, P1393S, 0, s.Length);
+            // Copy reversed ASN.1 S value to P1363S buffer, to get trailing zeroes if needed
+            Buffer.BlockCopy(s.Reverse().ToArray(), 0, P1363S, 0, s.Length);
 
             // Reverse and combine each coordinate and return the raw signature
             // Any trailing zeroes will become leading zeroes
-            var sig = P1393R.Reverse().ToArray().Concat(P1393S.Reverse().ToArray()).ToArray();
+            var sig = P1363R.Reverse().ToArray().Concat(P1363S.Reverse().ToArray()).ToArray();
 
             return sig;
         }
