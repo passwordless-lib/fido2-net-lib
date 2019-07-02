@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\fido2-net-lib\Fido2NetLib.csproj" />
+    <ProjectReference Include="..\Src\Fido2NetLib.csproj" />
   </ItemGroup>
 
 </Project>
