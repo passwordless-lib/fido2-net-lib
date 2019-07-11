@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../lib/CBOR/CBOR.Include.props" />
-  <Import Project="../lib/Chaos.NaCL/Chaos.NaCL.Include.props" />
-  <Import Project="../lib/Asn1Processor/Asn1Processor.Include.props" />
+  <Import Project="../ExternalLibs/CBOR/CBOR.Include.props" />
+  <Import Project="../ExternalLibs/Chaos.NaCL/Chaos.NaCL.Include.props" />
+  <Import Project="../ExternalLibs/Asn1Processor/Asn1Processor.Include.props" />
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp2.0</TargetFrameworks>
