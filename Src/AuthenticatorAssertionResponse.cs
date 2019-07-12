@@ -102,7 +102,11 @@ namespace Fido2NetLib
             using (var sha = SHA256.Create())
             {
                 // 11
-                hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(options.RpId));
+                // https://www.w3.org/TR/webauthn/#sctn-appid-extension
+                // FIDO AppID Extension:
+                // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
+                var rpid = Raw.Extensions?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
+                hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(rpid ?? string.Empty));
                 // 15
                 hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
             }
