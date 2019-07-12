@@ -119,12 +119,12 @@ namespace Fido2NetLib
             // UNLESS...userPresent is true?
             // see ee Server-ServerAuthenticatorAssertionResponse-Resp3 Test server processing authenticatorData
             // P-8 Send a valid ServerAuthenticatorAssertionResponse both authenticatorData.flags.UV and authenticatorData.flags.UP are not set, for userVerification set to "discouraged", and check that server succeeds
-            if (UserVerificationRequirement.Required == options.UserVerification && false == authData.UserVerified) throw new Fido2VerificationException("User verification is required");
+            if (UserVerificationRequirement.Required == options.UserVerification && false == authData.Flags.HasFlag(AuthenticatorFlags.UV)) throw new Fido2VerificationException("User verification is required");
 
             // 14. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call.In particular, any extension identifier values in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
             // todo: Verify this (and implement extensions on options)
-            if ((true == authData.ExtensionsPresent) && ((null == authData.Extensions) || (0 == authData.Extensions.Length))) throw new Fido2VerificationException("Extensions flag present, malformed extensions detected");
-            if ((false == authData.ExtensionsPresent) && (null != authData.Extensions)) throw new Fido2VerificationException("Extensions flag not present, but extensions detected");
+            if ((true == authData.Flags.HasFlag(AuthenticatorFlags.ED)) && ((null == authData.Extensions) || (0 == authData.Extensions.Length))) throw new Fido2VerificationException("Extensions flag present, malformed extensions detected");
+            if ((false == authData.Flags.HasFlag(AuthenticatorFlags.ED)) && (null != authData.Extensions)) throw new Fido2VerificationException("Extensions flag not present, but extensions detected");
 
             // 15.
             // Done earlier, hashedClientDataJson
@@ -139,8 +139,7 @@ namespace Fido2NetLib
             if (true != CryptoUtils.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
 
             // 17.
-            var counter = BitConverter.ToUInt32(authData.SignCount.ToArray().Reverse().ToArray(), 0);
-            if (counter > 0 && counter <= storedSignatureCounter)
+            if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)
                 throw new Fido2VerificationException("SignatureCounter was not greater than stored SignatureCounter");
 
             return new AssertionVerificationResult()
@@ -148,7 +147,7 @@ namespace Fido2NetLib
                 Status = "ok",
                 ErrorMessage = string.Empty,
                 CredentialId = Raw.Id,
-                Counter = counter
+                Counter = authData.SignCount,
             };
         }
     }

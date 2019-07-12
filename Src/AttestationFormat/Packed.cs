@@ -84,9 +84,11 @@ namespace Fido2NetLib.AttestationFormat
                 // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
                 // verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(attestnCert.Extensions);
-                if (aaguid != null && !aaguid.SequenceEqual(AuthData.AttData.Aaguid.ToArray()))
-                    throw new Fido2VerificationException("aaguid present in packed attestation but does not match aaguid from authData");
-
+                if (aaguid != null)
+                {
+                    if ( 0 != AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid))
+                        throw new Fido2VerificationException("aaguid present in packed attestation but does not match aaguid from authData");
+                }
                 // 2d. The Basic Constraints extension MUST have the CA component set to false
                 if (IsAttnCertCACert(attestnCert.Extensions))
                     throw new Fido2VerificationException("Attestion certificate has CA cert flag present");
@@ -100,7 +102,7 @@ namespace Fido2NetLib.AttestationFormat
 
                 if (null != MetadataService)
                 {
-                    var entry = MetadataService.GetEntry(AuthData.AttData.GuidAaguid);
+                    var entry = MetadataService.GetEntry(AuthData.AttestedCredentialData.AaGuid);
                     // while conformance testing, we must reject any authenticator that we cannot get metadata for
                     if (true == MetadataService.ConformanceTesting() && null == entry) throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
 
@@ -157,15 +159,13 @@ namespace Fido2NetLib.AttestationFormat
             else
             {
                 // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-                var credentialPublicKey = CBORObject.DecodeFromBytes(AuthData.AttData.CredentialPublicKey);
-                var coseAlg = credentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameters.alg)].AsInt32();
-                if (Alg.AsInt32() != coseAlg)
+                if ((COSE.Algorithm) Alg.AsInt32() != AuthData.AttestedCredentialData.CredentialPublicKey.Alg)
                     throw new Fido2VerificationException("Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 
                 // Verify that sig is a valid signature over the concatenation of authenticatorData and 
                 // clientDataHash using the credential public key with alg
                 
-                if (true != CryptoUtils.VerifySigWithCoseKey(Data, credentialPublicKey, Sig.GetByteString()))
+                if (true != CryptoUtils.VerifySigWithCoseKey(Data, AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject(), Sig.GetByteString()))
                     throw new Fido2VerificationException("Failed to validate signature");
             }
         }

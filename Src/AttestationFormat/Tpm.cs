@@ -430,20 +430,20 @@ namespace Fido2NetLib.AttestationFormat
             if (null == pubArea || null == pubArea.Unique || 0 == pubArea.Unique.Length)
                 throw new Fido2VerificationException("Missing or malformed pubArea");
 
-            var coseKty = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameters.kty)].AsInt32();
+            var coseKty = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
             if (3 == coseKty) // RSA
             {
-                var coseMod = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.n)].GetByteString(); // modulus 
-                var coseExp = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.e)].GetByteString(); // exponent
+                var coseMod = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(); // modulus 
+                var coseExp = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString(); // exponent
 
                 if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray())) throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
                 if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent) throw new Fido2VerificationException("Public key exponent mismatch between pubArea and credentialPublicKey");
             }
             else if (2 == coseKty) // ECC
             {
-                var curve = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.crv)].AsInt32();
-                var X = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString();
-                var Y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.y)].GetByteString();
+                var curve = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
+                var X = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
+                var Y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
 
                 if (pubArea.EccCurve != CoseCurveToTpm[curve]) throw new Fido2VerificationException("Curve mismatch between pubArea and credentialPublicKey");
                 if (!pubArea.ECPoint.X.SequenceEqual(X)) throw new Fido2VerificationException("X-coordinate mismatch between pubArea and credentialPublicKey");
@@ -552,7 +552,7 @@ namespace Fido2NetLib.AttestationFormat
 
                 // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
-                if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (!aaguid.SequenceEqual(AuthData.AttData.Aaguid.ToArray()))) throw new Fido2VerificationException("aaguid malformed");
+                if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (0 != new Guid(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid))) throw new Fido2VerificationException("aaguid malformed");
             }
             // If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (null != EcdaaKeyId)

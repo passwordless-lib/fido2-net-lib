@@ -204,15 +204,15 @@ namespace Fido2NetLib.AttestationFormat
             if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
             if (true != androidKeyPubKey.VerifyData(Data, CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), androidKeyPubKey.KeySize), CryptoUtils.algMap[Alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
 
-            var credentialPublicKey = CBORObject.DecodeFromBytes(AuthData.AttData.CredentialPublicKey);
+            var credentialPublicKey = CBORObject.DecodeFromBytes(AuthData.AttestedCredentialData.CredentialPublicKey.GetBytes());
             var cng = ECDsa.Create(new ECParameters
             {
                 Curve = ECCurve.NamedCurves.nistP256,
                 Q = new ECPoint
                 {
                     
-                    X = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString(),
-                    Y = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameters.y)].GetByteString()
+                    X = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(),
+                    Y = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString()
                 }
             });
             // Verify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
