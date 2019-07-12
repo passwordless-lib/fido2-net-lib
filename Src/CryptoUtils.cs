@@ -41,25 +41,25 @@ namespace Fido2NetLib
         }
         public static readonly Dictionary<int, HashAlgorithmName> algMap = new Dictionary<int, HashAlgorithmName>
         {
-            {(int) COSE.Algorithms.RS1, HashAlgorithmName.SHA1 },
-            {(int) COSE.Algorithms.ES256, HashAlgorithmName.SHA256},
-            {(int) COSE.Algorithms.ES384, HashAlgorithmName.SHA384 },
-            {(int) COSE.Algorithms.ES512, HashAlgorithmName.SHA512 },
-            {(int) COSE.Algorithms.PS256, HashAlgorithmName.SHA256 },
-            {(int) COSE.Algorithms.PS384, HashAlgorithmName.SHA384 },
-            {(int) COSE.Algorithms.PS512, HashAlgorithmName.SHA512 },
-            {(int) COSE.Algorithms.RS256, HashAlgorithmName.SHA256 },
-            {(int) COSE.Algorithms.RS384, HashAlgorithmName.SHA384 },
-            {(int) COSE.Algorithms.RS512, HashAlgorithmName.SHA512 },
+            {(int) COSE.Algorithm.RS1, HashAlgorithmName.SHA1 },
+            {(int) COSE.Algorithm.ES256, HashAlgorithmName.SHA256},
+            {(int) COSE.Algorithm.ES384, HashAlgorithmName.SHA384 },
+            {(int) COSE.Algorithm.ES512, HashAlgorithmName.SHA512 },
+            {(int) COSE.Algorithm.PS256, HashAlgorithmName.SHA256 },
+            {(int) COSE.Algorithm.PS384, HashAlgorithmName.SHA384 },
+            {(int) COSE.Algorithm.PS512, HashAlgorithmName.SHA512 },
+            {(int) COSE.Algorithm.RS256, HashAlgorithmName.SHA256 },
+            {(int) COSE.Algorithm.RS384, HashAlgorithmName.SHA384 },
+            {(int) COSE.Algorithm.RS512, HashAlgorithmName.SHA512 },
             {4, HashAlgorithmName.SHA1 },
             {11, HashAlgorithmName.SHA256 },
             {12, HashAlgorithmName.SHA384 },
             {13, HashAlgorithmName.SHA512 }
         };
-        public static readonly Dictionary<string, COSE.KeyTypes> CoseKeyTypeFromOid = new Dictionary<string, COSE.KeyTypes>
+        public static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new Dictionary<string, COSE.KeyType>
         {
-            { "1.2.840.10045.2.1", COSE.KeyTypes.EC2 },
-            { "1.2.840.113549.1.1.1", COSE.KeyTypes.RSA}
+            { "1.2.840.10045.2.1", COSE.KeyType.EC2 },
+            { "1.2.840.113549.1.1.1", COSE.KeyType.RSA}
         };
 
         public static CBORObject CoseKeyFromCertAndAlg(X509Certificate2 cert, int alg)
@@ -67,53 +67,53 @@ namespace Fido2NetLib
             var coseKey = CBORObject.NewMap();
             var keyAlg = cert.GetKeyAlgorithm();
             var kty = CoseKeyTypeFromOid[keyAlg];
-            coseKey.Add(COSE.KeyCommonParameters.kty, kty);
-            coseKey.Add(COSE.KeyCommonParameters.alg, alg);
-            if (COSE.KeyTypes.RSA == kty)
+            coseKey.Add(COSE.KeyCommonParameter.KeyType, kty);
+            coseKey.Add(COSE.KeyCommonParameter.Alg, alg);
+            if (COSE.KeyType.RSA == kty)
             {
                 var keyParams = cert.GetRSAPublicKey().ExportParameters(false);
-                coseKey.Add(COSE.KeyTypeParameters.n, keyParams.Modulus);
-                coseKey.Add(COSE.KeyTypeParameters.e, keyParams.Exponent);
+                coseKey.Add(COSE.KeyTypeParameter.N, keyParams.Modulus);
+                coseKey.Add(COSE.KeyTypeParameter.E, keyParams.Exponent);
             }
-            if (COSE.KeyTypes.EC2 == kty)
+            if (COSE.KeyType.EC2 == kty)
             {
                 var ecDsaPubKey = (ECDsaCng)cert.GetECDsaPublicKey();
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
                 if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
-                    coseKey.Add(COSE.KeyTypeParameters.crv, COSE.EllipticCurves.P256);
+                    coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
                 if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName))
-                    coseKey.Add(COSE.KeyTypeParameters.crv, COSE.EllipticCurves.P384);
+                    coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
 
                 if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName))
-                    coseKey.Add(COSE.KeyTypeParameters.crv, COSE.EllipticCurves.P521);
+                    coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
 
-                coseKey.Add(COSE.KeyTypeParameters.x, keyParams.Q.X);
-                coseKey.Add(COSE.KeyTypeParameters.y, keyParams.Q.Y);
+                coseKey.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
+                coseKey.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y);
             }
             return coseKey;
         }
         public static bool VerifySigWithCoseKey(byte[] data, CBORObject coseKey, byte[] sig)
         {
             // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-            var kty = coseKey[CBORObject.FromObject(COSE.KeyCommonParameters.kty)].AsInt32();
-            var alg = coseKey[CBORObject.FromObject(COSE.KeyCommonParameters.alg)].AsInt32();
+            var kty = coseKey[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
+            var alg = coseKey[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
             var crv = 0;
-            if (COSE.KeyTypes.OKP == (COSE.KeyTypes) kty || COSE.KeyTypes.EC2 == (COSE.KeyTypes) kty)
-                crv = coseKey[CBORObject.FromObject(COSE.KeyTypeParameters.crv)].AsInt32();
+            if (COSE.KeyType.OKP == (COSE.KeyType) kty || COSE.KeyType.EC2 == (COSE.KeyType) kty)
+                crv = coseKey[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
             switch (kty) // https://www.iana.org/assignments/cose/cose.xhtml#key-type
             {
-                case (int) COSE.KeyTypes.OKP: // OKP
+                case (int) COSE.KeyType.OKP: // OKP
                     {
                         switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                         {
-                            case (int) COSE.Algorithms.EdDSA:
+                            case (int) COSE.Algorithm.EdDSA:
                                 switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                                 {
-                                    case (int) COSE.EllipticCurves.Ed25519:
+                                    case (int) COSE.EllipticCurve.Ed25519:
                                         var message = GetHasher(HashAlgorithmName.SHA512).ComputeHash(data);
-                                        var publicKey = coseKey[CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString();
+                                        var publicKey = coseKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                                         return Chaos.NaCl.Ed25519.Verify(sig, message, publicKey);
                                     default:
                                         throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
@@ -122,41 +122,41 @@ namespace Fido2NetLib
                                 throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", alg.ToString()));
                         }
                     }
-                case (int) COSE.KeyTypes.EC2: // EC2
+                case (int) COSE.KeyType.EC2: // EC2
                     {
                         var point = new ECPoint
                         {
-                            X = coseKey[CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString(),
-                            Y = coseKey[CBORObject.FromObject(COSE.KeyTypeParameters.y)].GetByteString()
+                            X = coseKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(),
+                            Y = coseKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString()
                         };
                         ECCurve curve;
                         switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                         {
-                            case (int) COSE.Algorithms.ES256:
+                            case (int) COSE.Algorithm.ES256:
                                 switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                                 {
-                                    case (int) COSE.EllipticCurves.P256:
-                                    case (int) COSE.EllipticCurves.P256K:
+                                    case (int) COSE.EllipticCurve.P256:
+                                    case (int) COSE.EllipticCurve.P256K:
                                         curve = ECCurve.NamedCurves.nistP256;
                                         break;
                                     default:
                                         throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
                                 }
                                 break;
-                            case (int) COSE.Algorithms.ES384:
+                            case (int) COSE.Algorithm.ES384:
                                 switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                                 {
-                                    case (int) COSE.EllipticCurves.P384:
+                                    case (int) COSE.EllipticCurve.P384:
                                         curve = ECCurve.NamedCurves.nistP384;
                                         break;
                                     default:
                                         throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
                                 }
                                 break;
-                            case (int) COSE.Algorithms.ES512:
+                            case (int) COSE.Algorithm.ES512:
                                 switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                                 {
-                                    case (int) COSE.EllipticCurves.P521:
+                                    case (int) COSE.EllipticCurve.P521:
                                         curve = ECCurve.NamedCurves.nistP521;
                                         break;
                                     default:
@@ -174,30 +174,30 @@ namespace Fido2NetLib
                         var ecsig = SigFromEcDsaSig(sig, cng.KeySize);
                         return cng.VerifyData(data, ecsig, algMap[alg]);
                     }
-                case (int) COSE.KeyTypes.RSA: // RSA
+                case (int) COSE.KeyType.RSA: // RSA
                     {
                         var rsa = new RSACng();
                         rsa.ImportParameters(
                             new RSAParameters()
                             {
-                                Modulus = coseKey[CBORObject.FromObject(COSE.KeyTypeParameters.n)].GetByteString(),
-                                Exponent = coseKey[CBORObject.FromObject(COSE.KeyTypeParameters.e)].GetByteString()
+                                Modulus = coseKey[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
+                                Exponent = coseKey[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
                             }
                         );
                         RSASignaturePadding padding;
                         switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                         {
 
-                            case (int) COSE.Algorithms.PS256:
-                            case (int) COSE.Algorithms.PS384:
-                            case (int) COSE.Algorithms.PS512:
+                            case (int) COSE.Algorithm.PS256:
+                            case (int) COSE.Algorithm.PS384:
+                            case (int) COSE.Algorithm.PS512:
                                 padding = RSASignaturePadding.Pss;
                                 break;
 
-                            case (int) COSE.Algorithms.RS1:
-                            case (int) COSE.Algorithms.RS256:
-                            case (int) COSE.Algorithms.RS384:
-                            case (int) COSE.Algorithms.RS512:
+                            case (int) COSE.Algorithm.RS1:
+                            case (int) COSE.Algorithm.RS256:
+                            case (int) COSE.Algorithm.RS384:
+                            case (int) COSE.Algorithm.RS512:
                                 padding = RSASignaturePadding.Pkcs1;
                                 break;
                             default:
@@ -210,8 +210,8 @@ namespace Fido2NetLib
         }
         public static Memory<byte> U2FKeyFromCOSEKey(CBORObject COSEKey)
         {
-            var x = COSEKey[CBORObject.FromObject(COSE.KeyTypeParameters.x)].GetByteString();
-            var y = COSEKey[CBORObject.FromObject(COSE.KeyTypeParameters.y)].GetByteString();
+            var x = COSEKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
+            var y = COSEKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
             var publicKeyU2F = new byte[1] { 0x4 }; // uncompressed
             return publicKeyU2F.Concat(x).Concat(y).ToArray();
         }

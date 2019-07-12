@@ -106,7 +106,7 @@ namespace Fido2NetLib
 
             // 10
             // Verify that the User Present bit of the flags in authData is set.
-            if (false == authData.UserPresent)
+            if (false == authData.Flags.HasFlag(AuthenticatorFlags.UP))
                 throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 11 
@@ -117,7 +117,7 @@ namespace Fido2NetLib
             // Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected
             // todo: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
 
-            if (false == authData.AttestedCredentialDataPresent)
+            if (false == authData.Flags.HasFlag(AuthenticatorFlags.AT))
                 throw new Fido2VerificationException("Attestation flag not set on attestation data");
 
             // 13
@@ -183,7 +183,7 @@ namespace Fido2NetLib
              * Check that the credentialId is not yet registered to any other user.
              * If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
              * */
-            if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttData.CredentialID, originalOptions.User)))
+            if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialID, originalOptions.User)))
             {
                 throw new Fido2VerificationException("CredentialId is not unique to this user");
             }
@@ -203,12 +203,12 @@ namespace Fido2NetLib
 
             var result = new AttestationVerificationSuccess()
             {
-                CredentialId = authData.AttData.CredentialID,
-                PublicKey = authData.AttData.CredentialPublicKey,
+                CredentialId = authData.AttestedCredentialData.CredentialID,
+                PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
                 User = originalOptions.User,
-                Counter = BitConverter.ToUInt32(authData.SignCount.Reverse().ToArray(), 0),
+                Counter = authData.SignCount,
                 CredType = AttestationObject.Fmt,
-                Aaguid = authData.AttData.GuidAaguid
+                Aaguid = authData.AttestedCredentialData.AaGuid,
             };            
 
             return result;

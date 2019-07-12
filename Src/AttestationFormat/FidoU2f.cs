@@ -17,7 +17,7 @@ namespace Fido2NetLib.AttestationFormat
         public override void Verify()
         {
             // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
-            if (false == AuthData.AttData.Aaguid.SequenceEqual(Guid.Empty.ToByteArray()))
+            if (0 != AuthData.AttestedCredentialData.AaGuid.CompareTo(Guid.Empty))
                 throw new Fido2VerificationException("Aaguid was not empty parsing fido-u2f atttestation statement");
 
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
@@ -80,7 +80,7 @@ namespace Fido2NetLib.AttestationFormat
             verificationData = verificationData
                                 .Concat(AuthData.RpIdHash)
                                 .Concat(clientDataHash)
-                                .Concat(AuthData.AttData.CredentialID)
+                                .Concat(AuthData.AttestedCredentialData.CredentialID)
                                 .Concat(publicKeyU2F.ToArray())
                                 .ToArray();
 
@@ -92,7 +92,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null == ecsig)
                 throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
             
-            var coseAlg = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameters.alg)].AsInt32();
+            var coseAlg = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
             var hashAlg = CryptoUtils.algMap[coseAlg];
 
             if (true != pubKey.VerifyData(verificationData, ecsig, hashAlg))
