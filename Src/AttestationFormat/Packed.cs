@@ -158,6 +158,7 @@ namespace Fido2NetLib.AttestationFormat
             else
             {
                 // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
+
                 if (false == AuthData.AttestedCredentialData.CredentialPublicKey.IsSameAlg((COSE.Algorithm)Alg.AsInt32()))
                     throw new Fido2VerificationException("Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 
