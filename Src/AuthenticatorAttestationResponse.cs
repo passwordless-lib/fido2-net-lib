@@ -106,7 +106,7 @@ namespace Fido2NetLib
 
             // 10
             // Verify that the User Present bit of the flags in authData is set.
-            if (false == authData.Flags.HasFlag(AuthenticatorFlags.UP))
+            if (false == authData.UserPresent)
                 throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 11 
@@ -117,7 +117,7 @@ namespace Fido2NetLib
             // Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected
             // todo: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
 
-            if (false == authData.Flags.HasFlag(AuthenticatorFlags.AT))
+            if (false == authData.HasAttestedCredentialData)
                 throw new Fido2VerificationException("Attestation flag not set on attestation data");
 
             // 13

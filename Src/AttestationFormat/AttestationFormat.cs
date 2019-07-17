@@ -21,7 +21,7 @@ namespace Fido2NetLib.AttestationFormat
         internal CBORObject Alg { get { return attStmt["alg"]; } }
         internal CBORObject EcdaaKeyId { get { return attStmt["ecdaaKeyId"]; } }
         internal Objects.AuthenticatorData AuthData { get { return new Objects.AuthenticatorData(authenticatorData); } }
-        internal CBORObject CredentialPublicKey { get {return CBORObject.DecodeFromBytes(AuthData.AttestedCredentialData.CredentialPublicKey.GetBytes()); } }
+        internal CBORObject CredentialPublicKey { get {return AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject(); } }
         internal byte[] Data
         {
             get

@@ -482,10 +482,9 @@ namespace Fido2NetLib.AttestationFormat
 
                 // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                 var aikCert = new X509Certificate2(X5c.Values.First().GetByteString());
-
-                var coseKey = CryptoUtils.CoseKeyFromCertAndAlg(aikCert, Alg.AsInt32());
-
-                if (true != CryptoUtils.VerifySigWithCoseKey(certInfo.Raw, coseKey, Sig.GetByteString()))
+                
+                var cpk = new CredentialPublicKey(aikCert, Alg.AsInt32());
+                if (true != cpk.Verify(certInfo.Raw, Sig.GetByteString()))
                     throw new Fido2VerificationException("Bad signature in TPM with aikCert");
 
                 // Verify that aikCert meets the TPM attestation statement certificate requirements
