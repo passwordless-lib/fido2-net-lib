@@ -106,7 +106,7 @@ namespace Fido2NetLib
 
             // 10
             // Verify that the User Present bit of the flags in authData is set.
-            if (false == authData.Flags.HasFlag(AuthenticatorFlags.UP))
+            if (false == authData.UserPresent)
                 throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 11 
