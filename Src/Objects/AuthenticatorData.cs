@@ -10,9 +10,10 @@ namespace Fido2NetLib.Objects
         /// Minimum length of the authenticator data structure.
         /// <see cref="https://www.w3.org/TR/webauthn/#sec-authenticator-data"/>
         /// </summary>
-        private const int MinLength = 37;
+        private const int MinLength = SHA256HashLenBytes + sizeof(AuthenticatorFlags) + sizeof(UInt32);
 
         private const int SHA256HashLenBytes = 32; // 256 bits, 8 bits per byte
+
         /// <summary>
         /// SHA-256 hash of the RP ID the credential is scoped to.
         /// </summary>
@@ -22,12 +23,36 @@ namespace Fido2NetLib.Objects
         /// Flags contains information from the authenticator about the authentication 
         /// and whether or not certain data is present in the authenticator data.
         /// </summary>
-        public AuthenticatorFlags Flags;
+        private readonly AuthenticatorFlags Flags;
+
+        /// <summary>
+        /// UserPresent indicates that the user presence test has completed successfully.
+        /// <see cref="https://www.w3.org/TR/webauthn/#up"/>
+        /// </summary>
+        public bool UserPresent { get { return Flags.HasFlag(AuthenticatorFlags.UP); } }
+
+        /// <summary>
+        /// UserVerified indicates that the user verification process has completed successfully.
+        /// <see cref="https://www.w3.org/TR/webauthn/#uv"/>
+        /// </summary>
+        public bool UserVerified { get { return Flags.HasFlag(AuthenticatorFlags.UV); } }
+
+        /// <summary>
+        /// HasAttestedCredentialData indicates that the authenticator added attested credential data to the authenticator data.
+        /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
+        /// </summary>
+        public bool HasAttestedCredentialData { get { return Flags.HasFlag(AuthenticatorFlags.AT); } }
+
+        /// <summary>
+        /// HasExtensionsData indicates that the authenticator added extension data to the authenticator data.
+        /// <see cref="https://www.w3.org/TR/webauthn/#authdataextensions"/>
+        /// </summary>
+        public bool HasExtensionsData { get { return Flags.HasFlag(AuthenticatorFlags.ED); } }
 
         /// <summary>
         /// Signature counter, 32-bit unsigned big-endian integer. 
         /// </summary>
-        public uint SignCount;
+        public UInt32 SignCount;
 
         /// <summary>
         /// Attested credential data is a variable-length byte array added to the 
@@ -64,14 +89,14 @@ namespace Fido2NetLib.Objects
                     SignCount = BitConverter.ToUInt32(signCountBytes, 0);
 
                     // Attested credential data is only present if the AT flag is set
-                    if (Flags.HasFlag(AuthenticatorFlags.AT))
+                    if (HasAttestedCredentialData)
                     {
                         // Decode attested credential data, which starts at the next byte past the minimum length of the structure.
                         AttestedCredentialData = new AttestedCredentialData(reader);
                     }
 
                     // Extensions data is only present if the ED flag is set
-                    if (Flags.HasFlag(AuthenticatorFlags.ED))
+                    if (HasExtensionsData)
                     {
 
                         // "CBORObject.Read: This method will read from the stream until the end 

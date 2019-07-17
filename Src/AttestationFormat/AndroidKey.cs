@@ -189,8 +189,8 @@ namespace Fido2NetLib.AttestationFormat
                 0 == X5c.Values.First().GetByteString().Length)
                 throw new Fido2VerificationException("Malformed x5c in android-key attestation");
 
-            X509Certificate2 androidKeyCert = null;
-            ECDsaCng androidKeyPubKey = null;
+            X509Certificate2 androidKeyCert;
+            ECDsaCng androidKeyPubKey;
             try
             {
                 androidKeyCert = new X509Certificate2(X5c.Values.First().GetByteString());
@@ -204,19 +204,8 @@ namespace Fido2NetLib.AttestationFormat
             if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32())) throw new Fido2VerificationException("Invalid attestation algorithm");
             if (true != androidKeyPubKey.VerifyData(Data, CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), androidKeyPubKey.KeySize), CryptoUtils.algMap[Alg.AsInt32()])) throw new Fido2VerificationException("Invalid android key signature");
 
-            var credentialPublicKey = CBORObject.DecodeFromBytes(AuthData.AttestedCredentialData.CredentialPublicKey.GetBytes());
-            var cng = ECDsa.Create(new ECParameters
-            {
-                Curve = ECCurve.NamedCurves.nistP256,
-                Q = new ECPoint
-                {
-                    
-                    X = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(),
-                    Y = credentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString()
-                }
-            });
-            // Verify that the public key in the first certificate in in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
-            if (true != cng.VerifyData(Data, CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), cng.KeySize), CryptoUtils.algMap[Alg.AsInt32()]))
+            // Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
+            if (true != AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, Sig.GetByteString()))
                 throw new Fido2VerificationException("Invalid android key signature");
 
             // Verify that in the attestation certificate extension data:

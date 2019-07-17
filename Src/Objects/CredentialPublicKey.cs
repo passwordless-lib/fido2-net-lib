@@ -1,19 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
-using System.Text;
+using System.Security.Cryptography.X509Certificates;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.Objects
 {
     public class CredentialPublicKey
     {
-        public RSACng RSA
+        public bool Verify(byte[] data, byte[] sig)
+        {
+            switch (_type)
+            {
+                case COSE.KeyType.EC2:
+                    {
+                        var ecsig = CryptoUtils.SigFromEcDsaSig(sig, Ecdsa.KeySize);
+                        return Ecdsa.VerifyData(data, ecsig, CryptoUtils.algMap[(int)_alg]);
+                    }
+                case COSE.KeyType.RSA:
+                    {
+                        return Rsa.VerifyData(data, sig, CryptoUtils.algMap[(int)_alg], Padding);
+                    }
+                case COSE.KeyType.OKP:
+                    {
+                        var message = CryptoUtils.GetHasher(HashAlgorithmName.SHA512).ComputeHash(data);
+                        return Chaos.NaCl.Ed25519.Verify(sig, message, EdDSAPublicKey);
+                    }
+
+            }
+            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown kty {0}", _type.ToString()));
+        }
+
+        internal RSACng Rsa
         {
             get
             {
-                if (Type == COSE.KeyType.RSA)
-                {
+                if (_type == COSE.KeyType.RSA)
+               {
                     var rsa = new RSACng();
                     rsa.ImportParameters(
                         new RSAParameters()
@@ -27,11 +50,12 @@ namespace Fido2NetLib.Objects
                 return null;
             }
         }
-        public ECDsa ECDsa
+
+        internal ECDsa Ecdsa
         {
             get
             {
-                if (Type == COSE.KeyType.EC2)
+                if (_type == COSE.KeyType.EC2)
                 {
                     var point = new ECPoint
                     {
@@ -40,7 +64,7 @@ namespace Fido2NetLib.Objects
                     };
                     ECCurve curve;
                     var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
-                    switch (Alg)
+                    switch (_alg)
                     {
                         case COSE.Algorithm.ES256:
                             switch (crv)
@@ -74,7 +98,7 @@ namespace Fido2NetLib.Objects
                             }
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", Alg.ToString()));
+                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", _alg.ToString()));
                     }
                     return ECDsa.Create(new ECParameters
                     {
@@ -86,13 +110,13 @@ namespace Fido2NetLib.Objects
             }
         }
 
-        public RSASignaturePadding Padding
+        internal RSASignaturePadding Padding
         {
             get
             {
-                if (Type == COSE.KeyType.RSA)
+                if (_type == COSE.KeyType.RSA)
                 {
-                    switch (Alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                     {
                         case COSE.Algorithm.PS256:
                         case COSE.Algorithm.PS384:
@@ -105,59 +129,120 @@ namespace Fido2NetLib.Objects
                         case COSE.Algorithm.RS512:
                             return RSASignaturePadding.Pkcs1;
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", Alg.ToString()));
+                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", _alg.ToString()));
                     }
                 }
                 return null;
             }
         }
 
-        public byte[] EdDSAPublicKey
+        internal byte[] EdDSAPublicKey
         {
             get
             {
-                if (Type == COSE.KeyType.OKP)
+                if (_type == COSE.KeyType.OKP)
                 {
-                    switch (Alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                    switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                     {
                         case COSE.Algorithm.EdDSA:
                             var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
                             switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                             {
                                 case COSE.EllipticCurve.Ed25519:
-                                    var publicKey = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                                    return publicKey;
+                                    return _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
+
                                 default:
                                     throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
                             }
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", Alg.ToString()));
+                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", _alg.ToString()));
                     }
                 }
                 return null;
             }
         }
-        public COSE.KeyType Type;
-        public COSE.Algorithm Alg;
-        internal CBORObject _cpk;
+
+        internal readonly COSE.KeyType _type;
+
+        internal readonly COSE.Algorithm _alg;
+
+        internal readonly CBORObject _cpk;
+
+        internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new Dictionary<string, COSE.KeyType>
+        {
+            { "1.2.840.10045.2.1", COSE.KeyType.EC2 },
+            { "1.2.840.113549.1.1.1", COSE.KeyType.RSA}
+        };
+
+        public CredentialPublicKey(X509Certificate2 cert, int alg)
+        {
+            _cpk = CBORObject.NewMap();
+            var keyAlg = cert.GetKeyAlgorithm();
+            _type = CoseKeyTypeFromOid[keyAlg];
+            _alg = (COSE.Algorithm)alg;
+            _cpk.Add(COSE.KeyCommonParameter.KeyType, _type);
+            _cpk.Add(COSE.KeyCommonParameter.Alg, alg);
+            if (COSE.KeyType.RSA == _type)
+            {
+                var keyParams = cert.GetRSAPublicKey().ExportParameters(false);
+                _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus);
+                _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent);
+            }
+            if (COSE.KeyType.EC2 == _type)
+            {
+                var ecDsaPubKey = (ECDsaCng)cert.GetECDsaPublicKey();
+                var keyParams = ecDsaPubKey.ExportParameters(false);
+
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
+                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
+
+                if (keyParams.Curve.Oid.FriendlyName.Equals("secP256k1"))
+                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256K);
+
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName))
+                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
+
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName))
+                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
+
+                _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
+                _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y);
+            }
+        }
+
+        public CredentialPublicKey(System.IO.Stream stream) : this(CBORObject.Read(stream))
+        {
+        }
+
+        public CredentialPublicKey(byte[] cpk) : this(CBORObject.DecodeFromBytes(cpk))
+        {
+        }
 
         public CredentialPublicKey(CBORObject cpk)
         {
             _cpk = cpk;
-            Type = (COSE.KeyType)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
-            Alg = (COSE.Algorithm)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
+            _type = (COSE.KeyType)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
+            _alg = (COSE.Algorithm)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
         }
+
         public override string ToString()
         {
             return _cpk.ToString();
         }
+      
         public byte[] GetBytes()
         {
             return _cpk.EncodeToBytes();
         }
+
+        public bool IsSameAlg(COSE.Algorithm alg)
+        {
+            return _alg.Equals(alg);
+        }
+
         public CBORObject GetCBORObject()
         {
             return _cpk;
-        }
+        }            
     }
 }

@@ -1,12 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Runtime.InteropServices;
+
 
 namespace Fido2NetLib.Objects
 {
     public class AttestedCredentialData
     {
+        /// <summary>
+        /// Minimum length of the attested credential data structure.  AAGUID + credentialID length + credential ID + credential public key.
+        /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
+        /// </summary>
+        private int MinLength = Marshal.SizeOf(typeof(Guid)) + sizeof(UInt16) + sizeof(byte) + sizeof(byte);
+
         /// <summary>
         /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
         /// <see cref="https://www.w3.org/TR/webauthn/#aaguid"/>
@@ -26,33 +32,34 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public CredentialPublicKey CredentialPublicKey { get; private set; }
 
+        internal static void SwapBytes(byte[] bytes, int index1, int index2)
+        {
+            var temp = bytes[index1];
+            bytes[index1] = bytes[index2];
+            bytes[index2] = temp;
+        }
+
         /// <summary>
         /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
         /// </summary>
         public static Guid FromBigEndian(byte[] Aaguid)
         {
-            byte[] guid = new byte[16];
-            for (int i = 8; i < 16; i++)
-            {
-                guid[i] = Aaguid[i];
-            }
-            guid[3] = Aaguid[0];
-            guid[2] = Aaguid[1];
-            guid[1] = Aaguid[2];
-            guid[0] = Aaguid[3];
-            guid[5] = Aaguid[4];
-            guid[4] = Aaguid[5];
-            guid[6] = Aaguid[7];
-            guid[7] = Aaguid[6];
-            return new Guid(guid);
+            SwapBytes(Aaguid, 0, 3);
+            SwapBytes(Aaguid, 1, 2);
+            SwapBytes(Aaguid, 4, 5);
+            SwapBytes(Aaguid, 6, 7);
+
+            return new Guid(Aaguid);
         }
         /// <summary>
         /// Decodes attested credential data.
         /// </summary>
         public AttestedCredentialData(BinaryReader reader)
         {
+            if (reader.BaseStream.Length < MinLength) throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+            
             // First 16 bytes is AAGUID
-            var aaguidBytes = reader.ReadBytes(Guid.Empty.ToByteArray().Length);
+            var aaguidBytes = reader.ReadBytes(Marshal.SizeOf(typeof(Guid)));
 
             if (BitConverter.IsLittleEndian)
             {
@@ -81,14 +88,9 @@ namespace Fido2NetLib.Objects
             // credentialPublicKey's beginning location given the preceding credentialId's length, and 
             // then determining the credentialPublicKey's length"
 
-            // "CBORObject.Read: This method will read from the stream until the end 
-            // of the CBOR object is reached or an error occurs, whichever happens first."
-
             // Read the CBOR object from the stream
-            var cpk = PeterO.Cbor.CBORObject.Read(reader.BaseStream);
+            CredentialPublicKey = new CredentialPublicKey(reader.BaseStream);
 
-            // Encode the CBOR object back to a byte array.
-            CredentialPublicKey = new CredentialPublicKey(cpk);
         }
         public override string ToString()
         {

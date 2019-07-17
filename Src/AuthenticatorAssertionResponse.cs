@@ -127,8 +127,8 @@ namespace Fido2NetLib
 
             // 14. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call.In particular, any extension identifier values in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
             // todo: Verify this (and implement extensions on options)
-            if ((true == authData.Flags.HasFlag(AuthenticatorFlags.ED)) && ((null == authData.Extensions) || (0 == authData.Extensions.Length))) throw new Fido2VerificationException("Extensions flag present, malformed extensions detected");
-            if ((false == authData.Flags.HasFlag(AuthenticatorFlags.ED)) && (null != authData.Extensions)) throw new Fido2VerificationException("Extensions flag not present, but extensions detected");
+            if (true == authData.HasExtensionsData && ((null == authData.Extensions) || (0 == authData.Extensions.Length))) throw new Fido2VerificationException("Extensions flag present, malformed extensions detected");
+            if (false == authData.HasExtensionsData && (null != authData.Extensions)) throw new Fido2VerificationException("Extensions flag not present, but extensions detected");
 
             // 15.
             // Done earlier, hashedClientDataJson
@@ -139,8 +139,8 @@ namespace Fido2NetLib
             Buffer.BlockCopy(hashedClientDataJson, 0, data, Raw.Response.AuthenticatorData.Length, hashedClientDataJson.Length);
 
             if (null == storedPublicKey || 0 == storedPublicKey.Length) throw new Fido2VerificationException("Stored public key is null or empty");
-            var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(storedPublicKey);
-            if (true != CryptoUtils.VerifySigWithCoseKey(data, coseKey, Signature)) throw new Fido2VerificationException("Signature did not match");
+            var cpk = new CredentialPublicKey(storedPublicKey);
+            if (true != cpk.Verify(data, Signature)) throw new Fido2VerificationException("Signature did not match");
 
             // 17.
             if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)

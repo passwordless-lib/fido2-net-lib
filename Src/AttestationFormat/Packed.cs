@@ -65,9 +65,8 @@ namespace Fido2NetLib.AttestationFormat
                 if (false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
                     throw new Fido2VerificationException("Invalid attestation algorithm");
 
-                var coseKey = CryptoUtils.CoseKeyFromCertAndAlg(attestnCert, Alg.AsInt32());
-
-                if (true != CryptoUtils.VerifySigWithCoseKey(Data, coseKey, Sig.GetByteString()))
+                var cpk = new CredentialPublicKey(attestnCert, Alg.AsInt32());
+                if (true != cpk.Verify(Data, Sig.GetByteString()))
                     throw new Fido2VerificationException("Invalid full packed signature");
 
                 // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
@@ -159,13 +158,14 @@ namespace Fido2NetLib.AttestationFormat
             else
             {
                 // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-                if ((COSE.Algorithm) Alg.AsInt32() != AuthData.AttestedCredentialData.CredentialPublicKey.Alg)
+
+                if (false == AuthData.AttestedCredentialData.CredentialPublicKey.IsSameAlg((COSE.Algorithm)Alg.AsInt32()))
                     throw new Fido2VerificationException("Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 
                 // Verify that sig is a valid signature over the concatenation of authenticatorData and 
                 // clientDataHash using the credential public key with alg
-                
-                if (true != CryptoUtils.VerifySigWithCoseKey(Data, AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject(), Sig.GetByteString()))
+
+                if (true != AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, Sig.GetByteString()))
                     throw new Fido2VerificationException("Failed to validate signature");
             }
         }

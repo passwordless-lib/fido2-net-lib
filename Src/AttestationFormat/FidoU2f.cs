@@ -73,7 +73,9 @@ namespace Fido2NetLib.AttestationFormat
             // see rpIdHash, credentialId, and credentialPublicKey variables
 
             // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
-            var publicKeyU2F = CryptoUtils.U2FKeyFromCOSEKey(CredentialPublicKey);
+            var x = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
+            var y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+            var publicKeyU2F = new byte[1] { 0x4 }.Concat(x).Concat(y).ToArray();
 
             // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
             var verificationData = new byte[1] { 0x00 };
