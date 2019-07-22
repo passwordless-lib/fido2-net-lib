@@ -14,4 +14,4 @@ if ($nupkgPath -eq "") {
 
 Write-Host "Publishing $nupkgPath..."
 Start-Sleep 2
-nuget push $nupkgPath -Source https://api.nuget.org/v3/index.json
+dotnet nuget push $nupkgPath --source https://api.nuget.org/v3/index.json

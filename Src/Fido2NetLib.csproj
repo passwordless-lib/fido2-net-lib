@@ -14,7 +14,7 @@
 
   <PropertyGroup>
     <PackageId>Fido2</PackageId>
-    <Version>1.0.0-preview3</Version>
+    <Version>1.0.0-preview4</Version>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
