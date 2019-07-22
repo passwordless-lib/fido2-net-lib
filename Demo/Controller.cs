@@ -89,11 +89,7 @@ namespace Fido2Demo
                         "<td>";
                 switch (kty)
                 {
-<<<<<<< HEAD:Demo/Controller.cs
                     case (int) COSE.KeyType.OKP:
-=======
-                    case (int)COSE.KeyTypes.OKP:
->>>>>>> Added support for Usernameless and Browserwarnings:Fido2Demo/Controller.cs
                         {
                             var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                             table += "<table class=\"sub-table\">" +
@@ -103,11 +99,7 @@ namespace Fido2Demo
                                     "</table>";
                             break;
                         }
-<<<<<<< HEAD:Demo/Controller.cs
                     case (int) COSE.KeyType.EC2:
-=======
-                    case (int)COSE.KeyTypes.EC2:
->>>>>>> Added support for Usernameless and Browserwarnings:Fido2Demo/Controller.cs
                         {
                             var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                             var Y = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -121,11 +113,7 @@ namespace Fido2Demo
                                     "</table>";
                             break;
                         }
-<<<<<<< HEAD:Demo/Controller.cs
                     case (int) COSE.KeyType.RSA:
-=======
-                    case (int)COSE.KeyTypes.RSA:
->>>>>>> Added support for Usernameless and Browserwarnings:Fido2Demo/Controller.cs
                         {
                             var modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString();
                             var exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString();
