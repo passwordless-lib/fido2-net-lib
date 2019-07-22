@@ -1,0 +1,126 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@functions {
+    string isActive(string page) => Url.ActionContext.HttpContext.Request.Path == page ? "is-active" : "";
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>FIDO2 .NET lib Demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+
+    <link href="https://fonts.googleapis.com/css?family=Work+Sans" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>-->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.1/sweetalert2.min.css" />
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css" rel="stylesheet" type="text/css" />
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+        }
+
+        .hero {
+            background-color: #861657;
+            background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
+        }
+    </style>
+    <!--<link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />-->
+    <script src="~/js/helpers.js"></script>
+</head>
+
+<body>
+    <section class="hero is-black is-medium">
+        <div class="hero-head">
+            <nav class="navbar">
+                <div class="container">
+                    @*<div class="navbar-brand">
+                            @*<a class="navbar-item">
+                                <img src="https://bulma.io/images/bulma-type-white.png" alt="Logo">
+                            </a>
+                            <span class="navbar-burger burger" data-target="navbarMenuHeroB">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </div>*@
+                    <div id="navbarMenuHeroB" class="navbar-menu">
+                        <div class="navbar-end">
+                            <a class="navbar-item" asp-page="/overview">
+                                Home
+                            </a>
+                            <a class="navbar-item" href="https://github.com/abergs/fido2-net-lib#examples">
+                                Documentation
+                            </a>
+                            <span class="navbar-item">
+                                <a class="button is-info is-inverted" href="https://github.com/abergs/fido2-net-lib">
+                                    <span class="icon">
+                                        <i class="fab fa-github"></i>
+                                    </span>
+                                    <span>Download</span>
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="hero-body">
+            <div class="container has-text-centered">
+                <p class="title">
+                    FIDO2 .NET Library
+                </p>
+                <p class="subtitle">
+                    Enabling smoooth sign in using FIDO2 / WebAuthn
+                </p>
+            </div>
+        </div>
+
+        <div class="hero-foot" id="heroFoot">
+            <nav class="tabs is-boxed is-fullwidth">
+                <div class="container">
+                    <ul>
+                        <li class="@isActive("/overview")">
+                            <a asp-page="/overview" asp-fragment="heroFoot">Overview</a>
+                        </li>
+                        <li class="@isActive("/mfa")">
+                            <a asp-page="/mfa" asp-fragment="heroFoot">Use as 2FA/MFA</a>
+                        </li>
+                        <li class="@isActive("/passwordless")">
+                            <a asp-page="/passwordless" asp-fragment="heroFoot">Go Passwordless</a>
+                        </li>
+                        <li class="@isActive("/usernameless")">
+                            <a asp-page="/usernameless" asp-fragment="heroFoot">Go Usernameless too</a>
+                        </li>
+                        <li class="@isActive("/custom")">
+                            <a asp-page="/custom" asp-fragment="heroFoot">Custom</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </section>
+    @RenderBody()
+    <footer class="footer" style="        margin-top: 20vh">
+        <div class="content has-text-centered">
+            <p>
+                <strong>Fido2 .NET library</strong> by <a href="https://github.com/abergs/">Anders Åberg</a>, <a href="https://github.com/aseigler">Alex Seigler</a> and <a href="https://github.com/abergs/fido2-net-lib/graphs/contributors">contributors</a>. The source code is licensed
+                <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. Available on <a href="https://github.com/abergs/fido2-net-lib">Github</a>
+            </p>
+            
+            <p><small>Illustrations from <a href="https://medium.com/@@herrjemand/introduction-to-webauthn-api-5fd1fb46c285">Ackermann Yuriy</a></small></p>
+        </div>
+    </footer>
+    <script src="~/js/instant.js"></script>
+</body>
+</html>

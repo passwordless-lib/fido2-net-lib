@@ -20,9 +20,9 @@ namespace Fido2Demo
     public class MyController : Controller
     {
         private Fido2 _lib;
-        private IMetadataService _mds;
+        public static IMetadataService _mds;
         private string _origin;
-        private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
+        public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         public MyController(IConfiguration config)
         {
@@ -51,7 +51,7 @@ namespace Fido2Demo
         }
 
         [HttpGet]
-        [Route("/dashboard/{username}")]
+        [Route("/dashboard-old/{username}")]
         public ContentResult Index(string username)
         {
             // 1. Get user from DB
@@ -70,7 +70,8 @@ namespace Fido2Demo
                 var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
                 var desc = "";
                 var icon = "";
-                try {
+                try
+                {
                     var entry = _mds.GetEntry(cred.AaGuid);
                     desc = entry.MetadataStatement.Description.ToString();
                     icon = entry.MetadataStatement.Icon.ToString();
@@ -143,14 +144,20 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredentialOptions")]
-        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
+        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string displayName, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
         {
             try
             {
+
+                if (string.IsNullOrEmpty(username))
+                {
+                    username = $"{displayName} (Usernameless user created at {DateTime.UtcNow})";
+                }
+
                 // 1. Get user from DB by username (in our example, auto create missing users)
                 var user = DemoStorage.GetOrAddUser(username, () => new User
                 {
-                    DisplayName = "Display " + username,
+                    DisplayName = displayName,
                     Name = username,
                     Id = Encoding.UTF8.GetBytes(username) // byte representation of userID is required
                 });
@@ -233,12 +240,17 @@ namespace Fido2Demo
         {
             try
             {
-                // 1. Get user from DB
-                var user = DemoStorage.GetUser(username);
-                if (user == null) throw new ArgumentException("Username was not registered");
+                var existingCredentials = new List<PublicKeyCredentialDescriptor>();
 
-                // 2. Get registered credentials from database
-                var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                if (!string.IsNullOrEmpty(username))
+                {
+                    // 1. Get user from DB
+                    var user = DemoStorage.GetUser(username);
+                    if (user == null) throw new ArgumentException("Username was not registered");
+
+                    // 2. Get registered credentials from database
+                    existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+                }
 
                 var exts = new AuthenticationExtensionsClientInputs() { SimpleTransactionAuthorization = "FIDO", GenericTransactionAuthorization = new TxAuthGenericArg { ContentType = "text/plain", Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } }, UserVerificationIndex = true, Location = true, UserVerificationMethod = true };
 
@@ -275,6 +287,11 @@ namespace Fido2Demo
 
                 // 2. Get registered credential from database
                 var creds = DemoStorage.GetCredentialById(clientResponse.Id);
+
+                if(creds == null)
+                {
+                    throw new Exception("Unknown credentials");
+                }
 
                 // 3. Get credential counter from database
                 var storedCounter = creds.SignatureCounter;

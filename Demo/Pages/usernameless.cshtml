@@ -1,0 +1,103 @@
+﻿@page "/usernameless/{handler?}"
+@{
+    Layout = "_Layout.cshtml";
+}
+
+<div class="section">
+    <div class="container">
+        <h1 class="title is-1">Scenario: Usernameless</h1>
+        <div class="content">
+            <p>In this scenario we have removed the need for both usernames and passwords. The WebAuthn flow is very similiar to the paswordless flow, but when registering we require the resident key option. User account selection is handled by the client/authenticator. If multiple credentials are found, the user will be able to choose which credential to use.</p>
+            <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics might be used by the authenticator on the client</p>
+        </div>
+
+        <div class="notification is-danger" style="display:none">
+            Please note: Your browser does not seem to support WebAuthn yet. <a href="https://caniuse.com/#search=webauthn" target="_blank">Supported browsers</a>
+        </div>
+
+        <div class="notification is-warning">
+            Please note: At the time of writing (Feb 2019) this is only supported by Edge on Windows.
+        </div>
+        <div class="columns">
+            <div class="column is-4">
+
+                <h3 class="title is-3">Register user</h3>
+                <form action="/mfa" method="post" id="register">
+                    @*<div class="field">
+                            <label class="label">Username</label>
+                            <div class="control has-icons-left has-icons-right">
+                                <input class="input" type="text" placeholder="abergs" name="username" required>
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                            </div>
+                        </div>*@
+
+                    <div class="field">
+                        <label class="label">Display name</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Anders Åberg" name="displayName">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                        <p class="help">Optional - but recommended.</p>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Register user</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="column is-2"></div>
+            <div class="column is-4">
+
+                <h3 class="title is-3">Sign in</h3>
+
+
+                <form action="/mfa" method="post" id="signin">
+                    @*<div class="field">
+                            <label class="label">Username</label>
+                            <div class="control has-icons-left has-icons-right">
+                                <input class="input" type="text" placeholder="abergs" name="username" required>
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                            </div>
+                        </div>*@
+
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Sign in</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="section">
+    <div class="container">
+        <div class="content">
+            <h1 class="title is-2">Explanation: Username and paswordless login with FIDO2</h1>
+            <p>
+                In this scenario, WebAuthn is used without a username to securely authenticate the user. This requires the Authenticator to support Resident Keys.
+                The flow is visualized in the figure below.
+            </p>
+            <img src="~/images/scenario3.png" alt="figure visualizing username and challenge sent together with assertion" />
+            <p>In this flow the Relying Party should tell the Authenticator to do User Verification (set UserVerification to required) via Biometrics/pin, thus the authentication is MFA (Something the user has - the private key - and something the user knows/is - the PIN or biometrics). However in scenarios where security requirements are very low we we could discourage user verification to minimize the user interaction needed to sign in. If discouraged, only user presence will be checked (Any human is present at the device).</p>
+
+            <p>
+                Read the source code for this demo here: <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/usernameless.register.js")">usernameless.register.js</a> and <a href="@Url.ToGithub("Fido2Demo/wwwroot/js/usernameless.login.js")">usernameless.login.js</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/usernameless.register.js"></script>
+<script src="~/js/usernameless.login.js"></script>
