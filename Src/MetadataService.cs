@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -334,7 +335,13 @@ namespace Fido2NetLib
         private MDSMetadata(string accessToken, string cachedirPath, HttpClient httpClient = null)
         {
             // We need either an access token or a cache directory, but prefer both
-            if (null == accessToken && null == cachedirPath) return;
+            if (null == accessToken && null == cachedirPath)
+            {
+                Trace.TraceWarning("MetadataService was not given accessToken and cacheDirPath and cannot be used.");
+                return;
+            };
+
+            Trace.TraceInformation($"MetadataService started with acccessToken and CacheDirpath: {cachedirPath}");
 
             // If we have only an access token, we can get metadata from directly from MDS and only cache in memory
             // If we have only a cache directory, we can read cached data (as long as it is not expired)
