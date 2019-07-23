@@ -18,6 +18,7 @@ namespace Fido2Demo
         }
 
         public IConfiguration Configuration { get; }
+        public IRule PasswordLessDomainRule { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -50,6 +51,7 @@ namespace Fido2Demo
             else
             {
                 app.UseExceptionHandler("/Error");
+                app.UseRewriter(new RewriteOptions().AddRedirectToWWwIfPasswordlessDomain());
             }
 
             app.UseSession();
@@ -62,10 +64,8 @@ namespace Fido2Demo
                     rewriteContext.Result = RuleResult.EndResponse;
                 }
             }));
-            app.UseMvc();            
+            app.UseMvc();
             app.UseStaticFiles();
-           
-
         }
     }
 }
