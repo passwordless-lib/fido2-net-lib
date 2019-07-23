@@ -10,7 +10,7 @@ To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.
 ```Install-Package Fido2 -Version 1.0.0-preview4 ```
 
 ### Demo
-* **Online example**: https://fido2.azurewebsites.net/
+* **Online example**: https://www.passwordless.dev
 * [Code examples](#examples)
 
 ## What is FIDO2?
