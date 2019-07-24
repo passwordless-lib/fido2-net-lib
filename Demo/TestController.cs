@@ -39,7 +39,7 @@ namespace Fido2Demo
             if (false == _mds.IsInitialized())
                 _mds.Initialize().Wait();
             
-            _lib = new Fido2(new Fido2.Configuration()
+            _lib = new Fido2(new Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",

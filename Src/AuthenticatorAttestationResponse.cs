@@ -63,7 +63,7 @@ namespace Fido2NetLib
             return response;
         }
 
-        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, Fido2NetLib.Fido2.Configuration config, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
+        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, Configuration config, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
         {
             BaseVerify(config.Origin, originalOptions.Challenge, requestTokenBindingId);
             // verify challenge is same as we expected

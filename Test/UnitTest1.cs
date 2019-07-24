@@ -16,7 +16,7 @@ namespace fido2_net_lib.Test
     public class UnitTest1
     {
         internal IMetadataService MetadataService;
-        private readonly Fido2.Configuration config;
+        private readonly Configuration config;
 
         public UnitTest1()
         {
@@ -30,7 +30,7 @@ namespace fido2_net_lib.Test
                 if (false == MetadataService.IsInitialized())
                     MetadataService.Initialize().Wait();
             }
-            config = new Fido2.Configuration { Origin = "https://localhost:44329" };
+            config = new Configuration { Origin = "https://localhost:44329" };
         }
         public static byte[] StringToByteArray(string hex)
         {
