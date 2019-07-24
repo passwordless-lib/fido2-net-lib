@@ -2,7 +2,7 @@ param([String]$nupkgPath="") #Must be the first statement in your script
 
 $scriptDir = Split-Path $myinvocation.mycommand.path -Parent
 $root = Split-Path $scriptDir -Parent
-$target = Join-Path $root "Src" | Join-Path -ChildPath "bin" | Join-Path -ChildPath "release"
+$target = Join-Path $root "Fido2NetLib.Models" | Join-Path -ChildPath "bin" | Join-Path -ChildPath "release"
 
 if ($nupkgPath -eq "") {
     Write-Error "No nupkg path supplied"
