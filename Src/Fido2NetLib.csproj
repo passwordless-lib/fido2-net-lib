@@ -1,8 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ExternalLibs/CBOR/CBOR.Include.props" />
   <Import Project="../ExternalLibs/Chaos.NaCL/Chaos.NaCL.Include.props" />
   <Import Project="../ExternalLibs/Asn1Processor/Asn1Processor.Include.props" />
-
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp2.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(OS)' != 'Unix'">netstandard2.0;netcoreapp2.0</TargetFrameworks>
@@ -11,11 +10,10 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-
   <PropertyGroup>
     <PackageId>Fido2</PackageId>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>$(VersionSuffix)</VersionSuffix>
+    <VersionSuffix>preview5</VersionSuffix>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -24,7 +22,6 @@
     <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/abergs/fido2-net-lib/blob/master/LICENSE.txt</PackageLicenseUrl>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Fido2NetLib.Models" Version="2.0.0" Condition="'$(Configuration)'=='Release'" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
@@ -34,11 +31,9 @@
     <PackageReference Include="System.Security.Cryptography.Cng" Version="4.5.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Fido2NetLib.Models\Fido2NetLib.Models.csproj" Condition="'$(Configuration)'=='Debug'" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="build/fido2.targets" PackagePath="build/" />
   </ItemGroup>
