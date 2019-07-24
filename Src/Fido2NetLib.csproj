@@ -36,4 +36,8 @@
   <ItemGroup>
     <Content Include="build/fido2.targets" PackagePath="build/" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fido2NetLib.Models\Fido2NetLib.Models.csproj" />
+  </ItemGroup>
 </Project>

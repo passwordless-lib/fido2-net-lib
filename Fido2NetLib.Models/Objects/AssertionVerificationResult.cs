@@ -5,7 +5,7 @@
     /// </summary>
     public class AssertionVerificationResult : Fido2ResponseBase
     {
-        public byte[] CredentialId { get; internal set; }
-        public uint Counter { get; internal set; }
+        public byte[] CredentialId { get; set; }
+        public uint Counter { get; set; }
     }
 }
