@@ -25,6 +25,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fido2NetLib.Models" Version="1.0.0" Condition="'$(Configuration)'=='Release'"/>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.2.4" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
@@ -34,10 +35,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="build/fido2.targets" PackagePath="build/" />
+    <ProjectReference Include="..\Fido2NetLib.Models\Fido2NetLib.Models.csproj" Condition="'$(Configuration)'=='Debug'" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fido2NetLib.Models\Fido2NetLib.Models.csproj" />
+    <Content Include="build/fido2.targets" PackagePath="build/" />
   </ItemGroup>
 </Project>
