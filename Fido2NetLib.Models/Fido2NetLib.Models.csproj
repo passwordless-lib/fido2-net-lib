@@ -5,7 +5,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <PackageId>Fido2</PackageId>
+    <PackageId>Fido2.Models</PackageId>
     <VersionPrefix>1.0.0</VersionPrefix>
     <VersionSuffix>$(VersionSuffix)</VersionSuffix>
     <Description>FIDO2 .NET library Models</Description>

@@ -18,7 +18,6 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.2" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Fido2NetLib.Models\Fido2NetLib.Models.csproj" />
     <ProjectReference Include="..\Src\Fido2NetLib.csproj" />
   </ItemGroup>
   <ItemGroup>
