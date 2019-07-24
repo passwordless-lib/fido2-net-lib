@@ -3,6 +3,19 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <PackageId>Fido2</PackageId>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix>$(VersionSuffix)</VersionSuffix>
+    <Description>FIDO2 .NET library Models</Description>
+    <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>fido2 webauthn</PackageTags>
+    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/abergs/fido2-net-lib/blob/master/LICENSE.txt</PackageLicenseUrl>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
