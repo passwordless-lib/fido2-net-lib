@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ExternalLibs/CBOR/CBOR.Include.props" />
   <Import Project="../ExternalLibs/Chaos.NaCL/Chaos.NaCL.Include.props" />
   <Import Project="../ExternalLibs/Asn1Processor/Asn1Processor.Include.props" />
@@ -13,7 +13,7 @@
   <PropertyGroup>
     <PackageId>Fido2</PackageId>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>preview6-dev</VersionSuffix>
+    <VersionSuffix>preview7-dev</VersionSuffix>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
