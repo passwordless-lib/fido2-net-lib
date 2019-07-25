@@ -1,6 +1,6 @@
 ﻿namespace Fido2NetLib
 {
-    public class Configuration
+    public class Fido2Configuration
     {
         /// <summary>
         /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. 
@@ -46,11 +46,11 @@
         /// <summary>
         /// Create the configuration for Fido2
         /// </summary>
-        public Configuration()
+        public Fido2Configuration()
         {
         }
 
-        public Configuration(IMetadataService metadataService)
+        public Fido2Configuration(IMetadataService metadataService)
         {
             MetadataService = metadataService;
         }

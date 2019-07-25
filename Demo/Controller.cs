@@ -36,7 +36,7 @@ namespace Fido2Demo
                     _mds.Initialize().Wait();
             }
             _origin = config["fido2:origin"];
-            _lib = new Fido2(new Configuration()
+            _lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
@@ -65,7 +65,7 @@ namespace Fido2Demo
                 }
 
                 // 1. Get user from DB by username (in our example, auto create missing users)
-                var user = DemoStorage.GetOrAddUser(username, () => new User
+                var user = DemoStorage.GetOrAddUser(username, () => new Fido2User
                 {
                     DisplayName = displayName,
                     Name = username,

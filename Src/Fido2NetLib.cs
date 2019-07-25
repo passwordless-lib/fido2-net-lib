@@ -11,11 +11,11 @@ namespace Fido2NetLib
     public partial class Fido2
     {
 
-        private Configuration Config { get; }
+        private Fido2Configuration Config { get; }
 
         private RandomNumberGenerator _crypto;
 
-        public Fido2(Configuration config)
+        public Fido2(Fido2Configuration config)
         {
             Config = config;
             _crypto = RandomNumberGenerator.Create();
@@ -26,7 +26,7 @@ namespace Fido2NetLib
         /// </summary>
         /// <returns></returns>
         /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
-        public CredentialCreateOptions RequestNewCredential(User user, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions = null)
+        public CredentialCreateOptions RequestNewCredential(Fido2User user, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions = null)
         {
             return RequestNewCredential(user, excludeCredentials, AuthenticatorSelection.Default, AttestationConveyancePreference.None, extensions);
         }
@@ -37,7 +37,7 @@ namespace Fido2NetLib
         /// <returns></returns>
         /// <param name="attestationPreference">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
         /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
-        public CredentialCreateOptions RequestNewCredential(User user, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationPreference, AuthenticationExtensionsClientInputs extensions = null)
+        public CredentialCreateOptions RequestNewCredential(Fido2User user, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationPreference, AuthenticationExtensionsClientInputs extensions = null)
         {
             // note: I have no idea if this crypto is ok...
             var challenge = new byte[Config.ChallengeSize];
