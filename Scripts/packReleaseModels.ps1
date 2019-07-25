@@ -1,7 +1,7 @@
 $scriptDir = Split-Path $myinvocation.mycommand.path -Parent
 $root = Split-Path $scriptDir -Parent
 
-$target = Join-Path $root "Fido2NetLib.Models" | Join-Path -ChildPath "Fido2NetLib.Models.csproj"
+$target = Join-Path $root "Models" | Join-Path -ChildPath "Fido2NetLib.Models.csproj"
 
 Write-Host "Packing $target"
 
