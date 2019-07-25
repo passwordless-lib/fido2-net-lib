@@ -46,7 +46,7 @@ namespace Fido2NetLib
         [JsonProperty("extensions", NullValueHandling = NullValueHandling.Ignore)]
         public AuthenticationExtensionsClientInputs Extensions { get; set; }
 
-        public static AssertionOptions Create(Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement? userVerification, AuthenticationExtensionsClientInputs extensions)
+        public static AssertionOptions Create(Fido2Configuration config, byte[] challenge, IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, UserVerificationRequirement? userVerification, AuthenticationExtensionsClientInputs extensions)
         {
             return new AssertionOptions()
             {

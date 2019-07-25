@@ -56,7 +56,7 @@ namespace fido2_net_lib.Test
                 }
             };
 
-            var fido2 = new Fido2(new Configuration
+            var fido2 = new Fido2(new Fido2Configuration
             {
                 Origin = "https://localhost:44336" //data was generated with this origin
             });
