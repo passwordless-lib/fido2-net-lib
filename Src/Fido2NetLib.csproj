@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../ExternalLibs/CBOR/CBOR.Include.props" />
   <Import Project="../ExternalLibs/Chaos.NaCL/Chaos.NaCL.Include.props" />
   <Import Project="../ExternalLibs/Asn1Processor/Asn1Processor.Include.props" />
@@ -23,7 +23,7 @@
     <PackageLicenseUrl>https://github.com/abergs/fido2-net-lib/blob/master/LICENSE.txt</PackageLicenseUrl>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Fido2.Models" Version="1.0.0-preview5" />
+    <PackageReference Include="Fido2.Models" Version="1.0.0-preview6-dev" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.2.4" />
     <PackageReference Include="System.Memory" Version="4.5.1" />
