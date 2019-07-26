@@ -25,11 +25,11 @@ namespace fido2_net_lib.Test
 
             // Only create and use MetadataService if we have an accesskey
             MetadataService = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, CacheDir);
-            //if (null != MetadataService)
-            //{
-            //    if (false == MetadataService.IsInitialized())
-            //        MetadataService.Initialize().Wait();
-            //}
+            if (null != MetadataService)
+            {
+                if (false == MetadataService.IsInitialized())
+                    MetadataService.Initialize().Wait();
+            }
             config = new Fido2.Configuration { Origin = "https://localhost:44329" };
         }
         public static byte[] StringToByteArray(string hex)
