@@ -26,6 +26,10 @@ namespace Fido2NetLib.Objects
                 return _extensionBytes.Length;
             }
         }
+        public byte[] GetBytes()
+        {
+            return _extensionBytes;
+        }
     }
     public class AuthenticationExtensionsClientInputs
     {
