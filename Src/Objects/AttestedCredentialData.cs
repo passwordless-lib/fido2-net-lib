@@ -52,6 +52,38 @@ namespace Fido2NetLib.Objects
         }
 
         /// <summary>
+        /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
+        /// </summary>
+        private byte[] AaGuidToBigEndian()
+        {
+            var aaguid = AaGuid.ToByteArray();
+
+            SwapBytes(aaguid, 0, 3);
+            SwapBytes(aaguid, 1, 2);
+            SwapBytes(aaguid, 4, 5);
+            SwapBytes(aaguid, 6, 7);
+
+            return aaguid;
+        }
+
+        /// <summary>
+        /// Instantiates an AttestedCredentialData object from an aaguid, credentialID, and CredentialPublicKey
+        /// </summary>
+        /// <param name="aaguid"></param>
+        /// <param name="credentialID"></param>
+        /// <param name="cpk"></param>
+        public AttestedCredentialData(Guid aaguid, byte[] credentialID, CredentialPublicKey cpk)
+        {
+            AaGuid = aaguid;
+            CredentialID = credentialID;
+            CredentialPublicKey = cpk;
+        }
+
+        public AttestedCredentialData(byte[] bytes) : this(new BinaryReader(new MemoryStream(bytes, false)))
+        {
+        }
+
+        /// <summary>
         /// Decodes attested credential data.
         /// </summary>
         public AttestedCredentialData(BinaryReader reader)
@@ -90,12 +122,46 @@ namespace Fido2NetLib.Objects
             // Read the CBOR object from the stream
             CredentialPublicKey = new CredentialPublicKey(reader.BaseStream);
         }
+
         public override string ToString()
         {
             return string.Format("AAGUID: {0}, CredentialID: {1}, CredentialPublicKey: {2}",
                 AaGuid.ToString(),
                 CredentialID.ToString().Replace("-",""),
                 CredentialPublicKey.ToString());
+        }
+
+        public byte[] ToByteArray()
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var writer = new BinaryWriter(ms))
+                {
+                    // Write the aaguid bytes out, reverse if we're on a little endian system
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        writer.Write(AaGuidToBigEndian());
+                    }
+                    else writer.Write(AaGuid.ToByteArray());
+
+                    // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
+                    var credentialIDLen = (UInt16)CredentialID.Length;
+                    var credentialIDLenBytes = BitConverter.GetBytes(credentialIDLen);
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        Array.Reverse(credentialIDLenBytes);
+                    }
+
+                    writer.Write(credentialIDLenBytes);
+
+                    // Write CredentialID bytes
+                    writer.Write(CredentialID);
+
+                    // Write credential public key bytes
+                    writer.Write(CredentialPublicKey.GetBytes());
+                }
+                return ms.ToArray();
+            }
         }
     }
 }

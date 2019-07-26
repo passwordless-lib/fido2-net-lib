@@ -65,6 +65,15 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public Extensions Extensions;
 
+        public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, UInt32 signCount, AttestedCredentialData acd, Extensions exts)
+        {
+            RpIdHash = rpIdHash;
+            Flags = flags;
+            SignCount = signCount;
+            AttestedCredentialData = acd;
+            Extensions = exts;
+        }
+
         public AuthenticatorData(byte[] authData)
         {
             // Input validation
@@ -111,6 +120,37 @@ namespace Fido2NetLib.Objects
                     // There should be no bytes left over after decoding all data from the structure
                     if (stream.Position != stream.Length) throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
                 }
+            }
+        }
+
+        public byte[] ToByteArray()
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var writer = new BinaryWriter(ms))
+                {
+                    writer.Write(RpIdHash);
+
+                    writer.Write((byte)Flags);
+
+                    var signCount = BitConverter.GetBytes(SignCount);
+                    if (BitConverter.IsLittleEndian)
+                    {
+                        Array.Reverse(signCount);
+                    }
+                    writer.Write(signCount);
+
+                    if (HasAttestedCredentialData)
+                    {
+                        writer.Write(AttestedCredentialData.ToByteArray());
+                    }
+
+                    if (HasExtensionsData)
+                    {
+                        writer.Write(Extensions.GetBytes());
+                    }
+                }
+                return ms.ToArray();
             }
         }
     }
