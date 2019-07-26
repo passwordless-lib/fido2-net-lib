@@ -36,7 +36,7 @@ namespace Fido2NetLib.Objects
             get
             {
                 if (_type == COSE.KeyType.RSA)
-               {
+                {
                     var rsa = new RSACng();
                     rsa.ImportParameters(
                         new RSAParameters()
@@ -229,7 +229,7 @@ namespace Fido2NetLib.Objects
         {
             return _cpk.ToString();
         }
-      
+
         public byte[] GetBytes()
         {
             return _cpk.EncodeToBytes();
