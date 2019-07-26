@@ -33,7 +33,13 @@ namespace Fido2NetLib.Objects
         /// Indicates the respective authenticator is contacted using a client device-specific transport.These authenticators are not removable from the client device.
         /// </summary>
         [EnumMember(Value = "internal")]
-        Internal
+        Internal,
+
+        /// <summary>
+        /// Indicates the respective authenticator can be contacted over removable Lightning.
+        /// </summary>
+        [EnumMember(Value = "lightning")]
+        Lightning
     }
     [System.Flags]
     public enum FIDOU2FTransports
