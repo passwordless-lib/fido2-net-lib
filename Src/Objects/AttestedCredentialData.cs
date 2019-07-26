@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 
+
 namespace Fido2NetLib.Objects
 {
     public class AttestedCredentialData
@@ -50,7 +51,6 @@ namespace Fido2NetLib.Objects
 
             return new Guid(Aaguid);
         }
-
         /// <summary>
         /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
         /// </summary>
@@ -89,6 +89,7 @@ namespace Fido2NetLib.Objects
         public AttestedCredentialData(BinaryReader reader)
         {
             if (reader.BaseStream.Length < MinLength) throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+            
             // First 16 bytes is AAGUID
             var aaguidBytes = reader.ReadBytes(Marshal.SizeOf(typeof(Guid)));
 
@@ -121,6 +122,7 @@ namespace Fido2NetLib.Objects
 
             // Read the CBOR object from the stream
             CredentialPublicKey = new CredentialPublicKey(reader.BaseStream);
+
         }
 
         public override string ToString()
