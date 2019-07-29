@@ -91,6 +91,7 @@ async function verifyAssertionWithServer(assertedCredential) {
         response: {
             authenticatorData: coerceToBase64Url(authData),
             clientDataJson: coerceToBase64Url(clientDataJSON),
+            userHandle: userHandle !== null ? coerceToBase64Url(userHandle): null,
             signature: coerceToBase64Url(sig)
         }
     };
