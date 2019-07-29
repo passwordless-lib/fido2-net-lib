@@ -1,3 +1,4 @@
+﻿#pragma warning disable CS3021 // Type or member does not need a CLSCompliant attribute because the assembly does not have a CLSCompliant attribute
 /*
 Written by Peter O. in 2013.
 Any copyright is dedicated to the Public Domain.
@@ -17,8 +18,9 @@ namespace PeterO.Cbor {
     /// <include file='../../docs.xml'
     /// path='docs/doc[@name="M:CBORObject.AsUInt16"]/*'/>
     [CLSCompliant(false)]
-    public ushort AsUInt16() {
-      int v = this.AsInt32();
+        public ushort AsUInt16()
+        {
+            int v = this.AsInt32();
       if (v > UInt16.MaxValue || v < 0) {
         throw new OverflowException("This object's value is out of range");
       }

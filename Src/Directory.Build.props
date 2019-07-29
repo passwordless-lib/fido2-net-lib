@@ -1,0 +1,18 @@
+<Project>
+  <Import Project="..\Directory.Build.props"/>
+
+  <!-- SourceLink Support-->
+  <PropertyGroup>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta-63127-02" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Projects inside "./src" should generate packages -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+</Project>
