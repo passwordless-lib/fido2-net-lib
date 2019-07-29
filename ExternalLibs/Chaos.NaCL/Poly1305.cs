@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
+using System;
 using System.Collections.Generic;
 using Chaos.NaCl.Internal;
 
