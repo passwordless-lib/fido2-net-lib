@@ -28,6 +28,14 @@ namespace Fido2Demo
                     response.StatusCode = 301;
                     response.Headers[HeaderNames.Location] = newUrl;
                     context.Result = RuleResult.EndResponse;
+                }else if(req.Host.Equals("fido2.azurewebsites.net"))
+                {
+                    var wwwHost = new HostString($"www.passwordless.dev");
+                    var newUrl = UriHelper.BuildAbsolute("https", wwwHost, req.PathBase, req.Path, req.QueryString);
+                    var response = context.HttpContext.Response;
+                    response.StatusCode = 301;
+                    response.Headers[HeaderNames.Location] = newUrl;
+                    context.Result = RuleResult.EndResponse;
                 }
 
                 context.Result = RuleResult.ContinueRules;
