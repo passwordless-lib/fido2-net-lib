@@ -36,7 +36,7 @@ namespace Fido2Demo
                     _mds.Initialize().Wait();
             }
             _origin = config["fido2:origin"];
-            _lib = new Fido2(new Configuration()
+            _lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
@@ -52,98 +52,6 @@ namespace Fido2Demo
             return string.Format("{0}{1}", e.Message, e.InnerException != null ? " (" + e.InnerException.Message + ")" : "");
         }
 
-        [HttpGet]
-        [Route("/dashboard-old/{username}")]
-        public ContentResult Index(string username)
-        {
-            // 1. Get user from DB
-            var user = DemoStorage.GetUser(username + "@example.com");
-
-            // 2. Get registered credentials from database
-            var existingCredentials = DemoStorage.GetCredentialsByUser(user);
-
-            var content = System.IO.File.ReadAllText("wwwroot/index.html");
-
-            var table = "";
-
-            foreach (var cred in existingCredentials)
-            {
-                var coseKey = PeterO.Cbor.CBORObject.DecodeFromBytes(cred.PublicKey);
-                var kty = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
-                var desc = "";
-                var icon = "";
-                try
-                {
-                    var entry = _mds.GetEntry(cred.AaGuid);
-                    desc = entry.MetadataStatement.Description.ToString();
-                    icon = entry.MetadataStatement.Icon.ToString();
-                }
-                catch { }
-
-                table +=
-                    "<tr>" +
-                        "<td class=\"format no-wrap\">" + cred.CredType + "</td>" +
-                        "<td class=\"no-wrap\">" + cred.RegDate + "</td>" +
-                        "<td class=\"no-wrap\">" + cred.SignatureCounter.ToString() + "</td>" +
-                        "<td class=\"no-wrap\">" + cred.AaGuid.ToString() + "</td>" +
-                        "<td class=\"no-wrap\">" + desc + "</td>" +
-                        "<img src=" + icon + ">" +
-                        "<td>";
-                switch (kty)
-                {
-                    case (int) COSE.KeyType.OKP:
-                        {
-                            var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                            table += "<table class=\"sub-table\">" +
-                                    "<tr>" +
-                                        "<td><pre>X: " + BitConverter.ToString(X).Replace("-", "") + "</pre></td>" +
-                                    "</tr>" +
-                                    "</table>";
-                            break;
-                        }
-                    case (int) COSE.KeyType.EC2:
-                        {
-                            var X = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                            var Y = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
-                            table += "<table class=\"sub-table\">" +
-                                    "<tr>" +
-                                        "<td><pre>X: " + BitConverter.ToString(X).Replace("-", "") + "</pre></td>" +
-                                    "</tr>" +
-                                    "<tr>" +
-                                        "<td><pre>Y: " + BitConverter.ToString(Y).Replace("-", "") + "</pre></td>" +
-                                    "</tr>" +
-                                    "</table>";
-                            break;
-                        }
-                    case (int) COSE.KeyType.RSA:
-                        {
-                            var modulus = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString();
-                            var exponent = coseKey[PeterO.Cbor.CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString();
-                            table += "<table class=\"sub-table\">" +
-                                    "<tr>" +
-                                        "<td><pre>Modulus: " + BitConverter.ToString(modulus).Replace("-", "") + "</pre></td>" +
-                                    "</tr>" +
-                                    "<tr>" +
-                                        "<td><pre>Exponent: " + BitConverter.ToString(exponent).Replace("-", "") + "</pre></td>" +
-                                    "</tr>" +
-                                "</table>";
-                            break;
-                        }
-                    default:
-                        {
-                            throw new Fido2VerificationException(string.Format("Missing or unknown keytype {0}", kty.ToString()));
-                        }
-                }
-            }
-
-            return new ContentResult
-            {
-                ContentType = "text/html",
-                StatusCode = (int)System.Net.HttpStatusCode.OK,
-                Content = string.Format(content, username, table)
-            };
-        }
-
         [HttpPost]
         [Route("/makeCredentialOptions")]
         public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string displayName, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
@@ -157,7 +65,7 @@ namespace Fido2Demo
                 }
 
                 // 1. Get user from DB by username (in our example, auto create missing users)
-                var user = DemoStorage.GetOrAddUser(username, () => new User
+                var user = DemoStorage.GetOrAddUser(username, () => new Fido2User
                 {
                     DisplayName = displayName,
                     Name = username,

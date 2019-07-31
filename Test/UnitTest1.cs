@@ -16,7 +16,7 @@ namespace fido2_net_lib.Test
     public class UnitTest1
     {
         internal IMetadataService MetadataService;
-        private readonly Fido2.Configuration config;
+        private readonly Fido2Configuration config;
 
         public UnitTest1()
         {
@@ -30,7 +30,7 @@ namespace fido2_net_lib.Test
                 if (false == MetadataService.IsInitialized())
                     MetadataService.Initialize().Wait();
             }
-            config = new Fido2.Configuration { Origin = "https://localhost:44329" };
+            config = new Fido2Configuration { Origin = "https://localhost:44329" };
         }
         public static byte[] StringToByteArray(string hex)
         {
@@ -345,7 +345,7 @@ namespace fido2_net_lib.Test
         }
 
         [Fact]
-        public async void TestAssertionResponse()
+        public void TestAssertionResponse()
         {
             MakeAssertionResponse(COSE.KeyType.EC2, COSE.Algorithm.ES256);
             MakeAssertionResponse(COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384);
@@ -479,7 +479,7 @@ namespace fido2_net_lib.Test
                 UserHandle = userHandle,
             };
 
-            var lib = new Fido2(new Fido2.Configuration()
+            var lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -500,9 +500,9 @@ namespace fido2_net_lib.Test
                 Id = new byte[] {0xf1, 0xd0},
                 RawId = new byte[] { 0xf1, 0xd0 },
             };
-            IsUserHandleOwnerOfCredentialIdAsync callback = async (args) =>
+            IsUserHandleOwnerOfCredentialIdAsync callback = (args) =>
             {
-                return true;
+                return Task.FromResult(true);
             };
             var res = await lib.MakeAssertionAsync(response, options, cpk.GetBytes(), signCount - 1, callback);
         }

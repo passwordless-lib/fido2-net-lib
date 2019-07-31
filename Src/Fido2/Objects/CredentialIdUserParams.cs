@@ -6,9 +6,9 @@
     public class IsCredentialIdUniqueToUserParams
     {
         public byte[] CredentialId { get; set; }
-        public User User { get; set; }
+        public Fido2User User { get; set; }
 
-        public IsCredentialIdUniqueToUserParams(byte[] credentialId, User user)
+        public IsCredentialIdUniqueToUserParams(byte[] credentialId, Fido2User user)
         {
             CredentialId = credentialId;
             User = user;

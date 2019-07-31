@@ -9,14 +9,14 @@ namespace Fido2NetLib.Development
 {
     public class DevelopmentInMemoryStore
     {
-        ConcurrentDictionary<string, User> storedUsers = new ConcurrentDictionary<string, User>();
+        ConcurrentDictionary<string, Fido2User> storedUsers = new ConcurrentDictionary<string, Fido2User>();
 
-        public User GetOrAddUser(string username, Func<User> addCallback)
+        public Fido2User GetOrAddUser(string username, Func<Fido2User> addCallback)
         {
             return storedUsers.GetOrAdd(username, addCallback());
         }
 
-        public User GetUser(string username)
+        public Fido2User GetUser(string username)
         {
             storedUsers.TryGetValue(username, out var user);
             return user;
@@ -25,7 +25,7 @@ namespace Fido2NetLib.Development
 
         List<StoredCredential> storedCredentials = new List<StoredCredential>();
 
-        public List<StoredCredential> GetCredentialsByUser(User user)
+        public List<StoredCredential> GetCredentialsByUser(Fido2User user)
         {
             return storedCredentials.Where(c => c.UserId.SequenceEqual(user.Id)).ToList();
         }
@@ -46,18 +46,18 @@ namespace Fido2NetLib.Development
             cred.SignatureCounter = counter;
         }
 
-        public void AddCredentialToUser(User user, StoredCredential credential)
+        public void AddCredentialToUser(Fido2User user, StoredCredential credential)
         {
             credential.UserId = user.Id;
             storedCredentials.Add(credential);
         }
 
-        public Task<List<User>> GetUsersByCredentialIdAsync(byte[] credentialId)
+        public Task<List<Fido2User>> GetUsersByCredentialIdAsync(byte[] credentialId)
         {
             // our in-mem storage does not allow storing multiple users for a given credentialId. Yours shouldn't either.
             var cred = storedCredentials.Where(c => c.Descriptor.Id.SequenceEqual(credentialId)).FirstOrDefault();
 
-            if (cred == null) return Task.FromResult(new List<User>());
+            if (cred == null) return Task.FromResult(new List<Fido2User>());
 
             return Task.FromResult(storedUsers.Where(u => u.Value.Id.SequenceEqual(cred.UserId)).Select(u => u.Value).ToList());
         }

@@ -1,3 +1,4 @@
+﻿#pragma warning disable CS3021 // Type or member does not need a CLSCompliant attribute because the assembly does not have a CLSCompliant attribute
 /*
 Written by Peter O. in 2013.
 Any copyright is dedicated to the Public Domain.
@@ -16,8 +17,9 @@ namespace PeterO {
     /// path='docs/doc[@name="P:PeterO.BigInteger.Zero"]/*'/>
     [CLSCompliant(false)] [Obsolete(
   "Use EInteger from PeterO.Numbers/com.upokecenter.numbers and the output of this class's ToString method.")]
-        public static BigInteger Zero {
-      get {
+        public static BigInteger Zero
+        {
+            get {
         return ValueZeroValue;
       }
     }
