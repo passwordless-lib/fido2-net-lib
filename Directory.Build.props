@@ -14,7 +14,7 @@
   <!-- GLOBALLY USABLE VARIABLES -->
   <PropertyGroup>
     <!-- Establish a preset but make it an active choice for each project. -->
-    <SupportedNonMetaTargetFrameWorks>netcoreapp2.1</SupportedNonMetaTargetFrameWorks>
+    <SupportedNonMetaTargetFrameWorks>netcoreapp2.2</SupportedNonMetaTargetFrameWorks>
     <!-- Can't have test project target .netstandard - only implementations not metaframeworks -->
     <SupportedTargetFrameworks>netstandard2.0;$(SupportedNonMetaTargetFrameWorks)</SupportedTargetFrameworks>
   </PropertyGroup>
