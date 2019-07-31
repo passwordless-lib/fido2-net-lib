@@ -4,10 +4,12 @@ async function handleSignInSubmit(event) {
     event.preventDefault();
 
     let username = this.username.value;
+    let user_verification = value("#option-userverification");
 
     // prepare form post data
     var formData = new FormData();
     formData.append('username', username);
+    formData.append('userVerification', user_verification);
 
     // send to server for registering
     let makeAssertionOptions;
