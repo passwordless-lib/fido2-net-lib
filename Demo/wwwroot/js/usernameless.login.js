@@ -83,6 +83,7 @@ async function verifyAssertionWithServer(assertedCredential) {
     let clientDataJSON = new Uint8Array(assertedCredential.response.clientDataJSON);
     let rawId = new Uint8Array(assertedCredential.rawId);
     let sig = new Uint8Array(assertedCredential.response.signature);
+    let userHandle = new Uint8Array(assertedCredential.response.userHandle)
     const data = {
         id: assertedCredential.id,
         rawId: coerceToBase64Url(rawId),
