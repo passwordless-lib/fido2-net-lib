@@ -56,9 +56,9 @@ Read more:
 
 ## Examples
 
-See the [demo controller](Fido2Demo/Controller.cs) for full examples of both [attestation](https://www.w3.org/TR/webauthn/#sctn-attestation) and [assertion](https://www.w3.org/TR/webauthn/#verifying-assertion).
+See the [demo controller](Demo/Controller.cs) for full examples of both [attestation](https://www.w3.org/TR/webauthn/#sctn-attestation) and [assertion](https://www.w3.org/TR/webauthn/#verifying-assertion).
 
-See the [test controller](Fido2Demo/TestController.cs) for examples of how to pass the [conformance tests](#conformance-testing-tool).
+See the [test controller](Demo/TestController.cs) for examples of how to pass the [conformance tests](#conformance-testing-tool).
 
 See the [Active Directory Store information](https://github.com/abergs/fido2-net-lib/issues/68#issuecomment-451758622) and [example credential store](https://github.com/abergs/fido2-net-lib/blob/ActiveDirectory/fido2-net-lib/ActiveDirectoryStore.cs) for ideas on how to integrate this library with an on-premises Active Directory.
 
