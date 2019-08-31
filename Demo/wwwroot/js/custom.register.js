@@ -91,8 +91,7 @@ async function handleRegisterSubmit(event) {
 
     try {
         registerNewCredential(newCredential);
-
-    } catch (e) {
+    } catch (err) {
         showErrorAlert(err.message ? err.message : err);
     }
 }
