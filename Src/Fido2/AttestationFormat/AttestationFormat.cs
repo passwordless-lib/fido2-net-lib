@@ -56,9 +56,8 @@ namespace Fido2NetLib.AttestationFormat
         {
             foreach (var ext in exts)
             {
-                if (ext.Oid.FriendlyName == "Basic Constraints")
+                if (ext.Oid.Value.Equals("2.5.29.19") && ext is X509BasicConstraintsExtension baseExt)
                 {
-                    var baseExt = (X509BasicConstraintsExtension)ext;
                     return baseExt.CertificateAuthority;
                 }
             }
