@@ -7,6 +7,21 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
 {
+    enum UndesiredAuthenticatorStatus
+    {
+        ATTESTATION_KEY_COMPROMISE = AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE,
+        USER_VERIFICATION_BYPASS = AuthenticatorStatus.USER_VERIFICATION_BYPASS,
+        USER_KEY_REMOTE_COMPROMISE = AuthenticatorStatus.USER_KEY_REMOTE_COMPROMISE,
+        USER_KEY_PHYSICAL_COMPROMISE = AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
+        REVOKED = AuthenticatorStatus.REVOKED
+    };
+
+    enum MetadataAttestationType
+    {
+        ATTESTATION_BASIC_FULL = 0x3e07,
+        ATTESTATION_BASIC_SURROGATE = 0x3e08
+    }
+
     class Packed : AttestationFormat
     {
         private readonly IMetadataService MetadataService;

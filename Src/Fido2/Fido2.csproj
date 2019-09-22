@@ -7,6 +7,13 @@
   <Import Project="../../ExternalLibs/CBOR/CBOR.Include.props" />
   <Import Project="../../ExternalLibs/Chaos.NaCL/Chaos.NaCL.Include.props" />
   <Import Project="../../ExternalLibs/Asn1Processor/Asn1Processor.Include.props" />
+  <ItemGroup>
+    <None Remove="Fido2MetadataServiceRepository.cs" />
+    <None Remove="FileSystemMetadataRepository.cs" />
+    <None Remove="IMetadataRepository.cs" />
+    <None Remove="Metadata\ConformanceMetadataRepository.cs" />
+    <None Remove="StaticMetadataRepository.cs" />
+  </ItemGroup>
 
   <!-- References -->
   <ItemGroup>

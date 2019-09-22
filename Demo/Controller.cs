@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Fido2NetLib.Development;
 using static Fido2NetLib.Fido2;
 using System.IO;
+using Microsoft.Extensions.Options;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,31 +21,14 @@ namespace Fido2Demo
     [Route("api/[controller]")]
     public class MyController : Controller
     {
-        private Fido2 _lib;
+        private IFido2 _fido2;
         public static IMetadataService _mds;
         private string _origin;
         public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
-        public MyController(IConfiguration config)
+        public MyController(IFido2 fido2)
         {
-            var MDSAccessKey = config["fido2:MDSAccessKey"];
-            var MDSCacheDirPath = config["fido2:MDSCacheDirPath"] ?? Path.Combine(Path.GetTempPath(), "fido2mdscache"); 
-            _mds = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, MDSCacheDirPath);
-            if (null != _mds)
-            {
-                if (false == _mds.IsInitialized())
-                    _mds.Initialize().Wait();
-            }
-            _origin = config["fido2:origin"];
-            _lib = new Fido2(new Fido2Configuration()
-            {
-                ServerDomain = config["fido2:serverDomain"],
-                ServerName = "Fido2 test",
-                Origin = _origin,
-                // Only create and use Metadataservice if we have an acesskey
-                MetadataService = _mds,
-                TimestampDriftTolerance = config.GetValue<int>("fido2:TimestampDriftTolerance")
-            });
+            _fido2 = fido2;
         }
 
         private string FormatException(Exception e)
@@ -87,7 +71,7 @@ namespace Fido2Demo
 
                 var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
 
-                var options = _lib.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
+                var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
 
                 // 4. Temporarily store options, session/in-memory cache/redis/db
                 HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -121,7 +105,7 @@ namespace Fido2Demo
                 };
 
                 // 2. Verify and make the credentials
-                var success = await _lib.MakeNewCredentialAsync(attestationResponse, options, callback);
+                var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback);
 
                 // 3. Store the credentials in db
                 DemoStorage.AddCredentialToUser(options.User, new StoredCredential
@@ -166,7 +150,7 @@ namespace Fido2Demo
 
                 // 3. Create options
                 var uv = string.IsNullOrEmpty(userVerification) ? UserVerificationRequirement.Discouraged : userVerification.ToEnum<UserVerificationRequirement>();
-                var options = _lib.GetAssertionOptions(
+                var options = _fido2.GetAssertionOptions(
                     existingCredentials,
                     uv,
                     exts
@@ -214,7 +198,7 @@ namespace Fido2Demo
                 };
 
                 // 5. Make the assertion
-                var res = await _lib.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
+                var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
 
                 // 6. Store the updated counter
                 DemoStorage.UpdateCounter(res.CredentialId, res.Counter);

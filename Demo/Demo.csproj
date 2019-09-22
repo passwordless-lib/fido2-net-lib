@@ -4,6 +4,8 @@
     <UserSecretsId>39589262-6aa1-4bde-aaa9-403a7542cf63</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
+    <ProjectReference Include="..\Src\Fido2.Models\Fido2.Models.csproj" />
     <ProjectReference Include="..\Src\Fido2\Fido2.csproj" />
 
     <PackageReference Include="Microsoft.AspNetCore.All" />
