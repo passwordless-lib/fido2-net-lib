@@ -218,7 +218,7 @@ A complimentary [blog post](http://ideasof.andersaberg.com/development/fido2-net
 
 ### Code Contributors
 
-This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+This project exists thanks to all the people who contribute. [[Contribute](https://github.com/abergs/fido2-net-lib/tree/master#contributing)].
 <a href="https://github.com/abergs/fido2-net-lib/graphs/contributors"><img src="https://opencollective.com/passwordless/contributors.svg?width=890&button=false" /></a>
 
 ### Financial Contributors
