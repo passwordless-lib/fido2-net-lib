@@ -32,14 +32,14 @@ namespace Fido2NetLib
             if (null == rawResponse.Response.AttestationObject || 0 == rawResponse.Response.AttestationObject.Length)
                 throw new Fido2VerificationException("Missing AttestationObject");
 
-            CBORObject cborAttestation = null;
+            CBORObject cborAttestation;
             try
             {
                 cborAttestation = CBORObject.DecodeFromBytes(rawResponse.Response.AttestationObject);
             }
-            catch (CBORException)
+            catch (CBORException ex)
             {
-                throw new Fido2VerificationException("Malformed AttestationObject");
+                throw new Fido2VerificationException("Malformed AttestationObject", ex);
             }
 
             if (null == cborAttestation["fmt"] ||

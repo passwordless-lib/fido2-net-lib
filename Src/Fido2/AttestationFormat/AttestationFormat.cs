@@ -2,26 +2,29 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
+using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.AttestationFormat
 {
     public abstract class AttestationFormat
     {
+        public CBORObject attStmt;
+        public byte[] authenticatorData;
+        public byte[] clientDataHash;
+
         public AttestationFormat(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash)
         {
             this.attStmt = attStmt;
             this.authenticatorData = authenticatorData;
             this.clientDataHash = clientDataHash;
         }
-        public CBORObject attStmt;
-        public byte[] authenticatorData;
-        public byte[] clientDataHash;
-        internal CBORObject Sig { get { return attStmt["sig"]; } }
-        internal CBORObject X5c { get { return attStmt["x5c"]; } }
-        internal CBORObject Alg { get { return attStmt["alg"]; } }
-        internal CBORObject EcdaaKeyId { get { return attStmt["ecdaaKeyId"]; } }
-        internal Objects.AuthenticatorData AuthData { get { return new Objects.AuthenticatorData(authenticatorData); } } 
-        internal CBORObject CredentialPublicKey { get { return AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject(); } }
+
+        internal CBORObject Sig => attStmt["sig"];
+        internal CBORObject X5c => attStmt["x5c"];
+        internal CBORObject Alg => attStmt["alg"];
+        internal CBORObject EcdaaKeyId => attStmt["ecdaaKeyId"];
+        internal AuthenticatorData AuthData => new AuthenticatorData(authenticatorData);
+        internal CBORObject CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject();
         internal byte[] Data
         {
             get

@@ -12,11 +12,14 @@ namespace Fido2NetLib.AttestationFormat
 {
     class AndroidSafetyNet : AttestationFormat
     {
-        private int _driftTolerance;
-        public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, int driftTolerance) : base(attStmt, authenticatorData, clientDataHash)
+        private readonly int _driftTolerance;
+
+        public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, int driftTolerance) 
+            : base(attStmt, authenticatorData, clientDataHash)
         {
             _driftTolerance = driftTolerance;
         }
+
         public override void Verify()
         {
 
@@ -83,9 +86,12 @@ namespace Fido2NetLib.AttestationFormat
 
             // Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
             if ("" == nonce) throw new Fido2VerificationException("Nonce value not found in Android SafetyNet attestation");
-            var dataHash = CryptoUtils.GetHasher(HashAlgorithmName.SHA256).ComputeHash(Data);
-            var nonceHash = Convert.FromBase64String(nonce);
-            if (false == dataHash.SequenceEqual(nonceHash)) throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
+            using(var hasher = CryptoUtils.GetHasher(HashAlgorithmName.SHA256))
+            {
+                var dataHash = hasher.ComputeHash(Data);
+                var nonceHash = Convert.FromBase64String(nonce);
+                if (false == dataHash.SequenceEqual(nonceHash)) throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
+            }
 
             // Verify that the attestation certificate is issued to the hostname "attest.android.com"
             var attCert = (validatedToken.SigningKey as X509SecurityKey).Certificate;

@@ -22,12 +22,13 @@ namespace Fido2NetLib.AttestationFormat
         ATTESTATION_BASIC_SURROGATE = 0x3e08
     }
 
-    class Packed : AttestationFormat
+    internal class Packed : AttestationFormat
     {
-        private readonly IMetadataService MetadataService;
+        private readonly IMetadataService _metadataService;
+
         public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
         {
-            MetadataService = metadataService;
+            _metadataService = metadataService;
         }
 
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
@@ -39,6 +40,7 @@ namespace Fido2NetLib.AttestationFormat
                 0 != dictSubject["CN"].Length ||
                 "Authenticator Attestation" == dictSubject["OU"].ToString());
         }
+
         public override void Verify()
         {
             // Verify that attStmt is valid CBOR conforming to the syntax defined above and 
@@ -114,10 +116,11 @@ namespace Fido2NetLib.AttestationFormat
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
 
-                var entry = MetadataService?.GetEntry(AuthData.AttestedCredentialData.AaGuid);
+                var entry = _metadataService?.GetEntry(AuthData.AttestedCredentialData.AaGuid);
 
                 // while conformance testing, we must reject any authenticator that we cannot get metadata for
-                if (MetadataService?.ConformanceTesting() == true && null == entry) throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
+                if (_metadataService?.ConformanceTesting() == true && null == entry)
+                    throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
 
                 // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
                 if (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false)

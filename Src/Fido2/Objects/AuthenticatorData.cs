@@ -23,36 +23,36 @@ namespace Fido2NetLib.Objects
         /// Flags contains information from the authenticator about the authentication 
         /// and whether or not certain data is present in the authenticator data.
         /// </summary>
-        private readonly AuthenticatorFlags Flags;
+        private readonly AuthenticatorFlags _flags;
 
         /// <summary>
         /// UserPresent indicates that the user presence test has completed successfully.
         /// <see cref="https://www.w3.org/TR/webauthn/#up"/>
         /// </summary>
-        public bool UserPresent { get { return Flags.HasFlag(AuthenticatorFlags.UP); } }
+        public bool UserPresent => _flags.HasFlag(AuthenticatorFlags.UP);
 
         /// <summary>
         /// UserVerified indicates that the user verification process has completed successfully.
         /// <see cref="https://www.w3.org/TR/webauthn/#uv"/>
         /// </summary>
-        public bool UserVerified { get { return Flags.HasFlag(AuthenticatorFlags.UV); } }
+        public bool UserVerified => _flags.HasFlag(AuthenticatorFlags.UV);
 
         /// <summary>
         /// HasAttestedCredentialData indicates that the authenticator added attested credential data to the authenticator data.
         /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
         /// </summary>
-        public bool HasAttestedCredentialData { get { return Flags.HasFlag(AuthenticatorFlags.AT); } }
+        public bool HasAttestedCredentialData => _flags.HasFlag(AuthenticatorFlags.AT);
 
         /// <summary>
         /// HasExtensionsData indicates that the authenticator added extension data to the authenticator data.
         /// <see cref="https://www.w3.org/TR/webauthn/#authdataextensions"/>
         /// </summary>
-        public bool HasExtensionsData { get { return Flags.HasFlag(AuthenticatorFlags.ED); } }
+        public bool HasExtensionsData => _flags.HasFlag(AuthenticatorFlags.ED);
 
         /// <summary>
         /// Signature counter, 32-bit unsigned big-endian integer. 
         /// </summary>
-        public UInt32 SignCount;
+        public uint SignCount;
 
         /// <summary>
         /// Attested credential data is a variable-length byte array added to the 
@@ -65,10 +65,10 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public Extensions Extensions;
 
-        public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, UInt32 signCount, AttestedCredentialData acd, Extensions exts)
+        public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData acd, Extensions exts)
         {
             RpIdHash = rpIdHash;
-            Flags = flags;
+            _flags = flags;
             SignCount = signCount;
             AttestedCredentialData = acd;
             Extensions = exts;
@@ -87,9 +87,9 @@ namespace Fido2NetLib.Objects
                 {
                     RpIdHash = reader.ReadBytes(SHA256HashLenBytes);
 
-                    Flags = (AuthenticatorFlags)reader.ReadByte();
+                    _flags = (AuthenticatorFlags)reader.ReadByte();
 
-                    var signCountBytes = reader.ReadBytes(sizeof(UInt32));
+                    var signCountBytes = reader.ReadBytes(sizeof(uint));
                     if (BitConverter.IsLittleEndian)
                     {
                         // Sign count is provided by the authenticator as big endian, convert if we are on little endian system
@@ -131,7 +131,7 @@ namespace Fido2NetLib.Objects
                 {
                     writer.Write(RpIdHash);
 
-                    writer.Write((byte)Flags);
+                    writer.Write((byte)_flags);
 
                     var signCount = BitConverter.GetBytes(SignCount);
                     if (BitConverter.IsLittleEndian)

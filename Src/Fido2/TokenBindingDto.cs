@@ -3,7 +3,7 @@
     public class TokenBindingDto
     {
         /// <summary>
-        /// Either "present" or "supported. https://www.w3.org/TR/webauthn/#enumdef-tokenbindingstatus
+        /// Either "present" or "supported". https://www.w3.org/TR/webauthn/#enumdef-tokenbindingstatus
         /// supported: Indicates the client supports token binding, but it was not negotiated when communicating with the Relying Party.
         /// present: Indicates token binding was used when communicating with the Relying Party. In this case, the id member MUST be present
         /// </summary>
@@ -17,12 +17,12 @@
         public void Verify(byte[] requestTokenbinding)
         {
             // validation by the FIDO conformance tool (more than spec says)
-            switch (this.Status)
+            switch (Status)
             {
                 case "present":
                     if (string.IsNullOrEmpty(Id)) throw new Fido2VerificationException("TokenBinding status was present but Id is missing");
                     var b64 = Base64Url.Encode(requestTokenbinding);
-                    if (this.Id != b64) throw new Fido2VerificationException("Tokenbinding Id does not match");
+                    if (Id != b64) throw new Fido2VerificationException("Tokenbinding Id does not match");
                     break;
                 case "supported":
                 case "not-supported":

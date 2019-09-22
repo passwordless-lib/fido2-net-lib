@@ -1,9 +1,7 @@
-﻿
-using System;
+﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -25,7 +23,7 @@ namespace Fido2NetLib.AttestationFormat
         {
             // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
             // This function returns an entry from the KeyDescription at index
-            if (null == attExtBytes || 0 == attExtBytes.Length || attExtBytes.Length > UInt16.MaxValue) throw new Fido2VerificationException("Invalid attExtBytes signature value");
+            if (null == attExtBytes || 0 == attExtBytes.Length || attExtBytes.Length > ushort.MaxValue) throw new Fido2VerificationException("Invalid attExtBytes signature value");
             var offset = 0;
             var derSequence = AuthDataHelper.GetSizedByteArray(attExtBytes, ref offset, 1);
             // expecting to start with 0x30 indicating SEQUENCE
@@ -34,6 +32,7 @@ namespace Fido2NetLib.AttestationFormat
             var dataLen = AuthDataHelper.GetSizedByteArray(attExtBytes, ref offset, 1);
             if (null == dataLen) throw new Fido2VerificationException("attExtBytes signature has invalid length");
             // if data is more than 127 bytes, the length is encoded in long form
+            // TODO : Why is longLen never used ?
             var longForm = (dataLen[0] > 0x7f);
             var longLen = 0;
             if (true == longForm)
@@ -103,13 +102,13 @@ namespace Fido2NetLib.AttestationFormat
             // the only two items we are expecting to find are purpose and origin
             // which are set of integer or integer, so int result is ok for now
             // if entire list is walked and tag is not found, return false
-            for (int i = 0; i < authList.Length;)
+            for (var i = 0; i < authList.Length;)
             {
                 // expecting to see first byte indicting the attribute is of class 2, and constructed value
                 // first two bits are the class, expecting to see 10
                 // third bit is primative (0) or constructed (1)
                 if (false == ((authList[i] & 0xA0) == 0xA0)) throw new Fido2VerificationException("Expected class 2 constructed ASN.1 value");
-                var foundTag = 0;
+                int foundTag;
                 // if the tag value is below 0x1F (11111), the value is stored in the remaining 5 bits of the first byte 
                 if (false == ((authList[i] & 0x1F) == 0x1F))
                 {

@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using LipingShare.LCLib.Asn1Processor;
-using PeterO.Cbor;
 using Fido2NetLib.Objects;
-using System.IO;
+using LipingShare.LCLib.Asn1Processor;
 
 namespace Fido2NetLib
 {
@@ -37,7 +36,7 @@ namespace Fido2NetLib
                 case "PS512":
                     return SHA512.Create();
                 default:
-                    throw new ArgumentOutOfRangeException("hashName");
+                    throw new ArgumentOutOfRangeException(nameof(hashName));
             }
         }
 

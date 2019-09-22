@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -15,18 +16,14 @@ namespace Fido2NetLib
             if (null == clientDataJson) throw new Fido2VerificationException("clientDataJson cannot be null");
             var stringx = Encoding.UTF8.GetString(clientDataJson);
 
-            AuthenticatorResponse response = null;
+            AuthenticatorResponse response;
             try
             {
-                response = Newtonsoft.Json.JsonConvert.DeserializeObject<AuthenticatorResponse>(stringx);
+                response = JsonConvert.DeserializeObject<AuthenticatorResponse>(stringx);
             }
-            catch (System.Exception e)//Newtonsoft.Json.JsonReaderException) 
+            catch (Exception e) when (e is JsonReaderException || e is JsonSerializationException)
             {
-                if (e is JsonReaderException || e is JsonSerializationException)
-                {
-                    throw new Fido2VerificationException("Malformed clientDataJson");
-                }
-                else throw;
+                throw new Fido2VerificationException("Malformed clientDataJson");
             }
 
             if (null == response) throw new Fido2VerificationException("Deserialized authenticator response cannot be null");

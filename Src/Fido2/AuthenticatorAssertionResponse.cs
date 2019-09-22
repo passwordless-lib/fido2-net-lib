@@ -44,9 +44,20 @@ namespace Fido2NetLib
         /// Implements alghoritm from https://www.w3.org/TR/webauthn/#verifying-assertion
         /// </summary>
         /// <param name="options">The assertionoptions that was sent to the client</param>
-        /// <param name="expectedOrigin">The expected server origin, used to verify that the signature is sent to the expected server</param>
+        /// <param name="expectedOrigin">
+        /// The expected server origin, used to verify that the signature is sent to the expected server
+        /// </param>
+        /// <param name="storedPublicKey">The stored public key for this CredentialId</param>
         /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
-        public async Task<AssertionVerificationResult> VerifyAsync(AssertionOptions options, string expectedOrigin, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId, byte[] requestTokenBindingId)
+        /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID</param>
+        /// <param name="requestTokenBindingId"></param>
+        public async Task<AssertionVerificationResult> VerifyAsync(
+            AssertionOptions options, 
+            string expectedOrigin, 
+            byte[] storedPublicKey, 
+            uint storedSignatureCounter, 
+            IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId, 
+            byte[] requestTokenBindingId)
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 

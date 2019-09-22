@@ -9,10 +9,10 @@ namespace Fido2NetLib.AttestationFormat
 {
     class FidoU2f : AttestationFormat
     {
-        private readonly IMetadataService MetadataService;
+        private readonly IMetadataService _metadataService;
         public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
         {
-            MetadataService = metadataService;
+            _metadataService = metadataService;
         }
         public override void Verify()
         {
@@ -32,14 +32,15 @@ namespace Fido2NetLib.AttestationFormat
 
             var cert = new X509Certificate2(X5c.Values.First().GetByteString());
 
+            // TODO : Check why this variable isn't used. Remove it or use it.
             var u2ftransports = U2FTransportsFromAttnCert(cert.Extensions);
 
             var aaguid = AaguidFromAttnCertExts(cert.Extensions);
 
-            if (null != MetadataService && null != aaguid)
+            if (null != _metadataService && null != aaguid)
             {
                 var guidAaguid = AttestedCredentialData.FromBigEndian(aaguid);
-                var entry = MetadataService.GetEntry(guidAaguid);
+                var entry = _metadataService.GetEntry(guidAaguid);
 
                 if (null != entry && null != entry.MetadataStatement)
                 {

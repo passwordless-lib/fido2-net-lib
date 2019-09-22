@@ -13,19 +13,16 @@ namespace Fido2NetLib.Objects
             switch (_type)
             {
                 case COSE.KeyType.EC2:
-                    {
                         var ecsig = CryptoUtils.SigFromEcDsaSig(sig, Ecdsa.KeySize);
                         return Ecdsa.VerifyData(data, ecsig, CryptoUtils.algMap[(int)_alg]);
-                    }
+
                 case COSE.KeyType.RSA:
-                    {
                         return Rsa.VerifyData(data, sig, CryptoUtils.algMap[(int)_alg], Padding);
-                    }
+
                 case COSE.KeyType.OKP:
                     {
                         return Chaos.NaCl.Ed25519.Verify(sig, data, EdDSAPublicKey);
                     }
-
             }
             throw new ArgumentOutOfRangeException(string.Format("Missing or unknown kty {0}", _type.ToString()));
         }

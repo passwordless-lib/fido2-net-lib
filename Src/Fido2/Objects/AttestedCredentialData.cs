@@ -10,7 +10,7 @@ namespace Fido2NetLib.Objects
         /// Minimum length of the attested credential data structure.  AAGUID + credentialID length + credential ID + credential public key.
         /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
         /// </summary>
-        private int MinLength = Marshal.SizeOf(typeof(Guid)) + sizeof(UInt16) + sizeof(byte) + sizeof(byte);
+        private readonly int _minLength = Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
 
         /// <summary>
         /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
@@ -88,7 +88,7 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public AttestedCredentialData(BinaryReader reader)
         {
-            if (reader.BaseStream.Length < MinLength) throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+            if (reader.BaseStream.Length < _minLength) throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
             // First 16 bytes is AAGUID
             var aaguidBytes = reader.ReadBytes(Marshal.SizeOf(typeof(Guid)));
 

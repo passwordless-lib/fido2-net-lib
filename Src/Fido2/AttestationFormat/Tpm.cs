@@ -8,9 +8,10 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
 {
-    class Tpm : AttestationFormat
+    internal class Tpm : AttestationFormat
     {
-        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
+        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) 
+            : base(attStmt, authenticatorData, clientDataHash)
         {
         }
 
@@ -467,10 +468,18 @@ namespace Fido2NetLib.AttestationFormat
 
             // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
             if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32())) throw new Fido2VerificationException("Invalid TPM attestation algorithm");
-            if (!CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]).ComputeHash(Data).SequenceEqual(certInfo.ExtraData)) throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
+            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
+            {
+                if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData)) 
+                    throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
+            }
 
             // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-            if (false == CryptoUtils.GetHasher(CryptoUtils.algMap[certInfo.Alg]).ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName)) throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[certInfo.Alg]))
+            {
+                if (false == hasher.ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName))
+                    throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+            }
 
             // If x5c is present, this indicates that the attestation type is not ECDAA
             if (null != X5c && CBORType.Array == X5c.Type && 0 != X5c.Count)
@@ -685,11 +694,10 @@ namespace Fido2NetLib.AttestationFormat
             // If size is zero, then no Name is present. 
             if (0 == size) throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
             // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
-            var tpmalg = TpmAlg.TPM_ALG_ERROR;
             byte[] name = null;
             if (Enum.IsDefined(typeof(TpmAlg), size))
             {
-                tpmalg = (TpmAlg)size;
+                var tpmalg = (TpmAlg)size;
                 if (tpmAlgToDigestSizeMap.ContainsKey(tpmalg))
                 {
                     name = AuthDataHelper.GetSizedByteArray(ab, ref offset, tpmAlgToDigestSizeMap[tpmalg]);
@@ -698,6 +706,7 @@ namespace Fido2NetLib.AttestationFormat
             if (totalSize != bytes.Length + name.Length) throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
             return (size, name);
         }
+
         public CertInfo(byte[] certInfo)
         {
             if (null == certInfo || 0 == certInfo.Length) throw new Fido2VerificationException("Malformed certInfo bytes");
