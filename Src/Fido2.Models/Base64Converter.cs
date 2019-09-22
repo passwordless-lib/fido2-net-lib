@@ -36,9 +36,9 @@ namespace Fido2NetLib
             {
                 ret = Base64Url.Decode((string)reader.Value);
             }
-            catch (FormatException)
+            catch (FormatException ex)
             {
-                throw new Fido2VerificationException("json value must be valid base64 encoded string");
+                throw new Fido2VerificationException("json value must be valid base64 encoded string", ex);
             }
             return ret;
         }
