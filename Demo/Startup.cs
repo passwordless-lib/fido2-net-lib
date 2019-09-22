@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Fido2Demo
 {
@@ -18,16 +17,15 @@ namespace Fido2Demo
         }
 
         public IConfiguration Configuration { get; }
-        public IRule PasswordLessDomainRule { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().AddRazorPagesOptions(o =>
+            services.AddRazorPages(opts =>
             {
                 // we don't care about antiforgery in the demo
-                o.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
-            }); ;
+                opts.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
+            }).AddNewtonsoftJson(); // the FIDO2 library requires Json.NET
 
             // Adds a default in-memory implementation of IDistributedCache.
             services.AddDistributedMemoryCache();
@@ -41,11 +39,10 @@ namespace Fido2Demo
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
-                app.UseBrowserLink();
                 app.UseDeveloperExceptionPage();
             }
             else
@@ -55,17 +52,14 @@ namespace Fido2Demo
             }
 
             app.UseSession();
-            app.UseRewriter(new RewriteOptions().Add(rewriteContext =>
-            {
-                var request = rewriteContext.HttpContext.Request;
-                if (request.Path == new PathString("/"))
-                {
-                    rewriteContext.HttpContext.Response.Redirect(request.PathBase + "/overview", true);
-                    rewriteContext.Result = RuleResult.EndResponse;
-                }
-            }));
-            app.UseMvc();
             app.UseStaticFiles();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapFallbackToPage("/", "/overview");
+                endpoints.MapRazorPages();
+                endpoints.MapControllers();
+            });
         }
     }
 }
