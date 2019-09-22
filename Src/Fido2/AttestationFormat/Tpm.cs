@@ -541,8 +541,8 @@ namespace Fido2NetLib.AttestationFormat
                 if (false == valid) throw new Fido2VerificationException("TPM attestation failed chain validation");
                 // The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
                 // OID is 2.23.133.8.3
-                var EKU = EKUFromAttnCertExts(aikCert.Extensions);
-                if (null == EKU || 0 != EKU.CompareTo("Attestation Identity Key Certificate (2.23.133.8.3)"))
+                var EKU = EKUFromAttnCertExts(aikCert.Extensions, "2.23.133.8.3");
+                if (!EKU)
                     throw new Fido2VerificationException("Invalid EKU on AIK certificate");
 
                 // The Basic Constraints extension MUST have the CA component set to false.
@@ -584,17 +584,20 @@ namespace Fido2NetLib.AttestationFormat
             }
             return null;
         }
-        private static string EKUFromAttnCertExts(X509ExtensionCollection exts)
+        private static bool EKUFromAttnCertExts(X509ExtensionCollection exts, string expectedEnhancedKeyUsages)
         {
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value.Equals("2.5.29.37")) // EKU
+                if (ext.Oid.Value.Equals("2.5.29.37") && ext is X509EnhancedKeyUsageExtension enhancedKeyUsageExtension)
                 {
-                    var asn = new AsnEncodedData(ext.Oid, ext.RawData);
-                    return asn.Format(false);
+                    foreach (var oid in enhancedKeyUsageExtension.EnhancedKeyUsages)
+                    {
+                        if (expectedEnhancedKeyUsages.Equals(oid.Value)) return true;
+                    }
+                
                 }
             }
-            return null;
+            return false;
         }
     }
 

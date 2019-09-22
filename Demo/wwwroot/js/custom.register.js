@@ -81,7 +81,7 @@ async function handleRegisterSubmit(event) {
             publicKey: makeCredentialOptions
         });
     } catch (e) {
-        var msg = "Could not create credentials in browser. Probably because the username is already registered with your authenticator. Please change username or authenaticator."
+        var msg = "Could not create credentials in browser. Probably because the username is already registered with your authenticator. Please change username or authenticator."
         console.error(msg, e);
         showErrorAlert(msg, e);
     }
@@ -91,8 +91,7 @@ async function handleRegisterSubmit(event) {
 
     try {
         registerNewCredential(newCredential);
-
-    } catch (e) {
+    } catch (err) {
         showErrorAlert(err.message ? err.message : err);
     }
 }
