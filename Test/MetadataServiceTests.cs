@@ -96,25 +96,5 @@ namespace Test
 
             Assert.Null(cacheEntry);
         }
-
-        //[Fact]
-        public async Task RegularToc()
-        {
-            var client = new Fido2MetadataServiceRepository("INSERT_REAL_KEY_HERE", null);
-            var toc = await client.GetToc();
-
-            Assert.True(toc.Entries.Length > 0);
-
-            foreach(var entry in toc.Entries)
-            {
-                var statement = await client.GetMetadataStatement(entry);
-                Assert.NotNull(statement.Description);
-
-                entry.MetadataStatement = statement;
-
-                var ser = JsonConvert.SerializeObject(entry);
-            }
-
-        }
     }
 }

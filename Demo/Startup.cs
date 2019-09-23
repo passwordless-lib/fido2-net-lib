@@ -49,7 +49,7 @@ namespace Fido2Demo
             })
             .AddCachedMetadataService(config =>
             {
-                //They'll be used in a "first match wins" way in the ordered registered
+                //They'll be used in a "first match wins" way in the order registered
                 config.AddStaticMetadataRepository();
                 if (!string.IsNullOrWhiteSpace(Configuration["fido2:MDSAccessKey"]))
                 {

@@ -116,7 +116,7 @@ namespace Fido2NetLib
                 {
                     toc = await DeserializeAndValidateToc(rawToc);
                 }
-                catch(Exception ex)
+                catch
                 {
                     continue;
                 }

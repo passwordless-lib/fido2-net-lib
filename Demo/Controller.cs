@@ -23,7 +23,6 @@ namespace Fido2Demo
     {
         private IFido2 _fido2;
         public static IMetadataService _mds;
-        private string _origin;
         public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
         public MyController(IFido2 fido2)

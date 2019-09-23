@@ -159,7 +159,7 @@ namespace fido2_net_lib.Test
         }
 
         [Fact]
-        public async Task TestMetadataTOCPayloadEntrySerialization()
+        public void MetadataTOCPayloadEntry_Can_Be_JSON_Roundtripped()
         {
             var input = new MetadataTOCPayloadEntry()
             {

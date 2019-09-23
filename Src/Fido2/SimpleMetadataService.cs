@@ -53,46 +53,32 @@ namespace Fido2NetLib
         protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayloadEntry entry)
         {
             if (entry.AaGuid != null)
-            {  
-                try
-                {
-                    var statement = await repository.GetMetadataStatement(entry);
+            {
+                var statement = await repository.GetMetadataStatement(entry);
 
-                    if (!string.IsNullOrWhiteSpace(statement.AaGuid))
-                    {
-                        _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
-
-                        var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
-                    }
-                }
-                catch (Exception ex)
+                if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                 {
-                    throw;
+                    _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
+
+                    var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
                 }
             }
         }
 
         protected virtual async Task InitializeClient(IMetadataRepository repository)
         {
-            try
-            {
-                var toc = await repository.GetToc();
+            var toc = await repository.GetToc();
 
-                foreach (var entry in toc.Entries)
+            foreach (var entry in toc.Entries)
+            {
+                if (!string.IsNullOrEmpty(entry.AaGuid))
                 {
-                    if (!string.IsNullOrEmpty(entry.AaGuid))
+                    if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
                     {
-                        if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
-                        {
-                            //Load if it doesn't already exist
-                            await LoadEntryStatement(repository, entry);
-                        }
+                        //Load if it doesn't already exist
+                        await LoadEntryStatement(repository, entry);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw;
             }
         }
 
