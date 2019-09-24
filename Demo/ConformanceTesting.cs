@@ -12,7 +12,7 @@ namespace Fido2Demo
 
         private static IMetadataService _instance;
 
-        public static IMetadataService MetadataServiceInstance()
+        public static IMetadataService MetadataServiceInstance(string cacheDir)
         {
             if(_instance == null)
             {
@@ -22,7 +22,8 @@ namespace Fido2Demo
                     {
                         var repos = new List<IMetadataRepository>
                         {
-                            new ConformanceMetadataRepository(null)
+                            new ConformanceMetadataRepository(null),
+                            new FileSystemMetadataRepository(cacheDir)
                         };
                         _instance = new SimpleMetadataService(repos);
                         _instance.Initialize().Wait();
