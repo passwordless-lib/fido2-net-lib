@@ -17,6 +17,7 @@ namespace Fido2NetLib
         protected readonly List<IMetadataRepository> _repositories;
         protected readonly ILogger<DistributedCacheMetadataService> _log;
         protected bool _initialized;
+        protected readonly TimeSpan _defaultCacheInterval = TimeSpan.FromHours(25);
 
         protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
         protected readonly ConcurrentDictionary<Guid, MetadataTOCPayloadEntry> _entries;
@@ -114,6 +115,25 @@ namespace Fido2NetLib
             }
         }
 
+        private DateTime? GetCacheUntilTime(MetadataTOCPayload toc)
+        {
+            if (!string.IsNullOrWhiteSpace(toc?.NextUpdate)
+                && DateTime.TryParseExact(
+                    toc.NextUpdate,
+                    new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "o" }, //Sould be ISO8601 date but allow for other ISO formats too
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+                    out var parsedDate))
+            {
+                //NextUpdate is in the past to default to a useful number that will result us cross the date theshold for the next update
+                if (parsedDate < DateTime.UtcNow.AddMinutes(5)) return DateTime.UtcNow.Add(_defaultCacheInterval);
+
+                return parsedDate;
+            }
+
+            return null;
+        }
+
         protected virtual async Task InitializeClient(IMetadataRepository repository)
         {
             var tocCacheKey = GetTocCacheKey(repository);
@@ -127,14 +147,7 @@ namespace Fido2NetLib
             if (cachedToc != null)
             {
                 toc = JsonConvert.DeserializeObject<MetadataTOCPayload>(cachedToc);
-
-                if(!string.IsNullOrEmpty(toc.NextUpdate))
-                {
-                    cacheUntil = DateTime.Parse(
-                        toc.NextUpdate,
-                        System.Globalization.CultureInfo.InvariantCulture,
-                        System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
-                }
+                cacheUntil = GetCacheUntilTime(toc);
             }
             else
             {
@@ -152,13 +165,10 @@ namespace Fido2NetLib
 
                 _log?.LogInformation("TOC not cached so loading from MDS... Done.");
 
-                if (!string.IsNullOrEmpty(toc.NextUpdate))
-                {
-                    cacheUntil = DateTime.Parse(
-                        toc.NextUpdate,
-                        System.Globalization.CultureInfo.InvariantCulture,
-                        System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal);
+                cacheUntil = GetCacheUntilTime(toc);
 
+                if(cacheUntil.HasValue)
+                {
                     await _cache.SetStringAsync(
                         tocCacheKey,
                         JsonConvert.SerializeObject(toc),

@@ -162,7 +162,7 @@ namespace Fido2NetLib
             _toc = new MetadataTOCPayload()
             {
                 Entries = _entries.Select(o => o.Value).ToArray(),
-                NextUpdate = _cacheUntil?.ToString("yyyy-MM-dd HH:mm:ss") ?? "", //Results in no caching
+                NextUpdate = _cacheUntil?.ToString("yyyy-MM-dd") ?? "", //Results in no caching
                 LegalHeader = "Static FAKE",
                 Number = 1
             };

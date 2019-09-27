@@ -17,7 +17,7 @@ namespace Test
         [Fact]
         public async Task ConformanceTestClient()
         {
-            var client = new ConformanceMetadataRepository(null);
+            var client = new ConformanceMetadataRepository(null, "http://localhost");
 
             var toc = await client.GetToc();
 
@@ -34,7 +34,7 @@ namespace Test
         {
             var services = new ServiceCollection();
 
-            var staticClient = new StaticMetadataRepository(DateTime.UtcNow.AddMinutes(10));
+            var staticClient = new StaticMetadataRepository(DateTime.UtcNow.AddDays(5));
 
             var clients = new List<IMetadataRepository>();
 
