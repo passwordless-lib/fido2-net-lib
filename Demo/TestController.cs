@@ -39,7 +39,7 @@ namespace Fido2Demo
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
                 Origin = _origin
-            }, ConformanceTesting.MetadataServiceInstance());
+            }, ConformanceTesting.MetadataServiceInstance(config["fido2:MDSCacheDirPath"] + @"\Conformance", _origin));
         }
 
         [HttpPost]

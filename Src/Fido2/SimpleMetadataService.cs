@@ -27,7 +27,7 @@ namespace Fido2NetLib
 
         public bool ConformanceTesting()
         {
-            if (_repositories.Count == 1 && _repositories.First().GetType() == typeof(ConformanceMetadataRepository)) return true;
+            if (_repositories.First().GetType() == typeof(ConformanceMetadataRepository)) return true;
             return false;
         }
 
@@ -41,6 +41,7 @@ namespace Fido2NetLib
 
                 if (_metadataStatements.ContainsKey(aaguid))
                 {
+                    if (entry.Hash != _metadataStatements[aaguid].Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
                     entry.MetadataStatement = _metadataStatements[aaguid];
                 }
 

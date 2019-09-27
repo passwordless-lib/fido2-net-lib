@@ -42,17 +42,14 @@ namespace Fido2NetLib
 
         protected string _tocAlg;
 
-        // Sample bogus key from https://fidoalliance.org/metadata/
-        private const string _token = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
-
         private readonly string _origin = "http://localhost";
 
         private readonly string _getEndpointsUrl = "https://fidoalliance.co.nz/mds/getEndpoints";
 
-        public ConformanceMetadataRepository(HttpClient client)
+        public ConformanceMetadataRepository(HttpClient client, string origin)
         {
-            _tocUrl = "https://mds2.fidoalliance.org";
             _httpClient = client ?? new HttpClient();
+            _origin = origin;
         }
 
         private Task<string> GetTocAlg()
@@ -74,19 +71,8 @@ namespace Fido2NetLib
             var statement = JsonConvert.DeserializeObject<MetadataStatement>(statementString);
             statement.Hash = Base64Url.Encode(CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(statementBase64Url)));
 
-            //if (!HashesAreEqual(entry.Hash, statement.Hash)) throw new Fido2VerificationException("TOC entry and statement hashes do not match:" + entry.Hash + " " + statement.Hash);
-
             return statement;
         }
-
-        private bool HashesAreEqual(string a, string b)
-        {
-            var hashA = Base64Url.Decode(a);
-            var hashB = Base64Url.Decode(b);
-
-            return hashA.SequenceEqual(hashB);
-        }
-
 
         public async Task<MetadataTOCPayload> GetToc()
         {
@@ -120,7 +106,6 @@ namespace Fido2NetLib
                 {
                     continue;
                 }
-
                 
                 if(string.Compare(toc.NextUpdate, combinedToc.NextUpdate) < 0) combinedToc.NextUpdate = toc.NextUpdate;
                 if (combinedToc.Number < toc.Number) combinedToc.Number = toc.Number;

@@ -70,19 +70,18 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return builder;
         }
-
         public static IFido2MetadataServiceBuilder AddConformanceMetadataRepository(
             this IFido2MetadataServiceBuilder builder,
-            HttpClient client = null)
+            HttpClient client = null, 
+            string origin = "")
         {
             builder.Services.AddTransient<IMetadataRepository>(provider =>
             {
-                return new ConformanceMetadataRepository(client);
+                return new ConformanceMetadataRepository(client, origin);
             });
 
             return builder;
         }
-
         public static IFido2MetadataServiceBuilder AddFidoMetadataRepository(
             this IFido2MetadataServiceBuilder builder,
             string accessToken,

@@ -37,7 +37,7 @@ namespace Fido2NetLib
 
         public virtual bool ConformanceTesting()
         {
-            if (_repositories.Count == 1 && _repositories.First().GetType() == typeof(ConformanceMetadataRepository)) return true;
+            if (_repositories.First().GetType() == typeof(ConformanceMetadataRepository)) return true;
             return false;
         }
 
