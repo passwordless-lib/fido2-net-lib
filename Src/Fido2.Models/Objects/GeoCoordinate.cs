@@ -281,7 +281,9 @@ namespace GeoCoordinatePortable
         /// <param name="other">The GeoCoordinate for the location to calculate the distance to.</param>
         public double GetDistanceTo(GeoCoordinate other)
         {
-            if (double.IsNaN(Latitude) || double.IsNaN(Longitude) || double.IsNaN(other.Latitude) ||
+            if (double.IsNaN(Latitude) || 
+                double.IsNaN(Longitude) || 
+                double.IsNaN(other.Latitude) ||
                 double.IsNaN(other.Longitude))
             {
                 throw new ArgumentException("Argument latitude or longitude is not a number");
