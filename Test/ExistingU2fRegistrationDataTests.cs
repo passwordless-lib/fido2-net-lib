@@ -69,23 +69,23 @@ namespace fido2_net_lib.Test
 
         public static CBORObject CreatePublicKeyFromU2fRegistrationData(byte[] keyHandleData, byte[] publicKeyData)
         {
-            var publicKey = new ECDsaCng(ConvertPublicKey(publicKeyData));
+            using (var publicKey = new ECDsaCng(ConvertPublicKey(publicKeyData)))
+            {
+                var coseKey = CBORObject.NewMap();
 
-            var coseKey = CBORObject.NewMap();
+                coseKey.Add(COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2);
+                coseKey.Add(COSE.KeyCommonParameter.Alg, -7);
 
-            coseKey.Add(COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2);
-            coseKey.Add(COSE.KeyCommonParameter.Alg, -7);
+                var keyParams = publicKey.ExportParameters(false);
 
-            var keyParams = publicKey.ExportParameters(false);
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
+                    coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-            if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
-                coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
+                coseKey.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
+                coseKey.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y);
 
-            coseKey.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
-            coseKey.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y);
-
-            return coseKey;
-
+                return coseKey;
+            }
         }
 
         public static CngKey ConvertPublicKey(byte[] rawData)
