@@ -80,7 +80,7 @@ namespace Fido2NetLib.Objects
             if (authData == null)
                 throw new Fido2VerificationException("Authenticator data cannot be null");
             if (authData.Length < MinLength)
-                throw new Fido2VerificationException(string.Format("Authenticator data is less than the minimum structure length of {0}", MinLength));
+                throw new Fido2VerificationException($"Authenticator data is less than the minimum structure length of {MinLength}");
 
             // Input parsing
             using (var stream = new MemoryStream(authData, false))

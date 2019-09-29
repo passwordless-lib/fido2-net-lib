@@ -128,10 +128,7 @@ namespace Fido2NetLib.Objects
 
         public override string ToString()
         {
-            return string.Format("AAGUID: {0}, CredentialID: {1}, CredentialPublicKey: {2}",
-                AaGuid.ToString(),
-                CredentialID.ToString().Replace("-",""),
-                CredentialPublicKey.ToString());
+            return $"AAGUID: {AaGuid}, CredentialID: {CredentialID.ToString().Replace("-", "")}, CredentialPublicKey: {CredentialPublicKey}";
         }
 
         public byte[] ToByteArray()
@@ -151,7 +148,7 @@ namespace Fido2NetLib.Objects
                     }
 
                     // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
-                    var credentialIDLen = (UInt16)CredentialID.Length;
+                    var credentialIDLen = (ushort)CredentialID.Length;
                     var credentialIDLenBytes = BitConverter.GetBytes(credentialIDLen);
                     if (BitConverter.IsLittleEndian)
                     {
