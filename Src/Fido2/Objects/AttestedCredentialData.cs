@@ -88,7 +88,8 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public AttestedCredentialData(BinaryReader reader)
         {
-            if (reader.BaseStream.Length < _minLength) throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+            if (reader.BaseStream.Length < _minLength)
+                throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
             // First 16 bytes is AAGUID
             var aaguidBytes = reader.ReadBytes(Marshal.SizeOf(typeof(Guid)));
 
@@ -98,10 +99,12 @@ namespace Fido2NetLib.Objects
                 AaGuid = FromBigEndian(aaguidBytes);
             }
             else
+            {
                 AaGuid = new Guid(aaguidBytes);
+            }
 
             // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
-            var credentialIDLenBytes = reader.ReadBytes(sizeof(UInt16));
+            var credentialIDLenBytes = reader.ReadBytes(sizeof(ushort));
 
             if (BitConverter.IsLittleEndian)
             {
@@ -142,7 +145,10 @@ namespace Fido2NetLib.Objects
                     {
                         writer.Write(AaGuidToBigEndian());
                     }
-                    else writer.Write(AaGuid.ToByteArray());
+                    else
+                    {
+                        writer.Write(AaGuid.ToByteArray());
+                    }
 
                     // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
                     var credentialIDLen = (UInt16)CredentialID.Length;

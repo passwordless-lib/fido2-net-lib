@@ -77,8 +77,10 @@ namespace Fido2NetLib.Objects
         public AuthenticatorData(byte[] authData)
         {
             // Input validation
-            if (authData == null) throw new Fido2VerificationException("Authenticator data cannot be null");
-            if (authData.Length < MinLength) throw new Fido2VerificationException(string.Format("Authenticator data is less than the minimum structure length of {0}", MinLength));
+            if (authData == null)
+                throw new Fido2VerificationException("Authenticator data cannot be null");
+            if (authData.Length < MinLength)
+                throw new Fido2VerificationException(string.Format("Authenticator data is less than the minimum structure length of {0}", MinLength));
 
             // Input parsing
             using (var stream = new MemoryStream(authData, false))
@@ -118,7 +120,8 @@ namespace Fido2NetLib.Objects
                         Extensions = new Extensions(ext.EncodeToBytes());
                     }
                     // There should be no bytes left over after decoding all data from the structure
-                    if (stream.Position != stream.Length) throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
+                    if (stream.Position != stream.Length)
+                        throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
                 }
             }
         }

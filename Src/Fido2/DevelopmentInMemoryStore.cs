@@ -55,7 +55,8 @@ namespace Fido2NetLib.Development
             // our in-mem storage does not allow storing multiple users for a given credentialId. Yours shouldn't either.
             var cred = _storedCredentials.Where(c => c.Descriptor.Id.SequenceEqual(credentialId)).FirstOrDefault();
 
-            if (cred == null) return Task.FromResult(new List<Fido2User>());
+            if (cred == null)
+                return Task.FromResult(new List<Fido2User>());
 
             return Task.FromResult(_storedUsers.Where(u => u.Value.Id.SequenceEqual(cred.UserId)).Select(u => u.Value).ToList());
         }

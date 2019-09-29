@@ -7,7 +7,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
 {
-    class FidoU2f : AttestationFormat
+    internal class FidoU2f : AttestationFormat
     {
         private readonly IMetadataService _metadataService;
         public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
@@ -44,7 +44,8 @@ namespace Fido2NetLib.AttestationFormat
 
                 if (null != entry && null != entry.MetadataStatement)
                 {
-                    if (entry.Hash != entry.MetadataStatement.Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
+                    if (entry.Hash != entry.MetadataStatement.Hash)
+                        throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
                     var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
                     
                     var chain = new X509Chain();
@@ -53,11 +54,14 @@ namespace Fido2NetLib.AttestationFormat
 
                     var valid = chain.Build(cert);
 
-                    if ( 
-                    //  the root cert has exactly one status listed against it
-                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
-                    // and that that status is a status of exactly UntrustedRoot
-                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot) valid = true;
+                    if (//  the root cert has exactly one status listed against it
+                        chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                        // and that that status is a status of exactly UntrustedRoot
+                        chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                    {
+                        valid = true;
+                    }
+
                     if (false == valid)
                     {
                         throw new Fido2VerificationException("Invalid certificate chain in U2F attestation");

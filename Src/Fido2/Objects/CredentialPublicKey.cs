@@ -1,30 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Chaos.NaCl;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.Objects
 {
     public class CredentialPublicKey
     {
+        public CredentialPublicKey(Stream stream) : this(CBORObject.Read(stream))
+        {
+        }
+
+        public CredentialPublicKey(byte[] cpk) : this(CBORObject.DecodeFromBytes(cpk))
+        {
+        }
+
+        public CredentialPublicKey(CBORObject cpk)
+        {
+            _cpk = cpk;
+            _type = (COSE.KeyType)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
+            _alg = (COSE.Algorithm)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
+        }
+
         public bool Verify(byte[] data, byte[] sig)
         {
             switch (_type)
             {
                 case COSE.KeyType.EC2:
-                        var ecsig = CryptoUtils.SigFromEcDsaSig(sig, Ecdsa.KeySize);
-                        return Ecdsa.VerifyData(data, ecsig, CryptoUtils.algMap[(int)_alg]);
+                    var ecsig = CryptoUtils.SigFromEcDsaSig(sig, Ecdsa.KeySize);
+                    return Ecdsa.VerifyData(data, ecsig, CryptoUtils.algMap[(int)_alg]);
 
                 case COSE.KeyType.RSA:
-                        return Rsa.VerifyData(data, sig, CryptoUtils.algMap[(int)_alg], Padding);
+                    return Rsa.VerifyData(data, sig, CryptoUtils.algMap[(int)_alg], Padding);
 
                 case COSE.KeyType.OKP:
                     {
-                        return Chaos.NaCl.Ed25519.Verify(sig, data, EdDSAPublicKey);
+                        return Ed25519.Verify(sig, data, EdDSAPublicKey);
                     }
             }
-            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown kty {0}", _type.ToString()));
+            throw new ArgumentOutOfRangeException($"Missing or unknown kty {_type}");
         }
 
         internal RSACng Rsa
@@ -70,7 +87,7 @@ namespace Fido2NetLib.Objects
                                     curve = ECCurve.NamedCurves.nistP256;
                                     break;
                                 default:
-                                    throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
+                                    throw new ArgumentOutOfRangeException($"Missing or unknown crv {crv}");
                             }
                             break;
                         case COSE.Algorithm.ES384:
@@ -80,7 +97,7 @@ namespace Fido2NetLib.Objects
                                     curve = ECCurve.NamedCurves.nistP384;
                                     break;
                                 default:
-                                    throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
+                                    throw new ArgumentOutOfRangeException($"Missing or unknown crv {crv}");
                             }
                             break;
                         case COSE.Algorithm.ES512:
@@ -90,11 +107,11 @@ namespace Fido2NetLib.Objects
                                     curve = ECCurve.NamedCurves.nistP521;
                                     break;
                                 default:
-                                    throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
+                                    throw new ArgumentOutOfRangeException($"Missing or unknown crv {crv}");
                             }
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", _alg.ToString()));
+                            throw new ArgumentOutOfRangeException($"Missing or unknown alg {_alg}");
                     }
                     return ECDsa.Create(new ECParameters
                     {
@@ -125,7 +142,7 @@ namespace Fido2NetLib.Objects
                         case COSE.Algorithm.RS512:
                             return RSASignaturePadding.Pkcs1;
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", _alg.ToString()));
+                            throw new ArgumentOutOfRangeException($"Missing or unknown alg {_alg}");
                     }
                 }
                 return null;
@@ -148,10 +165,10 @@ namespace Fido2NetLib.Objects
                                     return _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
 
                                 default:
-                                    throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
+                                    throw new ArgumentOutOfRangeException($"Missing or unknown crv {crv}");
                             }
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", _alg.ToString()));
+                            throw new ArgumentOutOfRangeException($"Missing or unknown alg {_alg}");
                     }
                 }
                 return null;
@@ -206,21 +223,6 @@ namespace Fido2NetLib.Objects
             }
         }
 
-        public CredentialPublicKey(System.IO.Stream stream) : this(CBORObject.Read(stream))
-        {
-        }
-
-        public CredentialPublicKey(byte[] cpk) : this(CBORObject.DecodeFromBytes(cpk))
-        {
-        }
-
-        public CredentialPublicKey(CBORObject cpk)
-        {
-            _cpk = cpk;
-            _type = (COSE.KeyType)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
-            _alg = (COSE.Algorithm)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
-        }
-
         public override string ToString()
         {
             return _cpk.ToString();
@@ -239,6 +241,6 @@ namespace Fido2NetLib.Objects
         public CBORObject GetCBORObject()
         {
             return _cpk;
-        }            
+        }
     }
 }

@@ -10,10 +10,10 @@ namespace Fido2NetLib
     /// </summary>
     public class AuthenticatorResponse
     {
-
         protected AuthenticatorResponse(byte[] clientDataJson)
         {
-            if (null == clientDataJson) throw new Fido2VerificationException("clientDataJson cannot be null");
+            if (null == clientDataJson)
+                throw new Fido2VerificationException("clientDataJson cannot be null");
             var stringx = Encoding.UTF8.GetString(clientDataJson);
 
             AuthenticatorResponse response;
@@ -26,7 +26,8 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Malformed clientDataJson");
             }
 
-            if (null == response) throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
+            if (null == response)
+                throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
             Type = response.Type;
             Challenge = response.Challenge;
             Origin = response.Origin;
@@ -52,13 +53,18 @@ namespace Fido2NetLib
 
         protected void BaseVerify(string expectedOrigin, byte[] originalChallenge, byte[] requestTokenBindingId)
         {
-            if (null == Challenge) throw new Fido2VerificationException("Challenge cannot be null");
+            if (null == Challenge)
+                throw new Fido2VerificationException("Challenge cannot be null");
+
             // verify challenge is same
-            if (!Challenge.SequenceEqual(originalChallenge)) throw new Fido2VerificationException("Challenge not equal to original challenge");
+            if (!Challenge.SequenceEqual(originalChallenge))
+                throw new Fido2VerificationException("Challenge not equal to original challenge");
 
-            if (Origin != expectedOrigin) throw new Fido2VerificationException("Origin not equal to original origin");
+            if (Origin != expectedOrigin)
+                throw new Fido2VerificationException("Origin not equal to original origin");
 
-            if (Type != "webauthn.create" && Type != "webauthn.get") throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
+            if (Type != "webauthn.create" && Type != "webauthn.get")
+                throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
 
             if (TokenBinding != null)
             {

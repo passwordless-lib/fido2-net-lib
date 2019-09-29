@@ -426,7 +426,9 @@ namespace Fido2NetLib.AttestationFormat
             if (null != attStmt["pubArea"] &&
                 CBORType.ByteString == attStmt["pubArea"].Type &&
                 0 != attStmt["pubArea"].GetByteString().Length)
+            { 
                 pubArea = new PubArea(attStmt["pubArea"].GetByteString());
+            }
 
             if (null == pubArea || null == pubArea.Unique || 0 == pubArea.Unique.Length)
                 throw new Fido2VerificationException("Missing or malformed pubArea");
@@ -437,8 +439,10 @@ namespace Fido2NetLib.AttestationFormat
                 var coseMod = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(); // modulus 
                 var coseExp = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString(); // exponent
 
-                if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray())) throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
-                if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent) throw new Fido2VerificationException("Public key exponent mismatch between pubArea and credentialPublicKey");
+                if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray()))
+                    throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
+                if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent)
+                    throw new Fido2VerificationException("Public key exponent mismatch between pubArea and credentialPublicKey");
             }
             else if (2 == coseKty) // ECC
             {
@@ -446,9 +450,12 @@ namespace Fido2NetLib.AttestationFormat
                 var X = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                 var Y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
 
-                if (pubArea.EccCurve != CoseCurveToTpm[curve]) throw new Fido2VerificationException("Curve mismatch between pubArea and credentialPublicKey");
-                if (!pubArea.ECPoint.X.SequenceEqual(X)) throw new Fido2VerificationException("X-coordinate mismatch between pubArea and credentialPublicKey");
-                if (!pubArea.ECPoint.Y.SequenceEqual(Y)) throw new Fido2VerificationException("Y-coordinate mismatch between pubArea and credentialPublicKey");
+                if (pubArea.EccCurve != CoseCurveToTpm[curve])
+                    throw new Fido2VerificationException("Curve mismatch between pubArea and credentialPublicKey");
+                if (!pubArea.ECPoint.X.SequenceEqual(X))
+                    throw new Fido2VerificationException("X-coordinate mismatch between pubArea and credentialPublicKey");
+                if (!pubArea.ECPoint.Y.SequenceEqual(Y))
+                    throw new Fido2VerificationException("Y-coordinate mismatch between pubArea and credentialPublicKey");
             }
             // Concatenate authenticatorData and clientDataHash to form attToBeSigned.
             // see data variable
@@ -458,7 +465,9 @@ namespace Fido2NetLib.AttestationFormat
             if (null != attStmt["certInfo"] &&
                 CBORType.ByteString == attStmt["certInfo"].Type &&
                 0 != attStmt["certInfo"].GetByteString().Length)
+            { 
                 certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
+            }
 
             if (null == certInfo || null == certInfo.ExtraData || 0 == certInfo.ExtraData.Length)
                 throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
@@ -467,7 +476,8 @@ namespace Fido2NetLib.AttestationFormat
             // handled in parser, see CertInfo.Magic
 
             // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32())) throw new Fido2VerificationException("Invalid TPM attestation algorithm");
+            if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
+                throw new Fido2VerificationException("Invalid TPM attestation algorithm");
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
             {
                 if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData)) 
@@ -487,11 +497,13 @@ namespace Fido2NetLib.AttestationFormat
                 if (null == X5c.Values || 0 == X5c.Values.Count ||
                     CBORType.ByteString != X5c.Values.First().Type ||
                     0 == X5c.Values.First().GetByteString().Length)
+                {
                     throw new Fido2VerificationException("Malformed x5c in TPM attestation");
+                }
 
                 // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                 var aikCert = new X509Certificate2(X5c.Values.First().GetByteString());
-                
+
                 var cpk = new CredentialPublicKey(aikCert, Alg.AsInt32());
                 if (true != cpk.Verify(certInfo.Raw, Sig.GetByteString()))
                     throw new Fido2VerificationException("Bad signature in TPM with aikCert");
@@ -519,11 +531,15 @@ namespace Fido2NetLib.AttestationFormat
                 // and SHOULD be non-critical if subject is non-empty"
 
                 // Best I can figure to do for now?
-                if (false == SAN.Contains("TPMManufacturer") || false == SAN.Contains("TPMModel") ||
+                if (false == SAN.Contains("TPMManufacturer") ||
+                    false == SAN.Contains("TPMModel") ||
                     false == SAN.Contains("TPMVersion"))
+                {
                     throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
+                }
                 var tpmManufacturer = SAN.Substring(SAN.IndexOf("TPMManufacturer"), 27).Split('=').Last();
-                if (false == TPMManufacturerRootMap.ContainsKey(tpmManufacturer)) throw new Fido2VerificationException("Invalid TPM manufacturer found parsing TPM attestation");
+                if (false == TPMManufacturerRootMap.ContainsKey(tpmManufacturer))
+                    throw new Fido2VerificationException("Invalid TPM manufacturer found parsing TPM attestation");
                 var tpmRoots = TPMManufacturerRootMap[tpmManufacturer];
                 var valid = false;
                 var i = 0;
@@ -537,7 +553,10 @@ namespace Fido2NetLib.AttestationFormat
                     {
                         chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority | X509VerificationFlags.IgnoreInvalidBasicConstraints;
                     }
-                    else chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    else
+                    {
+                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    }
                     if (X5c.Values.Count > 1)
                     {
                         foreach (var cert in X5c.Values.Skip(1).Reverse())
@@ -547,7 +566,8 @@ namespace Fido2NetLib.AttestationFormat
                     }
                     valid = chain.Build(new X509Certificate2(X5c.Values.First().GetByteString()));
                 }
-                if (false == valid) throw new Fido2VerificationException("TPM attestation failed chain validation");
+                if (false == valid)
+                    throw new Fido2VerificationException("TPM attestation failed chain validation");
                 // The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
                 // OID is 2.23.133.8.3
                 var EKU = EKUFromAttnCertExts(aikCert.Extensions, "2.23.133.8.3");
@@ -560,7 +580,10 @@ namespace Fido2NetLib.AttestationFormat
 
                 // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
-                if ((null != aaguid) && (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) && (0 != new Guid(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid))) throw new Fido2VerificationException("aaguid malformed");
+                if ((null != aaguid) &&
+                    (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) &&
+                    (0 != new Guid(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid)))
+                    throw new Fido2VerificationException("aaguid malformed");
             }
             // If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (null != EcdaaKeyId)
@@ -572,8 +595,10 @@ namespace Fido2NetLib.AttestationFormat
                 //attnType = AttestationType.ECDAA;
                 //trustPath = ecdaaKeyId;
             }
-            else throw new Fido2VerificationException("Neither x5c nor ECDAA were found in the TPM attestation statement");
-
+            else
+            {
+                throw new Fido2VerificationException("Neither x5c nor ECDAA were found in the TPM attestation statement");
+            }
         }
         private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
         {
@@ -601,7 +626,8 @@ namespace Fido2NetLib.AttestationFormat
                 {
                     foreach (var oid in enhancedKeyUsageExtension.EnhancedKeyUsages)
                     {
-                        if (expectedEnhancedKeyUsages.Equals(oid.Value)) return true;
+                        if (expectedEnhancedKeyUsages.Equals(oid.Value))
+                            return true;
                     }
                 
                 }
@@ -690,9 +716,11 @@ namespace Fido2NetLib.AttestationFormat
                 size = BitConverter.ToUInt16(bytes.ToArray().Reverse().ToArray(), 0);
             }
             // If size is four, then the Name is a handle. 
-            if (4 == size) throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
+            if (4 == size)
+                throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
             // If size is zero, then no Name is present. 
-            if (0 == size) throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
+            if (0 == size)
+                throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
             // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
             byte[] name = null;
             if (Enum.IsDefined(typeof(TpmAlg), size))
@@ -703,22 +731,27 @@ namespace Fido2NetLib.AttestationFormat
                     name = AuthDataHelper.GetSizedByteArray(ab, ref offset, tpmAlgToDigestSizeMap[tpmalg]);
                 }
             }
-            if (totalSize != bytes.Length + name.Length) throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
+            if (totalSize != bytes.Length + name.Length)
+                throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
             return (size, name);
         }
 
         public CertInfo(byte[] certInfo)
         {
-            if (null == certInfo || 0 == certInfo.Length) throw new Fido2VerificationException("Malformed certInfo bytes");
+            if (null == certInfo || 0 == certInfo.Length)
+                throw new Fido2VerificationException("Malformed certInfo bytes");
             Raw = certInfo;
             var offset = 0;
             Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-            if (0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray(), 0)) throw new Fido2VerificationException("Bad magic number " + Magic.ToString());
+            if (0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray(), 0))
+                throw new Fido2VerificationException("Bad magic number " + Magic.ToString());
             Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
-            if (0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0)) throw new Fido2VerificationException("Bad structure tag " + Type.ToString());
+            if (0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0))
+                throw new Fido2VerificationException("Bad structure tag " + Type.ToString());
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-            if (null == ExtraData || 0 == ExtraData.Length) throw new Fido2VerificationException("Bad extraData in certInfo");
+            if (null == ExtraData || 0 == ExtraData.Length)
+                throw new Fido2VerificationException("Bad extraData in certInfo");
             Clock = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
             ResetCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
             RestartCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
@@ -728,7 +761,8 @@ namespace Fido2NetLib.AttestationFormat
             Alg = size; // TPM_ALG_ID
             AttestedName = name;
             AttestedQualifiedNameBuffer = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-            if (certInfo.Length != offset) throw new Fido2VerificationException("Leftover bits decoding certInfo");
+            if (certInfo.Length != offset)
+                throw new Fido2VerificationException("Leftover bits decoding certInfo");
         }
         public byte[] Raw { get; private set; }
         public byte[] Magic { get; private set; }
@@ -817,7 +851,8 @@ namespace Fido2NetLib.AttestationFormat
 
             // TPMU_PUBLIC_ID
             Unique = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
-            if (pubArea.Length != offset) throw new Fido2VerificationException("Leftover bytes decoding pubArea");
+            if (pubArea.Length != offset)
+                throw new Fido2VerificationException("Leftover bytes decoding pubArea");
         }
         public byte[] Raw { get; private set; }
         public byte[] Type { get; private set; }
@@ -831,7 +866,7 @@ namespace Fido2NetLib.AttestationFormat
         public byte[] CurveID { get; private set; }
         public byte[] KDF { get; private set; }
         public byte[] Unique { get; private set; }
-        public TpmEccCurve EccCurve { get { return (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BitConverter.ToUInt16(CurveID.Reverse().ToArray(), 0).ToString()); }}
+        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BitConverter.ToUInt16(CurveID.Reverse().ToArray(), 0).ToString());
         public ECPoint ECPoint
         {
             get

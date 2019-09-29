@@ -20,9 +20,11 @@
             switch (Status)
             {
                 case "present":
-                    if (string.IsNullOrEmpty(Id)) throw new Fido2VerificationException("TokenBinding status was present but Id is missing");
+                    if (string.IsNullOrEmpty(Id))
+                        throw new Fido2VerificationException("TokenBinding status was present but Id is missing");
                     var b64 = Base64Url.Encode(requestTokenbinding);
-                    if (Id != b64) throw new Fido2VerificationException("Tokenbinding Id does not match");
+                    if (Id != b64)
+                        throw new Fido2VerificationException("Tokenbinding Id does not match");
                     break;
                 case "supported":
                 case "not-supported":

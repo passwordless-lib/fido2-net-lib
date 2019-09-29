@@ -17,8 +17,7 @@ namespace Fido2NetLib.Objects
 
         public override string ToString()
         {
-            return string.Format("Extensions: {0}",
-                CBORObject.DecodeFromBytes(_extensionBytes));
+            return $"Extensions: {CBORObject.DecodeFromBytes(_extensionBytes)}";
         }
 
         public byte[] GetBytes()
