@@ -13,7 +13,7 @@ namespace Fido2NetLib
         /// Its value’s id member specifies the relying party identifier with which the credential should be associated.If omitted, its value will be the CredentialsContainer object’s relevant settings object's origin's effective domain.
         /// </summary>
         [JsonProperty("rp")]
-        public Rp Rp { get; set; }
+        public PublicKeyCredentialRpEntity Rp { get; set; }
 
         /// <summary>
         /// This member contains data about the user account for which the Relying Party is requesting attestation. 
@@ -72,7 +72,7 @@ namespace Fido2NetLib
                 Status = "ok",
                 ErrorMessage = string.Empty,
                 Challenge = challenge,
-                Rp = new Rp(config.ServerDomain, config.ServerName),
+                Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
                 Timeout = config.Timeout,
                 User = user,
                 PubKeyCredParams = new List<PubKeyCredParam>()
@@ -169,12 +169,16 @@ namespace Fido2NetLib
         public long Alg { get; set; }
     }
 
-    public class Rp
+    /// <summary>
+    /// PublicKeyCredentialRpEntity 
+    /// </summary>
+    public class PublicKeyCredentialRpEntity
     {
-        public Rp(string id, string name)
+        public PublicKeyCredentialRpEntity(string id, string name, string icon)
         {
             Name = name;
             Id = id;
+            Icon = icon;
         }
 
         /// <summary>
@@ -188,6 +192,9 @@ namespace Fido2NetLib
         /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
+
+        [JsonProperty("icon", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string Icon { get; set; }
     }
 
     /// <summary>

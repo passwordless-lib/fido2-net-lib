@@ -9,6 +9,9 @@ using Xunit;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 using PeterO.Cbor;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace fido2_net_lib.Test
 {
@@ -21,15 +24,37 @@ namespace fido2_net_lib.Test
         public UnitTest1()
         {
             var MDSAccessKey = Environment.GetEnvironmentVariable("fido2:MDSAccessKey");
-            var CacheDir = Environment.GetEnvironmentVariable("fido2:MDSCacheDirPath");
+            //var CacheDir = Environment.GetEnvironmentVariable("fido2:MDSCacheDirPath");
 
-            // Only create and use MetadataService if we have an accesskey
-            MetadataService = string.IsNullOrEmpty(MDSAccessKey) ? null : MDSMetadata.Instance(MDSAccessKey, CacheDir);
-            if (null != MetadataService)
+            var services = new ServiceCollection();
+
+            var staticClient = new StaticMetadataRepository();
+
+            var repos = new List<IMetadataRepository>();
+
+            repos.Add(staticClient);
+
+            if(!string.IsNullOrEmpty(MDSAccessKey))
             {
-                if (false == MetadataService.IsInitialized())
-                    MetadataService.Initialize().Wait();
+                repos.Add(new Fido2MetadataServiceRepository(MDSAccessKey, null));
             }
+
+            services.AddDistributedMemoryCache();
+            services.AddLogging();
+
+            var provider = services.BuildServiceProvider();
+
+            var memCache = provider.GetService<IDistributedCache>();
+
+            var service = new DistributedCacheMetadataService(
+                repos,
+                memCache,
+                provider.GetService<ILogger<DistributedCacheMetadataService>>());
+
+            service.Initialize().Wait();
+
+            MetadataService = service;
+
             config = new Fido2Configuration { Origin = "https://localhost:44329" };
         }
         public static byte[] StringToByteArray(string hex)
@@ -131,6 +156,35 @@ namespace fido2_net_lib.Test
 
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+        }
+
+        [Fact]
+        public void MetadataTOCPayloadEntry_Can_Be_JSON_Roundtripped()
+        {
+            var input = new MetadataTOCPayloadEntry()
+            {
+                AaGuid = Guid.NewGuid().ToString(),
+                MetadataStatement = new MetadataStatement(),
+                StatusReports = new StatusReport[] { },
+                TimeOfLastStatusChange = DateTime.UtcNow.ToString("o")
+            };
+
+            input.MetadataStatement.AaGuid = Guid.NewGuid().ToString();
+            input.MetadataStatement.Description = "Test entry";
+            input.MetadataStatement.AuthenticatorVersion = 1;
+            input.MetadataStatement.AssertionScheme = "abc123";
+            input.MetadataStatement.AuthenticationAlgorithm = 1;
+            input.MetadataStatement.Upv = new System.Version[] { new System.Version("1.0.0.0") };
+            input.MetadataStatement.AttestationTypes = new ushort[] { 1 };
+            input.MetadataStatement.UserVerificationDetails = new VerificationMethodDescriptor[][] { };
+            input.MetadataStatement.AttestationRootCertificates = new string[] { "..." };
+
+            var json = JsonConvert.SerializeObject(input);
+
+            var output = JsonConvert.DeserializeObject<MetadataTOCPayloadEntry>(json);
+
+            Assert.Equal(input.AaGuid, output.AaGuid);
+
         }
 
         [Fact]
