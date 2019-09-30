@@ -510,7 +510,6 @@ namespace fido2_net_lib.Test
                     }
                 case COSE.KeyType.OKP:
                     {
-                        data = CryptoUtils.GetHasher(HashAlgorithmName.SHA512).ComputeHash(data);
                         signature = Chaos.NaCl.Ed25519.Sign(data, expandedPrivateKey);
                         break;
                     }
