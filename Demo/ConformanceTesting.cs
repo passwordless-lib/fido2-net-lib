@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Fido2NetLib;
 
 namespace Fido2Demo
 {
     public static class ConformanceTesting
     {
-        private static object _syncRoot = new object();
+        private static readonly object _syncRoot = new object();
 
         private static IMetadataService _instance;
 
