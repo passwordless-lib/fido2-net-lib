@@ -3,10 +3,11 @@
 namespace Fido2NetLib
 {
     /// <summary>
-    /// In the case of ECDAA attestation, the ECDAA-Issuer's trust anchor MUST be specified in this field.
+    /// Represents the the ECDAA attestation data.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#ecdaatrustanchor-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#ecdaatrustanchor-dictionary"/>
+    /// <para>In the case of ECDAA attestation, the ECDAA-Issuer's trust anchor MUST be specified in this field.</para>
     /// </remarks>
     public class EcdaaTrustAnchor
     {
@@ -16,7 +17,7 @@ namespace Fido2NetLib
         [JsonProperty("x", Required = Required.Always)]
         public string X { get; set; }
         /// <summary>
-        /// Gets or sets a base64url encoding of the result of ECPoint2ToB of the ECPoint2
+        /// Gets or sets a base64url encoding of the result of ECPoint2ToB of the ECPoint2.
         /// </summary>
         [JsonProperty("y", Required = Required.Always)]
         public string Y { get; set; }

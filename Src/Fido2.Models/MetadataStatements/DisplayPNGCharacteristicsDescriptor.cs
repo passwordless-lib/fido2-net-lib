@@ -6,7 +6,7 @@ namespace Fido2NetLib
     /// The DisplayPNGCharacteristicsDescriptor describes a PNG image characteristics as defined in the PNG [PNG] spec for IHDR (image header) and PLTE (palette table)
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#displaypngcharacteristicsdescriptor-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#displaypngcharacteristicsdescriptor-dictionary"/>
     /// </remarks>
     public class DisplayPNGCharacteristicsDescriptor
     {
@@ -16,7 +16,7 @@ namespace Fido2NetLib
         [JsonProperty("width", Required = Required.Always)]
         public ulong Width { get; set; }
         /// <summary>
-        /// Gets or sets the height.
+        /// Gets or sets the image height.
         /// </summary>
         [JsonProperty("height", Required = Required.Always)]
         public ulong Height { get; set; }

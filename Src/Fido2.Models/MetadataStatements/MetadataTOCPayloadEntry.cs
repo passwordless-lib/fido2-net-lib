@@ -6,7 +6,7 @@ namespace Fido2NetLib
     /// Represents the metadata TOC payload data strucutre.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-service-v2.0-id-20180227.html#metadata-toc-format"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#metadata-toc-format"/>
     /// </remarks>
     public class MetadataTOCPayloadEntry
     {
@@ -55,7 +55,7 @@ namespace Fido2NetLib
         [JsonProperty("url")]
         public string Url { get; set; }
         /// <summary>
-        /// 
+        /// Gets or sets the status of the FIDO Biometric Certification of one or more biometric components of the Authenticator.
         /// </summary>
         [JsonProperty("biometricStatusReports")]
         public BiometricStatusReport[] BiometricStatusReports { get; set; }

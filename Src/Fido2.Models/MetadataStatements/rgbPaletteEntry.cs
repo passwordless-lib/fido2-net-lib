@@ -6,7 +6,7 @@ namespace Fido2NetLib
     /// The rgbPaletteEntry is an RGB three-sample tuple palette entry.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#rgbpaletteentry-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#rgbpaletteentry-dictionary"/>
     /// </remarks>
     public class rgbPaletteEntry
     {

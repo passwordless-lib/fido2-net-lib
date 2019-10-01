@@ -6,7 +6,7 @@ namespace Fido2NetLib
     /// The CodeAccuracyDescriptor describes the relevant accuracy/complexity aspects of passcode user verification methods.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#codeaccuracydescriptor-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#codeaccuracydescriptor-dictionary"/>
     /// </remarks>
     public class CodeAccuracyDescriptor
     {
@@ -22,15 +22,17 @@ namespace Fido2NetLib
         public ushort MinLength { get; set; }
         /// <summary>
         /// Gets or sets the maximum number of false attempts before the authenticator will block this method (at least for some time).
-        /// <para>0 means it will never block.</para>
+        /// <para>Zero (0) means it will never block.</para>
         /// </summary>
         [JsonProperty("maxRetries")]
         public ushort MaxRetries { get; set; }
         /// <summary>
         /// Gets or sets the enforced minimum number of seconds wait time after blocking (e.g. due to forced reboot or similar). 
-        /// <para>0 means this user verification method will be blocked, either permanently or until an alternative user verification method method succeeded.</para> 
-        /// <para>All alternative user verification methods MUST be specified appropriately in the Metadata in userVerificationDetails.</para> 
+        /// <para>Zero (0) means this user verification method will be blocked, either permanently or until an alternative user verification method method succeeded.</para> 
         /// </summary>
+        /// <remarks>
+        /// All alternative user verification methods MUST be specified appropriately in the Metadata in <see cref="MetadataStatement.UserVerificationDetails"/>.
+        /// </remarks>
         [JsonProperty("blockSlowdown")]
         public ushort BlockSlowdown { get; set; }
     }

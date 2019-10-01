@@ -6,7 +6,7 @@ namespace Fido2NetLib
     /// Contains an AuthenticatorStatus and additional data associated with it, if any.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-service-v2.0-id-20180227.html#statusreport-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#statusreport-dictionary"/>
     /// </remarks>
     public class StatusReport
     {

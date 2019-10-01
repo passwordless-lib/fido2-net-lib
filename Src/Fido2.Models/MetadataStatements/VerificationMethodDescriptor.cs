@@ -6,13 +6,16 @@ namespace Fido2NetLib
     /// A descriptor for a specific base user verification method as implemented by the authenticator.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#verificationmethoddescriptor-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#verificationmethoddescriptor-dictionary"/>
     /// </remarks>
     public class VerificationMethodDescriptor
     {
         /// <summary>
-        /// Gets or sets a single USER_VERIFY constant, not a bit flag combination. This value MUST be non-zero. 
+        /// Gets or sets a single USER_VERIFY constant, not a bit flag combination. 
         /// </summary>
+        /// <remarks>
+        /// This value MUST be non-zero.
+        /// </remarks>
         [JsonProperty("userVerification", Required = Required.Always)]
         public ulong UserVerification { get; set; }
         /// <summary>

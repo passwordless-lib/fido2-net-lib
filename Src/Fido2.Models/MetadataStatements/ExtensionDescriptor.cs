@@ -6,7 +6,7 @@ namespace Fido2NetLib
     /// This descriptor contains an extension supported by the authenticator. 
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#extensiondescriptor-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#extensiondescriptor-dictionary"/>
     /// </remarks>
     public class ExtensionDescriptor
     {
@@ -17,6 +17,7 @@ namespace Fido2NetLib
         public string Id { get; set; }
         /// <summary>
         /// Gets or sets the tag.
+        /// <para>This field may be empty.</para>
         /// </summary>
         /// <remarks>
         /// The TAG of the extension if this was assigned. TAGs are assigned to extensions if they could appear in an assertion. 

@@ -7,7 +7,7 @@ namespace Fido2NetLib
     /// Represents the metadata statement.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#metadata-keys"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#metadata-keys"/>
     /// </remarks>
     public class MetadataStatement
     {
@@ -186,7 +186,8 @@ namespace Fido2NetLib
         [JsonProperty("supportedExtensions")]
         public ExtensionDescriptor[] SupportedExtensions { get; set; }
         /// <summary>
-        /// Gets or sets the hash value.
+        /// Gets or sets a computed hash value of this <see cref="MetadataStatement"/>.
+        /// <para>NOTE: This supports the internal infrastructure of Fido2Net and isn't intented to be used by user code.</para>
         /// </summary>
         public string Hash { get; set; }
     }

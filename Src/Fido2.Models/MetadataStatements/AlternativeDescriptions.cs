@@ -7,7 +7,7 @@ namespace Fido2NetLib
     /// This descriptor contains description in alternative languages.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#alternativedescriptions-dictionary"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#alternativedescriptions-dictionary"/>
     /// </remarks>
     public class AlternativeDescriptions
     {
