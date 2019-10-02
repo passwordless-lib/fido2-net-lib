@@ -8,7 +8,7 @@ namespace Fido2NetLib
     /// </summary>
     public class Base64UrlConverter : JsonConverter<byte[]>
     {
-        readonly Required requirement = Required.DisallowNull;
+        private readonly Required _requirement = Required.DisallowNull;
 
         public Base64UrlConverter()
         {
@@ -16,7 +16,7 @@ namespace Fido2NetLib
 
         public Base64UrlConverter(Required required = Required.DisallowNull)
         {
-            this.requirement = required;
+            _requirement = required;
         }
 
         public override void WriteJson(JsonWriter writer, byte[] value, JsonSerializer serializer)
@@ -28,17 +28,20 @@ namespace Fido2NetLib
         {
             byte[] ret = null;
 
-            if (null == reader.Value && requirement == Required.AllowNull) return ret;
+            if (null == reader.Value && _requirement == Required.AllowNull)
+                return ret;
 
-            if (null == reader.Value) throw new Fido2VerificationException("json value must not be null");
-            if (Type.GetType("System.String") != reader.ValueType) throw new Fido2VerificationException("json valuetype must be string");
+            if (null == reader.Value)
+                throw new Fido2VerificationException("json value must not be null");
+            if (Type.GetType("System.String") != reader.ValueType)
+                throw new Fido2VerificationException("json valuetype must be string");
             try
             {
                 ret = Base64Url.Decode((string)reader.Value);
             }
-            catch (FormatException)
+            catch (FormatException ex)
             {
-                throw new Fido2VerificationException("json value must be valid base64 encoded string");
+                throw new Fido2VerificationException("json value must be valid base64 encoded string", ex);
             }
             return ret;
         }

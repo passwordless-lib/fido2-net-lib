@@ -9,6 +9,16 @@ namespace Fido2NetLib.Objects
     /// </summary>
     public class PublicKeyCredentialDescriptor
     {
+        public PublicKeyCredentialDescriptor(byte[] credentialId)
+        {
+            Id = credentialId;
+        }
+
+        public PublicKeyCredentialDescriptor()
+        {
+
+        }
+
         /// <summary>
         /// This member contains the type of the public key credential the caller is referring to.
         /// </summary>
@@ -27,15 +37,5 @@ namespace Fido2NetLib.Objects
         /// </summary>
         [JsonProperty("transports", NullValueHandling = NullValueHandling.Ignore)]
         public AuthenticatorTransport[] Transports { get; set; }
-
-        public PublicKeyCredentialDescriptor(byte[] credentialId)
-        {
-            Id = credentialId;
-        }
-
-        public PublicKeyCredentialDescriptor()
-        {
-
-        }
     };
 }

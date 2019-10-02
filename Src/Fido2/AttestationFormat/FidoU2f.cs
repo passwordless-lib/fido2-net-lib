@@ -7,12 +7,12 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
 {
-    class FidoU2f : AttestationFormat
+    internal class FidoU2f : AttestationFormat
     {
-        private readonly IMetadataService MetadataService;
+        private readonly IMetadataService _metadataService;
         public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
         {
-            MetadataService = metadataService;
+            _metadataService = metadataService;
         }
         public override void Verify()
         {
@@ -32,18 +32,20 @@ namespace Fido2NetLib.AttestationFormat
 
             var cert = new X509Certificate2(X5c.Values.First().GetByteString());
 
+            // TODO : Check why this variable isn't used. Remove it or use it.
             var u2ftransports = U2FTransportsFromAttnCert(cert.Extensions);
 
             var aaguid = AaguidFromAttnCertExts(cert.Extensions);
 
-            if (null != MetadataService && null != aaguid)
+            if (null != _metadataService && null != aaguid)
             {
                 var guidAaguid = AttestedCredentialData.FromBigEndian(aaguid);
-                var entry = MetadataService.GetEntry(guidAaguid);
+                var entry = _metadataService.GetEntry(guidAaguid);
 
                 if (null != entry && null != entry.MetadataStatement)
                 {
-                    if (entry.Hash != entry.MetadataStatement.Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
+                    if (entry.Hash != entry.MetadataStatement.Hash)
+                        throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
                     var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
                     
                     var chain = new X509Chain();
@@ -52,11 +54,14 @@ namespace Fido2NetLib.AttestationFormat
 
                     var valid = chain.Build(cert);
 
-                    if ( 
-                    //  the root cert has exactly one status listed against it
-                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
-                    // and that that status is a status of exactly UntrustedRoot
-                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot) valid = true;
+                    if (//  the root cert has exactly one status listed against it
+                        chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                        // and that that status is a status of exactly UntrustedRoot
+                        chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                    {
+                        valid = true;
+                    }
+
                     if (false == valid)
                     {
                         throw new Fido2VerificationException("Invalid certificate chain in U2F attestation");

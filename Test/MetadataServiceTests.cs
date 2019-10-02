@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Xunit;
 
 namespace Test
@@ -49,7 +47,7 @@ namespace Test
 
             var service = new DistributedCacheMetadataService(
                 clients,
-                memCache, 
+                memCache,
                 provider.GetService<ILogger<DistributedCacheMetadataService>>());
 
             await service.Initialize();

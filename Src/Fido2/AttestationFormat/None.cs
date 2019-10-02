@@ -2,9 +2,10 @@
 
 namespace Fido2NetLib.AttestationFormat
 {
-    class None : AttestationFormat
+    internal class None : AttestationFormat
     {
-        public None(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
+        public None(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) 
+            : base(attStmt, authenticatorData, clientDataHash)
         {
         }
 

@@ -37,7 +37,12 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/makeCredentialOptions")]
-        public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string displayName, [FromForm] string attType, [FromForm] string authType, [FromForm] bool requireResidentKey, [FromForm] string userVerification)
+        public JsonResult MakeCredentialOptions([FromForm] string username,
+                                                [FromForm] string displayName,
+                                                [FromForm] string attType,
+                                                [FromForm] string authType,
+                                                [FromForm] bool requireResidentKey,
+                                                [FromForm] string userVerification)
         {
             try
             {
@@ -68,7 +73,18 @@ namespace Fido2Demo
                 if (!string.IsNullOrEmpty(authType))
                     authenticatorSelection.AuthenticatorAttachment = authType.ToEnum<AuthenticatorAttachment>();
 
-                var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
+                var exts = new AuthenticationExtensionsClientInputs() 
+                { 
+                    Extensions = true, 
+                    UserVerificationIndex = true, 
+                    Location = true, 
+                    UserVerificationMethod = true, 
+                    BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds 
+                    { 
+                        FAR = float.MaxValue, 
+                        FRR = float.MaxValue 
+                    } 
+                };
 
                 var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
 
@@ -98,7 +114,8 @@ namespace Fido2Demo
                 IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
                 {
                     var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
-                    if (users.Count > 0) return false;
+                    if (users.Count > 0)
+                        return false;
 
                     return true;
                 };
@@ -139,13 +156,25 @@ namespace Fido2Demo
                 {
                     // 1. Get user from DB
                     var user = DemoStorage.GetUser(username);
-                    if (user == null) throw new ArgumentException("Username was not registered");
+                    if (user == null)
+                        throw new ArgumentException("Username was not registered");
 
                     // 2. Get registered credentials from database
                     existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
                 }
 
-                var exts = new AuthenticationExtensionsClientInputs() { SimpleTransactionAuthorization = "FIDO", GenericTransactionAuthorization = new TxAuthGenericArg { ContentType = "text/plain", Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } }, UserVerificationIndex = true, Location = true, UserVerificationMethod = true };
+                var exts = new AuthenticationExtensionsClientInputs()
+                { 
+                    SimpleTransactionAuthorization = "FIDO", 
+                    GenericTransactionAuthorization = new TxAuthGenericArg 
+                    { 
+                        ContentType = "text/plain", 
+                        Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } 
+                    }, 
+                    UserVerificationIndex = true, 
+                    Location = true, 
+                    UserVerificationMethod = true 
+                };
 
                 // 3. Create options
                 var uv = string.IsNullOrEmpty(userVerification) ? UserVerificationRequirement.Discouraged : userVerification.ToEnum<UserVerificationRequirement>();

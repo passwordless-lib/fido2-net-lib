@@ -12,16 +12,18 @@ using PeterO.Cbor;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Chaos.NaCl;
+using System.Text;
 
 namespace fido2_net_lib.Test
 {
     // todo: Create tests and name Facts and json files better.
-    public class UnitTest1
+    public class Fido2Tests
     {
-        internal IMetadataService MetadataService;
-        private readonly Fido2Configuration config;
+        private readonly IMetadataService _metadataService;
+        private readonly Fido2Configuration _config;
 
-        public UnitTest1()
+        public Fido2Tests()
         {
             var MDSAccessKey = Environment.GetEnvironmentVariable("fido2:MDSAccessKey");
             //var CacheDir = Environment.GetEnvironmentVariable("fido2:MDSCacheDirPath");
@@ -34,7 +36,7 @@ namespace fido2_net_lib.Test
 
             repos.Add(staticClient);
 
-            if(!string.IsNullOrEmpty(MDSAccessKey))
+            if (!string.IsNullOrEmpty(MDSAccessKey))
             {
                 repos.Add(new Fido2MetadataServiceRepository(MDSAccessKey, null));
             }
@@ -53,9 +55,9 @@ namespace fido2_net_lib.Test
 
             service.Initialize().Wait();
 
-            MetadataService = service;
+            _metadataService = service;
 
-            config = new Fido2Configuration { Origin = "https://localhost:44329" };
+            _config = new Fido2Configuration { Origin = "https://localhost:44329" };
         }
         public static byte[] StringToByteArray(string hex)
         {
@@ -122,7 +124,7 @@ namespace fido2_net_lib.Test
             var response = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./AttestationNoneResponse.json"));
 
             var o = AuthenticatorAttestationResponse.Parse(response);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
 
             var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
             var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
@@ -155,7 +157,7 @@ namespace fido2_net_lib.Test
             Assert.NotNull(jsonPost);
 
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
         }
 
         [Fact]
@@ -165,7 +167,7 @@ namespace fido2_net_lib.Test
             {
                 AaGuid = Guid.NewGuid().ToString(),
                 MetadataStatement = new MetadataStatement(),
-                StatusReports = new StatusReport[] { },
+                StatusReports = Array.Empty<StatusReport>(),
                 TimeOfLastStatusChange = DateTime.UtcNow.ToString("o")
             };
 
@@ -174,9 +176,9 @@ namespace fido2_net_lib.Test
             input.MetadataStatement.AuthenticatorVersion = 1;
             input.MetadataStatement.AssertionScheme = "abc123";
             input.MetadataStatement.AuthenticationAlgorithm = 1;
-            input.MetadataStatement.Upv = new System.Version[] { new System.Version("1.0.0.0") };
+            input.MetadataStatement.Upv = new Version[] { new Version("1.0.0.0") };
             input.MetadataStatement.AttestationTypes = new ushort[] { 1 };
-            input.MetadataStatement.UserVerificationDetails = new VerificationMethodDescriptor[][] { };
+            input.MetadataStatement.UserVerificationDetails = Array.Empty<VerificationMethodDescriptor[]>();
             input.MetadataStatement.AttestationRootCertificates = new string[] { "..." };
 
             var json = JsonConvert.SerializeObject(input);
@@ -191,7 +193,7 @@ namespace fido2_net_lib.Test
         public void TestAuthenticatorDataPa2rsing()
         {
             var bs = new byte[] { 1, 2, 3 };
-            var x = PeterO.Cbor.CBORObject.NewMap().Add("bytes", bs);
+            var x = CBORObject.NewMap().Add("bytes", bs);
             var s = x["bytes"].GetByteString();
 
             Assert.Equal(s, bs);
@@ -203,8 +205,9 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsU2F.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsU2F.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
             byte[] ad = o.AttestationObject.AuthData;
+            // TODO : Why read ad ? Is the test finished ?
         }
         [Fact]
         public async Task TestPackedAttestationAsync()
@@ -212,7 +215,7 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsPacked.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsPacked.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
             byte[] ad = o.AttestationObject.AuthData;
             var authData = new AuthenticatorData(ad);
             Assert.True(authData.ToByteArray().SequenceEqual(ad));
@@ -226,7 +229,7 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsNone.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsNone.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
         }
         [Fact]
         public async Task TestTPMSHA256AttestationAsync()
@@ -234,8 +237,9 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationTPMSHA256Response.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationTPMSHA256Options.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
             byte[] ad = o.AttestationObject.AuthData;
+            // TODO : Why read ad ? Is the test finished ?
         }
         [Fact]
         public async Task TestTPMSHA1AttestationAsync()
@@ -243,8 +247,9 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationTPMSHA1Response.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationTPMSHA1Options.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
             byte[] ad = o.AttestationObject.AuthData;
+            // TODO : Why read ad ? Is the test finished ?
         }
         [Fact]
         public async Task TestAndroidKeyAttestationAsync()
@@ -252,8 +257,9 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationAndroidKeyResponse.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationAndroidKeyOptions.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
             byte[] ad = o.AttestationObject.AuthData;
+            // TODO : Why read ad ? Is the test finished ?
         }
         [Fact]
         public async Task TaskPackedAttestation512()
@@ -261,8 +267,9 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsPacked512.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsPacked512.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), MetadataService, null);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
             byte[] ad = o.AttestationObject.AuthData;
+            // TODO : Why read ad ? Is the test finished ?
         }
         //public void TestHasCorrentAAguid()
         //{
@@ -305,8 +312,7 @@ namespace fido2_net_lib.Test
         {
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-            byte[] privateKeySeed; byte[] publicKey; byte[] expandedPrivateKey = null;
-            MakeEdDSA(out privateKeySeed, out publicKey, out expandedPrivateKey);
+            MakeEdDSA(out _, out var publicKey, out _);
             var cpk = MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey);
 
             var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
@@ -318,10 +324,10 @@ namespace fido2_net_lib.Test
         [Fact]
         public void TestAuthenticatorData()
         {
-            byte[] rpId = System.Text.Encoding.UTF8.GetBytes("fido2.azurewebsites.net/");
+            byte[] rpId = Encoding.UTF8.GetBytes("fido2.azurewebsites.net/");
             var rpIdHash = SHA256.Create().ComputeHash(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
-            const UInt16 signCount = 0xf1d0;
+            const ushort signCount = 0xf1d0;
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
             var ecdsa = MakeECDsa(COSE.Algorithm.ES256, COSE.EllipticCurve.P256);
@@ -416,17 +422,17 @@ namespace fido2_net_lib.Test
         internal async void MakeAssertionResponse(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv = COSE.EllipticCurve.P256)
         {
             const string rp = "fido2.azurewebsites.net";
-            byte[] rpId = System.Text.Encoding.UTF8.GetBytes(rp);
+            byte[] rpId = Encoding.UTF8.GetBytes(rp);
             var rpIdHash = SHA256.Create().ComputeHash(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
-            const UInt16 signCount = 0xf1d0;
+            const ushort signCount = 0xf1d0;
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
 
             CredentialPublicKey cpk = null;
             ECDsaCng ecdsa = null;
             RSACng rsa = null;
-            byte[] privateKeySeed, publicKey, expandedPrivateKey = null;
+            byte[] expandedPrivateKey = null;
             switch (kty)
             {
                 case COSE.KeyType.EC2:
@@ -445,11 +451,11 @@ namespace fido2_net_lib.Test
                     }
                 case COSE.KeyType.OKP:
                     {
-                        MakeEdDSA(out privateKeySeed, out publicKey, out expandedPrivateKey);
+                        MakeEdDSA(out var privateKeySeed, out var publicKey, out expandedPrivateKey);
                         cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
                         break;
                     }
-                    throw new ArgumentOutOfRangeException(string.Format("Missing or unknown kty {0}", kty.ToString()));
+                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
             }
 
             var acd = new AttestedCredentialData(aaguid, credentialID, cpk);
@@ -462,7 +468,7 @@ namespace fido2_net_lib.Test
             var challenge = new byte[128];
             var rng = RandomNumberGenerator.Create();
             rng.GetBytes(challenge);
-            
+
 
             var clientData = new
             {
@@ -470,7 +476,7 @@ namespace fido2_net_lib.Test
                 Challenge = challenge,
                 Origin = rp,
             };
-            var clientDataJson = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(clientData));
+            var clientDataJson = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(clientData));
 
             var sha = SHA256.Create();
             var hashedClientDataJson = sha.ComputeHash(clientDataJson);
@@ -503,17 +509,19 @@ namespace fido2_net_lib.Test
                                 padding = RSASignaturePadding.Pkcs1;
                                 break;
                             default:
-                                throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", alg.ToString()));
+                                throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
                         }
                         signature = rsa.SignData(data, CryptoUtils.algMap[(int)alg], padding);
                         break;
                     }
                 case COSE.KeyType.OKP:
                     {
-                        signature = Chaos.NaCl.Ed25519.Sign(data, expandedPrivateKey);
+                        signature = Ed25519.Sign(data, expandedPrivateKey);
                         break;
                     }
-                    throw new ArgumentOutOfRangeException(string.Format("Missing or unknown kty {0}", kty.ToString()));
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
             }
 
             if (kty == COSE.KeyType.EC2)
@@ -538,10 +546,12 @@ namespace fido2_net_lib.Test
                 ServerName = rp,
                 Origin = rp,
             });
-            List<PublicKeyCredentialDescriptor> existingCredentials = new List<PublicKeyCredentialDescriptor>();
-            var cred = new PublicKeyCredentialDescriptor();
-            cred.Type = PublicKeyCredentialType.PublicKey;
-            cred.Id = new byte[] { 0xf1, 0xd0 };
+            var existingCredentials = new List<PublicKeyCredentialDescriptor>();
+            var cred = new PublicKeyCredentialDescriptor
+            {
+                Type = PublicKeyCredentialType.PublicKey,
+                Id = new byte[] { 0xf1, 0xd0 }
+            };
             existingCredentials.Add(cred);
 
             var options = lib.GetAssertionOptions(existingCredentials, null, null);
@@ -550,7 +560,7 @@ namespace fido2_net_lib.Test
             {
                 Response = assertion,
                 Type = PublicKeyCredentialType.PublicKey,
-                Id = new byte[] {0xf1, 0xd0},
+                Id = new byte[] { 0xf1, 0xd0 },
                 RawId = new byte[] { 0xf1, 0xd0 },
             };
             IsUserHandleOwnerOfCredentialIdAsync callback = (args) =>
@@ -568,7 +578,7 @@ namespace fido2_net_lib.Test
                 rng.GetBytes(privateKeySeed);
                 publicKey = new byte[32];
                 expandedPrivateKey = new byte[64];
-                Chaos.NaCl.Ed25519.KeyPairFromSeed(out publicKey, out expandedPrivateKey, privateKeySeed);
+                Ed25519.KeyPairFromSeed(out publicKey, out expandedPrivateKey, privateKeySeed);
             }
         }
 
@@ -585,7 +595,7 @@ namespace fido2_net_lib.Test
                             curve = ECCurve.NamedCurves.nistP256;
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
+                            throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}");
                     }
                     break;
                 case COSE.Algorithm.ES384:
@@ -595,7 +605,7 @@ namespace fido2_net_lib.Test
                             curve = ECCurve.NamedCurves.nistP384;
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
+                            throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}");
                     }
                     break;
                 case COSE.Algorithm.ES512:
@@ -605,11 +615,11 @@ namespace fido2_net_lib.Test
                             curve = ECCurve.NamedCurves.nistP521;
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException(string.Format("Missing or unknown crv {0}", crv.ToString()));
+                            throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}");
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(string.Format("Missing or unknown alg {0}", alg.ToString()));
+                    throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
             }
             return new ECDsaCng(curve);
         }
@@ -637,24 +647,22 @@ namespace fido2_net_lib.Test
             switch (kty)
             {
                 case COSE.KeyType.EC2:
-                        cpk.Add(COSE.KeyTypeParameter.X, x);
-                        cpk.Add(COSE.KeyTypeParameter.Y, y);
-                        cpk.Add(COSE.KeyTypeParameter.Crv, crv);
+                    cpk.Add(COSE.KeyTypeParameter.X, x);
+                    cpk.Add(COSE.KeyTypeParameter.Y, y);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, crv);
                     break;
                 case COSE.KeyType.RSA:
-                        cpk.Add(COSE.KeyTypeParameter.N, n);
-                        cpk.Add(COSE.KeyTypeParameter.E, e);
+                    cpk.Add(COSE.KeyTypeParameter.N, n);
+                    cpk.Add(COSE.KeyTypeParameter.E, e);
                     break;
                 case COSE.KeyType.OKP:
-                        cpk.Add(COSE.KeyTypeParameter.X, x);
-                        cpk.Add(COSE.KeyTypeParameter.Crv, crv);
+                    cpk.Add(COSE.KeyTypeParameter.X, x);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, crv);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("kty", kty, "Invalid COSE key type");
+                    throw new ArgumentOutOfRangeException(nameof(kty), kty, "Invalid COSE key type");
             }
             return new CredentialPublicKey(cpk);
         }
-
-        
     }
 }
