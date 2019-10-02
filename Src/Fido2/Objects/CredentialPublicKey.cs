@@ -23,8 +23,7 @@ namespace Fido2NetLib.Objects
                     }
                 case COSE.KeyType.OKP:
                     {
-                        var message = CryptoUtils.GetHasher(HashAlgorithmName.SHA512).ComputeHash(data);
-                        return Chaos.NaCl.Ed25519.Verify(sig, message, EdDSAPublicKey);
+                        return Chaos.NaCl.Ed25519.Verify(sig, data, EdDSAPublicKey);
                     }
 
             }

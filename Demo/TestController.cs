@@ -9,6 +9,7 @@ using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 
 namespace Fido2Demo
@@ -26,26 +27,19 @@ namespace Fido2Demo
          */
         private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
-        private Fido2 _lib;
-        private IMetadataService _mds;
+        private IFido2 _fido2;
         private string _origin;
 
         public TestController(IConfiguration config)
         {
-            // Sample bogus key from https://fidoalliance.org/metadata/
-            var invalidToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
             _origin = config["fido2:origin"];
-            _mds = MDSMetadata.ConformanceInstance(invalidToken, config["fido2:MDSCacheDirPath"], _origin);
-            if (false == _mds.IsInitialized())
-                _mds.Initialize().Wait();
-            
-            _lib = new Fido2(new Fido2Configuration()
+
+            _fido2 = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
-                Origin = _origin,
-                MetadataService = _mds
-            });
+                Origin = _origin
+            }, ConformanceTesting.MetadataServiceInstance(config["fido2:MDSCacheDirPath"] + @"\Conformance", _origin));
         }
 
         [HttpPost]
@@ -84,7 +78,7 @@ namespace Fido2Demo
 
                 exts.Example = opts.Extensions.Example;
             // 3. Create options
-            var options = _lib.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
+            var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -112,7 +106,7 @@ namespace Fido2Demo
             };
 
             // 2. Verify and make the credentials
-            var success = await _lib.MakeNewCredentialAsync(attestationResponse, options, callback);
+            var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback);
 
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
@@ -149,7 +143,7 @@ namespace Fido2Demo
                 exts.Example = assertionClientParams.Extensions.Example;
 
             // 3. Create options
-            var options = _lib.GetAssertionOptions(
+            var options = _fido2.GetAssertionOptions(
                 existingCredentials,
                 uv,
                 exts
@@ -184,7 +178,7 @@ namespace Fido2Demo
             };
 
             // 5. Make the assertion
-            var res = await _lib.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
+            var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
 
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.Counter);

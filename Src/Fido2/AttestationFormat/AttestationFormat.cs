@@ -40,12 +40,14 @@ namespace Fido2NetLib.AttestationFormat
                 if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.1.1.4")) // id-fido-gen-ce-aaguid
                 {
                     aaguid = new byte[16];
-                    var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
-                    // OCTET STRING
-                    if (0x4 != ms.ReadByte()) throw new Fido2VerificationException("Expected octet string value");
-                    // AAGUID
-                    if (0x10 != ms.ReadByte()) throw new Fido2VerificationException("Unexpected length for aaguid");
-                    ms.Read(aaguid, 0, 0x10);
+                    using (var ms = new System.IO.MemoryStream(ext.RawData.ToArray()))
+                    {
+                        // OCTET STRING
+                        if (0x4 != ms.ReadByte()) throw new Fido2VerificationException("Expected octet string value");
+                        // AAGUID
+                        if (0x10 != ms.ReadByte()) throw new Fido2VerificationException("Unexpected length for aaguid");
+                        ms.Read(aaguid, 0, 0x10);
+                    }
                     //The extension MUST NOT be marked as critical
                     if (true == ext.Critical) throw new Fido2VerificationException("extension MUST NOT be marked as critical");
                 }
@@ -56,9 +58,8 @@ namespace Fido2NetLib.AttestationFormat
         {
             foreach (var ext in exts)
             {
-                if (ext.Oid.FriendlyName == "Basic Constraints")
+                if (ext.Oid.Value.Equals("2.5.29.19") && ext is X509BasicConstraintsExtension baseExt)
                 {
-                    var baseExt = (X509BasicConstraintsExtension)ext;
                     return baseExt.CertificateAuthority;
                 }
             }
@@ -71,13 +72,14 @@ namespace Fido2NetLib.AttestationFormat
             {
                 if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.2.1.1"))
                 {
-                    var ms = new System.IO.MemoryStream(ext.RawData.ToArray());
-                    // BIT STRING
-                    if (0x3 != ms.ReadByte()) throw new Fido2VerificationException("Expected bit string");
-                    if (0x2 != ms.ReadByte()) throw new Fido2VerificationException("Expected integer value");
-                    var unusedBits = ms.ReadByte(); // number of unused bits
-                    // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-authenticator-transports-extension-v1.2-ps-20170411.html
-                    u2ftransports = ms.ReadByte(); // do something with this?
+                    using (var ms = new System.IO.MemoryStream(ext.RawData.ToArray()))
+                    {
+                        if (0x3 != ms.ReadByte()) throw new Fido2VerificationException("Expected bit string");
+                        if (0x2 != ms.ReadByte()) throw new Fido2VerificationException("Expected integer value");
+                        var unusedBits = ms.ReadByte(); // number of unused bits
+                        // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-authenticator-transports-extension-v1.2-ps-20170411.html
+                        u2ftransports = ms.ReadByte(); // do something with this?
+                    }
                 }
             }
             return u2ftransports;
