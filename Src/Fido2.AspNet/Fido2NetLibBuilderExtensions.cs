@@ -45,13 +45,6 @@ namespace Microsoft.Extensions.DependencyInjection
             configAction(new Fido2NetLibBuilder(builder.Services));
         }
 
-        private static IFido2NetLibBuilder AddClient<TClient>(this IFido2NetLibBuilder builder) where TClient : class, IMetadataRepository
-        {
-            builder.Services.AddTransient<IMetadataRepository, TClient>();
-
-            return builder;
-        }
-
         public static IFido2MetadataServiceBuilder AddFileSystemMetadataRepository(this IFido2MetadataServiceBuilder builder, string directoryPath)
         {
             builder.Services.AddTransient<IMetadataRepository, FileSystemMetadataRepository>(r =>
