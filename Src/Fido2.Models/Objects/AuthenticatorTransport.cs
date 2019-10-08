@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -41,7 +42,8 @@ namespace Fido2NetLib.Objects
         [EnumMember(Value = "lightning")]
         Lightning
     }
-    [System.Flags]
+
+    [Flags]
     public enum FIDOU2FTransports
     {
         bluetoothRadio = 128,
