@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
@@ -530,6 +531,13 @@ namespace Fido2NetLib.AttestationFormat
                 // Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty 
                 // and SHOULD be non-critical if subject is non-empty"
 
+                // AsnEncodedData does this for us on Windows
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    SAN = SAN.Replace("2.23.133.2.1", "TPMManufacturer")
+                        .Replace("2.23.133.2.2", "TPMModel")
+                        .Replace("2.23.133.2.3", "TPMVersion");
+                }
                 // Best I can figure to do for now?
                 if (false == SAN.Contains("TPMManufacturer") ||
                     false == SAN.Contains("TPMModel") ||

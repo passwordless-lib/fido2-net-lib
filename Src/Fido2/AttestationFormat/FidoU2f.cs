@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
@@ -70,10 +71,20 @@ namespace Fido2NetLib.AttestationFormat
             }
 
             // 2b. If certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve, terminate this algorithm and return an appropriate error
-            var pubKey = (ECDsaCng)cert.GetECDsaPublicKey();
-            if (CngAlgorithm.ECDsaP256 != pubKey.Key.Algorithm)
-                throw new Fido2VerificationException("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
+            var pubKey = cert.GetECDsaPublicKey();
+            var keyParams = pubKey.ExportParameters(false);
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (!keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
+                    throw new Fido2VerificationException("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
+            }
+
+            else
+            {
+                if (!keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value))
+                    throw new Fido2VerificationException("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
+            }
             // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
             // see rpIdHash, credentialId, and credentialPublicKey variables
 
