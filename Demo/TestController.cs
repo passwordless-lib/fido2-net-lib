@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 
 namespace Fido2Demo
@@ -26,26 +25,19 @@ namespace Fido2Demo
          */
         private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
-        private Fido2 _lib;
-        private IMetadataService _mds;
-        private string _origin;
+        private readonly IFido2 _fido2;
+        private readonly string _origin;
 
         public TestController(IConfiguration config)
         {
-            // Sample bogus key from https://fidoalliance.org/metadata/
-            var invalidToken = "6d6b44d78b09fed0c5559e34c71db291d0d322d4d4de0000";
             _origin = config["fido2:origin"];
-            _mds = MDSMetadata.ConformanceInstance(invalidToken, config["fido2:MDSCacheDirPath"], _origin);
-            if (false == _mds.IsInitialized())
-                _mds.Initialize().Wait();
-            
-            _lib = new Fido2(new Fido2Configuration()
+
+            _fido2 = new Fido2(new Fido2Configuration
             {
                 ServerDomain = config["fido2:serverDomain"],
                 ServerName = "Fido2 test",
-                Origin = _origin,
-                MetadataService = _mds
-            });
+                Origin = _origin
+            }, ConformanceTesting.MetadataServiceInstance(System.IO.Path.Combine(config["fido2:MDSCacheDirPath"], @"Conformance"), _origin));
         }
 
         [HttpPost]
@@ -61,9 +53,9 @@ namespace Fido2Demo
             {
                 username = Base64Url.Decode(opts.Username);
             }
-            catch(FormatException)
+            catch (FormatException)
             {
-                username = System.Text.Encoding.UTF8.GetBytes(opts.Username);
+                username = Encoding.UTF8.GetBytes(opts.Username);
             }
 
             // 1. Get user from DB by username (in our example, auto create missing users)
@@ -78,13 +70,12 @@ namespace Fido2Demo
             var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
             //var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
-            var exts = new AuthenticationExtensionsClientInputs() {  };
-            if (null != opts.Extensions
-                && null != opts.Extensions.Example)
-
+            var exts = new AuthenticationExtensionsClientInputs() { };
+            if (null != opts.Extensions && null != opts.Extensions.Example)
                 exts.Example = opts.Extensions.Example;
+
             // 3. Create options
-            var options = _lib.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
+            var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -106,13 +97,11 @@ namespace Fido2Demo
             IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
             {
                 var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
-                if (users.Count > 0) return false;
-
-                return true;
+                return users.Count <= 0;
             };
 
             // 2. Verify and make the credentials
-            var success = await _lib.MakeNewCredentialAsync(attestationResponse, options, callback);
+            var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback);
 
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
@@ -134,22 +123,34 @@ namespace Fido2Demo
             var username = assertionClientParams.Username;
             // 1. Get user from DB
             var user = DemoStorage.GetUser(username);
-            if (user == null) return NotFound("username was not registered");
+            if (user == null)
+                return NotFound("username was not registered");
 
             // 2. Get registered credentials from database
             var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
             var uv = assertionClientParams.UserVerification;
-            if (null != assertionClientParams.authenticatorSelection) uv = assertionClientParams.authenticatorSelection.UserVerification;
+            if (null != assertionClientParams.authenticatorSelection)
+                uv = assertionClientParams.authenticatorSelection.UserVerification;
 
-            var exts = new AuthenticationExtensionsClientInputs() { AppID = _origin, SimpleTransactionAuthorization = "FIDO", GenericTransactionAuthorization = new TxAuthGenericArg { ContentType = "text/plain", Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } }, UserVerificationIndex = true, Location = true, UserVerificationMethod = true };
-            if (null != assertionClientParams.Extensions
-                && null != assertionClientParams.Extensions.Example)
-
+            var exts = new AuthenticationExtensionsClientInputs
+            { 
+                AppID = _origin,
+                SimpleTransactionAuthorization = "FIDO",
+                GenericTransactionAuthorization = new TxAuthGenericArg 
+                { 
+                    ContentType = "text/plain",
+                    Content = new byte[] { 0x46, 0x49, 0x44, 0x4F }
+                }, 
+                UserVerificationIndex = true, 
+                Location = true, 
+                UserVerificationMethod = true
+            };
+            if (null != assertionClientParams.Extensions && null != assertionClientParams.Extensions.Example)
                 exts.Example = assertionClientParams.Extensions.Example;
 
             // 3. Create options
-            var options = _lib.GetAssertionOptions(
+            var options = _fido2.GetAssertionOptions(
                 existingCredentials,
                 uv,
                 exts
@@ -184,7 +185,7 @@ namespace Fido2Demo
             };
 
             // 5. Make the assertion
-            var res = await _lib.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
+            var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
 
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
@@ -197,11 +198,6 @@ namespace Fido2Demo
 
             // 7. return OK to client
             return Json(testRes);
-        }
-
-        private byte[] GetTokenBindingId()
-        {
-            return Request.HttpContext.Features.Get<ITlsTokenBindingFeature>()?.GetProvidedTokenBindingId();
         }
 
         /// <summary>

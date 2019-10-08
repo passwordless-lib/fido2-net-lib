@@ -20,7 +20,7 @@ namespace Fido2NetLib
         public override string ToString()
         {
             return Value;
-        }        
+        }
 
         public bool Equals(TypedString other)
         {

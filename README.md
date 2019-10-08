@@ -3,6 +3,7 @@ A working implementation library + demo for [FIDO2](https://fidoalliance.org/fid
 
 [![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
 [![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
+[![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless) 
 
 ### Purpose
 
@@ -212,3 +213,33 @@ To run a suit of test of different verifications and attestation formats, regist
 ## Other
 
 A complimentary [blog post](http://ideasof.andersaberg.com/development/fido2-net-library) with some lessons learned since starting this library
+
+## Contributors
+
+### Code Contributors
+
+This project exists thanks to all the people who contribute. [[Contribute](https://github.com/abergs/fido2-net-lib/tree/master#contributing)].
+<a href="https://github.com/abergs/fido2-net-lib/graphs/contributors"><img src="https://opencollective.com/passwordless/contributors.svg?width=890&button=false" /></a>
+
+### Financial Contributors
+
+Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/passwordless/contribute)]
+
+#### Individuals
+
+<a href="https://opencollective.com/passwordless"><img src="https://opencollective.com/passwordless/individuals.svg?width=890"></a>
+
+#### Organizations
+
+Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/passwordless/contribute)]
+
+<a href="https://opencollective.com/passwordless/organization/0/website"><img src="https://opencollective.com/passwordless/organization/0/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/1/website"><img src="https://opencollective.com/passwordless/organization/1/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/2/website"><img src="https://opencollective.com/passwordless/organization/2/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/3/website"><img src="https://opencollective.com/passwordless/organization/3/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/4/website"><img src="https://opencollective.com/passwordless/organization/4/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/5/website"><img src="https://opencollective.com/passwordless/organization/5/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/6/website"><img src="https://opencollective.com/passwordless/organization/6/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/7/website"><img src="https://opencollective.com/passwordless/organization/7/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/8/website"><img src="https://opencollective.com/passwordless/organization/8/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/9/website"><img src="https://opencollective.com/passwordless/organization/9/avatar.svg"></a>

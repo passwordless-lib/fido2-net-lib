@@ -1,7 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="MetadataStatements\**" />
+    <EmbeddedResource Remove="MetadataStatements\**" />
+    <None Remove="MetadataStatements\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="IMetadataService.cs" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
   </ItemGroup>

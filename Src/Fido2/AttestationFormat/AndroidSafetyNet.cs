@@ -10,16 +10,18 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
 {
-    class AndroidSafetyNet : AttestationFormat
+    internal class AndroidSafetyNet : AttestationFormat
     {
-        private int _driftTolerance;
-        public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, int driftTolerance) : base(attStmt, authenticatorData, clientDataHash)
+        private readonly int _driftTolerance;
+
+        public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, int driftTolerance) 
+            : base(attStmt, authenticatorData, clientDataHash)
         {
             _driftTolerance = driftTolerance;
         }
+
         public override void Verify()
         {
-
             // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
             // CBOR decoding on it to extract the contained fields
             if ((CBORType.TextString != attStmt["ver"].Type) ||
@@ -41,7 +43,8 @@ namespace Fido2NetLib.AttestationFormat
                 .Select(x => new X509SecurityKey(
                     new X509Certificate2(Convert.FromBase64String(x))))
                 .ToArray();
-            if ((null == keys) || (0 == keys.Count())) throw new Fido2VerificationException("SafetyNet attestation missing x5c");
+            if ((null == keys) || (0 == keys.Count()))
+                throw new Fido2VerificationException("SafetyNet attestation missing x5c");
             var validationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = false,
@@ -58,13 +61,15 @@ namespace Fido2NetLib.AttestationFormat
                 validationParameters,
                 out var validatedToken);
 
-            if (false == (validatedToken.SigningKey is X509SecurityKey)) throw new Fido2VerificationException("Safetynet signing key invalid");
+            if (false == (validatedToken.SigningKey is X509SecurityKey))
+                throw new Fido2VerificationException("Safetynet signing key invalid");
 
             var nonce = "";
             var payload = false;
             foreach (var claim in jwtToken.Claims)
             {
-                if (("nonce" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#string" == claim.ValueType) && (0 != claim.Value.Length)) nonce = claim.Value;
+                if (("nonce" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#string" == claim.ValueType) && (0 != claim.Value.Length))
+                    nonce = claim.Value;
                 if (("ctsProfileMatch" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#boolean" == claim.ValueType))
                 {
                     payload = bool.Parse(claim.Value);
@@ -82,18 +87,25 @@ namespace Fido2NetLib.AttestationFormat
             }
 
             // Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
-            if ("" == nonce) throw new Fido2VerificationException("Nonce value not found in Android SafetyNet attestation");
-            var dataHash = CryptoUtils.GetHasher(HashAlgorithmName.SHA256).ComputeHash(Data);
-            var nonceHash = Convert.FromBase64String(nonce);
-            if (false == dataHash.SequenceEqual(nonceHash)) throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
+            if ("" == nonce)
+                throw new Fido2VerificationException("Nonce value not found in Android SafetyNet attestation");
+            using(var hasher = CryptoUtils.GetHasher(HashAlgorithmName.SHA256))
+            {
+                var dataHash = hasher.ComputeHash(Data);
+                var nonceHash = Convert.FromBase64String(nonce);
+                if (false == dataHash.SequenceEqual(nonceHash))
+                    throw new Fido2VerificationException("Android SafetyNet hash value mismatch");
+            }
 
             // Verify that the attestation certificate is issued to the hostname "attest.android.com"
             var attCert = (validatedToken.SigningKey as X509SecurityKey).Certificate;
             var subject = attCert.GetNameInfo(X509NameType.DnsName, false);
-            if (false == ("attest.android.com").Equals(subject)) throw new Fido2VerificationException("Safetynet DnsName is not attest.android.com");
+            if (false == ("attest.android.com").Equals(subject))
+                throw new Fido2VerificationException("Safetynet DnsName is not attest.android.com");
 
             // Verify that the ctsProfileMatch attribute in the payload of response is true
-            if (true != payload) throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");
+            if (true != payload)
+                throw new Fido2VerificationException("Android SafetyNet ctsProfileMatch must be true");
         }
     }
 }

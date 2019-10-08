@@ -11,7 +11,7 @@
         /// <summary>
         /// TimestampDriftTolerance specifies a time in milliseconds that will be allowed for clock drift on a timestamped attestation.
         /// </summary>
-        public int TimestampDriftTolerance { get; set; } = 0;
+        public int TimestampDriftTolerance { get; set; } = 0; //Pretty sure 0 will never work - need a better default?
 
         /// <summary>
         /// The size of the challenges sent to the client
@@ -39,20 +39,10 @@
         public string Origin { get; set; }
 
         /// <summary>
-        /// MetdataService to verify metadata statements https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html
-        /// </summary>
-        public IMetadataService MetadataService { get; set; }
-
-        /// <summary>
         /// Create the configuration for Fido2
         /// </summary>
         public Fido2Configuration()
         {
-        }
-
-        public Fido2Configuration(IMetadataService metadataService)
-        {
-            MetadataService = metadataService;
         }
     }
 }

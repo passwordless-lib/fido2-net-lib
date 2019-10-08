@@ -1,6 +1,4 @@
-﻿using System;
-using System.Globalization;
-using Newtonsoft.Json;
+﻿using PeterO.Cbor;
 
 namespace Fido2NetLib.Objects
 {
@@ -14,26 +12,18 @@ namespace Fido2NetLib.Objects
         {
             _extensionBytes = extensions;
         }
+
+        public int Length => _extensionBytes.Length;
+
         public override string ToString()
         {
-            return string.Format("Extensions: {0}",
-                PeterO.Cbor.CBORObject.DecodeFromBytes(_extensionBytes));
+            return $"Extensions: {CBORObject.DecodeFromBytes(_extensionBytes)}";
         }
-        public int Length
-        {
-            get
-            {
-                return _extensionBytes.Length;
-            }
-        }
+
         public byte[] GetBytes()
         {
             return _extensionBytes;
         }
-    }
-    public class AuthenticationExtensionsAuthenticatorInputs
-    {
-
     }
 }
 

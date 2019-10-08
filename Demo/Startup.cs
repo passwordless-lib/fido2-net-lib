@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +35,23 @@ namespace Fido2Demo
                 options.IdleTimeout = TimeSpan.FromMinutes(2);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+            });
+
+            services.AddFido2(options =>
+            {
+                options.ServerDomain = Configuration["fido2:serverDomain"];
+                options.ServerName = "FIDO2 Test";
+                options.Origin = Configuration["fido2:origin"];
+                options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
+            })
+            .AddCachedMetadataService(config =>
+            {
+                //They'll be used in a "first match wins" way in the order registered
+                config.AddStaticMetadataRepository();
+                if (!string.IsNullOrWhiteSpace(Configuration["fido2:MDSAccessKey"]))
+                {
+                    config.AddFidoMetadataRepository(Configuration["fido2:MDSAccessKey"]);
+                }
             });
         }
 
