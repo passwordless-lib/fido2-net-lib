@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Chaos.NaCl;
@@ -44,17 +45,31 @@ namespace Fido2NetLib.Objects
                 var ecDsaPubKey = cert.GetECDsaPublicKey();
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
-                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
-                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
-
                 if (keyParams.Curve.Oid.FriendlyName.Equals("secP256k1"))
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256K);
 
-                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName))
-                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
+                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName))
-                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName))
+                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
+
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName))
+                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
+                }
+                else
+                {
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value))
+                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
+
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value))
+                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
+                    
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value))
+                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
+                }
 
                 _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
                 _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y);
