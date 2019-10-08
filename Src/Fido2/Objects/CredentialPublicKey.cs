@@ -44,16 +44,16 @@ namespace Fido2NetLib.Objects
                 var ecDsaPubKey = cert.GetECDsaPublicKey();
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
-                if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value))
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-                if (keyParams.Curve.Oid.Value.Equals("1.3.132.0.10"))
+                if (keyParams.Curve.Oid.FriendlyName.Equals("secP256k1"))
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256K);
 
-                if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value))
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName))
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
 
-                if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value))
+                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName))
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
 
                 _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
