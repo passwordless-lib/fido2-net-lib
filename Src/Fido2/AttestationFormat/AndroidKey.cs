@@ -222,11 +222,11 @@ namespace Fido2NetLib.AttestationFormat
                 throw new Fido2VerificationException("Malformed x5c in android-key attestation");
 
             X509Certificate2 androidKeyCert;
-            ECDsaCng androidKeyPubKey;
+            ECDsa androidKeyPubKey;
             try
             {
                 androidKeyCert = new X509Certificate2(X5c.Values.First().GetByteString());
-                androidKeyPubKey = (ECDsaCng)androidKeyCert.GetECDsaPublicKey(); // attestation public key
+                androidKeyPubKey = androidKeyCert.GetECDsaPublicKey(); // attestation public key
             }
             catch (Exception ex)
             {

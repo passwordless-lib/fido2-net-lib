@@ -61,7 +61,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Challenge not equal to original challenge");
 
             if (Origin != expectedOrigin)
-                throw new Fido2VerificationException("Origin not equal to original origin");
+                throw new Fido2VerificationException($"Origin {Origin} not equal to original origin {expectedOrigin}");
 
             if (Type != "webauthn.create" && Type != "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");

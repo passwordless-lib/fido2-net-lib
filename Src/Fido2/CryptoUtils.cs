@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
@@ -167,8 +168,17 @@ namespace Fido2NetLib
             {
                 if (ext.Oid.Value.Equals("2.5.29.31")) // id-ce-CRLDistributionPoints
                 {
-                    var asnData = new AsnEncodedData(ext.Oid, ext.RawData);
-                    cdp += asnData.Format(false).Split('=')[1];
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        var asnData = new AsnEncodedData(ext.Oid, ext.RawData);
+                        cdp += asnData.Format(false).Split('=')[1];
+                    }
+                    else
+                    {
+                        var strCDP = Asn1Util.BytesToString(ext.RawData);
+                        strCDP = strCDP.Replace("\u0086.", "=");
+                        cdp += strCDP.Split('=')[1];
+                    }
                 }
             }
             return cdp;
