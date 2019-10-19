@@ -8,7 +8,7 @@ using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Fido2Demo
 {
@@ -28,23 +28,25 @@ namespace Fido2Demo
         private readonly IFido2 _fido2;
         private readonly string _origin;
 
-        public TestController(IConfiguration config)
+        public TestController(IOptions<Fido2Configuration> fido2Configuration)
         {
-            _origin = config["fido2:origin"];
+            _origin = fido2Configuration.Value.Origin;
 
             _fido2 = new Fido2(new Fido2Configuration
             {
-                ServerDomain = config["fido2:serverDomain"],
-                ServerName = "Fido2 test",
+                ServerDomain = fido2Configuration.Value.ServerDomain,
+                ServerName = fido2Configuration.Value.ServerName,
                 Origin = _origin
-            }, ConformanceTesting.MetadataServiceInstance(System.IO.Path.Combine(config["fido2:MDSCacheDirPath"], @"Conformance"), _origin));
+            }, 
+            ConformanceTesting.MetadataServiceInstance(
+                System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance"), _origin)
+            );
         }
 
         [HttpPost]
         [Route("/attestation/options")]
         public JsonResult MakeCredentialOptionsTest([FromBody] TEST_MakeCredentialParams opts)
         {
-
             var attType = opts.Attestation;
 
             var username = new byte[] { };
