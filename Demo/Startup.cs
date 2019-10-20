@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
@@ -34,7 +35,10 @@ namespace Fido2Demo
                 // Set a short timeout for easy testing.
                 options.IdleTimeout = TimeSpan.FromMinutes(2);
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+                // Strict SameSite mode is required because the default mode used
+                // by ASP.NET Core 3 isn't understood by the Conformance Tool
+                // and breaks conformance testing
+                options.Cookie.SameSite = SameSiteMode.Strict;
             });
 
             services.AddFido2(options =>
