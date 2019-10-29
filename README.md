@@ -189,30 +189,7 @@ https://www.nuget.org/packages/Fido2/ and https://www.nuget.org/packages/Fido2.M
 
 # Contributing
 
-## To run the project locally
-
-Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
-You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
-
-The HTML and javascript is copied (and then updated) from WebAuthn.io.
-
-Feedback, issues and pull requests are VERY welcome.
-
-## Build
-
-[![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
-[![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
-
-All PR's and the master branch is built with Azure Devops.
-
-Scripts to build, pack and publish a nuget package are located in ./scripts/
-
-## Conformance testing tool
-To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/tool-request-agreement/)
-
-## Other
-
-A complimentary [blog post](http://ideasof.andersaberg.com/development/fido2-net-library) with some lessons learned since starting this library
+See [Contributing](CONTRIBUTING.md) for informations about contributing to the project.
 
 ## Contributors
 
