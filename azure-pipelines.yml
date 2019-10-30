@@ -1,34 +1,64 @@
-# ASP.NET Core (.NET Framework)
-# Build and test ASP.NET Core projects targeting the full .NET Framework.
-# Add steps that publish symbols, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
-trigger:
-- master
-
-pool:
-  vmImage: 'windows-latest'
+# This is the main build configuration for the Fido2 libraries
 
 variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  BuildConfiguration: Release
 
-steps:
-- task: NuGetToolInstaller@1
+jobs:
+# Prepare the environment for the other tasks
+- job: prepare
+  displayName: Prepare environment
+  pool: windows-latest
+  steps:
+  - task: NuGetToolInstaller@1
+    displayName: Use NuGet 4.3.0
+  - task: DotNetCoreInstaller@1
+    displayName: Use .NET Core sdk 3.0
+    inputs:
+      version: 3.0.x
+  - task: DotNetCoreCLI@2
+    displayName: dotnet restore
+    inputs:
+      command: restore
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+# Publish the demo website
+- job: demo
+  displayName: Demo build
+  pool: windows-latest
+  dependsOn: prepare
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: Publish website
+    inputs:
+      command: publish
+      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.0'
+  - task: PublishBuildArtifacts@1
+    displayName: Copy website to artifacts
+    inputs:
+      ArtifactName: demodrop
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+# Build the main library
+- job: lib
+  displayName: Library build
+  pool: windows-latest
+  dependsOn: prepare
+  steps:
+  - task: PowerShell@2
+    displayName: Run build script (lib only, release mode)
+    inputs:
+      targetType: filePath
+      filePath: ./scripts/buildRelease.ps1
+      arguments: '"-p:Version=$(Build.BuildNumber)-development"'
+  - task: PublishBuildArtifacts@1
+    displayName: Copy library to artifacts
 
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+# Run unit tests
+- job: tests
+  displayName: Unit tests
+  pool: windows-latest
+  dependsOn: lib
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: Run unit tests
+    inputs:
+      command: test
+      projects: 'fido2-net-lib.Test/*.csproj'
