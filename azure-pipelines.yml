@@ -2,12 +2,14 @@
 
 variables:
   BuildConfiguration: Release
+  TargetVmImage: windows-latest
 
 jobs:
 # Prepare the environment for the other tasks
 - job: prepare
   displayName: Prepare environment
-  pool: windows-latest
+  pool:
+    vmImage: $(TargetVmImage)
   steps:
   - task: NuGetToolInstaller@1
     displayName: Use NuGet 4.3.0
@@ -23,7 +25,8 @@ jobs:
 # Publish the demo website
 - job: demo
   displayName: Demo build
-  pool: windows-latest
+  pool:
+    vmImage: $(TargetVmImage)
   dependsOn: prepare
   steps:
   - task: DotNetCoreCLI@2
@@ -39,7 +42,8 @@ jobs:
 # Build the main library
 - job: lib
   displayName: Library build
-  pool: windows-latest
+  pool:
+    vmImage: $(TargetVmImage)
   dependsOn: prepare
   steps:
   - task: PowerShell@2
@@ -54,7 +58,8 @@ jobs:
 # Run unit tests
 - job: tests
   displayName: Unit tests
-  pool: windows-latest
+  pool:
+    vmImage: $(TargetVmImage)
   dependsOn: lib
   steps:
   - task: DotNetCoreCLI@2
