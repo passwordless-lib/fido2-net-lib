@@ -47,6 +47,7 @@ namespace Fido2Demo
                 options.Origin = Configuration["fido2:origin"];
                 options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
                 options.MDSAccessKey = Configuration["fido2:MDSAccessKey"];
+                options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
             })
             .AddCachedMetadataService(config =>
             {

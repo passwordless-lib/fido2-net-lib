@@ -69,35 +69,28 @@ namespace fido2_net_lib.Test
 
         public static CBORObject CreatePublicKeyFromU2fRegistrationData(byte[] keyHandleData, byte[] publicKeyData)
         {
-            using (var publicKey = new ECDsaCng(ConvertPublicKey(publicKeyData)))
+            var x = new byte[32];
+            var y = new byte[32];
+            Buffer.BlockCopy(publicKeyData, 1, x, 0, 32);
+            Buffer.BlockCopy(publicKeyData, 33, y, 0, 32);
+
+            var point = new ECPoint
             {
-                var coseKey = CBORObject.NewMap();
+                X = x,
+                Y = y,
+            };
 
-                coseKey.Add(COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2);
-                coseKey.Add(COSE.KeyCommonParameter.Alg, -7);
+            var coseKey = CBORObject.NewMap();
 
-                var keyParams = publicKey.ExportParameters(false);
+            coseKey.Add(COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2);
+            coseKey.Add(COSE.KeyCommonParameter.Alg, -7);
 
-                if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
-                    coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
+            coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-                coseKey.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
-                coseKey.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y);
+            coseKey.Add(COSE.KeyTypeParameter.X, point.X);
+            coseKey.Add(COSE.KeyTypeParameter.Y, point.Y);
 
-                return coseKey;
-            }
-        }
-
-        public static CngKey ConvertPublicKey(byte[] rawData)
-        {
-            if (rawData == null || rawData.Length != 65)
-                throw new Exception();
-            var header = new byte[] { 0x45, 0x43, 0x53, 0x31, 0x20, 0x00, 0x00, 0x00 };
-            var eccPublicKeyBlob = new byte[72];
-            Array.Copy(header, 0, eccPublicKeyBlob, 0, 8);
-            Array.Copy(rawData, 1, eccPublicKeyBlob, 8, 64);
-            CngKey key = CngKey.Import(eccPublicKeyBlob, CngKeyBlobFormat.EccPublicBlob);
-            return key;
+            return coseKey;
         }
     }
 }

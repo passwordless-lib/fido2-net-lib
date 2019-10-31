@@ -141,11 +141,7 @@ namespace fido2_net_lib.Test
             var aresponse = Get<AuthenticatorAssertionRawResponse>("./assertionNoneResponse.json");
 
             // signed assertion?
-            //var cng = CngKey.Import(StringToByteArray(key2), CngKeyBlobFormat.EccPublicBlob);
-            //var existingPublicKey = new ECDsaCng(cng);
             //fido2.MakeAssertion(aresponse, aoptions, response.);
-
-
         }
 
         [Fact]
@@ -297,7 +293,7 @@ namespace fido2_net_lib.Test
         {
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-            var rsa = new RSACng();
+            var rsa = RSA.Create();
             var rsaparams = rsa.ExportParameters(true);
             var cpk = MakeCredentialPublicKey(COSE.KeyType.RSA, COSE.Algorithm.RS256, rsaparams.Modulus, rsaparams.Exponent);
 
@@ -430,8 +426,8 @@ namespace fido2_net_lib.Test
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
 
             CredentialPublicKey cpk = null;
-            ECDsaCng ecdsa = null;
-            RSACng rsa = null;
+            ECDsa ecdsa = null;
+            RSA rsa = null;
             byte[] expandedPrivateKey = null;
             switch (kty)
             {
@@ -444,7 +440,7 @@ namespace fido2_net_lib.Test
                     }
                 case COSE.KeyType.RSA:
                     {
-                        rsa = new RSACng();
+                        rsa = RSA.Create();
                         var rsaparams = rsa.ExportParameters(true);
                         cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
                         break;
@@ -582,7 +578,7 @@ namespace fido2_net_lib.Test
             }
         }
 
-        internal ECDsaCng MakeECDsa(COSE.Algorithm alg, COSE.EllipticCurve crv)
+        internal ECDsa MakeECDsa(COSE.Algorithm alg, COSE.EllipticCurve crv)
         {
             ECCurve curve;
             switch (alg)
@@ -621,7 +617,7 @@ namespace fido2_net_lib.Test
                 default:
                     throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
             }
-            return new ECDsaCng(curve);
+            return ECDsa.Create(curve);
         }
 
         internal CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv, byte[] x, byte[] y)

@@ -111,7 +111,7 @@ namespace Fido2NetLib
             var keys = (jwtToken.Header["x5c"] as JArray)
                 .Values<string>()
                 .Select(x => new ECDsaSecurityKey(
-                    (ECDsaCng)(new X509Certificate2(Convert.FromBase64String(x)).GetECDsaPublicKey())))
+                    (ECDsa)(new X509Certificate2(Convert.FromBase64String(x)).GetECDsaPublicKey())))
                 .ToArray();
 
             var root = new X509Certificate2(Convert.FromBase64String(ROOT_CERT));
