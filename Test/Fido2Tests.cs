@@ -172,7 +172,12 @@ namespace fido2_net_lib.Test
             input.MetadataStatement.AuthenticatorVersion = 1;
             input.MetadataStatement.AssertionScheme = "abc123";
             input.MetadataStatement.AuthenticationAlgorithm = 1;
-            input.MetadataStatement.Upv = new Version[] { new Version("1.0.0.0") };
+            input.MetadataStatement.Upv = new UafVersion[] { new UafVersion
+                {
+                    Major = 1,
+                    Minor = 0,
+                } 
+            };
             input.MetadataStatement.AttestationTypes = new ushort[] { 1 };
             input.MetadataStatement.UserVerificationDetails = Array.Empty<VerificationMethodDescriptor[]>();
             input.MetadataStatement.AttestationRootCertificates = new string[] { "..." };

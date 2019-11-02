@@ -63,7 +63,7 @@ namespace Fido2NetLib
         /// Gets or sets the FIDO unified protocol version(s) (related to the specific protocol family) supported by this authenticator.
         /// </summary>
         [JsonProperty("upv")]
-        public Version[] Upv { get; set; }
+        public UafVersion[] Upv { get; set; }
         /// <summary>
         /// Gets or sets the assertion scheme supported by the authenticator.
         /// </summary>
