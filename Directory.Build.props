@@ -15,14 +15,14 @@
   <!-- GLOBALLY USABLE VARIABLES -->
   <PropertyGroup>
     <!-- Establish a preset but make it an active choice for each project. -->
-    <SupportedNonMetaTargetFrameWorks>netcoreapp3.0</SupportedNonMetaTargetFrameWorks>
+    <SupportedNonMetaTargetFrameWorks>netcoreapp3.1</SupportedNonMetaTargetFrameWorks>
     <!-- Can't have test project target .netstandard - only implementations not metaframeworks -->
-    <SupportedTargetFrameworks>netstandard2.0;$(SupportedNonMetaTargetFrameWorks)</SupportedTargetFrameworks>
+    <SupportedTargetFrameworks>netstandard2.0;netstandard2.1;$(SupportedNonMetaTargetFrameWorks)</SupportedTargetFrameworks>
   </PropertyGroup>
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
     <!-- Pin down language version -->
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>8</LangVersion>
     <!-- Running with "latest" means time alone will make builds non-reproducable... aww hell na -->
   </PropertyGroup>
   <!--MISC-->
