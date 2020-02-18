@@ -2,6 +2,10 @@
 
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
+    <Version>1.0.2</Version>
+    <PackageReleaseNotes>adding .net core 3.1 support and removing deprecated frameworks</PackageReleaseNotes>
+    <PackageLicenseUrl />
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
