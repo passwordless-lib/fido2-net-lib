@@ -56,7 +56,8 @@ namespace Fido2NetLib
             {4, HashAlgorithmName.SHA1 },
             {11, HashAlgorithmName.SHA256 },
             {12, HashAlgorithmName.SHA384 },
-            {13, HashAlgorithmName.SHA512 }
+            {13, HashAlgorithmName.SHA512 },
+            {(int) COSE.Algorithm.EdDSA, HashAlgorithmName.SHA512 }
         };
 
         public static byte[] GetEcDsaSigValue(BinaryReader reader)
