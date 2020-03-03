@@ -1,4 +1,4 @@
-# This is the main build configuration for the Fido2 libraries
+# This is the main build configuration, that build and tests the libraries
 name: $(Rev:r)
 
 variables:
@@ -13,11 +13,11 @@ jobs:
     vmImage: $(TargetVmImage)
   steps:
   - task: NuGetToolInstaller@1
-    displayName: Use NuGet 4.3.0
+    displayName: Install latest NuGet
   - task: DotNetCoreInstaller@1
-    displayName: Use .NET Core sdk 3.0
+    displayName: Use .NET Core sdk 3.1
     inputs:
-      version: 3.0.x
+      version: 3.1.x
   - task: DotNetCoreCLI@2
     displayName: dotnet restore
     inputs:
@@ -34,7 +34,7 @@ jobs:
     displayName: Publish website
     inputs:
       command: publish
-      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.0'
+      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.1'
   - task: PublishBuildArtifacts@1
     displayName: Copy website to artifacts
     inputs:
