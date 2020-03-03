@@ -23,23 +23,6 @@ jobs:
     inputs:
       command: restore
 
-# Publish the demo website
-- job: demo
-  displayName: Demo build
-  pool:
-    vmImage: $(TargetVmImage)
-  dependsOn: prepare
-  steps:
-  - task: DotNetCoreCLI@2
-    displayName: Publish website
-    inputs:
-      command: publish
-      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.1'
-  - task: PublishBuildArtifacts@1
-    displayName: Copy website to artifacts
-    inputs:
-      ArtifactName: demodrop
-
 # Build the main library
 - job: lib
   displayName: Library build
@@ -53,8 +36,23 @@ jobs:
       targetType: filePath
       filePath: ./scripts/buildRelease.ps1
       arguments: '"-p:Version=$(Build.BuildNumber)-development"'
+
+# Publish the demo website
+- job: demo
+  displayName: Demo build
+  pool:
+    vmImage: $(TargetVmImage)
+  dependsOn: lib
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: Publish website
+    inputs:
+      command: publish
+      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.1'
   - task: PublishBuildArtifacts@1
-    displayName: Copy library to artifacts
+    displayName: Copy website to artifacts
+    inputs:
+      ArtifactName: demodrop
 
 # Run unit tests
 - job: tests
@@ -67,4 +65,4 @@ jobs:
     displayName: Run unit tests
     inputs:
       command: test
-      projects: 'fido2-net-lib.Test/*.csproj'
+      projects: '**/Test.csproj'
