@@ -1,7 +1,7 @@
 <Project>
   <!-- Package Metadata -->
   <PropertyGroup>
-    <VersionPrefix>1.0.1</VersionPrefix>
+    <VersionPrefix>1.1.0</VersionPrefix>
     <VersionSuffix>
     </VersionSuffix>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
