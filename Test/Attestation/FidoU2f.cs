@@ -12,8 +12,6 @@ namespace Test.Attestation
 {
     public class FidoU2f : Fido2Tests.Attestation
     {
-        public override CredentialPublicKey _credentialPublicKey { get { return _cpk; } }
-        internal CredentialPublicKey _cpk;
         public FidoU2f()
         {
             _aaguid = Guid.Empty;
@@ -32,10 +30,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData));
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
-                    _cpk = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecparams.Q.X, ecparams.Q.Y);
+                    _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecparams.Q.X, ecparams.Q.Y);
 
-                    var x = _cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                    var y = _cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+                    var x = _credentialPublicKey.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
+                    var y = _credentialPublicKey.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
                     var publicKeyU2F = new byte[1] { 0x4 }.Concat(x).Concat(y).ToArray();
 
                     var verificationData = new byte[1] { 0x00 };
@@ -77,9 +75,31 @@ namespace Test.Attestation
             Assert.Equal("Malformed x5c in fido - u2f attestation", ex.Result.Message);
         }
         [Fact]
-        public void TestU2fMalformedX5c()
+        public void TestU2fX5cNotArray()
+        {
+            _attestationObject["attStmt"].Set("x5c", "boomerang");
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("Malformed x5c in fido - u2f attestation", ex.Result.Message);
+        }
+        [Fact]
+        public void TestU2fX5cCountNotOne()
+        {
+            _attestationObject["attStmt"]
+                .Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])).Add(CBORObject.FromObject(new byte[0])));
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("Malformed x5c in fido - u2f attestation", ex.Result.Message);
+        }
+        [Fact]
+        public void TestU2fX5cValueNotByteString()
         {
             _attestationObject["attStmt"].Set("x5c", "x".ToArray());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
+        }
+        [Fact]
+        public void TestU2fX5cValueZeroLengthByteString()
+        {
+            _attestationObject["attStmt"].Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
@@ -130,7 +150,7 @@ namespace Test.Attestation
         {
             _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(new byte[] { 0xf1, 0xd0 }));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
+            Assert.Equal("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex.Result.Message);
         }
         [Fact]
         public void TestU2fBadSig()

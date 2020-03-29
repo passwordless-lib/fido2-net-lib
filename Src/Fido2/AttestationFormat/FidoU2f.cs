@@ -106,10 +106,16 @@ namespace Fido2NetLib.AttestationFormat
             if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
 
-            var ecsig = CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), pubKey.KeySize);
-            if (null == ecsig)
-                throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form");
-            
+            byte[] ecsig;
+            try
+            {
+                ecsig = CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), pubKey.KeySize);
+            }
+            catch (Fido2VerificationException ex)
+            {
+                throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex);
+            }
+
             var coseAlg = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
             var hashAlg = CryptoUtils.algMap[coseAlg];
 
