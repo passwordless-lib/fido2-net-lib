@@ -591,7 +591,7 @@ namespace Fido2NetLib.AttestationFormat
                 if ((null != aaguid) &&
                     (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) &&
                     (0 != new Guid(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid)))
-                    throw new Fido2VerificationException("aaguid malformed");
+                    throw new Fido2VerificationException(string.Format("aaguid malformed, expected {0}, got {1}", AuthData.AttestedCredentialData.AaGuid, new Guid(aaguid)));
             }
             // If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (null != EcdaaKeyId)

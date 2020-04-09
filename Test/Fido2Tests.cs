@@ -366,6 +366,7 @@ namespace fido2_net_lib.Test
                     {
                         var x = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                         var y = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+                        var curve = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
                         unique = BitConverter
                             .GetBytes((UInt16)x.Length)
                             .Reverse()
@@ -375,13 +376,31 @@ namespace fido2_net_lib.Test
                                                 .Reverse()
                                                 .ToArray())
                             .Concat(y);
-                        curveId = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmEccCurve.TPM_ECC_NIST_P256).Reverse().ToArray();
+
+                        var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
+                        {
+                            { 1, TpmEccCurve.TPM_ECC_NIST_P256},
+                            { 2, TpmEccCurve.TPM_ECC_NIST_P384},
+                            { 3, TpmEccCurve.TPM_ECC_NIST_P521},
+                        };
+
+                        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[curve]).Reverse().ToArray();
                         kdf = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_NULL);
                     }
 
+                    var tpmAlg = new byte[2];
+                    if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                    if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
+                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                    if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
+                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                    if (alg == COSE.Algorithm.RS1)
+                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+
                     var pubArea = CreatePubArea(
                         new byte[] { 0x00, 0x23 }, // Type
-                        new byte[] { 0x00, 0x0b }, // Alg
+                        tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
@@ -406,7 +425,19 @@ namespace fido2_net_lib.Test
                         .ToArray()
                         .Concat(hashedData);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { 0x00, 0x22, 0x00, 0x0b }
+                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
+                    {
+                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
+                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
+                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
+                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
+                    };
+
+                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+
+                    IEnumerable<byte> tpm2bName = new byte[] { }
+                        .Concat(tpm2bNameLen)
+                        .Concat(tpmAlg)
                         .Concat(hashedPubArea);
 
                     var certInfo = CreateCertInfo(
