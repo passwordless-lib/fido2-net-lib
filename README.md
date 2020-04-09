@@ -100,8 +100,9 @@ When the client returns a response, we verify and register the credentials.
 
 ```csharp
 // file: Controller.cs
-// 1. get the options we sent the client
+// 1. get the options we sent the client and remove it from storage
 var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
+HttpContext.Session.Remove("fido2.attestationOptions");
 var options = CredentialCreateOptions.FromJson(jsonOptions);
 
 // 2. Create callback so that lib can verify credential id is unique to this user
@@ -160,8 +161,9 @@ return Json(options);
 When the client returns a response, we verify it and accepts the login.
 
 ```csharp
-// 1. Get the assertion options we sent the client
+// 1. Get the assertion options we sent the client and remove from storage
 var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions");
+HttpContext.Session.Remove("fido2.assertionOptions");
 var options = AssertionOptions.FromJson(jsonOptions);
 
 // 2. Get registered credential from database
