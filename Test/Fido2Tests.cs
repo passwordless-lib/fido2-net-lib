@@ -388,6 +388,22 @@ namespace fido2_net_lib.Test
                         kdf = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_NULL);
                     }
 
+                    var type = new byte[2];
+                    switch (kty)
+                    {
+                        case COSE.KeyType.EC2:
+                            {
+                                type = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
+                                break;
+                            }
+                        case COSE.KeyType.RSA:
+                            {
+                                type = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
+                                break;
+                            }
+                            throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+                    }
+
                     var tpmAlg = new byte[2];
                     if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
                         tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
@@ -399,7 +415,7 @@ namespace fido2_net_lib.Test
                         tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        new byte[] { 0x00, 0x23 }, // Type
+                        type, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
@@ -919,7 +935,7 @@ namespace fido2_net_lib.Test
                     .Concat(symmetric)
                     .Concat(scheme)
                     .Concat(keyBits)
-                    .Concat(exponent)
+                    .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)))
                     .Concat(BitConverter.GetBytes((UInt16)unique.Length)
                         .Reverse()
                         .ToArray())
