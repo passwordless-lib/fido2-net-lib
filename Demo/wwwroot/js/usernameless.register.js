@@ -16,7 +16,7 @@ async function handleRegisterSubmit(event) {
 
     // possible values: true,false
     // NOTE: For usernameless scenarios, resident key must be set to true.
-    let require_resident_key = true;
+    let require_resident_key = "true";
 
 
 
