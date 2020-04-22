@@ -2,10 +2,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -38,13 +36,13 @@ namespace Fido2NetLib
 
         public virtual bool ConformanceTesting()
         {
-            if (_repositories.First().GetType() == typeof(ConformanceMetadataRepository)) return true;
-            return false;
+            return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
         }
 
         public virtual MetadataTOCPayloadEntry GetEntry(Guid aaguid)
         {
-            if (!IsInitialized()) throw new InvalidOperationException("MetadataService must be initialized");
+            if (!IsInitialized())
+                throw new InvalidOperationException("MetadataService must be initialized");
 
             if (_entries.ContainsKey(aaguid))
             {
@@ -57,18 +55,20 @@ namespace Fido2NetLib
 
                 return entry;
             }
-
-            else return null;
+            else
+            {
+                return null;
+            }
         }
 
         protected virtual string GetTocCacheKey(IMetadataRepository repository)
         {
-            return CACHE_PREFIX + ":" + repository.GetType().Name + ":TOC";
+            return $"{CACHE_PREFIX}:{repository.GetType().Name}:TOC";
         }
 
         protected virtual string GetEntryCacheKey(IMetadataRepository repository, Guid aaGuid)
         {
-            return CACHE_PREFIX + ":" + repository.GetType().Name + ":Entry:" + aaGuid.ToString();
+            return $"{CACHE_PREFIX}:{repository.GetType().Name}:Entry:{aaGuid}";
         }
 
         protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayloadEntry entry, DateTime? cacheUntil = null)
@@ -81,7 +81,8 @@ namespace Fido2NetLib
                 if (cachedEntry != null)
                 {
                     var statement = JsonConvert.DeserializeObject<MetadataStatement>(cachedEntry);
-                    if (!string.IsNullOrWhiteSpace(statement.AaGuid)) _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
+                    if (!string.IsNullOrWhiteSpace(statement.AaGuid))
+                        _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
                 }
                 else
                 {
@@ -99,7 +100,7 @@ namespace Fido2NetLib
 
                             if (cacheUntil.HasValue)
                             {
-                                await _cache.SetStringAsync(cacheKey, statementJson, new DistributedCacheEntryOptions()
+                                await _cache.SetStringAsync(cacheKey, statementJson, new DistributedCacheEntryOptions
                                 {
                                     AbsoluteExpiration = cacheUntil
                                 });
@@ -126,7 +127,8 @@ namespace Fido2NetLib
                     out var parsedDate))
             {
                 //NextUpdate is in the past to default to a useful number that will result us cross the date theshold for the next update
-                if (parsedDate < DateTime.UtcNow.AddMinutes(5)) return DateTime.UtcNow.Add(_defaultCacheInterval);
+                if (parsedDate < DateTime.UtcNow.AddMinutes(5))
+                    return DateTime.UtcNow.Add(_defaultCacheInterval);
 
                 return parsedDate;
             }

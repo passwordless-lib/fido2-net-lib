@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using Fido2NetLib;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -8,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Fido2Demo
 {
@@ -19,16 +18,15 @@ namespace Fido2Demo
         }
 
         public IConfiguration Configuration { get; }
-        public IRule PasswordLessDomainRule { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().AddRazorPagesOptions(o =>
+            services.AddRazorPages(opts =>
             {
                 // we don't care about antiforgery in the demo
-                o.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
-            }); ;
+                opts.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
+            }).AddNewtonsoftJson(); // the FIDO2 library requires Json.NET
 
             // Adds a default in-memory implementation of IDistributedCache.
             services.AddDistributedMemoryCache();
@@ -37,7 +35,29 @@ namespace Fido2Demo
                 // Set a short timeout for easy testing.
                 options.IdleTimeout = TimeSpan.FromMinutes(2);
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+                // Strict SameSite mode is required because the default mode used
+                // by ASP.NET Core 3 isn't understood by the Conformance Tool
+                // and breaks conformance testing
+                options.Cookie.SameSite = SameSiteMode.Strict;
+            });
+
+            services.AddFido2(options =>
+            {
+                options.ServerDomain = Configuration["fido2:serverDomain"];
+                options.ServerName = "FIDO2 Test";
+                options.Origin = Configuration["fido2:origin"];
+                options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
+                options.MDSAccessKey = Configuration["fido2:MDSAccessKey"];
+                options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
+            })
+            .AddCachedMetadataService(config =>
+            {
+                //They'll be used in a "first match wins" way in the order registered
+                config.AddStaticMetadataRepository();
+                if (!string.IsNullOrWhiteSpace(Configuration["fido2:MDSAccessKey"]))
+                {
+                    config.AddFidoMetadataRepository(Configuration["fido2:MDSAccessKey"]);
+                }
             });
 
             services.AddFido2(options =>
@@ -59,11 +79,10 @@ namespace Fido2Demo
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
-                app.UseBrowserLink();
                 app.UseDeveloperExceptionPage();
             }
             else
@@ -73,17 +92,14 @@ namespace Fido2Demo
             }
 
             app.UseSession();
-            app.UseRewriter(new RewriteOptions().Add(rewriteContext =>
-            {
-                var request = rewriteContext.HttpContext.Request;
-                if (request.Path == new PathString("/"))
-                {
-                    rewriteContext.HttpContext.Response.Redirect(request.PathBase + "/overview", true);
-                    rewriteContext.Result = RuleResult.EndResponse;
-                }
-            }));
-            app.UseMvc();
             app.UseStaticFiles();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapFallbackToPage("/", "/overview");
+                endpoints.MapRazorPages();
+                endpoints.MapControllers();
+            });
         }
     }
 }

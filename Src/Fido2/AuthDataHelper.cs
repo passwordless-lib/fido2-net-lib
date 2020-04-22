@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {

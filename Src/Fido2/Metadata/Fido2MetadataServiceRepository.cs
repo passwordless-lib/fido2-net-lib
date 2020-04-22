@@ -1,11 +1,14 @@
 ﻿using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
 {
@@ -58,11 +61,15 @@ namespace Fido2NetLib
             var tocAlg = await GetTocAlg();
 
             var statementBytes = Base64Url.Decode(statementBase64Url);
-            var statementString = System.Text.Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
+            var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
             var statement = JsonConvert.DeserializeObject<MetadataStatement>(statementString);
-            statement.Hash = Base64Url.Encode(CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)).ComputeHash(System.Text.Encoding.UTF8.GetBytes(statementBase64Url)));
+            using(HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)))
+            {
+                statement.Hash = Base64Url.Encode(hasher.ComputeHash(Encoding.UTF8.GetBytes(statementBase64Url)));
+            }
 
-            if(!HashesAreEqual(entry.Hash, statement.Hash)) throw new Fido2VerificationException("TOC entry and statement hashes do not match");
+            if(!HashesAreEqual(entry.Hash, statement.Hash))
+                throw new Fido2VerificationException("TOC entry and statement hashes do not match");
 
             return statement;
         }
@@ -99,12 +106,12 @@ namespace Fido2NetLib
 
         protected async Task<MetadataTOCPayload> DeserializeAndValidateToc(string toc)
         {
-            var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(toc);
+            var jwtToken = new JwtSecurityToken(toc);
             _tocAlg = jwtToken.Header["alg"] as string;
-            var keys = (jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray)
+            var keys = (jwtToken.Header["x5c"] as JArray)
                 .Values<string>()
                 .Select(x => new ECDsaSecurityKey(
-                    (ECDsaCng)(new X509Certificate2(System.Convert.FromBase64String(x)).GetECDsaPublicKey())))
+                    (ECDsa)(new X509Certificate2(Convert.FromBase64String(x)).GetECDsaPublicKey())))
                 .ToArray();
 
             var root = new X509Certificate2(Convert.FromBase64String(ROOT_CERT));
@@ -121,15 +128,15 @@ namespace Fido2NetLib
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKeys = keys,
             };
-            var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var tokenHandler = new JwtSecurityTokenHandler();
 
             tokenHandler.ValidateToken(
                 toc,
                 validationParameters,
                 out var validatedToken);
-            var payload = ((System.IdentityModel.Tokens.Jwt.JwtSecurityToken)validatedToken).Payload.SerializeToJson();
-            chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(System.Convert.FromBase64String((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Values<string>().Last())));
-            var valid = chain.Build(new X509Certificate2(System.Convert.FromBase64String((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Values<string>().First())));
+            var payload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+            chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(Convert.FromBase64String((jwtToken.Header["x5c"] as JArray).Values<string>().Last())));
+            var valid = chain.Build(new X509Certificate2(Convert.FromBase64String((jwtToken.Header["x5c"] as JArray).Values<string>().First())));
             // if the root is trusted in the context we are running in, valid should be true here
             if (false == valid)
             {
@@ -139,14 +146,15 @@ namespace Fido2NetLib
                     {
                         var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
                         var crlFile = await DownloadDataAsync(cdp);
-                        if (true == CryptoUtils.IsCertInCRL(crlFile, element.Certificate)) throw new Fido2VerificationException(string.Format("Cert {0} found in CRL {1}", element.Certificate.Subject, cdp));
+                        if (true == CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
+                            throw new Fido2VerificationException(string.Format("Cert {0} found in CRL {1}", element.Certificate.Subject, cdp));
                     }
                 }
 
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
                 if (root.Thumbprint == chain.ChainElements[chain.ChainElements.Count - 1].Certificate.Thumbprint &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
-                    chain.ChainElements.Count == ((jwtToken.Header["x5c"] as Newtonsoft.Json.Linq.JArray).Count + 1) &&
+                    chain.ChainElements.Count == ((jwtToken.Header["x5c"] as JArray).Count + 1) &&
                     // and that the root cert has exactly one status listed against it
                     chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
                     // and that that status is a status of exactly UntrustedRoot
@@ -162,7 +170,8 @@ namespace Fido2NetLib
                     }
                 }
             }
-            if (false == valid) throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
+            if (false == valid)
+                throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
             return JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
         }
     }

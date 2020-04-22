@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Fido2NetLib;
 using Newtonsoft.Json;
 
 namespace Fido2NetLib
@@ -23,12 +22,13 @@ namespace Fido2NetLib
 
         public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayloadEntry entry)
         {
-            if (_toc == null) await GetToc();
+            if (_toc == null)
+                await GetToc();
 
-            Guid parsedAaGuid;
-            if(!string.IsNullOrEmpty(entry.AaGuid) && Guid.TryParse(entry.AaGuid, out parsedAaGuid))
+            if (!string.IsNullOrEmpty(entry.AaGuid) && Guid.TryParse(entry.AaGuid, out Guid parsedAaGuid))
             {
-                if (_entries.ContainsKey(parsedAaGuid)) return _entries[parsedAaGuid].MetadataStatement;
+                if (_entries.ContainsKey(parsedAaGuid))
+                    return _entries[parsedAaGuid].MetadataStatement;
             }
 
             return null;
@@ -36,17 +36,23 @@ namespace Fido2NetLib
 
         public Task<MetadataTOCPayload> GetToc()
         {
-            if (System.IO.Directory.Exists(_path))
+            if (Directory.Exists(_path))
             {
-                foreach (var filename in System.IO.Directory.GetFiles(_path))
+                foreach (var filename in Directory.GetFiles(_path))
                 {
-                    var rawStatement = System.IO.File.ReadAllText(filename);
+                    var rawStatement = File.ReadAllText(filename);
                     var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
                     var conformanceEntry = new MetadataTOCPayloadEntry
                     {
                         AaGuid = statement.AaGuid,
                         MetadataStatement = statement,
-                        StatusReports = new StatusReport[] { new StatusReport() { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED } }
+                        StatusReports = new StatusReport[] 
+                        { 
+                            new StatusReport 
+                            { 
+                                Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED 
+                            } 
+                        }
                     };
                     if (null != conformanceEntry.AaGuid) _entries.Add(new Guid(conformanceEntry.AaGuid), conformanceEntry);
                 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -41,12 +41,11 @@ namespace Fido2NetLib
         /// <returns>string.</returns>
         public static string ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
-            return typeof(TEnum)
-                .GetTypeInfo()
-                .DeclaredMembers
-                .SingleOrDefault(x => x.Name == value.ToString())
-                ?.GetCustomAttribute<EnumMemberAttribute>(false)
-                ?.Value;
+            return typeof(TEnum).GetTypeInfo()
+                                .DeclaredMembers
+                                .SingleOrDefault(x => x.Name == value.ToString())
+                                ?.GetCustomAttribute<EnumMemberAttribute>(false)
+                                ?.Value;
         }
     }
 }

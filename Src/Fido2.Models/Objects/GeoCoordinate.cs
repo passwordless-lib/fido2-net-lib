@@ -7,7 +7,7 @@ namespace GeoCoordinatePortable
     /// Represents a geographical location that is determined by latitude and longitude
     /// coordinates. May also include altitude, accuracy, speed, and course information.
     /// </summary>
-    public class GeoCoordinate : System.IEquatable<GeoCoordinate>
+    public class GeoCoordinate : IEquatable<GeoCoordinate>
     {
         /// <summary>
         /// Represents a <see cref="GeoCoordinate"/> object that has unknown latitude and longitude fields.
@@ -106,7 +106,7 @@ namespace GeoCoordinatePortable
             {
                 if (value > 90.0 || value < -90.0)
                 {
-                    throw new ArgumentOutOfRangeException("Latitude", "Argument must be in range of -90 to 90");
+                    throw new ArgumentOutOfRangeException(nameof(Latitude), "Argument must be in range of -90 to 90");
                 }
                 _latitude = value;
             }
@@ -126,7 +126,7 @@ namespace GeoCoordinatePortable
             {
                 if (value > 180.0 || value < -180.0)
                 {
-                    throw new ArgumentOutOfRangeException("Longitude", "Argument must be in range of -180 to 180");
+                    throw new ArgumentOutOfRangeException(nameof(Longitude), "Argument must be in range of -180 to 180");
                 }
                 _longitude = value;
             }
@@ -145,7 +145,7 @@ namespace GeoCoordinatePortable
             set
             {
                 if (value < 0.0)
-                    throw new ArgumentOutOfRangeException("HorizontalAccuracy", "Argument must be non negative");
+                    throw new ArgumentOutOfRangeException(nameof(HorizontalAccuracy), "Argument must be non negative");
                 _horizontalAccuracy = value == 0.0 ? double.NaN : value;
             }
         }
@@ -163,7 +163,7 @@ namespace GeoCoordinatePortable
             set
             {
                 if (value < 0.0)
-                    throw new ArgumentOutOfRangeException("VerticalAccuracy", "Argument must be non negative");
+                    throw new ArgumentOutOfRangeException(nameof(VerticalAccuracy), "Argument must be non negative");
                 _verticalAccuracy = value == 0.0 ? double.NaN : value;
             }
         }
@@ -181,7 +181,7 @@ namespace GeoCoordinatePortable
             set
             {
                 if (value < 0.0)
-                    throw new ArgumentOutOfRangeException("speed", "Argument must be non negative");
+                    throw new ArgumentOutOfRangeException(nameof(Speed), "Argument must be non negative");
                 _speed = value;
             }
         }
@@ -199,7 +199,7 @@ namespace GeoCoordinatePortable
             set
             {
                 if (value < 0.0 || value > 360.0)
-                    throw new ArgumentOutOfRangeException("course", "Argument must be in range 0 to 360");
+                    throw new ArgumentOutOfRangeException(nameof(Course), "Argument must be in range 0 to 360");
                 _course = value;
             }
         }
@@ -281,10 +281,12 @@ namespace GeoCoordinatePortable
         /// <param name="other">The GeoCoordinate for the location to calculate the distance to.</param>
         public double GetDistanceTo(GeoCoordinate other)
         {
-            if (double.IsNaN(Latitude) || double.IsNaN(Longitude) || double.IsNaN(other.Latitude) ||
+            if (double.IsNaN(Latitude) || 
+                double.IsNaN(Longitude) || 
+                double.IsNaN(other.Latitude) ||
                 double.IsNaN(other.Longitude))
             {
-                throw new ArgumentException("Argument latitude or longitude is not a number");
+                throw new InvalidOperationException("Argument latitude or longitude is not a number");
             }
 
             var d1 = Latitude * (Math.PI / 180.0);

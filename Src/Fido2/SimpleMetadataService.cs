@@ -2,9 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Fido2NetLib;
 using Newtonsoft.Json;
 
 namespace Fido2NetLib
@@ -17,7 +15,6 @@ namespace Fido2NetLib
         protected readonly ConcurrentDictionary<Guid, MetadataTOCPayloadEntry> _entries;
         protected bool _initialized;
 
-
         public SimpleMetadataService(IEnumerable<IMetadataRepository> repositories)
         {
             _repositories = repositories.ToList();
@@ -27,13 +24,13 @@ namespace Fido2NetLib
 
         public bool ConformanceTesting()
         {
-            if (_repositories.First().GetType() == typeof(ConformanceMetadataRepository)) return true;
-            return false;
+            return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
         }
 
         public MetadataTOCPayloadEntry GetEntry(Guid aaguid)
         {
-            if (!IsInitialized()) throw new InvalidOperationException("MetadataService must be initialized");
+            if (!IsInitialized())
+                throw new InvalidOperationException("MetadataService must be initialized");
 
             if (_entries.ContainsKey(aaguid))
             {
@@ -41,14 +38,17 @@ namespace Fido2NetLib
 
                 if (_metadataStatements.ContainsKey(aaguid))
                 {
-                    if (entry.Hash != _metadataStatements[aaguid].Hash) throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
+                    if (entry.Hash != _metadataStatements[aaguid].Hash)
+                        throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
                     entry.MetadataStatement = _metadataStatements[aaguid];
                 }
 
                 return entry;
             }
-
-            else return null;
+            else
+            {
+                return null;
+            }
         }
 
         protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayloadEntry entry)
@@ -61,6 +61,7 @@ namespace Fido2NetLib
                 {
                     _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
 
+                    // TODO : This seems undone
                     var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
                 }
             }

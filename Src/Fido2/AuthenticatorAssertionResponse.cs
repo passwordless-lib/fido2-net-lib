@@ -15,7 +15,6 @@ namespace Fido2NetLib
     {
         private AuthenticatorAssertionResponse(byte[] clientDataJson) : base(clientDataJson)
         {
-
         }
 
         public AuthenticatorAssertionRawResponse Raw { get; set; }
@@ -44,28 +43,45 @@ namespace Fido2NetLib
         /// Implements alghoritm from https://www.w3.org/TR/webauthn/#verifying-assertion
         /// </summary>
         /// <param name="options">The assertionoptions that was sent to the client</param>
-        /// <param name="expectedOrigin">The expected server origin, used to verify that the signature is sent to the expected server</param>
+        /// <param name="expectedOrigin">
+        /// The expected server origin, used to verify that the signature is sent to the expected server
+        /// </param>
+        /// <param name="storedPublicKey">The stored public key for this CredentialId</param>
         /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
-        public async Task<AssertionVerificationResult> VerifyAsync(AssertionOptions options, string expectedOrigin, byte[] storedPublicKey, uint storedSignatureCounter, IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId, byte[] requestTokenBindingId)
+        /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID</param>
+        /// <param name="requestTokenBindingId"></param>
+        public async Task<AssertionVerificationResult> VerifyAsync(
+            AssertionOptions options,
+            string expectedOrigin,
+            byte[] storedPublicKey,
+            uint storedSignatureCounter,
+            IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
+            byte[] requestTokenBindingId)
         {
             BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
 
-            if (Raw.Type != PublicKeyCredentialType.PublicKey) throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
+            if (Raw.Type != PublicKeyCredentialType.PublicKey)
+                throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
 
-            if (Raw.Id == null) throw new Fido2VerificationException("Id is missing");
-            if (Raw.RawId == null) throw new Fido2VerificationException("RawId is missing");
+            if (Raw.Id == null)
+                throw new Fido2VerificationException("Id is missing");
+            if (Raw.RawId == null)
+                throw new Fido2VerificationException("RawId is missing");
 
             // 1. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
             if (options.AllowCredentials != null && options.AllowCredentials.Count() > 0)
             {
                 // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
-                if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id))) throw new Fido2VerificationException("Invalid");
+                if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id)))
+                    throw new Fido2VerificationException("Invalid");
             }
 
             // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
             if (UserHandle != null)
             {
-                if (UserHandle.Length == 0) throw new Fido2VerificationException("Userhandle was empty DOMString. It should either be null or have a value.");
+                if (UserHandle.Length == 0)
+                    throw new Fido2VerificationException("Userhandle was empty DOMString. It should either be null or have a value.");
+
                 if (false == await isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle)))
                 {
                     throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
@@ -85,7 +101,8 @@ namespace Fido2NetLib
 
 
             // 7. Verify that the value of C.type is the string webauthn.get.
-            if (Type != "webauthn.get") throw new Fido2VerificationException();
+            if (Type != "webauthn.get")
+                throw new Fido2VerificationException();
 
             // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
             // 9. Verify that the value of C.origin matches the Relying Party's origin.
@@ -111,7 +128,8 @@ namespace Fido2NetLib
                 hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
             }
 
-            if (false == authData.RpIdHash.SequenceEqual(hashedRpId)) throw new Fido2VerificationException("Hash mismatch RPID");
+            if (false == authData.RpIdHash.SequenceEqual(hashedRpId))
+                throw new Fido2VerificationException("Hash mismatch RPID");
             // 12. Verify that the User Present bit of the flags in authData is set.
             // UNLESS...userVerification is set to preferred or discouraged?
             // See Server-ServerAuthenticatorAssertionResponse-Resp3 Test server processing authenticatorData
@@ -123,12 +141,15 @@ namespace Fido2NetLib
             // UNLESS...userPresent is true?
             // see ee Server-ServerAuthenticatorAssertionResponse-Resp3 Test server processing authenticatorData
             // P-8 Send a valid ServerAuthenticatorAssertionResponse both authenticatorData.flags.UV and authenticatorData.flags.UP are not set, for userVerification set to "discouraged", and check that server succeeds
-            if (UserVerificationRequirement.Required == options.UserVerification && false == authData.UserVerified) throw new Fido2VerificationException("User verification is required");
+            if (UserVerificationRequirement.Required == options.UserVerification && false == authData.UserVerified) 
+                throw new Fido2VerificationException("User verification is required");
 
             // 14. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call.In particular, any extension identifier values in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
             // todo: Verify this (and implement extensions on options)
-            if (true == authData.HasExtensionsData && ((null == authData.Extensions) || (0 == authData.Extensions.Length))) throw new Fido2VerificationException("Extensions flag present, malformed extensions detected");
-            if (false == authData.HasExtensionsData && (null != authData.Extensions)) throw new Fido2VerificationException("Extensions flag not present, but extensions detected");
+            if (true == authData.HasExtensionsData && ((null == authData.Extensions) || (0 == authData.Extensions.Length))) 
+                throw new Fido2VerificationException("Extensions flag present, malformed extensions detected");
+            if (false == authData.HasExtensionsData && (null != authData.Extensions)) 
+                throw new Fido2VerificationException("Extensions flag not present, but extensions detected");
 
             // 15.
             // Done earlier, hashedClientDataJson
@@ -138,9 +159,11 @@ namespace Fido2NetLib
             Buffer.BlockCopy(Raw.Response.AuthenticatorData, 0, data, 0, Raw.Response.AuthenticatorData.Length);
             Buffer.BlockCopy(hashedClientDataJson, 0, data, Raw.Response.AuthenticatorData.Length, hashedClientDataJson.Length);
 
-            if (null == storedPublicKey || 0 == storedPublicKey.Length) throw new Fido2VerificationException("Stored public key is null or empty");
+            if (null == storedPublicKey || 0 == storedPublicKey.Length) 
+                throw new Fido2VerificationException("Stored public key is null or empty");
             var cpk = new CredentialPublicKey(storedPublicKey);
-            if (true != cpk.Verify(data, Signature)) throw new Fido2VerificationException("Signature did not match");
+            if (true != cpk.Verify(data, Signature)) 
+                throw new Fido2VerificationException("Signature did not match");
 
             // 17.
             if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)

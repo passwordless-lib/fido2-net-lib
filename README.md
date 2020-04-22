@@ -3,6 +3,7 @@ A working implementation library + demo for [FIDO2](https://fidoalliance.org/fid
 
 [![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
 [![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
+[![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless) 
 
 ### Purpose
 
@@ -10,7 +11,11 @@ Enable passwordless sign in for all .net apps (asp, core, native).
 
 To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.com/) [FIDO2 Server](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html) / [WebAuthn relying party](https://www.w3.org/TR/webauthn/#relying-party) library for the easy validation of [registration](https://www.w3.org/TR/webauthn/#usecase-registration) ([attestation](https://www.w3.org/TR/webauthn/#attestation)) and [authentication](https://www.w3.org/TR/webauthn/#usecase-authentication) ([assertion](https://www.w3.org/TR/webauthn/#authentication-assertion)) of [FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) credentials, in order to increase the adoption of the technology, ultimately defeating phishing attacks.
 
-```Install-Package Fido2 -Version 1.0.1```
+```Install-Package Fido2 -Version 1.1.0```
+
+To use the asp.net helpers, install the asp.net-package.  
+
+```Install-Package Fido2.AspNet -Version 1.1.0```
 
 ### Demo
 * **Online example**: https://www.passwordless.dev
@@ -188,27 +193,34 @@ https://www.nuget.org/packages/Fido2/ and https://www.nuget.org/packages/Fido2.M
 
 # Contributing
 
-## To run the project locally
+See [Contributing](CONTRIBUTING.md) for informations about contributing to the project.
 
-Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
-You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
+## Contributors
 
-The HTML and javascript is copied (and then updated) from WebAuthn.io.
+### Code Contributors
 
-Feedback, issues and pull requests are VERY welcome.
+This project exists thanks to all the people who contribute. [[Contribute](https://github.com/abergs/fido2-net-lib/tree/master#contributing)].
+<a href="https://github.com/abergs/fido2-net-lib/graphs/contributors"><img src="https://opencollective.com/passwordless/contributors.svg?width=890&button=false" /></a>
 
-## Build
+### Financial Contributors
 
-[![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
-[![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
+Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/passwordless/contribute)]
 
-All PR's and the master branch is built with Azure Devops.
+#### Individuals
 
-Scripts to build, pack and publish a nuget package are located in ./scripts/
+<a href="https://opencollective.com/passwordless"><img src="https://opencollective.com/passwordless/individuals.svg?width=890"></a>
 
-## Conformance testing tool
-To run a suit of test of different verifications and attestation formats, register and download the [FIDO Test tools](https://fidoalliance.org/tool-request-agreement/)
+#### Organizations
 
-## Other
+Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/passwordless/contribute)]
 
-A complimentary [blog post](http://ideasof.andersaberg.com/development/fido2-net-library) with some lessons learned since starting this library
+<a href="https://opencollective.com/passwordless/organization/0/website"><img src="https://opencollective.com/passwordless/organization/0/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/1/website"><img src="https://opencollective.com/passwordless/organization/1/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/2/website"><img src="https://opencollective.com/passwordless/organization/2/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/3/website"><img src="https://opencollective.com/passwordless/organization/3/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/4/website"><img src="https://opencollective.com/passwordless/organization/4/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/5/website"><img src="https://opencollective.com/passwordless/organization/5/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/6/website"><img src="https://opencollective.com/passwordless/organization/6/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/7/website"><img src="https://opencollective.com/passwordless/organization/7/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/8/website"><img src="https://opencollective.com/passwordless/organization/8/avatar.svg"></a>
+<a href="https://opencollective.com/passwordless/organization/9/website"><img src="https://opencollective.com/passwordless/organization/9/avatar.svg"></a>

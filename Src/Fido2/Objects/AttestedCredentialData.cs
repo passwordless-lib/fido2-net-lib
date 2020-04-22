@@ -10,7 +10,7 @@ namespace Fido2NetLib.Objects
         /// Minimum length of the attested credential data structure.  AAGUID + credentialID length + credential ID + credential public key.
         /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
         /// </summary>
-        private int MinLength = Marshal.SizeOf(typeof(Guid)) + sizeof(UInt16) + sizeof(byte) + sizeof(byte);
+        private readonly int _minLength = Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
 
         /// <summary>
         /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
@@ -88,7 +88,8 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public AttestedCredentialData(BinaryReader reader)
         {
-            if (reader.BaseStream.Length < MinLength) throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+            if (reader.BaseStream.Length < _minLength)
+                throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
             // First 16 bytes is AAGUID
             var aaguidBytes = reader.ReadBytes(Marshal.SizeOf(typeof(Guid)));
 
@@ -98,10 +99,12 @@ namespace Fido2NetLib.Objects
                 AaGuid = FromBigEndian(aaguidBytes);
             }
             else
+            {
                 AaGuid = new Guid(aaguidBytes);
+            }
 
             // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
-            var credentialIDLenBytes = reader.ReadBytes(sizeof(UInt16));
+            var credentialIDLenBytes = reader.ReadBytes(sizeof(ushort));
 
             if (BitConverter.IsLittleEndian)
             {
@@ -125,10 +128,7 @@ namespace Fido2NetLib.Objects
 
         public override string ToString()
         {
-            return string.Format("AAGUID: {0}, CredentialID: {1}, CredentialPublicKey: {2}",
-                AaGuid.ToString(),
-                CredentialID.ToString().Replace("-",""),
-                CredentialPublicKey.ToString());
+            return $"AAGUID: {AaGuid}, CredentialID: {CredentialID.ToString().Replace("-", "")}, CredentialPublicKey: {CredentialPublicKey}";
         }
 
         public byte[] ToByteArray()
@@ -142,10 +142,13 @@ namespace Fido2NetLib.Objects
                     {
                         writer.Write(AaGuidToBigEndian());
                     }
-                    else writer.Write(AaGuid.ToByteArray());
+                    else
+                    {
+                        writer.Write(AaGuid.ToByteArray());
+                    }
 
                     // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
-                    var credentialIDLen = (UInt16)CredentialID.Length;
+                    var credentialIDLen = (ushort)CredentialID.Length;
                     var credentialIDLenBytes = BitConverter.GetBytes(credentialIDLen);
                     if (BitConverter.IsLittleEndian)
                     {

@@ -7,7 +7,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
 {
-    enum UndesiredAuthenticatorStatus
+    internal enum UndesiredAuthenticatorStatus
     {
         ATTESTATION_KEY_COMPROMISE = AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE,
         USER_VERIFICATION_BYPASS = AuthenticatorStatus.USER_VERIFICATION_BYPASS,
@@ -16,29 +16,34 @@ namespace Fido2NetLib.AttestationFormat
         REVOKED = AuthenticatorStatus.REVOKED
     };
 
-    enum MetadataAttestationType
+    internal enum MetadataAttestationType
     {
         ATTESTATION_BASIC_FULL = 0x3e07,
         ATTESTATION_BASIC_SURROGATE = 0x3e08
     }
 
-    class Packed : AttestationFormat
+    internal class Packed : AttestationFormat
     {
-        private readonly IMetadataService MetadataService;
-        public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
+        private readonly IMetadataService _metadataService;
+
+        public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService)
+            : base(attStmt, authenticatorData, clientDataHash)
         {
-            MetadataService = metadataService;
+            _metadataService = metadataService;
         }
 
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
-            var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None).Select(part => part.Split('=')).ToDictionary(split => split[0], split => split[1]);
+            var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None)
+                                          .Select(part => part.Split('='))
+                                          .ToDictionary(split => split[0], split => split[1]);
             return (0 != dictSubject["C"].Length ||
                 0 != dictSubject["O"].Length ||
                 0 != dictSubject["OU"].Length ||
                 0 != dictSubject["CN"].Length ||
                 "Authenticator Attestation" == dictSubject["OU"].ToString());
         }
+
         public override void Verify()
         {
             // Verify that attStmt is valid CBOR conforming to the syntax defined above and 
@@ -76,7 +81,7 @@ namespace Fido2NetLib.AttestationFormat
 
                 // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                 // using the attestation public key in attestnCert with the algorithm specified in alg
-                var packedPubKey = (ECDsaCng)attestnCert.GetECDsaPublicKey(); // attestation public key
+                var packedPubKey = attestnCert.GetECDsaPublicKey(); // attestation public key
                 if (false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
                     throw new Fido2VerificationException("Invalid attestation algorithm");
 
@@ -114,10 +119,11 @@ namespace Fido2NetLib.AttestationFormat
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
 
-                var entry = MetadataService?.GetEntry(AuthData.AttestedCredentialData.AaGuid);
+                var entry = _metadataService?.GetEntry(AuthData.AttestedCredentialData.AaGuid);
 
                 // while conformance testing, we must reject any authenticator that we cannot get metadata for
-                if (MetadataService?.ConformanceTesting() == true && null == entry) throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
+                if (_metadataService?.ConformanceTesting() == true && null == entry)
+                    throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
 
                 // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
                 if (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false)
@@ -144,7 +150,8 @@ namespace Fido2NetLib.AttestationFormat
                 // If the authenticator is not listed as one that should produce a basic full attestation, the certificate should be self signed
                 if (!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false)
                 {
-                    if (trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer) throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
+                    if (trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
+                        throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
                 }
 
                 // Check status resports for authenticator with undesirable status

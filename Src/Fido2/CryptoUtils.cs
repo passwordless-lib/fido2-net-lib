@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using LipingShare.LCLib.Asn1Processor;
-using PeterO.Cbor;
 using Fido2NetLib.Objects;
-using System.IO;
+using LipingShare.LCLib.Asn1Processor;
 
 namespace Fido2NetLib
 {
@@ -37,7 +37,7 @@ namespace Fido2NetLib
                 case "PS512":
                     return SHA512.Create();
                 default:
-                    throw new ArgumentOutOfRangeException("hashName");
+                    throw new ArgumentOutOfRangeException(nameof(hashName));
             }
         }
 
@@ -63,7 +63,8 @@ namespace Fido2NetLib
         {
             // First byte should be DER int marker
             var derInt = reader.ReadByte();
-            if (0x02 != derInt) throw new Fido2VerificationException("ECDsa signature coordinate sequence does not contain DER integer value"); // DER INTEGER
+            if (0x02 != derInt)
+                throw new Fido2VerificationException("ECDsa signature coordinate sequence does not contain DER integer value"); // DER INTEGER
 
             // Second byte is length to read
             var len = reader.ReadByte();
@@ -81,7 +82,8 @@ namespace Fido2NetLib
                 reader.BaseStream.Seek(-1, SeekOrigin.Current);
             }
             // back the stream up one byte from the leading 0x00 check
-            else reader.BaseStream.Seek(-1, SeekOrigin.Current);
+            else
+                reader.BaseStream.Seek(-1, SeekOrigin.Current);
 
             // read the calculated number of bytes from the stream and return the result
             return reader.ReadBytes(len);
@@ -110,16 +112,19 @@ namespace Fido2NetLib
                         var longLenBytes = (dataLen & ~(1 << 7));
 
                         // we are expecting a single byte to hold the data length at the time of this writing
-                        if (1 != longLenBytes) throw new Fido2VerificationException("ECDsa signature has invalid long form data length bytes");
+                        if (1 != longLenBytes)
+                            throw new Fido2VerificationException("ECDsa signature has invalid long form data length bytes");
 
                         // read the length of the data
                         var longLen = reader.ReadBytes(longLenBytes)[0];
 
                         // must be more than 127 bytes otherwise we'd be using the short form
-                        if (0x80 > longLen) throw new Fido2VerificationException("ECDsa signature has invalid long form data length");
+                        if (0x80 > longLen)
+                            throw new Fido2VerificationException("ECDsa signature has invalid long form data length");
 
                         // sanity check the length
-                        if (ecDsaSig.Length != (reader.BaseStream.Position + longLen)) throw new Fido2VerificationException("ECDsa signature has invalid long form length");
+                        if (ecDsaSig.Length != (reader.BaseStream.Position + longLen))
+                            throw new Fido2VerificationException("ECDsa signature has invalid long form length");
                     }
 
                     // Get R value
@@ -129,7 +134,8 @@ namespace Fido2NetLib
                     var s = GetEcDsaSigValue(reader);
 
                     // make sure we are at the end
-                    if (reader.BaseStream.Position != reader.BaseStream.Length) throw new Fido2VerificationException("ECDsa signature has bytes leftover after parsing R and S values");
+                    if (reader.BaseStream.Position != reader.BaseStream.Length)
+                        throw new Fido2VerificationException("ECDsa signature has bytes leftover after parsing R and S values");
 
                     // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
                     // ASN.1 requires storing positive integer values with any leading 0s removed
@@ -138,7 +144,8 @@ namespace Fido2NetLib
                     var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
                     // Sanity check R and S value lengths
-                    if ((coefficientSize * 2) < (r.Length + s.Length)) throw new Fido2VerificationException("ECDsa signature has invalid length for given curve key size");
+                    if ((coefficientSize * 2) < (r.Length + s.Length))
+                        throw new Fido2VerificationException("ECDsa signature has invalid length for given curve key size");
 
                     // Create byte array to copy R into 
                     var P1363R = new byte[coefficientSize];
@@ -161,8 +168,17 @@ namespace Fido2NetLib
             {
                 if (ext.Oid.Value.Equals("2.5.29.31")) // id-ce-CRLDistributionPoints
                 {
-                    var asnData = new AsnEncodedData(ext.Oid, ext.RawData);
-                    cdp += asnData.Format(false).Split('=')[1];
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        var asnData = new AsnEncodedData(ext.Oid, ext.RawData);
+                        cdp += asnData.Format(false).Split('=')[1];
+                    }
+                    else
+                    {
+                        var strCDP = Asn1Util.BytesToString(ext.RawData);
+                        strCDP = strCDP.Replace("\u0086.", "=");
+                        cdp += strCDP.Split('=')[1];
+                    }
                 }
             }
             return cdp;
@@ -176,7 +192,7 @@ namespace Fido2NetLib
             {
                 asnParser.LoadData(Asn1Util.PemToStream(strCRL));
             }
-            else asnParser.LoadData(new System.IO.MemoryStream(crl));
+            else asnParser.LoadData(new MemoryStream(crl));
 
             if (7 > asnParser.RootNode.GetChildNode(0).ChildNodeCount)
                 return false; // empty CRL
@@ -185,15 +201,16 @@ namespace Fido2NetLib
 
             // throw revoked certs into a list so someday we eventually cache CRLs 
             var revoked = new List<long>();
-            for (var i = 0;i < revokedCertificates.ChildNodeCount;i++)
+            for (var i = 0; i < revokedCertificates.ChildNodeCount; i++)
             {
-                revoked.Add(Asn1Util.BytesToLong(revokedCertificates.GetChildNode(i).GetChildNode(0).Data.Reverse().ToArray()));
+                revoked.Add(Asn1Util.BytesToLong(revokedCertificates.GetChildNode(i)
+                                                                    .GetChildNode(0)
+                                                                    .Data
+                                                                    .Reverse()
+                                                                    .ToArray()));
             }
 
-            if (revoked.Contains(Asn1Util.BytesToLong(cert.GetSerialNumber())))
-                return true;
-            
-            else return false;
+            return revoked.Contains(Asn1Util.BytesToLong(cert.GetSerialNumber()));
         }
     }
 }

@@ -2,26 +2,29 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
+using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.AttestationFormat
 {
     public abstract class AttestationFormat
     {
+        public CBORObject attStmt;
+        public byte[] authenticatorData;
+        public byte[] clientDataHash;
+
         public AttestationFormat(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash)
         {
             this.attStmt = attStmt;
             this.authenticatorData = authenticatorData;
             this.clientDataHash = clientDataHash;
         }
-        public CBORObject attStmt;
-        public byte[] authenticatorData;
-        public byte[] clientDataHash;
-        internal CBORObject Sig { get { return attStmt["sig"]; } }
-        internal CBORObject X5c { get { return attStmt["x5c"]; } }
-        internal CBORObject Alg { get { return attStmt["alg"]; } }
-        internal CBORObject EcdaaKeyId { get { return attStmt["ecdaaKeyId"]; } }
-        internal Objects.AuthenticatorData AuthData { get { return new Objects.AuthenticatorData(authenticatorData); } } 
-        internal CBORObject CredentialPublicKey { get { return AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject(); } }
+
+        internal CBORObject Sig => attStmt["sig"];
+        internal CBORObject X5c => attStmt["x5c"];
+        internal CBORObject Alg => attStmt["alg"];
+        internal CBORObject EcdaaKeyId => attStmt["ecdaaKeyId"];
+        internal AuthenticatorData AuthData => new AuthenticatorData(authenticatorData);
+        internal CBORObject CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject();
         internal byte[] Data
         {
             get
@@ -43,13 +46,16 @@ namespace Fido2NetLib.AttestationFormat
                     using (var ms = new System.IO.MemoryStream(ext.RawData.ToArray()))
                     {
                         // OCTET STRING
-                        if (0x4 != ms.ReadByte()) throw new Fido2VerificationException("Expected octet string value");
+                        if (0x4 != ms.ReadByte())
+                            throw new Fido2VerificationException("Expected octet string value");
                         // AAGUID
-                        if (0x10 != ms.ReadByte()) throw new Fido2VerificationException("Unexpected length for aaguid");
+                        if (0x10 != ms.ReadByte())
+                            throw new Fido2VerificationException("Unexpected length for aaguid");
                         ms.Read(aaguid, 0, 0x10);
                     }
                     //The extension MUST NOT be marked as critical
-                    if (true == ext.Critical) throw new Fido2VerificationException("extension MUST NOT be marked as critical");
+                    if (true == ext.Critical)
+                        throw new Fido2VerificationException("extension MUST NOT be marked as critical");
                 }
             }
             return aaguid;
@@ -74,8 +80,10 @@ namespace Fido2NetLib.AttestationFormat
                 {
                     using (var ms = new System.IO.MemoryStream(ext.RawData.ToArray()))
                     {
-                        if (0x3 != ms.ReadByte()) throw new Fido2VerificationException("Expected bit string");
-                        if (0x2 != ms.ReadByte()) throw new Fido2VerificationException("Expected integer value");
+                        if (0x3 != ms.ReadByte())
+                            throw new Fido2VerificationException("Expected bit string");
+                        if (0x2 != ms.ReadByte())
+                            throw new Fido2VerificationException("Expected integer value");
                         var unusedBits = ms.ReadByte(); // number of unused bits
                         // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-authenticator-transports-extension-v1.2-ps-20170411.html
                         u2ftransports = ms.ReadByte(); // do something with this?

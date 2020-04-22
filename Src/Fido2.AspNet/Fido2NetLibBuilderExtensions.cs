@@ -2,8 +2,6 @@
 using System.Net.Http;
 using Fido2NetLib;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -45,13 +43,6 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.AddMetadataService<DistributedCacheMetadataService>();
 
             configAction(new Fido2NetLibBuilder(builder.Services));
-        }
-
-        private static IFido2NetLibBuilder AddClient<TClient>(this IFido2NetLibBuilder builder) where TClient : class, IMetadataRepository
-        {
-            builder.Services.AddTransient<IMetadataRepository, TClient>();
-
-            return builder;
         }
 
         public static IFido2MetadataServiceBuilder AddFileSystemMetadataRepository(this IFido2MetadataServiceBuilder builder, string directoryPath)

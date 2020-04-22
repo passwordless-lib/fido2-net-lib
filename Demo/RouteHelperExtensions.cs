@@ -11,11 +11,11 @@ namespace Fido2Demo
     {
         public static RewriteOptions AddRedirectToWWwIfPasswordlessDomain(this RewriteOptions options)
         {
-            options.Add(new RedirectToWWwIfPasswordlessDomainRule());
+            options.Add(new RedirectToWwwIfPasswordlessDomainRule());
             return options;
         }
 
-        public class RedirectToWWwIfPasswordlessDomainRule : IRule
+        public class RedirectToWwwIfPasswordlessDomainRule : IRule
         {
             public virtual void ApplyRule(RewriteContext context)
             {
