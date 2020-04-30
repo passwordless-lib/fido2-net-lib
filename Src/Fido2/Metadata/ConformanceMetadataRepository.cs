@@ -8,19 +8,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
+using Microsoft.IdentityModel.Json.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
 {
-    internal class MDSGetEndpointResponse
-    {
-        [JsonProperty("status", Required = Required.Always)]
-        public string Status { get; set; }
-        [JsonProperty("result", Required = Required.Always)]
-        public string[] Result { get; set; }
-    }
-
+   
     public class ConformanceMetadataRepository : IMetadataRepository
     {
         protected const string ROOT_CERT = "MIICYjCCAeigAwIBAgIPBIdvCXPXJiuD7VW0mgRQMAoGCCqGSM49BAMDMGcxCzAJ" +
@@ -68,7 +61,7 @@ namespace Fido2NetLib
 
             var statementBytes = Base64Url.Decode(statementBase64Url);
             var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
-            var statement = JsonConvert.DeserializeObject<MetadataStatement>(statementString);
+            var statement = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataStatement>(statementString);
             using(HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)))
             {
                 statement.Hash = Base64Url.Encode(hasher.ComputeHash(Encoding.UTF8.GetBytes(statementBase64Url)));
@@ -84,9 +77,9 @@ namespace Fido2NetLib
                 endpoint = _origin
             };
 
-            var content = new StringContent(JsonConvert.SerializeObject(req), Encoding.UTF8, "application/json");
+            var content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(req), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
-            var result = JsonConvert.DeserializeObject<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
+            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
             var conformanceEndpoints = new List<string>(result.Result);
 
             var combinedToc = new MetadataTOCPayload
@@ -137,36 +130,64 @@ namespace Fido2NetLib
             return await _httpClient.GetByteArrayAsync(url);
         }
 
+        private X509Certificate2 GetX509Certificate(string key)
+        {
+            try
+            {
+                var certBytes = Convert.FromBase64String(key);
+                return new X509Certificate2(certBytes);
+            }
+            catch (Exception ex)
+            {
+                throw new ArgumentException("Could not parse X509 certificate.", ex);
+            }
+        }
+
         public async Task<MetadataTOCPayload> DeserializeAndValidateToc(string toc)
         {
-            var jwtToken = new JwtSecurityToken(toc);
-            _tocAlg = jwtToken.Header["alg"] as string;
+            if (string.IsNullOrWhiteSpace(toc))
+                throw new ArgumentNullException(nameof(toc));
 
-            var keys = new List<SecurityKey>();
+            var jwtParts = toc.Split('.');
 
-            var keyStrings = (jwtToken.Header["x5c"] as JArray).Values<string>();
+            if (jwtParts.Length != 3)
+                throw new ArgumentException("The JWT does not have the 3 expected components");
 
-            foreach(var keyString in keyStrings)
+            var tocHeader = jwtParts.First();
+            var tokenHeader = JObject.Parse(System.Text.Encoding.UTF8.GetString(Base64Url.Decode(tocHeader)));
+
+            _tocAlg = tokenHeader["alg"]?.Value<string>();
+
+            if(_tocAlg == null)
+                throw new ArgumentNullException("No alg value was present in the TOC header.");
+
+            var x5cArray = tokenHeader["x5c"] as JArray;
+
+            if (x5cArray == null)
+                throw new ArgumentException("No x5c array was present in the TOC header.");
+
+            var rootCert = GetX509Certificate(ROOT_CERT);
+            var tocCertStrings = x5cArray.Values<string>().ToList();
+            var tocCertificates = new List<X509Certificate2>();
+            var tocPublicKeys = new List<SecurityKey>();
+
+            foreach (var certString in tocCertStrings)
             {
-                var cert = new X509Certificate2(Convert.FromBase64String(keyString));
+                var cert = GetX509Certificate(certString);
+                tocCertificates.Add(cert);
+
                 var ecdsaPublicKey = cert.GetECDsaPublicKey();
                 if(ecdsaPublicKey != null)
-                {
-                    keys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
-                }
-
+                    tocPublicKeys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
+                
                 var rsa = cert.GetRSAPublicKey();
                 if(rsa != null)
-                {
-                    keys.Add(new RsaSecurityKey(rsa));
-                }
+                    tocPublicKeys.Add(new RsaSecurityKey(rsa));
             }
  
-            var root = new X509Certificate2(Convert.FromBase64String(ROOT_CERT));
-
-            var chain = new X509Chain();
-            chain.ChainPolicy.ExtraStore.Add(root);
-            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            var certChain = new X509Chain();
+            certChain.ChainPolicy.ExtraStore.Add(rootCert);
+            certChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
             var validationParameters = new TokenValidationParameters
             {
@@ -174,7 +195,7 @@ namespace Fido2NetLib
                 ValidateAudience = false,
                 ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKeys = keys,
+                IssuerSigningKeys = tocPublicKeys,
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -184,15 +205,17 @@ namespace Fido2NetLib
                 validationParameters,
                 out var validatedToken);
 
-            var payload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
-
-            chain.ChainPolicy.ExtraStore.Add(new X509Certificate2(Convert.FromBase64String((jwtToken.Header["x5c"] as JArray).Values<string>().Last())));
-
-            var valid = chain.Build(new X509Certificate2(Convert.FromBase64String((jwtToken.Header["x5c"] as JArray).Values<string>().First())));
-            // if the root is trusted in the context we are running in, valid should be true here
-            if (!valid)
+            if(tocCertificates.Count > 1)
             {
-                foreach (var element in chain.ChainElements)
+                certChain.ChainPolicy.ExtraStore.AddRange(tocCertificates.Skip(1).ToArray());
+            }
+            
+            var certChainIsValid = certChain.Build(tocCertificates.First());
+            
+            // if the root is trusted in the context we are running in, valid should be true here
+            if (!certChainIsValid)
+            {
+                foreach (var element in certChain.ChainElements)
                 {
                     if (element.Certificate.Issuer != element.Certificate.Subject)
                     {
@@ -204,29 +227,30 @@ namespace Fido2NetLib
                 }
 
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
-                if (root.Thumbprint == chain.ChainElements[chain.ChainElements.Count - 1].Certificate.Thumbprint &&
+                if (rootCert.Thumbprint == certChain.ChainElements[certChain.ChainElements.Count - 1].Certificate.Thumbprint &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
-                    chain.ChainElements.Count == ((jwtToken.Header["x5c"] as JArray).Count + 1) &&
+                    certChain.ChainElements.Count == (tocCertStrings.Count + 1) &&
                     // and that the root cert has exactly one status listed against it
-                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                    certChain.ChainElements[certChain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
                     // and that that status is a status of exactly UntrustedRoot
-                    chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                    certChain.ChainElements[certChain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
                 {
                     // if we are good so far, that is a good sign
-                    valid = true;
-                    for (var i = 0; i < chain.ChainElements.Count - 1; i++)
+                    certChainIsValid = true;
+                    for (var i = 0; i < certChain.ChainElements.Count - 1; i++)
                     {
                         // check each non-root cert to verify zero status listed against it, otherwise, invalidate chain
-                        if (0 != chain.ChainElements[i].ChainElementStatus.Length)
-                            valid = false;
+                        if (0 != certChain.ChainElements[i].ChainElementStatus.Length)
+                            certChainIsValid = false;
                     }
                 }
             }
 
-            if (!valid)
+            if (!certChainIsValid)
                 throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
 
-            return JsonConvert.DeserializeObject<MetadataTOCPayload>(payload);
+            var tocPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
         }
     }
 }

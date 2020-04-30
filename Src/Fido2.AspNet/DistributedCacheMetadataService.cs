@@ -111,7 +111,7 @@ namespace Fido2NetLib
                     {
                         _log?.LogError(ex, "Error getting MetadataStatement from {0} for AAGUID '{1}' ", repository.GetType().Name, entry.AaGuid);
                         throw;
-                    }                    
+                    }
                 }
             }
         }
@@ -196,9 +196,17 @@ namespace Fido2NetLib
 
         public virtual async Task Initialize()
         {
-            foreach(var client in _repositories)
+            foreach (var client in _repositories)
             {
-                await InitializeClient(client);
+                try
+                {
+                    await InitializeClient(client);
+                }
+                catch (Exception ex)
+                {
+                    //Catch and log this as we don't want issues with external services to prevent app startup
+                    _log.LogCritical(ex, "Error initialising MDS client '{0}'", client.GetType().Name);
+                }
             }
             _initialized = true;
         }
