@@ -269,6 +269,40 @@ namespace Fido2NetLib
             };
             _entries.Add(new Guid(soloKeysSolo.AaGuid), soloKeysSolo);
 
+            var soloTapStatement = await DownloadStringAsync("https://raw.githubusercontent.com/solokeys/solo/master/metadata/SoloTap-FIDO2-CTAP2-Authenticator.json");
+            var soloTapMetadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(soloTapStatement);
+            var soloTapMetadata = new MetadataTOCPayloadEntry
+            {
+                AaGuid = soloTapMetadataStatement.AaGuid,
+                Url = "https://raw.githubusercontent.com/solokeys/solo/master/metadata/SoloTap-FIDO2-CTAP2-Authenticator.json",
+                StatusReports = new StatusReport[]
+                {
+                    new StatusReport
+                    {
+                        Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
+                    }
+                },
+                MetadataStatement = soloTapMetadataStatement
+            };
+            _entries.Add(new Guid(soloTapMetadata.AaGuid), soloTapMetadata);
+
+            var soloSomuStatement = await DownloadStringAsync("https://raw.githubusercontent.com/solokeys/solo/master/metadata/Somu-FIDO2-CTAP2-Authenticator.json");
+            var soloSomuMetadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(soloSomuStatement);
+            var soloSomuMetadata = new MetadataTOCPayloadEntry
+            {
+                AaGuid = soloSomuMetadataStatement.AaGuid,
+                Url = "https://raw.githubusercontent.com/solokeys/solo/master/metadata/Somu-FIDO2-CTAP2-Authenticator.json",
+                StatusReports = new StatusReport[]
+                {
+                    new StatusReport
+                    {
+                        Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
+                    }
+                },
+                MetadataStatement = soloSomuMetadataStatement
+            };
+            _entries.Add(new Guid(soloSomuMetadata.AaGuid), soloSomuMetadata);
+
             foreach (var entry in _entries)
             {
                 entry.Value.MetadataStatement.AaGuid = entry.Value.AaGuid;
