@@ -15,7 +15,7 @@ async function handleRegisterSubmit(event) {
     let user_verification = "preferred";
 
     // possible values: true,false
-    let require_resident_key = false;
+    let require_resident_key = "false";
 
 
 
