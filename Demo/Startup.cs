@@ -59,6 +59,23 @@ namespace Fido2Demo
                     config.AddFidoMetadataRepository(Configuration["fido2:MDSAccessKey"]);
                 }
             });
+
+            services.AddFido2(options =>
+            {
+                options.ServerDomain = Configuration["fido2:serverDomain"];
+                options.ServerName = "FIDO2 Test";
+                options.Origin = Configuration["fido2:origin"];
+                options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
+            })
+            .AddCachedMetadataService(config =>
+            {
+                //They'll be used in a "first match wins" way in the order registered
+                config.AddStaticMetadataRepository();
+                if (!string.IsNullOrWhiteSpace(Configuration["fido2:MDSAccessKey"]))
+                {
+                    config.AddFidoMetadataRepository(Configuration["fido2:MDSAccessKey"]);
+                }
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

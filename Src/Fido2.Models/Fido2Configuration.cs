@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib
+﻿using System.Net.Http;
+
+namespace Fido2NetLib
 {
     public class Fido2Configuration
     {
