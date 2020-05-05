@@ -573,6 +573,10 @@ namespace Fido2NetLib.AttestationFormat
                         }
                     }
                     valid = chain.Build(new X509Certificate2(X5c.Values.First().GetByteString()));
+
+                    // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                    var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                    valid = valid && chainRoot.RawData.SequenceEqual(tpmRoots[i].RawData);
                 }
                 if (false == valid)
                     throw new Fido2VerificationException("TPM attestation failed chain validation");

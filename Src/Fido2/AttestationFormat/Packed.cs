@@ -140,7 +140,13 @@ namespace Fido2NetLib.AttestationFormat
                             chain.ChainPolicy.ExtraStore.Add(cert);
                         }
                     }
+
                     var valid = chain.Build(trustPath[0]);
+
+                    // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                    var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                    valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
+
                     if (false == valid)
                     {
                         throw new Fido2VerificationException("Invalid certificate chain in packed attestation");
