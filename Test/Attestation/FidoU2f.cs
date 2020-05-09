@@ -21,8 +21,7 @@ namespace Test.Attestation
             {
                 var attRequest = new CertificateRequest("CN=U2FTesting, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US", ecdsaAtt, HashAlgorithmName.SHA256);
 
-                attRequest.CertificateExtensions.Add(
-                    new X509BasicConstraintsExtension(false, false, 0, false));
+                attRequest.CertificateExtensions.Add(notCAExt);
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {

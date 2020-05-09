@@ -36,6 +36,7 @@ namespace Test.Attestation
         public void TestNoneWithAttStmt()
         {
             _attestationObject.Add("attStmt", CBORObject.NewMap().Add("foo", "bar"));
+            _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256));
             Assert.Equal("Attestation format none should have no attestation statement", ex.Result.Message);
         }

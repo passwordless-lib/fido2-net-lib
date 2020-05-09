@@ -37,10 +37,11 @@ namespace Fido2NetLib.AttestationFormat
             var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None)
                                           .Select(part => part.Split('='))
                                           .ToDictionary(split => split[0], split => split[1]);
-            return (0 != dictSubject["C"].Length ||
-                0 != dictSubject["O"].Length ||
-                0 != dictSubject["OU"].Length ||
-                0 != dictSubject["CN"].Length ||
+
+            return (0 != dictSubject["C"].Length &&
+                0 != dictSubject["O"].Length &&
+                0 != dictSubject["OU"].Length &&
+                0 != dictSubject["CN"].Length &&
                 "Authenticator Attestation" == dictSubject["OU"].ToString());
         }
 
@@ -106,7 +107,7 @@ namespace Fido2NetLib.AttestationFormat
                 if (aaguid != null)
                 {
                     if (0 != AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid))
-                        throw new Fido2VerificationException("aaguid present in packed attestation but does not match aaguid from authData");
+                        throw new Fido2VerificationException("aaguid present in packed attestation cert exts but does not match aaguid from authData");
                 }
                 // 2d. The Basic Constraints extension MUST have the CA component set to false
                 if (IsAttnCertCACert(attestnCert.Extensions))

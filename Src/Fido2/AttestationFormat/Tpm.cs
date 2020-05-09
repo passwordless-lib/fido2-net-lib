@@ -590,7 +590,7 @@ namespace Fido2NetLib.AttestationFormat
                 var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
                 if ((null != aaguid) &&
                     (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) &&
-                    (0 != new Guid(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid)))
+                    (0 != AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid)))
                     throw new Fido2VerificationException(string.Format("aaguid malformed, expected {0}, got {1}", AuthData.AttestedCredentialData.AaGuid, new Guid(aaguid)));
             }
             // If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -738,9 +738,18 @@ namespace Fido2NetLib.AttestationFormat
                 {
                     name = AuthDataHelper.GetSizedByteArray(ab, ref offset, tpmAlgToDigestSizeMap[tpmalg]);
                 }
+                else
+                {
+                    throw new Fido2VerificationException("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm");
+                }
             }
+            else
+            {
+                throw new Fido2VerificationException("Invalid TPM_ALG_ID found in TPM2B_NAME");
+            }
+
             if (totalSize != bytes.Length + name.Length)
-                throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
+                throw new Fido2VerificationException("Unexpected extra bytes found in TPM2B_NAME");
             return (size, name);
         }
 
@@ -752,10 +761,10 @@ namespace Fido2NetLib.AttestationFormat
             var offset = 0;
             Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
             if (0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray(), 0))
-                throw new Fido2VerificationException("Bad magic number " + Magic.ToString());
+                throw new Fido2VerificationException("Bad magic number " + BitConverter.ToString(Magic).Replace("-",""));
             Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
             if (0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0))
-                throw new Fido2VerificationException("Bad structure tag " + Type.ToString());
+                throw new Fido2VerificationException("Bad structure tag " + BitConverter.ToString(Type).Replace("-", ""));
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             if (null == ExtraData || 0 == ExtraData.Length)

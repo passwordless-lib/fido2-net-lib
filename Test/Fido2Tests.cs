@@ -29,7 +29,6 @@ namespace fido2_net_lib.Test
         static Fido2Tests()
         {
             var MDSAccessKey = Environment.GetEnvironmentVariable("fido2:MDSAccessKey");
-            //var CacheDir = Environment.GetEnvironmentVariable("fido2:MDSCacheDirPath");
 
             var services = new ServiceCollection();
 
@@ -96,6 +95,14 @@ namespace fido2_net_lib.Test
             public CredentialPublicKey _credentialPublicKey;
             public const string rp = "fido2.azurewebsites.net";
             public byte[] _challenge;
+            public X500DistinguishedName rootDN = new X500DistinguishedName("CN=Testing, O=FIDO2-NET-LIB, C=US");
+            public Oid oidIdFidoGenCeAaguid = new Oid("1.3.6.1.4.1.45724.1.1.4");
+            //private byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+            public byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+            public X509BasicConstraintsExtension caExt = new X509BasicConstraintsExtension(true, true, 2, false);
+            public X509BasicConstraintsExtension notCAExt = new X509BasicConstraintsExtension(false, false, 0, false);
+            public X509Extension idFidoGenCeAaguidExt;
+
             public byte[] _rpIdHash
             {
                 get
@@ -169,6 +176,8 @@ namespace fido2_net_lib.Test
                 _signCount = BitConverter.ToUInt16(signCount, 0);
 
                 _attestationObject = CBORObject.NewMap();
+
+                idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, asnEncodedAaguid, false);
             }
             public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
             {
@@ -237,12 +246,9 @@ namespace fido2_net_lib.Test
                 const string rp = "fido2.azurewebsites.net";
                 byte[] rpId = Encoding.UTF8.GetBytes(rp);
                 var rpIdHash = SHA256.Create().ComputeHash(rpId);
-                var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
-                const ushort signCount = 0xf1d0;
-                var aaguid = ((attestationObject["fmt"].AsString().Equals("fido-u2f"))) ? Guid.Empty : new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
+
                 var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
 
-                CredentialPublicKey cpk = null;
                 switch (kty)
                 {
                     case COSE.KeyType.EC2:
@@ -252,7 +258,7 @@ namespace fido2_net_lib.Test
                                 ecdsa = MakeECDsa(alg, crv);
                             }
                             var ecparams = ecdsa.ExportParameters(true);
-                            cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
+                            _credentialPublicKey = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
                             break;
                         }
                     case COSE.KeyType.RSA:
@@ -262,7 +268,7 @@ namespace fido2_net_lib.Test
                                 rsa = RSA.Create();
                             }
                             var rsaparams = rsa.ExportParameters(true);
-                            cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
+                            _credentialPublicKey = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
                             break;
                         }
                     case COSE.KeyType.OKP:
@@ -273,22 +279,14 @@ namespace fido2_net_lib.Test
                                 MakeEdDSA(out var privateKeySeed, out publicKey, out expandedPrivateKey);
                             }
 
-                            cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
+                            _credentialPublicKey = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
                             break;
                         }
-                        throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
                 }
 
-                var acd = new AttestedCredentialData(aaguid, credentialID, cpk);
-                var extBytes = CBORObject.NewMap().Add("testing", true).EncodeToBytes();
-                var exts = new Extensions(extBytes);
 
-                var ad = new AuthenticatorData(rpIdHash, flags, signCount, acd, exts);
-                var authData = ad.ToByteArray();
-
-                var challenge = new byte[128];
                 var rng = RandomNumberGenerator.Create();
-                rng.GetBytes(challenge);
 
                 var sha = SHA256.Create();
 
@@ -305,180 +303,35 @@ namespace fido2_net_lib.Test
                 var clientData = new
                 {
                     Type = "webauthn.create",
-                    Challenge = challenge,
+                    Challenge = _challenge,
                     Origin = rp,
                 };
 
-                var clientDataJson = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(clientData));
-                var clientDataHash = sha.ComputeHash(clientDataJson);
+                byte[] data = new byte[_authData.Length + _clientDataHash.Length];
+                Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
+                Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
 
-                byte[] data = new byte[authData.Length + clientDataHash.Length];
-                Buffer.BlockCopy(authData, 0, data, 0, authData.Length);
-                Buffer.BlockCopy(clientDataHash, 0, data, authData.Length, clientDataHash.Length);
+                if (!attestationObject.ContainsKey("authData"))
+                {
+                    attestationObject.Add("authData", _authData);
+                }
 
-                attestationObject.Add("authData", authData);
                 if (attestationObject["fmt"].AsString().Equals("packed"))
                 {
                     byte[] signature = SignData(kty, alg, data, ecdsa, rsa, expandedPrivateKey);
 
-                    if (X5c == null)
+                    if (attestationObject.ContainsKey("attStmt"))
                     {
-                        attestationObject.Add("attStmt", CBORObject.NewMap().Add("alg", alg).Add("sig", signature));
-                    }
-                    else
-                    {
-                        attestationObject.Add("attStmt", CBORObject.NewMap().Add("alg", alg).Add("sig", signature).Add("x5c", X5c));
-                    }
-                }
-
-                if (attestationObject["fmt"].AsString().Equals("fido-u2f"))
-                {
-                    var x = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                    var y = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
-                    var publicKeyU2F = new byte[1] { 0x4 }.Concat(x).Concat(y).ToArray();
-
-                    var verificationData = new byte[1] { 0x00 };
-                    verificationData = verificationData
-                                        .Concat(rpIdHash)
-                                        .Concat(clientDataHash)
-                                        .Concat(credentialID)
-                                        .Concat(publicKeyU2F.ToArray())
-                                        .ToArray();
-
-                    byte[] signature = SignData(kty, alg, verificationData, ecdsa, rsa, expandedPrivateKey);
-
-                    attestationObject.Add("attStmt", CBORObject.NewMap().Add("x5c", X5c).Add("sig", signature));
-                }
-
-                if (attestationObject["fmt"].AsString().Equals("tpm"))
-                {
-                    IEnumerable<byte> unique = null;
-                    IEnumerable<byte> exponent = null;
-                    IEnumerable<byte> curveId = null;
-                    IEnumerable<byte> kdf = null;
-
-                    if (kty == COSE.KeyType.RSA)
-                    {
-                        unique = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString();
-                        exponent = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString();
-                    }
-                    if (kty == COSE.KeyType.EC2)
-                    {
-                        var x = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                        var y = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
-                        var curve = cpk.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
-                        unique = BitConverter
-                            .GetBytes((UInt16)x.Length)
-                            .Reverse()
-                            .ToArray()
-                            .Concat(x)
-                            .Concat(BitConverter.GetBytes((UInt16)y.Length)
-                                                .Reverse()
-                                                .ToArray())
-                            .Concat(y);
-
-                        var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
+                        if (!attestationObject["attStmt"].ContainsKey("sig"))
                         {
-                            { 1, TpmEccCurve.TPM_ECC_NIST_P256},
-                            { 2, TpmEccCurve.TPM_ECC_NIST_P384},
-                            { 3, TpmEccCurve.TPM_ECC_NIST_P521},
-                        };
+                            attestationObject["attStmt"].Add("sig", signature);
+                        }
 
-                        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[curve]).Reverse().ToArray();
-                        kdf = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_NULL);
+                        if (X5c != null)
+                        {
+                            attestationObject["attStmt"].Add("x5c", X5c);
+                        }
                     }
-
-                    var type = new byte[2];
-                    switch (kty)
-                    {
-                        case COSE.KeyType.EC2:
-                            {
-                                type = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
-                                break;
-                            }
-                        case COSE.KeyType.RSA:
-                            {
-                                type = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
-                                break;
-                            }
-                            throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
-                    }
-
-                    var tpmAlg = new byte[2];
-                    if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-                    if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-                    if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-                    if (alg == COSE.Algorithm.RS1)
-                        tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
-
-                    var pubArea = CreatePubArea(
-                        type, // Type
-                        tpmAlg, // Alg
-                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
-                        new byte[] { 0x00 }, // Policy
-                        new byte[] { 0x00, 0x10 }, // Symmetric
-                        new byte[] { 0x00, 0x10 }, // Scheme
-                        new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
-                    );
-
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
-
-                    var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
-
-                    byte[] signature = SignData(kty, alg, certInfo, ecdsa, rsa, expandedPrivateKey);
-
-                    attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("ver", "2.0")
-                        .Add("alg", alg)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature)
-                        .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
                 }
 
                 var attestationResponse = new AuthenticatorAttestationRawResponse
@@ -489,7 +342,7 @@ namespace fido2_net_lib.Test
                     Response = new AuthenticatorAttestationRawResponse.ResponseData()
                     {
                         AttestationObject = attestationObject.EncodeToBytes(),
-                        ClientDataJson = clientDataJson,
+                        ClientDataJson = _clientDataJson,
                     }
                 };
 
@@ -502,7 +355,7 @@ namespace fido2_net_lib.Test
                         RequireResidentKey = true,
                         UserVerification = UserVerificationRequirement.Required,
                     },
-                    Challenge = challenge,
+                    Challenge = _challenge,
                     ErrorMessage = "",
                     PubKeyCredParams = new List<PubKeyCredParam>()
                 {
@@ -530,38 +383,56 @@ namespace fido2_net_lib.Test
 
                 var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
 
-                var assertionVerificationResult = await MakeAssertionResponse(kty, alg, crv, new CredentialPublicKey(credentialMakeResult.Result.PublicKey), (ushort)credentialMakeResult.Result.Counter, ecdsa, rsa, expandedPrivateKey);
+                var assertionVerificationResult = await MakeAssertionResponse(kty, alg, crv, _credentialPublicKey, (ushort)credentialMakeResult.Result.Counter, ecdsa, rsa, expandedPrivateKey);
+                //r assertionVerificationResult = await MakeAssertionResponse(kty, alg, crv, new CredentialPublicKey(credentialMakeResult.Result.PublicKey), (ushort)credentialMakeResult.Result.Counter, ecdsa, rsa, expandedPrivateKey);
 
                 return (credentialMakeResult, assertionVerificationResult);
             }
-
-            public class TPM : Attestation
+            internal static byte[] SignData(COSE.KeyType kty, COSE.Algorithm alg, byte[] data, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null)
             {
-                [Fact]
-                public void TestAttestationTPM()
+                byte[] signature = null;
+                switch (kty)
                 {
-                    _validCOSEParameters.ForEach(delegate (object[] param)
-                    {
-                        var attestationObject = CBORObject.NewMap()
-                        .Add("fmt", "tpm");
+                    case COSE.KeyType.EC2:
+                        {
+                            signature = ecdsa.SignData(data, CryptoUtils.algMap[(int)alg]);
+                            signature = EcDsaSigFromSig(signature, ecdsa.KeySize);
+                            break;
+                        }
+                    case COSE.KeyType.RSA:
+                        {
+                            RSASignaturePadding padding;
+                            switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                            {
+                                case COSE.Algorithm.PS256:
+                                case COSE.Algorithm.PS384:
+                                case COSE.Algorithm.PS512:
+                                    padding = RSASignaturePadding.Pss;
+                                    break;
 
-                        (Fido2.CredentialMakeResult, AssertionVerificationResult) res;
-                        if (param.Length == 3)
-                        {
-                            res = MakeAttestationResponse(attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]).Result;
+                                case COSE.Algorithm.RS1:
+                                case COSE.Algorithm.RS256:
+                                case COSE.Algorithm.RS384:
+                                case COSE.Algorithm.RS512:
+                                    padding = RSASignaturePadding.Pkcs1;
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
+                            }
+                            signature = rsa.SignData(data, CryptoUtils.algMap[(int)alg], padding);
+                            break;
                         }
-                        else
+                    case COSE.KeyType.OKP:
                         {
-                            res = MakeAttestationResponse(attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1]).Result;
+                            signature = Ed25519.Sign(data, expandedPrivateKey);
+                            break;
                         }
-                        Assert.Equal("tpm", res.Item1.Result.CredType);
-                        Assert.Equal(new byte[] { 0xf1, 0xd0 }, res.Item2.CredentialId);
-                        Assert.True(new[] { res.Item1.Status, res.Item2.Status }.All(x => x == "ok"));
-                        Assert.True(new[] { res.Item1.ErrorMessage, res.Item2.ErrorMessage }.All(x => x == ""));
-                        Assert.True(res.Item1.Result.Counter + 1 == res.Item2.Counter);
-                    });
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
                 }
 
+                return signature;
             }
         }
         
