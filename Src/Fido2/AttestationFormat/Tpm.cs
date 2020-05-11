@@ -470,7 +470,7 @@ namespace Fido2NetLib.AttestationFormat
                 certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
             }
 
-            if (null == certInfo || null == certInfo.ExtraData || 0 == certInfo.ExtraData.Length)
+            if (null == certInfo)
                 throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
 
             // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY 
@@ -580,7 +580,7 @@ namespace Fido2NetLib.AttestationFormat
                 // OID is 2.23.133.8.3
                 var EKU = EKUFromAttnCertExts(aikCert.Extensions, "2.23.133.8.3");
                 if (!EKU)
-                    throw new Fido2VerificationException("Invalid EKU on AIK certificate");
+                    throw new Fido2VerificationException("aikCert EKU missing tcg-kp-AIKCertificate OID");
 
                 // The Basic Constraints extension MUST have the CA component set to false.
                 if (IsAttnCertCACert(aikCert.Extensions))
