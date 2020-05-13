@@ -143,7 +143,7 @@ namespace Test.Attestation
             var X5c = CBORObject.NewArray().Add(CBORObject.FromObject(attestnCert));
             _attestationObject["attStmt"].Set("x5c", X5c);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Failed to extract public key from android key: Cannot find the requested object", ex.Result.Message);
+            Assert.StartsWith("Failed to extract public key from android key: ", ex.Result.Message);
         }
 
         [Fact]
