@@ -24,11 +24,18 @@ namespace Test.Attestation
 
                 res = MakeAttestationResponse().Result;
 
+                Assert.Equal(string.Empty, res.ErrorMessage);
+                Assert.Equal("ok", res.Status);
+                Assert.Equal(_aaguid, res.Result.Aaguid);
+                Assert.Equal(_signCount, res.Result.Counter);
                 Assert.Equal("none", res.Result.CredType);
-                //Assert.Equal(new byte[] { 0xf1, 0xd0 }, res.Result.CredentialId);
-                Assert.True(new[] { res.Status, res.Status }.All(x => x == "ok"));
-                Assert.True(new[] { res.ErrorMessage, res.ErrorMessage }.All(x => x == ""));
-                //Assert.True(res.Result.Counter + 1 == res.Result.Counter);
+                Assert.Equal(_credentialID, res.Result.CredentialId);
+                Assert.Null(res.Result.ErrorMessage);
+                Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
+                Assert.Null(res.Result.Status);
+                Assert.Equal("Test User", res.Result.User.DisplayName);
+                Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+                Assert.Equal("testuser", res.Result.User.Name);
                 _attestationObject = CBORObject.NewMap().Add("fmt", "none");
             });
         }
@@ -37,7 +44,7 @@ namespace Test.Attestation
         {
             _attestationObject.Add("attStmt", CBORObject.NewMap().Add("foo", "bar"));
             _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256));
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Attestation format none should have no attestation statement", ex.Result.Message);
         }
     }

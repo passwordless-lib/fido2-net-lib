@@ -54,10 +54,18 @@ namespace Test.Attestation
         public void TestU2f()
         {
             var res = MakeAttestationResponse().Result;
-            Assert.Equal("", res.ErrorMessage);
+            Assert.Equal(string.Empty, res.ErrorMessage);
             Assert.Equal("ok", res.Status);
-            Assert.True(_credentialID.SequenceEqual(res.Result.CredentialId));
+            Assert.Equal(_aaguid, res.Result.Aaguid);
             Assert.Equal(_signCount, res.Result.Counter);
+            Assert.Equal("fido-u2f", res.Result.CredType);
+            Assert.Equal(_credentialID, res.Result.CredentialId);
+            Assert.Null(res.Result.ErrorMessage);
+            Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
+            Assert.Null(res.Result.Status);
+            Assert.Equal("Test User", res.Result.User.DisplayName);
+            Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+            Assert.Equal("testuser", res.Result.User.Name);
         }
         [Fact]
         public void TestU2fWithAaguid()
@@ -155,7 +163,7 @@ namespace Test.Attestation
         public void TestU2fBadSig()
         {
             var sig = _attestationObject["attStmt"]["sig"].GetByteString();
-            sig[15] ^= sig[15];
+            sig[sig.Length - 1] ^= 0xff;
             _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(sig));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);

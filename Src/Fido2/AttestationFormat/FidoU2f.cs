@@ -111,7 +111,7 @@ namespace Fido2NetLib.AttestationFormat
             {
                 ecsig = CryptoUtils.SigFromEcDsaSig(Sig.GetByteString(), pubKey.KeySize);
             }
-            catch (Fido2VerificationException ex)
+            catch (Exception ex)
             {
                 throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex);
             }

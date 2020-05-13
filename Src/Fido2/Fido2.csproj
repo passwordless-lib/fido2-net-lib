@@ -6,7 +6,7 @@
   <!-- Sourced Libraries -->
   <Import Project="../../ExternalLibs/CBOR/CBOR.Include.props" />
   <Import Project="../../ExternalLibs/Chaos.NaCL/Chaos.NaCL.Include.props" />
-  <Import Project="../../ExternalLibs/Asn1Processor/Asn1Processor.Include.props" />
+  <Import Project="../../ExternalLibs/AsnElt/AsnElt.Include.props" />
   <ItemGroup>
     <None Remove="Fido2MetadataServiceRepository.cs" />
     <None Remove="FileSystemMetadataRepository.cs" />

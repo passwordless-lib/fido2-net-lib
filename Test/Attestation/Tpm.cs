@@ -55,7 +55,10 @@ namespace Test.Attestation
         {
             Fido2Tests._validCOSEParameters.ForEach(delegate (object[] param)
             {
-                (Fido2.CredentialMakeResult, AssertionVerificationResult) res = (null, null);
+                if (COSE.KeyType.OKP == (COSE.KeyType)param[0])
+                {
+                    return;
+                }
 
                 var alg = (COSE.Algorithm)param[1];
                 if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
@@ -219,7 +222,7 @@ namespace Test.Attestation
                                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                     );
 
-                                byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                                byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
 
                                 _attestationObject.Add("attStmt", CBORObject.NewMap()
                                     .Add("ver", "2.0")
@@ -227,26 +230,7 @@ namespace Test.Attestation
                                     .Add("x5c", X5c)
                                     .Add("sig", signature)
                                     .Add("certInfo", certInfo)
-                                    .Add("pubArea", pubArea))
-                                .Add("authData", _authData);
-
-                                res = MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2], ecdsa: ecdsaAtt, X5c: X5c).Result;
-                                Assert.Equal(string.Empty, res.Item1.ErrorMessage);
-                                Assert.Equal("ok", res.Item1.Status);
-                                Assert.Equal(_aaguid, res.Item1.Result.Aaguid);
-                                Assert.Equal(_signCount, res.Item1.Result.Counter);
-                                Assert.Equal("tpm", res.Item1.Result.CredType);
-                                Assert.Equal(_credentialID, res.Item1.Result.CredentialId);
-                                Assert.Null(res.Item1.Result.ErrorMessage);
-                                Assert.Equal(_credentialPublicKey.GetBytes(), res.Item1.Result.PublicKey);
-                                Assert.Null(res.Item1.Result.Status);
-                                Assert.Equal("Test User", res.Item1.Result.User.DisplayName);
-                                Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Item1.Result.User.Id);
-                                Assert.Equal("testuser", res.Item1.Result.User.Name);
-                                Assert.Equal(_signCount, res.Item2.Counter - 1);
-                                Assert.Equal(new byte[] { 0xf1, 0xd0 }, res.Item2.CredentialId);
-                                Assert.Equal(string.Empty, res.Item2.ErrorMessage);
-                                Assert.Equal("ok", res.Item2.Status);
+                                    .Add("pubArea", pubArea));
                             }
                         }
                         break;
@@ -376,7 +360,7 @@ namespace Test.Attestation
                                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                     );
 
-                                byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                                byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                                 _attestationObject.Add("attStmt", CBORObject.NewMap()
                                     .Add("ver", "2.0")
@@ -384,31 +368,26 @@ namespace Test.Attestation
                                     .Add("x5c", X5c)
                                     .Add("sig", signature)
                                     .Add("certInfo", certInfo)
-                                    .Add("pubArea", pubArea))
-                                .Add("authData", _authData);
-
-                                res = MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c).Result;
-                                Assert.Equal(string.Empty, res.Item1.ErrorMessage);
-                                Assert.Equal("ok", res.Item1.Status);
-                                Assert.Equal(_aaguid, res.Item1.Result.Aaguid);
-                                Assert.Equal(_signCount, res.Item1.Result.Counter);
-                                Assert.Equal("tpm", res.Item1.Result.CredType);
-                                Assert.Equal(_credentialID, res.Item1.Result.CredentialId);
-                                Assert.Null(res.Item1.Result.ErrorMessage);
-                                Assert.Equal(_credentialPublicKey.GetBytes(), res.Item1.Result.PublicKey);
-                                Assert.Null(res.Item1.Result.Status);
-                                Assert.Equal("Test User", res.Item1.Result.User.DisplayName);
-                                Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Item1.Result.User.Id);
-                                Assert.Equal("testuser", res.Item1.Result.User.Name);
-                                Assert.Equal(_signCount, res.Item2.Counter - 1);
-                                Assert.Equal(new byte[] { 0xf1, 0xd0 }, res.Item2.CredentialId);
-                                Assert.Equal(string.Empty, res.Item2.ErrorMessage);
-                                Assert.Equal("ok", res.Item2.Status);
+                                    .Add("pubArea", pubArea));
                             }
                         }
 
                         break;
-                }                
+                }
+                var res = MakeAttestationResponse().Result;
+
+                Assert.Equal(string.Empty, res.ErrorMessage);
+                Assert.Equal("ok", res.Status);
+                Assert.Equal(_aaguid, res.Result.Aaguid);
+                Assert.Equal(_signCount, res.Result.Counter);
+                Assert.Equal("tpm", res.Result.CredType);
+                Assert.Equal(_credentialID, res.Result.CredentialId);
+                Assert.Null(res.Result.ErrorMessage);
+                Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
+                Assert.Null(res.Result.Status);
+                Assert.Equal("Test User", res.Result.User.DisplayName);
+                Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+                Assert.Equal("testuser", res.Result.User.Name);
                 _attestationObject = CBORObject.NewMap().Add("fmt", "tpm");
             });
         }
@@ -553,7 +532,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -561,10 +540,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", null)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
                 }
             }
@@ -710,7 +689,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -718,10 +697,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", "strawberries")
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
                 }
             }
@@ -867,7 +846,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -875,10 +854,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", CBORObject.FromObject(new byte[0]))
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
                 }
             }
@@ -1024,7 +1003,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "3.0")
@@ -1032,10 +1011,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("FIDO2 only supports TPM 2.0", ex.Result.Message);
                 }
             }
@@ -1115,7 +1094,6 @@ namespace Test.Attestation
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
-
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
                     type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
@@ -1181,7 +1159,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1189,10 +1167,9 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", null))
-                    .Add("authData", _authData);
+                        .Add("pubArea", null));
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1338,7 +1315,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1346,10 +1323,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", "banana"))
-                    .Add("authData", _authData);
+                        .Add("pubArea", "banana"));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1495,7 +1472,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1503,10 +1480,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", CBORObject.FromObject(new byte[0])))
-                    .Add("authData", _authData);
+                        .Add("pubArea", CBORObject.FromObject(new byte[0])));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1652,7 +1629,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1660,10 +1637,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1809,7 +1786,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1817,10 +1794,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1966,7 +1943,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1974,10 +1951,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Public key mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -2122,7 +2099,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2130,10 +2107,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Public key exponent mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -2286,7 +2263,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2294,10 +2271,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], ecdsa: ecdsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("X-coordinate mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -2450,7 +2427,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2458,10 +2435,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], ecdsa: ecdsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Y-coordinate mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -2614,7 +2591,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2622,10 +2599,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], ecdsa: ecdsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Curve mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -2770,7 +2747,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2778,10 +2755,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", null)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
                 }
             }
@@ -2926,7 +2903,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2934,10 +2911,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", "tomato")
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
                 }
             }
@@ -3082,7 +3059,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3090,10 +3067,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", CBORObject.FromObject(new byte[0]))
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
                 }
             }
@@ -3238,7 +3215,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3246,10 +3223,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Bad magic number 474354FF", ex.Result.Message);
                 }
             }
@@ -3394,7 +3371,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3402,10 +3379,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Bad structure tag 1780", ex.Result.Message);
                 }
             }
@@ -3549,7 +3526,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3557,10 +3534,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Bad extraData in certInfo", ex.Result.Message);
                 }
             }
@@ -3705,7 +3682,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3713,10 +3690,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Unexpected handle in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -3861,7 +3838,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3869,10 +3846,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Unexpected no name found in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -4018,7 +3995,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4026,10 +4003,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Unexpected extra bytes found in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -4174,7 +4151,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4182,10 +4159,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm", ex.Result.Message);
                 }
             }
@@ -4330,7 +4307,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4338,10 +4315,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM_ALG_ID found in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -4487,7 +4464,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4495,10 +4472,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
                 }
             }
@@ -4643,7 +4620,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4651,10 +4628,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
                 }
             }
@@ -4799,7 +4776,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4807,10 +4784,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
                 }
             }
@@ -4955,7 +4932,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4963,10 +4940,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Hash value mismatch extraData and attToBeSigned", ex.Result.Message);
                 }
             }
@@ -5114,7 +5091,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5122,10 +5099,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Hash value mismatch attested and pubArea", ex.Result.Message);
                 }
             }
@@ -5270,7 +5247,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5278,10 +5255,10 @@ namespace Test.Attestation
                         .Add("x5c", null)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
                 }
             }
@@ -5426,7 +5403,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5434,10 +5411,10 @@ namespace Test.Attestation
                         .Add("x5c", "string")
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
                 }
             }
@@ -5582,7 +5559,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5590,10 +5567,10 @@ namespace Test.Attestation
                         .Add("x5c", CBORObject.NewArray())
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
                 }
             }
@@ -5738,7 +5715,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5746,10 +5723,10 @@ namespace Test.Attestation
                         .Add("x5c", CBORObject.NewArray().Add(null))
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -5894,7 +5871,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5902,10 +5879,10 @@ namespace Test.Attestation
                         .Add("x5c", CBORObject.NewArray().Add(CBORObject.Null))
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -6050,7 +6027,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6058,10 +6035,10 @@ namespace Test.Attestation
                         .Add("x5c", "x".ToArray())
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -6206,7 +6183,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6214,10 +6191,10 @@ namespace Test.Attestation
                         .Add("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])))
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -6362,7 +6339,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
                     signature[signature.Length - 1] ^= 0xff;
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
@@ -6371,10 +6348,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Bad signature in TPM with aikCert", ex.Result.Message);
                 }
             }
@@ -6522,7 +6499,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6530,10 +6507,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aikCert must be V3", ex.Result.Message);
                 }
             }
@@ -6679,7 +6656,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6687,10 +6664,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aikCert subject must be empty", ex.Result.Message);
                 }
             }
@@ -6835,7 +6812,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6843,10 +6820,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("SAN missing from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -6996,7 +6973,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7004,10 +6981,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("SAN missing from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -7158,7 +7135,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7166,10 +7143,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -7320,7 +7297,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7328,10 +7305,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -7482,7 +7459,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7490,10 +7467,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -7644,7 +7621,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7652,10 +7629,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Result.Message);
                 }
             }
@@ -7800,7 +7777,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7808,10 +7785,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aikCert EKU missing tcg-kp-AIKCertificate OID", ex.Result.Message);
                 }
             }
@@ -7956,7 +7933,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7964,10 +7941,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aikCert Basic Constraints extension CA component must be false", ex.Result.Message);
                 }
             }
@@ -8112,7 +8089,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -8120,27 +8097,23 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    (Fido2.CredentialMakeResult, AssertionVerificationResult) res = (null, null);
-                    res = MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c).Result;
-                    Assert.Equal(string.Empty, res.Item1.ErrorMessage);
-                    Assert.Equal("ok", res.Item1.Status);
-                    Assert.Equal(_aaguid, res.Item1.Result.Aaguid);
-                    Assert.Equal(_signCount, res.Item1.Result.Counter);
-                    Assert.Equal("tpm", res.Item1.Result.CredType);
-                    Assert.Equal(_credentialID, res.Item1.Result.CredentialId);
-                    Assert.Null(res.Item1.Result.ErrorMessage);
-                    Assert.Equal(_credentialPublicKey.GetBytes(), res.Item1.Result.PublicKey);
-                    Assert.Null(res.Item1.Result.Status);
-                    Assert.Equal("Test User", res.Item1.Result.User.DisplayName);
-                    Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Item1.Result.User.Id);
-                    Assert.Equal("testuser", res.Item1.Result.User.Name);
-                    Assert.Equal(_signCount, res.Item2.Counter - 1);
-                    Assert.Equal(new byte[] { 0xf1, 0xd0 }, res.Item2.CredentialId);
-                    Assert.Equal(string.Empty, res.Item2.ErrorMessage);
-                    Assert.Equal("ok", res.Item2.Status);
+                    var res = MakeAttestationResponse().Result;
+
+                    Assert.Equal(string.Empty, res.ErrorMessage);
+                    Assert.Equal("ok", res.Status);
+                    Assert.Equal(_aaguid, res.Result.Aaguid);
+                    Assert.Equal(_signCount, res.Result.Counter);
+                    Assert.Equal("tpm", res.Result.CredType);
+                    Assert.Equal(_credentialID, res.Result.CredentialId);
+                    Assert.Null(res.Result.ErrorMessage);
+                    Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
+                    Assert.Null(res.Result.Status);
+                    Assert.Equal("Test User", res.Result.User.DisplayName);
+                    Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+                    Assert.Equal("testuser", res.Result.User.Name);
                 }
             }
         }
@@ -8286,7 +8259,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -8294,10 +8267,10 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aaguid malformed, expected f1d0f1d0-f1d0-f1d0-f1d0-f1d0f1d0f1d0, got d0f1d0f1-d0f1-d0f1-f1d0-f1d0f1d0f1d0", ex.Result.Message);
                 }
             }
@@ -8442,7 +8415,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -8450,16 +8423,16 @@ namespace Test.Attestation
                         .Add("ecdaaKeyId", new byte[0])
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
+                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("ECDAA support for TPM attestation is not yet implemented", ex.Result.Message);
                 }
             }
         }
 
-        /*
+        
         [Fact]       
         public void TestTPMRSATemplate()
         {
@@ -8599,7 +8572,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -8607,15 +8580,12 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea))
-                    .Add("authData", _authData);
+                        .Add("pubArea", pubArea));
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse(_attestationObject, (COSE.KeyType)param[0], (COSE.Algorithm)param[1], rsa: rsaAtt, X5c: X5c));
-                    Assert.Equal("Invalid TPM_ALG_ID found in TPM2B_NAME", ex.Result.Message);
+                    var res = MakeAttestationResponse();
                 }
             }
         }
-             */
 
         internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
             byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)

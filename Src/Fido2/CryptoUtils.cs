@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Asn1;
 using Fido2NetLib.Objects;
-using LipingShare.LCLib.Asn1Processor;
 
 namespace Fido2NetLib
 {
@@ -60,106 +59,95 @@ namespace Fido2NetLib
             {(int) COSE.Algorithm.EdDSA, HashAlgorithmName.SHA512 }
         };
 
-        public static byte[] GetEcDsaSigValue(BinaryReader reader)
-        {
-            // First byte should be DER int marker
-            var derInt = reader.ReadByte();
-            if (0x02 != derInt)
-                throw new Fido2VerificationException("ECDsa signature coordinate sequence does not contain DER integer value"); // DER INTEGER
-
-            // Second byte is length to read
-            var len = reader.ReadByte();
-
-            // a leading 0x00 is added to the content to indicate that the number is not negative...
-            if (0x00 == reader.BaseStream.ReadByte())
-            {
-                // If the integer is positive but the high order bit is set to 1
-                if ((reader.BaseStream.ReadByte() & (1 << 7)) != 0)
-                {
-                    // we don't want to copy that leading 0x00, so reduce the length to read
-                    len--;
-                }
-                // back the stream up one byte from the high order bit check
-                reader.BaseStream.Seek(-1, SeekOrigin.Current);
-            }
-            // back the stream up one byte from the leading 0x00 check
-            else
-                reader.BaseStream.Seek(-1, SeekOrigin.Current);
-
-            // read the calculated number of bytes from the stream and return the result
-            return reader.ReadBytes(len);
-        }
-
         public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
         {
-            using (var stream = new MemoryStream(ecDsaSig, false))
+            var decoded = AsnElt.Decode(ecDsaSig);
+            var r = decoded.Sub[0].GetOctetString();
+            var s = decoded.Sub[1].GetOctetString();
+
+            // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
+            // ASN.1 requires storing positive integer values with any leading 0s removed
+            // Convert ASN.1 format to IEEE P-1363 format 
+            // determine coefficient size 
+            var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
+
+            // Create byte array to copy R into 
+            var P1363R = new byte[coefficientSize];
+
+            if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
             {
-                using (var reader = new BinaryReader(stream))
+                r.Skip(1).ToArray().CopyTo(P1363R, coefficientSize - r.Length + 1);
+            }
+            else
+            {
+                r.CopyTo(P1363R, coefficientSize - r.Length);
+            }
+
+            // Create byte array to copy S into 
+            var P1363S = new byte[coefficientSize];
+
+            if (0x0 == s[0] && (s[1] & (1 << 7)) != 0)
+            {
+                s.Skip(1).ToArray().CopyTo(P1363S, coefficientSize - s.Length + 1);
+            }
+            else
+            {
+                s.CopyTo(P1363S, coefficientSize - s.Length);
+            }
+
+            // Concatenate R + S coordinates and return the raw signature
+            return P1363R.Concat(P1363S).ToArray();
+        }
+
+        /// <summary>
+        /// Convert PEM formated string into byte array.
+        /// </summary>
+        /// <param name="pemStr">source string.</param>
+        /// <returns>output byte array.</returns>
+        public static byte[] PemToBytes(string pemStr)
+        {
+            const string PemStartStr = "-----BEGIN";
+            const string PemEndStr = "-----END";
+            byte[] retval = null;
+            var lines = pemStr.Split('\n');
+            var base64Str = "";
+            bool started = false, ended = false;
+            var cline = "";
+            for (var i = 0; i < lines.Length; i++)
+            {
+                cline = lines[i].ToUpper();
+                if (cline == "")
+                    continue;
+                if (cline.Length > PemStartStr.Length)
                 {
-                    // first byte should be DER sequence marker
-                    var derSequence = reader.ReadByte();
-                    if (0x30 != derSequence) throw new Fido2VerificationException("ECDsa signature not a valid DER sequence");
-
-                    // two forms of length, short form and long form
-                    // short form, one byte, bit 8 not set, rest of the bits indicate data length
-                    var dataLen = reader.ReadByte();
-
-                    // long form, first byte, bit 8 is set, rest of bits indicate the length of the data length
-                    // so if bit 8 is on...
-                    var longForm = (0 != (dataLen & (1 << 7)));
-                    if (true == longForm)
+                    if (!started && cline.Substring(0, PemStartStr.Length) == PemStartStr)
                     {
-                        // rest of bits indicate the number of bytes containing the data length in long form
-                        var longLenBytes = (dataLen & ~(1 << 7));
-
-                        // we are expecting a single byte to hold the data length at the time of this writing
-                        if (1 != longLenBytes)
-                            throw new Fido2VerificationException("ECDsa signature has invalid long form data length bytes");
-
-                        // read the length of the data
-                        var longLen = reader.ReadBytes(longLenBytes)[0];
-
-                        // must be more than 127 bytes otherwise we'd be using the short form
-                        if (0x80 > longLen)
-                            throw new Fido2VerificationException("ECDsa signature has invalid long form data length");
-
-                        // sanity check the length
-                        if (ecDsaSig.Length != (reader.BaseStream.Position + longLen))
-                            throw new Fido2VerificationException("ECDsa signature has invalid long form length");
+                        started = true;
+                        continue;
                     }
-
-                    // Get R value
-                    var r = GetEcDsaSigValue(reader);
-
-                    // Get S value
-                    var s = GetEcDsaSigValue(reader);
-
-                    // make sure we are at the end
-                    if (reader.BaseStream.Position != reader.BaseStream.Length)
-                        throw new Fido2VerificationException("ECDsa signature has bytes leftover after parsing R and S values");
-
-                    // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
-                    // ASN.1 requires storing positive integer values with any leading 0s removed
-                    // Convert ASN.1 format to IEEE P-1363 format 
-                    // determine coefficient size 
-                    var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
-
-                    // Sanity check R and S value lengths
-                    if ((coefficientSize * 2) < (r.Length + s.Length))
-                        throw new Fido2VerificationException("ECDsa signature has invalid length for given curve key size");
-
-                    // Create byte array to copy R into 
-                    var P1363R = new byte[coefficientSize];
-                    r.CopyTo(P1363R, coefficientSize - r.Length);
-
-                    // Create byte array to copy S into 
-                    var P1363S = new byte[coefficientSize];
-                    s.CopyTo(P1363S, coefficientSize - s.Length);
-
-                    // Concatenate R + S coordinates and return the raw signature
-                    return P1363R.Concat(P1363S).ToArray();
+                }
+                if (cline.Length > PemEndStr.Length)
+                {
+                    if (cline.Substring(0, PemEndStr.Length) == PemEndStr)
+                    {
+                        ended = true;
+                        break;
+                    }
+                }
+                if (started)
+                {
+                    base64Str += lines[i];
                 }
             }
+            if (!(started && ended))
+            {
+                throw new Exception("'BEGIN'/'END' line is missing.");
+            }
+            base64Str = base64Str.Replace("\r", "");
+            base64Str = base64Str.Replace("\n", "");
+            base64Str = base64Str.Replace("\n", " ");
+            retval = Convert.FromBase64String(base64Str);
+            return retval;
         }
 
         public static string CDPFromCertificateExts(X509ExtensionCollection exts)
@@ -169,49 +157,29 @@ namespace Fido2NetLib
             {
                 if (ext.Oid.Value.Equals("2.5.29.31")) // id-ce-CRLDistributionPoints
                 {
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                    {
-                        var asnData = new AsnEncodedData(ext.Oid, ext.RawData);
-                        cdp += asnData.Format(false).Split('=')[1];
-                    }
-                    else
-                    {
-                        var strCDP = Asn1Util.BytesToString(ext.RawData);
-                        strCDP = strCDP.Replace("\u0086.", "=");
-                        cdp += strCDP.Split('=')[1];
-                    }
+                    var asnData = AsnElt.Decode(ext.RawData);
+                    cdp = System.Text.Encoding.ASCII.GetString(asnData.Sub[0].Sub[0].Sub[0].Sub[0].GetOctetString());
                 }
             }
             return cdp;
         }
         public static bool IsCertInCRL(byte[] crl, X509Certificate2 cert)
         {
-            var asnParser = new Asn1Parser();
-            var strCRL = Asn1Util.BytesToString(crl);
-
-            if (Asn1Util.IsPemFormated(strCRL))
-            {
-                asnParser.LoadData(Asn1Util.PemToStream(strCRL));
-            }
-            else asnParser.LoadData(new MemoryStream(crl));
-
-            if (7 > asnParser.RootNode.GetChildNode(0).ChildNodeCount)
+            var pemCRL = System.Text.Encoding.ASCII.GetString(crl);
+            var crlBytes = PemToBytes(pemCRL);
+            var asnData = AsnElt.Decode(crlBytes);
+            if (7 > asnData.Sub[0].Sub.Length)
                 return false; // empty CRL
 
-            var revokedCertificates = asnParser.RootNode.GetChildNode(0).GetChildNode(5);
-
-            // throw revoked certs into a list so someday we eventually cache CRLs 
+            var revokedCertificates = asnData.Sub[0].Sub[5].Sub;
             var revoked = new List<long>();
-            for (var i = 0; i < revokedCertificates.ChildNodeCount; i++)
+
+            foreach (AsnElt s in revokedCertificates)
             {
-                revoked.Add(Asn1Util.BytesToLong(revokedCertificates.GetChildNode(i)
-                                                                    .GetChildNode(0)
-                                                                    .Data
-                                                                    .Reverse()
-                                                                    .ToArray()));
+                revoked.Add(BitConverter.ToInt64(s.Sub[0].GetOctetString().Reverse().ToArray(), 0));
             }
 
-            return revoked.Contains(Asn1Util.BytesToLong(cert.GetSerialNumber()));
+            return revoked.Contains(BitConverter.ToInt64(cert.GetSerialNumber(), 0));
         }
     }
 }
