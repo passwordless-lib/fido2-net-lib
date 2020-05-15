@@ -66,3 +66,17 @@ jobs:
     inputs:
       command: test
       projects: '**/Test.csproj'
+      arguments: --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:ExcludeByFile="**/ExternalLibs/**"
+  - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+    displayName: ReportGenerator
+    inputs:
+      reports: '$(Build.SourcesDirectory)/Test/coverage.netcoreapp3.1.cobertura.xml'
+      targetdir: '$(Build.SourcesDirectory)/CodeCoverage'
+      reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges'
+      assemblyfilters: '-xunit*'
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish code coverage'
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+      reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'
