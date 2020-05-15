@@ -14,19 +14,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Chaos.NaCl;
 using System.Text;
+using System.Security.Cryptography.X509Certificates;
+using Fido2NetLib.AttestationFormat;
 
 namespace fido2_net_lib.Test
 {
     // todo: Create tests and name Facts and json files better.
     public class Fido2Tests
     {
-        private readonly IMetadataService _metadataService;
-        private readonly Fido2Configuration _config;
+        private static readonly IMetadataService _metadataService;
+        private static readonly Fido2Configuration _config;
+        public static readonly List<object[]> _validCOSEParameters;
 
-        public Fido2Tests()
+        static Fido2Tests()
         {
             var MDSAccessKey = Environment.GetEnvironmentVariable("fido2:MDSAccessKey");
-            //var CacheDir = Environment.GetEnvironmentVariable("fido2:MDSCacheDirPath");
 
             var services = new ServiceCollection();
 
@@ -58,6 +60,19 @@ namespace fido2_net_lib.Test
             _metadataService = service;
 
             _config = new Fido2Configuration { Origin = "https://localhost:44329" };
+
+            _validCOSEParameters = new List<object[]>();
+
+            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256 });
+            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384 });
+            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521 });
+            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS256});
+            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS384});
+            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS512});
+            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS256});
+            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS384});
+            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS512});
+            _validCOSEParameters.Add(new object[3] { COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519 });
         }
         public static byte[] StringToByteArray(string hex)
         {
@@ -73,6 +88,289 @@ namespace fido2_net_lib.Test
         {
             return JsonConvert.DeserializeObject<T>(File.ReadAllText(filename));
         }
+
+        public abstract class Attestation
+        {
+            public CBORObject _attestationObject;
+            public CredentialPublicKey _credentialPublicKey;
+            public const string rp = "fido2.azurewebsites.net";
+            public byte[] _challenge;
+            public X500DistinguishedName rootDN = new X500DistinguishedName("CN=Testing, O=FIDO2-NET-LIB, C=US");
+            public Oid oidIdFidoGenCeAaguid = new Oid("1.3.6.1.4.1.45724.1.1.4");
+            //private byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+            public byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+            public X509BasicConstraintsExtension caExt = new X509BasicConstraintsExtension(true, true, 2, false);
+            public X509BasicConstraintsExtension notCAExt = new X509BasicConstraintsExtension(false, false, 0, false);
+            public X509Extension idFidoGenCeAaguidExt;
+
+            public byte[] _rpIdHash
+            {
+                get
+                {
+                    byte[] rpId = Encoding.UTF8.GetBytes(rp);
+                    return SHA256.Create().ComputeHash(rpId);
+                }
+            }
+
+            public byte[] _clientDataJson
+            {
+                get
+                {
+                    var clientData = new
+                    {
+                        Type = "webauthn.create",
+                        Challenge = _challenge,
+                        Origin = rp,
+                    };
+                    return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(clientData));
+                }
+            }
+            public byte[] _clientDataHash
+            {
+                get
+                {
+                    var sha = SHA256.Create();
+                    return sha.ComputeHash(_clientDataJson);
+                }
+            }
+
+            public byte[] _data
+            {
+                get
+                {
+                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
+                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
+                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
+                    return data;
+                }
+            }
+            public byte[] _credentialID;
+            public const AuthenticatorFlags _flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
+            public ushort _signCount;
+            public Guid _aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
+            public Extensions _exts
+            {
+                get
+                {
+                    var extBytes = CBORObject.NewMap().Add("testing", true).EncodeToBytes();
+                    return new Extensions(extBytes);
+                }
+            }
+            public byte[] _authData
+            {
+                get
+                {
+                    var ad = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, _exts);
+                    return ad.ToByteArray();
+                }
+            }
+            public AttestedCredentialData _acd
+            {
+                get
+                {
+                    return new AttestedCredentialData(_aaguid, _credentialID, _credentialPublicKey);
+                }
+            }
+
+            public Attestation()
+            {                
+                var rng = RandomNumberGenerator.Create();
+                
+                _credentialID = new byte[16];
+                rng.GetBytes(_credentialID);
+
+                _challenge = new byte[128];
+                rng.GetBytes(_challenge);
+
+                var signCount = new byte[2];
+                rng.GetBytes(signCount);
+                _signCount = BitConverter.ToUInt16(signCount, 0);
+
+                _attestationObject = CBORObject.NewMap();
+
+                idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, asnEncodedAaguid, false);
+            }
+            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
+            {
+                _attestationObject.Add("authData", _authData);
+
+                var attestationResponse = new AuthenticatorAttestationRawResponse
+                {
+                    Type = PublicKeyCredentialType.PublicKey,
+                    Id = new byte[] { 0xf1, 0xd0 },
+                    RawId = new byte[] { 0xf1, 0xd0 },
+                    Response = new AuthenticatorAttestationRawResponse.ResponseData()
+                    {
+                        AttestationObject = _attestationObject.EncodeToBytes(),
+                        ClientDataJson = _clientDataJson,
+                    }
+                };
+
+                var origChallenge = new CredentialCreateOptions
+                {
+                    Attestation = AttestationConveyancePreference.Direct,
+                    AuthenticatorSelection = new AuthenticatorSelection
+                    {
+                        AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
+                        RequireResidentKey = true,
+                        UserVerification = UserVerificationRequirement.Required,
+                    },
+                    Challenge = _challenge,
+                    ErrorMessage = "",
+                    PubKeyCredParams = new List<PubKeyCredParam>()
+                {
+                    new PubKeyCredParam
+                    {
+                        Alg = -7,
+                        Type = PublicKeyCredentialType.PublicKey,
+                    }
+                },
+                    Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                    Status = "ok",
+                    User = new Fido2User
+                    {
+                        Name = "testuser",
+                        Id = Encoding.UTF8.GetBytes("testuser"),
+                        DisplayName = "Test User",
+                    },
+                    Timeout = 60000,
+                };
+
+                IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+                {
+                    return Task.FromResult(true);
+                };
+                
+                var lib = new Fido2(new Fido2Configuration()
+                {
+                    ServerDomain = rp,
+                    ServerName = rp,
+                    Origin = rp,
+                });
+                
+                var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
+
+                return credentialMakeResult;
+            }
+
+            internal byte[] SignData(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv)
+            {
+                ECDsa ecdsa = null;
+                RSA rsa = null;
+                byte[] expandedPrivateKey = null, publicKey = null;
+
+                switch (kty)
+                {
+                    case COSE.KeyType.EC2:
+                        {
+                            ecdsa = MakeECDsa(alg, crv);
+                            break;
+                        }
+                    case COSE.KeyType.RSA:
+                        {
+                            rsa = RSA.Create();
+                            break;
+                        }
+                    case COSE.KeyType.OKP:
+                        {
+                            MakeEdDSA(out var privateKeySeed, out publicKey, out expandedPrivateKey);
+                            break;
+                        }
+                        throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+                }
+
+                return SignData(kty, alg, crv, ecdsa, rsa, expandedPrivateKey, publicKey);
+            }
+
+            internal byte[] SignData(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve curve, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null, byte[] publicKey = null)
+            {
+                switch (kty)
+                {
+                    case COSE.KeyType.EC2:
+                        {
+                            var ecparams = ecdsa.ExportParameters(true);
+                            _credentialPublicKey = MakeCredentialPublicKey(kty, alg, curve, ecparams.Q.X, ecparams.Q.Y);
+                            var signature = ecdsa.SignData(_data, CryptoUtils.algMap[(int)alg]);
+                            return EcDsaSigFromSig(signature, ecdsa.KeySize);
+                        }
+                    case COSE.KeyType.RSA:
+                        {
+                            RSASignaturePadding padding;
+                            switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                            {
+                                case COSE.Algorithm.PS256:
+                                case COSE.Algorithm.PS384:
+                                case COSE.Algorithm.PS512:
+                                    padding = RSASignaturePadding.Pss;
+                                    break;
+
+                                case COSE.Algorithm.RS1:
+                                case COSE.Algorithm.RS256:
+                                case COSE.Algorithm.RS384:
+                                case COSE.Algorithm.RS512:
+                                    padding = RSASignaturePadding.Pkcs1;
+                                    break;
+                                default:
+                                    throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
+                            }
+
+                            var rsaparams = rsa.ExportParameters(true);
+                            _credentialPublicKey = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
+                            return rsa.SignData(_data, CryptoUtils.algMap[(int)alg], padding);
+                        }
+                    case COSE.KeyType.OKP:
+                        {
+                            _credentialPublicKey = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
+                            return Ed25519.Sign(_data, expandedPrivateKey);
+                        }
+
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+                }
+            }
+        }
+
+        internal static byte[] SignData(COSE.KeyType kty, COSE.Algorithm alg, byte[] data, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null)
+        {
+            switch (kty)
+            {
+                case COSE.KeyType.EC2:
+                    {
+                        var signature = ecdsa.SignData(data, CryptoUtils.algMap[(int)alg]);
+                        return EcDsaSigFromSig(signature, ecdsa.KeySize);
+                    }
+                case COSE.KeyType.RSA:
+                    {
+                        RSASignaturePadding padding;
+                        switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                        {
+                            case COSE.Algorithm.PS256:
+                            case COSE.Algorithm.PS384:
+                            case COSE.Algorithm.PS512:
+                                padding = RSASignaturePadding.Pss;
+                                break;
+
+                            case COSE.Algorithm.RS1:
+                            case COSE.Algorithm.RS256:
+                            case COSE.Algorithm.RS384:
+                            case COSE.Algorithm.RS512:
+                                padding = RSASignaturePadding.Pkcs1;
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
+                        }
+                        return rsa.SignData(data, CryptoUtils.algMap[(int)alg], padding);
+                    }
+                case COSE.KeyType.OKP:
+                    {
+                        return Ed25519.Sign(data, expandedPrivateKey);
+                    }
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+            }
+        }
+    
 
         [Fact]
         public void TestStringIsSerializable()
@@ -120,8 +418,8 @@ namespace fido2_net_lib.Test
             //var key2 = "45-43-53-31-20-00-00-00-1D-60-44-D7-92-A0-0C-1E-3B-F9-58-5A-28-43-92-FD-F6-4F-BB-7F-8E-86-33-38-30-A4-30-5D-4E-2C-71-E3-53-3C-7B-98-81-99-FE-A9-DA-D9-24-8E-04-BD-C7-86-40-D3-03-1E-6E-00-81-7D-85-C3-A2-19-C9-21-85-8D";
             //var key2 = "45-43-53-31-20-00-00-00-A9-E9-12-2A-37-8A-F0-74-E7-BA-52-54-B0-91-55-46-DB-21-E5-2C-01-B8-FB-69-CD-E5-ED-02-B6-C3-16-E3-1A-59-16-C1-43-87-0D-04-B9-94-7F-CF-56-E5-AA-5E-96-8C-5B-27-8F-83-F4-E2-50-AB-B3-F6-28-A1-F8-9E";
 
-            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./AttestationNoneOptions.json"));
-            var response = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./AttestationNoneResponse.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationNoneOptions.json"));
+            var response = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationNoneResponse.json"));
 
             var o = AuthenticatorAttestationResponse.Parse(response);
             await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
@@ -405,71 +703,154 @@ namespace fido2_net_lib.Test
             }
         }
 
+
+
         [Fact]
         public void TestAssertionResponse()
         {
-            MakeAssertionResponse(COSE.KeyType.EC2, COSE.Algorithm.ES256);
-            MakeAssertionResponse(COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384);
-            MakeAssertionResponse(COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521);
-            MakeAssertionResponse(COSE.KeyType.RSA, COSE.Algorithm.RS256);
-            MakeAssertionResponse(COSE.KeyType.RSA, COSE.Algorithm.RS384);
-            MakeAssertionResponse(COSE.KeyType.RSA, COSE.Algorithm.RS512);
-            MakeAssertionResponse(COSE.KeyType.RSA, COSE.Algorithm.PS256);
-            MakeAssertionResponse(COSE.KeyType.RSA, COSE.Algorithm.PS384);
-            MakeAssertionResponse(COSE.KeyType.RSA, COSE.Algorithm.PS512);
-            MakeAssertionResponse(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519);
+            AssertionVerificationResult avr;
+            _validCOSEParameters.ForEach(async delegate (object[] param)
+            {
+                if (param.Length == 3)
+                {
+                    avr = await MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+                }
+                else
+                {
+                    avr = await MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1]);
+                }
+                Assert.Equal("", avr.ErrorMessage);
+                Assert.Equal("ok", avr.Status);
+                Assert.Equal(new byte[] { 0xf1, 0xd0 }, avr.CredentialId);
+                Assert.Equal("1", avr.Counter.ToString("X"));
+            });
         }
 
-        internal async void MakeAssertionResponse(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv = COSE.EllipticCurve.P256)
+        internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
+            byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
+        {
+            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(type.Reverse().ToArray(), 0).ToString());
+
+            IEnumerable<byte> raw = null;
+            var uniqueLen = BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray();
+
+            if (TpmAlg.TPM_ALG_RSA == tpmalg)
+            {
+                raw
+                     = type
+                    .Concat(alg)
+                    .Concat(attributes)
+                    .Concat(BitConverter.GetBytes((UInt16)policy.Length)
+                        .Reverse()
+                        .ToArray())
+                    .Concat(policy)
+                    .Concat(symmetric)
+                    .Concat(scheme)
+                    .Concat(keyBits)
+                    .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)))
+                    .Concat(BitConverter.GetBytes((UInt16)unique.Length)
+                        .Reverse()
+                        .ToArray())
+                    .Concat(unique);
+            }
+            if (TpmAlg.TPM_ALG_ECC == tpmalg)
+            {
+                raw = type
+                    .Concat(alg)
+                    .Concat(attributes)
+                    .Concat(BitConverter.GetBytes((UInt16)policy.Length)
+                        .Reverse()
+                        .ToArray())
+                    .Concat(policy)
+                    .Concat(symmetric)
+                    .Concat(scheme)
+                    .Concat(curveID)
+                    .Concat(kdf)
+                    .Concat(BitConverter.GetBytes((UInt16)unique.Length)
+                        .Reverse()
+                        .ToArray())
+                    .Concat(unique);
+            }
+            
+            return raw.ToArray();
+        }
+
+        internal static byte[] CreateCertInfo(byte[] magic, byte[] type, byte[] qualifiedSigner,
+            byte[] extraData, byte[] clock, byte[] resetCount, byte[] restartCount,
+            byte[] safe, byte[] firmwareRevision, byte[] tPM2BName, byte[] attestedQualifiedNameBuffer)
+        {
+            IEnumerable<byte> raw = magic
+                .Concat(type)
+                .Concat(qualifiedSigner)
+                .Concat(extraData)
+                .Concat(clock)
+                .Concat(resetCount)
+                .Concat(restartCount)
+                .Concat(safe)
+                .Concat(firmwareRevision)
+                .Concat(tPM2BName)
+                .Concat(attestedQualifiedNameBuffer);
+
+            return raw.ToArray();
+        }
+
+        
+        internal static async Task<AssertionVerificationResult> MakeAssertionResponse(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv = COSE.EllipticCurve.P256, CredentialPublicKey cpk = null, ushort signCount = 0, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null)
         {
             const string rp = "fido2.azurewebsites.net";
             byte[] rpId = Encoding.UTF8.GetBytes(rp);
             var rpIdHash = SHA256.Create().ComputeHash(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
-            const ushort signCount = 0xf1d0;
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-
-            CredentialPublicKey cpk = null;
-            ECDsa ecdsa = null;
-            RSA rsa = null;
-            byte[] expandedPrivateKey = null;
-            switch (kty)
+            if (cpk == null)
             {
-                case COSE.KeyType.EC2:
-                    {
-                        ecdsa = MakeECDsa(alg, crv);
-                        var ecparams = ecdsa.ExportParameters(true);
-                        cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
-                        break;
-                    }
-                case COSE.KeyType.RSA:
-                    {
-                        rsa = RSA.Create();
-                        var rsaparams = rsa.ExportParameters(true);
-                        cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
-                        break;
-                    }
-                case COSE.KeyType.OKP:
-                    {
-                        MakeEdDSA(out var privateKeySeed, out var publicKey, out expandedPrivateKey);
-                        cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
-                        break;
-                    }
-                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
-            }
+                switch (kty)
+                {
+                    case COSE.KeyType.EC2:
+                        {
+                            if (ecdsa == null)
+                            {
+                                ecdsa = MakeECDsa(alg, crv);
+                            }
+                            var ecparams = ecdsa.ExportParameters(true);
+                            cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
+                            break;
+                        }
+                    case COSE.KeyType.RSA:
+                        {
+                            if (rsa == null)
+                            {
+                                rsa = RSA.Create();
+                            }
+                            var rsaparams = rsa.ExportParameters(true);
+                            cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
+                            break;
+                        }
+                    case COSE.KeyType.OKP:
+                        {
+                            byte[] publicKey = null;
+                            if (expandedPrivateKey == null)
+                            {
+                                MakeEdDSA(out var privateKeySeed, out publicKey, out expandedPrivateKey);
+                            }
 
+                            cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
+                            break;
+                        }
+                        throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+                }
+            }
             var acd = new AttestedCredentialData(aaguid, credentialID, cpk);
             var extBytes = CBORObject.NewMap().Add("testing", true).EncodeToBytes();
             var exts = new Extensions(extBytes);
 
-            var ad = new AuthenticatorData(rpIdHash, flags, signCount, acd, exts);
+            var ad = new AuthenticatorData(rpIdHash, flags, (uint)(signCount + 1), acd, exts);
             var authData = ad.ToByteArray();
 
             var challenge = new byte[128];
             var rng = RandomNumberGenerator.Create();
             rng.GetBytes(challenge);
-
 
             var clientData = new
             {
@@ -484,51 +865,7 @@ namespace fido2_net_lib.Test
             byte[] data = new byte[authData.Length + hashedClientDataJson.Length];
             Buffer.BlockCopy(authData, 0, data, 0, authData.Length);
             Buffer.BlockCopy(hashedClientDataJson, 0, data, authData.Length, hashedClientDataJson.Length);
-            byte[] signature = null;
-            switch (kty)
-            {
-                case COSE.KeyType.EC2:
-                    {
-                        signature = ecdsa.SignData(data, CryptoUtils.algMap[(int)alg]);
-                        break;
-                    }
-                case COSE.KeyType.RSA:
-                    {
-                        RSASignaturePadding padding;
-                        switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                        {
-                            case COSE.Algorithm.PS256:
-                            case COSE.Algorithm.PS384:
-                            case COSE.Algorithm.PS512:
-                                padding = RSASignaturePadding.Pss;
-                                break;
-
-                            case COSE.Algorithm.RS1:
-                            case COSE.Algorithm.RS256:
-                            case COSE.Algorithm.RS384:
-                            case COSE.Algorithm.RS512:
-                                padding = RSASignaturePadding.Pkcs1;
-                                break;
-                            default:
-                                throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
-                        }
-                        signature = rsa.SignData(data, CryptoUtils.algMap[(int)alg], padding);
-                        break;
-                    }
-                case COSE.KeyType.OKP:
-                    {
-                        signature = Ed25519.Sign(data, expandedPrivateKey);
-                        break;
-                    }
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
-            }
-
-            if (kty == COSE.KeyType.EC2)
-            {
-                signature = EcDsaSigFromSig(signature, ecdsa.KeySize);
-            }
+            byte[] signature = SignData(kty, alg, data, ecdsa, rsa, expandedPrivateKey);
 
             var userHandle = new byte[16];
             rng.GetBytes(userHandle);
@@ -568,10 +905,10 @@ namespace fido2_net_lib.Test
             {
                 return Task.FromResult(true);
             };
-            var res = await lib.MakeAssertionAsync(response, options, cpk.GetBytes(), signCount - 1, callback);
+            return await lib.MakeAssertionAsync(response, options, cpk.GetBytes(), signCount, callback);
         }
 
-        internal void MakeEdDSA(out byte[] privateKeySeed, out byte[] publicKey, out byte[] expandedPrivateKey)
+        internal static void MakeEdDSA(out byte[] privateKeySeed, out byte[] publicKey, out byte[] expandedPrivateKey)
         {
             using (var rng = RandomNumberGenerator.Create())
             {
@@ -583,7 +920,7 @@ namespace fido2_net_lib.Test
             }
         }
 
-        internal ECDsa MakeECDsa(COSE.Algorithm alg, COSE.EllipticCurve crv)
+        internal static ECDsa MakeECDsa(COSE.Algorithm alg, COSE.EllipticCurve crv)
         {
             ECCurve curve;
             switch (alg)
@@ -625,22 +962,22 @@ namespace fido2_net_lib.Test
             return ECDsa.Create(curve);
         }
 
-        internal CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv, byte[] x, byte[] y)
+        internal static CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv, byte[] x, byte[] y)
         {
             return MakeCredentialPublicKey(kty, alg, crv, x, y, null, null);
         }
 
-        internal CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv, byte[] x)
+        internal static CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv, byte[] x)
         {
             return MakeCredentialPublicKey(kty, alg, crv, x, null, null, null);
         }
 
-        internal CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, byte[] n, byte[] e)
+        internal static CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, byte[] n, byte[] e)
         {
             return MakeCredentialPublicKey(kty, alg, null, null, null, n, e);
         }
 
-        internal CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve? crv, byte[] x, byte[] y, byte[] n, byte[] e)
+        internal static CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve? crv, byte[] x, byte[] y, byte[] n, byte[] e)
         {
             var cpk = CBORObject.NewMap();
             cpk.Add(COSE.KeyCommonParameter.KeyType, kty);
@@ -664,6 +1001,41 @@ namespace fido2_net_lib.Test
                     throw new ArgumentOutOfRangeException(nameof(kty), kty, "Invalid COSE key type");
             }
             return new CredentialPublicKey(cpk);
+        }
+
+        internal static CredentialPublicKey MakeCredentialPublicKey(object[] param)
+        {
+            var kty = (COSE.KeyType)param[0];
+            var alg = (COSE.Algorithm)param[1];
+            CredentialPublicKey cpk = null;
+            switch (kty)
+            {
+                case COSE.KeyType.EC2:
+                    {
+                        var crv = (COSE.EllipticCurve)param[2];
+                        var ecdsa = MakeECDsa(alg, crv);
+                        var ecparams = ecdsa.ExportParameters(true);
+                        cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
+                        break;
+                    }
+                case COSE.KeyType.RSA:
+                    {
+                        var rsa = RSA.Create();
+                        var rsaparams = rsa.ExportParameters(true);
+                        cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
+                        break;
+                    }
+                case COSE.KeyType.OKP:
+                    {
+                        byte[] publicKey = null;
+                        byte[] expandedPrivateKey = null;
+                        MakeEdDSA(out var privateKeySeed, out publicKey, out expandedPrivateKey);
+                        cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
+                        break;
+                    }
+                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+            }
+            return cpk;
         }
     }
 }
