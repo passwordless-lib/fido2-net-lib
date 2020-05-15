@@ -51,9 +51,9 @@ namespace Test.Attestation
 
         }
         [Fact]
-        public void TestU2f()
+        public async void TestU2f()
         {
-            var res = MakeAttestationResponse().Result;
+            var res = await MakeAttestationResponse();
             Assert.Equal(string.Empty, res.ErrorMessage);
             Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.Aaguid);

@@ -16,13 +16,13 @@ namespace Test.Attestation
         [Fact]
         public void TestNone()
         {
-            Fido2Tests._validCOSEParameters.ForEach(delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
             {
                 _attestationObject.Add("attStmt", CBORObject.NewMap());
                 _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(param);
                 Fido2.CredentialMakeResult res = null;
 
-                res = MakeAttestationResponse().Result;
+                res = await MakeAttestationResponse();
 
                 Assert.Equal(string.Empty, res.ErrorMessage);
                 Assert.Equal("ok", res.Status);

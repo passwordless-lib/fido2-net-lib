@@ -704,15 +704,15 @@ namespace fido2_net_lib.Test
         public void TestAssertionResponse()
         {
             AssertionVerificationResult avr;
-            _validCOSEParameters.ForEach(delegate (object[] param)
+            _validCOSEParameters.ForEach(async delegate (object[] param)
             {
                 if (param.Length == 3)
                 {
-                    avr = MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]).Result;
+                    avr = await MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
                 }
                 else
                 {
-                    avr = MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1]).Result;
+                    avr = await MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1]);
                 }
                 Assert.Equal("", avr.ErrorMessage);
                 Assert.Equal("ok", avr.Status);

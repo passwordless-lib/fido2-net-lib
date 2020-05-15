@@ -19,7 +19,7 @@ namespace Test.Attestation
         [Fact]
         public void TestSelf()
         {
-            Fido2Tests._validCOSEParameters.ForEach(delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
             {
                 var crv = (param.Length == 3) ? (COSE.EllipticCurve)param[2] : COSE.EllipticCurve.Reserved;
 
@@ -29,7 +29,7 @@ namespace Test.Attestation
                     .Add("alg", (COSE.Algorithm)param[1])
                     .Add("sig", signature));
 
-                var res = MakeAttestationResponse().Result;
+                var res = await MakeAttestationResponse();
 
                 Assert.Equal(string.Empty, res.ErrorMessage);
                 Assert.Equal("ok", res.Status);
@@ -133,7 +133,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFull()
         {
-            Fido2Tests._validCOSEParameters.ForEach(delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
             {
                 if (COSE.KeyType.OKP == (COSE.KeyType)param[0])
                 {
@@ -203,7 +203,7 @@ namespace Test.Attestation
                                     .Add("sig", signature)
                                     .Add("x5c", X5c));
 
-                                res = MakeAttestationResponse().Result;
+                                res = await MakeAttestationResponse();
                             }
                         }
                         break;
@@ -261,7 +261,7 @@ namespace Test.Attestation
                                     .Add("sig", signature)
                                     .Add("x5c", X5c));
 
-                                res = MakeAttestationResponse().Result;
+                                res = await MakeAttestationResponse();
                             }
                         }
                         break;
