@@ -16,6 +16,11 @@ namespace Fido2NetLib
         public int TimestampDriftTolerance { get; set; } = 0; //Pretty sure 0 will never work - need a better default?
 
         /// <summary>
+        /// When checking attestation, require the attestation to chain to a known root
+        /// </summary>
+        public bool RequireValidAttestationRoot { get; set; } = false;
+
+        /// <summary>
         /// The size of the challenges sent to the client
         /// </summary>
         public int ChallengeSize { get; set; } = 16;

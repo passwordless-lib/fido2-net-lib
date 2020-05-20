@@ -11,9 +11,12 @@ namespace Fido2NetLib.AttestationFormat
 {
     internal class Tpm : AttestationFormat
     {
-        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) 
+        private readonly bool _requireValidAttestationRoot;
+
+        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, bool requireValidAttestationRoot) 
             : base(attStmt, authenticatorData, clientDataHash)
         {
+            _requireValidAttestationRoot = requireValidAttestationRoot;
         }
 
         public static readonly Dictionary<string, X509Certificate2[]> TPMManufacturerRootMap = new Dictionary<string, X509Certificate2[]>
@@ -555,7 +558,7 @@ namespace Fido2NetLib.AttestationFormat
                 {
                     var chain = new X509Chain();
                     chain.ChainPolicy.ExtraStore.Add(tpmRoots[i]);
-                    i++;
+                    
                     chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                     if (tpmManufacturer == "id:FFFFF1D0")
                     {
@@ -573,6 +576,15 @@ namespace Fido2NetLib.AttestationFormat
                         }
                     }
                     valid = chain.Build(new X509Certificate2(X5c.Values.First().GetByteString()));
+
+                    if (_requireValidAttestationRoot)
+                    {
+                        // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                        var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                        valid = valid && chainRoot.RawData.SequenceEqual(tpmRoots[i].RawData);
+                    }
+
+                    i++;
                 }
                 if (false == valid)
                     throw new Fido2VerificationException("TPM attestation failed chain validation");
