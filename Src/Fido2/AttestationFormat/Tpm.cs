@@ -18,10 +18,48 @@ namespace Fido2NetLib.AttestationFormat
         {
             _requireValidAttestationRoot = requireValidAttestationRoot;
         }
+        // certificates from https://docs.microsoft.com/en-us/windows-server/security/guarded-fabric-shielded-vm/guarded-fabric-install-trusted-tpm-root-certificates
 
+        // microsoft root is used by numerous manufacturers 
+        private static readonly X509Certificate2 msRootCert = new X509Certificate2(Convert.FromBase64String(
+                "MIIGSDCCBDCgAwIBAgIJANLAiKUvCLEqMA0GCSqGSIb3DQEBCwUAMIG/MQswCQYD" +
+                "VQQGEwJVUzELMAkGA1UECAwCTVkxEjAQBgNVBAcMCVdha2VmaWVsZDEWMBQGA1UE" +
+                "CgwNRklETyBBbGxpYW5jZTEMMAoGA1UECwwDQ1dHMTYwNAYDVQQDDC1GSURPIEZh" +
+                "a2UgVFBNIFJvb3QgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IDIwMTgxMTAvBgkqhkiG" +
+                "9w0BCQEWImNvbmZvcm1hbmNlLXRvb2xzQGZpZG9hbGxpYW5jZS5vcmcwHhcNMTgw" +
+                "NTI5MTQzMjU5WhcNNDUxMDE0MTQzMjU5WjCBvzELMAkGA1UEBhMCVVMxCzAJBgNV" +
+                "BAgMAk1ZMRIwEAYDVQQHDAlXYWtlZmllbGQxFjAUBgNVBAoMDUZJRE8gQWxsaWFu" +
+                "Y2UxDDAKBgNVBAsMA0NXRzE2MDQGA1UEAwwtRklETyBGYWtlIFRQTSBSb290IENl" +
+                "cnRpZmljYXRlIEF1dGhvcml0eSAyMDE4MTEwLwYJKoZIhvcNAQkBFiJjb25mb3Jt" +
+                "YW5jZS10b29sc0BmaWRvYWxsaWFuY2Uub3JnMIICIjANBgkqhkiG9w0BAQEFAAOC" +
+                "Ag8AMIICCgKCAgEAyCtbMw6ckWpylo7ZCboe3khforOB1eUb0DZg4mLsf460nKnZ" +
+                "JbztZh/3qqLQTUBEb1kxeGW31QiJ5UoiAcPAoo9aHIADVfjJEPvr865fOqt85f/q" +
+                "O2qsF6ZjVpNk1/zQRP4xPRLZPhawQvZsnmV20vteV8K4KL9kWw/Yjo+m9LKt90OM" +
+                "1tf7+F/uh1alocxc+WPmfpXxSHDfySTvnq6m8cQySAn3LyjAg1pYnT4P9QC0HbNK" +
+                "z0KoL+EFylsmvps7wjAeRqNetu0BdmvBLtYC7AMxGpCzAuF5tYl+9/hWMI544QGn" +
+                "ZrQnhIXfq704brI04NsUtBmCfZ5rEuc+Gzrz/asAPo6JSXyj9OSq+yPiWXen3g98" +
+                "/BI7f7gZoV6rqrdCojkFlWZVBJgWgHio0JEy7OB4RPO0SIKichjKbvIyTcE+J7oP" +
+                "Cgz5UCjBbSo94sJ8hs35W2y8aVYriRZ94z5w9IM/T/tZLkZDOzI03uot+PO2d1xX" +
+                "K8YQ/QVzKnNcxXeve9l3x/CNzgknbp+IiL/NH509Zcn0YiGLfInHLPpEQ3p1PSU5" +
+                "vtx+mWWpoRWvzwYpQD907skC9exZjm16F1ZKu+cvboeA1AHAHC/tE26Lxema5F/p" +
+                "KXVFSu2XqK8JS6hO3EauL5ONaWxVIsQX4CIOxFdvS6mdmp8n+9SWr9FOuSMCAwEA" +
+                "AaNFMEMwEgYDVR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAoQwHQYDVR0O" +
+                "BBYEFEMRFpma7p1QN8JP/uJbFckJMz8yMA0GCSqGSIb3DQEBCwUAA4ICAQBlMRmP" +
+                "NnAWOxnkQ5L/rFfrNxelNv65g1igxu9ADtLpTvgoDauoT3JdaIeano3jbXxEvOPK" +
+                "oI0dwDmioYGZoZcTrMFtCLuygotZHVn+m5Lz1M+22mnR/REhrWzifDzqttEy0N1a" +
+                "OOATF3cc2RMupn1LUci5Tl+Mlx5QzfOL36UduWO6Mt3wRBmMua7vRbxU3GScIUTW" +
+                "aWUMT3MUdlYIITkMXon5S4zXvc2Z/xn98/Lj0GR/h3VnDlg+mZnIyKdHBJ/racTD" +
+                "FH1kvlU4LEvY9K6yJIi7GQvlN0JvsL7XDetnOENJrRrq5N8xSu9X9puNFaFBufuA" +
+                "NmE0EsF7MMybD4YfIhBWE4qSPEgaoa136Paf/pCPXz/BwSTlmCXoRJeybfgJsNoj" +
+                "K72heXSpJrwGI2RPKRg0UJ2Bw7GRkzubuaAB9apvBVurCngZ8n28bkCG+12v0qMh" +
+                "UwYKdlPP5mozrxK7shg+y9LBNO2x3b85Uu9hWZl3xys4P7hOtoG3y0IN05aCSvou" +
+                "l3YCmR+NJ5aK1PePq2qvSaWfBZyZBwNFlWTZb+pxLjXwul+m2Pg/9bMp0oPK7XZt" +
+                "Ar+IZ5HN+Tld2RL142d5ElizNNpiGDXlFTIqg7YzodejASdKNtn/S1z8yzHUuHE6" +
+                "ogcYf5q/tvBkp/uRH9i6L+xUSMoGHkXP2Bj9AQ=="
+            ));
         public static readonly Dictionary<string, X509Certificate2[]> TPMManufacturerRootMap = new Dictionary<string, X509Certificate2[]>
         {
-            {"id:FFFFF1D0", new X509Certificate2[]{
+            {"id:FFFFF1D0", new X509Certificate2[]{ // FIDO test
                 new X509Certificate2(Convert.FromBase64String(
                 "MIIGSDCCBDCgAwIBAgIJANLAiKUvCLEqMA0GCSqGSIb3DQEBCwUAMIG/MQswCQYD" +
                 "VQQGEwJVUzELMAkGA1UECAwCTVkxEjAQBgNVBAcMCVdha2VmaWVsZDEWMBQGA1UE" +
@@ -58,7 +96,7 @@ namespace Fido2NetLib.AttestationFormat
                 "Ar+IZ5HN+Tld2RL142d5ElizNNpiGDXlFTIqg7YzodejASdKNtn/S1z8yzHUuHE6" +
                 "ogcYf5q/tvBkp/uRH9i6L+xUSMoGHkXP2Bj9AQ=="
             ))}},
-            {"id:414D4400", new X509Certificate2[]{
+            {"id:414D4400", new X509Certificate2[]{ //AMD
                 new X509Certificate2(Convert.FromBase64String(
                 "MIIEiDCCA3CgAwIBAgIQJk05ojzrXVtJ1hAETuvRITANBgkqhkiG9w0BAQsFADB2" +
                 "MRQwEgYDVQQLEwtFbmdpbmVlcmluZzELMAkGA1UEBhMCVVMxEjAQBgNVBAcTCVN1" +
@@ -84,8 +122,8 @@ namespace Fido2NetLib.AttestationFormat
                 "jN/sN6kNtc4hL5r5Pr6Mze5H9WXBo2F2Oy+7+9jWMkxNrmUhoUUrF/6YsajTGPeq" +
                 "7r+i6q84W2nJdd+BoQQv4sk5GeuN2j2u4k1a8DkRPsVPc2I9QTtbzekchTK1GCXW" +
                 "ki3DKGkZUEuaoaa60Kgw55Q5rt1eK7HKEG5npmR8aEod7BDLWy4CMTNAWR5iabCW" +
-                "/KX28JbJL6Phau9j"))} },
-            {"id:41544D4C", new X509Certificate2[]{
+                "/KX28JbJL6Phau9j")), msRootCert} },
+            {"id:41544D4C", new X509Certificate2[]{ // Atmel
                 new X509Certificate2(Convert.FromBase64String(
                 "MIICKzCCAdCgAwIBAgIUcD8hGhUZbtWr/R0SMo4rBkmgVHgwCgYIKoZIzj0EAwIw" +
                 "czELMAkGA1UEBhMCVVMxETAPBgNVBAgTCENvbG9yYWRvMRkwFwYDVQQHExBDb2xv" +
@@ -98,37 +136,12 @@ namespace Fido2NetLib.AttestationFormat
                 "QveCQOt7n/zsBMRsqk1bsAfYKwqjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMB" +
                 "Af8EBTADAQH/MB0GA1UdDgQWBBQx0F0Qba/k7RndCq/TW+oio3gcVzAKBggqhkjO" +
                 "PQQDAgNJADBGAiEAyNu4sBDbRURcVGhKysdHGYidk5H2Bia+yo5mDryJ3hMCIQCs" +
-                "lDkUE4T1jHHwzSxca6KCXzgtpyui78G742CdYm9W5Q=="))} },
+                "lDkUE4T1jHHwzSxca6KCXzgtpyui78G742CdYm9W5Q==")), msRootCert} },
             //{"id:4252434D", "BRCM"},
             //{"id:48504500", "HPE"},
             //{"id:49424d00", "IBM"},
-            {"id:49465800",
+            {"id:49465800", // Infineon
                 new X509Certificate2[]{
-                new X509Certificate2(Convert.FromBase64String(
-                "MIIEUDCCAzigAwIBAgIQRyQE4N8hgD99IM2HSOq5WjANBgkqhkiG9w0BAQUFADCB" +
-                "ljELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDlZlcmlTaWduLCBJbmMuMTswOQYDVQQL" +
-                "EzJWZXJpU2lnbiBUcnVzdGVkIENvbXB1dGluZyBDZXJ0aWZpY2F0aW9uIEF1dGhv" +
-                "cml0eTExMC8GA1UEAxMoVmVyaVNpZ24gVHJ1c3RlZCBQbGF0Zm9ybSBNb2R1bGUg" +
-                "Um9vdCBDQTAeFw0wNTEwMjUwMDAwMDBaFw0zMDEwMjQyMzU5NTlaMG0xCzAJBgNV" +
-                "BAYTAkRFMRAwDgYDVQQIEwdCYXZhcmlhMSEwHwYDVQQKExhJbmZpbmVvbiBUZWNo" +
-                "bm9sb2dpZXMgQUcxDDAKBgNVBAsTA0FJTTEbMBkGA1UEAxMSSUZYIFRQTSBFSyBS" +
-                "b290IENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1yZqFFg0PLDo" +
-                "cW7Fyis2Xe5vERxnJ+KlEMUOQnrw5At9f0/ggovDM8uCVW71T6e24T6HH6kUQZCt" +
-                "yddtsaf0tebmA3TxjiuBzBAtT6qyns35+sXuL6uZaLnjGKXDv+uByOzpmBXUSwq1" +
-                "tdSTPQ0wWWQ6v/qwKofZdxAaPCTIBw61G08rkUT42a1hPESmVFrmc5hcnn4AQmJE" +
-                "cjcOhClwIKE9OQw8TzI+7ncgCZlY3FZFKqHp7NRNnaihpmKbHvn5wXIUnKuvS4iZ" +
-                "HqSbzGBuZ0ogqJ22ruDJi+JWYUWBmgI1JO85CPJ1Q58t0ME3hM3oWeqV6adWUcIc" +
-                "IpclkYQWlwIDAQABo4HBMIG+MBIGA1UdEwEB/wQIMAYBAf8CAQEwWAYDVR0gAQH/" +
-                "BE4wTDBKBgtghkgBhvhFAQcvATA7MDkGCCsGAQUFBwIBFi1odHRwOi8vd3d3LnZl" +
-                "cmlzaWduLmNvbS9yZXBvc2l0b3J5L2luZGV4Lmh0bWwwDgYDVR0PAQH/BAQDAgIE" +
-                "MB0GA1UdDgQWBBRW65FEhWPWcrOu1EWWC/eUDlRCpjAfBgNVHSMEGDAWgBQPFPXj" +
-                "IIhEFsomv40fzjcV6kVvBjANBgkqhkiG9w0BAQUFAAOCAQEAWKL5zsV8p/TZk3mt" +
-                "9m9NAqXWBDVHBnDgBE+Qphf25s+3s098vkWVLTddH3PtddF3MEYC4W8+dn4tyFe9" +
-                "mQ+96q8dwJdNabwBokrZy2beL71CXt/4jYNN0j/N9uYO4vIDBFDKRMWCtUO217+w" +
-                "xQTSOv5+mpgFw7UML/QpgpdmZy2i+eZPxDo8dzT+YJXC5vsHVSooA3rWDDzvnoLC" +
-                "cmDDiT3pG6AdjAN61MeeHHmoJavV8Tvdoa3g14Sn1lL+TQ1xaznyh520sX0dXPTp" +
-                "GqZbDzqEMiVbG7vFECqINE96/rwppJlWK91F1MZikGXr7FeF5C0JutGLb0gaYOmv" +
-                "Yau4DQ==")),
                 new X509Certificate2(Convert.FromBase64String(
                 "MIIEUDCCAzigAwIBAgIQRyQE4N8hgD99IM2HSOq5WjANBgkqhkiG9w0BAQUFADCB" +
                 "ljELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDlZlcmlTaWduLCBJbmMuMTswOQYDVQQL" +
@@ -185,8 +198,8 @@ namespace Fido2NetLib.AttestationFormat
                 "Rdp3SalxsSp6cWwJGE4wpYKB2ClM2QF3yNQoTGNwMlpsxnU72ihDi/RxyaRTz9OR" +
                 "pubNq8Wuq7jQUs5U00ryrMCZog1cxLzyfZwwCYh6O2CmbvMoydHNy5CU3ygxaLWv" +
                 "JpgZVHN103npVMR3mLNa3QE+5MFlBlP3Mmystu8iVAKJas39VO5y5jad4dRLkwtM" +
-                "6sJa8iBpdRjZrBp5sJBI"))} },
-            {"id:494E5443", new X509Certificate2[]{
+                "6sJa8iBpdRjZrBp5sJBI")), msRootCert} },
+            {"id:494E5443", new X509Certificate2[]{ //Intel
                 new X509Certificate2(Convert.FromBase64String(
                 "MIICdzCCAh6gAwIBAgIUB+dPf7a3IyJGO923z34oQLRP7pwwCgYIKoZIzj0EAwIw" +
                 "gYcxCzAJBgNVBAYMAlVTMQswCQYDVQQIDAJDQTEUMBIGA1UEBwwLU2FudGEgQ2xh" +
@@ -201,11 +214,25 @@ namespace Fido2NetLib.AttestationFormat
                 "uncPMB0GA1UdDgQWBBToUgXCT9jS1aUhRxa2zgx7W7p3DzASBgNVHRMBAf8ECDAG" +
                 "AQH/AgEBMA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNHADBEAiAldFScWQ6L" +
                 "PQgW/YT+2GILcATEA2TgzASaCrG+AzL6FgIgLH8ABRzm028hRYR/JZVGkHiomzYX" +
-                "VILmTjHwSL7uZBU="))} },
+                "VILmTjHwSL7uZBU=")), msRootCert} },
             //{"id:4C454E00", "LEN"},
             //{"id:4E534D20", "NSM"},
-            //{"id:4E545A00", "NTZ"},
-            {"id:4E544300", new X509Certificate2[]{
+            {"id:4E545A00", new X509Certificate2[]{ // Nationz/NTZ
+                new X509Certificate2(Convert.FromBase64String(
+                "MIICRDCCAcqgAwIBAgIBATAKBggqhkjOPQQDAzBrMQswCQYDVQQGEwJDTjEhMB8G" + 
+                "A1UECgwYTmF0aW9ueiBUZWNobm9sb2dpZXMgSW5jMRswGQYDVQQLDBJOYXRpb256" + 
+                "IFRQTSBEZXZpY2UxHDAaBgNVBAMME05hdGlvbnogVFBNIFJvb3QgQ0EwHhcNMTcw" + 
+                "NTEyMDAwMDAwWhcNNDcwNTEzMDAwMDAwWjBrMQswCQYDVQQGEwJDTjEhMB8GA1UE" + 
+                "CgwYTmF0aW9ueiBUZWNobm9sb2dpZXMgSW5jMRswGQYDVQQLDBJOYXRpb256IFRQ" + 
+                "TSBEZXZpY2UxHDAaBgNVBAMME05hdGlvbnogVFBNIFJvb3QgQ0EwdjAQBgcqhkjO" + 
+                "PQIBBgUrgQQAIgNiAATvuDTN8TNvp3A9fSjWpDARLmvz7ItQrDq/mmuzvzInwQfs" + 
+                "YKUUJza4MXB3yS0PH1jjv1YMvaIBIalAgc+kahScQUy6W2fy6hd36pazmc/vQfG3" + 
+                "Gdhw56gGwRHx4rn4TuqjQjBAMB0GA1UdDgQWBBQ6vP8I314BDCtkB4vHzpUG9Aj9" + 
+                "5DAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAwNo" + 
+                "ADBlAjApzqSmd4cCMKC7slJ4NE/7zweXZx89JzSEnEWGcq78jbbXCw6yM+R4nCNX" + 
+                "phflI9QCMQCeFOAvyR+DQvThfGFINABej+1zeDVIjuZHat3FHVyV0UQVClPgMlZu" + 
+                "TntipXwGOVY=")), msRootCert } }, 
+            {"id:4E544300", new X509Certificate2[]{ // Nuvoton Technology / NTC
                 new X509Certificate2(Convert.FromBase64String(
                 "MIIDSjCCAjKgAwIBAgIGAK3jXfbVMA0GCSqGSIb3DQEBBQUAMFIxUDAcBgNVBAMT" +
                 "FU5UQyBUUE0gRUsgUm9vdCBDQSAwMTAlBgNVBAoTHk51dm90b24gVGVjaG5vbG9n" +
@@ -328,10 +355,10 @@ namespace Fido2NetLib.AttestationFormat
                 "MA4GA1UdDwEB/wQEAwICBDASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBSf" +
                 "u3mqD1JieL7RUJKacXHpajW+9zAfBgNVHSMEGDAWgBSfu3mqD1JieL7RUJKacXHp" +
                 "ajW+9zAKBggqhkjOPQQDAgNIADBFAiEA/jiywhOKpiMOUnTfDmXsXfDFokhKVNTX" +
-                "B6Xtqm7J8L4CICjT3/Y+rrSnf8zrBXqWeHDh8Wi41+w2ppq6Ev9orZFI"))} },
-            //{"id:51434F4D", "QCOM"},
+                "B6Xtqm7J8L4CICjT3/Y+rrSnf8zrBXqWeHDh8Wi41+w2ppq6Ev9orZFI")), msRootCert} },
+            {"id:51434F4D", new X509Certificate2[] { msRootCert } }, // QCOM
             //{"id:534D5343", "SMSC"},
-            {"id:53544D20", new X509Certificate2[]{
+            {"id:53544D20", new X509Certificate2[]{ // ST Microelectronics
                 new X509Certificate2(Convert.FromBase64String(
                 "MIID1zCCAr+gAwIBAgILBAAAAAABIBkJGa4wDQYJKoZIhvcNAQELBQAwgYcxOzA5" +
                 "BgNVBAsTMkdsb2JhbFNpZ24gVHJ1c3RlZCBDb21wdXRpbmcgQ2VydGlmaWNhdGUg" +
@@ -408,11 +435,11 @@ namespace Fido2NetLib.AttestationFormat
                 "BEUwQzBBBgkrBgEEAaAyAVowNDAyBggrBgEFBQcCARYmaHR0cHM6Ly93d3cuZ2xv" +
                 "YmFsc2lnbi5jb20vcmVwb3NpdG9yeS8wCgYIKoZIzj0EAwMDZwAwZAIwWnuUAzwy" +
                 "vHUhHehymKTZ2QcPUwHX0LdcVTac4ohyEL3zcuv/dM0BN62kFxHgBOhWAjAIxt9i" +
-                "50yAxy0Z/MeV2NTXqKpLwdhWNuzOSFZnzRKsh9MxY3zj8nebDNlHTDGSMR0="))} }
+                "50yAxy0Z/MeV2NTXqKpLwdhWNuzOSFZnzRKsh9MxY3zj8nebDNlHTDGSMR0=")), msRootCert} },
             //{"id:534D534E", "SMSN"},
             //{"id:534E5300", "SNS"},
             //{"id:54584E00", "TXN"},
-            //{"id:57454300", "WEC"},
+            {"id:57454300", new X509Certificate2[] { msRootCert } } // WEC
             //{"id:524F4343", "ROCC"},
             //{"id:474F4F47", "GOOG"}
     };
