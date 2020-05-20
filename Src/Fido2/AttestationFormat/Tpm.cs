@@ -22,40 +22,38 @@ namespace Fido2NetLib.AttestationFormat
 
         // microsoft root is used by numerous manufacturers 
         private static readonly X509Certificate2 msRootCert = new X509Certificate2(Convert.FromBase64String(
-                "MIIGSDCCBDCgAwIBAgIJANLAiKUvCLEqMA0GCSqGSIb3DQEBCwUAMIG/MQswCQYD" +
-                "VQQGEwJVUzELMAkGA1UECAwCTVkxEjAQBgNVBAcMCVdha2VmaWVsZDEWMBQGA1UE" +
-                "CgwNRklETyBBbGxpYW5jZTEMMAoGA1UECwwDQ1dHMTYwNAYDVQQDDC1GSURPIEZh" +
-                "a2UgVFBNIFJvb3QgQ2VydGlmaWNhdGUgQXV0aG9yaXR5IDIwMTgxMTAvBgkqhkiG" +
-                "9w0BCQEWImNvbmZvcm1hbmNlLXRvb2xzQGZpZG9hbGxpYW5jZS5vcmcwHhcNMTgw" +
-                "NTI5MTQzMjU5WhcNNDUxMDE0MTQzMjU5WjCBvzELMAkGA1UEBhMCVVMxCzAJBgNV" +
-                "BAgMAk1ZMRIwEAYDVQQHDAlXYWtlZmllbGQxFjAUBgNVBAoMDUZJRE8gQWxsaWFu" +
-                "Y2UxDDAKBgNVBAsMA0NXRzE2MDQGA1UEAwwtRklETyBGYWtlIFRQTSBSb290IENl" +
-                "cnRpZmljYXRlIEF1dGhvcml0eSAyMDE4MTEwLwYJKoZIhvcNAQkBFiJjb25mb3Jt" +
-                "YW5jZS10b29sc0BmaWRvYWxsaWFuY2Uub3JnMIICIjANBgkqhkiG9w0BAQEFAAOC" +
-                "Ag8AMIICCgKCAgEAyCtbMw6ckWpylo7ZCboe3khforOB1eUb0DZg4mLsf460nKnZ" +
-                "JbztZh/3qqLQTUBEb1kxeGW31QiJ5UoiAcPAoo9aHIADVfjJEPvr865fOqt85f/q" +
-                "O2qsF6ZjVpNk1/zQRP4xPRLZPhawQvZsnmV20vteV8K4KL9kWw/Yjo+m9LKt90OM" +
-                "1tf7+F/uh1alocxc+WPmfpXxSHDfySTvnq6m8cQySAn3LyjAg1pYnT4P9QC0HbNK" +
-                "z0KoL+EFylsmvps7wjAeRqNetu0BdmvBLtYC7AMxGpCzAuF5tYl+9/hWMI544QGn" +
-                "ZrQnhIXfq704brI04NsUtBmCfZ5rEuc+Gzrz/asAPo6JSXyj9OSq+yPiWXen3g98" +
-                "/BI7f7gZoV6rqrdCojkFlWZVBJgWgHio0JEy7OB4RPO0SIKichjKbvIyTcE+J7oP" +
-                "Cgz5UCjBbSo94sJ8hs35W2y8aVYriRZ94z5w9IM/T/tZLkZDOzI03uot+PO2d1xX" +
-                "K8YQ/QVzKnNcxXeve9l3x/CNzgknbp+IiL/NH509Zcn0YiGLfInHLPpEQ3p1PSU5" +
-                "vtx+mWWpoRWvzwYpQD907skC9exZjm16F1ZKu+cvboeA1AHAHC/tE26Lxema5F/p" +
-                "KXVFSu2XqK8JS6hO3EauL5ONaWxVIsQX4CIOxFdvS6mdmp8n+9SWr9FOuSMCAwEA" +
-                "AaNFMEMwEgYDVR0TAQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAoQwHQYDVR0O" +
-                "BBYEFEMRFpma7p1QN8JP/uJbFckJMz8yMA0GCSqGSIb3DQEBCwUAA4ICAQBlMRmP" +
-                "NnAWOxnkQ5L/rFfrNxelNv65g1igxu9ADtLpTvgoDauoT3JdaIeano3jbXxEvOPK" +
-                "oI0dwDmioYGZoZcTrMFtCLuygotZHVn+m5Lz1M+22mnR/REhrWzifDzqttEy0N1a" +
-                "OOATF3cc2RMupn1LUci5Tl+Mlx5QzfOL36UduWO6Mt3wRBmMua7vRbxU3GScIUTW" +
-                "aWUMT3MUdlYIITkMXon5S4zXvc2Z/xn98/Lj0GR/h3VnDlg+mZnIyKdHBJ/racTD" +
-                "FH1kvlU4LEvY9K6yJIi7GQvlN0JvsL7XDetnOENJrRrq5N8xSu9X9puNFaFBufuA" +
-                "NmE0EsF7MMybD4YfIhBWE4qSPEgaoa136Paf/pCPXz/BwSTlmCXoRJeybfgJsNoj" +
-                "K72heXSpJrwGI2RPKRg0UJ2Bw7GRkzubuaAB9apvBVurCngZ8n28bkCG+12v0qMh" +
-                "UwYKdlPP5mozrxK7shg+y9LBNO2x3b85Uu9hWZl3xys4P7hOtoG3y0IN05aCSvou" +
-                "l3YCmR+NJ5aK1PePq2qvSaWfBZyZBwNFlWTZb+pxLjXwul+m2Pg/9bMp0oPK7XZt" +
-                "Ar+IZ5HN+Tld2RL142d5ElizNNpiGDXlFTIqg7YzodejASdKNtn/S1z8yzHUuHE6" +
-                "ogcYf5q/tvBkp/uRH9i6L+xUSMoGHkXP2Bj9AQ=="
+                "MIIF9TCCA92gAwIBAgIQXbYwTgy/J79JuMhpUB5dyzANBgkqhkiG9w0BAQsFADCB" +
+                "jDELMAkGA1UEBhMCVVMxEzARBgNVBAgTCldhc2hpbmd0b24xEDAOBgNVBAcTB1Jl" +
+                "ZG1vbmQxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjE2MDQGA1UEAxMt" +
+                "TWljcm9zb2Z0IFRQTSBSb290IENlcnRpZmljYXRlIEF1dGhvcml0eSAyMDE0MB4X" +
+                "DTE0MTIxMDIxMzExOVoXDTM5MTIxMDIxMzkyOFowgYwxCzAJBgNVBAYTAlVTMRMw" +
+                "EQYDVQQIEwpXYXNoaW5ndG9uMRAwDgYDVQQHEwdSZWRtb25kMR4wHAYDVQQKExVN" +
+                "aWNyb3NvZnQgQ29ycG9yYXRpb24xNjA0BgNVBAMTLU1pY3Jvc29mdCBUUE0gUm9v" +
+                "dCBDZXJ0aWZpY2F0ZSBBdXRob3JpdHkgMjAxNDCCAiIwDQYJKoZIhvcNAQEBBQAD" +
+                "ggIPADCCAgoCggIBAJ+n+bnKt/JHIRC/oI/xgkgsYdPzP0gpvduDA2GbRtth+L4W" +
+                "UyoZKGBw7uz5bjjP8Aql4YExyjR3EZQ4LqnZChMpoCofbeDR4MjCE1TGwWghGpS0" +
+                "mM3GtWD9XiME4rE2K0VW3pdN0CLzkYbvZbs2wQTFfE62yNQiDjyHFWAZ4BQH4eWa" +
+                "8wrDMUxIAneUCpU6zCwM+l6Qh4ohX063BHzXlTSTc1fDsiPaKuMMjWjK9vp5UHFP" +
+                "a+dMAWr6OljQZPFIg3aZ4cUfzS9y+n77Hs1NXPBn6E4Db679z4DThIXyoKeZTv1a" +
+                "aWOWl/exsDLGt2mTMTyykVV8uD1eRjYriFpmoRDwJKAEMOfaURarzp7hka9TOElG" +
+                "yD2gOV4Fscr2MxAYCywLmOLzA4VDSYLuKAhPSp7yawET30AvY1HRfMwBxetSqWP2" +
+                "+yZRNYJlHpor5QTuRDgzR+Zej+aWx6rWNYx43kLthozeVJ3QCsD5iEI/OZlmWn5W" +
+                "Yf7O8LB/1A7scrYv44FD8ck3Z+hxXpkklAsjJMsHZa9mBqh+VR1AicX4uZG8m16x" +
+                "65ZU2uUpBa3rn8CTNmw17ZHOiuSWJtS9+PrZVA8ljgf4QgA1g6NPOEiLG2fn8Gm+" +
+                "r5Ak+9tqv72KDd2FPBJ7Xx4stYj/WjNPtEUhW4rcLK3ktLfcy6ea7Rocw5y5AgMB" +
+                "AAGjUTBPMAsGA1UdDwQEAwIBhjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBR6" +
+                "jArOL0hiF+KU0a5VwVLscXSkVjAQBgkrBgEEAYI3FQEEAwIBADANBgkqhkiG9w0B" +
+                "AQsFAAOCAgEAW4ioo1+J9VWC0UntSBXcXRm1ePTVamtsxVy/GpP4EmJd3Ub53JzN" +
+                "BfYdgfUL51CppS3ZY6BoagB+DqoA2GbSL+7sFGHBl5ka6FNelrwsH6VVw4xV/8kl" +
+                "IjmqOyfatPYsz0sUdZev+reeiGpKVoXrK6BDnUU27/mgPtem5YKWvHB/soofUrLK" +
+                "zZV3WfGdx9zBr8V0xW6vO3CKaqkqU9y6EsQw34n7eJCbEVVQ8VdFd9iV1pmXwaBA" +
+                "fBwkviPTKEP9Cm+zbFIOLr3V3CL9hJj+gkTUuXWlJJ6wVXEG5i4rIbLAV59UrW4L" +
+                "onP+seqvWMJYUFxu/niF0R3fSGM+NU11DtBVkhRZt1u0kFhZqjDz1dWyfT/N7Hke" +
+                "3WsDqUFsBi+8SEw90rWx2aUkLvKo83oU4Mx4na+2I3l9F2a2VNGk4K7l3a00g51m" +
+                "iPiq0Da0jqw30PaLluTMTGY5+RnZVh50JD6nk+Ea3wRkU8aiYFnpIxfKBZ72whmY" +
+                "Ya/egj9IKeqpR0vuLebbU0fJBf880K1jWD3Z5SFyJXo057Mv0OPw5mttytE585ZI" +
+                "y5JsaRXlsOoWGRXE3kUT/MKR1UoAgR54c8Bsh+9Dq2wqIK9mRn15zvBDeyHG6+cz" +
+                "urLopziOUeWokxZN1syrEdKlhFoPYavm6t+PzIcpdxZwHA+V3jLJPfI="
             ));
         public static readonly Dictionary<string, X509Certificate2[]> TPMManufacturerRootMap = new Dictionary<string, X509Certificate2[]>
         {
