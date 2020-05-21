@@ -134,7 +134,7 @@ namespace fido2_net_lib.Test
                 }
             }
 
-            public byte[] _data
+            public byte[] _attToBeSigned
             {
                 get
                 {
@@ -144,6 +144,15 @@ namespace fido2_net_lib.Test
                     return data;
                 }
             }
+
+            public byte[] _attToBeSignedHash(HashAlgorithmName alg)
+            {
+                using (var hasher = CryptoUtils.GetHasher(alg))
+                {
+                    return hasher.ComputeHash(_attToBeSigned);
+                }
+            }
+
             public byte[] _credentialID;
             public const AuthenticatorFlags _flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
             public ushort _signCount;
@@ -290,7 +299,7 @@ namespace fido2_net_lib.Test
                         {
                             var ecparams = ecdsa.ExportParameters(true);
                             _credentialPublicKey = MakeCredentialPublicKey(kty, alg, curve, ecparams.Q.X, ecparams.Q.Y);
-                            var signature = ecdsa.SignData(_data, CryptoUtils.algMap[(int)alg]);
+                            var signature = ecdsa.SignData(_attToBeSigned, CryptoUtils.algMap[(int)alg]);
                             return EcDsaSigFromSig(signature, ecdsa.KeySize);
                         }
                     case COSE.KeyType.RSA:
@@ -316,12 +325,12 @@ namespace fido2_net_lib.Test
 
                             var rsaparams = rsa.ExportParameters(true);
                             _credentialPublicKey = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
-                            return rsa.SignData(_data, CryptoUtils.algMap[(int)alg], padding);
+                            return rsa.SignData(_attToBeSigned, CryptoUtils.algMap[(int)alg], padding);
                         }
                     case COSE.KeyType.OKP:
                         {
                             _credentialPublicKey = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
-                            return Ed25519.Sign(_data, expandedPrivateKey);
+                            return Ed25519.Sign(_attToBeSigned, expandedPrivateKey);
                         }
 
                     default:

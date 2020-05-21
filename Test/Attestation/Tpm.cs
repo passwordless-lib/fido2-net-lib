@@ -174,19 +174,16 @@ namespace Test.Attestation
                                     kdf?.ToArray(), // KDF
                                     unique.ToArray() // Unique
                                 );
-
-                                byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                                Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                                Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
-                                byte[] hashedData;
-                                byte[] hashedPubArea;
+                                
                                 var hashAlg = CryptoUtils.algMap[(int)alg];
-                                using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                                byte[] hashedData = _attToBeSignedHash(hashAlg);
+                                
+                                byte[] hashedPubArea;
+                                using (var hasher = CryptoUtils.GetHasher(hashAlg))
                                 {
-                                    hashedData = hasher.ComputeHash(data);
                                     hashedPubArea = hasher.ComputeHash(pubArea);
                                 }
+
                                 IEnumerable<byte> extraData = BitConverter
                                     .GetBytes((UInt16)hashedData.Length)
                                     .Reverse()

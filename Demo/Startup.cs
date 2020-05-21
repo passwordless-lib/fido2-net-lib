@@ -38,7 +38,7 @@ namespace Fido2Demo
                 // Strict SameSite mode is required because the default mode used
                 // by ASP.NET Core 3 isn't understood by the Conformance Tool
                 // and breaks conformance testing
-                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SameSite = SameSiteMode.Unspecified;
             });
 
             services.AddFido2(options =>
