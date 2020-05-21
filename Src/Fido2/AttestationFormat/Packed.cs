@@ -25,11 +25,13 @@ namespace Fido2NetLib.AttestationFormat
     internal class Packed : AttestationFormat
     {
         private readonly IMetadataService _metadataService;
+        private readonly bool _requireValidAttestationRoot;
 
-        public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService)
+        public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService, bool requireValidAttestationRoot)
             : base(attStmt, authenticatorData, clientDataHash)
         {
             _metadataService = metadataService;
+            _requireValidAttestationRoot = requireValidAttestationRoot;
         }
 
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
@@ -142,6 +144,14 @@ namespace Fido2NetLib.AttestationFormat
                         }
                     }
                     var valid = chain.Build(trustPath[0]);
+
+                    if (_requireValidAttestationRoot)
+                    {
+                        // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                        var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                        valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
+                    }
+
                     if (false == valid)
                     {
                         throw new Fido2VerificationException("Invalid certificate chain in packed attestation");

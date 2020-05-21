@@ -11,9 +11,11 @@ namespace Fido2NetLib.AttestationFormat
     internal class FidoU2f : AttestationFormat
     {
         private readonly IMetadataService _metadataService;
-        public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
+        private readonly bool _requireValidAttestationRoot;
+        public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService, bool requireValidAttestationRoot) : base(attStmt, authenticatorData, clientDataHash)
         {
             _metadataService = metadataService;
+            _requireValidAttestationRoot = requireValidAttestationRoot;
         }
         public override void Verify()
         {
@@ -61,6 +63,13 @@ namespace Fido2NetLib.AttestationFormat
                         chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
                     {
                         valid = true;
+                    }
+
+                    if (_requireValidAttestationRoot)
+                    {
+                        // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                        var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                        valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
                     }
 
                     if (false == valid)

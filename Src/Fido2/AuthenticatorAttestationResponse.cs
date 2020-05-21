@@ -135,7 +135,7 @@ namespace Fido2NetLib
 
                 case "tpm":
                     // https://www.w3.org/TR/webauthn/#tpm-attestation
-                    verifier = new Tpm(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+                    verifier = new Tpm(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, config.RequireValidAttestationRoot);
                     break;
 
                 case "android-key":
@@ -150,12 +150,12 @@ namespace Fido2NetLib
 
                 case "fido-u2f":
                     // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
-                    verifier = new FidoU2f(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
+                    verifier = new FidoU2f(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService, config.RequireValidAttestationRoot);
                     break;
 
                 case "packed":
                     // https://www.w3.org/TR/webauthn/#packed-attestation
-                    verifier = new Packed(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
+                    verifier = new Packed(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService, config.RequireValidAttestationRoot);
                     break;
 
                 default: throw new Fido2VerificationException("Missing or unknown attestation type");
