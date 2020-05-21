@@ -4,7 +4,6 @@
   </PropertyGroup>
 
   <!-- Sourced Libraries -->
-  <Import Project="../../ExternalLibs/CBOR/CBOR.Include.props" />
   <Import Project="../../ExternalLibs/Chaos.NaCL/Chaos.NaCL.Include.props" />
   <Import Project="../../ExternalLibs/AsnElt/AsnElt.Include.props" />
   <ItemGroup>
@@ -18,8 +17,8 @@
   <!-- References -->
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
-
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="PeterO.Cbor" Version="4.1.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.5.1" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="4.7.0" />
