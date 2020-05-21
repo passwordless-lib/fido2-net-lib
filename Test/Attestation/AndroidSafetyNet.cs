@@ -124,6 +124,100 @@ namespace Test.Attestation
         }
 
         [Fact]
+        public async void TestAndroidSafetyNetRSA()
+        {
+            var param = Fido2Tests._validCOSEParameters[3];
+            X509Certificate2 root, attestnCert;
+            DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+            DateTimeOffset notAfter = notBefore.AddDays(2);
+            var attDN = new X500DistinguishedName("CN=attest.android.com, OU=SafetyNet Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
+
+            using (var rsaRoot = RSA.Create())
+            {
+                var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                rootRequest.CertificateExtensions.Add(caExt);
+
+                using (root = rootRequest.CreateSelfSigned(
+                    notBefore,
+                    notAfter))
+
+                using (var rsaAtt = RSA.Create())
+                {
+                    var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+                    byte[] serial = new byte[12];
+
+                    using (var rng = RandomNumberGenerator.Create())
+                    {
+                        rng.GetBytes(serial);
+                    }
+                    using (X509Certificate2 publicOnly = attRequest.Create(
+                        root,
+                        notBefore,
+                        notAfter,
+                        serial))
+                    {
+                        attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
+                    }
+
+                    var rsaparams = rsaAtt.ExportParameters(true);
+
+                    var cpk = CBORObject.NewMap();
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
+                    cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
+
+                    _credentialPublicKey = new CredentialPublicKey(cpk);
+
+                    var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
+
+                    List<Claim> claims = new List<Claim>
+                    {
+                        new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
+                        new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
+                        new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
+                    };
+
+                    var tokenHandler = new JwtSecurityTokenHandler();
+
+                    var tokenDescriptor = new SecurityTokenDescriptor
+                    {
+                        Subject = new ClaimsIdentity(claims),
+                        SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsaAtt), SecurityAlgorithms.RsaSha256Signature)
+                    };
+
+                    JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
+                    securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+
+                    string strToken = "";
+                    if (tokenHandler.CanWriteToken)
+                    {
+                        strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
+                    }
+
+                    _attestationObject.Set("attStmt", CBORObject.NewMap()
+                        .Add("ver", "F1D0")
+                        .Add("response", Encoding.UTF8.GetBytes(strToken)));
+
+                    var res = await MakeAttestationResponse();
+                    Assert.Equal(string.Empty, res.ErrorMessage);
+                    Assert.Equal("ok", res.Status);
+                    Assert.Equal(_aaguid, res.Result.Aaguid);
+                    Assert.Equal(_signCount, res.Result.Counter);
+                    Assert.Equal("android-safetynet", res.Result.CredType);
+                    Assert.Equal(_credentialID, res.Result.CredentialId);
+                    Assert.Null(res.Result.ErrorMessage);
+                    Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
+                    Assert.Null(res.Result.Status);
+                    Assert.Equal("Test User", res.Result.User.DisplayName);
+                    Assert.Equal(Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+                    Assert.Equal("testuser", res.Result.User.Name);
+                }
+            }
+        }
+
+        [Fact]
         public void TestAndroidSafetyNetVerNotString()
         {
             _attestationObject["attStmt"].Set("ver", 1);
