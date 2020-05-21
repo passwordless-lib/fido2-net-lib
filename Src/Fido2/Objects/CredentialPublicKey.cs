@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Chaos.NaCl;
+using NSec.Cryptography;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.Objects
@@ -94,7 +94,7 @@ namespace Fido2NetLib.Objects
                     }
 
                 case COSE.KeyType.OKP:
-                    return Ed25519.Verify(sig, data, EdDSAPublicKey);
+                    return SignatureAlgorithm.Ed25519.Verify(EdDSAPublicKey, data, sig);
             }
             throw new InvalidOperationException($"Missing or unknown kty {_type}");
         }
@@ -198,7 +198,7 @@ namespace Fido2NetLib.Objects
             }
         }
 
-        internal byte[] EdDSAPublicKey
+        internal NSec.Cryptography.PublicKey EdDSAPublicKey
         {
             get
             {
@@ -211,7 +211,7 @@ namespace Fido2NetLib.Objects
                             switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                             {
                                 case COSE.EllipticCurve.Ed25519:
-                                    return _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
+                                    return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(), KeyBlobFormat.RawPublicKey);
 
                                 default:
                                     throw new InvalidOperationException($"Missing or unknown crv {crv}");
