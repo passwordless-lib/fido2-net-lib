@@ -81,6 +81,7 @@ jobs:
       summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
       reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'
   - task: Bash@3
+    displayName: 'UPload coverage to Codecov'
     inputs:
       targetType: 'inline'
-      script: 'bash <(curl -s https://codecov.io/bash)'
+      script: 'bash <(curl -s https://codecov.io/bash) -t 0b864a87-d3bc-4130-b942-81909f1064c0'
