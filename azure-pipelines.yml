@@ -80,3 +80,7 @@ jobs:
       codeCoverageTool: Cobertura
       summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
       reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'bash <(curl -s https://codecov.io/bash)'
