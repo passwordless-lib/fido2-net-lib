@@ -13,4 +13,4 @@ jobs:
       uses: jesusvasquez333/verify-pr-label-action@v1.1.0
       with:
         github-token: '${{ secrets.GITHUB_TOKEN }}'
-        valid-labels: 'bug, fix, enhancement, feature, chore'
+        valid-labels: 'bug, enhancement, feature, chore, documentation'
