@@ -1,0 +1,10 @@
+name: "Require labels"
+
+on:
+  pull_request:
+   types: [opened, labeled, unlabeled, synchronize]
+
+uses: actions/verify-pr-label-action@v1.0.0
+with:
+    github-token: '${{ secrets.GITHUB_TOKEN }}'
+    valid-labels: 'bug, fix, enhancement, feature, chore'
