@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using fido2_net_lib.Test;
@@ -879,8 +880,18 @@ namespace Test.Attestation
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-                    Assert.Equal("Packed x5c attestation certificate not V3", ex.Result.Message);
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
+                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponse());
+                        Assert.Equal("Unknown format in import.", ex.Result.Message);
+                    }
+
+                    else
+                    {
+                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                        Assert.Equal("Packed x5c attestation certificate not V3", ex.Result.Message);
+                    }
                 }
             }
         }
@@ -969,9 +980,9 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
                     attRequest.CertificateExtensions.Add(notCAExt);
 
-                    var notAsnEncodedAaguid = asnEncodedAaguid;
+                    var notAsnEncodedAaguid = _asnEncodedAaguid;
                     notAsnEncodedAaguid[3] = 0x42;
-                    var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, asnEncodedAaguid, false);
+                    var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
                     attRequest.CertificateExtensions.Add(notIdFidoGenCeAaguidExt);
 
                     byte[] serial = new byte[12];
