@@ -10,6 +10,7 @@ using PeterO.Cbor;
 using Xunit;
 using Fido2NetLib.AttestationFormat;
 using Asn1;
+using System.Runtime.InteropServices;
 
 namespace Test.Attestation
 {
@@ -6515,8 +6516,18 @@ namespace Test.Attestation
                         .Add("certInfo", certInfo)
                         .Add("pubArea", pubArea));
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-                    Assert.Equal("aikCert must be V3", ex.Result.Message);
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
+                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponse());
+                        Assert.Equal("Unknown format in import.", ex.Result.Message);
+                    }
+
+                    else
+                    {
+                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                        Assert.Equal("aikCert must be V3", ex.Result.Message);
+                    }
                 }
             }
         }

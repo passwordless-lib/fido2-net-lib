@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using fido2_net_lib.Test;
@@ -879,8 +880,18 @@ namespace Test.Attestation
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-                    Assert.Equal("Packed x5c attestation certificate not V3", ex.Result.Message);
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
+                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponse());
+                        Assert.Equal("Unknown format in import.", ex.Result.Message);
+                    }
+
+                    else
+                    {
+                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                        Assert.Equal("Packed x5c attestation certificate not V3", ex.Result.Message);
+                    }
                 }
             }
         }
