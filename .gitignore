@@ -328,5 +328,6 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
-/Test/coverage.netcoreapp3.1.cobertura.xml
 /results
+/Test/coverage.netcoreapp3.1.cobertura.xml
+
