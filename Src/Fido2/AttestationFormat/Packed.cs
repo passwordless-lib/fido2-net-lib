@@ -19,7 +19,9 @@ namespace Fido2NetLib.AttestationFormat
     internal enum MetadataAttestationType
     {
         ATTESTATION_BASIC_FULL = 0x3e07,
-        ATTESTATION_BASIC_SURROGATE = 0x3e08
+        ATTESTATION_BASIC_SURROGATE = 0x3e08,
+        ATTESTATION_ATTCA = 0x3e0a,
+        ATTESTATION_HELLO = 0x3e10
     }
 
     internal class Packed : AttestationFormat

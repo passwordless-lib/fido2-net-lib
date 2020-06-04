@@ -135,7 +135,7 @@ namespace Fido2NetLib
 
                 case "tpm":
                     // https://www.w3.org/TR/webauthn/#tpm-attestation
-                    verifier = new Tpm(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, config.RequireValidAttestationRoot);
+                    verifier = new Tpm(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService, config.RequireValidAttestationRoot);
                     break;
 
                 case "android-key":
