@@ -12,8 +12,9 @@ using PeterO.Cbor;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Chaos.NaCl;
 using System.Text;
+using NSec.Cryptography;
+using Asn1;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.AttestationFormat;
 
@@ -266,6 +267,7 @@ namespace fido2_net_lib.Test
             {
                 ECDsa ecdsa = null;
                 RSA rsa = null;
+                Key privateKey = null;
                 byte[] expandedPrivateKey = null, publicKey = null;
 
                 switch (kty)
@@ -283,15 +285,16 @@ namespace fido2_net_lib.Test
                     case COSE.KeyType.OKP:
                         {
                             MakeEdDSA(out var privateKeySeed, out publicKey, out expandedPrivateKey);
+                            privateKey = Key.Import(SignatureAlgorithm.Ed25519, expandedPrivateKey, KeyBlobFormat.RawPrivateKey);
                             break;
                         }
                         throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
                 }
 
-                return SignData(kty, alg, crv, ecdsa, rsa, expandedPrivateKey, publicKey);
+                return SignData(kty, alg, crv, ecdsa, rsa, privateKey, publicKey);
             }
 
-            internal byte[] SignData(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve curve, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null, byte[] publicKey = null)
+            internal byte[] SignData(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve curve, ECDsa ecdsa = null, RSA rsa = null, Key expandedPrivateKey = null, byte[] publicKey = null)
             {
                 switch (kty)
                 {
@@ -330,7 +333,7 @@ namespace fido2_net_lib.Test
                     case COSE.KeyType.OKP:
                         {
                             _credentialPublicKey = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
-                            return Ed25519.Sign(_attToBeSigned, expandedPrivateKey);
+                            return SignatureAlgorithm.Ed25519.Sign(expandedPrivateKey, _attToBeSigned);
                         }
 
                     default:
@@ -372,7 +375,8 @@ namespace fido2_net_lib.Test
                     }
                 case COSE.KeyType.OKP:
                     {
-                        return Ed25519.Sign(data, expandedPrivateKey);
+                        Key privateKey = Key.Import(SignatureAlgorithm.Ed25519, expandedPrivateKey, KeyBlobFormat.RawPrivateKey);
+                        return SignatureAlgorithm.Ed25519.Sign(privateKey, data);
                     }
 
                 default:
@@ -613,6 +617,12 @@ namespace fido2_net_lib.Test
             var acdBytes = acdFromConst.ToByteArray();
             var acdFromBytes = new AttestedCredentialData(acdBytes);
             Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
+
+            var sig = SignData(COSE.KeyType.RSA, COSE.Algorithm.RS256, acdBytes, null, rsa, null);
+
+            Assert.True(cpk.Verify(acdBytes, sig));
+            sig[sig.Length - 1] ^= 0xff;
+            Assert.False(cpk.Verify(acdBytes, sig));
         }
 
         [Fact]
@@ -620,13 +630,19 @@ namespace fido2_net_lib.Test
         {
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-            MakeEdDSA(out _, out var publicKey, out _);
+            MakeEdDSA(out _, out var publicKey, out var privateKey);
             var cpk = MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey);
 
             var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
             var acdBytes = acdFromConst.ToByteArray();
             var acdFromBytes = new AttestedCredentialData(acdBytes);
             Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
+
+            var sig = SignData(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, acdBytes, null, null, privateKey);
+
+            Assert.True(cpk.Verify(acdBytes, sig));
+            sig[sig.Length - 1] ^= 0xff;
+            Assert.False(cpk.Verify(acdBytes, sig));
         }
 
         [Fact]
@@ -924,8 +940,9 @@ namespace fido2_net_lib.Test
                 privateKeySeed = new byte[32];
                 rng.GetBytes(privateKeySeed);
                 publicKey = new byte[32];
-                expandedPrivateKey = new byte[64];
-                Ed25519.KeyPairFromSeed(out publicKey, out expandedPrivateKey, privateKeySeed);
+                var key = Key.Create(SignatureAlgorithm.Ed25519, new KeyCreationParameters() { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
+                expandedPrivateKey = key.Export(KeyBlobFormat.RawPrivateKey);
+                publicKey = key.Export(KeyBlobFormat.RawPublicKey);
             }
         }
 
