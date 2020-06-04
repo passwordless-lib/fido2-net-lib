@@ -169,7 +169,7 @@ namespace Fido2NetLib.AttestationFormat
                 throw new Fido2VerificationException("Failed to extract public key from android key: " + ex.Message, ex);
             }
 
-            if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
+            if (null == Alg || true != Alg.IsNumber || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
                 throw new Fido2VerificationException("Invalid android key attestation algorithm");
 
             byte[] ecsig;

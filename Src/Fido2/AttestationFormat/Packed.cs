@@ -57,7 +57,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid packed attestation signature");
 
-            if (null == Alg || CBORType.Number != Alg.Type)
+            if (null == Alg || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid packed attestation algorithm");
 
             // If x5c is present, this indicates that the attestation type is not ECDAA
