@@ -9,13 +9,13 @@ using Fido2NetLib.Objects;
 using PeterO.Cbor;
 using Xunit;
 using Fido2NetLib.AttestationFormat;
+using Asn1;
 
 namespace Test.Attestation
 {
     public class Tpm : Fido2Tests.Attestation
     {
         private X500DistinguishedName attDN = new X500DistinguishedName("");
-        private byte[] asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x02, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         private X509Certificate2 rootCert, attestnCert;
         private DateTimeOffset notBefore, notAfter;
         private X509EnhancedKeyUsageExtension tcgKpAIKCertExt;
@@ -43,6 +43,16 @@ namespace Test.Attestation
                     new Oid("2.23.133.8.3")
                 },
                 false);
+
+
+            var tpmManufacturer = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.1"), AsnElt.MakeString(AsnElt.UTF8String, "id:FFFFF1D0") });
+            var tpmModel = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.2"), AsnElt.MakeString(AsnElt.UTF8String, "FIDO2-NET-LIB-TEST-TPM") });
+            var tpmVersion = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.3"), AsnElt.MakeString(AsnElt.UTF8String, "id:F1D00002") });
+            var tpmDeviceAttributes = AsnElt.Make(AsnElt.SET, new AsnElt[] { tpmManufacturer, tpmModel, tpmVersion });
+            var tpmDirectoryName = AsnElt.Make(AsnElt.SEQUENCE, tpmDeviceAttributes);
+            var tpmGeneralName = AsnElt.MakeExplicit(AsnElt.OCTET_STRING, tpmDirectoryName);
+            var tpmSAN = AsnElt.Make(AsnElt.SEQUENCE, tpmGeneralName);
+            var asnEncodedSAN = tpmSAN.Encode();
 
             aikCertSanExt = new X509Extension(
                 "2.5.29.17",
@@ -359,7 +369,7 @@ namespace Test.Attestation
 
                                 byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
 
-                                _attestationObject.Add("attStmt", CBORObject.NewMap()
+                                _attestationObject.Set("attStmt", CBORObject.NewMap()
                                     .Add("ver", "2.0")
                                     .Add("alg", alg)
                                     .Add("x5c", X5c)
@@ -6345,8 +6355,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Bad signature in TPM with aikCert", ex.Result.Message);
@@ -6354,7 +6363,7 @@ namespace Test.Attestation
             }
         }
 
-        [Fact]
+        [Fact]        
         public void TestTPMAikCertNotV3()
         {
             var param = Fido2Tests._validCOSEParameters[3];
@@ -6505,7 +6514,6 @@ namespace Test.Attestation
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
                         .Add("pubArea", pubArea));
-                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aikCert must be V3", ex.Result.Message);

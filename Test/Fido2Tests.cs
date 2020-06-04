@@ -16,6 +16,7 @@ using Chaos.NaCl;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.AttestationFormat;
+using Asn1;
 
 namespace fido2_net_lib.Test
 {
@@ -98,7 +99,8 @@ namespace fido2_net_lib.Test
             public X500DistinguishedName rootDN = new X500DistinguishedName("CN=Testing, O=FIDO2-NET-LIB, C=US");
             public Oid oidIdFidoGenCeAaguid = new Oid("1.3.6.1.4.1.45724.1.1.4");
             //private byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-            public byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+            //public byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+            public byte[] _asnEncodedAaguid;
             public X509BasicConstraintsExtension caExt = new X509BasicConstraintsExtension(true, true, 2, false);
             public X509BasicConstraintsExtension notCAExt = new X509BasicConstraintsExtension(false, false, 0, false);
             public X509Extension idFidoGenCeAaguidExt;
@@ -197,11 +199,13 @@ namespace fido2_net_lib.Test
 
                 _attestationObject = CBORObject.NewMap();
 
-                idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, asnEncodedAaguid, false);
+                _asnEncodedAaguid = AsnElt.MakeBlob(AttestedCredentialData.AaGuidToBigEndian(_aaguid)).Encode();
+
+                idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
             }
             public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
             {
-                _attestationObject.Add("authData", _authData);
+                _attestationObject.Set("authData", _authData);
 
                 var attestationResponse = new AuthenticatorAttestationRawResponse
                 {
@@ -654,62 +658,16 @@ namespace fido2_net_lib.Test
             Assert.True(ad.Extensions.GetBytes().SequenceEqual(extBytes));
         }
 
-        internal static byte[] SetEcDsaSigValue(byte[] sig)
-        {
-            var start = Array.FindIndex(sig, b => b != 0);
-
-            if (start == sig.Length)
-            {
-                start--;
-            }
-
-            var length = sig.Length - start;
-            byte[] dataBytes;
-            var writeStart = 0;
-
-            if ((sig[start] & (1 << 7)) != 0)
-            {
-                dataBytes = new byte[length + 1];
-                writeStart = 1;
-            }
-            else
-            {
-                dataBytes = new byte[length];
-            }
-            Buffer.BlockCopy(sig, start, dataBytes, writeStart, length);
-            return new byte[2] { 0x02, BitConverter.GetBytes(dataBytes.Length)[0] }.Concat(dataBytes).ToArray();
-        }
-
         internal static byte[] EcDsaSigFromSig(byte[] sig, int keySize)
         {
             var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
             var R = sig.Take(coefficientSize);
             var S = sig.TakeLast(coefficientSize);
-            using (var ms = new MemoryStream())
-            {
-                using (var writer = new BinaryWriter(ms))
-                {
-                    writer.Write(new byte[1] { 0x30 });
 
-                    var derR = SetEcDsaSigValue(R.ToArray());
-
-                    var derS = SetEcDsaSigValue(S.ToArray());
-
-                    var dataLen = derR.Length + derS.Length;
-
-                    if (dataLen > 0x80)
-                    {
-                        writer.Write(new byte[1] { 0x81 });
-                    }
-
-                    writer.Write(new byte[1] { BitConverter.GetBytes(dataLen)[0] });
-
-                    writer.Write(derR);
-
-                    writer.Write(derS);
-                }
-                return ms.ToArray();
-            }
+            var intR = AsnElt.MakeInteger(R.ToArray());
+            var intS = AsnElt.MakeInteger(S.ToArray());
+            var ecdsasig = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { intR, intS });
+            return ecdsasig.Encode();
         }
 
 

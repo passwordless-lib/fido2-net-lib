@@ -969,9 +969,9 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
                     attRequest.CertificateExtensions.Add(notCAExt);
 
-                    var notAsnEncodedAaguid = asnEncodedAaguid;
+                    var notAsnEncodedAaguid = _asnEncodedAaguid;
                     notAsnEncodedAaguid[3] = 0x42;
-                    var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, asnEncodedAaguid, false);
+                    var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
                     attRequest.CertificateExtensions.Add(notIdFidoGenCeAaguidExt);
 
                     byte[] serial = new byte[12];
