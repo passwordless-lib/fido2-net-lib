@@ -49,29 +49,35 @@ namespace Fido2NetLib.AttestationFormat
                 {
                     if (entry.Hash != entry.MetadataStatement.Hash)
                         throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
-                    var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
-                    
-                    var chain = new X509Chain();
-                    chain.ChainPolicy.ExtraStore.Add(root);
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
-                    var valid = chain.Build(cert);
+                    var valid = false;
 
-                    if (//  the root cert has exactly one status listed against it
-                        chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
-                        // and that that status is a status of exactly UntrustedRoot
-                        chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                    foreach (var attestationRootCert in entry.MetadataStatement.AttestationRootCertificates)
                     {
-                        valid = true;
-                    }
 
-                    if (_requireValidAttestationRoot)
-                    {
-                        // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                        var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                        valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
-                    }
+                        var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
 
+                        var chain = new X509Chain();
+                        chain.ChainPolicy.ExtraStore.Add(root);
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
+                        valid = chain.Build(cert);
+
+                        if (//  the root cert has exactly one status listed against it
+                            chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                            // and that that status is a status of exactly UntrustedRoot
+                            chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                        {
+                            valid = true;
+                        }
+
+                        if (_requireValidAttestationRoot)
+                        {
+                            // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                            var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                            valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
+                        }
+                    }
                     if (false == valid)
                     {
                         throw new Fido2VerificationException("Invalid certificate chain in U2F attestation");

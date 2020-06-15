@@ -133,25 +133,31 @@ namespace Fido2NetLib.AttestationFormat
                 // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
                 if (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false)
                 {
-                    var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
-                    var chain = new X509Chain();
-                    chain.ChainPolicy.ExtraStore.Add(root);
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                    if (trustPath.Length > 1)
+                    var valid = false;
+                    foreach (var attestationRootCert in entry.MetadataStatement.AttestationRootCertificates)
                     {
-                        foreach (var cert in trustPath.Skip(1).Reverse())
+                        var root = new X509Certificate2(Convert.FromBase64String(attestationRootCert));
+                        var chain = new X509Chain();
+                        chain.ChainPolicy.ExtraStore.Add(root);
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                        if (trustPath.Length > 1)
                         {
-                            chain.ChainPolicy.ExtraStore.Add(cert);
+                            foreach (var cert in trustPath.Skip(1).Reverse())
+                            {
+                                chain.ChainPolicy.ExtraStore.Add(cert);
+                            }
                         }
-                    }
-                    var valid = chain.Build(trustPath[0]);
-
-                    if (_requireValidAttestationRoot)
-                    {
-                        // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                        var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                        valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
+                        valid = chain.Build(trustPath[0]);
+                    
+                        if (_requireValidAttestationRoot)
+                        {
+                            // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                            var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                            valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
+                        }
+                        if (true == valid)
+                            break;
                     }
 
                     if (false == valid)
