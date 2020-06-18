@@ -37,7 +37,6 @@ namespace Fido2Demo
                 ServerDomain = fido2Configuration.Value.ServerDomain,
                 ServerName = fido2Configuration.Value.ServerName,
                 Origin = _origin,
-                RequireValidAttestationRoot = true,
             }, 
             ConformanceTesting.MetadataServiceInstance(
                 System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance"), _origin)

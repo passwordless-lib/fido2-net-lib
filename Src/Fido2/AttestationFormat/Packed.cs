@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
@@ -27,13 +26,11 @@ namespace Fido2NetLib.AttestationFormat
     internal class Packed : AttestationFormat
     {
         private readonly IMetadataService _metadataService;
-        private readonly bool _requireValidAttestationRoot;
 
-        public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService, bool requireValidAttestationRoot)
+        public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService)
             : base(attStmt, authenticatorData, clientDataHash)
         {
             _metadataService = metadataService;
-            _requireValidAttestationRoot = requireValidAttestationRoot;
         }
 
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
@@ -51,7 +48,7 @@ namespace Fido2NetLib.AttestationFormat
 
         public override void Verify()
         {
-            // Verify that attStmt is valid CBOR conforming to the syntax defined above and 
+            // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and 
             // perform CBOR decoding on it to extract the contained fields.
             if (0 == attStmt.Keys.Count || 0 == attStmt.Values.Count)
                 throw new Fido2VerificationException("Attestation format packed must have attestation statement");
@@ -62,7 +59,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null == Alg || CBORType.Number != Alg.Type)
                 throw new Fido2VerificationException("Invalid packed attestation algorithm");
 
-            // If x5c is present, this indicates that the attestation type is not ECDAA
+            // 2. If x5c is present, this indicates that the attestation type is not ECDAA
             if (null != X5c)
             {
                 if (CBORType.Array != X5c.Type || 0 == X5c.Count || null != EcdaaKeyId)
@@ -95,31 +92,35 @@ namespace Fido2NetLib.AttestationFormat
                     throw new Fido2VerificationException("Invalid full packed signature");
 
                 // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
-                // 2b. Version MUST be set to 3
+                // 2bi. Version MUST be set to 3
                 if (3 != attestnCert.Version)
                     throw new Fido2VerificationException("Packed x5c attestation certificate not V3");
 
-                // Subject field MUST contain C, O, OU, CN
+                // 2bii. Subject field MUST contain C, O, OU, CN
                 // OU must match "Authenticator Attestation"
                 if (true != IsValidPackedAttnCertSubject(attestnCert.Subject))
                     throw new Fido2VerificationException("Invalid attestation cert subject");
 
-                // 2c. If the related attestation root certificate is used for multiple authenticator models, 
+                // 2biii. If the related attestation root certificate is used for multiple authenticator models, 
                 // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
                 // verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(attestnCert.Extensions);
+
+                // 2biiii. The Basic Constraints extension MUST have the CA component set to false
+                if (IsAttnCertCACert(attestnCert.Extensions))
+                    throw new Fido2VerificationException("Attestion certificate has CA cert flag present");
+
+                // 2c. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 if (aaguid != null)
                 {
                     if (0 != AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid))
                         throw new Fido2VerificationException("aaguid present in packed attestation cert exts but does not match aaguid from authData");
                 }
-                // 2d. The Basic Constraints extension MUST have the CA component set to false
-                if (IsAttnCertCACert(attestnCert.Extensions))
-                    throw new Fido2VerificationException("Attestion certificate has CA cert flag present");
 
                 // id-fido-u2f-ce-transports 
                 var u2ftransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
 
+                // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
                 var trustPath = X5c.Values
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
@@ -133,34 +134,11 @@ namespace Fido2NetLib.AttestationFormat
                 // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
                 if (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false)
                 {
-                    var valid = false;
-                    foreach (var attestationRootCert in entry.MetadataStatement.AttestationRootCertificates)
-                    {
-                        var root = new X509Certificate2(Convert.FromBase64String(attestationRootCert));
-                        var chain = new X509Chain();
-                        chain.ChainPolicy.ExtraStore.Add(root);
-                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                        if (trustPath.Length > 1)
-                        {
-                            foreach (var cert in trustPath.Skip(1).Reverse())
-                            {
-                                chain.ChainPolicy.ExtraStore.Add(cert);
-                            }
-                        }
-                        valid = chain.Build(trustPath[0]);
-                    
-                        if (_requireValidAttestationRoot)
-                        {
-                            // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                            var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                            valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
-                        }
-                        if (true == valid)
-                            break;
-                    }
+                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
+                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                        .ToArray();
 
-                    if (false == valid)
+                    if (false == ValidateTrustChain(trustPath, attestationRootCertificates))
                     {
                         throw new Fido2VerificationException("Invalid certificate chain in packed attestation");
                     }
@@ -181,28 +159,27 @@ namespace Fido2NetLib.AttestationFormat
                 }
             }
 
-            // If ecdaaKeyId is present, then the attestation type is ECDAA
+            // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (null != EcdaaKeyId)
             {
-                // Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
+                // 3a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
                 // using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId
                 // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
 
                 throw new Fido2VerificationException("ECDAA is not yet implemented");
-                // If successful, return attestation type ECDAA and attestation trust path ecdaaKeyId.
-                //attnType = AttestationType.ECDAA;
-                //trustPath = ecdaaKeyId;
+                // 3b. If successful, return attestation type ECDAA and attestation trust path ecdaaKeyId.
+                // attnType = AttestationType.ECDAA;
+                // trustPath = ecdaaKeyId;
             }
-            // If neither x5c nor ecdaaKeyId is present, self attestation is in use
+            // 4. If neither x5c nor ecdaaKeyId is present, self attestation is in use
             else
             {
-                // Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
+                // 4a. Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                 if (false == AuthData.AttestedCredentialData.CredentialPublicKey.IsSameAlg((COSE.Algorithm)Alg.AsInt32()))
                     throw new Fido2VerificationException("Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 
-                // Verify that sig is a valid signature over the concatenation of authenticatorData and 
+                // 4b. Verify that sig is a valid signature over the concatenation of authenticatorData and 
                 // clientDataHash using the credential public key with alg
-
                 if (true != AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, Sig.GetByteString()))
                     throw new Fido2VerificationException("Failed to validate signature");
             }

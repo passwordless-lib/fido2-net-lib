@@ -11,11 +11,10 @@ namespace Fido2NetLib.AttestationFormat
     internal class FidoU2f : AttestationFormat
     {
         private readonly IMetadataService _metadataService;
-        private readonly bool _requireValidAttestationRoot;
-        public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService, bool requireValidAttestationRoot) : base(attStmt, authenticatorData, clientDataHash)
+
+        public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
         {
             _metadataService = metadataService;
-            _requireValidAttestationRoot = requireValidAttestationRoot;
         }
         public override void Verify()
         {
@@ -23,70 +22,25 @@ namespace Fido2NetLib.AttestationFormat
             if (0 != AuthData.AttestedCredentialData.AaGuid.CompareTo(Guid.Empty))
                 throw new Fido2VerificationException("Aaguid was not empty parsing fido-u2f atttestation statement");
 
+            // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
+            // (handled in base class)
             if (null == X5c || CBORType.Array != X5c.Type || X5c.Count != 1)
                 throw new Fido2VerificationException("Malformed x5c in fido - u2f attestation");
 
-            // 2a. the attestation certificate attestnCert MUST be the first element in the array
+            // 2a. Check that x5c has exactly one element and let attCert be that element.
             if (null == X5c.Values || 0 == X5c.Values.Count ||
                 CBORType.ByteString != X5c.Values.First().Type ||
                 0 == X5c.Values.First().GetByteString().Length)
                 throw new Fido2VerificationException("Malformed x5c in fido-u2f attestation");
 
-            var cert = new X509Certificate2(X5c.Values.First().GetByteString());
+            var attCert = new X509Certificate2(X5c.Values.First().GetByteString());
 
             // TODO : Check why this variable isn't used. Remove it or use it.
-            var u2ftransports = U2FTransportsFromAttnCert(cert.Extensions);
-
-            var aaguid = AaguidFromAttnCertExts(cert.Extensions);
-
-            if (null != _metadataService && null != aaguid)
-            {
-                var guidAaguid = AttestedCredentialData.FromBigEndian(aaguid);
-                var entry = _metadataService.GetEntry(guidAaguid);
-
-                if (null != entry && null != entry.MetadataStatement)
-                {
-                    if (entry.Hash != entry.MetadataStatement.Hash)
-                        throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
-
-                    var valid = false;
-
-                    foreach (var attestationRootCert in entry.MetadataStatement.AttestationRootCertificates)
-                    {
-
-                        var root = new X509Certificate2(Convert.FromBase64String(entry.MetadataStatement.AttestationRootCertificates.FirstOrDefault()));
-
-                        var chain = new X509Chain();
-                        chain.ChainPolicy.ExtraStore.Add(root);
-                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-
-                        valid = chain.Build(cert);
-
-                        if (//  the root cert has exactly one status listed against it
-                            chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
-                            // and that that status is a status of exactly UntrustedRoot
-                            chain.ChainElements[chain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
-                        {
-                            valid = true;
-                        }
-
-                        if (_requireValidAttestationRoot)
-                        {
-                            // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                            var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                            valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
-                        }
-                    }
-                    if (false == valid)
-                    {
-                        throw new Fido2VerificationException("Invalid certificate chain in U2F attestation");
-                    }
-                }
-            }
+            var u2ftransports = U2FTransportsFromAttnCert(attCert.Extensions);
 
             // 2b. If certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve, terminate this algorithm and return an appropriate error
-            var pubKey = cert.GetECDsaPublicKey();
+            var pubKey = attCert.GetECDsaPublicKey();
             var keyParams = pubKey.ExportParameters(false);
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -94,18 +48,23 @@ namespace Fido2NetLib.AttestationFormat
                 if (!keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
                     throw new Fido2VerificationException("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
             }
-
             else
             {
                 if (!keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value))
                     throw new Fido2VerificationException("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
             }
-            // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
-            // see rpIdHash, credentialId, and credentialPublicKey variables
 
-            // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format
+            // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
+            // see rpIdHash, credentialId, and credentialPublicKey members of base class AuthenticatorData (AuthData)
+
+            // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format (Raw ANSI X9.62 public key format)
+            // 4a. Let x be the value corresponding to the "-2" key (representing x coordinate) in credentialPublicKey, and confirm its size to be of 32 bytes. If size differs or "-2" key is not found, terminate this algorithm and return an appropriate error
             var x = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
+
+            // 4b. Let y be the value corresponding to the "-3" key (representing y coordinate) in credentialPublicKey, and confirm its size to be of 32 bytes. If size differs or "-3" key is not found, terminate this algorithm and return an appropriate error
             var y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+
+            // 4c.Let publicKeyU2F be the concatenation 0x04 || x || y
             var publicKeyU2F = new byte[1] { 0x4 }.Concat(x).Concat(y).ToArray();
 
             // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
@@ -136,6 +95,31 @@ namespace Fido2NetLib.AttestationFormat
 
             if (true != pubKey.VerifyData(verificationData, ecsig, hashAlg))
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
+
+            // 7. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
+            var trustPath = X5c.Values
+                .Select(x => new X509Certificate2(x.GetByteString()))
+                .ToArray();
+
+            var aaguid = AaguidFromAttnCertExts(attCert.Extensions);
+
+            if (null != _metadataService && null != aaguid)
+            {
+                var guidAaguid = AttestedCredentialData.FromBigEndian(aaguid);
+                var entry = _metadataService.GetEntry(guidAaguid);
+
+                if (null != entry && null != entry.MetadataStatement)
+                {
+                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
+                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                        .ToArray();
+
+                    if (false == ValidateTrustChain(trustPath, attestationRootCertificates))
+                    {
+                        throw new Fido2VerificationException("Invalid certificate chain in U2F attestation");
+                    }
+                }
+            }
         }
     }
 }

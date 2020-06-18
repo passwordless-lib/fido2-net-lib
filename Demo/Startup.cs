@@ -49,7 +49,6 @@ namespace Fido2Demo
                 options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
                 options.MDSAccessKey = Configuration["fido2:MDSAccessKey"];
                 options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
-                options.RequireValidAttestationRoot = Configuration.GetValue<bool>("fido2:requireValidAttestationRoot");
             })
             .AddCachedMetadataService(config =>
             {

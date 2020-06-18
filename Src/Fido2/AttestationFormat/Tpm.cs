@@ -12,13 +12,11 @@ namespace Fido2NetLib.AttestationFormat
     internal class Tpm : AttestationFormat
     {
         private readonly IMetadataService _metadataService;
-        private readonly bool _requireValidAttestationRoot;
 
-        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService, bool requireValidAttestationRoot) 
+        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) 
             : base(attStmt, authenticatorData, clientDataHash)
         {
             _metadataService = metadataService;
-            _requireValidAttestationRoot = requireValidAttestationRoot;
         }
 
         public static readonly List<string> TPMManufacturers = new List<string>
@@ -51,13 +49,15 @@ namespace Fido2NetLib.AttestationFormat
     };
         public override void Verify()
         {
+            // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
+            // (handled in base class)
             if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid TPM attestation signature");
 
             if ("2.0" != attStmt["ver"].AsString())
                 throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
 
-            // Verify that the public key specified by the parameters and unique fields of pubArea
+            // 2. Verify that the public key specified by the parameters and unique fields of pubArea
             // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
             PubArea pubArea = null;
             if (null != attStmt["pubArea"] &&
@@ -94,10 +94,10 @@ namespace Fido2NetLib.AttestationFormat
                 if (!pubArea.ECPoint.Y.SequenceEqual(Y))
                     throw new Fido2VerificationException("Y-coordinate mismatch between pubArea and credentialPublicKey");
             }
-            // Concatenate authenticatorData and clientDataHash to form attToBeSigned.
-            // see data variable
+            // 3. Concatenate authenticatorData and clientDataHash to form attToBeSigned
+            // See Data field of base class
 
-            // Validate that certInfo is valid
+            // 4. Validate that certInfo is valid
             CertInfo certInfo = null;
             if (null != attStmt["certInfo"] &&
                 CBORType.ByteString == attStmt["certInfo"].Type &&
@@ -109,10 +109,13 @@ namespace Fido2NetLib.AttestationFormat
             if (null == certInfo)
                 throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
 
-            // Verify that magic is set to TPM_GENERATED_VALUE and type is set to TPM_ST_ATTEST_CERTIFY 
-            // handled in parser, see CertInfo.Magic
+            // 4a. Verify that magic is set to TPM_GENERATED_VALUE
+            // Handled in CertInfo constructor, see CertInfo.Magic
 
-            // Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
+            // 4b. Verify that type is set to TPM_ST_ATTEST_CERTIFY
+            // Handled in CertInfo constructor, see CertInfo.Type
+
+            // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
             if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
@@ -121,14 +124,16 @@ namespace Fido2NetLib.AttestationFormat
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
             }
 
-            // Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
+            // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[certInfo.Alg]))
             {
                 if (false == hasher.ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName))
                     throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
             }
 
-            // If x5c is present, this indicates that the attestation type is not ECDAA
+            // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
+
+            // 5. If x5c is present, this indicates that the attestation type is not ECDAA
             if (null != X5c && CBORType.Array == X5c.Type && 0 != X5c.Count)
             {
                 if (null == X5c.Values || 0 == X5c.Values.Count ||
@@ -138,24 +143,24 @@ namespace Fido2NetLib.AttestationFormat
                     throw new Fido2VerificationException("Malformed x5c in TPM attestation");
                 }
 
-                // Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
+                // 5a. Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
                 var aikCert = new X509Certificate2(X5c.Values.First().GetByteString());
 
                 var cpk = new CredentialPublicKey(aikCert, Alg.AsInt32());
                 if (true != cpk.Verify(certInfo.Raw, Sig.GetByteString()))
                     throw new Fido2VerificationException("Bad signature in TPM with aikCert");
 
-                // Verify that aikCert meets the TPM attestation statement certificate requirements
+                // 5b. Verify that aikCert meets the TPM attestation statement certificate requirements
                 // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
-                // Version MUST be set to 3
+                // 5bi. Version MUST be set to 3
                 if (3 != aikCert.Version)
                     throw new Fido2VerificationException("aikCert must be V3");
 
-                // Subject field MUST be set to empty - they actually mean subject name
+                // 5bii. Subject field MUST be set to empty - they actually mean subject name
                 if (0 != aikCert.SubjectName.Name.Length)
                     throw new Fido2VerificationException("aikCert subject must be empty");
 
-                // The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
+                // 5biii. The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
                 // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
                 var SAN = SANFromAttnCertExts(aikCert.Extensions);
                 if (null == SAN || 0 == SAN.Length)
@@ -185,6 +190,18 @@ namespace Fido2NetLib.AttestationFormat
                 if (false == TPMManufacturers.Contains(tpmManufacturer))
                     throw new Fido2VerificationException("Invalid TPM manufacturer found parsing TPM attestation");
 
+                // 5biiii. The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
+                // OID is 2.23.133.8.3
+                var EKU = EKUFromAttnCertExts(aikCert.Extensions, "2.23.133.8.3");
+                if (!EKU)
+                    throw new Fido2VerificationException("aikCert EKU missing tcg-kp-AIKCertificate OID");
+
+                // 5biiiii. The Basic Constraints extension MUST have the CA component set to false.
+                if (IsAttnCertCACert(aikCert.Extensions))
+                    throw new Fido2VerificationException("aikCert Basic Constraints extension CA component must be false");
+
+                // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] 
+                // are both OPTIONAL as the status of many attestation certificates is available through metadata services. See, for example, the FIDO Metadata Service [FIDOMetadataService].
                 var trustPath = X5c.Values
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
@@ -200,47 +217,17 @@ namespace Fido2NetLib.AttestationFormat
                     (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false) ||
                     (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_HELLO) ?? false))
                 {
-                    var valid = false;
-                    foreach (var attestationRootCert in entry.MetadataStatement.AttestationRootCertificates)
-                    {
-                        var root = new X509Certificate2(Convert.FromBase64String(attestationRootCert));
-                        var chain = new X509Chain();
-                        chain.ChainPolicy.ExtraStore.Add(root);
-                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                        if (trustPath.Length > 1)
-                        {
-                            foreach (var cert in trustPath.Skip(1).Reverse())
-                            {
-                                chain.ChainPolicy.ExtraStore.Add(cert);
-                            }
-                        }
-                        valid = chain.Build(trustPath[0]);
+                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
+                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                        .ToArray();
 
-                        if (_requireValidAttestationRoot)
-                        {
-                            // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                            var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                            valid = valid && chainRoot.RawData.SequenceEqual(root.RawData);
-                        }
-                        if (true == valid)
-                            break;
-                    }
-                    if (false == valid)
+                    if (false == ValidateTrustChain(trustPath, attestationRootCertificates))
+                    {
                         throw new Fido2VerificationException("TPM attestation failed chain validation");
+                    }
                 }
 
-                // The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
-                // OID is 2.23.133.8.3
-                var EKU = EKUFromAttnCertExts(aikCert.Extensions, "2.23.133.8.3");
-                if (!EKU)
-                    throw new Fido2VerificationException("aikCert EKU missing tcg-kp-AIKCertificate OID");
-
-                // The Basic Constraints extension MUST have the CA component set to false.
-                if (IsAttnCertCACert(aikCert.Extensions))
-                    throw new Fido2VerificationException("aikCert Basic Constraints extension CA component must be false");
-
-                // If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
+                // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
                 if ((null != aaguid) &&
                     (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) &&

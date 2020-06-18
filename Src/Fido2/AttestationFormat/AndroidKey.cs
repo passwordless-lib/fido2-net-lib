@@ -141,13 +141,14 @@ namespace Fido2NetLib.AttestationFormat
 
         public override void Verify()
         {
-            // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
+            // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
+            // (handled in base class)
             if (0 == attStmt.Keys.Count || 0 == attStmt.Values.Count)
                 throw new Fido2VerificationException("Attestation format android-key must have attestation statement");
 
             if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid android-key attestation signature");
-            // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
+            // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
             // using the attestation public key in attestnCert with the algorithm specified in alg
             if (null == X5c || CBORType.Array != X5c.Type || 0 == X5c.Count)
                 throw new Fido2VerificationException("Malformed x5c in android-key attestation");
@@ -185,16 +186,15 @@ namespace Fido2NetLib.AttestationFormat
             if (true != androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.algMap[Alg.AsInt32()]))
                 throw new Fido2VerificationException("Invalid android key attestation signature");
 
-            // Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
+            // 3. Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
             if (true != AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, Sig.GetByteString()))
                 throw new Fido2VerificationException("Incorrect credentialPublicKey in android key attestation");
 
-            // Verify that in the attestation certificate extension data:
+            // 4. Verify that the attestationChallenge field in the attestation certificate extension data is identical to clientDataHash
             var attExtBytes = AttestationExtensionBytes(androidKeyCert.Extensions);
             if (null == attExtBytes)
                 throw new Fido2VerificationException("Android key attestation certificate contains no AttestationRecord extension");
 
-            // 1. The value of the attestationChallenge field is identical to clientDataHash.
             try
             {
                 var attestationChallenge = GetAttestationChallenge(attExtBytes);
@@ -205,15 +205,18 @@ namespace Fido2NetLib.AttestationFormat
             {
                 throw new Fido2VerificationException("Malformed android key AttestationRecord extension verifying android key attestation certificate extension");
             }
-            // 2. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID.
+
+            // 5. Verify the following using the appropriate authorization list from the attestation certificate extension data
+
+            // 5a. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID
             if (true == FindAllApplicationsField(attExtBytes))
                 throw new Fido2VerificationException("Found all applications field in android key attestation certificate extension");
 
-            // 3. The value in the AuthorizationList.origin field is equal to KM_ORIGIN_GENERATED ( which == 0).
+            // 5bi. The value in the AuthorizationList.origin field is equal to KM_ORIGIN_GENERATED ( which == 0).
             if (false == IsOriginGenerated(attExtBytes))
                 throw new Fido2VerificationException("Found origin field not set to KM_ORIGIN_GENERATED in android key attestation certificate extension");
 
-            // 4. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
+            // 5bii. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
             if (false == IsPurposeSign(attExtBytes))
                 throw new Fido2VerificationException("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
         }
