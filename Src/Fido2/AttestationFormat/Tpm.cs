@@ -116,7 +116,7 @@ namespace Fido2NetLib.AttestationFormat
             // Handled in CertInfo constructor, see CertInfo.Type
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
+            if (null == Alg || true != Alg.IsNumber || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
                 
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
@@ -179,7 +179,7 @@ namespace Fido2NetLib.AttestationFormat
                     throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
                 }
 
-                if (false == TPMManufacturerRootMap.ContainsKey(tpmManufacturer))
+                if (false == TPMManufacturers.Contains(tpmManufacturer))
                     throw new Fido2VerificationException("Invalid TPM manufacturer found parsing TPM attestation");
 
                 // 5biiii. The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
