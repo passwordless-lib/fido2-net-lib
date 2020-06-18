@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Asn1;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
@@ -118,6 +118,7 @@ namespace Fido2NetLib.AttestationFormat
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
             if (null == Alg || CBORType.Number != Alg.Type || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
+                
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
             {
                 if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData)) 
@@ -162,9 +163,7 @@ namespace Fido2NetLib.AttestationFormat
 
                 // 5biii. The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
                 // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
-                var SAN = SANFromAttnCertExts(aikCert.Extensions);
-                if (null == SAN || 0 == SAN.Length)
-                    throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
+                (string tpmManufacturer, string tpmModel, string tpmVersion) = SANFromAttnCertExts(aikCert.Extensions);
 
                 // From https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf
                 // "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName 
@@ -172,22 +171,15 @@ namespace Fido2NetLib.AttestationFormat
                 // Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty 
                 // and SHOULD be non-critical if subject is non-empty"
 
-                // AsnEncodedData does this for us on Windows
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    SAN = SAN.Replace("2.23.133.2.1", "TPMManufacturer")
-                        .Replace("2.23.133.2.2", "TPMModel")
-                        .Replace("2.23.133.2.3", "TPMVersion");
-                }
                 // Best I can figure to do for now?
-                if (false == SAN.Contains("TPMManufacturer") ||
-                    false == SAN.Contains("TPMModel") ||
-                    false == SAN.Contains("TPMVersion"))
+                if (string.Empty == tpmManufacturer ||
+                    string.Empty == tpmModel ||
+                    string.Empty == tpmVersion)
                 {
                     throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
                 }
-                var tpmManufacturer = SAN.Substring(SAN.IndexOf("TPMManufacturer"), 27).Split('=').Last();
-                if (false == TPMManufacturers.Contains(tpmManufacturer))
+
+                if (false == TPMManufacturerRootMap.ContainsKey(tpmManufacturer))
                     throw new Fido2VerificationException("Invalid TPM manufacturer found parsing TPM attestation");
 
                 // 5biiii. The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
@@ -255,17 +247,76 @@ namespace Fido2NetLib.AttestationFormat
             { 2, TpmEccCurve.TPM_ECC_NIST_P384},
             { 3, TpmEccCurve.TPM_ECC_NIST_P521}
         };
-        private static string SANFromAttnCertExts(X509ExtensionCollection exts)
+        private static (string, string, string) SANFromAttnCertExts(X509ExtensionCollection exts)
         {
+            string tpmManufacturer = string.Empty,
+                tpmModel = string.Empty,
+                tpmVersion = string.Empty;
+            
+            var foundSAN = false;
+
             foreach (var ext in exts)
             {
                 if (ext.Oid.Value.Equals("2.5.29.17")) // subject alternative name
                 {
-                    var asn = new AsnEncodedData(ext.Oid, ext.RawData);
-                    return asn.Format(true);
+                    if (0 == ext.RawData.Length)
+                        throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
+
+                    foundSAN = true;
+                    var san = AsnElt.Decode(ext.RawData);
+                    san.CheckTag(AsnElt.SEQUENCE);
+                    san.CheckConstructed();
+                    foreach (AsnElt generalName in san.Sub)
+                    {
+                        if (generalName.TagClass != AsnElt.CONTEXT || generalName.TagValue != AsnElt.OCTET_STRING)
+                            continue;
+
+                        generalName.CheckConstructed();
+                        generalName.CheckNumSub(1);
+                        
+                        var exp = generalName.GetSub(0);
+                        exp.CheckConstructed();
+                        exp.CheckNumSub(1);
+                        exp.CheckTag(AsnElt.SEQUENCE);
+
+                        var directoryName = exp.GetSub(0);
+                        directoryName.CheckConstructed();
+                        directoryName.CheckNumSub(3);
+                        directoryName.CheckTag(AsnElt.SET);
+
+                        foreach (AsnElt dn in directoryName.Sub)
+                        {
+                            dn.CheckNumSub(2);
+                            dn.CheckTag(AsnElt.SEQUENCE);
+                            var oid = dn.GetSub(0);
+                            oid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
+                            oid.CheckPrimitive();
+
+                            var value = dn.GetSub(1);
+                            value.CheckTag(AsnElt.UTF8String);
+                            oid.CheckPrimitive();
+                            switch (oid.GetOID())
+                            {
+                                case ("2.23.133.2.1"):
+                                    tpmManufacturer = value.GetString();
+                                    break;
+                                case ("2.23.133.2.2"):
+                                    tpmModel = value.GetString();
+                                    break;
+                                case ("2.23.133.2.3"):
+                                    tpmVersion = value.GetString();
+                                    break;
+                                default:
+                                    continue;
+                            }
+                        }
+                    }
                 }
             }
-            return null;
+            if (false == foundSAN)
+                throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
+
+            return (tpmManufacturer, tpmModel, tpmVersion);
         }
         private static bool EKUFromAttnCertExts(X509ExtensionCollection exts, string expectedEnhancedKeyUsages)
         {

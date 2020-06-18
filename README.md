@@ -1,8 +1,7 @@
 # FIDO2 .NET Library (WebAuthn)
 A working implementation library + demo for [FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/) using [.NET](https://dotnet.microsoft.com/)  
-
-[![Build status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2-CI?label=Build)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=2)
-[![Test Status](https://anders.visualstudio.com/Fido2/_apis/build/status/Fido2%20Tests?branchName=master&label=Tests)](https://anders.visualstudio.com/Fido2/_build/latest?definitionId=3?branchName=master)
+[![Build Status](https://dev.azure.com/anders/Fido2/_apis/build/status/abergs.fido2-net-lib?branchName=master)](https://dev.azure.com/anders/Fido2/_build/latest?definitionId=10&branchName=master)
+[![codecov](https://codecov.io/gh/abergs/fido2-net-lib/branch/master/graph/badge.svg)](https://codecov.io/gh/abergs/fido2-net-lib)
 [![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless) 
 
 [![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/) [Change log](https://github.com/abergs/fido2-net-lib/blob/master/CHANGELOG.md)

@@ -3,6 +3,7 @@ using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
 using Fido2NetLib.Objects;
+using Asn1;
 
 namespace Fido2NetLib.AttestationFormat
 {
@@ -42,17 +43,11 @@ namespace Fido2NetLib.AttestationFormat
             {
                 if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.1.1.4")) // id-fido-gen-ce-aaguid
                 {
-                    aaguid = new byte[16];
-                    using (var ms = new System.IO.MemoryStream(ext.RawData.ToArray()))
-                    {
-                        // OCTET STRING
-                        if (0x4 != ms.ReadByte())
-                            throw new Fido2VerificationException("Expected octet string value");
-                        // AAGUID
-                        if (0x10 != ms.ReadByte())
-                            throw new Fido2VerificationException("Unexpected length for aaguid");
-                        ms.Read(aaguid, 0, 0x10);
-                    }
+                    var decodedAaguid = AsnElt.Decode(ext.RawData);
+                    decodedAaguid.CheckTag(AsnElt.OCTET_STRING);
+                    decodedAaguid.CheckPrimitive();
+                    aaguid = decodedAaguid.GetOctetString();
+
                     //The extension MUST NOT be marked as critical
                     if (true == ext.Critical)
                         throw new Fido2VerificationException("extension MUST NOT be marked as critical");
@@ -78,16 +73,10 @@ namespace Fido2NetLib.AttestationFormat
             {
                 if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.2.1.1"))
                 {
-                    using (var ms = new System.IO.MemoryStream(ext.RawData.ToArray()))
-                    {
-                        if (0x3 != ms.ReadByte())
-                            throw new Fido2VerificationException("Expected bit string");
-                        if (0x2 != ms.ReadByte())
-                            throw new Fido2VerificationException("Expected integer value");
-                        var unusedBits = ms.ReadByte(); // number of unused bits
-                        // https://fidoalliance.org/specs/fido-u2f-v1.2-ps-20170411/fido-u2f-authenticator-transports-extension-v1.2-ps-20170411.html
-                        u2ftransports = ms.ReadByte(); // do something with this?
-                    }
+                    var decodedU2Ftransports = AsnElt.Decode(ext.RawData);
+                    decodedU2Ftransports.CheckTag(AsnElt.BIT_STRING);
+                    decodedU2Ftransports.CheckPrimitive();
+                    u2ftransports = decodedU2Ftransports.GetBitString()[0];
                 }
             }
             return u2ftransports;

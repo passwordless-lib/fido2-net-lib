@@ -54,7 +54,7 @@ namespace Fido2NetLib.Objects
         /// <summary>
         /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
         /// </summary>
-        private byte[] AaGuidToBigEndian()
+        public static byte[] AaGuidToBigEndian(Guid AaGuid)
         {
             var aaguid = AaGuid.ToByteArray();
 
@@ -140,7 +140,7 @@ namespace Fido2NetLib.Objects
                     // Write the aaguid bytes out, reverse if we're on a little endian system
                     if (BitConverter.IsLittleEndian)
                     {
-                        writer.Write(AaGuidToBigEndian());
+                        writer.Write(AaGuidToBigEndian(AaGuid));
                     }
                     else
                     {
