@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -125,7 +125,7 @@ public static class AsnIO {
 			int r = str.IndexOf((char)10, p) + 1;
 			int px = str.IndexOf('-', p);
 			if (px > 0 && px < r && r > 0 && r <= q) {
-				pemType = string.Copy(str.Substring(p, px - p));
+				pemType = new StringBuilder(str.Substring(p, px - p)).ToString();
 				str = str.Substring(r, q - r);
 			}
 		}

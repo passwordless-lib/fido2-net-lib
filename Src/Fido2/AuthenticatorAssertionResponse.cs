@@ -91,7 +91,7 @@ namespace Fido2NetLib
 
             // 4. Let cData, authData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.
             //var cData = Raw.Response.ClientDataJson;
-            var authData = new AuthenticatorData(Raw.Response.AuthenticatorData);
+            var authData = new AuthenticatorData(AuthenticatorData);
             //var sig = Raw.Response.Signature;
 
             // 5. Let JSONtext be the result of running UTF-8 decode on the value of cData.
@@ -100,7 +100,7 @@ namespace Fido2NetLib
 
             // 7. Verify that the value of C.type is the string webauthn.get.
             if (Type != "webauthn.get")
-                throw new Fido2VerificationException();
+                throw new Fido2VerificationException("AssertionResponse is not type webauthn.get");
 
             // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
             // 9. Verify that the value of C.origin matches the Relying Party's origin.

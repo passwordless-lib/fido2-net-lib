@@ -40,7 +40,7 @@ namespace Fido2NetLib
             }
             catch (CBORException ex)
             {
-                throw new Fido2VerificationException("Malformed AttestationObject", ex);
+                throw new Fido2VerificationException("AttestationObject invalid CBOR", ex);
             }
 
             if (null == cborAttestation["fmt"]
@@ -87,9 +87,6 @@ namespace Fido2NetLib
 
             if (Raw.Type != PublicKeyCredentialType.PublicKey)
                 throw new Fido2VerificationException("AttestationResponse is missing type with value 'public-key'");
-
-            if (null == AttestationObject.AuthData || 0 == AttestationObject.AuthData.Length)
-                throw new Fido2VerificationException("Missing or malformed authData");
 
             var authData = new AuthenticatorData(AttestationObject.AuthData);
 

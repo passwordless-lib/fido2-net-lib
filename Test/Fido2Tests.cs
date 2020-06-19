@@ -17,7 +17,6 @@ using NSec.Cryptography;
 using Asn1;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.AttestationFormat;
-using Asn1;
 
 namespace fido2_net_lib.Test
 {
@@ -204,6 +203,7 @@ namespace fido2_net_lib.Test
 
                 idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
             }
+
             public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
             {
                 _attestationObject.Set("authData", _authData);
@@ -217,6 +217,25 @@ namespace fido2_net_lib.Test
                     {
                         AttestationObject = _attestationObject.EncodeToBytes(),
                         ClientDataJson = _clientDataJson,
+                    },
+                    Extensions = new AuthenticationExtensionsClientOutputs()
+                    {
+                        AppID = true,
+                        AuthenticatorSelection = true,
+                        BiometricAuthenticatorPerformanceBounds = true,
+                        GenericTransactionAuthorization = new byte[] { 0xf1, 0xd0 },
+                        SimpleTransactionAuthorization = "test",
+                        Extensions = new string[] { "foo", "bar" },
+                        Example = "test",
+                        Location = new GeoCoordinatePortable.GeoCoordinate(42.523714, -71.040860),
+                        UserVerificationIndex = new byte[] { 0xf1, 0xd0 },
+                        UserVerificationMethod = new ulong[][]
+                        {
+                            new ulong[]
+                            {
+                                4 // USER_VERIFY_PASSCODE_INTERNAL
+                            },
+                        },
                     }
                 };
 
