@@ -22,6 +22,7 @@ jobs:
     displayName: dotnet restore
     inputs:
       command: restore
+      includeNuGetOrg: true
 
 # Build the main library
 - job: lib
