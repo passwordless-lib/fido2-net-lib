@@ -23,6 +23,7 @@ jobs:
     inputs:
       command: restore
       includeNuGetOrg: true
+      noCache: true
 
 # Build the main library
 - job: lib
@@ -45,11 +46,6 @@ jobs:
     vmImage: $(TargetVmImage)
   dependsOn: lib
   steps:
-  - task: NuGetCommand@2
-    displayName: dotnet restore
-    inputs:
-      command: restore
-      includeNuGetOrg: true
   - task: DotNetCoreCLI@2
     displayName: Publish website
     inputs:
@@ -67,11 +63,6 @@ jobs:
     vmImage: $(TargetVmImage)
   dependsOn: lib
   steps:
-  - task: NuGetCommand@2
-    displayName: dotnet restore
-    inputs:
-      command: restore
-      includeNuGetOrg: true  
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
