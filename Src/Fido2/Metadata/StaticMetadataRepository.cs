@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Fido2NetLib.AttestationFormat;
-using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
@@ -61,7 +60,6 @@ namespace Fido2NetLib
             return await _httpClient.GetStringAsync(url);
         }
 
-
         public async Task<MetadataTOCPayload> GetToc()
         {
             var yubico = new MetadataTOCPayloadEntry
@@ -87,61 +85,6 @@ namespace Fido2NetLib
                 }
             };
             _entries.Add(new Guid(yubico.AaGuid), yubico);
-
-            // YubiKey 5 USB and NFC AAGUID values from https://support.yubico.com/support/solutions/articles/15000014219-yubikey-5-series-technical-manual#AAGUID_Valuesxf002do
-            var yubikey5usb = new MetadataTOCPayloadEntry
-            {
-                AaGuid = "cb69481e-8ff7-4039-93ec-0a2729a154a8",
-                Hash = "",
-                StatusReports = new StatusReport[]
-                {
-                    new StatusReport
-                    {
-                        Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
-                    }
-                },
-                MetadataStatement = new MetadataStatement
-                {
-                    AttestationTypes = new ushort[]
-                    {
-                        (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL
-                    },
-                    Hash = "",
-                    Description = "Yubico YubiKey 5 USB",
-                    AttestationRootCertificates = new string[]
-                    {
-                        YUBICO_ROOT
-                    }
-                }
-            };
-            _entries.Add(new Guid(yubikey5usb.AaGuid), yubikey5usb);
-
-            var yubikey5nfc = new MetadataTOCPayloadEntry
-            {
-                AaGuid = "fa2b99dc-9e39-4257-8f92-4a30d23c4118",
-                Hash = "",
-                StatusReports = new StatusReport[]
-                {
-                    new StatusReport
-                    {
-                        Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
-                    }
-                },
-                MetadataStatement = new MetadataStatement
-                {
-                    AttestationTypes = new ushort[]
-                    {
-                        (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL
-                    },
-                    Hash = "",
-                    Description = "Yubico YubiKey 5 NFC",
-                    AttestationRootCertificates = new string[]
-                    {
-                        YUBICO_ROOT
-                    }
-                }
-            };
-            _entries.Add(new Guid(yubikey5nfc.AaGuid), yubikey5nfc);
 
             var yubicoSecuriyKeyNfc = new MetadataTOCPayloadEntry
             {
@@ -251,57 +194,6 @@ namespace Fido2NetLib
                 }
             };
             _entries.Add(new Guid(msftWhfbHardwareVbs.AaGuid), msftWhfbHardwareVbs);
-
-            var solostatement = await DownloadStringAsync("https://raw.githubusercontent.com/solokeys/solo/master/metadata/Solo-FIDO2-CTAP2-Authenticator.json");
-            var soloMetadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(solostatement);
-            var soloKeysSolo = new MetadataTOCPayloadEntry
-            {
-                AaGuid = soloMetadataStatement.AaGuid,
-                Url = "https://raw.githubusercontent.com/solokeys/solo/master/metadata/Solo-FIDO2-CTAP2-Authenticator.json",
-                StatusReports = new StatusReport[]
-                {
-                    new StatusReport
-                    {
-                        Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
-                    }
-                },
-                MetadataStatement = soloMetadataStatement
-            };
-            _entries.Add(new Guid(soloKeysSolo.AaGuid), soloKeysSolo);
-
-            var soloTapStatement = await DownloadStringAsync("https://raw.githubusercontent.com/solokeys/solo/master/metadata/SoloTap-FIDO2-CTAP2-Authenticator.json");
-            var soloTapMetadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(soloTapStatement);
-            var soloTapMetadata = new MetadataTOCPayloadEntry
-            {
-                AaGuid = soloTapMetadataStatement.AaGuid,
-                Url = "https://raw.githubusercontent.com/solokeys/solo/master/metadata/SoloTap-FIDO2-CTAP2-Authenticator.json",
-                StatusReports = new StatusReport[]
-                {
-                    new StatusReport
-                    {
-                        Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
-                    }
-                },
-                MetadataStatement = soloTapMetadataStatement
-            };
-            _entries.Add(new Guid(soloTapMetadata.AaGuid), soloTapMetadata);
-
-            var soloSomuStatement = await DownloadStringAsync("https://raw.githubusercontent.com/solokeys/solo/master/metadata/Somu-FIDO2-CTAP2-Authenticator.json");
-            var soloSomuMetadataStatement = JsonConvert.DeserializeObject<MetadataStatement>(soloSomuStatement);
-            var soloSomuMetadata = new MetadataTOCPayloadEntry
-            {
-                AaGuid = soloSomuMetadataStatement.AaGuid,
-                Url = "https://raw.githubusercontent.com/solokeys/solo/master/metadata/Somu-FIDO2-CTAP2-Authenticator.json",
-                StatusReports = new StatusReport[]
-                {
-                    new StatusReport
-                    {
-                        Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
-                    }
-                },
-                MetadataStatement = soloSomuMetadataStatement
-            };
-            _entries.Add(new Guid(soloSomuMetadata.AaGuid), soloSomuMetadata);
 
             foreach (var entry in _entries)
             {
