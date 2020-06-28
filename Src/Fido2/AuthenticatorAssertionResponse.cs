@@ -74,7 +74,7 @@ namespace Fido2NetLib
                     throw new Fido2VerificationException("Invalid");
             }
 
-            // 2. If credential.response.userHandle is present, verify that the user identified by this value is the owner of the public key credential identified by credential.id.
+            // 2. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id
             if (UserHandle != null)
             {
                 if (UserHandle.Length == 0)
@@ -87,11 +87,11 @@ namespace Fido2NetLib
             }
 
             // 3. Using credential’s id attribute(or the corresponding rawId, if base64url encoding is inappropriate for your use case), look up the corresponding credential public key.
-            // public key inserted via parameter.
+            // Credential public key passed in via storePublicKey parameter
 
             // 4. Let cData, authData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.
             //var cData = Raw.Response.ClientDataJson;
-            var authData = new AuthenticatorData(Raw.Response.AuthenticatorData);
+            var authData = new AuthenticatorData(AuthenticatorData);
             //var sig = Raw.Response.Signature;
 
             // 5. Let JSONtext be the result of running UTF-8 decode on the value of cData.
@@ -100,7 +100,7 @@ namespace Fido2NetLib
 
             // 7. Verify that the value of C.type is the string webauthn.get.
             if (Type != "webauthn.get")
-                throw new Fido2VerificationException();
+                throw new Fido2VerificationException("AssertionResponse is not type webauthn.get");
 
             // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
             // 9. Verify that the value of C.origin matches the Relying Party's origin.

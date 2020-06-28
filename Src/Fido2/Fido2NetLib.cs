@@ -51,7 +51,6 @@ namespace Fido2NetLib
             AttestationConveyancePreference attestationPreference,
             AuthenticationExtensionsClientInputs extensions = null)
         {
-            // note: I have no idea if this crypto is ok...
             var challenge = new byte[_config.ChallengeSize];
             _crypto.GetBytes(challenge);
 

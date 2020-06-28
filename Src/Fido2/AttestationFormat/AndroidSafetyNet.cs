@@ -37,13 +37,14 @@ namespace Fido2NetLib.AttestationFormat
 
         public override void Verify()
         {
-            // Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
+            // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
             // CBOR decoding on it to extract the contained fields
+            // (handled in base class)
             if ((CBORType.TextString != attStmt["ver"].Type) ||
                 (0 == attStmt["ver"].AsString().Length))
                 throw new Fido2VerificationException("Invalid version in SafetyNet data");
 
-            // Verify that response is a valid SafetyNet response of version ver
+            // 2. Verify that response is a valid SafetyNet response of version ver
             var ver = attStmt["ver"].AsString();
 
             if ((CBORType.ByteString != attStmt["response"].Type) ||
@@ -140,7 +141,7 @@ namespace Fido2NetLib.AttestationFormat
                 throw new Fido2VerificationException(string.Format("SafetyNet timestampMs must be present and between one minute ago and now, got: {0}", timestampMs.ToString()));
             }
 
-            // Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
+            // 3. Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
             if ("" == nonce)
                 throw new Fido2VerificationException("Nonce value not found in SafetyNet attestation");
 
@@ -167,15 +168,17 @@ namespace Fido2NetLib.AttestationFormat
                         );
             }
 
-            // Verify that the attestation certificate is issued to the hostname "attest.android.com"
+            // 4. Let attestationCert be the attestation certificate
             var subject = certs[0].GetNameInfo(X509NameType.DnsName, false);
+
+            // 5. Verify that the attestation certificate is issued to the hostname "attest.android.com"
             if (false == ("attest.android.com").Equals(subject))
                 throw new Fido2VerificationException(string.Format("SafetyNet attestation cert DnsName invalid, want {0}, got {1}", "attest.android.com", subject));
 
+            // 6. Verify that the ctsProfileMatch attribute in the payload of response is true
             if (null == ctsProfileMatch)
                 throw new Fido2VerificationException("SafetyNet response ctsProfileMatch missing");
-
-            // Verify that the ctsProfileMatch attribute in the payload of response is true
+                        
             if (true != ctsProfileMatch)
                 throw new Fido2VerificationException("SafetyNet response ctsProfileMatch false");
         }
