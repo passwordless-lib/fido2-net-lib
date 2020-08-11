@@ -116,17 +116,17 @@ namespace Fido2NetLib.AttestationFormat
             // Handled in CertInfo constructor, see CertInfo.Type
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (null == Alg || true != Alg.IsNumber || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
+            if (null == Alg || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
                 
-            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
+            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
             {
                 if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData)) 
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
             }
 
             // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[certInfo.Alg]))
+            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(certInfo.Alg)))
             {
                 if (false == hasher.ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName))
                     throw new Fido2VerificationException("Hash value mismatch attested and pubArea");

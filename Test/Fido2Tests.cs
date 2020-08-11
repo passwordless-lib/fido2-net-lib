@@ -325,7 +325,7 @@ namespace fido2_net_lib.Test
                         {
                             var ecparams = ecdsa.ExportParameters(true);
                             _credentialPublicKey = MakeCredentialPublicKey(kty, alg, curve, ecparams.Q.X, ecparams.Q.Y);
-                            var signature = ecdsa.SignData(_attToBeSigned, CryptoUtils.algMap[(int)alg]);
+                            var signature = ecdsa.SignData(_attToBeSigned, CryptoUtils.HashAlgFromCOSEAlg((int)alg));
                             return EcDsaSigFromSig(signature, ecdsa.KeySize);
                         }
                     case COSE.KeyType.RSA:
@@ -351,7 +351,7 @@ namespace fido2_net_lib.Test
 
                             var rsaparams = rsa.ExportParameters(true);
                             _credentialPublicKey = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
-                            return rsa.SignData(_attToBeSigned, CryptoUtils.algMap[(int)alg], padding);
+                            return rsa.SignData(_attToBeSigned, CryptoUtils.HashAlgFromCOSEAlg((int)alg), padding);
                         }
                     case COSE.KeyType.OKP:
                         {
@@ -371,7 +371,7 @@ namespace fido2_net_lib.Test
             {
                 case COSE.KeyType.EC2:
                     {
-                        var signature = ecdsa.SignData(data, CryptoUtils.algMap[(int)alg]);
+                        var signature = ecdsa.SignData(data, CryptoUtils.HashAlgFromCOSEAlg((int)alg));
                         return EcDsaSigFromSig(signature, ecdsa.KeySize);
                     }
                 case COSE.KeyType.RSA:
@@ -394,7 +394,7 @@ namespace fido2_net_lib.Test
                             default:
                                 throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
                         }
-                        return rsa.SignData(data, CryptoUtils.algMap[(int)alg], padding);
+                        return rsa.SignData(data, CryptoUtils.HashAlgFromCOSEAlg((int)alg), padding);
                     }
                 case COSE.KeyType.OKP:
                     {

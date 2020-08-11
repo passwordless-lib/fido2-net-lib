@@ -83,10 +83,6 @@ namespace Fido2NetLib.AttestationFormat
 
                 // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                 // using the attestation public key in attestnCert with the algorithm specified in alg
-                var packedPubKey = attestnCert.GetECDsaPublicKey(); // attestation public key
-                if (false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
-                    throw new Fido2VerificationException("Invalid attestation algorithm");
-
                 var cpk = new CredentialPublicKey(attestnCert, Alg.AsInt32());
                 if (true != cpk.Verify(Data, Sig.GetByteString()))
                     throw new Fido2VerificationException("Invalid full packed signature");

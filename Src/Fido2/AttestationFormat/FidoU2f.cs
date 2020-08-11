@@ -91,7 +91,7 @@ namespace Fido2NetLib.AttestationFormat
             }
 
             var coseAlg = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
-            var hashAlg = CryptoUtils.algMap[coseAlg];
+            var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(coseAlg);
 
             if (true != pubKey.VerifyData(verificationData, ecsig, hashAlg))
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");

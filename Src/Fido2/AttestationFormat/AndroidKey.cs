@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Asn1;
+using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
 namespace Fido2NetLib.AttestationFormat
@@ -170,7 +170,7 @@ namespace Fido2NetLib.AttestationFormat
                 throw new Fido2VerificationException("Failed to extract public key from android key: " + ex.Message, ex);
             }
 
-            if (null == Alg || true != Alg.IsNumber || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
+            if (null == Alg || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid android key attestation algorithm");
 
             byte[] ecsig;
@@ -183,7 +183,7 @@ namespace Fido2NetLib.AttestationFormat
                 throw new Fido2VerificationException("Failed to decode android key attestation signature from ASN.1 encoded form", ex);
             }
 
-            if (true != androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.algMap[Alg.AsInt32()]))
+            if (true != androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
                 throw new Fido2VerificationException("Invalid android key attestation signature");
 
             // 3. Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
