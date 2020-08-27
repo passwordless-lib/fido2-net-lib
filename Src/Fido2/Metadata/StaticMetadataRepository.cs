@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Fido2NetLib.AttestationFormat;
 
 namespace Fido2NetLib
 {

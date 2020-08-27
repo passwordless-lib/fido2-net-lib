@@ -6,21 +6,16 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Fido2NetLib.Objects;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
-    internal class AndroidSafetyNet : AttestationFormat
+    internal class AndroidSafetyNet : AttestationVerifier
     {
         private readonly int _driftTolerance;
-
-        public AndroidSafetyNet(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, int driftTolerance) 
-            : base(attStmt, authenticatorData, clientDataHash)
-        {
-            _driftTolerance = driftTolerance;
-        }
 
         private X509Certificate2 GetX509Certificate(string certString)
         {
@@ -35,7 +30,7 @@ namespace Fido2NetLib.AttestationFormat
             }
         }
 
-        public override void Verify()
+        public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
             // CBOR decoding on it to extract the contained fields
@@ -169,7 +164,8 @@ namespace Fido2NetLib.AttestationFormat
             }
 
             // 4. Let attestationCert be the attestation certificate
-            var subject = certs[0].GetNameInfo(X509NameType.DnsName, false);
+            var attestationCert = certs[0];
+            var subject = attestationCert.GetNameInfo(X509NameType.DnsName, false);
 
             // 5. Verify that the attestation certificate is issued to the hostname "attest.android.com"
             if (false == ("attest.android.com").Equals(subject))
@@ -181,6 +177,8 @@ namespace Fido2NetLib.AttestationFormat
                         
             if (true != ctsProfileMatch)
                 throw new Fido2VerificationException("SafetyNet response ctsProfileMatch false");
+
+            return (AttestationType.Basic, new X509Certificate2[] { attestationCert });
         }
     }
 }

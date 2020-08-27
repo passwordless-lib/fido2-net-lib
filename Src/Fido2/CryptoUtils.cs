@@ -62,6 +62,33 @@ namespace Fido2NetLib
             };
         }
 
+        public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
+        {
+            foreach (var attestationRootCert in attestationRootCertificates)
+            {
+                var chain = new X509Chain();
+                chain.ChainPolicy.ExtraStore.Add(attestationRootCert);
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                if (trustPath.Length > 1)
+                {
+                    foreach (var cert in trustPath.Skip(1).Reverse())
+                    {
+                        chain.ChainPolicy.ExtraStore.Add(cert);
+                    }
+                }
+                var valid = chain.Build(trustPath[0]);
+
+                // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
+
+                if (true == valid)
+                    return true;
+            }
+            return false;
+        }
+
         public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
         {
             var decoded = AsnElt.Decode(ecDsaSig);

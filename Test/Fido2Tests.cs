@@ -16,7 +16,6 @@ using System.Text;
 using NSec.Cryptography;
 using Asn1;
 using System.Security.Cryptography.X509Certificates;
-using Fido2NetLib.AttestationFormat;
 
 namespace fido2_net_lib.Test
 {

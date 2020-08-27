@@ -1,18 +1,17 @@
-﻿using PeterO.Cbor;
+﻿using System.Security.Cryptography.X509Certificates;
+using Fido2NetLib.Objects;
+using PeterO.Cbor;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
-    internal class None : AttestationFormat
+    public class None : AttestationVerifier
     {
-        public None(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) 
-            : base(attStmt, authenticatorData, clientDataHash)
-        {
-        }
-
-        public override void Verify()
+        public override (AttestationType, X509Certificate2[]) Verify()
         {
             if (0 != attStmt.Keys.Count && 0 != attStmt.Values.Count)
                 throw new Fido2VerificationException("Attestation format none should have no attestation statement");
+
+            return (AttestationType.None, null);
         }
     }
 }

@@ -1,24 +1,16 @@
 ﻿using PeterO.Cbor;
 using System;
 using System.Security.Cryptography.X509Certificates;
-using System.Linq;
 using Fido2NetLib.Objects;
 using Asn1;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
-    public abstract class AttestationFormat
+    public abstract class AttestationVerifier
     {
         public CBORObject attStmt;
         public byte[] authenticatorData;
         public byte[] clientDataHash;
-
-        public AttestationFormat(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash)
-        {
-            this.attStmt = attStmt;
-            this.authenticatorData = authenticatorData;
-            this.clientDataHash = clientDataHash;
-        }
 
         internal CBORObject Sig => attStmt["sig"];
         internal CBORObject X5c => attStmt["x5c"];
@@ -82,33 +74,16 @@ namespace Fido2NetLib.AttestationFormat
             return u2ftransports;
         }
 
-        internal bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
+
+
+        public virtual (AttestationType, X509Certificate2[]) Verify(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash)
         {
-            foreach (var attestationRootCert in attestationRootCertificates)
-            {
-                var chain = new X509Chain();
-                chain.ChainPolicy.ExtraStore.Add(attestationRootCert);
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                if (trustPath.Length > 1)
-                {
-                    foreach (var cert in trustPath.Skip(1).Reverse())
-                    {
-                        chain.ChainPolicy.ExtraStore.Add(cert);
-                    }
-                }
-                var valid = chain.Build(trustPath[0]);
-
-                // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
-
-                if (true == valid)
-                    return true;
-            }
-            return false;
+            this.attStmt = attStmt;
+            this.authenticatorData = authenticatorData;
+            this.clientDataHash = clientDataHash;
+            return Verify();
         }
 
-        public abstract void Verify();
+        public abstract (AttestationType, X509Certificate2[]) Verify();
     }
 }
