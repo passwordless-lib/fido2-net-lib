@@ -41,7 +41,7 @@ namespace Fido2NetLib
             _cacheUntil = cacheUntil;
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayloadEntry entry)
+        public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
         {
             if (_toc == null)
                 await GetToc();

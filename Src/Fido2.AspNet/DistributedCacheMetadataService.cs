@@ -71,32 +71,47 @@ namespace Fido2NetLib
             return $"{CACHE_PREFIX}:{repository.GetType().Name}:Entry:{aaGuid}";
         }
 
-        protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayloadEntry entry, DateTime? cacheUntil = null)
+        protected virtual async Task LoadTocEntryStatement(
+            IMetadataRepository repository,
+            MetadataTOCPayload toc,
+            MetadataTOCPayloadEntry entry,
+            DateTime? cacheUntil = null)
         {
-            if (entry.AaGuid != null)
+            if (entry.AaGuid != null && !_entries.ContainsKey(Guid.Parse(entry.AaGuid)))
             {
-                var cacheKey = GetEntryCacheKey(repository, Guid.Parse(entry.AaGuid));
+                var entryAaGuid = Guid.Parse(entry.AaGuid);
+
+                var cacheKey = GetEntryCacheKey(repository, entryAaGuid);
 
                 var cachedEntry = await _cache.GetStringAsync(cacheKey);
                 if (cachedEntry != null)
                 {
                     var statement = JsonConvert.DeserializeObject<MetadataStatement>(cachedEntry);
                     if (!string.IsNullOrWhiteSpace(statement.AaGuid))
-                        _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
+                    {
+                        var aaGuid = Guid.Parse(statement.AaGuid);
+                        _metadataStatements.TryAdd(aaGuid, statement);
+                        _entries.TryAdd(aaGuid, entry);
+                    }
                 }
                 else
                 {
-                    _log?.LogInformation("Entry for {0}/{1} not cached so loading from MDS...", entry.AaGuid, entry.Aaid);
+                    _log?.LogInformation("Entry for {0} {1} not cached so loading from MDS...", entry.AaGuid, entry.MetadataStatement?.Description ?? entry.StatusReports?.FirstOrDefault().CertificationDescriptor ?? "(unknown)");
 
                     try
                     {
-                        var statement = await repository.GetMetadataStatement(entry);
+                        var statement = await repository.GetMetadataStatement(toc, entry);
 
                         if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                         {
-                            _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
-
                             var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
+
+                            _log?.LogDebug("{0}:{1}\n{2}", statement.AaGuid, statement.Description, statementJson);
+
+                            var aaGuid = Guid.Parse(statement.AaGuid);
+
+                            _metadataStatements.TryAdd(aaGuid, statement);
+                            _entries.TryAdd(aaGuid, entry);
 
                             if (cacheUntil.HasValue)
                             {
@@ -107,7 +122,7 @@ namespace Fido2NetLib
                             }
                         }
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         _log?.LogError(ex, "Error getting MetadataStatement from {0} for AAGUID '{1}' ", repository.GetType().Name, entry.AaGuid);
                         throw;
@@ -136,7 +151,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        protected virtual async Task InitializeClient(IMetadataRepository repository)
+        protected virtual async Task InitializeRepository(IMetadataRepository repository)
         {
             var tocCacheKey = GetTocCacheKey(repository);
 
@@ -153,23 +168,23 @@ namespace Fido2NetLib
             }
             else
             {
-                _log?.LogInformation("TOC not cached so loading from MDS...");
+                _log?.LogInformation($"TOC for {repository.GetType().Name} not cached so loading from MDS...");
 
                 try
                 {
                     toc = await repository.GetToc();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _log?.LogError(ex, "Error getting TOC from {0}", repository.GetType().Name);
                     throw;
                 }
 
-                _log?.LogInformation("TOC not cached so loading from MDS... Done.");
+                _log?.LogInformation($"TOC for {repository.GetType().Name} not cached so loading from MDS... Done.");
 
                 cacheUntil = GetCacheUntilTime(toc);
 
-                if(cacheUntil.HasValue)
+                if (cacheUntil.HasValue)
                 {
                     await _cache.SetStringAsync(
                         tocCacheKey,
@@ -183,12 +198,15 @@ namespace Fido2NetLib
 
             foreach (var entry in toc.Entries)
             {
-                if (!string.IsNullOrEmpty(entry.AaGuid))
+                if (!string.IsNullOrEmpty(entry.AaGuid)) //Only load FIDO2 entries
                 {
-                    if(_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
+                    try
                     {
-                        //Load if it doesn't already exist
-                        await LoadEntryStatement(repository, entry, cacheUntil);
+                        await LoadTocEntryStatement(repository, toc, entry, cacheUntil);
+                    }
+                    catch (Exception ex)
+                    {
+                        _log?.LogError(ex, "Error getting statement from {0} for AAGUID '{1}'.\nTOC entry:\n{2} ", repository.GetType().Name, entry.AaGuid, JsonConvert.SerializeObject(entry, Formatting.Indented));
                     }
                 }
             }
@@ -196,16 +214,16 @@ namespace Fido2NetLib
 
         public virtual async Task Initialize()
         {
-            foreach (var client in _repositories)
+            foreach (var repository in _repositories)
             {
                 try
                 {
-                    await InitializeClient(client);
+                    await InitializeRepository(repository);
                 }
                 catch (Exception ex)
                 {
                     //Catch and log this as we don't want issues with external services to prevent app startup
-                    _log.LogCritical(ex, "Error initialising MDS client '{0}'", client.GetType().Name);
+                    _log?.LogCritical(ex, "Error initialising MDS client '{0}'", repository.GetType().Name);
                 }
             }
             _initialized = true;
