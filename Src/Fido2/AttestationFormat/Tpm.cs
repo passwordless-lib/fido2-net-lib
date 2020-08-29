@@ -290,15 +290,15 @@ namespace Fido2NetLib.AttestationFormat
                             propertySequence.CheckTag(AsnElt.SEQUENCE);
                             propertySequence.CheckNumSub(2);
 
-                            var properyOid = propertySequence.GetSub(0);
-                            properyOid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
-                            properyOid.CheckPrimitive();
+                            var propertyOid = propertySequence.GetSub(0);
+                            propertyOid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
+                            propertyOid.CheckPrimitive();
 
                             var propertyValue = propertySequence.GetSub(1);
                             propertyValue.CheckTag(AsnElt.UTF8String);
                             propertyValue.CheckPrimitive();
 
-                            switch (properyOid.GetOID())
+                            switch (propertyOid.GetOID())
                             {
                                 case ("2.23.133.2.1"):
                                     tpmManufacturer = propertyValue.GetString();
