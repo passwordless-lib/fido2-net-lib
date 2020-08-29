@@ -13,7 +13,7 @@ namespace Fido2NetLib.AttestationFormat
     {
         private readonly IMetadataService _metadataService;
 
-        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) 
+        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService)
             : base(attStmt, authenticatorData, clientDataHash)
         {
             _metadataService = metadataService;
@@ -63,7 +63,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null != attStmt["pubArea"] &&
                 CBORType.ByteString == attStmt["pubArea"].Type &&
                 0 != attStmt["pubArea"].GetByteString().Length)
-            { 
+            {
                 pubArea = new PubArea(attStmt["pubArea"].GetByteString());
             }
 
@@ -102,7 +102,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null != attStmt["certInfo"] &&
                 CBORType.ByteString == attStmt["certInfo"].Type &&
                 0 != attStmt["certInfo"].GetByteString().Length)
-            { 
+            {
                 certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
             }
 
@@ -118,10 +118,10 @@ namespace Fido2NetLib.AttestationFormat
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
             if (null == Alg || true != Alg.IsNumber || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
-                
+
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
             {
-                if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData)) 
+                if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData))
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
             }
 
@@ -247,73 +247,79 @@ namespace Fido2NetLib.AttestationFormat
             { 2, TpmEccCurve.TPM_ECC_NIST_P384},
             { 3, TpmEccCurve.TPM_ECC_NIST_P521}
         };
-        private static (string, string, string) SANFromAttnCertExts(X509ExtensionCollection exts)
+        private static (string, string, string) SANFromAttnCertExts(X509ExtensionCollection extensions)
         {
             string tpmManufacturer = string.Empty,
                 tpmModel = string.Empty,
                 tpmVersion = string.Empty;
-            
+
             var foundSAN = false;
 
-            foreach (var ext in exts)
+            foreach (var extension in extensions)
             {
-                if (ext.Oid.Value.Equals("2.5.29.17")) // subject alternative name
+                if (extension.Oid.Value.Equals("2.5.29.17")) // subject alternative name
                 {
-                    if (0 == ext.RawData.Length)
+                    if (0 == extension.RawData.Length)
                         throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
 
                     foundSAN = true;
-                    var san = AsnElt.Decode(ext.RawData);
-                    san.CheckTag(AsnElt.SEQUENCE);
-                    san.CheckConstructed();
-                    foreach (AsnElt generalName in san.Sub)
-                    {
-                        if (generalName.TagClass != AsnElt.CONTEXT || generalName.TagValue != AsnElt.OCTET_STRING)
-                            continue;
 
+                    var subjectAlternativeName = AsnElt.Decode(extension.RawData);
+                    subjectAlternativeName.CheckConstructed();
+                    subjectAlternativeName.CheckTag(AsnElt.SEQUENCE);
+                    subjectAlternativeName.CheckNumSubMin(1);
+
+                    var generalName = subjectAlternativeName.Sub.FirstOrDefault(o => o.TagClass == AsnElt.CONTEXT && o.TagValue == AsnElt.OCTET_STRING);
+
+                    if (generalName != null)
+                    {
                         generalName.CheckConstructed();
                         generalName.CheckNumSub(1);
-                        
-                        var exp = generalName.GetSub(0);
-                        exp.CheckConstructed();
-                        exp.CheckNumSub(1);
-                        exp.CheckTag(AsnElt.SEQUENCE);
 
-                        var directoryName = exp.GetSub(0);
-                        directoryName.CheckConstructed();
-                        directoryName.CheckNumSub(3);
-                        directoryName.CheckTag(AsnElt.SET);
+                        var nameSequence = generalName.GetSub(0);
+                        nameSequence.CheckConstructed();
+                        nameSequence.CheckTag(AsnElt.SEQUENCE);
+                        nameSequence.CheckNumSub(3);
 
-                        foreach (AsnElt dn in directoryName.Sub)
+                        foreach (AsnElt propertySet in nameSequence.Sub)
                         {
-                            dn.CheckNumSub(2);
-                            dn.CheckTag(AsnElt.SEQUENCE);
-                            var oid = dn.GetSub(0);
-                            oid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
-                            oid.CheckPrimitive();
+                            propertySet.CheckTag(AsnElt.SET);
+                            propertySet.CheckNumSub(1);
 
-                            var value = dn.GetSub(1);
-                            value.CheckTag(AsnElt.UTF8String);
-                            oid.CheckPrimitive();
-                            switch (oid.GetOID())
+                            var propertySequence = propertySet.GetSub(0);
+                            propertySequence.CheckTag(AsnElt.SEQUENCE);
+                            propertySequence.CheckNumSub(2);
+
+                            var properyOid = propertySequence.GetSub(0);
+                            properyOid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
+                            properyOid.CheckPrimitive();
+
+                            var propertyValue = propertySequence.GetSub(1);
+                            propertyValue.CheckTag(AsnElt.UTF8String);
+                            propertyValue.CheckPrimitive();
+
+                            switch (properyOid.GetOID())
                             {
                                 case ("2.23.133.2.1"):
-                                    tpmManufacturer = value.GetString();
+                                    tpmManufacturer = propertyValue.GetString();
                                     break;
                                 case ("2.23.133.2.2"):
-                                    tpmModel = value.GetString();
+                                    tpmModel = propertyValue.GetString();
                                     break;
                                 case ("2.23.133.2.3"):
-                                    tpmVersion = value.GetString();
+                                    tpmVersion = propertyValue.GetString();
                                     break;
                                 default:
                                     continue;
                             }
                         }
                     }
+
+                    break;
                 }
             }
-            if (false == foundSAN)
+
+            if (!foundSAN)
                 throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
 
             return (tpmManufacturer, tpmModel, tpmVersion);
@@ -329,7 +335,7 @@ namespace Fido2NetLib.AttestationFormat
                         if (expectedEnhancedKeyUsages.Equals(oid.Value))
                             return true;
                     }
-                
+
                 }
             }
             return false;
