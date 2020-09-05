@@ -74,7 +74,9 @@ namespace Fido2NetLib.AttestationFormat
 
                     var x5ccert = new X509Certificate2(enumerator.Current.GetByteString());
 
-                    if (DateTime.UtcNow < x5ccert.NotBefore || DateTime.UtcNow > x5ccert.NotAfter)
+                    // X509Certificate2.NotBefore/.NotAfter return LOCAL DateTimes, so
+                    // it's correct to compare using DateTime.Now.
+                    if (DateTime.Now < x5ccert.NotBefore || DateTime.Now > x5ccert.NotAfter)
                         throw new Fido2VerificationException("Packed signing certificate expired or not yet valid");
                 }
 
