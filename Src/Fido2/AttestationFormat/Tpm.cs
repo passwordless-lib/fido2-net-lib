@@ -279,9 +279,56 @@ namespace Fido2NetLib.AttestationFormat
                         var nameSequence = generalName.GetSub(0);
                         nameSequence.CheckConstructed();
                         nameSequence.CheckTag(AsnElt.SEQUENCE);
-                        nameSequence.CheckNumSub(3);
+                        nameSequence.CheckNumSubMin(1);
 
-                        foreach (AsnElt propertySet in nameSequence.Sub)
+                        /*
+                         
+                        Per Trusted Computing Group Endorsement Key Credential Profile section 3.2.9:
+
+                        "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName-form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device Attributes."
+
+                        An example is provided in document section A.1 Example 1:
+
+                                    // SEQUENCE
+                                    30 49
+                                         // SET
+                                         31 16
+                                             // SEQUENCE
+                                             30 14
+                                                 // OBJECT IDENTIFER tcg-at-tpmManufacturer (2.23.133.2.1)
+                                                 06 05 67 81 05 02 01
+                                                 // UTF8 STRING id:54434700 (TCG)
+                                                 0C 0B 69 64 3A 35 34 34 33 34 37 30 30
+                                        // SET
+                                        31 17
+                                            // SEQUENCE
+                                            30 15
+                                                // OBJECT IDENTIFER tcg-at-tpmModel (2.23.133.2.2)
+                                                06 05 67 81 05 02 02
+                                                // UTF8 STRING ABCDEF123456
+                                                0C 0C 41 42 43 44 45 46 31 32 33 34 35 36
+                                        // SET
+                                        31 16
+                                            // SEQUENCE
+                                            30 14
+                                                // OBJECT IDENTIFER tcg-at-tpmVersion (2.23.133.2.3)
+                                                06 05 67 81 05 02 03
+                                                // UTF8 STRING id:00010023
+                                                0C 0B 69 64 3A 30 30 30 31 30 30 32 33
+
+                        Some TPM implementations place each device attributes SEQUENCE within a single SET instead of each in its own SET.
+
+                        This detects this condition and repacks each devices attributes SEQUENCE into its own SET to conform with TCG spec.
+
+                         */
+
+                        var deviceAttributes = nameSequence.Sub;
+                        if (1 != deviceAttributes.FirstOrDefault().Sub.Length)
+                        {
+                            deviceAttributes = deviceAttributes.FirstOrDefault().Sub.Select(o => AsnElt.Make(AsnElt.SET, o)).ToArray();
+                        }
+
+                        foreach (AsnElt propertySet in deviceAttributes)
                         {
                             propertySet.CheckTag(AsnElt.SET);
                             propertySet.CheckNumSub(1);
