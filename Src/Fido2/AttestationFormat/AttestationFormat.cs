@@ -73,9 +73,6 @@ namespace Fido2NetLib
             }
             return u2ftransports;
         }
-
-
-
         public virtual (AttestationType, X509Certificate2[]) Verify(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash)
         {
             this.attStmt = attStmt;

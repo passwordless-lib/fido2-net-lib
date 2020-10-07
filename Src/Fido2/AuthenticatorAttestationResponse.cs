@@ -135,6 +135,7 @@ namespace Fido2NetLib
                 "android-safetynet" => new AndroidSafetyNet(),  // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
                 "fido-u2f" => new FidoU2f(),                    // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
                 "packed" => new Packed(),                       // https://www.w3.org/TR/webauthn/#packed-attestation
+                "apple" => new Apple(),                       // https://www.w3.org/TR/webauthn/#apple-anonymous-attestation
                 _ => throw new Fido2VerificationException("Missing or unknown attestation type"),
             };
 
