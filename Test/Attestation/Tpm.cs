@@ -401,6 +401,191 @@ namespace Test.Attestation
         }
 
         [Fact]
+        public void TestTPMAikCertSANTCGConformant()
+        {
+            var param = Fido2Tests._validCOSEParameters[3];
+
+            var alg = (COSE.Algorithm)param[1];
+            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+            if (alg == COSE.Algorithm.RS1)
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+
+            using (RSA rsaRoot = RSA.Create())
+            {
+                RSASignaturePadding padding = RSASignaturePadding.Pss;
+                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                {
+                    case COSE.Algorithm.RS1:
+                    case COSE.Algorithm.RS256:
+                    case COSE.Algorithm.RS384:
+                    case COSE.Algorithm.RS512:
+                        padding = RSASignaturePadding.Pkcs1;
+                        break;
+                }
+                var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
+                rootRequest.CertificateExtensions.Add(caExt);
+
+                using (rootCert = rootRequest.CreateSelfSigned(
+                    notBefore,
+                    notAfter))
+
+                using (var rsaAtt = RSA.Create())
+                {
+                    var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
+
+                    attRequest.CertificateExtensions.Add(notCAExt);
+
+                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                    var tcpaTpmManufacturer = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.1"), AsnElt.MakeString(AsnElt.UTF8String, "id:FFFFF1D0") });
+                    var tcpaTpmModel = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.2"), AsnElt.MakeString(AsnElt.UTF8String, "FIDO2-NET-LIB-TestTPMAikCertSANTCGConformant") });
+                    var tcpaTpmVersion = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.3"), AsnElt.MakeString(AsnElt.UTF8String, "id:F1D00002") });
+                    var asnEncodedSAN = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
+                AsnElt.Make(AsnElt.CONTEXT, AsnElt.OCTET_STRING, AsnElt.Make(
+                    AsnElt.SEQUENCE, new AsnElt[] {
+                        AsnElt.Make(AsnElt.SET, tcpaTpmManufacturer),
+                        AsnElt.Make(AsnElt.SET, tcpaTpmModel),
+                        AsnElt.Make(AsnElt.SET, tcpaTpmVersion)
+                    })
+                )}).Encode();
+
+                    var aikCertSanExt = new X509Extension(
+                        "2.5.29.17",
+                        asnEncodedSAN,
+                        false);
+
+                    attRequest.CertificateExtensions.Add(aikCertSanExt);
+
+                    attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
+
+                    byte[] serial = new byte[12];
+
+                    using (var rng = RandomNumberGenerator.Create())
+                    {
+                        rng.GetBytes(serial);
+                    }
+                    using (X509Certificate2 publicOnly = attRequest.Create(
+                        rootCert,
+                        notBefore,
+                        notAfter,
+                        serial))
+                    {
+                        attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
+                    }
+
+                    var X5c = CBORObject.NewArray()
+                        .Add(CBORObject.FromObject(attestnCert.RawData))
+                        .Add(CBORObject.FromObject(rootCert.RawData));
+                    var rsaparams = rsaAtt.ExportParameters(true);
+
+                    var cpk = CBORObject.NewMap();
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
+                    cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
+
+                    _credentialPublicKey = new CredentialPublicKey(cpk);
+
+                    unique = rsaparams.Modulus;
+                    exponent = rsaparams.Exponent;
+                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
+
+                    var pubArea = CreatePubArea(
+                        type, // Type
+                        tpmAlg, // Alg
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
+                        new byte[] { 0x00 }, // Policy
+                        new byte[] { 0x00, 0x10 }, // Symmetric
+                        new byte[] { 0x00, 0x10 }, // Scheme
+                        new byte[] { 0x80, 0x00 }, // KeyBits
+                        exponent?.ToArray(), // Exponent
+                        curveId?.ToArray(), // CurveID
+                        kdf?.ToArray(), // KDF
+                        unique.ToArray() // Unique
+                    );
+
+                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
+                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
+                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
+
+                    byte[] hashedData;
+                    byte[] hashedPubArea;
+                    var hashAlg = CryptoUtils.algMap[(int)alg];
+                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    {
+                        hashedData = hasher.ComputeHash(data);
+                        hashedPubArea = hasher.ComputeHash(pubArea);
+                    }
+                    IEnumerable<byte> extraData = BitConverter
+                        .GetBytes((UInt16)hashedData.Length)
+                        .Reverse()
+                        .ToArray()
+                        .Concat(hashedData);
+
+                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
+            {
+                {TpmAlg.TPM_ALG_SHA1,   (160/8) },
+                {TpmAlg.TPM_ALG_SHA256, (256/8) },
+                {TpmAlg.TPM_ALG_SHA384, (384/8) },
+                {TpmAlg.TPM_ALG_SHA512, (512/8) }
+            };
+
+                    var tpm1bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+
+                    IEnumerable<byte> tpm1bName = new byte[] { }
+                        .Concat(tpm1bNameLen)
+                        .Concat(tpmAlg)
+                        .Concat(hashedPubArea);
+
+                    var certInfo = CreateCertInfo(
+                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                            extraData.ToArray(), // ExtraData
+                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                            new byte[] { 0x00 }, // Safe
+                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                            tpm1bName.ToArray(), // TPM2BName
+                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                        );
+
+                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+
+                    _attestationObject.Add("attStmt", CBORObject.NewMap()
+                        .Add("ver", "2.0")
+                        .Add("alg", alg)
+                        .Add("x5c", X5c)
+                        .Add("sig", signature)
+                        .Add("certInfo", certInfo)
+                        .Add("pubArea", pubArea));
+
+
+                    var res = MakeAttestationResponse().Result;
+
+                    Assert.Equal(string.Empty, res.ErrorMessage);
+                    Assert.Equal("ok", res.Status);
+                    Assert.Equal(_aaguid, res.Result.Aaguid);
+                    Assert.Equal(_signCount, res.Result.Counter);
+                    Assert.Equal("tpm", res.Result.CredType);
+                    Assert.Equal(_credentialID, res.Result.CredentialId);
+                    Assert.Null(res.Result.ErrorMessage);
+                    Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
+                    Assert.Null(res.Result.Status);
+                    Assert.Equal("Test User", res.Result.User.DisplayName);
+                    Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+                    Assert.Equal("testuser", res.Result.User.Name);
+                }
+            }
+        }
+
+        [Fact]
         public void TestTPMSigNull()
         {
             var param = Fido2Tests._validCOSEParameters[3];
