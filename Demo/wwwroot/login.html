@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>FIDO2 .NET lib Demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>-->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.1/sweetalert2.min.css" />
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css" rel="stylesheet" type="text/css" />
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <!--<link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />-->
+</head>
+
+<body onload="detectFIDOSupport()">
+    <section class="hero is-info is-large">
+        <div class="hero-head">
+            <nav class="navbar">
+                <div class="container">
+                    <div class="navbar-brand">
+                        <a class="navbar-item">
+                            <img src="https://bulma.io/images/bulma-type-white.png" alt="Logo">
+                        </a>
+                        <span class="navbar-burger burger" data-target="navbarMenuHeroB">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </div>
+                    <div id="navbarMenuHeroB" class="navbar-menu">
+                        <div class="navbar-end">
+                            <a class="navbar-item is-active">
+                                Home
+                            </a>
+                            <a class="navbar-item">
+                                Examples
+                            </a>
+                            <a class="navbar-item">
+                                Documentation
+                            </a>
+                            <span class="navbar-item">
+                                <a class="button is-info is-inverted">
+                                    <span class="icon">
+                                        <i class="fab fa-github"></i>
+                                    </span>
+                                    <span>Download</span>
+                                </a>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="hero-body">
+            <div class="container has-text-centered">
+                <p class="title">
+                    FIDO2 .NET Library
+                </p>
+                <p class="subtitle">
+                    The smoooth way to login using FIDO2 / WebAuthn
+                </p>
+            </div>
+        </div>
+
+        <div class="hero-foot">
+            <nav class="tabs is-boxed is-fullwidth">
+                <div class="container">
+                    <ul>
+                        <li class="is-active">
+                            <a>Overview</a>
+                        </li>
+                        <li>
+                            <a>Use as 2FA/MFA</a>
+                        </li>
+                        <li>
+                            <a>Go Passwordless</a>
+                        </li>
+                        <li>
+                            <a>Go Usernameless</a>
+                        </li>
+                        <li>
+                            <a>Contribute</a>
+                        </li>
+                        <li>
+                            <a>Donate</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </section>
+    <div class="container">
+        <div class="login-wrapper">
+            <form class="form-signin mb-">
+                <h2 class="form-signin-heading text-center">FIDO2 .NET lib Demo</h2>
+                <br>
+                <p class="">
+                    This site can be used to test the <a href="https://www.w3.org/TR/webauthn/">WebAuthn spec</a> on the Chrome, Firefox, and Edge browsers.
+                    Currently, the WebAuthn spec supports credential creation and assertion best using U2F Token, like those provided by Yubico and Feitian.
+
+                </p>
+                <p>The code for this demo can be found at the <a href="https://github.com/abergs/fido2-net-lib">Fido2.net-lib repo</a> and the original source <a href="https://github.com/duo-labs/webauthn">here</a>.</p>
+                <p>
+                    To see what's happening under the hood when you create a test user and login using WebAuthn below, you can open your web browser's console and
+                    see the output of the necessary credential objects being used.
+                </p>
+                <br>
+                <div class="row" id="inputEmailRow">
+                    <div class="mx-auto">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Username" autofocus aria-label="email" id="input-email">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="email-site">@example.com</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="row" id="inputAttestation">
+                    <div class="mx-auto">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="attestationType">
+                                    Attestation Type
+                                </label>
+                            </div>
+                            <select class="custom-select" id="select-attestation">
+                                <option selected value="none">None</option>
+                                <option value="indirect">Indirect</option>
+                                <option value="direct">Direct</option>
+                            </select>
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="authenticatorType">
+                                    Authenticator Type
+                                </label>
+                            </div>
+                            <select class="custom-select" id="select-authenticator" onchange="detectFIDOUserVerifyingPlatformSupport()">
+                                <option selected value="">Not specified</option>
+                                <option value="cross-platform">Cross Platform (Token)</option>
+                                <option value="platform">Platform (TPM)</option>
+                            </select>
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="userVerification">
+                                    User Verification
+                                </label>
+                            </div>
+                            <select class="custom-select" id="select-userVerification" onchange="detectFIDOUserVerifyingPlatformSupport()">
+                                <option value="required">Required</option>
+                                <option value="preferred">Preferred</option>
+                                <option selected value="discouraged">Discouraged</option>
+                            </select>
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="residentCredentials">
+                                    Resident Credentials
+                                </label>
+                            </div>
+                            <div class="input-group-text" style="background-color: #fff">
+                                <input type="checkbox" class="custom-checkbox" id="checkbox-residentCredentials" value="residentCredentials" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="alert-wrapper" id="user-alert" style="display:none">
+                <div class="alert alert-danger" id="alert-msg" role="alert">
+                    <strong>Holy guacamole!</strong> You should check in on some of those fields below.
+                </div>
+            </div>
+            <div class="warning-wrapper" id="user-warning" style="display:none">
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <span id="warning-msg"></span>
+                    <button type="button" class="close" aria-label="Close" onclick="hideWarningAlert()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+            <div class="text-center buttons">
+                <button id="register-button" class="btn btn-lg btn-primary" type="button" onclick="makeCredential()">Register a User/Credential</button>
+                <button id="login-button" class="btn btn-lg btn-primary" type="button" onclick="getAssertion()">Login with Credential</button>
+
+            </div>
+        </div>
+        <div class="footer text-center fixed-bottom">
+            <span>Made with &lt;3 by <a href="https://github.com/abergs/fido2-net-lib/graphs/contributors">the contributors on github</a></span>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/js/cbor.js"></script>
+    <script type="text/javascript" src="/js/base64.js"></script>
+    <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="/js/webauthn.js"></script>
+</body>
+
+</html>

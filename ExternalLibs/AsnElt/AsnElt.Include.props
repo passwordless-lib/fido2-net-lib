@@ -1,0 +1,10 @@
+<Project>
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)**/*.cs">
+            <Link>AsnElt\%(FileName)%(Extension)</Link>
+        </Compile>
+        <None Include="$(MSBuildThisFileDirectory)**/*">
+            <Link>AsnElt\%(FileName)%(Extension)</Link>
+        </None>
+    </ItemGroup>
+</Project>

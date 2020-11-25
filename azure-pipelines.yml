@@ -1,0 +1,89 @@
+# This is the main build configuration, that build and tests the libraries
+name: $(Rev:r)
+
+variables:
+  BuildConfiguration: Release
+  TargetVmImage: windows-latest
+
+jobs:
+# Prepare the environment for the other tasks
+- job: prepare
+  displayName: Prepare environment
+  pool:
+    vmImage: $(TargetVmImage)
+  steps:
+  - task: NuGetToolInstaller@1
+    displayName: Install latest NuGet
+  - task: DotNetCoreInstaller@1
+    displayName: Use .NET Core sdk 3.1
+    inputs:
+      version: 3.1.x
+  - task: DotNetCoreCLI@2
+    displayName: dotnet restore
+    inputs:
+      command: restore
+      includeNuGetOrg: true
+      noCache: true
+
+# Build the main library
+- job: lib
+  displayName: Library build
+  pool:
+    vmImage: $(TargetVmImage)
+  dependsOn: prepare
+  steps:
+  - task: PowerShell@2
+    displayName: Run build script (lib only, release mode)
+    inputs:
+      targetType: filePath
+      filePath: ./scripts/buildRelease.ps1
+      arguments: '"-p:Version=$(Build.BuildNumber)-development"'
+
+# Publish the demo website
+- job: demo
+  displayName: Demo build
+  pool:
+    vmImage: $(TargetVmImage)
+  dependsOn: lib
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: Publish website
+    inputs:
+      command: publish
+      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.1'
+  - task: PublishBuildArtifacts@1
+    displayName: Copy website to artifacts
+    inputs:
+      ArtifactName: demodrop
+
+# Run unit tests
+- job: tests
+  displayName: Unit tests
+  pool:
+    vmImage: $(TargetVmImage)
+  dependsOn: lib
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: Run unit tests
+    inputs:
+      command: test
+      projects: '**/Test.csproj'
+      arguments: --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:ExcludeByFile="**/ExternalLibs/**"
+  - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+    displayName: ReportGenerator
+    inputs:
+      reports: '$(Build.SourcesDirectory)/Test/coverage.netcoreapp3.1.cobertura.xml'
+      targetdir: '$(Build.SourcesDirectory)/CodeCoverage'
+      reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges'
+      assemblyfilters: '-xunit*'
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish code coverage'
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+      reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'
+  - task: Bash@3
+    displayName: 'Upload coverage to Codecov'
+    inputs:
+      targetType: 'inline'
+      script: 'bash <(curl -s https://codecov.io/bash) -t 0b864a87-d3bc-4130-b942-81909f1064c0'

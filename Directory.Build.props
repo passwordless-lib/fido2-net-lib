@@ -1,0 +1,35 @@
+<Project>
+  <!-- Package Metadata -->
+  <PropertyGroup>
+    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionSuffix>
+    </VersionSuffix>
+    <Description>FIDO2 .NET library (WebAuthn)</Description>
+    <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>fido2 webauthn</PackageTags>
+    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+  <!-- GLOBALLY USABLE VARIABLES -->
+  <PropertyGroup>
+    <!-- Establish a preset but make it an active choice for each project. -->
+    <SupportedNonMetaTargetFrameWorks>netcoreapp3.1</SupportedNonMetaTargetFrameWorks>
+    <!-- Can't have test project target .netstandard - only implementations not metaframeworks -->
+    <SupportedTargetFrameworks>netstandard2.0;netstandard2.1;$(SupportedNonMetaTargetFrameWorks)</SupportedTargetFrameworks>
+  </PropertyGroup>
+  <!-- Language + Compiler Settings-->
+  <PropertyGroup>
+    <!-- Pin down language version -->
+    <LangVersion>8</LangVersion>
+    <!-- Running with "latest" means time alone will make builds non-reproducable... aww hell na -->
+  </PropertyGroup>
+  <!--MISC-->
+  <PropertyGroup>
+    <!-- Avoid annoying build warnings when packing using the solution file -->
+    <IsPackable>false</IsPackable>
+    <!-- Avoid annoying build warnings when packing using the solution file -->
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+</Project>

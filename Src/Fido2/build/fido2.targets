@@ -1,0 +1,10 @@
+<Project>
+  <Target Name="ErrorForFrameworksMissingNETStandardAPIs" 
+          BeforeTargets="BeforeCompile"
+          Condition="'$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net462'">
+    <Error  Code="FI0404"
+            File="$(MSBuildProjectFullPath)"
+            Text="FIDO2 cannot be used with .NET 4.6.1 and .NET 4.6.2 due to missing APIs. %0a%0d
+                  Visit https://github.com/abergs/fido2-net-lib/blob/master/Documentation/NET46X.md for more information." />
+  </Target>
+</Project>
