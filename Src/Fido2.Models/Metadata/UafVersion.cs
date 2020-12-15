@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -10,10 +11,10 @@ namespace Fido2NetLib
     /// </remarks>
     public class UafVersion
     {
-        [JsonProperty("major")]
+        [JsonPropertyName("major")]
         public ushort Major { get; set; }
 
-        [JsonProperty("minor")]
+        [JsonPropertyName("minor")]
         public ushort Minor { get; set; }
     }
 }

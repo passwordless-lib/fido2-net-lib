@@ -1,12 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
     public class TxAuthGenericArg
     {
-        [JsonProperty("contentType", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("contentType")]
         public string ContentType { get; set; }
-        [JsonProperty("content", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("content")]
         public byte[] Content { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
@@ -8,7 +8,7 @@ namespace Fido2NetLib.Objects
     /// PublicKeyCredentialType.
     /// https://w3c.github.io/webauthn/#enumdef-publickeycredentialtype
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum PublicKeyCredentialType
     {
         [EnumMember(Value = "public-key")]

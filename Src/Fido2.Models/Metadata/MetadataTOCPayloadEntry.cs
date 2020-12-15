@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -14,13 +15,13 @@ namespace Fido2NetLib
         /// Gets or sets the AAID.
         /// <para>The AAID of the authenticator this metadata TOC payload entry relates to.</para>
         /// </summary>
-        [JsonProperty("aaid")]
+        [JsonPropertyName("aaid")]
         public string Aaid { get; set; }
         /// <summary>
         /// Gets or sets the AAGUID.
         /// <para>The Authenticator Attestation GUID.</para>
         /// </summary>
-        [JsonProperty("aaguid")]
+        [JsonPropertyName("aaguid")]
         public string AaGuid { get; set; }
         /// <summary>
         /// Gets or sets a list of the attestation certificate public key identifiers encoded as hex string.
@@ -34,7 +35,7 @@ namespace Fido2NetLib
         /// </list>
         /// <para>FIDO U2F authenticators do not support AAID nor AAGUID, but they use attestation certificates dedicated to a single authenticator model.</para>
         /// </remarks>
-        [JsonProperty("attestationCertificateKeyIdentifiers")]
+        [JsonPropertyName("attestationCertificateKeyIdentifiers")]
         public string[] AttestationCertificateKeyIdentifiers { get; set; }
         /// <summary>
         /// Gets or sets the hash value computed over the base64url encoding of the UTF-8 representation of the JSON encoded metadata statement available at url.
@@ -43,7 +44,7 @@ namespace Fido2NetLib
         /// The hash algorithm related to the signature algorithm specified in the JWTHeader (see Metadata TOC) must be used.
         /// <para>This method of base64url encoding the UTF-8 representation is also used by JWT [JWT] to avoid encoding ambiguities.</para>
         /// </remarks>
-        [JsonProperty("hash")]
+        [JsonPropertyName("hash")]
         public string Hash { get; set; }
         /// <summary>
         /// Gets or sets the Uniform resource locator (URL) of the encoded metadata statement for this authenticator model (identified by its AAID, AAGUID or attestationCertificateKeyIdentifier).
@@ -52,27 +53,27 @@ namespace Fido2NetLib
         /// This URL must point to the base64url encoding of the UTF-8 representation of the JSON encoded metadata statement.
         /// <para>If this field is missing, the metadata statement has not been published.</para>
         /// </remarks>
-        [JsonProperty("url")]
+        [JsonPropertyName("url")]
         public string Url { get; set; }
         /// <summary>
         /// Gets or sets the status of the FIDO Biometric Certification of one or more biometric components of the Authenticator.
         /// </summary>
-        [JsonProperty("biometricStatusReports")]
+        [JsonPropertyName("biometricStatusReports")]
         public BiometricStatusReport[] BiometricStatusReports { get; set; }
         /// <summary>
         /// Gets or sets an array of status reports applicable to this authenticator.
         /// </summary>
-        [JsonProperty("statusReports", Required = Required.Always)]
+        [JsonPropertyName("statusReports")]
         public StatusReport[] StatusReports { get; set; }
         /// <summary>
         /// Gets or sets ISO-8601 formatted date since when the status report array was set to the current value. 
         /// </summary>
-        [JsonProperty("timeOfLastStatusChange")]
+        [JsonPropertyName("timeOfLastStatusChange")]
         public string TimeOfLastStatusChange { get; set; }
         /// <summary>
         /// Gets or sets an URL of a list of rogue (i.e. untrusted) individual authenticators. 
         /// </summary>
-        [JsonProperty("rogueListURL")]
+        [JsonPropertyName("rogueListURL")]
         public string RogueListURL { get; set; }
         /// <summary>
         /// Gets or sets the hash value computed of <see cref="RogueListURL"/>.
@@ -80,12 +81,12 @@ namespace Fido2NetLib
         /// <remarks>
         /// This hash value must be present and non-empty whenever rogueListURL is present.
         /// </remarks>
-        [JsonProperty("rogueListHash")]
+        [JsonPropertyName("rogueListHash")]
         public string RogueListHash { get; set; }
         /// <summary>
         /// Gets or sets the metadata statement.
         /// </summary>
-        [JsonProperty("metadataStatement")]
+        [JsonPropertyName("metadataStatement")]
         //[JsonConverter(typeof(Base64UrlConverter))]
         public MetadataStatement MetadataStatement { get; set; }
     }

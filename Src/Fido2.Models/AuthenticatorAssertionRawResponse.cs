@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -29,12 +30,12 @@ namespace Fido2NetLib
             [JsonConverter(typeof(Base64UrlConverter))]
             public byte[] Signature { get; set; }
 
-            [JsonProperty("clientDataJson")]
+            [JsonPropertyName("clientDataJson")]
             [JsonConverter(typeof(Base64UrlConverter))]
             public byte[] ClientDataJson { get; set; }
 
-            [JsonProperty("userHandle")]
-            [JsonConverter(typeof(Base64UrlConverter), Required.AllowNull)]
+            [JsonPropertyName("userHandle")]
+            [JsonConverter(typeof(NullableBase64UrlConverter))]
             public byte[] UserHandle { get; set; }
         }
     }

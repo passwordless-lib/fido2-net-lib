@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -13,18 +14,18 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or sets the numeric system base (radix) of the code, e.g.  10 in the case of decimal digits. 
         /// </summary>
-        [JsonProperty("base", Required = Required.Always)]
+        [JsonPropertyName("base")]
         public ushort Base { get; set; }
         /// <summary>
         /// Gets or sets the minimum number of digits of the given base required for that code, e.g. 4 in the case of 4 digits.
         /// </summary>
-        [JsonProperty("minLength", Required = Required.Always)]
+        [JsonPropertyName("minLength")]
         public ushort MinLength { get; set; }
         /// <summary>
         /// Gets or sets the maximum number of false attempts before the authenticator will block this method (at least for some time).
         /// <para>Zero (0) means it will never block.</para>
         /// </summary>
-        [JsonProperty("maxRetries")]
+        [JsonPropertyName("maxRetries")]
         public ushort MaxRetries { get; set; }
         /// <summary>
         /// Gets or sets the enforced minimum number of seconds wait time after blocking (e.g. due to forced reboot or similar). 
@@ -33,7 +34,7 @@ namespace Fido2NetLib
         /// <remarks>
         /// All alternative user verification methods MUST be specified appropriately in the Metadata in <see cref="MetadataStatement.UserVerificationDetails"/>.
         /// </remarks>
-        [JsonProperty("blockSlowdown")]
+        [JsonPropertyName("blockSlowdown")]
         public ushort BlockSlowdown { get; set; }
     }
 }

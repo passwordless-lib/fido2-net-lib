@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -14,33 +15,33 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or sets a base64url encoding of the result of ECPoint2ToB of the ECPoint2 X=P2​x​​.
         /// </summary>
-        [JsonProperty("x", Required = Required.Always)]
+        [JsonPropertyName("x")]
         public string X { get; set; }
         /// <summary>
         /// Gets or sets a base64url encoding of the result of ECPoint2ToB of the ECPoint2.
         /// </summary>
-        [JsonProperty("y", Required = Required.Always)]
+        [JsonPropertyName("y")]
         public string Y { get; set; }
         /// <summary>
         /// Gets or sets a base64url encoding of the result of BigNumberToB(c).
         /// </summary>
-        [JsonProperty("c", Required = Required.Always)]
+        [JsonPropertyName("c")]
         public string C { get; set; }
         /// <summary>
         /// Gets or sets the base64url encoding of the result of BigNumberToB(sx).
         /// </summary>
-        [JsonProperty("sx", Required = Required.Always)]
+        [JsonPropertyName("sx")]
         public string SX { get; set; }
         /// <summary>
         /// Gets or sets the base64url encoding of the result of BigNumberToB(sy).
         /// </summary>
-        [JsonProperty("sy", Required = Required.Always)]
+        [JsonPropertyName("sy")]
         public string SY { get; set; }
         /// <summary>
         /// Gets or sets a name of the Barreto-Naehrig elliptic curve for G1.
         /// <para>"BN_P256", "BN_P638", "BN_ISOP256", and "BN_ISOP512" are supported.</para>
         /// </summary>
-        [JsonProperty("G1Curve", Required = Required.Always)]
+        [JsonPropertyName("G1Curve")]
         public string G1Curve { get; set; }
     }
 }

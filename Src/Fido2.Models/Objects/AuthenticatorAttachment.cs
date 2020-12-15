@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
@@ -13,7 +13,7 @@ namespace Fido2NetLib.Objects
     /// Note: An authenticator attachment modality selection option is available only in the [[Create]](origin, options, sameOriginWithAncestors) operation. The Relying Party may use it to, for example, ensure the user has a roaming credential for authenticating on another client device; or to specifically register a platform credential for easier reauthentication using a particular client device. The [[DiscoverFromExternalSource]](origin, options, sameOriginWithAncestors) operation has no authenticator attachment modality selection option, so the Relying Party SHOULD accept any of the user’s registered credentials. The client and user will then use whichever is available and convenient at the time.
     /// https://w3c.github.io/webauthn/#attachment
     /// </remarks>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AuthenticatorAttachment
     {
         /// <summary>

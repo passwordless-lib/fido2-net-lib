@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -16,22 +17,22 @@ namespace Fido2NetLib
         /// <remarks>
         /// This value MUST be non-zero.
         /// </remarks>
-        [JsonProperty("userVerification", Required = Required.Always)]
+        [JsonPropertyName("userVerification")]
         public ulong UserVerification { get; set; }
         /// <summary>
         /// Gets or sets a may optionally be used in the case of method USER_VERIFY_PASSCODE.
         /// </summary>
-        [JsonProperty("caDesc")]
+        [JsonPropertyName("caDesc")]
         public CodeAccuracyDescriptor CaDesc { get; set; }
         /// <summary>
         /// Gets or sets a may optionally be used in the case of method USER_VERIFY_FINGERPRINT, USER_VERIFY_VOICEPRINT, USER_VERIFY_FACEPRINT, USER_VERIFY_EYEPRINT, or USER_VERIFY_HANDPRINT.
         /// </summary>
-        [JsonProperty("baDesc")]
+        [JsonPropertyName("baDesc")]
         public BiometricAccuracyDescriptor BaDesc { get; set; }
         /// <summary>
         /// Gets or sets a may optionally be used in case of method USER_VERIFY_PATTERN.
         /// </summary>
-        [JsonProperty("paDesc")]
+        [JsonPropertyName("paDesc")]
         public PatternAccuracyDescriptor PaDesc { get; set; }
     }
 }

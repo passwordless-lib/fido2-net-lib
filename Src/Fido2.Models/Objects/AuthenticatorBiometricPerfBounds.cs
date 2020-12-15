@@ -1,12 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
     public class AuthenticatorBiometricPerfBounds
     {
-        [JsonProperty("FAR", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("FAR")]
         public float FAR { get; set; }
-        [JsonProperty("FRR", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonPropertyName("FRR")]
         public float FRR { get; set; }
     }
 }

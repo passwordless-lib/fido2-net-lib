@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib

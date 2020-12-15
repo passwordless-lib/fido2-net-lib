@@ -1,13 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
     public abstract class Fido2ResponseBase
     {
-        [JsonProperty("status")]
+        [JsonPropertyName("status")]
         public string Status { get; set; }
 
-        [JsonProperty("errorMessage")]
+        [JsonPropertyName("errorMessage")]
         public string ErrorMessage { get; set; }
     }
 }
