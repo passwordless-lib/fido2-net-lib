@@ -37,7 +37,7 @@ namespace Fido2NetLib
 
         private readonly string _origin = "http://localhost";
 
-        private readonly string _getEndpointsUrl = "https://fidoalliance.co.nz/mds/getEndpoints";
+        private readonly string _getEndpointsUrl = "https://mds.certinfra.fidoalliance.org/getEndpoints";
 
         public ConformanceMetadataRepository(HttpClient client, string origin)
         {
