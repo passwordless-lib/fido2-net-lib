@@ -34,7 +34,7 @@ namespace Fido2NetLib
         protected readonly string _tocUrl;
         protected readonly HttpClient _httpClient;
 
-        protected string _tocAlg;
+        //protected string _tocAlg;
 
         public Fido2MetadataServiceRepository(string accessToken, HttpClient httpClient)
         {
@@ -43,32 +43,20 @@ namespace Fido2NetLib
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        private Task<string> GetTocAlg()
-        {
-            if (!string.IsNullOrEmpty(_tocAlg))
-            {
-                return Task.FromResult(_tocAlg);
-            }
-            else
-            {
-                throw new InvalidOperationException("Could not determine the TOC algorithm");
-            }
-        }
-
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayloadEntry entry)
+        public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
         {
             var statementBase64Url = await DownloadStringAsync(entry.Url + "/?token=" + WebUtility.UrlEncode(_token));
-            var tocAlg = await GetTocAlg();
-
+            
             var statementBytes = Base64Url.Decode(statementBase64Url);
             var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
             var statement = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataStatement>(statementString);
-            using(HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)))
+
+            using (HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(toc.JwtAlg)))
             {
                 statement.Hash = Base64Url.Encode(hasher.ComputeHash(Encoding.UTF8.GetBytes(statementBase64Url)));
             }
 
-            if(!HashesAreEqual(entry.Hash, statement.Hash))
+            if (!HashesAreEqual(entry.Hash, statement.Hash))
                 throw new Fido2VerificationException("TOC entry and statement hashes do not match");
 
             return statement;
@@ -132,13 +120,13 @@ namespace Fido2NetLib
             }
         }
 
-        protected async Task<MetadataTOCPayload> DeserializeAndValidateToc(string toc)
+        protected async Task<MetadataTOCPayload> DeserializeAndValidateToc(string rawTocJwt)
         {
            
-            if (string.IsNullOrWhiteSpace(toc))
-                throw new ArgumentNullException(nameof(toc));
+            if (string.IsNullOrWhiteSpace(rawTocJwt))
+                throw new ArgumentNullException(nameof(rawTocJwt));
 
-            var jwtParts = toc.Split('.');
+            var jwtParts = rawTocJwt.Split('.');
 
             if (jwtParts.Length != 3)
                 throw new ArgumentException("The JWT does not have the 3 expected components");
@@ -146,9 +134,9 @@ namespace Fido2NetLib
             var tocHeaderString = jwtParts.First();
             var tocHeader = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(tocHeaderString)));
 
-            _tocAlg = tocHeader["alg"]?.Value<string>();
+            var tocAlg = tocHeader["alg"]?.Value<string>();
 
-            if (_tocAlg == null)
+            if (tocAlg == null)
                 throw new ArgumentNullException("No alg value was present in the TOC header.");
 
             var x5cArray = tocHeader["x5c"] as JArray;
@@ -181,7 +169,7 @@ namespace Fido2NetLib
             var tokenHandler = new JwtSecurityTokenHandler();
 
             tokenHandler.ValidateToken(
-                toc,
+                rawTocJwt,
                 validationParameters,
                 out var validatedToken);
 
@@ -229,7 +217,10 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
 
             var tocPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
+
+            var toc =  Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
+            toc.JwtAlg = tocAlg;
+            return toc;
         }
     }
 }
