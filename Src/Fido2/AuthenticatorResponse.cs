@@ -68,7 +68,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Challenge not equal to original challenge");
 
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
-            if (!string.Equals(FullyQualifiedOrigin(this.Origin), expectedOrigin, StringComparison.OrdinalIgnoreCase))
+            if (Origin != expectedOrigin)
                 throw new Fido2VerificationException($"Origin {Origin} not equal to original origin {expectedOrigin}");
 
             // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
@@ -77,13 +77,6 @@ namespace Fido2NetLib
             {
                 TokenBinding.Verify(requestTokenBindingId);
             }
-        }
-
-        private string FullyQualifiedOrigin(string origin)
-        {
-            var uri = new Uri(origin);
-
-            return $"{uri.Scheme}://{uri.Host}";
         }
     }
 }
