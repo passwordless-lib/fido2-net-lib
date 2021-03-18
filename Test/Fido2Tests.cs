@@ -596,7 +596,7 @@ namespace fido2_net_lib.Test
             // TODO : Why read ad ? Is the test finished ?
         }
 
-        [Fact]
+        [Fact(Skip = "Need to determine how best to validate expired certificates")]
         public async Task TestAppleAttestationAsync()
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationAppleResponse.json"));
