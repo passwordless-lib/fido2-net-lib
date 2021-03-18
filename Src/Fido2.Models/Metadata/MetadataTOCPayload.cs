@@ -40,7 +40,7 @@ namespace Fido2NetLib
         /// <summary>
         /// The "alg" property from the original JWT header. Used to validate MetadataStatements.
         /// </summary>
-        [JsonProperty("jwtAlg", Required = Required.AllowNull)]
+        [JsonProperty("jwtAlg", Required = Required.Default)]
         public string JwtAlg { get; set; }
     }
 }

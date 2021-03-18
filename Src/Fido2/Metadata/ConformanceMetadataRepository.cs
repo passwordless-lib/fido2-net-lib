@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -102,6 +102,7 @@ namespace Fido2NetLib
                 {
                     entries.Add(entry);
                 }
+                combinedToc.JwtAlg = toc.JwtAlg;
             }
 
             combinedToc.Entries = entries.ToArray();
