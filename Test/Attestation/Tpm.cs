@@ -8,7 +8,6 @@ using Fido2NetLib;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 using Xunit;
-using Fido2NetLib.AttestationFormat;
 using Asn1;
 using System.Runtime.InteropServices;
 
@@ -521,7 +520,7 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    
+
                     IEnumerable<byte> extraData = BitConverter
                         .GetBytes((UInt16)hashedData.Length)
                         .Reverse()
@@ -529,6 +528,7 @@ namespace Test.Attestation
                         .Concat(hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
+
                     {
                         {TpmAlg.TPM_ALG_SHA1,   (160/8) },
                         {TpmAlg.TPM_ALG_SHA256, (256/8) },
