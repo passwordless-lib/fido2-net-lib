@@ -51,23 +51,20 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayloadEntry entry)
+        protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
         {
             if (entry.AaGuid != null)
             {
-                var statement = await repository.GetMetadataStatement(entry);
+                var statement = await repository.GetMetadataStatement(toc, entry);
 
                 if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                 {
                     _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
-
-                    // TODO : This seems undone
-                    var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
                 }
             }
         }
 
-        protected virtual async Task InitializeClient(IMetadataRepository repository)
+        protected virtual async Task InitializeRepository(IMetadataRepository repository)
         {
             var toc = await repository.GetToc();
 
@@ -78,7 +75,7 @@ namespace Fido2NetLib
                     if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
                     {
                         //Load if it doesn't already exist
-                        await LoadEntryStatement(repository, entry);
+                        await LoadEntryStatement(repository, toc, entry);
                     }
                 }
             }
@@ -86,9 +83,9 @@ namespace Fido2NetLib
 
         public virtual async Task Initialize()
         {
-            foreach (var client in _repositories)
+            foreach (var repository in _repositories)
             {
-                await InitializeClient(client);
+                await InitializeRepository(repository);
             }
             _initialized = true;
         }
