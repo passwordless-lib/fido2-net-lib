@@ -250,13 +250,13 @@ namespace fido2_net_lib.Test
                     Challenge = _challenge,
                     ErrorMessage = "",
                     PubKeyCredParams = new List<PubKeyCredParam>()
-                {
-                    new PubKeyCredParam
                     {
-                        Alg = -7,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
-                },
+                        new PubKeyCredParam
+                        {
+                            Alg = COSE.Algorithm.ES256,
+                            Type = PublicKeyCredentialType.PublicKey,
+                        }
+                    },
                     Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                     Status = "ok",
                     User = new Fido2User

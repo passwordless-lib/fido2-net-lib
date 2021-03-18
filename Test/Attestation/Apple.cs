@@ -192,7 +192,7 @@ namespace Test.Attestation
                 {
                     new PubKeyCredParam
                     {
-                        Alg = -7,
+                        Alg = COSE.Algorithm.ES256,
                         Type = PublicKeyCredentialType.PublicKey,
                     }
                 },

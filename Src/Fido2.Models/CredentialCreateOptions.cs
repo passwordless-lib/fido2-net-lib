@@ -87,6 +87,7 @@ namespace Fido2NetLib
                     ES512,
                     RS512,
                     PS512,
+                    Ed25519,
                 },
                 AuthenticatorSelection = authenticatorSelection,
                 Attestation = attestationConveyancePreference,
@@ -109,48 +110,53 @@ namespace Fido2NetLib
         {
             // External authenticators support the ES256 algorithm
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -7
+            Alg = COSE.Algorithm.ES256,
         };
         private static PubKeyCredParam ES384 = new PubKeyCredParam()
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -35
+            Alg = COSE.Algorithm.ES384,
         };
         private static PubKeyCredParam ES512 = new PubKeyCredParam()
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -36
+            Alg = COSE.Algorithm.ES512,
         };
         private static PubKeyCredParam RS256 = new PubKeyCredParam()
         {
             // Windows Hello supports the RS256 algorithm
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -257
+            Alg = COSE.Algorithm.RS256,
         };
         private static PubKeyCredParam RS384 = new PubKeyCredParam()
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -258
+            Alg = COSE.Algorithm.RS384,
         };
         private static PubKeyCredParam RS512 = new PubKeyCredParam()
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -259
+            Alg = COSE.Algorithm.RS512,
         };
         private static PubKeyCredParam PS256 = new PubKeyCredParam()
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -37
+            Alg = COSE.Algorithm.PS256,
         };
         private static PubKeyCredParam PS384 = new PubKeyCredParam()
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -38
+            Alg = COSE.Algorithm.PS384,
         };
         private static PubKeyCredParam PS512 = new PubKeyCredParam()
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Alg = -39
+            Alg = COSE.Algorithm.PS512,
+        };
+        private static PubKeyCredParam Ed25519 = new PubKeyCredParam()
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Alg = COSE.Algorithm.EdDSA,
         };
     }
 
@@ -166,7 +172,7 @@ namespace Fido2NetLib
         /// The alg member specifies the cryptographic signature algorithm with which the newly generated credential will be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic Curve.
         /// </summary>
         [JsonProperty("alg")]
-        public long Alg { get; set; }
+        public COSE.Algorithm Alg { get; set; }
     }
 
     /// <summary>
