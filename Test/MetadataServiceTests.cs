@@ -21,7 +21,7 @@ namespace Test
 
             Assert.True(toc.Entries.Length > 0);
 
-            var entry_1 = await client.GetMetadataStatement(toc.Entries[toc.Entries.Length - 1]);
+            var entry_1 = await client.GetMetadataStatement(toc, toc.Entries[toc.Entries.Length - 1]);
 
             Assert.NotNull(entry_1.Description);
 
