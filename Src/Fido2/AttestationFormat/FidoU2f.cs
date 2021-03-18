@@ -6,17 +6,13 @@ using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
-    internal class FidoU2f : AttestationFormat
+    internal class FidoU2f : AttestationVerifier
     {
         private readonly IMetadataService _metadataService;
 
-        public FidoU2f(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) : base(attStmt, authenticatorData, clientDataHash)
-        {
-            _metadataService = metadataService;
-        }
-        public override void Verify()
+        public override (AttestationType, X509Certificate2[]) Verify()
         {
             // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
             if (0 != AuthData.AttestedCredentialData.AaGuid.CompareTo(Guid.Empty))
@@ -101,25 +97,7 @@ namespace Fido2NetLib.AttestationFormat
                 .Select(x => new X509Certificate2(x.GetByteString()))
                 .ToArray();
 
-            var aaguid = AaguidFromAttnCertExts(attCert.Extensions);
-
-            if (null != _metadataService && null != aaguid)
-            {
-                var guidAaguid = AttestedCredentialData.FromBigEndian(aaguid);
-                var entry = _metadataService.GetEntry(guidAaguid);
-
-                if (null != entry && null != entry.MetadataStatement)
-                {
-                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
-                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                        .ToArray();
-
-                    if (false == ValidateTrustChain(trustPath, attestationRootCertificates))
-                    {
-                        throw new Fido2VerificationException("Invalid certificate chain in U2F attestation");
-                    }
-                }
-            }
+            return (AttestationType.AttCa, trustPath);
         }
     }
 }

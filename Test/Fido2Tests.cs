@@ -16,7 +16,6 @@ using System.Text;
 using NSec.Cryptography;
 using Asn1;
 using System.Security.Cryptography.X509Certificates;
-using Fido2NetLib.AttestationFormat;
 
 namespace fido2_net_lib.Test
 {
@@ -596,6 +595,19 @@ namespace fido2_net_lib.Test
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
+
+        [Fact]
+        public async Task TestAppleAttestationAsync()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationAppleResponse.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationAppleOptions.json"));
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            var config = new Fido2Configuration { Origin = "https://6cc3c9e7967a.ngrok.io" };
+            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), _metadataService, null);
+            byte[] ad = o.AttestationObject.AuthData;
+            // TODO : Why read ad ? Is the test finished ?
+        }
+
         [Fact]
         public async Task TaskPackedAttestation512()
         {

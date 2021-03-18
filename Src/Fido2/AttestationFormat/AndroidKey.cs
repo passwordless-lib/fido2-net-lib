@@ -6,14 +6,10 @@ using Asn1;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
-    internal class AndroidKey : AttestationFormat
+    internal class AndroidKey : AttestationVerifier
     {
-        public AndroidKey(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash) : base(attStmt, authenticatorData, clientDataHash)
-        {
-        }
-
         public static byte[] AttestationExtensionBytes(X509ExtensionCollection exts)
         {
             foreach (var ext in exts)
@@ -139,7 +135,7 @@ namespace Fido2NetLib.AttestationFormat
             return (2 == softwareEnforcedPurposeValue && 2 == teeEnforcedPurposeValue);
         }
 
-        public override void Verify()
+        public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
             // (handled in base class)
@@ -219,6 +215,12 @@ namespace Fido2NetLib.AttestationFormat
             // 5bii. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
             if (false == IsPurposeSign(attExtBytes))
                 throw new Fido2VerificationException("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
+
+            var trustPath = X5c.Values
+                .Select(x => new X509Certificate2(x.GetByteString()))
+                .ToArray();
+
+            return (AttestationType.Basic, trustPath);
         }
     }
 }
