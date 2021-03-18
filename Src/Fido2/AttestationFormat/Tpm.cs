@@ -13,12 +13,6 @@ namespace Fido2NetLib
     {
         private readonly IMetadataService _metadataService;
 
-        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService)
-            : base(attStmt, authenticatorData, clientDataHash)
-        {
-            _metadataService = metadataService;
-        }
-
         public static readonly List<string> TPMManufacturers = new List<string>
         {
             "id:FFFFF1D0", // FIDO testing TPM
