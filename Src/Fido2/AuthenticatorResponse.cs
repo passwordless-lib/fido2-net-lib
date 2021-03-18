@@ -83,7 +83,9 @@ namespace Fido2NetLib
         {
             var uri = new Uri(origin);
 
-            return $"{uri.Scheme}://{uri.Host}";
+            var fullyQualifiedOrigin = uri.IsDefaultPort ? $"{uri.Scheme}://{uri.Host}" : $"{uri.Scheme}://{uri.Host}:{uri.Port}";
+
+            return fullyQualifiedOrigin;
         }
     }
 }

@@ -26,7 +26,7 @@ namespace Test
                         {
                             Type = "webauthn.create",
                             Challenge = challenge,
-                            Origin = "fido2.azurewebsites.net",
+                            Origin = "https://www.passwordless.dev",
                         }
                     )
                 );
@@ -156,7 +156,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseInvalidType()
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var clientDataJson = Encoding.UTF8.GetBytes(
                     JsonConvert.SerializeObject
                     (
@@ -232,7 +232,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseInvalidRawId(byte[] value)
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var clientDataJson = Encoding.UTF8.GetBytes(
                     JsonConvert.SerializeObject
                     (
@@ -306,7 +306,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseInvalidRawType()
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var clientDataJson = Encoding.UTF8.GetBytes(
                     JsonConvert.SerializeObject
                     (
@@ -380,7 +380,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseRpidMismatch()
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var authData = new AuthenticatorData(
                 SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes("passwordless.dev")),
                 AuthenticatorFlags.UV,
@@ -461,7 +461,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseNotUserPresent()
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var authData = new AuthenticatorData(
                 SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(rp)),
                 AuthenticatorFlags.UV,
@@ -542,7 +542,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseNoAttestedCredentialData()
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var authData = new AuthenticatorData(
                 SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(rp)),
                 AuthenticatorFlags.UP | AuthenticatorFlags.UV,
@@ -623,7 +623,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseUnknownAttestationType()
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
             var authData = new AuthenticatorData(
                 SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(rp)),
@@ -705,7 +705,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseNotUniqueCredId()
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
-            var rp = "fido2.azurewebsites.net";
+            var rp = "https://www.passwordless.dev";
             var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
             var authData = new AuthenticatorData(
                 SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(rp)),
@@ -794,7 +794,7 @@ namespace Test
                         {
                             Type = "webauthn.get",
                             Challenge = challenge,
-                            Origin = "fido2.azurewebsites.net",
+                            Origin = "https://www.passwordless.dev",
                         }
                     )
                 );

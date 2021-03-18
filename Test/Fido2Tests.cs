@@ -93,7 +93,7 @@ namespace fido2_net_lib.Test
         {
             public CBORObject _attestationObject;
             public CredentialPublicKey _credentialPublicKey;
-            public const string rp = "fido2.azurewebsites.net";
+            public const string rp = "https://www.passwordless.dev";
             public byte[] _challenge;
             public X500DistinguishedName rootDN = new X500DistinguishedName("CN=Testing, O=FIDO2-NET-LIB, C=US");
             public Oid oidIdFidoGenCeAaguid = new Oid("1.3.6.1.4.1.45724.1.1.4");
@@ -811,7 +811,7 @@ namespace fido2_net_lib.Test
         
         internal static async Task<AssertionVerificationResult> MakeAssertionResponse(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv = COSE.EllipticCurve.P256, CredentialPublicKey cpk = null, ushort signCount = 0, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null)
         {
-            const string rp = "fido2.azurewebsites.net";
+            const string rp = "https://www.passwordless.dev";
             byte[] rpId = Encoding.UTF8.GetBytes(rp);
             var rpIdHash = SHA256.Create().ComputeHash(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
