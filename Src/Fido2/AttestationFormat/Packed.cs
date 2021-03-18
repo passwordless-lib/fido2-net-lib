@@ -4,7 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
     internal enum UndesiredAuthenticatorStatus
     {
@@ -23,16 +23,8 @@ namespace Fido2NetLib.AttestationFormat
         ATTESTATION_HELLO = 0x3e10
     }
 
-    internal class Packed : AttestationFormat
+    internal class Packed : AttestationVerifier
     {
-        private readonly IMetadataService _metadataService;
-
-        public Packed(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService)
-            : base(attStmt, authenticatorData, clientDataHash)
-        {
-            _metadataService = metadataService;
-        }
-
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
             var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None)
@@ -46,7 +38,7 @@ namespace Fido2NetLib.AttestationFormat
                 "Authenticator Attestation" == dictSubject["OU"].ToString());
         }
 
-        public override void Verify()
+        public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and 
             // perform CBOR decoding on it to extract the contained fields.
@@ -74,7 +66,9 @@ namespace Fido2NetLib.AttestationFormat
 
                     var x5ccert = new X509Certificate2(enumerator.Current.GetByteString());
 
-                    if (DateTime.UtcNow < x5ccert.NotBefore || DateTime.UtcNow > x5ccert.NotAfter)
+                    // X509Certificate2.NotBefore/.NotAfter return LOCAL DateTimes, so
+                    // it's correct to compare using DateTime.Now.
+                    if (DateTime.Now < x5ccert.NotBefore || DateTime.Now > x5ccert.NotAfter)
                         throw new Fido2VerificationException("Packed signing certificate expired or not yet valid");
                 }
 
@@ -83,10 +77,6 @@ namespace Fido2NetLib.AttestationFormat
 
                 // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                 // using the attestation public key in attestnCert with the algorithm specified in alg
-                var packedPubKey = attestnCert.GetECDsaPublicKey(); // attestation public key
-                if (false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
-                    throw new Fido2VerificationException("Invalid attestation algorithm");
-
                 var cpk = new CredentialPublicKey(attestnCert, Alg.AsInt32());
                 if (true != cpk.Verify(Data, Sig.GetByteString()))
                     throw new Fido2VerificationException("Invalid full packed signature");
@@ -108,7 +98,7 @@ namespace Fido2NetLib.AttestationFormat
 
                 // 2biiii. The Basic Constraints extension MUST have the CA component set to false
                 if (IsAttnCertCACert(attestnCert.Extensions))
-                    throw new Fido2VerificationException("Attestion certificate has CA cert flag present");
+                    throw new Fido2VerificationException("Attestation certificate has CA cert flag present");
 
                 // 2c. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 if (aaguid != null)
@@ -125,38 +115,7 @@ namespace Fido2NetLib.AttestationFormat
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
 
-                var entry = _metadataService?.GetEntry(AuthData.AttestedCredentialData.AaGuid);
-
-                // while conformance testing, we must reject any authenticator that we cannot get metadata for
-                if (_metadataService?.ConformanceTesting() == true && null == entry)
-                    throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
-
-                // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
-                if (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false)
-                {
-                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
-                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                        .ToArray();
-
-                    if (false == ValidateTrustChain(trustPath, attestationRootCertificates))
-                    {
-                        throw new Fido2VerificationException("Invalid certificate chain in packed attestation");
-                    }
-                }
-
-                // If the authenticator is not listed as one that should produce a basic full attestation, the certificate should be self signed
-                if (!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false)
-                {
-                    if (trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
-                        throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
-                }
-
-                // Check status resports for authenticator with undesirable status
-                foreach (var report in entry?.StatusReports ?? Enumerable.Empty<StatusReport>())
-                {
-                    if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), (UndesiredAuthenticatorStatus)report.Status))
-                        throw new Fido2VerificationException("Authenticator found with undesirable status");
-                }
+                return (AttestationType.AttCa, trustPath);
             }
 
             // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -182,6 +141,8 @@ namespace Fido2NetLib.AttestationFormat
                 // clientDataHash using the credential public key with alg
                 if (true != AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, Sig.GetByteString()))
                     throw new Fido2VerificationException("Failed to validate signature");
+
+                return (AttestationType.Self, null);
             }
         }
     }

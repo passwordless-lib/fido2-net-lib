@@ -759,8 +759,8 @@ namespace Test.Attestation
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-                    Assert.Equal("Invalid attestation algorithm", ex.Result.Message);
+                    var ex = Assert.ThrowsAsync<InvalidOperationException>(() => MakeAttestationResponse());
+                    Assert.Equal("Missing or unknown alg 42", ex.Result.Message);
                 }
             }
         }
@@ -1071,7 +1071,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c));
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-                    Assert.Equal("Attestion certificate has CA cert flag present", ex.Result.Message);
+                    Assert.Equal("Attestation certificate has CA cert flag present", ex.Result.Message);
                 }
             }
         }

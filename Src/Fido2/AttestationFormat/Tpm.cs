@@ -7,17 +7,11 @@ using Asn1;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
-    internal class Tpm : AttestationFormat
+    internal class Tpm : AttestationVerifier
     {
         private readonly IMetadataService _metadataService;
-
-        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService)
-            : base(attStmt, authenticatorData, clientDataHash)
-        {
-            _metadataService = metadataService;
-        }
 
         public static readonly List<string> TPMManufacturers = new List<string>
         {
@@ -46,8 +40,9 @@ namespace Fido2NetLib.AttestationFormat
             "id:57454300", // 'WEC' Winbond
             "id:524F4343", // 'ROCC' Fuzhou Rockchip
             "id:474F4F47", // 'GOOG' Google
-    };
-        public override void Verify()
+        };
+        
+        public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             // (handled in base class)
@@ -116,17 +111,17 @@ namespace Fido2NetLib.AttestationFormat
             // Handled in CertInfo constructor, see CertInfo.Type
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (null == Alg || true != Alg.IsNumber || false == CryptoUtils.algMap.ContainsKey(Alg.AsInt32()))
+            if (null == Alg || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
-
-            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[Alg.AsInt32()]))
+                
+            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
             {
                 if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData))
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
             }
 
             // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[certInfo.Alg]))
+            using(var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(certInfo.Alg)))
             {
                 if (false == hasher.ComputeHash(pubArea.Raw).SequenceEqual(certInfo.AttestedName))
                     throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
@@ -198,33 +193,14 @@ namespace Fido2NetLib.AttestationFormat
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
 
-                var entry = _metadataService?.GetEntry(AuthData.AttestedCredentialData.AaGuid);
-
-                // while conformance testing, we must reject any authenticator that we cannot get metadata for
-                if (_metadataService?.ConformanceTesting() == true && null == entry)
-                    throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
-
-                // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
-                if ((entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) ||
-                    (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false) ||
-                    (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_HELLO) ?? false))
-                {
-                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
-                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                        .ToArray();
-
-                    if (false == ValidateTrustChain(trustPath, attestationRootCertificates))
-                    {
-                        throw new Fido2VerificationException("TPM attestation failed chain validation");
-                    }
-                }
-
                 // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
                 if ((null != aaguid) &&
                     (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) &&
                     (0 != AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid)))
                     throw new Fido2VerificationException(string.Format("aaguid malformed, expected {0}, got {1}", AuthData.AttestedCredentialData.AaGuid, new Guid(aaguid)));
+
+                return (AttestationType.AttCa, trustPath);
             }
             // If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (null != EcdaaKeyId)

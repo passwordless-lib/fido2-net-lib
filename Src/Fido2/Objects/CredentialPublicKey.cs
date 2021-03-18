@@ -84,13 +84,13 @@ namespace Fido2NetLib.Objects
                     using(ECDsa ecdsa = CreateECDsa())
                     {
                         var ecsig = CryptoUtils.SigFromEcDsaSig(sig, ecdsa.KeySize);
-                        return ecdsa.VerifyData(data, ecsig, CryptoUtils.algMap[(int)_alg]);
+                        return ecdsa.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg((int)_alg));
                     }
 
                 case COSE.KeyType.RSA:
                     using (RSA rsa = CreateRsa())
                     {
-                        return rsa.VerifyData(data, sig, CryptoUtils.algMap[(int)_alg], Padding);
+                        return rsa.VerifyData(data, sig, CryptoUtils.HashAlgFromCOSEAlg((int)_alg), Padding);
                     }
 
                 case COSE.KeyType.OKP:

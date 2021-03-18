@@ -175,7 +175,7 @@ namespace Test.Attestation
         {
             _attestationObject["attStmt"].Set("alg", -1);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Invalid android key attestation algorithm", ex.Result.Message);
+            Assert.Equal("Unrecognized COSE alg value", ex.Result.Message);
         }
 
         [Fact]

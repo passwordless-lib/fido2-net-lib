@@ -8,7 +8,6 @@ using Fido2NetLib;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 using Xunit;
-using Fido2NetLib.AttestationFormat;
 using Asn1;
 using System.Runtime.InteropServices;
 
@@ -73,13 +72,13 @@ namespace Test.Attestation
 
                 var alg = (COSE.Algorithm)param[1];
                 if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
                 if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
                 if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
                 if (alg == COSE.Algorithm.RS1)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
                 switch ((COSE.KeyType)param[0])
                 {
@@ -186,7 +185,7 @@ namespace Test.Attestation
                                     unique.ToArray() // Unique
                                 );
                                 
-                                var hashAlg = CryptoUtils.algMap[(int)alg];
+                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
                                 byte[] hashedData = _attToBeSignedHash(hashAlg);
                                 
                                 byte[] hashedPubArea;
@@ -327,8 +326,8 @@ namespace Test.Attestation
 
                                 byte[] hashedData;
                                 byte[] hashedPubArea;
-                                var hashAlg = CryptoUtils.algMap[(int)alg];
-                                using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                                using (var hasher = CryptoUtils.GetHasher(hashAlg))
                                 {
                                     hashedData = hasher.ComputeHash(data);
                                     hashedPubArea = hasher.ComputeHash(pubArea);
@@ -592,13 +591,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -684,8 +683,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -749,13 +748,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -841,8 +840,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -906,13 +905,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -998,8 +997,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -1063,13 +1062,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1155,8 +1154,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -1220,13 +1219,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1311,8 +1310,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -1375,13 +1374,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1467,8 +1466,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -1532,13 +1531,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1624,8 +1623,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -1689,13 +1688,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1781,8 +1780,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea.ToArray());
@@ -1846,13 +1845,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1938,8 +1937,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -2003,13 +2002,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -2095,8 +2094,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -2160,13 +2159,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -2251,8 +2250,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -2314,7 +2313,7 @@ namespace Test.Attestation
         {
             var param = Fido2Tests._validCOSEParameters[0];
             var alg = (COSE.Algorithm)param[1];
-            tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+            tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
 
             using (var ecdsaRoot = ECDsa.Create())
             {
@@ -2415,8 +2414,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -2478,7 +2477,7 @@ namespace Test.Attestation
         {
             var param = Fido2Tests._validCOSEParameters[0];
             var alg = (COSE.Algorithm)param[1];
-            tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+            tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
 
             using (var ecdsaRoot = ECDsa.Create())
             {
@@ -2579,8 +2578,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -2642,7 +2641,7 @@ namespace Test.Attestation
         {
             var param = Fido2Tests._validCOSEParameters[0];
             var alg = (COSE.Algorithm)param[1];
-            tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+            tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
 
             using (var ecdsaRoot = ECDsa.Create())
             {
@@ -2743,8 +2742,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -2808,13 +2807,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -2899,8 +2898,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -2964,13 +2963,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3055,8 +3054,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -3120,13 +3119,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3211,8 +3210,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -3276,13 +3275,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3367,8 +3366,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -3432,13 +3431,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3523,8 +3522,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -3588,13 +3587,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3679,8 +3678,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -3743,13 +3742,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3834,8 +3833,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -3899,13 +3898,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3990,8 +3989,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -4055,13 +4054,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4146,8 +4145,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -4212,13 +4211,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4303,8 +4302,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -4368,13 +4367,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4459,8 +4458,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -4525,13 +4524,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4616,8 +4615,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -4681,13 +4680,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4772,8 +4771,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -4831,175 +4830,19 @@ namespace Test.Attestation
         }
 
         [Fact]
-        public void TestTPMAlgInvalid()
-        {
-            var param = Fido2Tests._validCOSEParameters[3];
-
-            var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
-
-            using (RSA rsaRoot = RSA.Create())
-            {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
-                var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
-                rootRequest.CertificateExtensions.Add(caExt);
-
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
-                using (var rsaAtt = RSA.Create())
-                {
-                    var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
-
-                    attRequest.CertificateExtensions.Add(notCAExt);
-
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                    attRequest.CertificateExtensions.Add(aikCertSanExt);
-
-                    attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
-
-                    byte[] serial = new byte[12];
-
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        rootCert,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
-                    }
-
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData))
-                        .Add(CBORObject.FromObject(rootCert.RawData));
-                    var rsaparams = rsaAtt.ExportParameters(true);
-
-                    var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
-                    cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
-
-                    unique = rsaparams.Modulus;
-                    exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
-
-                    var pubArea = CreatePubArea(
-                        type, // Type
-                        tpmAlg, // Alg
-                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
-                        new byte[] { 0x00 }, // Policy
-                        new byte[] { 0x00, 0x10 }, // Symmetric
-                        new byte[] { 0x00, 0x10 }, // Scheme
-                        new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
-                    );
-
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
-
-                    var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
-
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
-
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("ver", "2.0")
-                        .Add("alg", 0)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature)
-                        .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
-
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-                    Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
-                }
-            }
-        }
-
-        [Fact]
         public void TestTPMAlgMismatch()
         {
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5084,8 +4927,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -5149,13 +4992,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5240,8 +5083,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -5308,13 +5151,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5399,8 +5242,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -5464,13 +5307,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5555,8 +5398,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -5620,13 +5463,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5711,8 +5554,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -5776,13 +5619,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5867,8 +5710,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -5932,13 +5775,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6023,8 +5866,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -6088,13 +5931,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6179,8 +6022,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -6244,13 +6087,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6335,8 +6178,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -6400,13 +6243,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6491,8 +6334,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -6556,13 +6399,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6650,8 +6493,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -6724,13 +6567,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6816,8 +6659,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -6881,13 +6724,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6972,8 +6815,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -7037,13 +6880,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7133,8 +6976,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -7198,13 +7041,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7295,8 +7138,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -7360,13 +7203,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7457,8 +7300,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -7522,13 +7365,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7619,8 +7462,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -7684,13 +7527,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7781,8 +7624,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -7846,13 +7689,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7937,8 +7780,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -8002,13 +7845,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -8093,8 +7936,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -8158,13 +8001,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -8249,8 +8092,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -8326,13 +8169,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -8419,8 +8262,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -8484,13 +8327,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -8575,8 +8418,8 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);

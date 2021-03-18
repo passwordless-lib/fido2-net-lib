@@ -35,7 +35,7 @@ namespace Fido2NetLib
 
         private readonly string _origin = "http://localhost";
 
-        private readonly string _getEndpointsUrl = "https://fidoalliance.co.nz/mds/getEndpoints";
+        private readonly string _getEndpointsUrl = "https://mds.certinfra.fidoalliance.org/getEndpoints";
 
         public ConformanceMetadataRepository(HttpClient client, string origin)
         {
@@ -46,11 +46,12 @@ namespace Fido2NetLib
         public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
         {
             var statementBase64Url = await DownloadStringAsync(entry.Url);
-            
+            var tocAlg = await GetTocAlg();
+
             var statementBytes = Base64Url.Decode(statementBase64Url);
             var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
             var statement = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataStatement>(statementString);
-            using(HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(toc.JwtAlg)))
+            using(HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(tocAlg)))
             {
                 statement.Hash = Base64Url.Encode(hasher.ComputeHash(Encoding.UTF8.GetBytes(statementBase64Url)));
             }
@@ -131,12 +132,12 @@ namespace Fido2NetLib
             }
         }
 
-        public async Task<MetadataTOCPayload> DeserializeAndValidateToc(string rawTocJwt)
+        public async Task<MetadataTOCPayload> DeserializeAndValidateToc(string toc)
         {
-            if (string.IsNullOrWhiteSpace(rawTocJwt))
-                throw new ArgumentNullException(nameof(rawTocJwt));
+            if (string.IsNullOrWhiteSpace(toc))
+                throw new ArgumentNullException(nameof(toc));
 
-            var jwtParts = rawTocJwt.Split('.');
+            var jwtParts = toc.Split('.');
 
             if (jwtParts.Length != 3)
                 throw new ArgumentException("The JWT does not have the 3 expected components");
@@ -144,9 +145,9 @@ namespace Fido2NetLib
             var tocHeader = jwtParts.First();
             var tokenHeader = JObject.Parse(System.Text.Encoding.UTF8.GetString(Base64Url.Decode(tocHeader)));
 
-            var tocAlg = tokenHeader["alg"]?.Value<string>();
+            _tocAlg = tokenHeader["alg"]?.Value<string>();
 
-            if(tocAlg == null)
+            if(_tocAlg == null)
                 throw new ArgumentNullException("No alg value was present in the TOC header.");
 
             var x5cArray = tokenHeader["x5c"] as JArray;
@@ -189,7 +190,7 @@ namespace Fido2NetLib
             var tokenHandler = new JwtSecurityTokenHandler();
 
             tokenHandler.ValidateToken(
-                rawTocJwt,
+                toc,
                 validationParameters,
                 out var validatedToken);
 
@@ -238,10 +239,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
 
             var tocPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
-
-            var toc = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
-            toc.JwtAlg = tocAlg;
-            return toc;
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
         }
     }
 }

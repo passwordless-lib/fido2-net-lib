@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -40,24 +39,55 @@ namespace Fido2NetLib
             }
         }
 
-        public static readonly Dictionary<int, HashAlgorithmName> algMap = new Dictionary<int, HashAlgorithmName>
+        public static HashAlgorithmName HashAlgFromCOSEAlg(int alg)
         {
-            {(int) COSE.Algorithm.RS1, HashAlgorithmName.SHA1 },
-            {(int) COSE.Algorithm.ES256, HashAlgorithmName.SHA256},
-            {(int) COSE.Algorithm.ES384, HashAlgorithmName.SHA384 },
-            {(int) COSE.Algorithm.ES512, HashAlgorithmName.SHA512 },
-            {(int) COSE.Algorithm.PS256, HashAlgorithmName.SHA256 },
-            {(int) COSE.Algorithm.PS384, HashAlgorithmName.SHA384 },
-            {(int) COSE.Algorithm.PS512, HashAlgorithmName.SHA512 },
-            {(int) COSE.Algorithm.RS256, HashAlgorithmName.SHA256 },
-            {(int) COSE.Algorithm.RS384, HashAlgorithmName.SHA384 },
-            {(int) COSE.Algorithm.RS512, HashAlgorithmName.SHA512 },
-            {4, HashAlgorithmName.SHA1 },
-            {11, HashAlgorithmName.SHA256 },
-            {12, HashAlgorithmName.SHA384 },
-            {13, HashAlgorithmName.SHA512 },
-            {(int) COSE.Algorithm.EdDSA, HashAlgorithmName.SHA512 }
-        };
+            return (COSE.Algorithm)alg switch
+            {
+                COSE.Algorithm.RS1 => HashAlgorithmName.SHA1,
+                COSE.Algorithm.ES256 => HashAlgorithmName.SHA256,
+                COSE.Algorithm.ES384 => HashAlgorithmName.SHA384,
+                COSE.Algorithm.ES512 => HashAlgorithmName.SHA512,
+                COSE.Algorithm.PS256 => HashAlgorithmName.SHA256,
+                COSE.Algorithm.PS384 => HashAlgorithmName.SHA384,
+                COSE.Algorithm.PS512 => HashAlgorithmName.SHA512,
+                COSE.Algorithm.RS256 => HashAlgorithmName.SHA256,
+                COSE.Algorithm.RS384 => HashAlgorithmName.SHA384,
+                COSE.Algorithm.RS512 => HashAlgorithmName.SHA512,
+                (COSE.Algorithm)4 => HashAlgorithmName.SHA1,
+                (COSE.Algorithm)11 => HashAlgorithmName.SHA256,
+                (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
+                (COSE.Algorithm)13 => HashAlgorithmName.SHA512,
+                COSE.Algorithm.EdDSA => HashAlgorithmName.SHA512,
+                _ => throw new Fido2VerificationException("Unrecognized COSE alg value"),
+            };
+        }
+
+        public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
+        {
+            foreach (var attestationRootCert in attestationRootCertificates)
+            {
+                var chain = new X509Chain();
+                chain.ChainPolicy.ExtraStore.Add(attestationRootCert);
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                if (trustPath.Length > 1)
+                {
+                    foreach (var cert in trustPath.Skip(1).Reverse())
+                    {
+                        chain.ChainPolicy.ExtraStore.Add(cert);
+                    }
+                }
+                var valid = chain.Build(trustPath[0]);
+
+                // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
+                var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
+
+                if (true == valid)
+                    return true;
+            }
+            return false;
+        }
 
         public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
         {
