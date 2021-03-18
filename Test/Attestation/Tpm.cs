@@ -8,7 +8,6 @@ using Fido2NetLib;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 using Xunit;
-using Fido2NetLib.AttestationFormat;
 using Asn1;
 using System.Runtime.InteropServices;
 
