@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Fido2NetLib.Objects;
-using Fido2NetLib.AttestationFormat;
 using PeterO.Cbor;
 
 namespace Fido2NetLib
@@ -126,48 +126,62 @@ namespace Fido2NetLib
             // 13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. 
             // An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
-            AttestationFormat.AttestationFormat verifier;
-            switch (AttestationObject.Fmt)
+            AttestationVerifier verifier = AttestationObject.Fmt switch
             {
-                // 14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
-                // by using the attestation statement format fmt’s verification procedure given attStmt, authData and the hash of the serialized client data computed in step 7
-                case "none":
-                    // https://www.w3.org/TR/webauthn/#none-attestation
-                    verifier = new None(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
-                    break;
+                // TODO: Better way to build these mappings?
+                "none" => new None(),                           // https://www.w3.org/TR/webauthn/#none-attestation
+                "tpm" => new Tpm(),                             // https://www.w3.org/TR/webauthn/#tpm-attestation
+                "android-key" => new AndroidKey(),              // https://www.w3.org/TR/webauthn/#android-key-attestation
+                "android-safetynet" => new AndroidSafetyNet(),  // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
+                "fido-u2f" => new FidoU2f(),                    // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
+                "packed" => new Packed(),                       // https://www.w3.org/TR/webauthn/#packed-attestation
+                "apple" => new Apple(),                       // https://www.w3.org/TR/webauthn/#apple-anonymous-attestation
+                _ => throw new Fido2VerificationException("Missing or unknown attestation type"),
+            };
 
-                case "tpm":
-                    // https://www.w3.org/TR/webauthn/#tpm-attestation
-                    verifier = new Tpm(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
-                    break;
+            // 14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
+            // by using the attestation statement format fmt’s verification procedure given attStmt, authData and the hash of the serialized client data computed in step 7
+            (var attType, var trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
 
-                case "android-key":
-                    // https://www.w3.org/TR/webauthn/#android-key-attestation
-                    verifier = new AndroidKey(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
-                    break;
-
-                case "android-safetynet":
-                    // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
-                    verifier = new AndroidSafetyNet(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, config.TimestampDriftTolerance);
-                    break;
-
-                case "fido-u2f":
-                    // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
-                    verifier = new FidoU2f(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
-                    break;
-
-                case "packed":
-                    // https://www.w3.org/TR/webauthn/#packed-attestation
-                    verifier = new Packed(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, metadataService);
-                    break;
-
-                default: throw new Fido2VerificationException("Missing or unknown attestation type");
-            }
-
-            verifier.Verify();
             // 15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
             // For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
-            // Done for "fido-u2f", "packed", and "tpm" inside format-specific verifier above
+            var entry = metadataService?.GetEntry(authData.AttestedCredentialData.AaGuid);
+
+            // while conformance testing, we must reject any authenticator that we cannot get metadata for
+            if (metadataService?.ConformanceTesting() == true && null == entry && AttestationType.None != attType && "fido-u2f" != AttestationObject.Fmt)
+                throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
+
+            if (null != trustPath)
+            {
+                // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
+                if ((entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) ||
+                    (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false))
+                {
+                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
+                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                        .ToArray();
+
+                    if (false == CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates))
+                    {
+                        throw new Fido2VerificationException("Invalid certificate chain");
+                    }
+                }
+
+                // If the authenticator is not listed as one that should produce a basic full attestation, the certificate should be self signed
+                if ((!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) &&
+                    (!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false))
+                {
+                    if (trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
+                        throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
+                }
+            }
+
+            // Check status resports for authenticator with undesirable status
+            foreach (var report in entry?.StatusReports ?? Enumerable.Empty<StatusReport>())
+            {
+                if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), (UndesiredAuthenticatorStatus)report.Status))
+                    throw new Fido2VerificationException("Authenticator found with undesirable status");
+            }
 
             // 16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
             // If self attestation was used, check if self attestation is acceptable under Relying Party policy.

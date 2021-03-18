@@ -1,0 +1,28 @@
+{
+  "status": "ok",
+  "errorMessage": "",
+  "rp": {
+    "name": "Fido2 test",
+    "id": "6cc3c9e7967a.ngrok.io"
+  },
+  "user": {
+    "name": "KXDmnFe45QYAngSfMY9R",
+    "id": "KXDmnFe45QYAngSfMY9R",
+    "displayName": "Eleanor Duchene"
+  },
+  "challenge": "kOwMvE2mQO6ou0B0jjD0VA",
+  "pubKeyCredParams": [
+    {
+      "type": "public-key",
+      "alg": -7
+    },
+    {
+      "type": "public-key",
+      "alg": -257
+    }
+  ],
+  "timeout": 60000,
+  "attestation": "direct",
+  "authenticatorSelection": null,
+  "excludeCredentials": []
+}

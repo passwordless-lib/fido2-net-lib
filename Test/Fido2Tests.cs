@@ -16,7 +16,6 @@ using System.Text;
 using NSec.Cryptography;
 using Asn1;
 using System.Security.Cryptography.X509Certificates;
-using Fido2NetLib.AttestationFormat;
 
 namespace fido2_net_lib.Test
 {
@@ -94,7 +93,7 @@ namespace fido2_net_lib.Test
         {
             public CBORObject _attestationObject;
             public CredentialPublicKey _credentialPublicKey;
-            public const string rp = "fido2.azurewebsites.net";
+            public const string rp = "https://www.passwordless.dev";
             public byte[] _challenge;
             public X500DistinguishedName rootDN = new X500DistinguishedName("CN=Testing, O=FIDO2-NET-LIB, C=US");
             public Oid oidIdFidoGenCeAaguid = new Oid("1.3.6.1.4.1.45724.1.1.4");
@@ -251,13 +250,13 @@ namespace fido2_net_lib.Test
                     Challenge = _challenge,
                     ErrorMessage = "",
                     PubKeyCredParams = new List<PubKeyCredParam>()
-                {
-                    new PubKeyCredParam
                     {
-                        Alg = -7,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
-                },
+                        new PubKeyCredParam
+                        {
+                            Alg = COSE.Algorithm.ES256,
+                            Type = PublicKeyCredentialType.PublicKey,
+                        }
+                    },
                     Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                     Status = "ok",
                     User = new Fido2User
@@ -596,6 +595,19 @@ namespace fido2_net_lib.Test
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
+
+        [Fact(Skip = "Need to determine how best to validate expired certificates")]
+        public async Task TestAppleAttestationAsync()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationAppleResponse.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationAppleOptions.json"));
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            var config = new Fido2Configuration { Origin = "https://6cc3c9e7967a.ngrok.io" };
+            await o.VerifyAsync(options, config, (x) => Task.FromResult(true), _metadataService, null);
+            byte[] ad = o.AttestationObject.AuthData;
+            // TODO : Why read ad ? Is the test finished ?
+        }
+
         [Fact]
         public async Task TaskPackedAttestation512()
         {
@@ -799,7 +811,7 @@ namespace fido2_net_lib.Test
         
         internal static async Task<AssertionVerificationResult> MakeAssertionResponse(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv = COSE.EllipticCurve.P256, CredentialPublicKey cpk = null, ushort signCount = 0, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null)
         {
-            const string rp = "fido2.azurewebsites.net";
+            const string rp = "https://www.passwordless.dev";
             byte[] rpId = Encoding.UTF8.GetBytes(rp);
             var rpIdHash = SHA256.Create().ComputeHash(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;

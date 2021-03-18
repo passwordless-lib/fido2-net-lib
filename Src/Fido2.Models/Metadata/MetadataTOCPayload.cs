@@ -19,7 +19,7 @@ namespace Fido2NetLib
         /// </remarks>
         [JsonPropertyName("legalHeader")]
         public string LegalHeader { get; set; }
-        /// <summary>
+        /// <summary>   
         /// Gets or sets the serial number of this UAF Metadata TOC Payload. 
         /// </summary>
         /// <remarks>
@@ -35,7 +35,13 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or sets a list of zero or more entries of <see cref="MetadataTOCPayloadEntry"/>.
         /// </summary>
-        [JsonPropertyName("entries")]
+        [JsonProperty("entries", Required = Required.Always)]
         public MetadataTOCPayloadEntry[] Entries { get; set; }
+
+        /// <summary>
+        /// The "alg" property from the original JWT header. Used to validate MetadataStatements.
+        /// </summary>
+        [JsonProperty("jwtAlg", Required = Required.Default)]
+        public string JwtAlg { get; set; }
     }
 }

@@ -7,17 +7,11 @@ using Asn1;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
-namespace Fido2NetLib.AttestationFormat
+namespace Fido2NetLib
 {
-    internal class Tpm : AttestationFormat
+    internal class Tpm : AttestationVerifier
     {
         private readonly IMetadataService _metadataService;
-
-        public Tpm(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash, IMetadataService metadataService) 
-            : base(attStmt, authenticatorData, clientDataHash)
-        {
-            _metadataService = metadataService;
-        }
 
         public static readonly List<string> TPMManufacturers = new List<string>
         {
@@ -46,8 +40,9 @@ namespace Fido2NetLib.AttestationFormat
             "id:57454300", // 'WEC' Winbond
             "id:524F4343", // 'ROCC' Fuzhou Rockchip
             "id:474F4F47", // 'GOOG' Google
-    };
-        public override void Verify()
+        };
+        
+        public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             // (handled in base class)
@@ -63,7 +58,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null != attStmt["pubArea"] &&
                 CBORType.ByteString == attStmt["pubArea"].Type &&
                 0 != attStmt["pubArea"].GetByteString().Length)
-            { 
+            {
                 pubArea = new PubArea(attStmt["pubArea"].GetByteString());
             }
 
@@ -102,7 +97,7 @@ namespace Fido2NetLib.AttestationFormat
             if (null != attStmt["certInfo"] &&
                 CBORType.ByteString == attStmt["certInfo"].Type &&
                 0 != attStmt["certInfo"].GetByteString().Length)
-            { 
+            {
                 certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
             }
 
@@ -121,7 +116,7 @@ namespace Fido2NetLib.AttestationFormat
                 
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
             {
-                if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData)) 
+                if (!hasher.ComputeHash(Data).SequenceEqual(certInfo.ExtraData))
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
             }
 
@@ -198,33 +193,14 @@ namespace Fido2NetLib.AttestationFormat
                     .Select(x => new X509Certificate2(x.GetByteString()))
                     .ToArray();
 
-                var entry = _metadataService?.GetEntry(AuthData.AttestedCredentialData.AaGuid);
-
-                // while conformance testing, we must reject any authenticator that we cannot get metadata for
-                if (_metadataService?.ConformanceTesting() == true && null == entry)
-                    throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
-
-                // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
-                if ((entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) ||
-                    (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false) ||
-                    (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_HELLO) ?? false))
-                {
-                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
-                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                        .ToArray();
-
-                    if (false == ValidateTrustChain(trustPath, attestationRootCertificates))
-                    {
-                        throw new Fido2VerificationException("TPM attestation failed chain validation");
-                    }
-                }
-
                 // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
                 if ((null != aaguid) &&
                     (!aaguid.SequenceEqual(Guid.Empty.ToByteArray())) &&
                     (0 != AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid)))
                     throw new Fido2VerificationException(string.Format("aaguid malformed, expected {0}, got {1}", AuthData.AttestedCredentialData.AaGuid, new Guid(aaguid)));
+
+                return (AttestationType.AttCa, trustPath);
             }
             // If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (null != EcdaaKeyId)
@@ -247,73 +223,126 @@ namespace Fido2NetLib.AttestationFormat
             { 2, TpmEccCurve.TPM_ECC_NIST_P384},
             { 3, TpmEccCurve.TPM_ECC_NIST_P521}
         };
-        private static (string, string, string) SANFromAttnCertExts(X509ExtensionCollection exts)
+        private static (string, string, string) SANFromAttnCertExts(X509ExtensionCollection extensions)
         {
             string tpmManufacturer = string.Empty,
                 tpmModel = string.Empty,
                 tpmVersion = string.Empty;
-            
+
             var foundSAN = false;
 
-            foreach (var ext in exts)
+            foreach (var extension in extensions)
             {
-                if (ext.Oid.Value.Equals("2.5.29.17")) // subject alternative name
+                if (extension.Oid.Value.Equals("2.5.29.17")) // subject alternative name
                 {
-                    if (0 == ext.RawData.Length)
+                    if (0 == extension.RawData.Length)
                         throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
 
                     foundSAN = true;
-                    var san = AsnElt.Decode(ext.RawData);
-                    san.CheckTag(AsnElt.SEQUENCE);
-                    san.CheckConstructed();
-                    foreach (AsnElt generalName in san.Sub)
-                    {
-                        if (generalName.TagClass != AsnElt.CONTEXT || generalName.TagValue != AsnElt.OCTET_STRING)
-                            continue;
 
+                    var subjectAlternativeName = AsnElt.Decode(extension.RawData);
+                    subjectAlternativeName.CheckConstructed();
+                    subjectAlternativeName.CheckTag(AsnElt.SEQUENCE);
+                    subjectAlternativeName.CheckNumSubMin(1);
+
+                    var generalName = subjectAlternativeName.Sub.FirstOrDefault(o => o.TagClass == AsnElt.CONTEXT && o.TagValue == AsnElt.OCTET_STRING);
+
+                    if (generalName != null)
+                    {
                         generalName.CheckConstructed();
                         generalName.CheckNumSub(1);
-                        
-                        var exp = generalName.GetSub(0);
-                        exp.CheckConstructed();
-                        exp.CheckNumSub(1);
-                        exp.CheckTag(AsnElt.SEQUENCE);
 
-                        var directoryName = exp.GetSub(0);
-                        directoryName.CheckConstructed();
-                        directoryName.CheckNumSub(3);
-                        directoryName.CheckTag(AsnElt.SET);
+                        var nameSequence = generalName.GetSub(0);
+                        nameSequence.CheckConstructed();
+                        nameSequence.CheckTag(AsnElt.SEQUENCE);
+                        nameSequence.CheckNumSubMin(1);
 
-                        foreach (AsnElt dn in directoryName.Sub)
+                        /*
+                         
+                        Per Trusted Computing Group Endorsement Key Credential Profile section 3.2.9:
+
+                        "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName-form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device Attributes."
+
+                        An example is provided in document section A.1 Example 1:
+
+                                    // SEQUENCE
+                                    30 49
+                                         // SET
+                                         31 16
+                                             // SEQUENCE
+                                             30 14
+                                                 // OBJECT IDENTIFER tcg-at-tpmManufacturer (2.23.133.2.1)
+                                                 06 05 67 81 05 02 01
+                                                 // UTF8 STRING id:54434700 (TCG)
+                                                 0C 0B 69 64 3A 35 34 34 33 34 37 30 30
+                                        // SET
+                                        31 17
+                                            // SEQUENCE
+                                            30 15
+                                                // OBJECT IDENTIFER tcg-at-tpmModel (2.23.133.2.2)
+                                                06 05 67 81 05 02 02
+                                                // UTF8 STRING ABCDEF123456
+                                                0C 0C 41 42 43 44 45 46 31 32 33 34 35 36
+                                        // SET
+                                        31 16
+                                            // SEQUENCE
+                                            30 14
+                                                // OBJECT IDENTIFER tcg-at-tpmVersion (2.23.133.2.3)
+                                                06 05 67 81 05 02 03
+                                                // UTF8 STRING id:00010023
+                                                0C 0B 69 64 3A 30 30 30 31 30 30 32 33
+
+                        Some TPM implementations place each device attributes SEQUENCE within a single SET instead of each in its own SET.
+
+                        This detects this condition and repacks each devices attributes SEQUENCE into its own SET to conform with TCG spec.
+
+                         */
+
+                        var deviceAttributes = nameSequence.Sub;
+                        if (1 != deviceAttributes.FirstOrDefault().Sub.Length)
                         {
-                            dn.CheckNumSub(2);
-                            dn.CheckTag(AsnElt.SEQUENCE);
-                            var oid = dn.GetSub(0);
-                            oid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
-                            oid.CheckPrimitive();
+                            deviceAttributes = deviceAttributes.FirstOrDefault().Sub.Select(o => AsnElt.Make(AsnElt.SET, o)).ToArray();
+                        }
 
-                            var value = dn.GetSub(1);
-                            value.CheckTag(AsnElt.UTF8String);
-                            oid.CheckPrimitive();
-                            switch (oid.GetOID())
+                        foreach (AsnElt propertySet in deviceAttributes)
+                        {
+                            propertySet.CheckTag(AsnElt.SET);
+                            propertySet.CheckNumSub(1);
+
+                            var propertySequence = propertySet.GetSub(0);
+                            propertySequence.CheckTag(AsnElt.SEQUENCE);
+                            propertySequence.CheckNumSub(2);
+
+                            var propertyOid = propertySequence.GetSub(0);
+                            propertyOid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
+                            propertyOid.CheckPrimitive();
+
+                            var propertyValue = propertySequence.GetSub(1);
+                            propertyValue.CheckTag(AsnElt.UTF8String);
+                            propertyValue.CheckPrimitive();
+
+                            switch (propertyOid.GetOID())
                             {
                                 case ("2.23.133.2.1"):
-                                    tpmManufacturer = value.GetString();
+                                    tpmManufacturer = propertyValue.GetString();
                                     break;
                                 case ("2.23.133.2.2"):
-                                    tpmModel = value.GetString();
+                                    tpmModel = propertyValue.GetString();
                                     break;
                                 case ("2.23.133.2.3"):
-                                    tpmVersion = value.GetString();
+                                    tpmVersion = propertyValue.GetString();
                                     break;
                                 default:
                                     continue;
                             }
                         }
                     }
+
+                    break;
                 }
             }
-            if (false == foundSAN)
+
+            if (!foundSAN)
                 throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
 
             return (tpmManufacturer, tpmModel, tpmVersion);
@@ -329,7 +358,7 @@ namespace Fido2NetLib.AttestationFormat
                         if (expectedEnhancedKeyUsages.Equals(oid.Value))
                             return true;
                     }
-                
+
                 }
             }
             return false;

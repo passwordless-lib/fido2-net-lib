@@ -7,6 +7,6 @@ namespace Fido2NetLib
     {
         Task<MetadataTOCPayload> GetToc();
 
-        Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayloadEntry entry);
+        Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry);
     }
 }
