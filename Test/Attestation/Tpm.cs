@@ -8,6 +8,7 @@ using Fido2NetLib;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 using Xunit;
+using Fido2NetLib.AttestationFormat;
 using Asn1;
 using System.Runtime.InteropServices;
 
@@ -406,13 +407,13 @@ namespace Test.Attestation
 
             var alg = (COSE.Algorithm)param[1];
             if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
             if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
             if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.AttestationFormat.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -514,12 +515,13 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.algMap[(int)alg];
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.algMap[(int)alg]))
+
+                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((int)alg)))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
+                    
                     IEnumerable<byte> extraData = BitConverter
                         .GetBytes((UInt16)hashedData.Length)
                         .Reverse()
@@ -527,12 +529,12 @@ namespace Test.Attestation
                         .Concat(hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-            {
-                {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                {TpmAlg.TPM_ALG_SHA512, (512/8) }
-            };
+                    {
+                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
+                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
+                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
+                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
+                    };
 
                     var tpm1bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
 
