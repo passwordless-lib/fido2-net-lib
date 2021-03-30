@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
-using Newtonsoft.Json;
 using NSec.Cryptography;
 using PeterO.Cbor;
 using Xunit;
@@ -20,7 +20,7 @@ namespace Test
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -158,7 +158,7 @@ namespace Test
             var challenge = RandomGenerator.Default.GenerateBytes(128);
             var rp = "https://www.passwordless.dev";
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -234,7 +234,7 @@ namespace Test
             var challenge = RandomGenerator.Default.GenerateBytes(128);
             var rp = "https://www.passwordless.dev";
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -308,7 +308,7 @@ namespace Test
             var challenge = RandomGenerator.Default.GenerateBytes(128);
             var rp = "https://www.passwordless.dev";
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -389,7 +389,7 @@ namespace Test
                 null
                 ).ToByteArray();
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -470,7 +470,7 @@ namespace Test
                 null
                 ).ToByteArray();
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -551,7 +551,7 @@ namespace Test
                 null
                 ).ToByteArray();
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -633,7 +633,7 @@ namespace Test
                 null
                 ).ToByteArray();
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -715,7 +715,7 @@ namespace Test
                 null
                 ).ToByteArray();
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {
@@ -788,7 +788,7 @@ namespace Test
         {
             var challenge = RandomGenerator.Default.GenerateBytes(128);
             var clientDataJson = Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject
+                    JsonSerializer.Serialize
                     (
                         new
                         {

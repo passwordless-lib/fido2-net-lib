@@ -10,6 +10,7 @@ using PeterO.Cbor;
 using Xunit;
 using System.Threading.Tasks;
 using System.Text;
+using System.Text.Json;
 
 namespace Test.Attestation
 {
@@ -163,7 +164,7 @@ namespace Test.Attestation
                 Challenge = _challenge,
                 Origin = "6cc3c9e7967a.ngrok.io",
             };
-            var clientDataJson = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(clientData));
+            var clientDataJson = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(clientData));
 
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {

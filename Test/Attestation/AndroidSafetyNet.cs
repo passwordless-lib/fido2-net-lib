@@ -6,11 +6,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 using Xunit;
@@ -291,7 +291,7 @@ namespace Test.Attestation
             var jwtParts = Encoding.UTF8.GetString(response).Split('.');
             var jwtHeaderJSON = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(jwtParts.First())));
             jwtHeaderJSON.Remove("x5c");
-            jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwtHeaderJSON)));
+            jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(jwtHeaderJSON)));
             response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
             _attestationObject["attStmt"].Set("response", response);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -306,7 +306,7 @@ namespace Test.Attestation
             var jwtHeaderJSON = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(jwtParts.First())));
             jwtHeaderJSON.Remove("x5c");
             jwtHeaderJSON.Add("x5c", JToken.FromObject(new List<string> {  }));
-            jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwtHeaderJSON)));
+            jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(jwtHeaderJSON)));
             response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
             _attestationObject["attStmt"].Set("response", response);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -340,7 +340,7 @@ namespace Test.Attestation
             }
 
             jwtHeaderJSON.Add("x5c", JToken.FromObject(new List<string> { Convert.ToBase64String(x5c) }));
-            jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwtHeaderJSON)));
+            jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(jwtHeaderJSON)));
             response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
             _attestationObject["attStmt"].Set("response", response);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());

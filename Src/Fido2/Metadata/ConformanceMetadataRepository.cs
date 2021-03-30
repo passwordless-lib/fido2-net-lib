@@ -66,7 +66,7 @@ namespace Fido2NetLib
                 endpoint = _origin
             };
 
-            var content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(req), Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
             var result = JsonSerializer.Deserialize<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
             var conformanceEndpoints = new List<string>(result.Result);

@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿
 using System;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
-    [JsonConverter(typeof(ToStringJsonConverter))]
     public class TypedString : IEquatable<TypedString>
     {
 
