@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace Fido2NetLib
 {
@@ -86,7 +86,7 @@ namespace Fido2NetLib
                 var cachedEntry = await _cache.GetStringAsync(cacheKey);
                 if (cachedEntry != null)
                 {
-                    var statement = JsonConvert.DeserializeObject<MetadataStatement>(cachedEntry);
+                    var statement = JsonSerializer.Deserialize<MetadataStatement>(cachedEntry);
                     if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                     {
                         var aaGuid = Guid.Parse(statement.AaGuid);
@@ -104,7 +104,7 @@ namespace Fido2NetLib
 
                         if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                         {
-                            var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
+                            var statementJson = JsonSerializer.Serialize(statement,new JsonSerializerOptions { WriteIndented = true });
 
                             _log?.LogDebug("{0}:{1}\n{2}", statement.AaGuid, statement.Description, statementJson);
 
@@ -163,7 +163,7 @@ namespace Fido2NetLib
 
             if (cachedToc != null)
             {
-                toc = JsonConvert.DeserializeObject<MetadataTOCPayload>(cachedToc);
+                toc = JsonSerializer.Deserialize<MetadataTOCPayload>(cachedToc);
                 cacheUntil = GetCacheUntilTime(toc);
             }
             else
@@ -188,7 +188,7 @@ namespace Fido2NetLib
                 {
                     await _cache.SetStringAsync(
                         tocCacheKey,
-                        JsonConvert.SerializeObject(toc),
+                        JsonSerializer.Serialize(toc),
                         new DistributedCacheEntryOptions()
                         {
                             AbsoluteExpiration = cacheUntil
@@ -206,7 +206,7 @@ namespace Fido2NetLib
                     }
                     catch (Exception ex)
                     {
-                        _log?.LogError(ex, "Error getting statement from {0} for AAGUID '{1}'.\nTOC entry:\n{2} ", repository.GetType().Name, entry.AaGuid, JsonConvert.SerializeObject(entry, Formatting.Indented));
+                        _log?.LogError(ex, "Error getting statement from {0} for AAGUID '{1}'.\nTOC entry:\n{2} ", repository.GetType().Name, entry.AaGuid, JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = true }));
                     }
                 }
             }

@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -21,11 +22,17 @@ namespace Fido2NetLib
             // Note: C may be any implementation-specific data structure representation, as long as C’s components are referenceable, as required by this algorithm.
             // We call this AuthenticatorResponse
             AuthenticatorResponse response;
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+            };
+
             try
             {
-                response = JsonConvert.DeserializeObject<AuthenticatorResponse>(JSONtext);
+                response = JsonSerializer.Deserialize<AuthenticatorResponse>(JSONtext, jsonOptions);
             }
-            catch (Exception e) when (e is JsonReaderException || e is JsonSerializationException)
+            catch (Exception e) when (e is JsonException)
             {
                 throw new Fido2VerificationException("Malformed clientDataJson");
             }
@@ -40,15 +47,18 @@ namespace Fido2NetLib
         }
 
         [JsonConstructor]
-        private AuthenticatorResponse()
+        public AuthenticatorResponse()
         {
 
         }
 
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
         [JsonConverter(typeof(Base64UrlConverter))]
+        [JsonPropertyName("challenge")]
         public byte[] Challenge { get; set; }
+        [JsonPropertyName("origin")]
         public string Origin { get; set; }
 
         public TokenBindingDto TokenBinding { get; set; }

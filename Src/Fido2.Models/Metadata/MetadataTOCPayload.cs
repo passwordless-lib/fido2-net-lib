@@ -35,13 +35,13 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or sets a list of zero or more entries of <see cref="MetadataTOCPayloadEntry"/>.
         /// </summary>
-        [JsonProperty("entries", Required = Required.Always)]
+        [JsonPropertyName("entries")]
         public MetadataTOCPayloadEntry[] Entries { get; set; }
 
         /// <summary>
         /// The "alg" property from the original JWT header. Used to validate MetadataStatements.
         /// </summary>
-        [JsonProperty("jwtAlg", Required = Required.Default)]
+        [JsonPropertyName("jwtAlg")]
         public string JwtAlg { get; set; }
     }
 }

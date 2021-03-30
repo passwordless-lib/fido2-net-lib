@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Json.Linq;
 using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace Fido2NetLib
 {
@@ -49,7 +50,7 @@ namespace Fido2NetLib
             
             var statementBytes = Base64Url.Decode(statementBase64Url);
             var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
-            var statement = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataStatement>(statementString);
+            var statement = JsonSerializer.Deserialize<MetadataStatement>(statementString);
             using(HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(toc.JwtAlg)))
             {
                 statement.Hash = Base64Url.Encode(hasher.ComputeHash(Encoding.UTF8.GetBytes(statementBase64Url)));
@@ -67,7 +68,7 @@ namespace Fido2NetLib
 
             var content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(req), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
-            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
+            var result = JsonSerializer.Deserialize<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
             var conformanceEndpoints = new List<string>(result.Result);
 
             var combinedToc = new MetadataTOCPayload
@@ -240,7 +241,7 @@ namespace Fido2NetLib
 
             var tocPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var toc = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
+            var toc = JsonSerializer.Deserialize<MetadataTOCPayload>(tocPayload);
             toc.JwtAlg = tocAlg;
             return toc;
         }
