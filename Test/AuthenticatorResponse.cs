@@ -15,6 +15,225 @@ namespace Test
 {
     public class AuthenticatorResponse
     {
+
+        [Theory]
+        [InlineData("https://www.passwordless.dev", "https://www.passwordless.dev")]
+        [InlineData("https://www.passwordless.dev:443", "https://www.passwordless.dev:443")]
+        [InlineData("https://www.passwordless.dev", "https://www.passwordless.dev:443")]
+        [InlineData("https://www.passwordless.dev:443", "https://www.passwordless.dev")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html","https://www.passwordless.dev:443/foo/bar.html")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html", "https://www.passwordless.dev:443/bar/foo.html")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html", "https://www.passwordless.dev/bar/foo.html")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html", "https://www.passwordless.dev")]
+        [InlineData("ftp://www.passwordless.dev", "ftp://www.passwordless.dev")]
+        [InlineData("ftp://www.passwordless.dev:8080", "ftp://www.passwordless.dev:8080")]
+        [InlineData("http://127.0.0.1", "http://127.0.0.1")]
+        [InlineData("http://localhost", "http://localhost")]
+        [InlineData("https://127.0.0.1:80", "https://127.0.0.1:80")]
+        [InlineData("http://localhost:80", "http://localhost:80")]
+        [InlineData("http://127.0.0.1:443", "http://127.0.0.1:443")]
+        [InlineData("http://localhost:443", "http://localhost:443")]
+        [InlineData("android:apk-key-hash:Ea3dD4m7ccbwcw+a27/D547hfwYra2gKE4lIBbBjCTU", "android:apk-key-hash:Ea3dD4m7ccbwcw+a27/D547hfwYra2gKE4lIBbBjCTU")]
+        [InlineData("lorem:ipsum:dolor", "lorem:ipsum:dolor")]
+        [InlineData("lorem:/ipsum:4321", "lorem:/ipsum:4321")]
+        [InlineData("lorem://ipsum:1234", "lorem://ipsum:1234")]
+        [InlineData("lorem://ipsum:9876/sit", "lorem://ipsum:9876/sit")]
+        [InlineData("foo://bar:321/path/", "foo://bar:321/path/")]
+        [InlineData("foo://bar:321/path","foo://bar:321/path")]
+        [InlineData("http://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]")]
+        [InlineData("http://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]:80")]
+        [InlineData("https://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]")]
+        [InlineData("https://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]:443")]
+        public async Task TestAuthenticatorOrigins(string origin, string expectedOrigin)
+        {
+            var challenge = RandomGenerator.Default.GenerateBytes(128);
+            var rp = origin;
+            var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+            var authData = new AuthenticatorData(
+                SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(origin)),
+                AuthenticatorFlags.UP | AuthenticatorFlags.AT,
+                0,
+                acd,
+                null
+                ).ToByteArray();
+            var clientDataJson = Encoding.UTF8.GetBytes(
+                    JsonConvert.SerializeObject
+                    (
+                        new
+                        {
+                            Type = "webauthn.create",
+                            Challenge = challenge,
+                            Origin = rp,
+                        }
+                    )
+                );
+            var rawResponse = new AuthenticatorAttestationRawResponse
+            {
+                Type = PublicKeyCredentialType.PublicKey,
+                Id = new byte[] { 0xf1, 0xd0 },
+                RawId = new byte[] { 0xf1, 0xd0 },
+                Response = new AuthenticatorAttestationRawResponse.ResponseData()
+                {
+                    AttestationObject = CBORObject.NewMap().Add("fmt", "none").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    ClientDataJson = clientDataJson
+                },
+            };
+
+            var origChallenge = new CredentialCreateOptions
+            {
+                Attestation = AttestationConveyancePreference.Direct,
+                AuthenticatorSelection = new AuthenticatorSelection
+                {
+                    AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
+                    RequireResidentKey = true,
+                    UserVerification = UserVerificationRequirement.Required,
+                },
+                Challenge = challenge,
+                ErrorMessage = "",
+                PubKeyCredParams = new List<PubKeyCredParam>()
+                {
+                    new PubKeyCredParam
+                    {
+                        Alg = COSE.Algorithm.ES256,
+                        Type = PublicKeyCredentialType.PublicKey,
+                    }
+                },
+                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Status = "ok",
+                User = new Fido2User
+                {
+                    Name = "testuser",
+                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    DisplayName = "Test User",
+                },
+                Timeout = 60000,
+            };
+
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            {
+                return Task.FromResult(true);
+            };
+
+            var lib = new Fido2(new Fido2Configuration()
+            {
+                ServerDomain = rp,
+                ServerName = rp,
+                Origin = expectedOrigin,
+            });
+
+            var result = await lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback);
+        }
+
+
+        [Theory]
+        [InlineData("https://www.passwordless.dev", "http://www.passwordless.dev")]
+        [InlineData("https://www.passwordless.dev:443", "http://www.passwordless.dev:443")]
+        [InlineData("https://www.passwordless.dev", "http://www.passwordless.dev:443")]
+        [InlineData("https://www.passwordless.dev:443", "http://www.passwordless.dev")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html", "http://www.passwordless.dev:443/foo/bar.html")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html", "http://www.passwordless.dev:443/bar/foo.html")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html", "http://www.passwordless.dev/bar/foo.html")]
+        [InlineData("https://www.passwordless.dev:443/foo/bar.html", "http://www.passwordless.dev")]
+        [InlineData("ftp://www.passwordless.dev", "ftp://www.passwordless.dev:80")]
+        [InlineData("ftp://www.passwordless.dev:8080", "ftp://www.passwordless.dev:8081")]
+        [InlineData("https://127.0.0.1", "http://127.0.0.1")]
+        [InlineData("https://localhost", "http://localhost")]
+        [InlineData("https://127.0.0.1:80", "https://127.0.0.1:81")]
+        [InlineData("http://localhost:80", "http://localhost:82")]
+        [InlineData("http://127.0.0.1:443", "http://127.0.0.1:444")]
+        [InlineData("http://localhost:443", "http://localhost:444")]
+        [InlineData("android:apk-key-hash:Ea3dD4m7ccbwcw+a27/D547hfwYra2gKE4lIBbBjCTU", "android:apk-key-hash:Ae3dD4m7ccbwcw+a27/D547hfwYra2gKE4lIBbBjCTU")]
+        [InlineData("lorem:ipsum:dolor", "lorem:dolor:ipsum")]
+        [InlineData("lorem:/ipsum:4321", "lorem:/ipsum:4322")]
+        [InlineData("lorem://ipsum:1234", "lorem://ipsum:1235")]
+        [InlineData("lorem://ipsum:9876/sit", "lorem://ipsum:9877/sit")]
+        [InlineData("foo://bar:321/path/", "foo://bar:322/path/")]
+        [InlineData("foo://bar:321/path", "foo://bar:322/path")]
+        [InlineData("https://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]")]
+        [InlineData("https://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]:80")]
+        [InlineData("http://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]")]
+        [InlineData("http://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]:443")]
+        public void TestAuthenticatorOriginsFail(string origin, string expectedOrigin)
+        {
+            var challenge = RandomGenerator.Default.GenerateBytes(128);
+            var rp = origin;
+            var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+            var authData = new AuthenticatorData(
+                SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(origin)),
+                AuthenticatorFlags.UP | AuthenticatorFlags.AT,
+                0,
+                acd,
+                null
+                ).ToByteArray();
+            var clientDataJson = Encoding.UTF8.GetBytes(
+                    JsonConvert.SerializeObject
+                    (
+                        new
+                        {
+                            Type = "webauthn.create",
+                            Challenge = challenge,
+                            Origin = rp,
+                        }
+                    )
+                );
+            var rawResponse = new AuthenticatorAttestationRawResponse
+            {
+                Type = PublicKeyCredentialType.PublicKey,
+                Id = new byte[] { 0xf1, 0xd0 },
+                RawId = new byte[] { 0xf1, 0xd0 },
+                Response = new AuthenticatorAttestationRawResponse.ResponseData()
+                {
+                    AttestationObject = CBORObject.NewMap().Add("fmt", "none").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    ClientDataJson = clientDataJson
+                },
+            };
+
+            var origChallenge = new CredentialCreateOptions
+            {
+                Attestation = AttestationConveyancePreference.Direct,
+                AuthenticatorSelection = new AuthenticatorSelection
+                {
+                    AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
+                    RequireResidentKey = true,
+                    UserVerification = UserVerificationRequirement.Required,
+                },
+                Challenge = challenge,
+                ErrorMessage = "",
+                PubKeyCredParams = new List<PubKeyCredParam>()
+                {
+                    new PubKeyCredParam
+                    {
+                        Alg = COSE.Algorithm.ES256,
+                        Type = PublicKeyCredentialType.PublicKey,
+                    }
+                },
+                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Status = "ok",
+                User = new Fido2User
+                {
+                    Name = "testuser",
+                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    DisplayName = "Test User",
+                },
+                Timeout = 60000,
+            };
+
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            {
+                return Task.FromResult(true);
+            };
+
+            var lib = new Fido2(new Fido2Configuration()
+            {
+                ServerDomain = rp,
+                ServerName = rp,
+                Origin = expectedOrigin,
+            });
+
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+            Assert.StartsWith("Fully qualified origin", ex.Result.Message);
+        }
+
         [Fact]
         public void TestAuthenticatorAttestationRawResponse()
         {
