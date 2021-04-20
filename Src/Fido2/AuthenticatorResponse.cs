@@ -67,9 +67,12 @@ namespace Fido2NetLib
             if (!Challenge.SequenceEqual(originalChallenge))
                 throw new Fido2VerificationException("Challenge not equal to original challenge");
 
+            var fullyQualifiedOrigin = FullyQualifiedOrigin(Origin);
+            var fullyQualifiedExpectedOrigin = FullyQualifiedOrigin(expectedOrigin);
+
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
-            if (!string.Equals(FullyQualifiedOrigin(this.Origin), expectedOrigin, StringComparison.OrdinalIgnoreCase))
-                throw new Fido2VerificationException($"Origin {Origin} not equal to original origin {expectedOrigin}");
+            if (!string.Equals(fullyQualifiedOrigin, fullyQualifiedExpectedOrigin, StringComparison.OrdinalIgnoreCase))
+                throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {fullyQualifiedExpectedOrigin} of {expectedOrigin}");
 
             // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
@@ -83,9 +86,10 @@ namespace Fido2NetLib
         {
             var uri = new Uri(origin);
 
-            var fullyQualifiedOrigin = uri.IsDefaultPort ? $"{uri.Scheme}://{uri.Host}" : $"{uri.Scheme}://{uri.Host}:{uri.Port}";
+            if (UriHostNameType.Unknown != uri.HostNameType)
+                return uri.IsDefaultPort ? $"{uri.Scheme}://{uri.Host}" : $"{uri.Scheme}://{uri.Host}:{uri.Port}";
 
-            return fullyQualifiedOrigin;
+            return origin;
         }
     }
 }
