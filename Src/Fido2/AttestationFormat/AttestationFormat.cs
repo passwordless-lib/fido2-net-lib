@@ -65,10 +65,15 @@ namespace Fido2NetLib
             {
                 if (ext.Oid.Value.Equals("1.3.6.1.4.1.45724.2.1.1"))
                 {
-                    var decodedU2Ftransports = AsnElt.Decode(ext.RawData);
-                    decodedU2Ftransports.CheckTag(AsnElt.BIT_STRING);
-                    decodedU2Ftransports.CheckPrimitive();
-                    u2ftransports = decodedU2Ftransports.GetBitString()[0];
+                    // some certificates seem to encode this wrong, so ignore it if that's the case.
+                    try 
+                    {
+                        var decodedU2Ftransports = AsnElt.Decode(ext.RawData);
+                        decodedU2Ftransports.CheckTag(AsnElt.BIT_STRING);
+                        decodedU2Ftransports.CheckPrimitive();
+                        u2ftransports = decodedU2Ftransports.GetBitString()[0];
+                    }
+                    catch { }
                 }
             }
             return u2ftransports;

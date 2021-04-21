@@ -618,6 +618,37 @@ namespace fido2_net_lib.Test
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
+
+        [Fact]
+        public async Task TestTrustKeyAttestationAsync()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultTrustKeyT110.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsTrustKeyT110.json"));
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
+            byte[] ad = o.AttestationObject.AuthData;
+            var authData = new AuthenticatorData(ad);
+            Assert.True(authData.ToByteArray().SequenceEqual(ad));
+            var acdBytes = authData.AttestedCredentialData.ToByteArray();
+            var acd = new AttestedCredentialData(acdBytes);
+            Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
+        }
+
+        [Fact]
+        public async Task TestInvalidU2FAttestationASync()
+        {
+            var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsATKey.json"));
+            var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsATKey.json"));
+            var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+            await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
+            byte[] ad = o.AttestationObject.AuthData;
+            var authData = new AuthenticatorData(ad);
+            Assert.True(authData.ToByteArray().SequenceEqual(ad));
+            var acdBytes = authData.AttestedCredentialData.ToByteArray();
+            var acd = new AttestedCredentialData(acdBytes);
+            Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
+        }
+
         //public void TestHasCorrentAAguid()
         //{
         //    var expectedAaguid = new Uint8Array([
