@@ -214,7 +214,7 @@ namespace Fido2NetLib
                 {
                     AttestationTypes = new ushort[]
                     {
-                        15888
+                        (ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL
                     },
                     Hash = "",
                     Description = "Windows Hello Hardware Authenticator",
