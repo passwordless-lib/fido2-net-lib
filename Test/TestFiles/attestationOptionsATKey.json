@@ -1,0 +1,21 @@
+{
+  "status":"ok",
+  "errorMessage":"",
+  "rp":{
+    "name":"MyID",
+    "id":"localhost"},
+  "user":{
+    "name":"Ela Park",
+    "id":"ewdbqyfxTDae7Wlp7qCWRQ",
+    "displayName":"Ela Park"
+  },
+  "challenge":"wsY7StCQ-R88dEf0_1QFRAaKVozFMPr0MKYdLvsYwvc",
+  "pubKeyCredParams":[
+    {
+      "type":"public-key",
+      "alg":-7
+    }
+  ],
+  "timeout":0
+}
+
