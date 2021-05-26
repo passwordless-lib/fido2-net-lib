@@ -202,7 +202,10 @@ https://www.nuget.org/packages/Fido2/ and https://www.nuget.org/packages/Fido2.M
 
 # Contributing
 
-See [Contributing](CONTRIBUTING.md) for informations about contributing to the project.
+See [Contributing](CONTRIBUTING.md) for information about contributing to the project.
+
+This project has adopted the code of conduct defined by the Contributor Covenant to clarify expected behavior in our community.
+For more information see the [.NET Foundation Code of Conduct](https://dotnetfoundation.org/code-of-conduct). 
 
 ## Contributors
 
@@ -233,3 +236,7 @@ Support this project with your organization. Your logo will show up here with a 
 <a href="https://opencollective.com/passwordless/organization/7/website"><img src="https://opencollective.com/passwordless/organization/7/avatar.svg"></a>
 <a href="https://opencollective.com/passwordless/organization/8/website"><img src="https://opencollective.com/passwordless/organization/8/avatar.svg"></a>
 <a href="https://opencollective.com/passwordless/organization/9/website"><img src="https://opencollective.com/passwordless/organization/9/avatar.svg"></a>
+
+### .NET Foundation
+
+This project is supported by the [.NET Foundation](https://dotnetfoundation.org).

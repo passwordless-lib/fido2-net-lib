@@ -2,6 +2,8 @@
 
 The project is open to contributions through PRs. Discussions, feature requests and bug reports are encouraged through [issues](https://github.com/abergs/fido2-net-lib/issues).
 
+Since Fido2-net-lib is part of the .NET Foundation, we ask our contributors to abide by their [Code of Conduct](https://dotnetfoundation.org/code-of-conduct).
+
 ## To run the project locally
 
 Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
