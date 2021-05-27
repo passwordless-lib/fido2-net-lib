@@ -3,7 +3,7 @@ A working implementation library + demo for [FIDO2](https://fidoalliance.org/fid
 [![Build Status](https://dev.azure.com/anders/Fido2/_apis/build/status/abergs.fido2-net-lib?branchName=master)](https://dev.azure.com/anders/Fido2/_build/latest?definitionId=10&branchName=master)
 [![codecov](https://codecov.io/gh/abergs/fido2-net-lib/branch/master/graph/badge.svg)](https://codecov.io/gh/abergs/fido2-net-lib)
 [![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless)
-[![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/) [Change log](https://github.com/abergs/fido2-net-lib/releases)
+[![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/) [Releases & Change log](https://github.com/abergs/fido2-net-lib/releases)
 
 ### 💡 Passwordless API now available!
 
@@ -13,9 +13,13 @@ The quickest way to get started with FIDO2 and WebAuthn is with the [Passwordles
 
 ### Purpose
 
-Enable passwordless sign in for all .net apps (asp, core, native).
+<img align="right" width="100px" src="https://dotnetfoundation.org/img/logo_big.svg" />
+Our purpose is to enable passwordless sign in for all .net apps (asp, core, native).
 
 To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.com/) [FIDO2 Server](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html) / [WebAuthn relying party](https://www.w3.org/TR/webauthn/#relying-party) library for the easy validation of [registration](https://www.w3.org/TR/webauthn/#usecase-registration) ([attestation](https://www.w3.org/TR/webauthn/#attestation)) and [authentication](https://www.w3.org/TR/webauthn/#usecase-authentication) ([assertion](https://www.w3.org/TR/webauthn/#authentication-assertion)) of [FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) credentials, in order to increase the adoption of the technology, ultimately defeating phishing attacks.
+
+This projects is part of the [.net foundation](https://dotnetfoundation.org)
+
 
 ```Install-Package Fido2```
 
