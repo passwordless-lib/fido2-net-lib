@@ -133,8 +133,10 @@ namespace Fido2NetLib.Objects
                         switch (crv)
                         {
                             case COSE.EllipticCurve.P256:
-                            case COSE.EllipticCurve.P256K:
                                 curve = ECCurve.NamedCurves.nistP256;
+                                break;
+                            case COSE.EllipticCurve.P256K:
+                                curve = ECCurve.CreateFromFriendlyName("secP256k1");
                                 break;
                             default:
                                 throw new InvalidOperationException($"Missing or unknown crv {crv}");
