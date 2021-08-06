@@ -7,7 +7,7 @@ A working implementation library + demo for [FIDO2](https://fidoalliance.org/fid
 
 ### 💡 Passwordless API now available!
 
-The quickest way to get started with FIDO2 and WebAuthn is with the [Passwordless API](https://beta.passwordless.dev?gh). It free to try and get started with before commiting to implement your own server with this library.
+The quickest way to get started with FIDO2 and WebAuthn is with the [Passwordless API](https://passwordless.dev?gh). It free to try and get started with before commiting to implement your own server with this library.
 
 [Blog: How to get started](http://ideasof.andersaberg.com/development/passwordless-api)
 
@@ -28,7 +28,8 @@ To use the asp.net helpers, install the asp.net-package.
 ```Install-Package Fido2.AspNet```
 
 ### Demo
-* **Online example**: https://www.passwordless.dev
+* **Online examples**: https://www.passwordless.dev
+* **Library website**: https://fido2-net-lib.passwordless.dev
 * [Code examples](#examples)
 
 ## What is FIDO2?
