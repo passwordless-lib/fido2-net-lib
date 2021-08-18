@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -50,13 +51,13 @@ namespace Fido2NetLib
         /// <param name="requestTokenBindingId"></param>
         public async Task<AssertionVerificationResult> VerifyAsync(
             AssertionOptions options,
-            string expectedOrigin,
+            List<string> expectedOrigins,
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
             byte[] requestTokenBindingId)
         {
-            BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
+            BaseVerify(expectedOrigins, options.Challenge, requestTokenBindingId);
 
             if (Raw.Type != PublicKeyCredentialType.PublicKey)
                 throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");

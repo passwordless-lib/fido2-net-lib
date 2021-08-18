@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
@@ -55,7 +56,7 @@ namespace Fido2NetLib
 
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
 
-        protected void BaseVerify(string expectedOrigin, byte[] originalChallenge, byte[] requestTokenBindingId)
+        protected void BaseVerify(List<string> expectedOrigins, byte[] originalChallenge, byte[] requestTokenBindingId)
         {
             if (Type != "webauthn.create" && Type != "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
@@ -68,11 +69,11 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Challenge not equal to original challenge");
 
             var fullyQualifiedOrigin = FullyQualifiedOrigin(Origin);
-            var fullyQualifiedExpectedOrigin = FullyQualifiedOrigin(expectedOrigin);
+            var fullyQualifiedExpectedOrigins = expectedOrigins.Select(FullyQualifiedOrigin);
 
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
-            if (!string.Equals(fullyQualifiedOrigin, fullyQualifiedExpectedOrigin, StringComparison.OrdinalIgnoreCase))
-                throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {fullyQualifiedExpectedOrigin} of {expectedOrigin}");
+            if (!fullyQualifiedExpectedOrigins.Any(o => string.Equals(fullyQualifiedOrigin, o, StringComparison.OrdinalIgnoreCase)))
+                throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {fullyQualifiedExpectedOrigins} of {expectedOrigins}");
 
             // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.

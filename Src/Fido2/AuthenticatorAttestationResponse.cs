@@ -80,7 +80,7 @@ namespace Fido2NetLib
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
             // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-            BaseVerify(config.Origin, originalOptions.Challenge, requestTokenBindingId);
+            BaseVerify(config.Origins, originalOptions.Challenge, requestTokenBindingId);
 
             if (Raw.Id == null || Raw.Id.Length == 0)
                 throw new Fido2VerificationException("AttestationResponse is missing Id");

@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Fido2NetLib
 {
@@ -38,7 +39,17 @@ namespace Fido2NetLib
         /// <summary>
         /// Server origin, including protocol host and port.
         /// </summary>
+        [Obsolete("This property is obsolete. Use Origins instead.")]
         public string Origin { get; set; }
+
+        /// <summary>
+        /// Server origins, including protocol host and port.
+        /// </summary>
+        public List<string> Origins
+        {
+            get => _origins ?? new List<string>{ Origin };
+            set => _origins = value;
+        }
 
         /// <summary>
         /// MDSAccessKey
@@ -56,5 +67,7 @@ namespace Fido2NetLib
         public Fido2Configuration()
         {
         }
+
+        private List<string> _origins;
     }
 }
