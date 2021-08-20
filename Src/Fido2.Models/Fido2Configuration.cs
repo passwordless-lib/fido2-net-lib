@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Fido2NetLib
 {
@@ -45,10 +46,23 @@ namespace Fido2NetLib
         /// <summary>
         /// Server origins, including protocol host and port.
         /// </summary>
-        public List<string> Origins
+        public HashSet<string> Origins
         {
-            get => _origins ?? new List<string>{ Origin };
-            set => _origins = value;
+            get => _origins ?? new HashSet<string> { Origin };
+            set
+            {
+                _origins = value;
+                _fullyQualifiedOrigins = new HashSet<string>(value.Select(o => o.ToFullyQualifiedOrigin()), StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
+        /// Fully Qualified Server origins, generated automatically from Origins.
+        /// </summary>
+        public HashSet<string> FullyQualifiedOrigins
+        {
+            get => _fullyQualifiedOrigins ?? new HashSet<string> { Origin?.ToFullyQualifiedOrigin() };
+            private set => _fullyQualifiedOrigins = value;
         }
 
         /// <summary>
@@ -68,6 +82,7 @@ namespace Fido2NetLib
         {
         }
 
-        private List<string> _origins;
+        private HashSet<string> _origins;
+        private HashSet<string> _fullyQualifiedOrigins;
     }
 }

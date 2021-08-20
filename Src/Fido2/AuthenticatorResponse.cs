@@ -46,6 +46,8 @@ namespace Fido2NetLib
 
         }
 
+        public const int MAX_ORIGINS_TO_PRINT = 5;
+
         public string Type { get; set; }
 
         [JsonConverter(typeof(Base64UrlConverter))]
@@ -56,7 +58,7 @@ namespace Fido2NetLib
 
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
 
-        protected void BaseVerify(List<string> expectedOrigins, byte[] originalChallenge, byte[] requestTokenBindingId)
+        protected void BaseVerify(HashSet<string> fullyQualifiedExpectedOrigins, byte[] originalChallenge, byte[] requestTokenBindingId)
         {
             if (Type != "webauthn.create" && Type != "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
@@ -68,12 +70,11 @@ namespace Fido2NetLib
             if (!Challenge.SequenceEqual(originalChallenge))
                 throw new Fido2VerificationException("Challenge not equal to original challenge");
 
-            var fullyQualifiedOrigin = FullyQualifiedOrigin(Origin);
-            var fullyQualifiedExpectedOrigins = expectedOrigins.Select(FullyQualifiedOrigin);
+            var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
 
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
-            if (!fullyQualifiedExpectedOrigins.Any(o => string.Equals(fullyQualifiedOrigin, o, StringComparison.OrdinalIgnoreCase)))
-                throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins)} of {string.Join(", ", expectedOrigins)}");
+            if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
+                throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
 
             // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
@@ -81,16 +82,6 @@ namespace Fido2NetLib
             {
                 TokenBinding.Verify(requestTokenBindingId);
             }
-        }
-
-        private string FullyQualifiedOrigin(string origin)
-        {
-            var uri = new Uri(origin);
-
-            if (UriHostNameType.Unknown != uri.HostNameType)
-                return uri.IsDefaultPort ? $"{uri.Scheme}://{uri.Host}" : $"{uri.Scheme}://{uri.Host}:{uri.Port}";
-
-            return origin;
         }
     }
 }

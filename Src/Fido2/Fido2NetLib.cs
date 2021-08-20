@@ -113,7 +113,7 @@ namespace Fido2NetLib
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 
             var result = await parsedResponse.VerifyAsync(originalOptions,
-                                                          _config.Origins,
+                                                          _config.FullyQualifiedOrigins,
                                                           storedPublicKey,
                                                           storedSignatureCounter,
                                                           isUserHandleOwnerOfCredentialIdCallback,
