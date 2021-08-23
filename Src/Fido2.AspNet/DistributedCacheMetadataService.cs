@@ -100,17 +100,15 @@ namespace Fido2NetLib
 
                     try
                     {
-                        var statement = await repository.GetMetadataStatement(toc, entry);
-
-                        if (!string.IsNullOrWhiteSpace(statement.AaGuid))
+                        if (!string.IsNullOrWhiteSpace(entry.AaGuid))
                         {
-                            var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
+                            var statementJson = JsonConvert.SerializeObject(entry.MetadataStatement, Formatting.Indented);
 
-                            _log?.LogDebug("{0}:{1}\n{2}", statement.AaGuid, statement.Description, statementJson);
+                            _log?.LogDebug("{0}:{1}\n{2}", entry.AaGuid, entry.MetadataStatement.Description, statementJson);
 
-                            var aaGuid = Guid.Parse(statement.AaGuid);
+                            var aaGuid = Guid.Parse(entry.AaGuid);
 
-                            _metadataStatements.TryAdd(aaGuid, statement);
+                            _metadataStatements.TryAdd(aaGuid, entry.MetadataStatement);
                             _entries.TryAdd(aaGuid, entry);
 
                             if (cacheUntil.HasValue)

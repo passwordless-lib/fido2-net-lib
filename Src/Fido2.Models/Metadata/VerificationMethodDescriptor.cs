@@ -16,8 +16,8 @@ namespace Fido2NetLib
         /// <remarks>
         /// This value MUST be non-zero.
         /// </remarks>
-        [JsonProperty("userVerification", Required = Required.Always)]
-        public ulong UserVerification { get; set; }
+        [JsonProperty("userVerificationMethod")]
+        public string UserVerificationMethod { get; set; }
         /// <summary>
         /// Gets or sets a may optionally be used in the case of method USER_VERIFY_PASSCODE.
         /// </summary>

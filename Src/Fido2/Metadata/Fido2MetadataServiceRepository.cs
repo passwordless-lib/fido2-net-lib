@@ -36,22 +36,18 @@ namespace Fido2NetLib
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH" +
         "WD9f";
 
-        protected readonly string _token;
         protected readonly string _tocUrl;
         protected readonly HttpClient _httpClient;
 
-        //protected string _tocAlg;
-
-        public Fido2MetadataServiceRepository(string accessToken, HttpClient httpClient)
+        public Fido2MetadataServiceRepository(HttpClient httpClient)
         {
-            _tocUrl = "https://mds2.fidoalliance.org";
-            _token = accessToken;
+            _tocUrl = "https://mds.fidoalliance.org/";
             _httpClient = httpClient ?? new HttpClient();
         }
 
         public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
         {
-            var statementBase64Url = await DownloadStringAsync(entry.Url + "/?token=" + WebUtility.UrlEncode(_token));
+            var statementBase64Url = await DownloadStringAsync(entry.Url);
             
             var statementBytes = Base64Url.Decode(statementBase64Url);
             var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
@@ -84,7 +80,7 @@ namespace Fido2NetLib
 
         protected async Task<string> GetRawToc()
         {
-            var url = _tocUrl + "/?token=" + WebUtility.UrlEncode(_token);
+            var url = _tocUrl;
             return await DownloadStringAsync(url);
         }
 
@@ -194,7 +190,12 @@ namespace Fido2NetLib
                 IssuerSigningKeys = tocPublicKeys,
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenHandler = new JwtSecurityTokenHandler()
+            {
+                // 250k isn't enough bytes for conformance test tool
+                // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1097
+                MaximumTokenSizeInBytes = rawTocJwt.Length
+            };
 
             tokenHandler.ValidateToken(
                 rawTocJwt,
