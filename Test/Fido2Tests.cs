@@ -1,4 +1,4 @@
-﻿using Fido2NetLib.Objects;
+﻿    using Fido2NetLib.Objects;
 using Fido2NetLib;
 using Newtonsoft.Json;
 using System;
@@ -949,7 +949,7 @@ namespace fido2_net_lib.Test
                             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                             {
                                 // see https://github.com/dotnet/runtime/issues/47770
-                                throw new InvalidCastException($"No support currently for secP256k1 on MacOS");
+                                throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");
                             }
                             curve = ECCurve.CreateFromFriendlyName("secP256k1");
                             break;

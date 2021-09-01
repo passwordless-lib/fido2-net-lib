@@ -169,7 +169,7 @@ namespace Test.Attestation
                                     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                                     {
                                         // see https://github.com/dotnet/runtime/issues/47770
-                                        throw new InvalidCastException($"No support currently for secP256k1 on MacOS");
+                                        throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");
                                     }
                                     eCCurve = ECCurve.CreateFromFriendlyName("secP256k1");
                                     break;
