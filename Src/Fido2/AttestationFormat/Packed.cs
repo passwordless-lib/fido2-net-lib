@@ -27,7 +27,12 @@ namespace Fido2NetLib
     {
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
-            var dictSubject = attnCertSubj.Split(new string[] { ", " }, StringSplitOptions.None)
+            // parse the DN string using standard rules
+            var dictSubjectObj = new X500DistinguishedName(attnCertSubj);
+
+            // form the string for splitting using new lines to avoid issues with commas
+            var dictSubjectString = dictSubjectObj.Decode(X500DistinguishedNameFlags.UseNewLines); 
+            var dictSubject = dictSubjectString.Split(new string[] { Environment.NewLine }, StringSplitOptions.None)
                                           .Select(part => part.Split('='))
                                           .ToDictionary(split => split[0], split => split[1]);
 

@@ -956,6 +956,66 @@ namespace Test.Attestation
         }
 
         [Fact]
+        public async void TestAttCertSubjectCommaAsync()
+        {
+            var param = Fido2Tests._validCOSEParameters[0];
+            X509Certificate2 root, attestnCert;
+            DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+            DateTimeOffset notAfter = notBefore.AddDays(2);
+            var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=\"FIDO2-NET-LIB, Inc.\", C=US");
+
+            using (var ecdsaRoot = ECDsa.Create())
+            {
+                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+                rootRequest.CertificateExtensions.Add(caExt);
+
+                var curve = (COSE.EllipticCurve)param[2];
+                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+                using (root = rootRequest.CreateSelfSigned(
+                    notBefore,
+                    notAfter))
+
+                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                {
+                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                    attRequest.CertificateExtensions.Add(notCAExt);
+
+                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                    byte[] serial = new byte[12];
+
+                    using (var rng = RandomNumberGenerator.Create())
+                    {
+                        rng.GetBytes(serial);
+                    }
+                    using (X509Certificate2 publicOnly = attRequest.Create(
+                        root,
+                        notBefore,
+                        notAfter,
+                        serial))
+                    {
+                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                    }
+
+                    var X5c = CBORObject.NewArray()
+                        .Add(CBORObject.FromObject(attestnCert.RawData))
+                        .Add(CBORObject.FromObject(root.RawData));
+
+                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+
+                    _attestationObject.Add("attStmt", CBORObject.NewMap()
+                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("sig", signature)
+                        .Add("x5c", X5c));
+
+                    var res = await MakeAttestationResponse();
+                    Assert.Equal(string.Empty, res.ErrorMessage);
+                    Assert.Equal("ok", res.Status);
+                }
+            }
+        }
+
+        [Fact]
         public void TestFullAttCertAaguidNotMatchAuthdata()
         {
             var param = Fido2Tests._validCOSEParameters[0];
