@@ -67,7 +67,12 @@ namespace Test.Attestation
             {
                 if (COSE.KeyType.OKP == (COSE.KeyType)param[0])
                 {
-                    return;
+                    return; // no OKP support in TPM
+                }
+
+                if (COSE.KeyType.EC2 == (COSE.KeyType)param[0] && COSE.Algorithm.ES256K == (COSE.Algorithm)param[1])
+                {
+                    return; // no secp256k1 support in TPM
                 }
 
                 var alg = (COSE.Algorithm)param[1];

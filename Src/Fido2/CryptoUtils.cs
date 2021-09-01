@@ -53,6 +53,7 @@ namespace Fido2NetLib
                 COSE.Algorithm.RS256 => HashAlgorithmName.SHA256,
                 COSE.Algorithm.RS384 => HashAlgorithmName.SHA384,
                 COSE.Algorithm.RS512 => HashAlgorithmName.SHA512,
+                COSE.Algorithm.ES256K => HashAlgorithmName.SHA256,
                 (COSE.Algorithm)4 => HashAlgorithmName.SHA1,
                 (COSE.Algorithm)11 => HashAlgorithmName.SHA256,
                 (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
