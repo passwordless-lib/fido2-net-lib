@@ -129,15 +129,28 @@ namespace Fido2NetLib.Objects
                 var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
                 switch (_alg)
                 {
+                    case COSE.Algorithm.ES256K:
+                        switch (crv)
+                        {
+                            case COSE.EllipticCurve.P256K:
+                                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                                {
+                                    // see https://github.com/dotnet/runtime/issues/47770
+                                    throw new InvalidCastException($"No support currently for secP256k1 on MacOS");
+                                }
+                                curve = ECCurve.CreateFromFriendlyName("secP256k1");
+                                break;
+                            default:
+                                throw new InvalidOperationException($"Missing or unknown crv {crv}");
+                        }
+                        break;
                     case COSE.Algorithm.ES256:
                         switch (crv)
                         {
                             case COSE.EllipticCurve.P256:
                                 curve = ECCurve.NamedCurves.nistP256;
                                 break;
-                            case COSE.EllipticCurve.P256K:
-                                curve = ECCurve.CreateFromFriendlyName("secP256k1");
-                                break;
+
                             default:
                                 throw new InvalidOperationException($"Missing or unknown crv {crv}");
                         }

@@ -16,6 +16,7 @@ using System.Text;
 using NSec.Cryptography;
 using Asn1;
 using System.Security.Cryptography.X509Certificates;
+using System.Runtime.InteropServices;
 
 namespace fido2_net_lib.Test
 {
@@ -73,6 +74,7 @@ namespace fido2_net_lib.Test
             _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS384});
             _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS512});
             _validCOSEParameters.Add(new object[3] { COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519 });
+            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K });
         }
         public static byte[] StringToByteArray(string hex)
         {
@@ -940,11 +942,25 @@ namespace fido2_net_lib.Test
             ECCurve curve;
             switch (alg)
             {
+                case COSE.Algorithm.ES256K:
+                    switch (crv)
+                    {
+                        case COSE.EllipticCurve.P256K:
+                            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                            {
+                                // see https://github.com/dotnet/runtime/issues/47770
+                                throw new InvalidCastException($"No support currently for secP256k1 on MacOS");
+                            }
+                            curve = ECCurve.CreateFromFriendlyName("secP256k1");
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}");
+                    }
+                    break;
                 case COSE.Algorithm.ES256:
                     switch (crv)
                     {
                         case COSE.EllipticCurve.P256:
-                        case COSE.EllipticCurve.P256K:
                             curve = ECCurve.NamedCurves.nistP256;
                             break;
                         default:

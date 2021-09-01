@@ -26,7 +26,7 @@ namespace Test.Attestation
 
                 var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], crv);
 
-                _attestationObject.Add("attStmt", CBORObject.NewMap()
+                _attestationObject.Set("attStmt", CBORObject.NewMap()
                     .Add("alg", (COSE.Algorithm)param[1])
                     .Add("sig", signature));
 
@@ -165,6 +165,14 @@ namespace Test.Attestation
                                 case COSE.EllipticCurve.P521:
                                     eCCurve = ECCurve.NamedCurves.nistP521;
                                     break;
+                                case COSE.EllipticCurve.P256K:
+                                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                                    {
+                                        // see https://github.com/dotnet/runtime/issues/47770
+                                        throw new InvalidCastException($"No support currently for secP256k1 on MacOS");
+                                    }
+                                    eCCurve = ECCurve.CreateFromFriendlyName("secP256k1");
+                                    break;
                             }
 
                             using (root = rootRequest.CreateSelfSigned(
@@ -199,7 +207,7 @@ namespace Test.Attestation
 
                                 var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
 
-                                _attestationObject.Add("attStmt", CBORObject.NewMap()
+                                _attestationObject.Set("attStmt", CBORObject.NewMap()
                                     .Add("alg", (COSE.Algorithm)param[1])
                                     .Add("sig", signature)
                                     .Add("x5c", X5c));
@@ -257,7 +265,7 @@ namespace Test.Attestation
 
                                 var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], COSE.EllipticCurve.Reserved, rsa: rsaAtt);
 
-                                _attestationObject.Add("attStmt", CBORObject.NewMap()
+                                _attestationObject.Set("attStmt", CBORObject.NewMap()
                                     .Add("alg", (COSE.Algorithm)param[1])
                                     .Add("sig", signature)
                                     .Add("x5c", X5c));
