@@ -436,7 +436,7 @@ namespace fido2_net_lib.Test
             Assert.Equal(AuthenticatorAttachment.CrossPlatform, y2);
 
             // test list of typedstrings
-            var z1 = new[] { AuthenticatorTransport.Ble, AuthenticatorTransport.Usb, AuthenticatorTransport.Nfc, AuthenticatorTransport.Lightning, AuthenticatorTransport.Internal };
+            var z1 = new[] { AuthenticatorTransport.Ble, AuthenticatorTransport.Usb, AuthenticatorTransport.Nfc, AuthenticatorTransport.Internal };
             var zjson = JsonConvert.SerializeObject(z1);
             var z2 = JsonConvert.DeserializeObject<AuthenticatorTransport[]>(zjson);
 
