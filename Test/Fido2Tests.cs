@@ -212,13 +212,8 @@ namespace fido2_net_lib.Test
                     {
                         AppID = true,
                         AuthenticatorSelection = true,
-                        BiometricAuthenticatorPerformanceBounds = true,
-                        GenericTransactionAuthorization = new byte[] { 0xf1, 0xd0 },
-                        SimpleTransactionAuthorization = "test",
                         Extensions = new string[] { "foo", "bar" },
                         Example = "test",
-                        Location = new GeoCoordinatePortable.GeoCoordinate(42.523714, -71.040860),
-                        UserVerificationIndex = new byte[] { 0xf1, 0xd0 },
                         UserVerificationMethod = new ulong[][]
                         {
                             new ulong[]
@@ -481,9 +476,9 @@ namespace fido2_net_lib.Test
         }
 
         [Fact]
-        public void MetadataTOCPayloadEntry_Can_Be_JSON_Roundtripped()
+        public void MetadataBLOBPayloadEntry_Can_Be_JSON_Roundtripped()
         {
-            var input = new MetadataTOCPayloadEntry()
+            var input = new MetadataBLOBPayloadEntry()
             {
                 AaGuid = Guid.NewGuid().ToString(),
                 MetadataStatement = new MetadataStatement(),
@@ -512,7 +507,7 @@ namespace fido2_net_lib.Test
 
             var json = JsonConvert.SerializeObject(input);
 
-            var output = JsonConvert.DeserializeObject<MetadataTOCPayloadEntry>(json);
+            var output = JsonConvert.DeserializeObject<MetadataBLOBPayloadEntry>(json);
 
             Assert.Equal(input.AaGuid, output.AaGuid);
 

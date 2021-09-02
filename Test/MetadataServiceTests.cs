@@ -17,11 +17,11 @@ namespace Test
         {
             var client = new ConformanceMetadataRepository(null, "http://localhost");
 
-            var toc = await client.GetToc();
+            var blob = await client.GetBLOB();
 
-            Assert.True(toc.Entries.Length > 0);
+            Assert.True(blob.Entries.Length > 0);
 
-            var entry_1 = await client.GetMetadataStatement(toc, toc.Entries[toc.Entries.Length - 1]);
+            var entry_1 = await client.GetMetadataStatement(blob, blob.Entries[blob.Entries.Length - 1]);
 
             Assert.NotNull(entry_1.Description);
 

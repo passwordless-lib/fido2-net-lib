@@ -169,7 +169,8 @@ namespace Fido2NetLib
 
                 // If the authenticator is not listed as one that should produce a basic full attestation, the certificate should be self signed
                 if ((!entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_BASIC_FULL.ToEnumMemberValue()) ?? false) &&
-                    (!entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_PRIVACY_CA.ToEnumMemberValue()) ?? false))
+                    (!entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_PRIVACY_CA.ToEnumMemberValue()) ?? false) &&
+                    (!entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_ANONCA.ToEnumMemberValue()) ?? false))
                 {
                     if (trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
                         throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");

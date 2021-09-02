@@ -167,11 +167,6 @@ namespace Fido2NetLib
         [JsonProperty("supportedExtensions")]
         public ExtensionDescriptor[] SupportedExtensions { get; set; }
         /// <summary>
-        /// Describes supported versions, extensions, AAGUID of the device and its capabilities.
-        /// </summary>
-        public AuthenticatorGetInfo AuthenticatorGetInfo { get; set; }
-
-        /// <summary>
         /// Gets or sets a computed hash value of this <see cref="MetadataStatement"/>.
         /// <para>NOTE: This supports the internal infrastructure of Fido2Net and isn't intented to be used by user code.</para>
         /// </summary>

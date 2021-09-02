@@ -76,14 +76,7 @@ namespace Fido2Demo
                 var exts = new AuthenticationExtensionsClientInputs() 
                 { 
                     Extensions = true, 
-                    UserVerificationIndex = true, 
-                    Location = true, 
                     UserVerificationMethod = true, 
-                    BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds 
-                    { 
-                        FAR = float.MaxValue, 
-                        FRR = float.MaxValue 
-                    } 
                 };
 
                 var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
@@ -165,14 +158,6 @@ namespace Fido2Demo
 
                 var exts = new AuthenticationExtensionsClientInputs()
                 { 
-                    SimpleTransactionAuthorization = "FIDO", 
-                    GenericTransactionAuthorization = new TxAuthGenericArg 
-                    { 
-                        ContentType = "text/plain", 
-                        Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } 
-                    }, 
-                    UserVerificationIndex = true, 
-                    Location = true, 
                     UserVerificationMethod = true 
                 };
 

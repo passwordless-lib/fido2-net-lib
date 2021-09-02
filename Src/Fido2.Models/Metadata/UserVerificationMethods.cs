@@ -14,43 +14,69 @@ namespace Fido2NetLib
     [JsonConverter(typeof(StringEnumConverter))]
     public enum UserVerificationMethods
     {
-        /* This flag must be set if the authenticator is able to confirm user presence in any fashion. If this flag and no other is set for user verification, the guarantee is only that the authenticator cannot be operated without some human intervention, not necessarily that the presence verification provides any level of authentication of the human's identity. (e.g. a device that requires a touch to activate)*/
+        /// <summary>
+        /// This flag must be set if the authenticator is able to confirm user presence in any fashion. If this flag and no other is set for user verification, the guarantee is only that the authenticator cannot be operated without some human intervention, not necessarily that the presence verification provides any level of authentication of the human's identity. (e.g. a device that requires a touch to activate)
+        /// </summary>
         [EnumMember(Value = "presence_internal")]
         PRESENCE_INTERNAL = 1,
-        /* This flag must be set if the authenticator uses any type of measurement of a fingerprint for user verification.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses any type of measurement of a fingerprint for user verification.
+        /// </summary>
         [EnumMember(Value = "fingerprint_internal")]
         FINGERPRINT_INTERNAL = 2,
-        /* This flag must be set if the authenticator uses a local-only passcode (i.e. a passcode not known by the server) for user verification.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses a local-only passcode (i.e. a passcode not known by the server) for user verification.
+        /// </summary>
         [EnumMember(Value = "passcode_internal")]
         PASSCODE_INTERNAL = 4,
-        /* This flag must be set if the authenticator uses a voiceprint (also known as speaker recognition) for user verification.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses a voiceprint (also known as speaker recognition) for user verification.
+        /// </summary>
         [EnumMember(Value = "voiceprint_internal")]
         VOICEPRINT_INTERNAL = 8,
-        /* This flag must be set if the authenticator uses any manner of face recognition to verify the user.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses any manner of face recognition to verify the user.
+        /// </summary>
         [EnumMember(Value = "faceprint_internal")]
         FACEPRINT_INTERNAL = 0x10,
-        /* This flag must be set if the authenticator uses any form of location sensor or measurement for user verification.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses any form of location sensor or measurement for user verification.
+        /// </summary>
         [EnumMember(Value = "location_internal")]
         LOCATION_INTERNAL = 0x20,
-        /* This flag must be set if the authenticator uses any form of eye biometrics for user verification.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses any form of eye biometrics for user verification.
+        /// </summary>
         [EnumMember(Value = "eyeprint_internal")]
         EYEPRINT_INTERNAL = 0x40,
-        /* This flag must be set if the authenticator uses a drawn pattern for user verification.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses a drawn pattern for user verification.
+        /// </summary>
         [EnumMember(Value = "pattern_internal")]
         PATTERN_INTERNAL = 0x80,
-        /* This flag must be set if the authenticator uses any measurement of a full hand (including palm-print, hand geometry or vein geometry) for user verification.*/
+        /// <summary>
+        /// This flag must be set if the authenticator uses any measurement of a full hand (including palm-print, hand geometry or vein geometry) for user verification.
+        /// </summary>
         [EnumMember(Value = "handprint_internal")]
         HANDPRINT_INTERNAL = 0x100,
-        /* This flag must be set if the authenticator uses a local-only passcode (i.e. a passcode not known by the server) for user verification that might be gathered outside the authenticator boundary. */
+        /// <summary>
+        /// This flag must be set if the authenticator uses a local-only passcode (i.e. a passcode not known by the server) for user verification that might be gathered outside the authenticator boundary.
+        /// </summary>
         [EnumMember(Value = "passcode_external")]
         PASSCODE_EXTERNAL = 0x800,
-        /* This flag must be set if the authenticator uses a drawn pattern for user verification that might be gathered outside the authenticator boundary. */
+        /// <summary>
+        /// This flag must be set if the authenticator uses a drawn pattern for user verification that might be gathered outside the authenticator boundary.
+        /// </summary>
         [EnumMember(Value = "pattern_external")]
         PATTERN_EXTERNAL = 0x1000,
-        /* This flag must be set if the authenticator will respond without any user interaction (e.g. Silent Authenticator).*/
+        /// <summary>
+        /// This flag must be set if the authenticator will respond without any user interaction (e.g. Silent Authenticator).
+        /// </summary>
         [EnumMember(Value = "none")]
         NONE = 0x200,
-        /* If an authenticator sets multiple flags for user verification types, it may also set this flag to indicate that all verification methods will be enforced (e.g. faceprint AND voiceprint). If flags for multiple user verification methods are set and this flag is not set, verification with only one is necessary (e.g. fingerprint OR passcode).*/
+        /// <summary>
+        /// If an authenticator sets multiple flags for user verification types, it may also set this flag to indicate that all verification methods will be enforced (e.g. faceprint AND voiceprint). If flags for multiple user verification methods are set and this flag is not set, verification with only one is necessary (e.g. fingerprint OR passcode).
+        /// </summary>
         [EnumMember(Value = "all")]
         ALL = 0x400,
     }

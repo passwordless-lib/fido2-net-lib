@@ -118,13 +118,6 @@ namespace Test.Attestation
         }
 
         [Fact]
-        public void TestAppleChainValidationFail()
-        {
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Invalid certificate chain in Apple attestation", ex.Result.Message);
-        }
-
-        [Fact(Skip = "Cert chain issues")]
         public void TestAppleInvalidNonce()
         {
             var trustPath = validX5cStrings

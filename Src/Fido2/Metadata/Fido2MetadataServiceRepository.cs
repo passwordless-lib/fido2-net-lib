@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -36,16 +35,16 @@ namespace Fido2NetLib
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH" +
         "WD9f";
 
-        protected readonly string _tocUrl;
+        protected readonly string _blobUrl;
         protected readonly HttpClient _httpClient;
 
         public Fido2MetadataServiceRepository(HttpClient httpClient)
         {
-            _tocUrl = "https://mds.fidoalliance.org/";
+            _blobUrl = "https://mds.fidoalliance.org/";
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
+        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             var statementBase64Url = await DownloadStringAsync(entry.Url);
             
@@ -53,13 +52,13 @@ namespace Fido2NetLib
             var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
             var statement = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataStatement>(statementString);
 
-            using (HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(toc.JwtAlg)))
+            using (HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(blob.JwtAlg)))
             {
                 statement.Hash = Base64Url.Encode(hasher.ComputeHash(Encoding.UTF8.GetBytes(statementBase64Url)));
             }
 
             if (!HashesAreEqual(entry.Hash, statement.Hash))
-                throw new Fido2VerificationException("TOC entry and statement hashes do not match");
+                throw new Fido2VerificationException("BLOB entry and statement hashes do not match");
 
             return statement;
         }
@@ -72,15 +71,15 @@ namespace Fido2NetLib
             return hashA.SequenceEqual(hashB);
         }
 
-        public async Task<MetadataTOCPayload> GetToc()
+        public async Task<MetadataBLOBPayload> GetBLOB()
         {
-            var rawToc = await GetRawToc();
-            return await DeserializeAndValidateToc(rawToc);
+            var rawBLOB = await GetRawBlob();
+            return await DeserializeAndValidateBlob(rawBLOB);
         }
 
-        protected async Task<string> GetRawToc()
+        protected async Task<string> GetRawBlob()
         {
-            var url = _tocUrl;
+            var url = _blobUrl;
             return await DownloadStringAsync(url);
         }
 
@@ -122,37 +121,37 @@ namespace Fido2NetLib
             }
         }
 
-        protected async Task<MetadataTOCPayload> DeserializeAndValidateToc(string rawTocJwt)
+        protected async Task<MetadataBLOBPayload> DeserializeAndValidateBlob(string rawBLOBJwt)
         {
            
-            if (string.IsNullOrWhiteSpace(rawTocJwt))
-                throw new ArgumentNullException(nameof(rawTocJwt));
+            if (string.IsNullOrWhiteSpace(rawBLOBJwt))
+                throw new ArgumentNullException(nameof(rawBLOBJwt));
 
-            var jwtParts = rawTocJwt.Split('.');
+            var jwtParts = rawBLOBJwt.Split('.');
 
             if (jwtParts.Length != 3)
                 throw new ArgumentException("The JWT does not have the 3 expected components");
 
-            var tocHeaderString = jwtParts.First();
-            var tocHeader = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(tocHeaderString)));
+            var blobHeaderString = jwtParts.First();
+            var blobHeader = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(blobHeaderString)));
 
-            var tocAlg = tocHeader["alg"]?.Value<string>();
+            var blobAlg = blobHeader["alg"]?.Value<string>();
 
-            if (tocAlg == null)
-                throw new ArgumentNullException("No alg value was present in the TOC header.");
+            if (blobAlg == null)
+                throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
-            var x5cArray = tocHeader["x5c"] as JArray;
+            var x5cArray = blobHeader["x5c"] as JArray;
 
             if (x5cArray == null)
-                throw new Exception("No x5c array was present in the TOC header.");
+                throw new Exception("No x5c array was present in the BLOB header.");
 
             var keyStrings = x5cArray.Values<string>().ToList();
 
             if (keyStrings.Count == 0)
-                throw new ArgumentException("No keys were present in the TOC header.");
+                throw new ArgumentException("No keys were present in the BLOB header.");
 
             var rootCert = GetX509Certificate(ROOT_CERT);
-            var tocCerts = keyStrings.Select(o => GetX509Certificate(o)).ToArray();
+            var blobCerts = keyStrings.Select(o => GetX509Certificate(o)).ToArray();
 
             var keys = new List<SecurityKey>();
 
@@ -175,7 +174,7 @@ namespace Fido2NetLib
                 }
                 throw new Fido2MetadataException("Unknown certificate algorithm");
             }
-            var tocPublicKeys = keys.ToArray();
+            var blobPublicKeys = keys.ToArray();
 
             var certChain = new X509Chain();
             certChain.ChainPolicy.ExtraStore.Add(rootCert);
@@ -187,27 +186,27 @@ namespace Fido2NetLib
                 ValidateAudience = false,
                 ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKeys = tocPublicKeys,
+                IssuerSigningKeys = blobPublicKeys,
             };
 
             var tokenHandler = new JwtSecurityTokenHandler()
             {
                 // 250k isn't enough bytes for conformance test tool
                 // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1097
-                MaximumTokenSizeInBytes = rawTocJwt.Length
+                MaximumTokenSizeInBytes = rawBLOBJwt.Length
             };
 
             tokenHandler.ValidateToken(
-                rawTocJwt,
+                rawBLOBJwt,
                 validationParameters,
                 out var validatedToken);
 
-            if(tocCerts.Length > 1)
+            if(blobCerts.Length > 1)
             {
-                certChain.ChainPolicy.ExtraStore.AddRange(tocCerts.Skip(1).ToArray());
+                certChain.ChainPolicy.ExtraStore.AddRange(blobCerts.Skip(1).ToArray());
             }
             
-            var certChainIsValid = certChain.Build(tocCerts.First());
+            var certChainIsValid = certChain.Build(blobCerts.First());
             // if the root is trusted in the context we are running in, valid should be true here
             if (!certChainIsValid)
             {
@@ -243,13 +242,13 @@ namespace Fido2NetLib
             }
 
             if (!certChainIsValid)
-                throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
+                throw new Fido2VerificationException("Failed to validate cert chain while parsing BLOB");
 
-            var tocPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+            var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var toc =  Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
-            toc.JwtAlg = tocAlg;
-            return toc;
+            var blob =  Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataBLOBPayload>(blobPayload);
+            blob.JwtAlg = blobAlg;
+            return blob;
         }
     }
 }

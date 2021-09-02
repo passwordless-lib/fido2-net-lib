@@ -11,8 +11,6 @@ namespace Fido2NetLib
 {
     internal class Tpm : AttestationVerifier
     {
-        private readonly IMetadataService _metadataService;
-
         public static readonly List<string> TPMManufacturers = new List<string>
         {
             "id:FFFFF1D0", // FIDO testing TPM

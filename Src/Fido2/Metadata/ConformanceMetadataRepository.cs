@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,7 +29,7 @@ namespace Fido2NetLib
                                         "xubSa3y3v5ormpPqCwfqn9s0MLBAtzCIgxQ/zkzPKctkiwoPtDzI51KnAjAmeMyg" +
                                         "X2S5Ht8+e+EQnezLJBJXtnkRWY+Zt491wgt/AwSs5PHHMv5QgjELOuMxQBc=";
 
-        protected readonly string _tocUrl;
+        protected readonly string _blobUrl;
         protected readonly HttpClient _httpClient;
 
         private readonly string _origin = "http://localhost";
@@ -43,12 +42,12 @@ namespace Fido2NetLib
             _origin = origin;
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
+        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             return entry.MetadataStatement;
         }
 
-        public async Task<MetadataTOCPayload> GetToc()
+        public async Task<MetadataBLOBPayload> GetBLOB()
         {
             var req = new
             {
@@ -60,43 +59,43 @@ namespace Fido2NetLib
             var result = Newtonsoft.Json.JsonConvert.DeserializeObject<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
             var conformanceEndpoints = new List<string>(result.Result);
 
-            var combinedToc = new MetadataTOCPayload
+            var combinedBlob = new MetadataBLOBPayload
             {
                 Number = -1,
                 NextUpdate = "2099-08-07"
             };
 
-            var entries = new List<MetadataTOCPayloadEntry>();
+            var entries = new List<MetadataBLOBPayloadEntry>();
 
-            foreach(var tocUrl in conformanceEndpoints)
+            foreach(var BLOBUrl in conformanceEndpoints)
             {
-                var rawToc = await DownloadStringAsync(tocUrl);
+                var rawBlob = await DownloadStringAsync(BLOBUrl);
 
-                MetadataTOCPayload toc = null;
+                MetadataBLOBPayload blob = null;
 
                 try
                 {
-                    toc = await DeserializeAndValidateToc(rawToc);
+                    blob = await DeserializeAndValidateBlob(rawBlob);
                 }
                 catch
                 {
                     continue;
                 }
                 
-                if(string.Compare(toc.NextUpdate, combinedToc.NextUpdate) < 0)
-                    combinedToc.NextUpdate = toc.NextUpdate;
-                if (combinedToc.Number < toc.Number)
-                    combinedToc.Number = toc.Number;
+                if(string.Compare(blob.NextUpdate, combinedBlob.NextUpdate) < 0)
+                    combinedBlob.NextUpdate = blob.NextUpdate;
+                if (combinedBlob.Number < blob.Number)
+                    combinedBlob.Number = blob.Number;
 
-                foreach (var entry in toc.Entries)
+                foreach (var entry in blob.Entries)
                 {
                     entries.Add(entry);
                 }
-                combinedToc.JwtAlg = toc.JwtAlg;
+                combinedBlob.JwtAlg = blob.JwtAlg;
             }
 
-            combinedToc.Entries = entries.ToArray();
-            return combinedToc;
+            combinedBlob.Entries = entries.ToArray();
+            return combinedBlob;
         }
 
         protected async Task<string> DownloadStringAsync(string url)
@@ -122,46 +121,46 @@ namespace Fido2NetLib
             }
         }
 
-        public async Task<MetadataTOCPayload> DeserializeAndValidateToc(string rawTocJwt)
+        public async Task<MetadataBLOBPayload> DeserializeAndValidateBlob(string rawBLOBJwt)
         {
-            if (string.IsNullOrWhiteSpace(rawTocJwt))
-                throw new ArgumentNullException(nameof(rawTocJwt));
+            if (string.IsNullOrWhiteSpace(rawBLOBJwt))
+                throw new ArgumentNullException(nameof(rawBLOBJwt));
 
-            var jwtParts = rawTocJwt.Split('.');
+            var jwtParts = rawBLOBJwt.Split('.');
 
             if (jwtParts.Length != 3)
                 throw new ArgumentException("The JWT does not have the 3 expected components");
 
-            var tocHeader = jwtParts.First();
-            var tokenHeader = JObject.Parse(System.Text.Encoding.UTF8.GetString(Base64Url.Decode(tocHeader)));
+            var blobHeader = jwtParts.First();
+            var tokenHeader = JObject.Parse(System.Text.Encoding.UTF8.GetString(Base64Url.Decode(blobHeader)));
 
-            var tocAlg = tokenHeader["alg"]?.Value<string>();
+            var blobAlg = tokenHeader["alg"]?.Value<string>();
 
-            if(tocAlg == null)
-                throw new ArgumentNullException("No alg value was present in the TOC header.");
+            if(blobAlg == null)
+                throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
             var x5cArray = tokenHeader["x5c"] as JArray;
 
             if (x5cArray == null)
-                throw new ArgumentException("No x5c array was present in the TOC header.");
+                throw new ArgumentException("No x5c array was present in the BLOB header.");
 
             var rootCert = GetX509Certificate(ROOT_CERT);
-            var tocCertStrings = x5cArray.Values<string>().ToList();
-            var tocCertificates = new List<X509Certificate2>();
-            var tocPublicKeys = new List<SecurityKey>();
+            var blobCertStrings = x5cArray.Values<string>().ToList();
+            var blobCertificates = new List<X509Certificate2>();
+            var blobPublicKeys = new List<SecurityKey>();
 
-            foreach (var certString in tocCertStrings)
+            foreach (var certString in blobCertStrings)
             {
                 var cert = GetX509Certificate(certString);
-                tocCertificates.Add(cert);
+                blobCertificates.Add(cert);
 
                 var ecdsaPublicKey = cert.GetECDsaPublicKey();
                 if(ecdsaPublicKey != null)
-                    tocPublicKeys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
+                    blobPublicKeys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
                 
                 var rsa = cert.GetRSAPublicKey();
                 if(rsa != null)
-                    tocPublicKeys.Add(new RsaSecurityKey(rsa));
+                    blobPublicKeys.Add(new RsaSecurityKey(rsa));
             }
  
             var certChain = new X509Chain();
@@ -174,27 +173,27 @@ namespace Fido2NetLib
                 ValidateAudience = false,
                 ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKeys = tocPublicKeys,
+                IssuerSigningKeys = blobPublicKeys,
             };
 
             var tokenHandler = new JwtSecurityTokenHandler() 
             {
                 // 250k isn't enough bytes for conformance test tool
                 // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1097
-                MaximumTokenSizeInBytes = rawTocJwt.Length
+                MaximumTokenSizeInBytes = rawBLOBJwt.Length
             };
 
             tokenHandler.ValidateToken(
-                rawTocJwt,
+                rawBLOBJwt,
                 validationParameters,
                 out var validatedToken);
 
-            if(tocCertificates.Count > 1)
+            if(blobCertificates.Count > 1)
             {
-                certChain.ChainPolicy.ExtraStore.AddRange(tocCertificates.Skip(1).ToArray());
+                certChain.ChainPolicy.ExtraStore.AddRange(blobCertificates.Skip(1).ToArray());
             }
             
-            var certChainIsValid = certChain.Build(tocCertificates.First());
+            var certChainIsValid = certChain.Build(blobCertificates.First());
             
             // if the root is trusted in the context we are running in, valid should be true here
             if (!certChainIsValid)
@@ -213,7 +212,7 @@ namespace Fido2NetLib
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
                 if (rootCert.Thumbprint == certChain.ChainElements[certChain.ChainElements.Count - 1].Certificate.Thumbprint &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
-                    certChain.ChainElements.Count == (tocCertStrings.Count + 1) &&
+                    certChain.ChainElements.Count == (blobCertStrings.Count + 1) &&
                     // and that the root cert has exactly one status listed against it
                     certChain.ChainElements[certChain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
                     // and that that status is a status of exactly UntrustedRoot
@@ -231,13 +230,13 @@ namespace Fido2NetLib
             }
 
             if (!certChainIsValid)
-                throw new Fido2VerificationException("Failed to validate cert chain while parsing TOC");
+                throw new Fido2VerificationException("Failed to validate cert chain while parsing BLOB");
 
-            var tocPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+            var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var toc = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataTOCPayload>(tocPayload);
-            toc.JwtAlg = tocAlg;
-            return toc;
+            var blob = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataBLOBPayload>(blobPayload);
+            blob.JwtAlg = blobAlg;
+            return blob;
         }
     }
 }
