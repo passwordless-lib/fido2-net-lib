@@ -196,9 +196,7 @@ namespace Fido2NetLib
         }
         public static bool IsCertInCRL(byte[] crl, X509Certificate2 cert)
         {
-            var pemCRL = System.Text.Encoding.ASCII.GetString(crl);
-            var crlBytes = PemToBytes(pemCRL);
-            var asnData = AsnElt.Decode(crlBytes);
+            var asnData = AsnElt.Decode(crl);
             if (7 > asnData.Sub[0].Sub.Length)
                 return false; // empty CRL
 

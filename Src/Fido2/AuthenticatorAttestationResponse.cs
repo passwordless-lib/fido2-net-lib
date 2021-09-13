@@ -154,8 +154,8 @@ namespace Fido2NetLib
             if (null != trustPath)
             {
                 // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
-                if ((entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) ||
-                    (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false))
+                if ((entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_BASIC_FULL.ToEnumMemberValue()) ?? false) ||
+                    (entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_PRIVACY_CA.ToEnumMemberValue()) ?? false))
                 {
                     var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
                         .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
@@ -168,8 +168,9 @@ namespace Fido2NetLib
                 }
 
                 // If the authenticator is not listed as one that should produce a basic full attestation, the certificate should be self signed
-                if ((!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) &&
-                    (!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false))
+                if ((!entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_BASIC_FULL.ToEnumMemberValue()) ?? false) &&
+                    (!entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_PRIVACY_CA.ToEnumMemberValue()) ?? false) &&
+                    (!entry?.MetadataStatement?.AttestationTypes.Contains(MetadataAttestationType.ATTESTATION_ANONCA.ToEnumMemberValue()) ?? false))
                 {
                     if (trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
                         throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");

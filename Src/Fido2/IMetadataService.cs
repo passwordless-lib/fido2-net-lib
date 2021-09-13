@@ -9,11 +9,11 @@ namespace Fido2NetLib
     public interface IMetadataService
     {
         /// <summary>
-        /// Gets the metadata TOC (table-of-content) payload entry by a guid.
+        /// Gets the metadata payload entry by a guid.
         /// </summary>
         /// <param name="aaguid">The Authenticator Attestation GUID.</param>
         /// <returns>Returns the entry; Otherwise <c>null</c>.</returns>
-        MetadataTOCPayloadEntry GetEntry(Guid aaguid);
+        MetadataBLOBPayloadEntry GetEntry(Guid aaguid);
         /// <summary>
         /// Gets a value indicating whether the internal access token is valid.
         /// </summary>

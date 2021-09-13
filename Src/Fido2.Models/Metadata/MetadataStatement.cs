@@ -51,62 +51,53 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or set earliest (i.e. lowest) trustworthy authenticatorVersion meeting the requirements specified in this metadata statement. 
         /// </summary>
-        [JsonProperty("authenticatorVersion")]
-        public ushort AuthenticatorVersion { get; set; }
+        [JsonProperty("authenticatorVersion", Required = Required.Always)]
+        public ulong AuthenticatorVersion { get; set; }
         /// <summary>
         /// Gets or set the FIDO protocol family.
         /// <para>The values "uaf", "u2f", and "fido2" are supported.</para>
         /// </summary>
-        [JsonProperty("protocolFamily")]
+        [JsonProperty("protocolFamily", Required = Required.Always)]
         public string ProtocolFamily { get; set; }
+        /// <summary>
+        /// The Metadata Schema version
+        /// Metadata schema version defines what schema of the metadata statement is currently present.The schema version of this version of the specification is 3.
+        /// </summary>
+        [JsonProperty("schema", Required = Required.Always)]
+        public ushort Schema { get; set; }
         /// <summary>
         /// Gets or sets the FIDO unified protocol version(s) (related to the specific protocol family) supported by this authenticator.
         /// </summary>
-        [JsonProperty("upv")]
+        [JsonProperty("upv", Required = Required.Always)]
         public UafVersion[] Upv { get; set; }
-        /// <summary>
-        /// Gets or sets the assertion scheme supported by the authenticator.
-        /// </summary>
-        [JsonProperty("assertionScheme")]
-        public string AssertionScheme { get; set; }
-        /// <summary>
-        /// Gets or sets the preferred authentication algorithm supported by the authenticator.
-        /// </summary>
-        [JsonProperty("authenticationAlgorithm")]
-        public ushort AuthenticationAlgorithm { get; set; }
         /// <summary>
         /// Gets or sets the list of authentication algorithms supported by the authenticator. 
         /// </summary>
-        [JsonProperty("authenticationAlgorithms")]
-        public ushort[] AuthenticationAlgorithms { get; set; }
-        /// <summary>
-        /// Gets or sets the preferred public key format used by the authenticator during registration operations.
-        /// </summary>
-        [JsonProperty("publicKeyAlgAndEncoding")]
-        public ushort PublicKeyAlgAndEncoding { get; set; }
+        [JsonProperty("authenticationAlgorithms", Required = Required.Always)]
+        public string[] AuthenticationAlgorithms { get; set; }
         /// <summary>
         /// Gets or sets the list of public key formats supported by the authenticator during registration operations.
         /// </summary>
-        [JsonProperty("publicKeyAlgAndEncodings")]
-        public ushort[] PublicKeyAlgAndEncodings { get; set; }
+        [JsonProperty("publicKeyAlgAndEncodings", Required = Required.Always)]
+        public string[] PublicKeyAlgAndEncodings { get; set; }
         /// <summary>
         /// Gets or sets the supported attestation type(s).
         /// </summary>
         /// <remarks>
         /// For example: TAG_ATTESTATION_BASIC_FULL(0x3E07), TAG_ATTESTATION_BASIC_SURROGATE(0x3E08). 
         /// </remarks>
-        [JsonProperty("attestationTypes")]
-        public ushort[] AttestationTypes { get; set; }
+        [JsonProperty("attestationTypes", Required = Required.Always)]
+        public string[] AttestationTypes { get; set; }
         /// <summary>
         /// Gets or sets a list of alternative VerificationMethodANDCombinations.
         /// </summary>
-        [JsonProperty("userVerificationDetails")]
+        [JsonProperty("userVerificationDetails", Required = Required.Always)]
         public VerificationMethodDescriptor[][] UserVerificationDetails { get; set; }
         /// <summary>
         /// Gets or sets a 16-bit number representing the bit fields defined by the KEY_PROTECTION constants.
         /// </summary>
-        [JsonProperty("keyProtection")]
-        public ushort KeyProtection { get; set; }
+        [JsonProperty("keyProtection", Required = Required.Always)]
+        public string[] KeyProtection { get; set; }
         /// <summary>
         /// Gets or sets a value indicating whether the Uauth private key is restricted by the authenticator to only sign valid FIDO signature assertions.
         /// </summary>
@@ -127,8 +118,8 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or sets a 16-bit number representing the bit fields defined by the MATCHER_PROTECTION constants.
         /// </summary>
-        [JsonProperty("matcherProtection")]
-        public ushort MatcherProtection { get; set; }
+        [JsonProperty("matcherProtection", Required = Required.Always)]
+        public string[] MatcherProtection { get; set; }
         /// <summary>
         /// Gets or sets the authenticator's overall claimed cryptographic strength in bits (sometimes also called security strength or security level).
         /// </summary>
@@ -136,25 +127,15 @@ namespace Fido2NetLib
         [JsonProperty("cryptoStrength")]
         public ushort CryptoStrength { get; set; }
         /// <summary>
-        /// Gets or sets a description of the particular operating environment that is used for the Authenticator.
-        /// </summary>
-        [JsonProperty("operatingEnv")]
-        public string OperatingEnv { get; set; }
-        /// <summary>
         /// Gets or sets a 32-bit number representing the bit fields defined by the ATTACHMENT_HINT constants.
         /// </summary>
         [JsonProperty("attachmentHint")]
-        public ulong AttachmentHint { get; set; }
-        /// <summary>
-        /// Gets or sets a value indicating whether the authenticator is designed to be used only as a second factor, i.e. requiring some other authentication method as a first factor.
-        /// </summary>
-        [JsonProperty("isSecondFactorOnly")]
-        public bool IsSecondFactorOnly { get; set; }
+        public string[] AttachmentHint { get; set; }
         /// <summary>
         /// Gets or sets a 16-bit number representing a combination of the bit flags defined by the TRANSACTION_CONFIRMATION_DISPLAY constants.
         /// </summary>
-        [JsonProperty("tcDisplay")]
-        public ushort TcDisplay { get; set; }
+        [JsonProperty("tcDisplay", Required = Required.Always)]
+        public string[] TcDisplay { get; set; }
         /// <summary>
         /// Gets or sets the supported MIME content type [RFC2049] for the transaction confirmation display, such as text/plain or image/png. 
         /// </summary>
@@ -168,7 +149,7 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or sets a list of a PKIX [RFC5280] X.509 certificate that is a valid trust anchor for this authenticator model.
         /// </summary>
-        [JsonProperty("attestationRootCertificates")]
+        [JsonProperty("attestationRootCertificates", Required = Required.Always)]
         public string[] AttestationRootCertificates { get; set; }
         /// <summary>
         /// Gets or set a list of trust anchors used for ECDAA attestation. 

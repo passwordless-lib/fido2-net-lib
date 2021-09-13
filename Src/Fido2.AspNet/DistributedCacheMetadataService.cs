@@ -18,7 +18,7 @@ namespace Fido2NetLib
         protected readonly TimeSpan _defaultCacheInterval = TimeSpan.FromHours(25);
 
         protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
-        protected readonly ConcurrentDictionary<Guid, MetadataTOCPayloadEntry> _entries;
+        protected readonly ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
 
         protected const string CACHE_PREFIX = "DistributedCacheMetadataService";
 
@@ -30,7 +30,7 @@ namespace Fido2NetLib
             _repositories = repositories.ToList();
             _cache = cache;
             _metadataStatements = new ConcurrentDictionary<Guid, MetadataStatement>();
-            _entries = new ConcurrentDictionary<Guid, MetadataTOCPayloadEntry>();
+            _entries = new ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry>();
             _log = log;
         }
 
@@ -39,7 +39,7 @@ namespace Fido2NetLib
             return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
         }
 
-        public virtual MetadataTOCPayloadEntry GetEntry(Guid aaguid)
+        public virtual MetadataBLOBPayloadEntry GetEntry(Guid aaguid)
         {
             if (!IsInitialized())
                 throw new InvalidOperationException("MetadataService must be initialized");
@@ -73,8 +73,8 @@ namespace Fido2NetLib
 
         protected virtual async Task LoadTocEntryStatement(
             IMetadataRepository repository,
-            MetadataTOCPayload toc,
-            MetadataTOCPayloadEntry entry,
+            MetadataBLOBPayload blob,
+            MetadataBLOBPayloadEntry entry,
             DateTime? cacheUntil = null)
         {
             if (entry.AaGuid != null && !_entries.ContainsKey(Guid.Parse(entry.AaGuid)))
@@ -100,17 +100,15 @@ namespace Fido2NetLib
 
                     try
                     {
-                        var statement = await repository.GetMetadataStatement(toc, entry);
-
-                        if (!string.IsNullOrWhiteSpace(statement.AaGuid))
+                        if (!string.IsNullOrWhiteSpace(entry.AaGuid))
                         {
-                            var statementJson = JsonConvert.SerializeObject(statement, Formatting.Indented);
+                            var statementJson = JsonConvert.SerializeObject(entry.MetadataStatement, Formatting.Indented);
 
-                            _log?.LogDebug("{0}:{1}\n{2}", statement.AaGuid, statement.Description, statementJson);
+                            _log?.LogDebug("{0}:{1}\n{2}", entry.AaGuid, entry.MetadataStatement.Description, statementJson);
 
-                            var aaGuid = Guid.Parse(statement.AaGuid);
+                            var aaGuid = Guid.Parse(entry.AaGuid);
 
-                            _metadataStatements.TryAdd(aaGuid, statement);
+                            _metadataStatements.TryAdd(aaGuid, entry.MetadataStatement);
                             _entries.TryAdd(aaGuid, entry);
 
                             if (cacheUntil.HasValue)
@@ -131,11 +129,11 @@ namespace Fido2NetLib
             }
         }
 
-        private DateTime? GetCacheUntilTime(MetadataTOCPayload toc)
+        private DateTime? GetCacheUntilTime(MetadataBLOBPayload blob)
         {
-            if (!string.IsNullOrWhiteSpace(toc?.NextUpdate)
+            if (!string.IsNullOrWhiteSpace(blob?.NextUpdate)
                 && DateTime.TryParseExact(
-                    toc.NextUpdate,
+                    blob.NextUpdate,
                     new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "o" }, //Sould be ISO8601 date but allow for other ISO formats too
                     System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
@@ -153,42 +151,42 @@ namespace Fido2NetLib
 
         protected virtual async Task InitializeRepository(IMetadataRepository repository)
         {
-            var tocCacheKey = GetTocCacheKey(repository);
+            var blobCacheKey = GetTocCacheKey(repository);
 
-            var cachedToc = await _cache.GetStringAsync(tocCacheKey);
+            var cachedToc = await _cache.GetStringAsync(blobCacheKey);
 
-            MetadataTOCPayload toc;
+            MetadataBLOBPayload blob;
 
             DateTime? cacheUntil = null;
 
             if (cachedToc != null)
             {
-                toc = JsonConvert.DeserializeObject<MetadataTOCPayload>(cachedToc);
-                cacheUntil = GetCacheUntilTime(toc);
+                blob = JsonConvert.DeserializeObject<MetadataBLOBPayload>(cachedToc);
+                cacheUntil = GetCacheUntilTime(blob);
             }
             else
             {
-                _log?.LogInformation($"TOC for {repository.GetType().Name} not cached so loading from MDS...");
+                _log?.LogInformation($"BLOB for {repository.GetType().Name} not cached so loading from MDS...");
 
                 try
                 {
-                    toc = await repository.GetToc();
+                    blob = await repository.GetBLOB();
                 }
                 catch (Exception ex)
                 {
-                    _log?.LogError(ex, "Error getting TOC from {0}", repository.GetType().Name);
+                    _log?.LogError(ex, "Error getting BLOB from {0}", repository.GetType().Name);
                     throw;
                 }
 
-                _log?.LogInformation($"TOC for {repository.GetType().Name} not cached so loading from MDS... Done.");
+                _log?.LogInformation($"BLOB for {repository.GetType().Name} not cached so loading from MDS... Done.");
 
-                cacheUntil = GetCacheUntilTime(toc);
+                cacheUntil = GetCacheUntilTime(blob);
 
                 if (cacheUntil.HasValue)
                 {
                     await _cache.SetStringAsync(
-                        tocCacheKey,
-                        JsonConvert.SerializeObject(toc),
+                        blobCacheKey,
+                        JsonConvert.SerializeObject(blob),
                         new DistributedCacheEntryOptions()
                         {
                             AbsoluteExpiration = cacheUntil
@@ -196,13 +194,13 @@ namespace Fido2NetLib
                 }
             }
 
-            foreach (var entry in toc.Entries)
+            foreach (var entry in blob.Entries)
             {
                 if (!string.IsNullOrEmpty(entry.AaGuid)) //Only load FIDO2 entries
                 {
                     try
                     {
-                        await LoadTocEntryStatement(repository, toc, entry, cacheUntil);
+                        await LoadTocEntryStatement(repository, blob, entry, cacheUntil);
                     }
                     catch (Exception ex)
                     {

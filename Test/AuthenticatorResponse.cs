@@ -263,13 +263,8 @@ namespace Test
                 {
                     AppID = true,
                     AuthenticatorSelection = true,
-                    BiometricAuthenticatorPerformanceBounds = true,
-                    GenericTransactionAuthorization = new byte[] { 0xf1, 0xd0 },
-                    SimpleTransactionAuthorization = "test",
                     Extensions = new string[] { "foo", "bar" },
                     Example = "test",
-                    Location = new GeoCoordinatePortable.GeoCoordinate(42.523714, -71.040860),
-                    UserVerificationIndex = new byte[] { 0xf1, 0xd0 },
                     UserVerificationMethod = new ulong[][]
                     {
                         new ulong[]
@@ -286,14 +281,8 @@ namespace Test
             Assert.True(rawResponse.Response.ClientDataJson.SequenceEqual(clientDataJson));
             Assert.True(rawResponse.Extensions.AppID);
             Assert.True(rawResponse.Extensions.AuthenticatorSelection);
-            Assert.True(rawResponse.Extensions.BiometricAuthenticatorPerformanceBounds);
-            Assert.True(rawResponse.Extensions.GenericTransactionAuthorization.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-            Assert.Equal("test", rawResponse.Extensions.SimpleTransactionAuthorization);
             Assert.Equal(rawResponse.Extensions.Extensions, new string[] { "foo", "bar" });
             Assert.Equal("test", rawResponse.Extensions.Example);
-            Assert.Equal(42.523714, rawResponse.Extensions.Location.Latitude);
-            Assert.Equal(-71.040860, rawResponse.Extensions.Location.Longitude);
-            Assert.True(rawResponse.Extensions.UserVerificationIndex.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
             Assert.Equal((ulong)4, rawResponse.Extensions.UserVerificationMethod[0][0]);
         }
 
@@ -1036,13 +1025,8 @@ namespace Test
                 {
                     AppID = true,
                     AuthenticatorSelection = true,
-                    BiometricAuthenticatorPerformanceBounds = true,
-                    GenericTransactionAuthorization = new byte[] { 0xf1, 0xd0 },
-                    SimpleTransactionAuthorization = "test",
                     Extensions = new string[] { "foo", "bar" },
                     Example = "test",
-                    Location = new GeoCoordinatePortable.GeoCoordinate(42.523714, -71.040860),
-                    UserVerificationIndex = new byte[] { 0xf1, 0xd0 },
                     UserVerificationMethod = new ulong[][]
                     {
                         new ulong[]
@@ -1061,14 +1045,8 @@ namespace Test
             Assert.True(assertionResponse.Response.UserHandle.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
             Assert.True(assertionResponse.Extensions.AppID);
             Assert.True(assertionResponse.Extensions.AuthenticatorSelection);
-            Assert.True(assertionResponse.Extensions.BiometricAuthenticatorPerformanceBounds);
-            Assert.True(assertionResponse.Extensions.GenericTransactionAuthorization.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-            Assert.Equal("test", assertionResponse.Extensions.SimpleTransactionAuthorization);
             Assert.Equal(assertionResponse.Extensions.Extensions, new string[] { "foo", "bar" });
             Assert.Equal("test", assertionResponse.Extensions.Example);
-            Assert.Equal(42.523714, assertionResponse.Extensions.Location.Latitude);
-            Assert.Equal(-71.040860, assertionResponse.Extensions.Location.Longitude);
-            Assert.True(assertionResponse.Extensions.UserVerificationIndex.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
             Assert.Equal((ulong)4, assertionResponse.Extensions.UserVerificationMethod[0][0]);
         }
     }

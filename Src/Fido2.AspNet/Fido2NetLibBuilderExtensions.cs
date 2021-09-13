@@ -55,12 +55,6 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        public static IFido2MetadataServiceBuilder AddStaticMetadataRepository(this IFido2MetadataServiceBuilder builder)
-        {
-            builder.Services.AddTransient<IMetadataRepository, StaticMetadataRepository>();
-
-            return builder;
-        }
         public static IFido2MetadataServiceBuilder AddConformanceMetadataRepository(
             this IFido2MetadataServiceBuilder builder,
             HttpClient client = null, 
@@ -75,12 +69,11 @@ namespace Microsoft.Extensions.DependencyInjection
         }
         public static IFido2MetadataServiceBuilder AddFidoMetadataRepository(
             this IFido2MetadataServiceBuilder builder,
-            string accessToken,
             HttpClient client = null)
         {
             builder.Services.AddTransient<IMetadataRepository>(provider =>
             {
-                return new Fido2MetadataServiceRepository(accessToken, client);
+                return new Fido2MetadataServiceRepository(client);
             });
 
             return builder;

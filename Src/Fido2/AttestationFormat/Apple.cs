@@ -51,32 +51,11 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Malformed x5c in Apple attestation");
 
             // 2. Verify x5c is a valid certificate chain starting from the credCert to the Apple WebAuthn root certificate.
-            // TODO: Pull this in instead of hard coding?
-            // https://www.apple.com/certificateauthority/Apple_WebAuthn_Root_CA.pem
-            var appleWebAuthnRoots =    new string[] {
-                "MIICEjCCAZmgAwIBAgIQaB0BbHo84wIlpQGUKEdXcTAKBggqhkjOPQQDAzBLMR8w" +
-                "HQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJ" +
-                "bmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMB4XDTIwMDMxODE4MjEzMloXDTQ1MDMx" +
-                "NTAwMDAwMFowSzEfMB0GA1UEAwwWQXBwbGUgV2ViQXV0aG4gUm9vdCBDQTETMBEG" +
-                "A1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTB2MBAGByqGSM49" +
-                "AgEGBSuBBAAiA2IABCJCQ2pTVhzjl4Wo6IhHtMSAzO2cv+H9DQKev3//fG59G11k" +
-                "xu9eI0/7o6V5uShBpe1u6l6mS19S1FEh6yGljnZAJ+2GNP1mi/YK2kSXIuTHjxA/" +
-                "pcoRf7XkOtO4o1qlcaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUJtdk" +
-                "2cV4wlpn0afeaxLQG2PxxtcwDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2cA" +
-                "MGQCMFrZ+9DsJ1PW9hfNdBywZDsWDbWFp28it1d/5w2RPkRX3Bbn/UbDTNLx7Jr3" +
-                "jAGGiQIwHFj+dJZYUJR786osByBelJYsVZd2GbHQu209b5RCmGQ21gpSAk9QZW4B" +
-                "1bWeT0vT"};
+            // This happens in AuthenticatorAttestationResponse.VerifyAsync using metadata from MDS3
 
             var trustPath = X5c.Values
                 .Select(x => new X509Certificate2(x.GetByteString()))
                 .ToArray();
-
-            var appleWebAuthnRootCerts = appleWebAuthnRoots
-                .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                .ToArray();
-
-            if (!CryptoUtils.ValidateTrustChain(trustPath, appleWebAuthnRootCerts))
-                throw new Fido2VerificationException("Invalid certificate chain in Apple attestation");
 
             // credCert is the first certificate in the trust path
             var credCert = trustPath[0];

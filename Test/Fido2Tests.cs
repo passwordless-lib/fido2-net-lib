@@ -29,20 +29,11 @@ namespace fido2_net_lib.Test
 
         static Fido2Tests()
         {
-            var MDSAccessKey = Environment.GetEnvironmentVariable("fido2:MDSAccessKey");
-
             var services = new ServiceCollection();
-
-            var staticClient = new StaticMetadataRepository();
 
             var repos = new List<IMetadataRepository>();
 
-            repos.Add(staticClient);
-
-            if (!string.IsNullOrEmpty(MDSAccessKey))
-            {
-                repos.Add(new Fido2MetadataServiceRepository(MDSAccessKey, null));
-            }
+            repos.Add(new Fido2MetadataServiceRepository(null));
 
             services.AddDistributedMemoryCache();
             services.AddLogging();
@@ -223,13 +214,8 @@ namespace fido2_net_lib.Test
                     {
                         AppID = true,
                         AuthenticatorSelection = true,
-                        BiometricAuthenticatorPerformanceBounds = true,
-                        GenericTransactionAuthorization = new byte[] { 0xf1, 0xd0 },
-                        SimpleTransactionAuthorization = "test",
                         Extensions = new string[] { "foo", "bar" },
                         Example = "test",
-                        Location = new GeoCoordinatePortable.GeoCoordinate(42.523714, -71.040860),
-                        UserVerificationIndex = new byte[] { 0xf1, 0xd0 },
                         UserVerificationMethod = new ulong[][]
                         {
                             new ulong[]
@@ -492,9 +478,9 @@ namespace fido2_net_lib.Test
         }
 
         [Fact]
-        public void MetadataTOCPayloadEntry_Can_Be_JSON_Roundtripped()
+        public void MetadataBLOBPayloadEntry_Can_Be_JSON_Roundtripped()
         {
-            var input = new MetadataTOCPayloadEntry()
+            var input = new MetadataBLOBPayloadEntry()
             {
                 AaGuid = Guid.NewGuid().ToString(),
                 MetadataStatement = new MetadataStatement(),
@@ -505,21 +491,25 @@ namespace fido2_net_lib.Test
             input.MetadataStatement.AaGuid = Guid.NewGuid().ToString();
             input.MetadataStatement.Description = "Test entry";
             input.MetadataStatement.AuthenticatorVersion = 1;
-            input.MetadataStatement.AssertionScheme = "abc123";
-            input.MetadataStatement.AuthenticationAlgorithm = 1;
             input.MetadataStatement.Upv = new UafVersion[] { new UafVersion
                 {
                     Major = 1,
                     Minor = 0,
                 } 
             };
-            input.MetadataStatement.AttestationTypes = new ushort[] { 1 };
+            input.MetadataStatement.ProtocolFamily = "foo";
+            input.MetadataStatement.AttestationTypes = new string[] { "bar" };
+            input.MetadataStatement.AuthenticationAlgorithms = new string[] { "alg0", "alg1" };
+            input.MetadataStatement.PublicKeyAlgAndEncodings = new string[] { "example0", "example1" };
+            input.MetadataStatement.TcDisplay = new string[] { "transaction","confirmation" };
+            input.MetadataStatement.KeyProtection = new string[] { "protector" };
+            input.MetadataStatement.MatcherProtection = new string[] { "stuff", "things" };
             input.MetadataStatement.UserVerificationDetails = Array.Empty<VerificationMethodDescriptor[]>();
             input.MetadataStatement.AttestationRootCertificates = new string[] { "..." };
 
             var json = JsonConvert.SerializeObject(input);
 
-            var output = JsonConvert.DeserializeObject<MetadataTOCPayloadEntry>(json);
+            var output = JsonConvert.DeserializeObject<MetadataBLOBPayloadEntry>(json);
 
             Assert.Equal(input.AaGuid, output.AaGuid);
 

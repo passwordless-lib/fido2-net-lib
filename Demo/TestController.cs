@@ -138,14 +138,6 @@ namespace Fido2Demo
             var exts = new AuthenticationExtensionsClientInputs
             { 
                 AppID = _origin,
-                SimpleTransactionAuthorization = "FIDO",
-                GenericTransactionAuthorization = new TxAuthGenericArg 
-                { 
-                    ContentType = "text/plain",
-                    Content = new byte[] { 0x46, 0x49, 0x44, 0x4F }
-                }, 
-                UserVerificationIndex = true, 
-                Location = true, 
                 UserVerificationMethod = true
             };
             if (null != assertionClientParams.Extensions && null != assertionClientParams.Extensions.Example)

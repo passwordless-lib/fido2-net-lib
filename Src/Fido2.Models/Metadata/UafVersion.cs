@@ -10,9 +10,14 @@ namespace Fido2NetLib
     /// </remarks>
     public class UafVersion
     {
+        /// <summary>
+        /// Major version
+        /// </summary>
         [JsonProperty("major")]
         public ushort Major { get; set; }
-
+        /// <summary>
+        /// Minor version
+        /// </summary>
         [JsonProperty("minor")]
         public ushort Minor { get; set; }
     }

@@ -11,19 +11,19 @@ namespace Fido2NetLib
     {
         protected readonly string _path;
 
-        protected readonly IDictionary<Guid, MetadataTOCPayloadEntry> _entries;
-        protected MetadataTOCPayload _toc;
+        protected readonly IDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
+        protected MetadataBLOBPayload _blob;
 
         public FileSystemMetadataRepository(string path)
         {
             _path = path;
-            _entries = new Dictionary<Guid, MetadataTOCPayloadEntry>();
+            _entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
+        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
-            if (_toc == null)
-                await GetToc();
+            if (_blob == null)
+                await GetBLOB();
 
             if (!string.IsNullOrEmpty(entry.AaGuid) && Guid.TryParse(entry.AaGuid, out Guid parsedAaGuid))
             {
@@ -34,7 +34,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        public Task<MetadataTOCPayload> GetToc()
+        public Task<MetadataBLOBPayload> GetBLOB()
         {
             if (Directory.Exists(_path))
             {
@@ -42,7 +42,7 @@ namespace Fido2NetLib
                 {
                     var rawStatement = File.ReadAllText(filename);
                     var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
-                    var conformanceEntry = new MetadataTOCPayloadEntry
+                    var conformanceEntry = new MetadataBLOBPayloadEntry
                     {
                         AaGuid = statement.AaGuid,
                         MetadataStatement = statement,
@@ -58,7 +58,7 @@ namespace Fido2NetLib
                 }
             }
 
-            _toc = new MetadataTOCPayload()
+            _blob = new MetadataBLOBPayload()
             {
                 Entries = _entries.Select(o => o.Value).ToArray(),
                 NextUpdate = "", //Empty means it won't get cached
@@ -66,7 +66,7 @@ namespace Fido2NetLib
                 Number = 1
             };
 
-            return Task.FromResult(_toc);
+            return Task.FromResult(_blob);
         }
     }
 }

@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
@@ -12,14 +11,14 @@ namespace Fido2NetLib
 
         protected readonly List<IMetadataRepository> _repositories;
         protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
-        protected readonly ConcurrentDictionary<Guid, MetadataTOCPayloadEntry> _entries;
+        protected readonly ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
         protected bool _initialized;
 
         public SimpleMetadataService(IEnumerable<IMetadataRepository> repositories)
         {
             _repositories = repositories.ToList();
             _metadataStatements = new ConcurrentDictionary<Guid, MetadataStatement>();
-            _entries = new ConcurrentDictionary<Guid, MetadataTOCPayloadEntry>();
+            _entries = new ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry>();
         }
 
         public bool ConformanceTesting()
@@ -27,7 +26,7 @@ namespace Fido2NetLib
             return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
         }
 
-        public MetadataTOCPayloadEntry GetEntry(Guid aaguid)
+        public MetadataBLOBPayloadEntry GetEntry(Guid aaguid)
         {
             if (!IsInitialized())
                 throw new InvalidOperationException("MetadataService must be initialized");
@@ -51,11 +50,11 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
+        protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             if (entry.AaGuid != null)
             {
-                var statement = await repository.GetMetadataStatement(toc, entry);
+                var statement = await repository.GetMetadataStatement(blob, entry);
 
                 if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                 {
@@ -66,16 +65,16 @@ namespace Fido2NetLib
 
         protected virtual async Task InitializeRepository(IMetadataRepository repository)
         {
-            var toc = await repository.GetToc();
+            var blob = await repository.GetBLOB();
 
-            foreach (var entry in toc.Entries)
+            foreach (var entry in blob.Entries)
             {
                 if (!string.IsNullOrEmpty(entry.AaGuid))
                 {
                     if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
                     {
                         //Load if it doesn't already exist
-                        await LoadEntryStatement(repository, toc, entry);
+                        await LoadEntryStatement(repository, blob, entry);
                     }
                 }
             }

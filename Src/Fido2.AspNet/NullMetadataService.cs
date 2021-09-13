@@ -10,7 +10,7 @@ namespace Fido2NetLib
             return false;
         }
 
-        MetadataTOCPayloadEntry IMetadataService.GetEntry(Guid aaguid)
+        MetadataBLOBPayloadEntry IMetadataService.GetEntry(Guid aaguid)
         {
             return null;
         }

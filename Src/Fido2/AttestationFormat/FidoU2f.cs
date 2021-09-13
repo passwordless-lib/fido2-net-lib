@@ -10,8 +10,6 @@ namespace Fido2NetLib
 {
     internal class FidoU2f : AttestationVerifier
     {
-        private readonly IMetadataService _metadataService;
-
         public override (AttestationType, X509Certificate2[]) Verify()
         {
             // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
