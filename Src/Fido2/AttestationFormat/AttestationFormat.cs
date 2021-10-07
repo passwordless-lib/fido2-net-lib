@@ -32,7 +32,7 @@ namespace Fido2NetLib
         internal static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
         {
             byte[] aaguid = null;
-            var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value == "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
+            var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
             if (null != ext)
             {
                 var decodedAaguid = AsnElt.Decode(ext.RawData);
@@ -49,7 +49,7 @@ namespace Fido2NetLib
         }
         internal static bool IsAttnCertCACert(X509ExtensionCollection exts)
         {
-            var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value == "2.5.29.19");
+            var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "2.5.29.19");
             if (null != ext && ext is X509BasicConstraintsExtension baseExt)
             {
                 return baseExt.CertificateAuthority;
@@ -60,7 +60,7 @@ namespace Fido2NetLib
         internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
         {
             var u2ftransports = new byte();
-            var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value == "1.3.6.1.4.1.45724.2.1.1");
+            var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.3.6.1.4.1.45724.2.1.1");
             if (null != ext)
             {
                 var decodedU2Ftransports = AsnElt.Decode(ext.RawData);

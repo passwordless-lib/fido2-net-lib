@@ -147,7 +147,7 @@ namespace Fido2NetLib
             for (var i = 0; i < lines.Length; i++)
             {
                 cline = lines[i].ToUpper();
-                if (cline == "")
+                if (cline is "")
                     continue;
                 if (cline.Length > PemStartStr.Length)
                 {

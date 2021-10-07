@@ -61,7 +61,7 @@ namespace Fido2NetLib
 
             var x5cArray = jwtHeaderJSON["x5c"] as JArray;
 
-            if (x5cArray == null)
+            if (x5cArray is null)
                 throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
             var x5cStrings = x5cArray.Values<string>().ToList();
 
@@ -116,13 +116,15 @@ namespace Fido2NetLib
 
             foreach (var claim in jwtToken.Claims)
             {
-                if (("nonce" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#string" == claim.ValueType) && (0 != claim.Value.Length))
+                if (claim.Type is "nonce" && claim.ValueType is "http://www.w3.org/2001/XMLSchema#string" && (0 != claim.Value.Length))
+                {
                     nonce = claim.Value;
-                if (("ctsProfileMatch" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#boolean" == claim.ValueType))
+                }
+                if (claim.Type is "ctsProfileMatch" && claim.ValueType is "http://www.w3.org/2001/XMLSchema#boolean")
                 {
                     ctsProfileMatch = bool.Parse(claim.Value);
                 }
-                if (("timestampMs" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#integer64" == claim.ValueType))
+                if (claim.Type is "timestampMs" && claim.ValueType is "http://www.w3.org/2001/XMLSchema#integer64")
                 {
                     timestampMs = DateTimeHelper.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
                 }
@@ -136,7 +138,7 @@ namespace Fido2NetLib
             }
 
             // 3. Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
-            if ("" == nonce)
+            if (nonce is "")
                 throw new Fido2VerificationException("Nonce value not found in SafetyNet attestation");
 
             byte[] nonceHash = null;
@@ -167,11 +169,11 @@ namespace Fido2NetLib
             var subject = attestationCert.GetNameInfo(X509NameType.DnsName, false);
 
             // 5. Verify that the attestation certificate is issued to the hostname "attest.android.com"
-            if (false == ("attest.android.com").Equals(subject))
+            if (subject is not "attest.android.com")
                 throw new Fido2VerificationException(string.Format("SafetyNet attestation cert DnsName invalid, want {0}, got {1}", "attest.android.com", subject));
 
             // 6. Verify that the ctsProfileMatch attribute in the payload of response is true
-            if (null == ctsProfileMatch)
+            if (ctsProfileMatch is null)
                 throw new Fido2VerificationException("SafetyNet response ctsProfileMatch missing");
                         
             if (true != ctsProfileMatch)

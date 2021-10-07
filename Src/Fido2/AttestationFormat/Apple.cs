@@ -12,9 +12,9 @@ namespace Fido2NetLib
     {
         public static byte[] GetAppleAttestationExtensionValue(X509ExtensionCollection exts)
         {
-            var appleExtension = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value == "1.2.840.113635.100.8.2");
+            var appleExtension = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.2.840.113635.100.8.2");
             
-            if (appleExtension == null || appleExtension.RawData == null || appleExtension.RawData.Length < 0x26)
+            if (appleExtension is null || appleExtension.RawData is null || appleExtension.RawData.Length < 0x26)
                 throw new Fido2VerificationException("Extension with OID 1.2.840.113635.100.8.2 not found on Apple attestation credCert");
 
             try
@@ -44,8 +44,8 @@ namespace Fido2NetLib
         public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
-            if (null == X5c || CBORType.Array != X5c.Type || X5c.Count < 2 ||
-                    null == X5c.Values || 0 == X5c.Values.Count ||
+            if (X5c is null || CBORType.Array != X5c.Type || X5c.Count < 2 ||
+                    X5c.Values is null || 0 == X5c.Values.Count ||
                     CBORType.ByteString != X5c.Values.First().Type ||
                     0 == X5c.Values.First().GetByteString().Length)
                 throw new Fido2VerificationException("Malformed x5c in Apple attestation");
