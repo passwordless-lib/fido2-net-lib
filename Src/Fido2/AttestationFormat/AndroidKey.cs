@@ -8,7 +8,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal class AndroidKey : AttestationVerifier
+    internal sealed class AndroidKey : AttestationVerifier
     {
         public static byte[] AttestationExtensionBytes(X509ExtensionCollection exts)
         {

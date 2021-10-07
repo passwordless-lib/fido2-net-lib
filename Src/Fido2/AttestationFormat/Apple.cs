@@ -8,7 +8,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal class Apple : AttestationVerifier
+    internal sealed class Apple : AttestationVerifier
     {
         public static byte[] GetAppleAttestationExtensionValue(X509ExtensionCollection exts)
         {

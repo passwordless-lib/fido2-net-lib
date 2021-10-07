@@ -9,7 +9,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal class Tpm : AttestationVerifier
+    internal sealed class Tpm : AttestationVerifier
     {
         public static readonly List<string> TPMManufacturers = new List<string>
         {
@@ -418,7 +418,7 @@ namespace Fido2NetLib
     // TPMS_ATTEST, TPMv2-Part2, section 10.12.8
     public class CertInfo
     {
-        private static readonly Dictionary<TpmAlg, ushort> tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
+        private static readonly Dictionary<TpmAlg, ushort> tpmAlgToDigestSizeMap = new()
         {
             {TpmAlg.TPM_ALG_SHA1,   (160/8) },
             {TpmAlg.TPM_ALG_SHA256, (256/8) },

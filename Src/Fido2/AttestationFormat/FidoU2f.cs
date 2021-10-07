@@ -8,7 +8,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal class FidoU2f : AttestationVerifier
+    internal sealed class FidoU2f : AttestationVerifier
     {
         public override (AttestationType, X509Certificate2[]) Verify()
         {

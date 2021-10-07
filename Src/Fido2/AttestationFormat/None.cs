@@ -1,10 +1,9 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    public class None : AttestationVerifier
+    public sealed class None : AttestationVerifier
     {
         public override (AttestationType, X509Certificate2[]) Verify()
         {

@@ -12,7 +12,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal class AndroidSafetyNet : AttestationVerifier
+    internal sealed class AndroidSafetyNet : AttestationVerifier
     {
         private readonly int _driftTolerance;
 
