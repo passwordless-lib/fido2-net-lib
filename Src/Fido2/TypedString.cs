@@ -4,7 +4,7 @@ using System;
 namespace Fido2NetLib
 {
     [JsonConverter(typeof(ToStringJsonConverter))]
-    public class TypedString : IEquatable<TypedString>
+    public sealed class TypedString : IEquatable<TypedString>
     {
 
         [JsonConstructor]
@@ -27,7 +27,7 @@ namespace Fido2NetLib
             if (ReferenceEquals(this, other))
                 return true;
 
-            if (ReferenceEquals(null, other))
+            if (other is null)
                 return false;
 
             //if your below implementation will involve objects of derived classes, then do a 
@@ -48,8 +48,8 @@ namespace Fido2NetLib
 
         public static bool operator ==(TypedString e1, TypedString e2)
         {
-            if (ReferenceEquals(e1, null))
-                return ReferenceEquals(e2, null);
+            if (e1 is null)
+                return e2 is null;
 
             return e1.Equals(e2);
         }
