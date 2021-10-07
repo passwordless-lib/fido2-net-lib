@@ -44,10 +44,10 @@ namespace Fido2NetLib
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             // (handled in base class)
-            if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
+            if (Sig is null || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid TPM attestation signature");
 
-            if ("2.0" != attStmt["ver"].AsString())
+            if (attStmt["ver"].AsString() is not "2.0")
                 throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
 
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
@@ -60,7 +60,7 @@ namespace Fido2NetLib
                 pubArea = new PubArea(attStmt["pubArea"].GetByteString());
             }
 
-            if (null == pubArea || null == pubArea.Unique || 0 == pubArea.Unique.Length)
+            if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
                 throw new Fido2VerificationException("Missing or malformed pubArea");
 
             var coseKty = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
@@ -99,7 +99,7 @@ namespace Fido2NetLib
                 certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
             }
 
-            if (null == certInfo)
+            if (certInfo is null)
                 throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
 
             // 4a. Verify that magic is set to TPM_GENERATED_VALUE
@@ -109,7 +109,7 @@ namespace Fido2NetLib
             // Handled in CertInfo constructor, see CertInfo.Type
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (null == Alg || true != Alg.IsNumber)
+            if (Alg is null || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
                 
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
@@ -130,7 +130,7 @@ namespace Fido2NetLib
             // 5. If x5c is present, this indicates that the attestation type is not ECDAA
             if (null != X5c && CBORType.Array == X5c.Type && 0 != X5c.Count)
             {
-                if (null == X5c.Values || 0 == X5c.Values.Count ||
+                if (X5c.Values is null || X5c.Values.Count is 0 ||
                     CBORType.ByteString != X5c.Values.First().Type ||
                     0 == X5c.Values.First().GetByteString().Length)
                 {
@@ -474,7 +474,7 @@ namespace Fido2NetLib
 
         public CertInfo(byte[] certInfo)
         {
-            if (null == certInfo || 0 == certInfo.Length)
+            if (certInfo is null || certInfo.Length is 0)
                 throw new Fido2VerificationException("Malformed certInfo bytes");
             Raw = certInfo;
             var offset = 0;
@@ -486,7 +486,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Bad structure tag " + BitConverter.ToString(Type).Replace("-", ""));
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-            if (null == ExtraData || 0 == ExtraData.Length)
+            if (ExtraData is null || ExtraData.Length is 0)
                 throw new Fido2VerificationException("Bad extraData in certInfo");
             Clock = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
             ResetCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);

@@ -12,7 +12,7 @@ namespace Fido2NetLib
     {
         protected AuthenticatorResponse(byte[] clientDataJson)
         {
-            if (null == clientDataJson)
+            if (clientDataJson is null)
                 throw new Fido2VerificationException("clientDataJson cannot be null");
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON
             var JSONtext = Encoding.UTF8.GetString(clientDataJson);
@@ -30,7 +30,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Malformed clientDataJson");
             }
 
-            if (null == response)
+            if (response is null)
                 throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
             Type = response.Type;
             Challenge = response.Challenge;
@@ -60,7 +60,7 @@ namespace Fido2NetLib
             if (Type != "webauthn.create" && Type != "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
 
-            if (null == Challenge)
+            if (Challenge is null)
                 throw new Fido2VerificationException("Challenge cannot be null");
 
             // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call

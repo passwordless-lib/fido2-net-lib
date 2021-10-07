@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -577,7 +577,7 @@ public class AsnElt {
 		if (off < 0) {
 			throw new AsnException("invalid value offset: " + off);
 		}
-		if (objBuf == null) {
+		if (objBuf is null) {
 			int k = 0;
 			foreach (AsnElt a in Sub) {
 				int slen = a.EncodedLength;
@@ -718,7 +718,7 @@ public class AsnElt {
 	int EncodeValue(int start, int end, byte[] dst, int dstOff)
 	{
 		int orig = dstOff;
-		if (objBuf == null) {
+		if (objBuf is null) {
 			int k = 0;
 			foreach (AsnElt a in Sub) {
 				int slen = a.EncodedLength;
@@ -781,7 +781,7 @@ public class AsnElt {
 	 */
 	byte[] GetValue(out int off, out int len)
 	{
-		if (objBuf == null) {
+		if (objBuf is null) {
 			/*
 			 * We can modify objBuf because CopyValue()
 			 * called ValueLength, thus valLen has been
@@ -1169,7 +1169,7 @@ public class AsnElt {
 					tcOff ++;
 				}
 			}
-			if (tc == null) {
+			if (tc is null) {
 				tc = new char[tcOff];
 			}
 		}
@@ -1275,7 +1275,7 @@ public class AsnElt {
 					tcOff ++;
 				}
 			}
-			if (tc == null) {
+			if (tc is null) {
 				tc = new char[tcOff];
 			}
 		}
@@ -1636,7 +1636,7 @@ public class AsnElt {
 	{
 		string tt = (type == UTCTime) ? "UTCTime" : "GeneralizedTime";
 		string msg = String.Format("invalid {0} string: '{1}'", tt, s);
-		if (e == null) {
+		if (e is null) {
 			return new AsnException(msg);
 		} else {
 			return new AsnException(msg, e);
@@ -1916,7 +1916,7 @@ public class AsnElt {
 		}
 		a.TagClass = tagClass;
 		a.TagValue = tagValue;
-		if (subs == null) {
+		if (subs is null) {
 			a.Sub = new AsnElt[0];
 		} else {
 			a.Sub = new AsnElt[subs.Length];
@@ -1941,7 +1941,7 @@ public class AsnElt {
 		a.hasEncodedHeader = false;
 		a.TagClass = UNIVERSAL;
 		a.TagValue = SET;
-		if (subs == null) {
+		if (subs is null) {
 			a.Sub = new AsnElt[0];
 		} else {
 			SortedDictionary<byte[], AsnElt> d =

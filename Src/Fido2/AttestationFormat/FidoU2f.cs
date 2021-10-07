@@ -19,11 +19,11 @@ namespace Fido2NetLib
             // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             // (handled in base class)
-            if (null == X5c || CBORType.Array != X5c.Type || X5c.Count != 1)
+            if (X5c is null || CBORType.Array != X5c.Type || X5c.Count != 1)
                 throw new Fido2VerificationException("Malformed x5c in fido - u2f attestation");
 
             // 2a. Check that x5c has exactly one element and let attCert be that element.
-            if (null == X5c.Values || 0 == X5c.Values.Count ||
+            if (X5c.Values is null || 0 == X5c.Values.Count ||
                 CBORType.ByteString != X5c.Values.First().Type ||
                 0 == X5c.Values.First().GetByteString().Length)
                 throw new Fido2VerificationException("Malformed x5c in fido-u2f attestation");
@@ -71,7 +71,7 @@ namespace Fido2NetLib
                                 .ToArray();
 
             // 6. Verify the sig using verificationData and certificate public key
-            if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
+            if (Sig is null || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
 
             byte[] ecsig;

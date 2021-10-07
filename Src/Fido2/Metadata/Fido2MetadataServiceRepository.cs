@@ -137,12 +137,12 @@ namespace Fido2NetLib
 
             var blobAlg = blobHeader["alg"]?.Value<string>();
 
-            if (blobAlg == null)
+            if (blobAlg is null)
                 throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
             var x5cArray = blobHeader["x5c"] as JArray;
 
-            if (x5cArray == null)
+            if (x5cArray is null)
                 throw new Exception("No x5c array was present in the BLOB header.");
 
             var keyStrings = x5cArray.Values<string>().ToList();

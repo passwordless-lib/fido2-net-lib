@@ -26,10 +26,10 @@ namespace Fido2NetLib
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
-            if (null == rawResponse || null == rawResponse.Response)
+            if (rawResponse is null || rawResponse.Response is null)
                 throw new Fido2VerificationException("Expected rawResponse, got null");
 
-            if (null == rawResponse.Response.AttestationObject || 0 == rawResponse.Response.AttestationObject.Length)
+            if (rawResponse.Response.AttestationObject is null || 0 == rawResponse.Response.AttestationObject.Length)
                 throw new Fido2VerificationException("Missing AttestationObject");
 
             // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
@@ -43,11 +43,11 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("AttestationObject invalid CBOR", ex);
             }
 
-            if (null == cborAttestation["fmt"]
+            if (cborAttestation["fmt"] is null
                 || CBORType.TextString != cborAttestation["fmt"].Type
-                || null == cborAttestation["attStmt"]
+                || cborAttestation["attStmt"] is null
                 || CBORType.Map != cborAttestation["attStmt"].Type
-                || null == cborAttestation["authData"]
+                || cborAttestation["authData"] is null
                 || CBORType.ByteString != cborAttestation["authData"].Type)
                 throw new Fido2VerificationException("Malformed AttestationObject");
 
@@ -82,7 +82,7 @@ namespace Fido2NetLib
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
             BaseVerify(config.Origin, originalOptions.Challenge, requestTokenBindingId);
 
-            if (Raw.Id == null || Raw.Id.Length == 0)
+            if (Raw.Id is null || Raw.Id.Length == 0)
                 throw new Fido2VerificationException("AttestationResponse is missing Id");
 
             if (Raw.Type != PublicKeyCredentialType.PublicKey)
@@ -148,7 +148,7 @@ namespace Fido2NetLib
             var entry = metadataService?.GetEntry(authData.AttestedCredentialData.AaGuid);
 
             // while conformance testing, we must reject any authenticator that we cannot get metadata for
-            if (metadataService?.ConformanceTesting() == true && null == entry && AttestationType.None != attType && "fido-u2f" != AttestationObject.Fmt)
+            if (metadataService?.ConformanceTesting() is true && entry is null && AttestationType.None != attType && AttestationObject.Fmt is not "fido-u2f")
                 throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
 
             if (null != trustPath)

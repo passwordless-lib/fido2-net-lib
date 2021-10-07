@@ -132,16 +132,16 @@ namespace Fido2NetLib
                 throw new ArgumentException("The JWT does not have the 3 expected components");
 
             var blobHeader = jwtParts.First();
-            var tokenHeader = JObject.Parse(System.Text.Encoding.UTF8.GetString(Base64Url.Decode(blobHeader)));
+            var tokenHeader = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(blobHeader)));
 
             var blobAlg = tokenHeader["alg"]?.Value<string>();
 
-            if(blobAlg == null)
+            if(blobAlg is null)
                 throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
             var x5cArray = tokenHeader["x5c"] as JArray;
 
-            if (x5cArray == null)
+            if (x5cArray is null)
                 throw new ArgumentException("No x5c array was present in the BLOB header.");
 
             var rootCert = GetX509Certificate(ROOT_CERT);

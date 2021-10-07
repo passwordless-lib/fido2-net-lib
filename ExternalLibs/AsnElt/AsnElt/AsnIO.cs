@@ -97,7 +97,7 @@ public static class AsnIO {
 				str = ConvertBi(buf, 0, false);
 			}
 		}
-		if (str == null) {
+		if (str is null) {
 			if (buf[0] == 0xEF
 				&& buf[1] == 0xBB
 				&& buf[2] == 0xBF)
@@ -109,7 +109,7 @@ public static class AsnIO {
 				str = ConvertMono(buf, 0);
 			}
 		}
-		if (str == null) {
+		if (str is null) {
 			return null;
 		}
 
