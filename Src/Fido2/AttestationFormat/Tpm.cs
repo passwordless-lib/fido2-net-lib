@@ -52,7 +52,7 @@ namespace Fido2NetLib
 
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
             // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
-            PubArea pubArea = null;
+            PubArea? pubArea = null;
             if (null != attStmt["pubArea"] &&
                 CBORType.ByteString == attStmt["pubArea"].Type &&
                 0 != attStmt["pubArea"].GetByteString().Length)
@@ -91,7 +91,7 @@ namespace Fido2NetLib
             // See Data field of base class
 
             // 4. Validate that certInfo is valid
-            CertInfo certInfo = null;
+            CertInfo? certInfo = null;
             if (null != attStmt["certInfo"] &&
                 CBORType.ByteString == attStmt["certInfo"].Type &&
                 0 != attStmt["certInfo"].GetByteString().Length)
@@ -443,13 +443,13 @@ namespace Fido2NetLib
                 size = BitConverter.ToUInt16(bytes.ToArray().Reverse().ToArray(), 0);
             }
             // If size is four, then the Name is a handle. 
-            if (4 == size)
+            if (size is 4)
                 throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
             // If size is zero, then no Name is present. 
-            if (0 == size)
+            if (size is 0)
                 throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
             // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
-            byte[] name = null;
+            byte[] name;
             if (Enum.IsDefined(typeof(TpmAlg), size))
             {
                 var tpmalg = (TpmAlg)size;
@@ -467,7 +467,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Invalid TPM_ALG_ID found in TPM2B_NAME");
             }
 
-            if (totalSize != bytes.Length + name.Length)
+            if (totalSize != bytes!.Length + name.Length)
                 throw new Fido2VerificationException("Unexpected extra bytes found in TPM2B_NAME");
             return (size, name);
         }
@@ -595,12 +595,12 @@ namespace Fido2NetLib
         public byte[] Alg { get; private set; }
         public byte[] Attributes { get; private set; }
         public byte[] Policy { get; private set; }
-        public byte[] Symmetric { get; private set; }
-        public byte[] Scheme { get; private set; }
-        public byte[] KeyBits { get; private set; }
+        public byte[]? Symmetric { get; private set; }
+        public byte[]? Scheme { get; private set; }
+        public byte[]? KeyBits { get; private set; }
         public uint Exponent { get; private set; }
-        public byte[] CurveID { get; private set; }
-        public byte[] KDF { get; private set; }
+        public byte[]? CurveID { get; private set; }
+        public byte[]? KDF { get; private set; }
         public byte[] Unique { get; private set; }
         public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BitConverter.ToUInt16(CurveID.Reverse().ToArray(), 0).ToString());
         public ECPoint ECPoint

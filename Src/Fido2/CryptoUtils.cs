@@ -139,11 +139,11 @@ namespace Fido2NetLib
         {
             const string PemStartStr = "-----BEGIN";
             const string PemEndStr = "-----END";
-            byte[] retval = null;
+            byte[] retval;
             var lines = pemStr.Split('\n');
             var base64Str = "";
             bool started = false, ended = false;
-            var cline = "";
+            string cline;
             for (var i = 0; i < lines.Length; i++)
             {
                 cline = lines[i].ToUpper();

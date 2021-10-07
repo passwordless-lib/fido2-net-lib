@@ -17,7 +17,7 @@ namespace Fido2NetLib.Development
             return _storedUsers.GetOrAdd(username, addCallback());
         }
 
-        public Fido2User GetUser(string username)
+        public Fido2User? GetUser(string username)
         {
             _storedUsers.TryGetValue(username, out var user);
             return user;
@@ -61,6 +61,8 @@ namespace Fido2NetLib.Development
             return Task.FromResult(_storedUsers.Where(u => u.Value.Id.SequenceEqual(cred.UserId)).Select(u => u.Value).ToList());
         }
     }
+
+#nullable disable
 
     public class StoredCredential
     {

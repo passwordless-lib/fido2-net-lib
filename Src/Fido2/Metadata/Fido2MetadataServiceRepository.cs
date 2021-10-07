@@ -44,7 +44,7 @@ namespace Fido2NetLib
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public async Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             var statementBase64Url = await DownloadStringAsync(entry.Url);
             

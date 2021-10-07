@@ -12,7 +12,7 @@ namespace Fido2NetLib
         protected readonly string _path;
 
         protected readonly IDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
-        protected MetadataBLOBPayload _blob;
+        protected MetadataBLOBPayload? _blob;
 
         public FileSystemMetadataRepository(string path)
         {
@@ -20,7 +20,7 @@ namespace Fido2NetLib
             _entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public async Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             if (_blob is null)
                 await GetBLOB();

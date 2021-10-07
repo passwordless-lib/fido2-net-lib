@@ -1,4 +1,6 @@
-﻿using PeterO.Cbor;
+﻿#nullable disable
+
+using PeterO.Cbor;
 using System;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
