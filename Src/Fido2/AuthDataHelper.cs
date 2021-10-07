@@ -15,7 +15,7 @@ namespace Fido2NetLib
                 len = BinaryPrimitives.ReadUInt16BigEndian(ab.Slice(offset, 2).Span);
                 offset += 2;
             }
-            byte[] result = null;
+            byte[] result = null!;
             if ((0 < len) && ((offset + len) <= ab.Length)) 
             {
                 result = ab.Slice(offset, len).ToArray();

@@ -1,18 +1,24 @@
 ﻿namespace Fido2NetLib
 {
-    public class TokenBindingDto
+    public sealed class TokenBindingDto
     {
+        public TokenBindingDto(string status, string id)
+        {
+            Status = status;
+            Id = id;
+        }
+
         /// <summary>
         /// Either "present" or "supported". https://www.w3.org/TR/webauthn/#enumdef-tokenbindingstatus
         /// supported: Indicates the client supports token binding, but it was not negotiated when communicating with the Relying Party.
         /// present: Indicates token binding was used when communicating with the Relying Party. In this case, the id member MUST be present
         /// </summary>
-        public string Status { get; set; }
+        public string Status { get; }
 
         /// <summary>
         /// This member MUST be present if status is present, and MUST a base64url encoding of the Token Binding ID that was used when communicating with the Relying Party.
         /// </summary>
-        public string Id { get; set; }
+        public string Id { get; }
 
         public void Verify(byte[] requestTokenbinding)
         {

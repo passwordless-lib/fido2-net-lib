@@ -10,7 +10,7 @@ namespace Fido2NetLib
 {
     internal sealed class AndroidKey : AttestationVerifier
     {
-        public static byte[] AttestationExtensionBytes(X509ExtensionCollection exts)
+        public static byte[]? AttestationExtensionBytes(X509ExtensionCollection exts)
         {
             foreach (var ext in exts)
             {

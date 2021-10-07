@@ -29,7 +29,7 @@ namespace Fido2NetLib
                                         "xubSa3y3v5ormpPqCwfqn9s0MLBAtzCIgxQ/zkzPKctkiwoPtDzI51KnAjAmeMyg" +
                                         "X2S5Ht8+e+EQnezLJBJXtnkRWY+Zt491wgt/AwSs5PHHMv5QgjELOuMxQBc=";
 
-        protected readonly string _blobUrl;
+        protected readonly string? _blobUrl;
         protected readonly HttpClient _httpClient;
 
         private readonly string _origin = "http://localhost";
@@ -71,7 +71,7 @@ namespace Fido2NetLib
             {
                 var rawBlob = await DownloadStringAsync(BLOBUrl);
 
-                MetadataBLOBPayload blob = null;
+                MetadataBLOBPayload blob;
 
                 try
                 {

@@ -113,12 +113,13 @@ namespace Fido2NetLib.Objects
                 );
                 return rsa;
             }
-            return null;
+
+            throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
         }
 
         internal ECDsa CreateECDsa()
         {
-            if (_type == COSE.KeyType.EC2)
+            if (_type is COSE.KeyType.EC2)
             {
                 var point = new ECPoint
                 {
@@ -184,7 +185,9 @@ namespace Fido2NetLib.Objects
                     Curve = curve
                 });
             }
-            return null;
+
+            throw new InvalidOperationException($"Must be a EC2 key. Was {_type}");
+
         }
 
         internal RSASignaturePadding Padding
@@ -209,7 +212,8 @@ namespace Fido2NetLib.Objects
                             throw new InvalidOperationException($"Missing or unknown alg {_alg}");
                     }
                 }
-                return null;
+
+                throw new InvalidOperationException($"Must be a RA key. Was {_type}");
             }
         }
 
@@ -235,7 +239,8 @@ namespace Fido2NetLib.Objects
                             throw new InvalidOperationException($"Missing or unknown alg {_alg}");
                     }
                 }
-                return null;
+
+                throw new InvalidOperationException($"Must be a OKP key. Was {_type}");
             }
         }
 

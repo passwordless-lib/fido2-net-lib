@@ -95,7 +95,7 @@ namespace Fido2NetLib
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken validatedToken = null;
+            SecurityToken validatedToken;
             try
             { 
                 tokenHandler.ValidateToken(
@@ -112,7 +112,7 @@ namespace Fido2NetLib
             bool? ctsProfileMatch = null;
             var timestampMs = DateTimeHelper.UnixEpoch;
 
-            var jwtToken = validatedToken as JwtSecurityToken;
+            var jwtToken = (JwtSecurityToken)validatedToken;
 
             foreach (var claim in jwtToken.Claims)
             {
@@ -141,7 +141,7 @@ namespace Fido2NetLib
             if (nonce is "")
                 throw new Fido2VerificationException("Nonce value not found in SafetyNet attestation");
 
-            byte[] nonceHash = null;
+            byte[] nonceHash;
             try
             {
                 nonceHash = Convert.FromBase64String(nonce);

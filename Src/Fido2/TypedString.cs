@@ -22,7 +22,7 @@ namespace Fido2NetLib
             return Value;
         }
 
-        public bool Equals(TypedString other)
+        public bool Equals(TypedString? other)
         {
             if (ReferenceEquals(this, other))
                 return true;
@@ -41,7 +41,7 @@ namespace Fido2NetLib
             return false;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals(obj as TypedString);
         }

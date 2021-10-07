@@ -39,11 +39,13 @@ namespace Fido2NetLib
 
         }
 
+#nullable disable
         [JsonConstructor]
         private AuthenticatorResponse()
         {
 
         }
+#nullable enable
 
         public string Type { get; set; }
 

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -54,12 +56,12 @@ namespace Fido2NetLib
             var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
             {
                 Raw = rawResponse,
-                AttestationObject = new ParsedAttestationObject()
-                {
-                    Fmt = cborAttestation["fmt"].AsString(),
-                    AttStmt = cborAttestation["attStmt"], // convert to dictionary?
-                    AuthData = cborAttestation["authData"].GetByteString()
-                }
+                AttestationObject = new ParsedAttestationObject
+                (
+                    fmt      : cborAttestation["fmt"].AsString(),
+                    attStmt  : cborAttestation["attStmt"], // convert to dictionary?
+                    authData : cborAttestation["authData"].GetByteString()
+                )
             };
             return response;
         }
@@ -216,11 +218,18 @@ namespace Fido2NetLib
         /// <summary>
         /// The AttestationObject after CBOR parsing
         /// </summary>
-        public class ParsedAttestationObject
+        public sealed class ParsedAttestationObject
         {
+            public ParsedAttestationObject(string fmt, CBORObject attStmt, byte[] authData)
+            {
+                Fmt = fmt;
+                AttStmt = attStmt;
+                AuthData = authData;
+            }
+
             public string Fmt { get; set; }
-            public byte[] AuthData { get; set; }
             public CBORObject AttStmt { get; set; }
+            public byte[] AuthData { get; set; }
         }
     }
 }

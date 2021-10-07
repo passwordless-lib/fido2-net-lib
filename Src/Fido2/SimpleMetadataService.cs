@@ -26,7 +26,7 @@ namespace Fido2NetLib
             return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
         }
 
-        public MetadataBLOBPayloadEntry GetEntry(Guid aaguid)
+        public MetadataBLOBPayloadEntry? GetEntry(Guid aaguid)
         {
             if (!IsInitialized())
                 throw new InvalidOperationException("MetadataService must be initialized");

@@ -13,7 +13,7 @@ namespace Fido2NetLib
         /// </summary>
         /// <param name="aaguid">The Authenticator Attestation GUID.</param>
         /// <returns>Returns the entry; Otherwise <c>null</c>.</returns>
-        MetadataBLOBPayloadEntry GetEntry(Guid aaguid);
+        MetadataBLOBPayloadEntry? GetEntry(Guid aaguid);
         /// <summary>
         /// Gets a value indicating whether the internal access token is valid.
         /// </summary>
