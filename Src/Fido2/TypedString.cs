@@ -4,9 +4,8 @@ using System;
 namespace Fido2NetLib
 {
     [JsonConverter(typeof(ToStringJsonConverter))]
-    public sealed class TypedString : IEquatable<TypedString>
+    public class TypedString : IEquatable<TypedString>
     {
-
         [JsonConstructor]
         protected TypedString(string value)
         {
