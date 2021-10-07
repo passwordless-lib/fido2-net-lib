@@ -11,8 +11,7 @@ using Microsoft.IdentityModel.Json.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
-{
-   
+{   
     public class ConformanceMetadataRepository : IMetadataRepository
     {
         protected const string ROOT_CERT = "MIICaDCCAe6gAwIBAgIPBCqih0DiJLW7+UHXx/o1MAoGCCqGSM49BAMDMGcxCzAJ" +
@@ -42,9 +41,9 @@ namespace Fido2NetLib
             _origin = origin;
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
-            return entry.MetadataStatement;
+            return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
         public async Task<MetadataBLOBPayload> GetBLOB()
