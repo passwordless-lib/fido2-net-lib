@@ -22,7 +22,7 @@
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
     <!-- Pin down language version -->
-    <LangVersion>8</LangVersion>
+    <LangVersion>9</LangVersion>
     <!-- Running with "latest" means time alone will make builds non-reproducable... aww hell na -->
   </PropertyGroup>
   <!--MISC-->
