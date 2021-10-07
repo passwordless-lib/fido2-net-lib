@@ -9,8 +9,8 @@ namespace Fido2NetLib.Development
 {
     public class DevelopmentInMemoryStore
     {
-        private readonly ConcurrentDictionary<string, Fido2User> _storedUsers = new ConcurrentDictionary<string, Fido2User>();
-        private readonly List<StoredCredential> _storedCredentials = new List<StoredCredential>();
+        private readonly ConcurrentDictionary<string, Fido2User> _storedUsers = new();
+        private readonly List<StoredCredential> _storedCredentials = new();
 
         public Fido2User GetOrAddUser(string username, Func<Fido2User> addCallback)
         {
