@@ -213,7 +213,7 @@ namespace Fido2NetLib.Objects
                     }
                 }
 
-                throw new InvalidOperationException($"Must be a RA key. Was {_type}");
+                throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
             }
         }
 
