@@ -1960,7 +1960,7 @@ public class AsnElt {
 		return a;
 	}
 
-	static IComparer<byte[]> COMPARER_LEXICOGRAPHIC =
+	static readonly IComparer<byte[]> COMPARER_LEXICOGRAPHIC =
 		new ComparerLexicographic();
 
 	class ComparerLexicographic : IComparer<byte[]> {
