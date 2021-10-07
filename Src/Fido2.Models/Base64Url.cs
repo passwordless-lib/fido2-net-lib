@@ -9,7 +9,7 @@ namespace Fido2NetLib
     public static class Base64Url
     {
         /// <summary>
-        /// Converts arg data to a Base64Url encoded string
+        /// Converts arg data to a Base64Url encoded string.
         /// </summary>
         public static string Encode(byte[] arg)
         {
@@ -24,7 +24,7 @@ namespace Fido2NetLib
             
             Convert.ToBase64CharArray(arg, 0, arg.Length, base64Chars, 0);
 
-            var base64Url = base64Chars.AsSpan();
+            Span<char> base64Url = base64Chars.AsSpan();
 
             for (int i = 0; i < base64Url.Length; i++)
             {
@@ -47,19 +47,8 @@ namespace Fido2NetLib
             return base64Url.ToString();
         }
 
-        public static string EncodeWithPadding(byte[] arg)
-        {
-            string s = Convert.ToBase64String(arg); // Standard base64 encoder
-
-            //s = s.Split('=')[0]; // Remove any trailing '='s
-            s = s.Replace('+', '-'); // 62nd char of encoding
-            s = s.Replace('/', '_'); // 63rd char of encoding
-
-            return s;
-        }
-
         /// <summary>
-        /// Decodes a Base64Url encoded string to its raw bytes
+        /// Decodes a Base64Url encoded string to its raw bytes.
         /// </summary>
         public static byte[] Decode(string text)
         {
