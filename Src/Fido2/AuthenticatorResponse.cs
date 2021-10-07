@@ -57,7 +57,7 @@ namespace Fido2NetLib
 
         protected void BaseVerify(string expectedOrigin, byte[] originalChallenge, byte[] requestTokenBindingId)
         {
-            if (Type != "webauthn.create" && Type != "webauthn.get")
+            if (Type is not "webauthn.create" && Type is not "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
 
             if (Challenge is null)

@@ -73,7 +73,7 @@ namespace Fido2NetLib
             // Above handled in base class constructor
 
             // 3. Verify that the value of C.type is webauthn.create
-            if (Type != "webauthn.create")
+            if (Type is not "webauthn.create")
                 throw new Fido2VerificationException("AttestationResponse is not type webauthn.create");
 
             // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.

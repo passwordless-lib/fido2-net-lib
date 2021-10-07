@@ -99,7 +99,7 @@ namespace Fido2NetLib
 
 
             // 7. Verify that the value of C.type is the string webauthn.get.
-            if (Type != "webauthn.get")
+            if (Type is not "webauthn.get")
                 throw new Fido2VerificationException("AssertionResponse is not type webauthn.get");
 
             // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
