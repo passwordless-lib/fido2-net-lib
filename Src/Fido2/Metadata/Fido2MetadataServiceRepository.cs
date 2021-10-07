@@ -73,11 +73,11 @@ namespace Fido2NetLib
 
         public async Task<MetadataBLOBPayload> GetBLOB()
         {
-            var rawBLOB = await GetRawBlob();
-            return await DeserializeAndValidateBlob(rawBLOB);
+            var rawBLOB = await GetRawBlobAsync();
+            return await DeserializeAndValidateBlobAsync(rawBLOB);
         }
 
-        protected async Task<string> GetRawBlob()
+        protected async Task<string> GetRawBlobAsync()
         {
             var url = _blobUrl;
             return await DownloadStringAsync(url);
@@ -121,7 +121,7 @@ namespace Fido2NetLib
             }
         }
 
-        protected async Task<MetadataBLOBPayload> DeserializeAndValidateBlob(string rawBLOBJwt)
+        protected async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt)
         {
            
             if (string.IsNullOrWhiteSpace(rawBLOBJwt))
