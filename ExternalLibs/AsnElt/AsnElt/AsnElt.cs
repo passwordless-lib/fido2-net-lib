@@ -579,7 +579,7 @@ public class AsnElt {
 		if (off < 0) {
 			throw new AsnException("invalid value offset: " + off);
 		}
-		if (objBuf is null) {
+		if (objBuf == null) {
 			int k = 0;
 			foreach (AsnElt a in Sub) {
 				int slen = a.EncodedLength;
@@ -720,7 +720,7 @@ public class AsnElt {
 	int EncodeValue(int start, int end, byte[] dst, int dstOff)
 	{
 		int orig = dstOff;
-		if (objBuf is null) {
+		if (objBuf == null) {
 			int k = 0;
 			foreach (AsnElt a in Sub) {
 				int slen = a.EncodedLength;
@@ -783,7 +783,7 @@ public class AsnElt {
 	 */
 	byte[] GetValue(out int off, out int len)
 	{
-		if (objBuf is null) {
+		if (objBuf == null) {
 			/*
 			 * We can modify objBuf because CopyValue()
 			 * called ValueLength, thus valLen has been
@@ -1171,7 +1171,7 @@ public class AsnElt {
 					tcOff ++;
 				}
 			}
-			if (tc is null) {
+			if (tc == null) {
 				tc = new char[tcOff];
 			}
 		}
@@ -1277,7 +1277,7 @@ public class AsnElt {
 					tcOff ++;
 				}
 			}
-			if (tc is null) {
+			if (tc == null) {
 				tc = new char[tcOff];
 			}
 		}
@@ -1638,7 +1638,7 @@ public class AsnElt {
 	{
 		string tt = (type == UTCTime) ? "UTCTime" : "GeneralizedTime";
 		string msg = String.Format("invalid {0} string: '{1}'", tt, s);
-		if (e is null) {
+		if (e == null) {
 			return new AsnException(msg);
 		} else {
 			return new AsnException(msg, e);
@@ -1647,7 +1647,7 @@ public class AsnElt {
 
 	/* =============================================================== */
 
-	/*
+	/*is 
 	 * Create a new element for a primitive value. The provided buffer
 	 * is internally copied.
 	 */
@@ -1918,7 +1918,7 @@ public class AsnElt {
 		}
 		a.TagClass = tagClass;
 		a.TagValue = tagValue;
-		if (subs is null) {
+		if (subs == null) {
 			a.Sub = new AsnElt[0];
 		} else {
 			a.Sub = new AsnElt[subs.Length];
@@ -1943,7 +1943,7 @@ public class AsnElt {
 		a.hasEncodedHeader = false;
 		a.TagClass = UNIVERSAL;
 		a.TagValue = SET;
-		if (subs is null) {
+		if (subs == null) {
 			a.Sub = new AsnElt[0];
 		} else {
 			SortedDictionary<byte[], AsnElt> d =
@@ -1962,7 +1962,7 @@ public class AsnElt {
 		return a;
 	}
 
-	static readonly IComparer<byte[]> COMPARER_LEXICOGRAPHIC =
+	static IComparer<byte[]> COMPARER_LEXICOGRAPHIC =
 		new ComparerLexicographic();
 
 	class ComparerLexicographic : IComparer<byte[]> {

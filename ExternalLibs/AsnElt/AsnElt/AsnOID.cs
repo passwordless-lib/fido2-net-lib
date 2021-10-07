@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,8 +6,10 @@ namespace Asn1 {
 
 public class AsnOID {
 
-    private static readonly Dictionary<string, string> OIDToName = new();
-    private static readonly Dictionary<string, string> NameToOID = new();
+	static Dictionary<string, string> OIDToName =
+		new Dictionary<string, string>();
+	static Dictionary<string, string> NameToOID =
+		new Dictionary<string, string>();
 
 	static AsnOID()
 	{
