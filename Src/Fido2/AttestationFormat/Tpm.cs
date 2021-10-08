@@ -525,7 +525,7 @@ namespace Fido2NetLib
 
             // TPMI_ALG_PUBLIC
             Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type).ToString());
+            var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
 
             // TPMI_ALG_HASH 
             Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
@@ -603,7 +603,7 @@ namespace Fido2NetLib
         public byte[]? CurveID { get; private set; }
         public byte[]? KDF { get; private set; }
         public byte[] Unique { get; private set; }
-        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID).ToString());
+        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.ToObject(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID));
         public ECPoint ECPoint
         {
             get

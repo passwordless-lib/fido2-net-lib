@@ -10,6 +10,7 @@ using PeterO.Cbor;
 using Xunit;
 using Asn1;
 using System.Runtime.InteropServices;
+using System.Buffers.Binary;
 
 namespace Test.Attestation
 {
@@ -1766,7 +1767,7 @@ namespace Test.Attestation
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
                     type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
-                    var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(type.Reverse().ToArray(), 0).ToString());
+                    var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
                     var policy = new byte[] { 0x00 };
                     var pubArea
                          = type
@@ -8486,7 +8487,7 @@ namespace Test.Attestation
         internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
             byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
         {
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(type.Reverse().ToArray(), 0).ToString());
+            var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
 
             IEnumerable<byte> raw = null;
             var uniqueLen = BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray();
