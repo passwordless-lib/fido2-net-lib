@@ -20,11 +20,11 @@ namespace Fido2NetLib
 
             int base64Length = (int)(((long)arg.Length + 2) / 3 * 4);
 
-            char[] base64Chars = new char[base64Length];
-            
-            Convert.ToBase64CharArray(arg, 0, arg.Length, base64Chars, 0);
+            char[] pooledBuffer = ArrayPool<char>.Shared.Rent(base64Length);
 
-            Span<char> base64Url = base64Chars.AsSpan();
+            Convert.TryToBase64Chars(arg, pooledBuffer, out int encodedLength);
+
+            Span<char> base64Url = pooledBuffer.AsSpan(0, encodedLength);
 
             for (int i = 0; i < base64Url.Length; i++)
             {
@@ -44,7 +44,11 @@ namespace Fido2NetLib
                 base64Url = base64Url.Slice(0, equalIndex);
             }
 
-            return base64Url.ToString();
+            var result = new string(base64Url);
+
+            ArrayPool<char>.Shared.Return(pooledBuffer, clearArray: true);
+
+            return result;
         }
 
         /// <summary>
@@ -74,12 +78,8 @@ namespace Fido2NetLib
 
                 switch (c)
                 {
-                    case '-':
-                        c = '+';
-                        break;
-                    case '_':
-                        c = '/';
-                        break;
+                    case '-': c = '+'; break;
+                    case '_': c = '/'; break;
                 }
             }
 
