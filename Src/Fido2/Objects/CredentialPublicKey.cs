@@ -45,7 +45,7 @@ namespace Fido2NetLib.Objects
                 var ecDsaPubKey = cert.GetECDsaPublicKey();
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
-                if (keyParams.Curve.Oid.FriendlyName.Equals("secP256k1"))
+                if (keyParams.Curve.Oid.FriendlyName is "secP256k1")
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256K);
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

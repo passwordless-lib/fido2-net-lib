@@ -20,7 +20,7 @@ namespace Fido2Demo
             public virtual void ApplyRule(RewriteContext context)
             {
                 var req = context.HttpContext.Request;
-                if (req.Host.Host.Equals("passwordless.dev") || req.Host.Host.Equals("fido2.azurewebsites.net"))
+                if (req.Host.Host is "passwordless.dev" or "fido2.azurewebsites.net")
                 {
                     var wwwHost = new HostString("www.passwordless.dev");
                     var newUrl = UriHelper.BuildAbsolute("https", wwwHost, req.PathBase, req.Path, req.QueryString);
