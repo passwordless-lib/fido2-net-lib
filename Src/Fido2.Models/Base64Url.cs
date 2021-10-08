@@ -11,13 +11,8 @@ namespace Fido2NetLib
         /// <summary>
         /// Converts arg data to a Base64Url encoded string.
         /// </summary>
-        public static string Encode(byte[] arg)
+        public static string Encode(ReadOnlySpan<byte> arg)
         {
-            if (arg is null)
-            {
-                throw new ArgumentNullException(nameof(arg));
-            }
-
             int base64Length = (int)(((long)arg.Length + 2) / 3 * 4);
 
             char[] pooledBuffer = ArrayPool<char>.Shared.Rent(base64Length);
