@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -139,15 +140,15 @@ namespace Fido2NetLib
         {
             const string PemStartStr = "-----BEGIN";
             const string PemEndStr = "-----END";
-            byte[] retval = null;
+            byte[] retval;
             var lines = pemStr.Split('\n');
             var base64Str = "";
             bool started = false, ended = false;
-            var cline = "";
+            string cline;
             for (var i = 0; i < lines.Length; i++)
             {
                 cline = lines[i].ToUpper();
-                if (cline == "")
+                if (cline is "")
                     continue;
                 if (cline.Length > PemStartStr.Length)
                 {
@@ -205,7 +206,7 @@ namespace Fido2NetLib
 
             foreach (AsnElt s in revokedCertificates)
             {
-                revoked.Add(BitConverter.ToInt64(s.Sub[0].GetOctetString().Reverse().ToArray(), 0));
+                revoked.Add(BinaryPrimitives.ReadInt64BigEndian(s.Sub[0].GetOctetString()));
             }
 
             return revoked.Contains(BitConverter.ToInt64(cert.GetSerialNumber(), 0));

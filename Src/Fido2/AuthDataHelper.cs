@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Buffers.Binary;
 
 namespace Fido2NetLib
 {
@@ -12,10 +12,10 @@ namespace Fido2NetLib
         {
             if ((0 == len) && ((offset + 2) <= ab.Length))
             {
-                len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray(), 0);
+                len = BinaryPrimitives.ReadUInt16BigEndian(ab.Slice(offset, 2).Span);
                 offset += 2;
             }
-            byte[] result = null;
+            byte[] result = null!;
             if ((0 < len) && ((offset + len) <= ab.Length)) 
             {
                 result = ab.Slice(offset, len).ToArray();

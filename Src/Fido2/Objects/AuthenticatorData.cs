@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.IO;
 using System.Linq;
 
@@ -77,7 +79,7 @@ namespace Fido2NetLib.Objects
         public AuthenticatorData(byte[] authData)
         {
             // Input validation
-            if (authData == null)
+            if (authData is null)
                 throw new Fido2VerificationException("Authenticator data cannot be null");
             if (authData.Length < MinLength)
                 throw new Fido2VerificationException($"Authenticator data is less than the minimum structure length of {MinLength}");

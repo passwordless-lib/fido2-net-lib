@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -26,7 +25,7 @@ namespace Fido2NetLib
             var values = Enum.GetValues(typeof(TEnum)).OfType<TEnum>().ToArray();
             foreach (var val in values)
             {
-                if (ToEnumMemberValue(val).Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                if (ToEnumMemberValue(val)!.Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
                     return val;
             }
 
@@ -39,7 +38,7 @@ namespace Fido2NetLib
         /// <typeparam name="TEnum">The type of enum.</typeparam>
         /// <param name="value">The enum's value.</param>
         /// <returns>string.</returns>
-        public static string ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, Enum
+        public static string? ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
             return typeof(TEnum).GetTypeInfo()
                                 .DeclaredMembers

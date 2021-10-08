@@ -9,15 +9,15 @@ namespace Fido2NetLib.Development
 {
     public class DevelopmentInMemoryStore
     {
-        private readonly ConcurrentDictionary<string, Fido2User> _storedUsers = new ConcurrentDictionary<string, Fido2User>();
-        private readonly List<StoredCredential> _storedCredentials = new List<StoredCredential>();
+        private readonly ConcurrentDictionary<string, Fido2User> _storedUsers = new();
+        private readonly List<StoredCredential> _storedCredentials = new();
 
         public Fido2User GetOrAddUser(string username, Func<Fido2User> addCallback)
         {
             return _storedUsers.GetOrAdd(username, addCallback());
         }
 
-        public Fido2User GetUser(string username)
+        public Fido2User? GetUser(string username)
         {
             _storedUsers.TryGetValue(username, out var user);
             return user;
@@ -55,12 +55,14 @@ namespace Fido2NetLib.Development
             // our in-mem storage does not allow storing multiple users for a given credentialId. Yours shouldn't either.
             var cred = _storedCredentials.Where(c => c.Descriptor.Id.SequenceEqual(credentialId)).FirstOrDefault();
 
-            if (cred == null)
+            if (cred is null)
                 return Task.FromResult(new List<Fido2User>());
 
             return Task.FromResult(_storedUsers.Where(u => u.Value.Id.SequenceEqual(cred.UserId)).Select(u => u.Value).ToList());
         }
     }
+
+#nullable disable
 
     public class StoredCredential
     {

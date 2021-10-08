@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -9,7 +10,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal class Tpm : AttestationVerifier
+    internal sealed class Tpm : AttestationVerifier
     {
         public static readonly List<string> TPMManufacturers = new List<string>
         {
@@ -44,15 +45,15 @@ namespace Fido2NetLib
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             // (handled in base class)
-            if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
+            if (Sig is null || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid TPM attestation signature");
 
-            if ("2.0" != attStmt["ver"].AsString())
+            if (attStmt["ver"].AsString() is not "2.0")
                 throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
 
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
             // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
-            PubArea pubArea = null;
+            PubArea? pubArea = null;
             if (null != attStmt["pubArea"] &&
                 CBORType.ByteString == attStmt["pubArea"].Type &&
                 0 != attStmt["pubArea"].GetByteString().Length)
@@ -60,7 +61,7 @@ namespace Fido2NetLib
                 pubArea = new PubArea(attStmt["pubArea"].GetByteString());
             }
 
-            if (null == pubArea || null == pubArea.Unique || 0 == pubArea.Unique.Length)
+            if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
                 throw new Fido2VerificationException("Missing or malformed pubArea");
 
             var coseKty = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
@@ -91,7 +92,7 @@ namespace Fido2NetLib
             // See Data field of base class
 
             // 4. Validate that certInfo is valid
-            CertInfo certInfo = null;
+            CertInfo? certInfo = null;
             if (null != attStmt["certInfo"] &&
                 CBORType.ByteString == attStmt["certInfo"].Type &&
                 0 != attStmt["certInfo"].GetByteString().Length)
@@ -99,7 +100,7 @@ namespace Fido2NetLib
                 certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
             }
 
-            if (null == certInfo)
+            if (certInfo is null)
                 throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
 
             // 4a. Verify that magic is set to TPM_GENERATED_VALUE
@@ -109,7 +110,7 @@ namespace Fido2NetLib
             // Handled in CertInfo constructor, see CertInfo.Type
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (null == Alg || true != Alg.IsNumber)
+            if (Alg is null || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
                 
             using(var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
@@ -130,7 +131,7 @@ namespace Fido2NetLib
             // 5. If x5c is present, this indicates that the attestation type is not ECDAA
             if (null != X5c && CBORType.Array == X5c.Type && 0 != X5c.Count)
             {
-                if (null == X5c.Values || 0 == X5c.Values.Count ||
+                if (X5c.Values is null || X5c.Values.Count is 0 ||
                     CBORType.ByteString != X5c.Values.First().Type ||
                     0 == X5c.Values.First().GetByteString().Length)
                 {
@@ -418,7 +419,7 @@ namespace Fido2NetLib
     // TPMS_ATTEST, TPMv2-Part2, section 10.12.8
     public class CertInfo
     {
-        private static readonly Dictionary<TpmAlg, ushort> tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
+        private static readonly Dictionary<TpmAlg, ushort> tpmAlgToDigestSizeMap = new()
         {
             {TpmAlg.TPM_ALG_SHA1,   (160/8) },
             {TpmAlg.TPM_ALG_SHA256, (256/8) },
@@ -434,22 +435,22 @@ namespace Fido2NetLib
             ushort totalSize = 0;
             if (null != totalBytes)
             {
-                totalSize = BitConverter.ToUInt16(totalBytes.ToArray().Reverse().ToArray(), 0);
+                totalSize = BinaryPrimitives.ReadUInt16BigEndian(totalBytes);
             }
             ushort size = 0;
             var bytes = AuthDataHelper.GetSizedByteArray(ab, ref offset, 2);
             if (null != bytes)
             {
-                size = BitConverter.ToUInt16(bytes.ToArray().Reverse().ToArray(), 0);
+                size = BinaryPrimitives.ReadUInt16BigEndian(bytes);
             }
             // If size is four, then the Name is a handle. 
-            if (4 == size)
+            if (size is 4)
                 throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
             // If size is zero, then no Name is present. 
-            if (0 == size)
+            if (size is 0)
                 throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
             // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
-            byte[] name = null;
+            byte[] name;
             if (Enum.IsDefined(typeof(TpmAlg), size))
             {
                 var tpmalg = (TpmAlg)size;
@@ -467,26 +468,26 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Invalid TPM_ALG_ID found in TPM2B_NAME");
             }
 
-            if (totalSize != bytes.Length + name.Length)
+            if (totalSize != bytes!.Length + name.Length)
                 throw new Fido2VerificationException("Unexpected extra bytes found in TPM2B_NAME");
             return (size, name);
         }
 
         public CertInfo(byte[] certInfo)
         {
-            if (null == certInfo || 0 == certInfo.Length)
+            if (certInfo is null || certInfo.Length is 0)
                 throw new Fido2VerificationException("Malformed certInfo bytes");
             Raw = certInfo;
             var offset = 0;
             Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-            if (0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray(), 0))
+            if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
                 throw new Fido2VerificationException("Bad magic number " + BitConverter.ToString(Magic).Replace("-",""));
             Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
-            if (0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0))
+            if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
                 throw new Fido2VerificationException("Bad structure tag " + BitConverter.ToString(Type).Replace("-", ""));
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-            if (null == ExtraData || 0 == ExtraData.Length)
+            if (ExtraData is null || ExtraData.Length is 0)
                 throw new Fido2VerificationException("Bad extraData in certInfo");
             Clock = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
             ResetCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
@@ -524,7 +525,7 @@ namespace Fido2NetLib
 
             // TPMI_ALG_PUBLIC
             Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(Type.Reverse().ToArray(), 0).ToString());
+            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type).ToString());
 
             // TPMI_ALG_HASH 
             Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
@@ -595,14 +596,14 @@ namespace Fido2NetLib
         public byte[] Alg { get; private set; }
         public byte[] Attributes { get; private set; }
         public byte[] Policy { get; private set; }
-        public byte[] Symmetric { get; private set; }
-        public byte[] Scheme { get; private set; }
-        public byte[] KeyBits { get; private set; }
+        public byte[]? Symmetric { get; private set; }
+        public byte[]? Scheme { get; private set; }
+        public byte[]? KeyBits { get; private set; }
         public uint Exponent { get; private set; }
-        public byte[] CurveID { get; private set; }
-        public byte[] KDF { get; private set; }
+        public byte[]? CurveID { get; private set; }
+        public byte[]? KDF { get; private set; }
         public byte[] Unique { get; private set; }
-        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BitConverter.ToUInt16(CurveID.Reverse().ToArray(), 0).ToString());
+        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID).ToString());
         public ECPoint ECPoint
         {
             get
@@ -610,9 +611,9 @@ namespace Fido2NetLib
                 var point = new ECPoint();
                 var uniqueOffset = 0;
                 var size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
-                point.X = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BitConverter.ToUInt16(size.Reverse().ToArray(), 0));
+                point.X = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BinaryPrimitives.ReadUInt16BigEndian(size));
                 size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
-                point.Y = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BitConverter.ToUInt16(size.Reverse().ToArray(), 0));
+                point.Y = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BinaryPrimitives.ReadUInt16BigEndian(size));
                 return point;
             }
         }

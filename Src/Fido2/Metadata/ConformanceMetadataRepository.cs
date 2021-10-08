@@ -11,8 +11,7 @@ using Microsoft.IdentityModel.Json.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
-{
-   
+{   
     public class ConformanceMetadataRepository : IMetadataRepository
     {
         protected const string ROOT_CERT = "MIICaDCCAe6gAwIBAgIPBCqih0DiJLW7+UHXx/o1MAoGCCqGSM49BAMDMGcxCzAJ" +
@@ -29,7 +28,7 @@ namespace Fido2NetLib
                                         "xubSa3y3v5ormpPqCwfqn9s0MLBAtzCIgxQ/zkzPKctkiwoPtDzI51KnAjAmeMyg" +
                                         "X2S5Ht8+e+EQnezLJBJXtnkRWY+Zt491wgt/AwSs5PHHMv5QgjELOuMxQBc=";
 
-        protected readonly string _blobUrl;
+        protected readonly string? _blobUrl;
         protected readonly HttpClient _httpClient;
 
         private readonly string _origin = "http://localhost";
@@ -42,9 +41,9 @@ namespace Fido2NetLib
             _origin = origin;
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
-            return entry.MetadataStatement;
+            return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
         public async Task<MetadataBLOBPayload> GetBLOB()
@@ -71,7 +70,7 @@ namespace Fido2NetLib
             {
                 var rawBlob = await DownloadStringAsync(BLOBUrl);
 
-                MetadataBLOBPayload blob = null;
+                MetadataBLOBPayload blob;
 
                 try
                 {
@@ -132,16 +131,16 @@ namespace Fido2NetLib
                 throw new ArgumentException("The JWT does not have the 3 expected components");
 
             var blobHeader = jwtParts.First();
-            var tokenHeader = JObject.Parse(System.Text.Encoding.UTF8.GetString(Base64Url.Decode(blobHeader)));
+            var tokenHeader = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(blobHeader)));
 
             var blobAlg = tokenHeader["alg"]?.Value<string>();
 
-            if(blobAlg == null)
+            if(blobAlg is null)
                 throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
             var x5cArray = tokenHeader["x5c"] as JArray;
 
-            if (x5cArray == null)
+            if (x5cArray is null)
                 throw new ArgumentException("No x5c array was present in the BLOB header.");
 
             var rootCert = GetX509Certificate(ROOT_CERT);

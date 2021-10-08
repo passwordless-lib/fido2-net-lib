@@ -62,10 +62,10 @@ namespace Fido2NetLib
             if (0 == attStmt.Keys.Count || 0 == attStmt.Values.Count)
                 throw new Fido2VerificationException("Attestation format packed must have attestation statement");
 
-            if (null == Sig || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
+            if (Sig is null || CBORType.ByteString != Sig.Type || 0 == Sig.GetByteString().Length)
                 throw new Fido2VerificationException("Invalid packed attestation signature");
 
-            if (null == Alg || true != Alg.IsNumber)
+            if (Alg is null || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid packed attestation algorithm");
 
             // 2. If x5c is present, this indicates that the attestation type is not ECDAA
@@ -76,7 +76,7 @@ namespace Fido2NetLib
                 var enumerator = X5c.Values.GetEnumerator();
                 while (enumerator.MoveNext())
                 {
-                    if (null == enumerator || null == enumerator.Current
+                    if (enumerator is null || enumerator.Current is null
                         || CBORType.ByteString != enumerator.Current.Type
                         || 0 == enumerator.Current.GetByteString().Length)
                         throw new Fido2VerificationException("Malformed x5c cert found in packed attestation statement");

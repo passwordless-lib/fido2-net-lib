@@ -6,7 +6,6 @@ namespace Fido2NetLib
     [JsonConverter(typeof(ToStringJsonConverter))]
     public class TypedString : IEquatable<TypedString>
     {
-
         [JsonConstructor]
         protected TypedString(string value)
         {
@@ -22,12 +21,12 @@ namespace Fido2NetLib
             return Value;
         }
 
-        public bool Equals(TypedString other)
+        public bool Equals(TypedString? other)
         {
             if (ReferenceEquals(this, other))
                 return true;
 
-            if (ReferenceEquals(null, other))
+            if (other is null)
                 return false;
 
             //if your below implementation will involve objects of derived classes, then do a 
@@ -41,15 +40,15 @@ namespace Fido2NetLib
             return false;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals(obj as TypedString);
         }
 
         public static bool operator ==(TypedString e1, TypedString e2)
         {
-            if (ReferenceEquals(e1, null))
-                return ReferenceEquals(e2, null);
+            if (e1 is null)
+                return e2 is null;
 
             return e1.Equals(e2);
         }

@@ -12,7 +12,7 @@ namespace Fido2NetLib
     {
         protected AuthenticatorResponse(byte[] clientDataJson)
         {
-            if (null == clientDataJson)
+            if (clientDataJson is null)
                 throw new Fido2VerificationException("clientDataJson cannot be null");
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON
             var JSONtext = Encoding.UTF8.GetString(clientDataJson);
@@ -30,20 +30,20 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Malformed clientDataJson");
             }
 
-            if (null == response)
+            if (response is null)
                 throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
             Type = response.Type;
             Challenge = response.Challenge;
             Origin = response.Origin;
-            TokenBinding = response.TokenBinding;
-
         }
 
+#nullable disable
         [JsonConstructor]
         private AuthenticatorResponse()
         {
 
         }
+#nullable enable
 
         public string Type { get; set; }
 
@@ -51,16 +51,14 @@ namespace Fido2NetLib
         public byte[] Challenge { get; set; }
         public string Origin { get; set; }
 
-        public TokenBindingDto TokenBinding { get; set; }
-
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
 
         protected void BaseVerify(string expectedOrigin, byte[] originalChallenge, byte[] requestTokenBindingId)
         {
-            if (Type != "webauthn.create" && Type != "webauthn.get")
+            if (Type is not "webauthn.create" && Type is not "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
 
-            if (null == Challenge)
+            if (Challenge is null)
                 throw new Fido2VerificationException("Challenge cannot be null");
 
             // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
@@ -74,12 +72,6 @@ namespace Fido2NetLib
             if (!string.Equals(fullyQualifiedOrigin, fullyQualifiedExpectedOrigin, StringComparison.OrdinalIgnoreCase))
                 throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {fullyQualifiedExpectedOrigin} of {expectedOrigin}");
 
-            // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
-            // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-            if (TokenBinding != null)
-            {
-                TokenBinding.Verify(requestTokenBindingId);
-            }
         }
 
         private string FullyQualifiedOrigin(string origin)

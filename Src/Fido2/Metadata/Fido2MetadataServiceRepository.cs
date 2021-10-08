@@ -44,7 +44,7 @@ namespace Fido2NetLib
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        public async Task<MetadataStatement> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public async Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             var statementBase64Url = await DownloadStringAsync(entry.Url);
             
@@ -73,11 +73,11 @@ namespace Fido2NetLib
 
         public async Task<MetadataBLOBPayload> GetBLOB()
         {
-            var rawBLOB = await GetRawBlob();
-            return await DeserializeAndValidateBlob(rawBLOB);
+            var rawBLOB = await GetRawBlobAsync();
+            return await DeserializeAndValidateBlobAsync(rawBLOB);
         }
 
-        protected async Task<string> GetRawBlob()
+        protected async Task<string> GetRawBlobAsync()
         {
             var url = _blobUrl;
             return await DownloadStringAsync(url);
@@ -121,7 +121,7 @@ namespace Fido2NetLib
             }
         }
 
-        protected async Task<MetadataBLOBPayload> DeserializeAndValidateBlob(string rawBLOBJwt)
+        protected async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt)
         {
            
             if (string.IsNullOrWhiteSpace(rawBLOBJwt))
@@ -137,12 +137,12 @@ namespace Fido2NetLib
 
             var blobAlg = blobHeader["alg"]?.Value<string>();
 
-            if (blobAlg == null)
+            if (blobAlg is null)
                 throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
             var x5cArray = blobHeader["x5c"] as JArray;
 
-            if (x5cArray == null)
+            if (x5cArray is null)
                 throw new Exception("No x5c array was present in the BLOB header.");
 
             var keyStrings = x5cArray.Values<string>().ToList();

@@ -133,7 +133,7 @@ namespace Fido2Demo
             }
             catch (Exception e)
             {
-                return Json(new CredentialMakeResult { Status = "error", ErrorMessage = FormatException(e) });
+                return Json(new CredentialMakeResult(status: "error", errorMessage: FormatException(e), result: null));
             }
         }
 
