@@ -109,7 +109,7 @@ namespace Fido2NetLib
         private static readonly PubKeyCredParam ES256   = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
         private static readonly PubKeyCredParam ES384   = new(COSE.Algorithm.ES384);
         private static readonly PubKeyCredParam ES512   = new(COSE.Algorithm.ES512);
-        private static readonly PubKeyCredParam RS256   = new(COSE.Algorithm.RS256); // Supported by windows hellow
+        private static readonly PubKeyCredParam RS256   = new(COSE.Algorithm.RS256); // Supported by windows hello
         private static readonly PubKeyCredParam RS384   = new(COSE.Algorithm.RS384);
         private static readonly PubKeyCredParam RS512   = new(COSE.Algorithm.RS512);
         private static readonly PubKeyCredParam PS256   = new(COSE.Algorithm.PS256);
