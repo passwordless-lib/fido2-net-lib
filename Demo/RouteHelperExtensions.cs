@@ -35,6 +35,4 @@ namespace Fido2Demo
             }
         }
     }
-
 }
-
