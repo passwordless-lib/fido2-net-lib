@@ -12,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
 {
-    public class Fido2MetadataServiceRepository : IMetadataRepository
+    public sealed class Fido2MetadataServiceRepository : IMetadataRepository
     {
         protected const string ROOT_CERT =
         "MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G" +

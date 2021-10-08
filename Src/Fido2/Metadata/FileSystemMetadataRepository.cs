@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
-    public class FileSystemMetadataRepository : IMetadataRepository
+    public sealed class FileSystemMetadataRepository : IMetadataRepository
     {
         protected readonly string _path;
 
