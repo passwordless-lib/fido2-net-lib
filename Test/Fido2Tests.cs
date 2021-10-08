@@ -32,9 +32,10 @@ namespace fido2_net_lib.Test
         {
             var services = new ServiceCollection();
 
-            var repos = new List<IMetadataRepository>();
-
-            repos.Add(new Fido2MetadataServiceRepository(null));
+            var repos = new List<IMetadataRepository>
+            {
+                new Fido2MetadataServiceRepository(null)
+            };
 
             services.AddDistributedMemoryCache();
             services.AddLogging();
@@ -54,19 +55,20 @@ namespace fido2_net_lib.Test
 
             _config = new Fido2Configuration { Origin = "https://localhost:44329" };
 
-            _validCOSEParameters = new List<object[]>();
-
-            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256 });
-            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384 });
-            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521 });
-            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS256});
-            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS384});
-            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS512});
-            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS256});
-            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS384});
-            _validCOSEParameters.Add(new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS512});
-            _validCOSEParameters.Add(new object[3] { COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519 });
-            _validCOSEParameters.Add(new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K });
+            _validCOSEParameters = new List<object[]>
+            {
+                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256 },
+                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384 },
+                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521 },
+                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS256 },
+                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS384 },
+                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS512 },
+                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS256 },
+                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS384 },
+                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS512 },
+                new object[3] { COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519 },
+                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K }
+            };
         }
         public static byte[] StringToByteArray(string hex)
         {
@@ -941,11 +943,9 @@ namespace fido2_net_lib.Test
         {           
             privateKeySeed = new byte[32];
             RandomNumberGenerator.Fill(privateKeySeed);
-            publicKey = new byte[32];
             var key = Key.Create(SignatureAlgorithm.Ed25519, new KeyCreationParameters() { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
             expandedPrivateKey = key.Export(KeyBlobFormat.RawPrivateKey);
-            publicKey = key.Export(KeyBlobFormat.RawPublicKey);
-            
+            publicKey = key.Export(KeyBlobFormat.RawPublicKey);            
         }
 
         internal static ECDsa MakeECDsa(COSE.Algorithm alg, COSE.EllipticCurve crv)
@@ -1069,13 +1069,11 @@ namespace fido2_net_lib.Test
                     }
                 case COSE.KeyType.OKP:
                     {
-                        byte[] publicKey = null;
-                        byte[] expandedPrivateKey = null;
-                        MakeEdDSA(out var privateKeySeed, out publicKey, out expandedPrivateKey);
+                        MakeEdDSA(out var privateKeySeed, out byte[] publicKey, out byte[] expandedPrivateKey);
                         cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
                         break;
                     }
-                    throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
+                    throw new ArgumentException(nameof(kty), $"Missing or unknown kty {kty}");
             }
             return cpk;
         }

@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Asn1;
 using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 using Xunit;
-using Asn1;
-using System.Runtime.InteropServices;
 
 namespace Test.Attestation
 {

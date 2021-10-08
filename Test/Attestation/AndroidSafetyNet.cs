@@ -390,7 +390,7 @@ namespace Test.Attestation
 
                     var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                    List<Claim> claims = new List<Claim>
+                    var claims = new List<Claim>
                     {
                         new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                         new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
@@ -727,9 +727,9 @@ namespace Test.Attestation
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
                     var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
-                    attToBeSigned[attToBeSigned.Length - 1] ^= 0xff;
+                    attToBeSigned[^1] ^= 0xff;
 
-                    List<Claim> claims = new List<Claim>
+                    var claims = new List<Claim>
                     {
                         new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                         new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
@@ -984,7 +984,7 @@ namespace Test.Attestation
 
                     var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                    List<Claim> claims = new List<Claim>
+                    var claims = new List<Claim>
                     {
                         new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                         new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
