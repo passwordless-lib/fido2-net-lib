@@ -767,7 +767,7 @@ namespace fido2_net_lib.Test
         internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
             byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
         {
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type.AsSpan()).ToString());
+            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type).ToString());
 
             IEnumerable<byte> raw = null;
             var uniqueLen = new byte[2];
