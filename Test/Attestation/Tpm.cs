@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -70,20 +71,29 @@ namespace Test.Attestation
                     return; // no OKP support in TPM
                 }
 
-                if (COSE.KeyType.EC2 == (COSE.KeyType)param[0] && COSE.Algorithm.ES256K == (COSE.Algorithm)param[1])
+                var alg = (COSE.Algorithm)param[1];
+
+                if ((COSE.KeyType)param[0] is COSE.KeyType.EC2 && alg is COSE.Algorithm.ES256K)
                 {
                     return; // no secp256k1 support in TPM
-                }
+                }               
 
-                var alg = (COSE.Algorithm)param[1];
-                if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-                if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-                if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-                if (alg == COSE.Algorithm.RS1)
-                    tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
+                {
+                    tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
+                }
+                if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                {
+                    tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+                }
+                if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                {
+                    tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+                }
+                if (alg is COSE.Algorithm.RS1)
+                {
+                    tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
+                }
 
                 switch ((COSE.KeyType)param[0])
                 {
@@ -115,11 +125,8 @@ namespace Test.Attestation
                                 var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                                 attRequest.CertificateExtensions.Add(notCAExt);
-
                                 attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                                 attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                                 attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                                 byte[] serial = new byte[12];
@@ -173,8 +180,8 @@ namespace Test.Attestation
                                 };
 
                                 curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
-                                kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
-                                type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
+                                kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL); // should this be big endian?
+                                type = TpmAlg.TPM_ALG_ECC.ToUInt16BigEndianBytes();
 
                                 var pubArea = CreatePubArea(
                                     type, // Type
@@ -221,18 +228,18 @@ namespace Test.Attestation
                                     .Concat(hashedPubArea);
 
                                 var certInfo = CreateCertInfo(
-                                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                                        extraData.ToArray(), // ExtraData
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                                        new byte[] { 0x00 }, // Safe
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                                        tpm2bName.ToArray(), // TPM2BName
-                                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                                    );
+                                    new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                                    new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                                    new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                                    extraData.ToArray(), // ExtraData
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                                    new byte[] { 0x00 }, // Safe
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                                    tpm2bName.ToArray(), // TPM2BName
+                                    new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                                );
 
                                 byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
 
@@ -271,19 +278,13 @@ namespace Test.Attestation
                                 var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
                                 
                                 attRequest.CertificateExtensions.Add(notCAExt);
-
                                 attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                                 attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                                 attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
-                                byte[] serial = new byte[12];
+                                var serial = new byte[12];
+                                RandomNumberGenerator.Fill(serial);
 
-                                using (var rng = RandomNumberGenerator.Create())
-                                {
-                                    rng.GetBytes(serial);
-                                }
                                 using (X509Certificate2 publicOnly = attRequest.Create(
                                     rootCert,
                                     notBefore,
@@ -306,10 +307,9 @@ namespace Test.Attestation
 
                                 _credentialPublicKey = new CredentialPublicKey(cpk);
 
-
                                 unique = rsaparams.Modulus;
                                 exponent = rsaparams.Exponent;
-                                type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
+                                type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                                 var pubArea = CreatePubArea(
                                     type, // Type
@@ -410,14 +410,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
+                tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -497,7 +497,7 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
+                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
                         type, // Type
@@ -597,14 +597,22 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
+            {
+                tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
+            }
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+            {
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            }
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+            {
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            }
+            if (alg is COSE.Algorithm.RS1)
+            {
+                tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
+            }
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -754,14 +762,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
+                tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -825,7 +833,7 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
+                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
                         type, // Type
@@ -911,14 +919,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
+                tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -982,7 +990,7 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
+                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
                         type, // Type
@@ -1068,14 +1076,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1225,14 +1233,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1380,14 +1388,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1537,14 +1545,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1694,14 +1702,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -1851,14 +1859,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -2008,14 +2016,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -2165,14 +2173,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -2813,14 +2821,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -2969,14 +2977,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3125,14 +3133,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3281,14 +3289,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3437,14 +3445,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3593,14 +3601,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3748,14 +3756,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -3904,14 +3912,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4060,14 +4068,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4217,14 +4225,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4373,14 +4381,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4530,14 +4538,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4686,14 +4694,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4842,14 +4850,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -4998,14 +5006,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5157,14 +5165,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5313,14 +5321,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5469,14 +5477,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5625,14 +5633,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5781,14 +5789,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -5937,14 +5945,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6093,14 +6101,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6249,14 +6257,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6405,14 +6413,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6573,14 +6581,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6730,14 +6738,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -6886,14 +6894,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7047,14 +7055,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7209,14 +7217,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7371,14 +7379,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7533,14 +7541,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7695,14 +7703,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -7851,14 +7859,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -8007,14 +8015,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
+                tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -8175,14 +8183,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
@@ -8333,14 +8341,14 @@ namespace Test.Attestation
             var param = Fido2Tests._validCOSEParameters[3];
 
             var alg = (COSE.Algorithm)param[1];
-            if (alg == COSE.Algorithm.ES256 || alg == COSE.Algorithm.PS256 || alg == COSE.Algorithm.RS256)
+                        if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA256).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES384 || alg == COSE.Algorithm.PS384 || alg == COSE.Algorithm.RS384)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA384).Reverse().ToArray();
-            if (alg == COSE.Algorithm.ES512 || alg == COSE.Algorithm.PS512 || alg == COSE.Algorithm.RS512)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA512).Reverse().ToArray();
-            if (alg == COSE.Algorithm.RS1)
-                tpmAlg = BitConverter.GetBytes((ushort)Fido2NetLib.TpmAlg.TPM_ALG_SHA1).Reverse().ToArray();
+            if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
+                tpmAlg = TpmAlg.TPM_ALG_SHA384.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
+                tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
+            if (alg is COSE.Algorithm.RS1)
+                tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
