@@ -64,7 +64,6 @@ namespace fido2_net_lib.Test
             var res = await fido2.MakeAssertionAsync(authResponse, options, publicKey.EncodeToBytes(), 0, null);
 
             Assert.Equal("ok", res.Status);
-
         }
 
         public static CBORObject CreatePublicKeyFromU2fRegistrationData(byte[] keyHandleData, byte[] publicKeyData)

@@ -3,7 +3,6 @@ using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Xunit;
 
-
 namespace fido2_net_lib.Test
 {
     public class EnumExtensionTest
@@ -36,7 +35,6 @@ namespace fido2_net_lib.Test
         [InlineData("indIrEcT", false, true)]
         public void TestToEnumWithIgnoringCase(string value, bool ignoreCase, bool shouldThrow)
         {
-
             var exception = Record.Exception(() => value.ToEnum<AttestationConveyancePreference>(ignoreCase));
 
             if (shouldThrow)
