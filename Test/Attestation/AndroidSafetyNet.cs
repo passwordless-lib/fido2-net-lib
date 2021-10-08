@@ -43,12 +43,9 @@ namespace Test.Attestation
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -146,11 +143,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                     byte[] serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -325,12 +319,9 @@ namespace Test.Attestation
             {
                 var attRequest = new CertificateRequest(new X500DistinguishedName("CN=fakeattest.android.com"), ecdsaAtt, HashAlgorithmName.SHA256);
 
-                byte[] serial = new byte[12];
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
 
-                using (var rng = RandomNumberGenerator.Create())
-                {
-                    rng.GetBytes(serial);
-                }
                 using (X509Certificate2 publicOnly = attRequest.CreateSelfSigned(
                     DateTimeOffset.UtcNow,
                     DateTimeOffset.UtcNow.AddDays(2)))
@@ -371,12 +362,9 @@ namespace Test.Attestation
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -460,11 +448,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                     byte[] serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -548,11 +533,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                     byte[] serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -635,11 +617,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                     byte[] serial = new byte[12];
-
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
+                    RandomNumberGenerator.Fill(serial);
+                   
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -721,12 +700,9 @@ namespace Test.Attestation
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -810,12 +786,9 @@ namespace Test.Attestation
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -898,12 +871,9 @@ namespace Test.Attestation
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -986,12 +956,9 @@ namespace Test.Attestation
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -1073,12 +1040,9 @@ namespace Test.Attestation
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,

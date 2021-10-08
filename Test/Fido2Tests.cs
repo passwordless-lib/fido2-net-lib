@@ -1,4 +1,4 @@
-﻿    using Fido2NetLib.Objects;
+﻿using Fido2NetLib.Objects;
 using Fido2NetLib;
 using Newtonsoft.Json;
 using System;
@@ -177,17 +177,16 @@ namespace fido2_net_lib.Test
             }
 
             public Attestation()
-            {                
-                var rng = RandomNumberGenerator.Create();
-                
+            {   
                 _credentialID = new byte[16];
-                rng.GetBytes(_credentialID);
+                RandomNumberGenerator.Fill(_credentialID);
 
                 _challenge = new byte[128];
-                rng.GetBytes(_challenge);
+                RandomNumberGenerator.Fill(_credentialID);
 
                 var signCount = new byte[2];
-                rng.GetBytes(signCount);
+                RandomNumberGenerator.Fill(signCount);
+
                 _signCount = BitConverter.ToUInt16(signCount, 0);
 
                 _attestationObject = CBORObject.NewMap();
@@ -888,8 +887,7 @@ namespace fido2_net_lib.Test
             var authData = ad.ToByteArray();
 
             var challenge = new byte[128];
-            var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(challenge);
+            RandomNumberGenerator.Fill(challenge);
 
             var clientData = new
             {
@@ -907,7 +905,7 @@ namespace fido2_net_lib.Test
             byte[] signature = SignData(kty, alg, data, ecdsa, rsa, expandedPrivateKey);
 
             var userHandle = new byte[16];
-            rng.GetBytes(userHandle);
+            RandomNumberGenerator.Fill(userHandle);
 
             var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
             {
@@ -948,16 +946,14 @@ namespace fido2_net_lib.Test
         }
 
         internal static void MakeEdDSA(out byte[] privateKeySeed, out byte[] publicKey, out byte[] expandedPrivateKey)
-        {
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                privateKeySeed = new byte[32];
-                rng.GetBytes(privateKeySeed);
-                publicKey = new byte[32];
-                var key = Key.Create(SignatureAlgorithm.Ed25519, new KeyCreationParameters() { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
-                expandedPrivateKey = key.Export(KeyBlobFormat.RawPrivateKey);
-                publicKey = key.Export(KeyBlobFormat.RawPublicKey);
-            }
+        {           
+            privateKeySeed = new byte[32];
+            RandomNumberGenerator.Fill(privateKeySeed);
+            publicKey = new byte[32];
+            var key = Key.Create(SignatureAlgorithm.Ed25519, new KeyCreationParameters() { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
+            expandedPrivateKey = key.Export(KeyBlobFormat.RawPrivateKey);
+            publicKey = key.Export(KeyBlobFormat.RawPublicKey);
+            
         }
 
         internal static ECDsa MakeECDsa(COSE.Algorithm alg, COSE.EllipticCurve crv)
