@@ -183,11 +183,7 @@ namespace Test.Attestation
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity("6cc3c9e7967a.ngrok.io", "6cc3c9e7967a.ngrok.io", ""),
                 Status = "ok",
