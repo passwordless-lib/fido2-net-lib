@@ -14,7 +14,7 @@ namespace Fido2NetLib
 {
     public sealed class Fido2MetadataServiceRepository : IMetadataRepository
     {
-        protected const string ROOT_CERT =
+        private const string ROOT_CERT =
         "MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G" +
         "A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjMxEzARBgNVBAoTCkdsb2JhbFNp" +
         "Z24xEzARBgNVBAMTCkdsb2JhbFNpZ24wHhcNMDkwMzE4MTAwMDAwWhcNMjkwMzE4" +
@@ -35,8 +35,8 @@ namespace Fido2NetLib
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH" +
         "WD9f";
 
-        protected readonly string _blobUrl;
-        protected readonly HttpClient _httpClient;
+        private readonly string _blobUrl;
+        private readonly HttpClient _httpClient;
 
         public Fido2MetadataServiceRepository(HttpClient httpClient)
         {
@@ -77,18 +77,18 @@ namespace Fido2NetLib
             return await DeserializeAndValidateBlobAsync(rawBLOB);
         }
 
-        protected async Task<string> GetRawBlobAsync()
+        private async Task<string> GetRawBlobAsync()
         {
             var url = _blobUrl;
             return await DownloadStringAsync(url);
         }
 
-        protected async Task<string> DownloadStringAsync(string url)
+        private async Task<string> DownloadStringAsync(string url)
         {
             return await _httpClient.GetStringAsync(url);
         }
 
-        protected async Task<byte[]> DownloadDataAsync(string url)
+        private async Task<byte[]> DownloadDataAsync(string url)
         {
             return await _httpClient.GetByteArrayAsync(url);
         }
@@ -121,7 +121,7 @@ namespace Fido2NetLib
             }
         }
 
-        protected async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt)
+        private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt)
         {
            
             if (string.IsNullOrWhiteSpace(rawBLOBJwt))
@@ -222,13 +222,13 @@ namespace Fido2NetLib
                 }
 
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
-                if (rootCert.Thumbprint == certChain.ChainElements[certChain.ChainElements.Count - 1].Certificate.Thumbprint &&
+                if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
                     certChain.ChainElements.Count == (keyStrings.Count + 1) &&
                     // and that the root cert has exactly one status listed against it
-                    certChain.ChainElements[certChain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                    certChain.ChainElements[^1].ChainElementStatus.Length == 1 &&
                     // and that that status is a status of exactly UntrustedRoot
-                    certChain.ChainElements[certChain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                    certChain.ChainElements[^1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
                 {
                     // if we are good so far, that is a good sign
                     certChainIsValid = true;
