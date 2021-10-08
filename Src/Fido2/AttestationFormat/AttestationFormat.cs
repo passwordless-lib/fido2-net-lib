@@ -52,7 +52,7 @@ namespace Fido2NetLib
         internal static bool IsAttnCertCACert(X509ExtensionCollection exts)
         {
             var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "2.5.29.19");
-            if (null != ext && ext is X509BasicConstraintsExtension baseExt)
+            if (ext is X509BasicConstraintsExtension baseExt)
             {
                 return baseExt.CertificateAuthority;
             }
