@@ -101,17 +101,13 @@ namespace Fido2NetLib.Objects
 
         internal RSA CreateRsa()
         {
-            if (_type == COSE.KeyType.RSA)
+            if (_type is COSE.KeyType.RSA)
             {
-                var rsa = RSA.Create();
-                rsa.ImportParameters(
-                    new RSAParameters()
-                    {
-                        Modulus = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
-                        Exponent = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
-                    }
-                );
-                return rsa;
+                return RSA.Create(new RSAParameters
+                {
+                    Modulus = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
+                    Exponent = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
+                });
             }
 
             throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
