@@ -16,7 +16,6 @@ using System.Text;
 using NSec.Cryptography;
 using Asn1;
 using System.Security.Cryptography.X509Certificates;
-using System.Runtime.InteropServices;
 using System.Buffers.Binary;
 
 namespace fido2_net_lib.Test
@@ -826,7 +825,6 @@ namespace fido2_net_lib.Test
 
             return raw.ToArray();
         }
-
         
         internal static async Task<AssertionVerificationResult> MakeAssertionResponse(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv = COSE.EllipticCurve.P256, CredentialPublicKey cpk = null, ushort signCount = 0, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null)
         {
@@ -842,20 +840,16 @@ namespace fido2_net_lib.Test
                 {
                     case COSE.KeyType.EC2:
                         {
-                            if (ecdsa == null)
-                            {
-                                ecdsa = MakeECDsa(alg, crv);
-                            }
+                            ecdsa ??= MakeECDsa(alg, crv);
+                            
                             var ecparams = ecdsa.ExportParameters(true);
                             cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
                             break;
                         }
                     case COSE.KeyType.RSA:
                         {
-                            if (rsa == null)
-                            {
-                                rsa = RSA.Create();
-                            }
+                            rsa ??= RSA.Create();
+                            
                             var rsaparams = rsa.ExportParameters(true);
                             cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
                             break;
@@ -957,7 +951,7 @@ namespace fido2_net_lib.Test
                     switch (crv)
                     {
                         case COSE.EllipticCurve.P256K:
-                            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                            if (OperatingSystem.IsMacOS())
                             {
                                 // see https://github.com/dotnet/runtime/issues/47770
                                 throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");

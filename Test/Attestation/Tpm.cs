@@ -6094,7 +6094,7 @@ namespace Test.Attestation
                         .Add("certInfo", certInfo)
                         .Add("pubArea", pubArea));
 
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    if (OperatingSystem.IsMacOS())
                     {
                         // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
                         var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponse());
