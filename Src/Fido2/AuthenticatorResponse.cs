@@ -10,12 +10,13 @@ namespace Fido2NetLib
     /// </summary>
     public class AuthenticatorResponse
     {
-        protected AuthenticatorResponse(byte[] clientDataJson)
+        protected AuthenticatorResponse(ReadOnlySpan<byte> clientDataJson)
         {
-            if (clientDataJson is null)
-                throw new Fido2VerificationException("clientDataJson cannot be null");
+            if (clientDataJson.Length is 0)
+                throw new Fido2VerificationException("clientDataJson may not be empty");
+
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON
-            var JSONtext = Encoding.UTF8.GetString(clientDataJson);
+            var jsonText = Encoding.UTF8.GetString(clientDataJson);
 
             // 2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext
             // Note: C may be any implementation-specific data structure representation, as long as C’s components are referenceable, as required by this algorithm.
@@ -23,7 +24,7 @@ namespace Fido2NetLib
             AuthenticatorResponse response;
             try
             {
-                response = JsonConvert.DeserializeObject<AuthenticatorResponse>(JSONtext);
+                response = JsonConvert.DeserializeObject<AuthenticatorResponse>(jsonText);
             }
             catch (Exception e) when (e is JsonReaderException || e is JsonSerializationException)
             {
@@ -54,7 +55,7 @@ namespace Fido2NetLib
 
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
 
-        protected void BaseVerify(string expectedOrigin, byte[] originalChallenge, byte[] requestTokenBindingId)
+        protected void BaseVerify(string expectedOrigin, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
         {
             if (Type is not "webauthn.create" && Type is not "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
@@ -63,7 +64,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Challenge cannot be null");
 
             // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
-            if (!Challenge.SequenceEqual(originalChallenge))
+            if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
                 throw new Fido2VerificationException("Challenge not equal to original challenge");
 
             var fullyQualifiedOrigin = FullyQualifiedOrigin(Origin);
