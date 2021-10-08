@@ -1647,7 +1647,7 @@ public class AsnElt {
 
 	/* =============================================================== */
 
-	/*is 
+	/*
 	 * Create a new element for a primitive value. The provided buffer
 	 * is internally copied.
 	 */
