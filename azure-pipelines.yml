@@ -51,7 +51,7 @@ jobs:
     displayName: Publish website
     inputs:
       command: publish
-      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.1'
+      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework net5.0'
   - task: PublishBuildArtifacts@1
     displayName: Copy website to artifacts
     inputs:
