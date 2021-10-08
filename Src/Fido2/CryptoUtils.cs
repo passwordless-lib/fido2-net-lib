@@ -102,7 +102,7 @@ namespace Fido2NetLib
         public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
         {
             var decoded = AsnElt.Decode(ecDsaSig);
-            var r = decoded.Sub[0].GetOctetString();
+            var r = decoded.Sub[0].GetOctetString().AsSpan();
             var s = decoded.Sub[1].GetOctetString();
 
             // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
@@ -111,32 +111,37 @@ namespace Fido2NetLib
             // determine coefficient size 
             var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
-            // Create byte array to copy R into 
-            var P1363R = new byte[coefficientSize];
+            // Create buffer to copy R into 
+            Span<byte> p1363R = stackalloc byte[coefficientSize];
 
             if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
             {
-                r.Skip(1).ToArray().CopyTo(P1363R, coefficientSize - r.Length + 1);
+                r.Slice(1).CopyTo(p1363R.Slice(coefficientSize - r.Length + 1));
             }
             else
             {
-                r.CopyTo(P1363R, coefficientSize - r.Length);
+                r.CopyTo(p1363R.Slice(coefficientSize - r.Length));
             }
 
             // Create byte array to copy S into 
-            var P1363S = new byte[coefficientSize];
+            var p1363S = new byte[coefficientSize];
 
             if (0x0 == s[0] && (s[1] & (1 << 7)) != 0)
             {
-                s.Skip(1).ToArray().CopyTo(P1363S, coefficientSize - s.Length + 1);
+                s.AsSpan(1).CopyTo(p1363S.AsSpan(coefficientSize - s.Length + 1));
             }
             else
             {
-                s.CopyTo(P1363S, coefficientSize - s.Length);
+                s.CopyTo(p1363S, coefficientSize - s.Length);
             }
 
             // Concatenate R + S coordinates and return the raw signature
-            return P1363R.Concat(P1363S).ToArray();
+            byte[] concated = new byte[p1363R.Length + p1363S.Length];
+
+            p1363R.CopyTo(concated);
+            p1363S.CopyTo(concated.AsSpan(p1363R.Length));
+
+            return concated;
         }
 
         /// <summary>
