@@ -1,4 +1,4 @@
-﻿    using Fido2NetLib.Objects;
+﻿using Fido2NetLib.Objects;
 using Fido2NetLib;
 using Newtonsoft.Json;
 using System;
@@ -21,6 +21,7 @@ using System.Buffers.Binary;
 
 namespace fido2_net_lib.Test
 {
+
     // todo: Create tests and name Facts and json files better.
     public class Fido2Tests
     {
@@ -240,11 +241,7 @@ namespace fido2_net_lib.Test
                     ErrorMessage = "",
                     PubKeyCredParams = new List<PubKeyCredParam>()
                     {
-                        new PubKeyCredParam
-                        {
-                            Alg = COSE.Algorithm.ES256,
-                            Type = PublicKeyCredentialType.PublicKey,
-                        }
+                        new PubKeyCredParam(COSE.Algorithm.ES256)
                     },
                     Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                     Status = "ok",
@@ -555,6 +552,7 @@ namespace fido2_net_lib.Test
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsNone.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsNone.json"));
+
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
         }
