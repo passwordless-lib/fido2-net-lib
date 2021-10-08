@@ -54,11 +54,10 @@ namespace Fido2NetLib
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
             // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
             PubArea? pubArea = null;
-            if (null != attStmt["pubArea"] &&
-                CBORType.ByteString == attStmt["pubArea"].Type &&
-                0 != attStmt["pubArea"].GetByteString().Length)
+            if (attStmt["pubArea"] is {  Type: CBORType.ByteString } pubAreaObject &&
+                pubAreaObject.GetByteString().Length != 0)
             {
-                pubArea = new PubArea(attStmt["pubArea"].GetByteString());
+                pubArea = new PubArea(pubAreaObject.GetByteString());
             }
 
             if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
@@ -93,11 +92,10 @@ namespace Fido2NetLib
 
             // 4. Validate that certInfo is valid
             CertInfo? certInfo = null;
-            if (null != attStmt["certInfo"] &&
-                CBORType.ByteString == attStmt["certInfo"].Type &&
-                0 != attStmt["certInfo"].GetByteString().Length)
+            if (attStmt["certInfo"] is { Type: CBORType.ByteString } certInfoObject &&
+                certInfoObject.GetByteString().Length != 0)
             {
-                certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
+                certInfo = new CertInfo(certInfoObject.GetByteString());
             }
 
             if (certInfo is null)
@@ -129,7 +127,7 @@ namespace Fido2NetLib
             // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
             // 5. If x5c is present, this indicates that the attestation type is not ECDAA
-            if (null != X5c && CBORType.Array == X5c.Type && 0 != X5c.Count)
+            if (X5c is { Type: CBORType.Array } && X5c.Count != 0)
             {
                 if (X5c.Values is null || X5c.Values.Count is 0 ||
                     CBORType.ByteString != X5c.Values.First().Type ||
@@ -244,7 +242,7 @@ namespace Fido2NetLib
                     subjectAlternativeName.CheckTag(AsnElt.SEQUENCE);
                     subjectAlternativeName.CheckNumSubMin(1);
 
-                    var generalName = subjectAlternativeName.Sub.FirstOrDefault(o => o.TagClass == AsnElt.CONTEXT && o.TagValue == AsnElt.OCTET_STRING);
+                    var generalName = subjectAlternativeName.Sub.FirstOrDefault(o => o is { TagClass: AsnElt.CONTEXT, TagValue: AsnElt.OCTET_STRING });
 
                     if (generalName != null)
                     {
