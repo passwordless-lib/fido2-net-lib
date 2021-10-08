@@ -12,7 +12,7 @@ namespace Fido2NetLib
 {
     internal sealed class Tpm : AttestationVerifier
     {
-        public static readonly List<string> TPMManufacturers = new List<string>
+        public static readonly HashSet<string> TPMManufacturers = new HashSet<string>
         {
             "id:FFFFF1D0", // FIDO testing TPM
             // From https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Version-1.02-Revision-1.00.pdf
