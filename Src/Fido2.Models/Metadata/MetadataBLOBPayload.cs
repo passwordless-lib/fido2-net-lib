@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
+
+using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
@@ -8,7 +10,7 @@ namespace Fido2NetLib
     /// <remarks>
     /// <see xref="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#metadata-blob-payload-dictionary"/>
     /// </remarks>
-    public class MetadataBLOBPayload
+    public sealed class MetadataBLOBPayload
     {
         /// <summary>
         /// Gets or sets the legalHeader, if present, contains a legal guide for accessing and using metadata.
@@ -18,6 +20,7 @@ namespace Fido2NetLib
         /// </remarks>
         [JsonProperty("legalHeader")]
         public string LegalHeader { get; set; }
+
         /// <summary>   
         /// Gets or sets the serial number of this UAF Metadata BLOB Payload. 
         /// </summary>
@@ -31,6 +34,7 @@ namespace Fido2NetLib
         /// </summary>
         [JsonProperty("nextUpdate", Required = Required.Always)]
         public string NextUpdate { get; set; }
+        
         /// <summary>
         /// Gets or sets a list of zero or more entries of <see cref="MetadataBLOBPayloadEntry"/>.
         /// </summary>
