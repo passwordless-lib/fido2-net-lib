@@ -49,6 +49,7 @@ namespace Fido2NetLib
 
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[] Challenge { get; set; }
+
         public string Origin { get; set; }
 
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
@@ -74,7 +75,7 @@ namespace Fido2NetLib
 
         }
 
-        private string FullyQualifiedOrigin(string origin)
+        private static string FullyQualifiedOrigin(string origin)
         {
             var uri = new Uri(origin);
 

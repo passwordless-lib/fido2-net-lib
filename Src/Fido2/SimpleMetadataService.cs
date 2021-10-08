@@ -8,7 +8,6 @@ namespace Fido2NetLib
 {
     public class SimpleMetadataService : IMetadataService
     {
-
         protected readonly List<IMetadataRepository> _repositories;
         protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
         protected readonly ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry> _entries;

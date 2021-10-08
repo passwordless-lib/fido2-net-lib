@@ -515,6 +515,7 @@ namespace Fido2NetLib
         public byte[] AttestedName { get; private set; }
         public byte[] AttestedQualifiedNameBuffer { get; private set; }
     }
+
     // TPMT_PUBLIC, TPMv2-Part2, section 12.2.4
     public class PubArea
     {
@@ -604,6 +605,7 @@ namespace Fido2NetLib
         public byte[]? KDF { get; private set; }
         public byte[] Unique { get; private set; }
         public TpmEccCurve EccCurve => (TpmEccCurve)Enum.ToObject(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID));
+
         public ECPoint ECPoint
         {
             get
