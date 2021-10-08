@@ -103,7 +103,7 @@ namespace fido2_net_lib.Test
                 get
                 {
                     byte[] rpId = Encoding.UTF8.GetBytes(rp);
-                    return SHA256.Create().ComputeHash(rpId);
+                    return SHA256.HashData(rpId);
                 }
             }
 
@@ -120,15 +120,8 @@ namespace fido2_net_lib.Test
                     return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(clientData));
                 }
             }
-            public byte[] _clientDataHash
-            {
-                get
-                {
-                    var sha = SHA256.Create();
-                    return sha.ComputeHash(_clientDataJson);
-                }
-            }
-
+            public byte[] _clientDataHash => SHA256.HashData(_clientDataJson);
+            
             public byte[] _attToBeSigned
             {
                 get
@@ -707,7 +700,7 @@ namespace fido2_net_lib.Test
         public void TestAuthenticatorData()
         {
             byte[] rpId = Encoding.UTF8.GetBytes("fido2.azurewebsites.net/");
-            var rpIdHash = SHA256.Create().ComputeHash(rpId);
+            var rpIdHash = SHA256.HashData(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
             const ushort signCount = 0xf1d0;
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
@@ -837,7 +830,7 @@ namespace fido2_net_lib.Test
         {
             const string rp = "https://www.passwordless.dev";
             byte[] rpId = Encoding.UTF8.GetBytes(rp);
-            var rpIdHash = SHA256.Create().ComputeHash(rpId);
+            var rpIdHash = SHA256.HashData(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
             var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
             var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
@@ -897,8 +890,7 @@ namespace fido2_net_lib.Test
             };
             var clientDataJson = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(clientData));
 
-            var sha = SHA256.Create();
-            var hashedClientDataJson = sha.ComputeHash(clientDataJson);
+            var hashedClientDataJson = SHA256.HashData(clientDataJson);
             byte[] data = new byte[authData.Length + hashedClientDataJson.Length];
             Buffer.BlockCopy(authData, 0, data, 0, authData.Length);
             Buffer.BlockCopy(hashedClientDataJson, 0, data, authData.Length, hashedClientDataJson.Length);
