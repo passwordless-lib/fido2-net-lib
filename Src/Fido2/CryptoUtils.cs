@@ -109,11 +109,13 @@ namespace Fido2NetLib
             // ASN.1 requires storing positive integer values with any leading 0s removed
             // Convert ASN.1 format to IEEE P-1363 format 
             // determine coefficient size 
+
+            // common coefficient sizes include: 32, 48, and 64
             var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
             // Create buffer to copy R into 
-            Span<byte> p1363R = coefficientSize is 32
-                ? stackalloc byte[32]
+            Span<byte> p1363R = coefficientSize <= 64
+                ? stackalloc byte[coefficientSize]
                 : new byte[coefficientSize];
 
             if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
@@ -126,8 +128,8 @@ namespace Fido2NetLib
             }
 
             // Create byte array to copy S into 
-            Span<byte> p1363S = coefficientSize is 32
-                ? stackalloc byte[32]
+            Span<byte> p1363S = coefficientSize <= 64
+                ? stackalloc byte[coefficientSize]
                 : new byte[coefficientSize];
 
             if (0x0 == s[0] && (s[1] & (1 << 7)) != 0)
