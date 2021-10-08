@@ -4,7 +4,7 @@ namespace Fido2NetLib
 {
     public interface IMetadataRepository
     {
-        Task<MetadataBLOBPayload> GetBLOB();
+        Task<MetadataBLOBPayload> GetBLOBAsync();
 
         Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry);
     }

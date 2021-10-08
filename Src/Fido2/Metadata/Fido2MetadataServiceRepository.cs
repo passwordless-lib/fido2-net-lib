@@ -71,7 +71,7 @@ namespace Fido2NetLib
             return hashA.SequenceEqual(hashB);
         }
 
-        public async Task<MetadataBLOBPayload> GetBLOB()
+        public async Task<MetadataBLOBPayload> GetBLOBAsync()
         {
             var rawBLOB = await GetRawBlobAsync();
             return await DeserializeAndValidateBlobAsync(rawBLOB);

@@ -65,7 +65,7 @@ namespace Fido2NetLib
 
         protected virtual async Task InitializeRepository(IMetadataRepository repository)
         {
-            var blob = await repository.GetBLOB();
+            var blob = await repository.GetBLOBAsync();
 
             foreach (var entry in blob.Entries)
             {

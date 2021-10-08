@@ -170,7 +170,7 @@ namespace Fido2NetLib
 
                 try
                 {
-                    blob = await repository.GetBLOB();
+                    blob = await repository.GetBLOBAsync();
                 }
                 catch (Exception ex)
                 {

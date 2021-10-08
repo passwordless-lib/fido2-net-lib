@@ -46,7 +46,7 @@ namespace Fido2NetLib
             return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
-        public async Task<MetadataBLOBPayload> GetBLOB()
+        public async Task<MetadataBLOBPayload> GetBLOBAsync()
         {
             var req = new
             {
