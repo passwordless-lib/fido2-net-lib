@@ -17,6 +17,7 @@ using NSec.Cryptography;
 using Asn1;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.InteropServices;
+using System.Buffers.Binary;
 
 namespace fido2_net_lib.Test
 {
@@ -766,10 +767,11 @@ namespace fido2_net_lib.Test
         internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
             byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
         {
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(type.Reverse().ToArray(), 0).ToString());
+            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type.AsSpan()).ToString());
 
             IEnumerable<byte> raw = null;
-            var uniqueLen = BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray();
+            var uniqueLen = new byte[2];
+            BinaryPrimitives.WriteUInt16BigEndian(uniqueLen, (UInt16)unique.Length);
 
             if (TpmAlg.TPM_ALG_RSA == tpmalg)
             {

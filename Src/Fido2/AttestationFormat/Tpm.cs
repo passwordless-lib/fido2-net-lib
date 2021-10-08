@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -434,13 +435,13 @@ namespace Fido2NetLib
             ushort totalSize = 0;
             if (null != totalBytes)
             {
-                totalSize = BitConverter.ToUInt16(totalBytes.ToArray().Reverse().ToArray(), 0);
+                totalSize = BinaryPrimitives.ReadUInt16BigEndian(totalBytes);
             }
             ushort size = 0;
             var bytes = AuthDataHelper.GetSizedByteArray(ab, ref offset, 2);
             if (null != bytes)
             {
-                size = BitConverter.ToUInt16(bytes.ToArray().Reverse().ToArray(), 0);
+                size = BinaryPrimitives.ReadUInt16BigEndian(bytes);
             }
             // If size is four, then the Name is a handle. 
             if (size is 4)
@@ -479,10 +480,10 @@ namespace Fido2NetLib
             Raw = certInfo;
             var offset = 0;
             Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-            if (0xff544347 != BitConverter.ToUInt32(Magic.ToArray().Reverse().ToArray(), 0))
+            if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
                 throw new Fido2VerificationException("Bad magic number " + BitConverter.ToString(Magic).Replace("-",""));
             Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
-            if (0x8017 != BitConverter.ToUInt16(Type.ToArray().Reverse().ToArray(), 0))
+            if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
                 throw new Fido2VerificationException("Bad structure tag " + BitConverter.ToString(Type).Replace("-", ""));
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
             ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
@@ -524,7 +525,7 @@ namespace Fido2NetLib
 
             // TPMI_ALG_PUBLIC
             Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BitConverter.ToUInt16(Type.Reverse().ToArray(), 0).ToString());
+            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type).ToString());
 
             // TPMI_ALG_HASH 
             Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
@@ -602,7 +603,7 @@ namespace Fido2NetLib
         public byte[]? CurveID { get; private set; }
         public byte[]? KDF { get; private set; }
         public byte[] Unique { get; private set; }
-        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BitConverter.ToUInt16(CurveID.Reverse().ToArray(), 0).ToString());
+        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID).ToString());
         public ECPoint ECPoint
         {
             get
@@ -610,9 +611,9 @@ namespace Fido2NetLib
                 var point = new ECPoint();
                 var uniqueOffset = 0;
                 var size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
-                point.X = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BitConverter.ToUInt16(size.Reverse().ToArray(), 0));
+                point.X = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BinaryPrimitives.ReadUInt16BigEndian(size));
                 size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
-                point.Y = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BitConverter.ToUInt16(size.Reverse().ToArray(), 0));
+                point.Y = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BinaryPrimitives.ReadUInt16BigEndian(size));
                 return point;
             }
         }

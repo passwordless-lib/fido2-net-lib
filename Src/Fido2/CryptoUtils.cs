@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -205,7 +206,7 @@ namespace Fido2NetLib
 
             foreach (AsnElt s in revokedCertificates)
             {
-                revoked.Add(BitConverter.ToInt64(s.Sub[0].GetOctetString().Reverse().ToArray(), 0));
+                revoked.Add(BinaryPrimitives.ReadInt64BigEndian(s.Sub[0].GetOctetString()));
             }
 
             return revoked.Contains(BitConverter.ToInt64(cert.GetSerialNumber(), 0));
