@@ -90,7 +90,7 @@ namespace Fido2NetLib
                 var valid = chain.Build(trustPath[0]);
 
                 // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                var chainRoot = chain.ChainElements[^1].Certificate;
                 valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
 
                 if (true == valid)
