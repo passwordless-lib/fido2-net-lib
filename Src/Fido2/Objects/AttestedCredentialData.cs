@@ -1,6 +1,7 @@
 ﻿#nullable disable
 
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -106,16 +107,7 @@ namespace Fido2NetLib.Objects
             }
 
             // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
-            var credentialIDLenBytes = reader.ReadBytes(sizeof(ushort));
-
-            if (BitConverter.IsLittleEndian)
-            {
-                // Credential ID length from authenticator is big endian.  If we are on little endian system, convert.
-                Array.Reverse(credentialIDLenBytes);
-            }
-
-            // Convert the read bytes to uint16 so we know how many bytes to read for the credential ID
-            var credentialIDLen = BitConverter.ToUInt16(credentialIDLenBytes, 0);
+            var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(reader.ReadBytes(sizeof(ushort)));
 
             // Read the credential ID bytes
             CredentialID = reader.ReadBytes(credentialIDLen);
@@ -150,15 +142,8 @@ namespace Fido2NetLib.Objects
                     }
 
                     // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
-                    var credentialIDLen = (ushort)CredentialID.Length;
-                    var credentialIDLenBytes = BitConverter.GetBytes(credentialIDLen);
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        Array.Reverse(credentialIDLenBytes);
-                    }
-
-                    writer.Write(credentialIDLenBytes);
-
+                    writer.WriteUInt16BigEndian((ushort)CredentialID.Length);
+                    
                     // Write CredentialID bytes
                     writer.Write(CredentialID);
 
