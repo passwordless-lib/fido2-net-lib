@@ -50,24 +50,24 @@ namespace Fido2NetLib.Objects
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName))
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
 
-                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName))
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
                 }
                 else
                 {
-                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value))
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value))
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
                     
-                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value))
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
                 }
 

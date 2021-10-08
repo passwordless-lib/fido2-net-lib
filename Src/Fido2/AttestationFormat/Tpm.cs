@@ -354,7 +354,7 @@ namespace Fido2NetLib
                 {
                     foreach (var oid in enhancedKeyUsageExtension.EnhancedKeyUsages)
                     {
-                        if (expectedEnhancedKeyUsages.Equals(oid.Value))
+                        if (expectedEnhancedKeyUsages.Equals(oid.Value, StringComparison.Ordinal))
                             return true;
                     }
 
