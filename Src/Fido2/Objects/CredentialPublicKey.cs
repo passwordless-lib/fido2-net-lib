@@ -250,7 +250,7 @@ namespace Fido2NetLib.Objects
 
         internal readonly CBORObject _cpk;
 
-        internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new Dictionary<string, COSE.KeyType>
+        internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new ()
         {
             { "1.2.840.10045.2.1", COSE.KeyType.EC2 },
             { "1.2.840.113549.1.1.1", COSE.KeyType.RSA}
