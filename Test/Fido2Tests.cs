@@ -69,16 +69,7 @@ namespace fido2_net_lib.Test
                 new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K }
             };
         }
-        public static byte[] StringToByteArray(string hex)
-        {
-            hex = hex.Replace("-", "");
-            int NumberChars = hex.Length;
-            byte[] bytes = new byte[NumberChars / 2];
-            for (int i = 0; i < NumberChars; i += 2)
-                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-            return bytes;
-        }
-
+       
         private T Get<T>(string filename)
         {
             return JsonConvert.DeserializeObject<T>(File.ReadAllText(filename));
@@ -424,7 +415,6 @@ namespace fido2_net_lib.Test
 
             Assert.All(z2, (x) => z1.Contains(x));
             Assert.True(z1.SequenceEqual(z2));
-
         }
 
         [Fact]
@@ -445,7 +435,7 @@ namespace fido2_net_lib.Test
             var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
                     new PublicKeyCredentialDescriptor()
                     {
-                        Id = StringToByteArray(credId),
+                        Id = Convert.FromHexString(credId.Replace("-", "")),
                         Type = PublicKeyCredentialType.PublicKey
                     }
                 };
