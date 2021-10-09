@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -13,8 +14,9 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets or sets the identifier that identifies the extension.
         /// </summary>
-        [JsonProperty("id", Required = Required.Always)]
+        [JsonPropertyName("id"), Required]
         public string Id { get; set; }
+
         /// <summary>
         /// Gets or sets the tag.
         /// <para>This field may be empty.</para>
@@ -22,8 +24,9 @@ namespace Fido2NetLib
         /// <remarks>
         /// The TAG of the extension if this was assigned. TAGs are assigned to extensions if they could appear in an assertion. 
         /// </remarks>
-        [JsonProperty("tag")]
+        [JsonPropertyName("tag")]
         public ushort Tag { get; set; }
+
         /// <summary>
         /// Gets or sets arbitrary data further describing the extension and/or data needed to correctly process the extension. 
         /// <para>This field may be empty.</para>
@@ -31,8 +34,9 @@ namespace Fido2NetLib
         /// <remarks>
         /// This field MAY be missing or it MAY be empty.
         /// </remarks>
-        [JsonProperty("data")]
+        [JsonPropertyName("data")]
         public string Data { get; set; }
+
         /// <summary>
         /// Gets or sets a value indication whether an unknown extensions must be ignored (<c>false</c>) or must lead to an error (<c>true</c>) when the extension is to be processed by the FIDO Server, FIDO Client, ASM, or FIDO Authenticator. 
         /// </summary>
@@ -42,7 +46,7 @@ namespace Fido2NetLib
         ///     <item>A value of true indicates that unknown extensions MUST result in an error.</item>
         /// </list>
         /// </remarks>
-        [JsonProperty("fail_if_unknown", Required = Required.Always)]
+        [JsonPropertyName("fail_if_unknown"), Required]
         public bool Fail_If_Unknown { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -8,19 +9,19 @@ namespace Fido2NetLib
     /// <remarks>
     /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#patternaccuracydescriptor-dictionary"/>
     /// </remarks>
-    public class PatternAccuracyDescriptor
+    public sealed class PatternAccuracyDescriptor
     {
         /// <summary>
         /// Gets or sets the number of possible patterns (having the minimum length) out of which exactly one would be the right one, i.e. 1/probability in the case of equal distribution.
         /// </summary>
-        [JsonProperty("minComplexity", Required = Required.Always)]
+        [JsonPropertyName("minComplexity"), Required]
         public ulong MinComplexity { get; set; }
 
         /// <summary>
         /// Gets or sets maximum number of false attempts before the authenticator will block authentication using this method (at least temporarily). 
         /// <para>Zero (0) means it will never block.</para>
         /// </summary>
-        [JsonProperty("maxRetries")]
+        [JsonPropertyName("maxRetries")]
         public ushort MaxRetries { get; set; }
 
         /// <summary>
@@ -30,7 +31,7 @@ namespace Fido2NetLib
         /// <remarks>
         /// All alternative user verification methods MUST be specified appropriately in the metadata under userVerificationDetails.
         /// </remarks>
-        [JsonProperty("blockSlowdown")]
+        [JsonPropertyName("blockSlowdown")]
         public ushort BlockSlowdown { get; set; }
     }
 }

@@ -87,7 +87,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddSingleton<IMetadataService>(r =>
             {
                 var service = r.GetService<TService>();
-                service.Initialize().Wait();
+                service.InitializeAsync().Wait();
                 return service;
             });
         }

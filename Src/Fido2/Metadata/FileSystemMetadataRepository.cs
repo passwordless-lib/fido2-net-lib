@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
@@ -40,7 +40,7 @@ namespace Fido2NetLib
                 foreach (var filename in Directory.GetFiles(_path))
                 {
                     var rawStatement = File.ReadAllText(filename);
-                    var statement = JsonConvert.DeserializeObject<MetadataStatement>(rawStatement);
+                    var statement = JsonSerializer.Deserialize<MetadataStatement>(rawStatement)!;
                     var conformanceEntry = new MetadataBLOBPayloadEntry
                     {
                         AaGuid = statement.AaGuid,

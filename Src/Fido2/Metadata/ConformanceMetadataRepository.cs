@@ -5,13 +5,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Json.Linq;
-using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
-{   
+{
     public sealed class ConformanceMetadataRepository : IMetadataRepository
     {
         private const string ROOT_CERT = "MIICaDCCAe6gAwIBAgIPBCqih0DiJLW7+UHXx/o1MAoGCCqGSM49BAMDMGcxCzAJ" +
@@ -53,10 +52,10 @@ namespace Fido2NetLib
                 endpoint = _origin
             };
 
-            var content = new StringContent(Newtonsoft.Json.JsonConvert.SerializeObject(req), Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
-            var result = Newtonsoft.Json.JsonConvert.DeserializeObject<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
-            var conformanceEndpoints = new List<string>(result.Result);
+            var result = JsonSerializer.Deserialize<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
+            var conformanceEndpoints = result.Result;
 
             var combinedBlob = new MetadataBLOBPayload
             {
@@ -66,9 +65,9 @@ namespace Fido2NetLib
 
             var entries = new List<MetadataBLOBPayloadEntry>();
 
-            foreach(var BLOBUrl in conformanceEndpoints)
+            foreach(var blobUrl in conformanceEndpoints)
             {
-                var rawBlob = await DownloadStringAsync(BLOBUrl);
+                var rawBlob = await DownloadStringAsync(blobUrl);
 
                 MetadataBLOBPayload blob;
 
@@ -97,14 +96,14 @@ namespace Fido2NetLib
             return combinedBlob;
         }
 
-        protected async Task<string> DownloadStringAsync(string url)
+        protected Task<string> DownloadStringAsync(string url)
         {
-            return await _httpClient.GetStringAsync(url);
+            return _httpClient.GetStringAsync(url);
         }
 
-        protected async Task<byte[]> DownloadDataAsync(string url)
+        protected Task<byte[]> DownloadDataAsync(string url)
         {
-            return await _httpClient.GetByteArrayAsync(url);
+            return _httpClient.GetByteArrayAsync(url);
         }
 
         private X509Certificate2 GetX509Certificate(string key)
@@ -130,21 +129,19 @@ namespace Fido2NetLib
             if (jwtParts.Length != 3)
                 throw new ArgumentException("The JWT does not have the 3 expected components");
 
-            var blobHeader = jwtParts.First();
-            var tokenHeader = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(blobHeader)));
+            var blobHeader = jwtParts[0];
+            using var jsonDoc = JsonDocument.Parse(Base64Url.Decode(blobHeader));
+            var tokenHeader = jsonDoc.RootElement;
 
-            var blobAlg = tokenHeader["alg"]?.Value<string>();
+            var blobAlg = tokenHeader.TryGetProperty("alg", out var algEl)
+                ? algEl.GetString()!
+                : throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
-            if(blobAlg is null)
-                throw new ArgumentNullException("No alg value was present in the BLOB header.");
-
-            var x5cArray = tokenHeader["x5c"] as JArray;
-
-            if (x5cArray is null)
-                throw new ArgumentException("No x5c array was present in the BLOB header.");
+            var blobCertStrings = tokenHeader.TryGetProperty("x5c", out var x5cEl)
+                ? x5cEl.ToStringArray()
+                : throw new ArgumentException("No x5c array was present in the BLOB header.");
 
             var rootCert = GetX509Certificate(ROOT_CERT);
-            var blobCertStrings = x5cArray.Values<string>().ToList();
             var blobCertificates = new List<X509Certificate2>();
             var blobPublicKeys = new List<SecurityKey>();
 
@@ -211,7 +208,7 @@ namespace Fido2NetLib
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
                 if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
-                    certChain.ChainElements.Count == (blobCertStrings.Count + 1) &&
+                    certChain.ChainElements.Count == (blobCertStrings.Length + 1) &&
                     // and that the root cert has exactly one status listed against it
                     certChain.ChainElements[^1].ChainElementStatus.Length == 1 &&
                     // and that that status is a status of exactly UntrustedRoot
@@ -233,7 +230,7 @@ namespace Fido2NetLib
 
             var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var blob = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataBLOBPayload>(blobPayload);
+            var blob = JsonSerializer.Deserialize<MetadataBLOBPayload>(blobPayload);
             blob.JwtAlg = blobAlg;
             return blob;
         }

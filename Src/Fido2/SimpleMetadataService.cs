@@ -79,7 +79,7 @@ namespace Fido2NetLib
             }
         }
 
-        public virtual async Task Initialize()
+        public virtual async Task InitializeAsync()
         {
             foreach (var repository in _repositories)
             {

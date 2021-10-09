@@ -2,10 +2,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
@@ -86,7 +86,7 @@ namespace Fido2NetLib
                 var cachedEntry = await _cache.GetStringAsync(cacheKey);
                 if (cachedEntry != null)
                 {
-                    var statement = JsonConvert.DeserializeObject<MetadataStatement>(cachedEntry);
+                    var statement = JsonSerializer.Deserialize<MetadataStatement>(cachedEntry);
                     if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                     {
                         var aaGuid = Guid.Parse(statement.AaGuid);
@@ -102,7 +102,7 @@ namespace Fido2NetLib
                     {
                         if (!string.IsNullOrWhiteSpace(entry.AaGuid))
                         {
-                            var statementJson = JsonConvert.SerializeObject(entry.MetadataStatement, Formatting.Indented);
+                            var statementJson = JsonSerializer.Serialize(entry.MetadataStatement, new JsonSerializerOptions { WriteIndented = true });
 
                             _log?.LogDebug("{0}:{1}\n{2}", entry.AaGuid, entry.MetadataStatement.Description, statementJson);
 
@@ -149,7 +149,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        protected virtual async Task InitializeRepository(IMetadataRepository repository)
+        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository)
         {
             var blobCacheKey = GetTocCacheKey(repository);
 
@@ -161,7 +161,7 @@ namespace Fido2NetLib
 
             if (cachedToc != null)
             {
-                blob = JsonConvert.DeserializeObject<MetadataBLOBPayload>(cachedToc);
+                blob = JsonSerializer.Deserialize<MetadataBLOBPayload>(cachedToc);
                 cacheUntil = GetCacheUntilTime(blob);
             }
             else
@@ -186,7 +186,7 @@ namespace Fido2NetLib
                 {
                     await _cache.SetStringAsync(
                         blobCacheKey,
-                        JsonConvert.SerializeObject(blob),
+                        JsonSerializer.Serialize(blob),
                         new DistributedCacheEntryOptions()
                         {
                             AbsoluteExpiration = cacheUntil
@@ -204,19 +204,19 @@ namespace Fido2NetLib
                     }
                     catch (Exception ex)
                     {
-                        _log?.LogError(ex, "Error getting statement from {0} for AAGUID '{1}'.\nTOC entry:\n{2} ", repository.GetType().Name, entry.AaGuid, JsonConvert.SerializeObject(entry, Formatting.Indented));
+                        _log?.LogError(ex, "Error getting statement from {0} for AAGUID '{1}'.\nTOC entry:\n{2} ", repository.GetType().Name, entry.AaGuid, JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = true }));
                     }
                 }
             }
         }
 
-        public virtual async Task Initialize()
+        public virtual async Task InitializeAsync()
         {
             foreach (var repository in _repositories)
             {
                 try
                 {
-                    await InitializeRepository(repository);
+                    await InitializeRepositoryAsync(repository);
                 }
                 catch (Exception ex)
                 {

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
@@ -22,20 +22,23 @@ namespace Fido2NetLib.Objects
         /// <summary>
         /// This member contains the type of the public key credential the caller is referring to.
         /// </summary>
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public PublicKeyCredentialType? Type { get; set; } = PublicKeyCredentialType.PublicKey;
 
         /// <summary>
         /// This member contains the credential ID of the public key credential the caller is referring to.
         /// </summary>
         [JsonConverter(typeof(Base64UrlConverter))]
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public byte[] Id { get; set; }
+
+#nullable enable
 
         /// <summary>
         /// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator of the public key credential the caller is referring to.
         /// </summary>
-        [JsonProperty("transports", NullValueHandling = NullValueHandling.Ignore)]
-        public AuthenticatorTransport[] Transports { get; set; }
+        [JsonPropertyName("transports")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public AuthenticatorTransport[]? Transports { get; set; }
     };
 }

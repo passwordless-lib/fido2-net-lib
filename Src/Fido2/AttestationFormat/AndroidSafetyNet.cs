@@ -5,9 +5,10 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
+
 using Fido2NetLib.Objects;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 using PeterO.Cbor;
 
 namespace Fido2NetLib
@@ -16,7 +17,7 @@ namespace Fido2NetLib
     {
         private readonly int _driftTolerance;
 
-        private X509Certificate2 GetX509Certificate(string certString)
+        private static X509Certificate2 GetX509Certificate(string certString)
         {
             try
             {
@@ -56,33 +57,36 @@ namespace Fido2NetLib
             if (jwtParts.Length != 3)
                 throw new Fido2VerificationException("SafetyNet response JWT does not have the 3 expected components");
 
-            var jwtHeaderString = jwtParts.First();
-            var jwtHeaderJSON = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(jwtHeaderString)));
+            string jwtHeaderString = jwtParts[0];
 
-            var x5cArray = jwtHeaderJSON["x5c"] as JArray;
+            using var jwtHeaderJsonDoc = JsonDocument.Parse(Base64Url.Decode(jwtHeaderString));
+            var jwtHeaderJson = jwtHeaderJsonDoc.RootElement;
 
-            if (x5cArray is null)
-                throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
-            var x5cStrings = x5cArray.Values<string>().ToList();
+            string[] x5cStrings = jwtHeaderJson.TryGetProperty("x5c", out var x5cEl)
+                ? x5cEl.ToStringArray()
+                : throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
 
-            if (x5cStrings.Count == 0)
+
+            if (x5cStrings.Length is 0)
                 throw new Fido2VerificationException("No keys were present in the TOC header in SafetyNet response JWT");
 
-            var certs = new List<X509Certificate2>();
+            var certs = new X509Certificate2[x5cStrings.Length];
             var keys = new List<SecurityKey>();
 
-            foreach (var certString in x5cStrings)
+            for (int i = 0; i < certs.Length; i++)
             {
+                var certString = x5cStrings[i];
                 var cert = GetX509Certificate(certString);
-                certs.Add(cert);
+                certs[i] = cert;
 
-                var ecdsaPublicKey = cert.GetECDsaPublicKey();
-                if (ecdsaPublicKey != null)
+                if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
+                {
                     keys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
-
-                var rsaPublicKey = cert.GetRSAPublicKey();
-                if (rsaPublicKey != null)
+                }
+                else if (cert.GetRSAPublicKey() is RSA rsaPublicKey)
+                {
                     keys.Add(new RsaSecurityKey(rsaPublicKey));
+                }
             }
 
             var validationParameters = new TokenValidationParameters
