@@ -8,7 +8,7 @@ namespace Fido2NetLib
     /// <remarks>
     /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#biometricaccuracydescriptor-dictionary"/>
     /// </remarks>
-    public class BiometricAccuracyDescriptor
+    public sealed class BiometricAccuracyDescriptor
     {
         /// <summary>
         /// Gets or sets the false rejection rate.
@@ -17,14 +17,14 @@ namespace Fido2NetLib
         /// <remarks>
         ///  [ISO19795-1] for a single template, i.e. the percentage of verification transactions with truthful claims of identity that are incorrectly denied. 
         /// </remarks>
-        [JsonPropertyName("selfAttestedFRR ")] // TODO: Verify if this leading space is correct
+        [JsonPropertyName("selfAttestedFRR")]
         public double SelfAttestedFRR { get; set; }
 
         /// <summary>
         /// Gets or sets the false acceptance rate.
         /// <para>For example a FAR of 0.002% would be encoded as 0.00002.</para>
         /// </summary>
-        [JsonPropertyName("selfAttestedFAR ")] // TODO: Verify if this leading space is correct
+        [JsonPropertyName("selfAttestedFAR")]
         public double SelfAttestedFAR { get; set; }
 
         /// <summary>
