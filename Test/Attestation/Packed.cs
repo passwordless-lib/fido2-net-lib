@@ -166,7 +166,7 @@ namespace Test.Attestation
                                     eCCurve = ECCurve.NamedCurves.nistP521;
                                     break;
                                 case COSE.EllipticCurve.P256K:
-                                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                                    if (OperatingSystem.IsMacOS())
                                     {
                                         // see https://github.com/dotnet/runtime/issues/47770
                                         throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");
@@ -186,7 +186,7 @@ namespace Test.Attestation
 
                                 attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                                byte[] serial = new byte[12];
+                                var serial = new byte[12];
 
                                 using (var rng = RandomNumberGenerator.Create())
                                 {
@@ -244,7 +244,7 @@ namespace Test.Attestation
 
                                 attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                                byte[] serial = new byte[12];
+                                var serial = new byte[12];
 
                                 using (var rng = RandomNumberGenerator.Create())
                                 {
@@ -328,7 +328,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -387,7 +387,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -446,7 +446,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -505,7 +505,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -564,7 +564,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -623,7 +623,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -682,7 +682,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -741,7 +741,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -800,7 +800,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -859,7 +859,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -888,7 +888,7 @@ namespace Test.Attestation
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    if (OperatingSystem.IsMacOS())
                     {
                         // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
                         var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponse());
@@ -931,7 +931,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -990,7 +990,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -1053,7 +1053,7 @@ namespace Test.Attestation
                     var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
                     attRequest.CertificateExtensions.Add(notIdFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
@@ -1112,7 +1112,7 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    byte[] serial = new byte[12];
+                    var serial = new byte[12];
 
                     using (var rng = RandomNumberGenerator.Create())
                     {
