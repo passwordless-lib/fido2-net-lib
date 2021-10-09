@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Buffers;
+using System.Buffers.Text;
+using System.Text.Unicode;
 
 namespace Fido2NetLib
 {
@@ -49,11 +51,8 @@ namespace Fido2NetLib
         /// <summary>
         /// Decodes a Base64Url encoded string to its raw bytes.
         /// </summary>
-        public static byte[] Decode(string text)
+        public static byte[] Decode(ReadOnlySpan<char> text)
         {
-            if (text is null)
-                throw new ArgumentNullException(nameof(text));
-
             int padCharCount = (text.Length % 4) switch
             {
                 2 => 2,
@@ -65,7 +64,7 @@ namespace Fido2NetLib
 
             char[] buffer = ArrayPool<char>.Shared.Rent(encodedLength);
 
-            text.CopyTo(0, buffer, 0, text.Length);
+            text.CopyTo(buffer);
 
             for (int i = 0; i < text.Length; i++)
             {
@@ -91,6 +90,55 @@ namespace Fido2NetLib
             var result = Convert.FromBase64CharArray(buffer, 0, encodedLength);
 
             ArrayPool<char>.Shared.Return(buffer, true);
+
+            return result;
+        }
+
+
+        /// <summary>
+        /// Decodes a Base64Url encoded string to its raw bytes.
+        /// </summary>
+        public static byte[] DecodeUtf8(ReadOnlySpan<byte> text)
+        {
+            int padCharCount = (text.Length % 4) switch
+            {
+                2 => 2,
+                3 => 1,
+                _ => 0
+            };
+
+            int encodedLength = text.Length + padCharCount;
+
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(encodedLength);
+
+            text.CopyTo(buffer);
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                ref byte c = ref buffer[i];
+
+                switch ((char)c)
+                {
+                    case '-': c = (byte)'+'; break;
+                    case '_': c = (byte)'/'; break;
+                }
+            }
+
+            if (padCharCount == 1)
+            {
+                buffer[encodedLength - 1] = (byte)'=';
+            }
+            else if (padCharCount == 2)
+            {
+                buffer[encodedLength - 1] = (byte)'=';
+                buffer[encodedLength - 2] = (byte)'=';
+            }
+
+            Base64.DecodeFromUtf8InPlace(buffer.AsSpan(0, encodedLength), out int decodedLength);
+
+            var result = buffer.AsSpan(0, decodedLength).ToArray();
+
+            ArrayPool<byte>.Shared.Return(buffer, true);
 
             return result;
         }
