@@ -40,7 +40,7 @@ namespace Fido2NetLib
             _origin = origin;
         }
 
-        public Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }

@@ -53,7 +53,7 @@ namespace Fido2NetLib
         {
             if (entry.AaGuid != null)
             {
-                var statement = await repository.GetMetadataStatement(blob, entry);
+                var statement = await repository.GetMetadataStatementAsync(blob, entry);
 
                 if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                 {

@@ -20,7 +20,7 @@ namespace Test
             
             Assert.True(blob.Entries.Length > 0);
 
-            var entry_1 = await client.GetMetadataStatement(blob, blob.Entries[^1]);
+            var entry_1 = await client.GetMetadataStatementAsync(blob, blob.Entries[^1]);
 
             Assert.NotNull(entry_1.Description);
         }

@@ -19,7 +19,7 @@ namespace Fido2NetLib
             _entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
         }
 
-        public async Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             if (_blob is null)
                 await GetBLOBAsync();
