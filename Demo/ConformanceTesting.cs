@@ -5,17 +5,17 @@ namespace Fido2Demo
 {
     public static class ConformanceTesting
     {
-        private static readonly object _syncRoot = new object();
+        private static readonly object _syncRoot = new ();
 
         private static IMetadataService _instance;
 
         public static IMetadataService MetadataServiceInstance(string cacheDir, string origin)
         {
-            if(_instance == null)
+            if (_instance == null)
             {
-                lock(_syncRoot)
+                lock (_syncRoot)
                 {
-                    if(_instance == null)
+                    if (_instance == null)
                     {
                         var repos = new List<IMetadataRepository>
                         {

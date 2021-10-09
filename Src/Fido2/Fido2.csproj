@@ -20,8 +20,6 @@
     <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
     <PackageReference Include="PeterO.Cbor" Version="4.1.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.6.0" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.7.0" />
   </ItemGroup>
 
   <!-- Attach a build warning in relation to our .NETStandard2.0

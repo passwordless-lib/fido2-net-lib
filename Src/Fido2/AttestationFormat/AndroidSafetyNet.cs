@@ -116,15 +116,15 @@ namespace Fido2NetLib
 
             foreach (var claim in jwtToken.Claims)
             {
-                if (claim.Type is "nonce" && claim.ValueType is "http://www.w3.org/2001/XMLSchema#string" && (0 != claim.Value.Length))
+                if (claim is { Type: "nonce", ValueType: "http://www.w3.org/2001/XMLSchema#string" }  && claim.Value.Length != 0)
                 {
                     nonce = claim.Value;
                 }
-                if (claim.Type is "ctsProfileMatch" && claim.ValueType is "http://www.w3.org/2001/XMLSchema#boolean")
+                if (claim is { Type: "ctsProfileMatch", ValueType: "http://www.w3.org/2001/XMLSchema#boolean" })
                 {
                     ctsProfileMatch = bool.Parse(claim.Value);
                 }
-                if (claim.Type is "timestampMs" && claim.ValueType is "http://www.w3.org/2001/XMLSchema#integer64")
+                if (claim is { Type: "timestampMs", ValueType: "http://www.w3.org/2001/XMLSchema#integer64" })
                 {
                     timestampMs = DateTimeHelper.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
                 }
@@ -151,9 +151,9 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Nonce value not base64string in SafetyNet attestation", ex);
             }
 
-            using (var hasher = CryptoUtils.GetHasher(HashAlgorithmName.SHA256))
+            using (var sha256 = SHA256.Create())
             {
-                var dataHash = hasher.ComputeHash(Data);
+                var dataHash = sha256.ComputeHash(Data);
                 if (false == dataHash.SequenceEqual(nonceHash))
                     throw new Fido2VerificationException(
                         string.Format(

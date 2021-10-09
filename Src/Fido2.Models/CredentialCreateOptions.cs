@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Fido2NetLib
 {
-    public class CredentialCreateOptions : Fido2ResponseBase
+    public sealed class CredentialCreateOptions : Fido2ResponseBase
     {
         /// <summary>
         /// 
@@ -106,73 +106,41 @@ namespace Fido2NetLib
             return JsonConvert.DeserializeObject<CredentialCreateOptions>(json);
         }
 
-        private static PubKeyCredParam ES256 = new PubKeyCredParam()
-        {
-            // External authenticators support the ES256 algorithm
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.ES256,
-        };
-        private static PubKeyCredParam ES384 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.ES384,
-        };
-        private static PubKeyCredParam ES512 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.ES512,
-        };
-        private static PubKeyCredParam RS256 = new PubKeyCredParam()
-        {
-            // Windows Hello supports the RS256 algorithm
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.RS256,
-        };
-        private static PubKeyCredParam RS384 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.RS384,
-        };
-        private static PubKeyCredParam RS512 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.RS512,
-        };
-        private static PubKeyCredParam PS256 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.PS256,
-        };
-        private static PubKeyCredParam PS384 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.PS384,
-        };
-        private static PubKeyCredParam PS512 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.PS512,
-        };
-        private static PubKeyCredParam Ed25519 = new PubKeyCredParam()
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Alg = COSE.Algorithm.EdDSA,
-        };
+        private static readonly PubKeyCredParam ES256   = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
+        private static readonly PubKeyCredParam ES384   = new(COSE.Algorithm.ES384);
+        private static readonly PubKeyCredParam ES512   = new(COSE.Algorithm.ES512);
+        private static readonly PubKeyCredParam RS256   = new(COSE.Algorithm.RS256); // Supported by windows hello
+        private static readonly PubKeyCredParam RS384   = new(COSE.Algorithm.RS384);
+        private static readonly PubKeyCredParam RS512   = new(COSE.Algorithm.RS512);
+        private static readonly PubKeyCredParam PS256   = new(COSE.Algorithm.PS256);
+        private static readonly PubKeyCredParam PS384   = new(COSE.Algorithm.PS384);
+        private static readonly PubKeyCredParam PS512   = new(COSE.Algorithm.PS512);
+        private static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
     }
 
-    public class PubKeyCredParam
+    public sealed class PubKeyCredParam
     {
+        /// <summary>
+        /// Constructs a PubKeyCredParam instance
+        /// </summary>
+        [JsonConstructor]
+        public PubKeyCredParam(COSE.Algorithm alg, PublicKeyCredentialType type = PublicKeyCredentialType.PublicKey)
+        {
+            Type = type;
+            Alg = alg;
+        }
+
         /// <summary>
         /// The type member specifies the type of credential to be created.
         /// </summary>
         [JsonProperty("type")]
-        public PublicKeyCredentialType Type { get; set; }
+        public PublicKeyCredentialType Type { get; }
 
         /// <summary>
         /// The alg member specifies the cryptographic signature algorithm with which the newly generated credential will be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic Curve.
         /// </summary>
         [JsonProperty("alg")]
-        public COSE.Algorithm Alg { get; set; }
+        public COSE.Algorithm Alg { get; }
     }
 
     /// <summary>

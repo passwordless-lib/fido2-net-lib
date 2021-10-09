@@ -87,11 +87,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -192,11 +188,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -384,11 +376,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -455,11 +443,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -524,11 +508,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -601,11 +581,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -679,11 +655,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -756,11 +728,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -834,11 +802,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",
@@ -912,11 +876,7 @@ namespace Test
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",

@@ -14,16 +14,8 @@ namespace Fido2Demo
 {
     public class TestController : Controller
     {
-        /**
-         * 
-         * 
-         * 
-         * CONFORMANCE TESTING ENDPOINTS
-         * 
-         * 
-         * 
-         */
-        private static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
+        /* CONFORMANCE TESTING ENDPOINTS */
+        private static readonly DevelopmentInMemoryStore DemoStorage = new ();
 
         private readonly IFido2 _fido2;
         private readonly string _origin;
@@ -49,7 +41,7 @@ namespace Fido2Demo
         {
             var attType = opts.Attestation;
 
-            var username = new byte[] { };
+            var username = Array.Empty<byte>();
 
             try
             {
@@ -73,7 +65,7 @@ namespace Fido2Demo
 
             //var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
             var exts = new AuthenticationExtensionsClientInputs() { };
-            if (null != opts.Extensions && null != opts.Extensions.Example)
+            if (opts.Extensions?.Example != null)
                 exts.Example = opts.Extensions.Example;
 
             // 3. Create options

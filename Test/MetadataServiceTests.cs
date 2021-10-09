@@ -17,7 +17,7 @@ namespace Test
         {
             var client = new ConformanceMetadataRepository(null, "http://localhost");
 
-            var blob = await client.GetBLOB();
+            var blob = await client.GetBLOBAsync();
 
             Assert.True(blob.Entries.Length > 0);
 

@@ -45,29 +45,29 @@ namespace Fido2NetLib.Objects
                 var ecDsaPubKey = cert.GetECDsaPublicKey();
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
-                if (keyParams.Curve.Oid.FriendlyName.Equals("secP256k1"))
+                if (keyParams.Curve.Oid.FriendlyName is "secP256k1")
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256K);
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName))
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName))
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
 
-                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName))
+                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
                 }
                 else
                 {
-                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value))
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
-                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value))
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
                     
-                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value))
+                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
                 }
 
@@ -101,17 +101,13 @@ namespace Fido2NetLib.Objects
 
         internal RSA CreateRsa()
         {
-            if (_type == COSE.KeyType.RSA)
+            if (_type is COSE.KeyType.RSA)
             {
-                var rsa = RSA.Create();
-                rsa.ImportParameters(
-                    new RSAParameters()
-                    {
-                        Modulus = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
-                        Exponent = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
-                    }
-                );
-                return rsa;
+                return RSA.Create(new RSAParameters
+                {
+                    Modulus = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
+                    Exponent = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
+                });
             }
 
             throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
@@ -250,7 +246,7 @@ namespace Fido2NetLib.Objects
 
         internal readonly CBORObject _cpk;
 
-        internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new Dictionary<string, COSE.KeyType>
+        internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new ()
         {
             { "1.2.840.10045.2.1", COSE.KeyType.EC2 },
             { "1.2.840.113549.1.1.1", COSE.KeyType.RSA}

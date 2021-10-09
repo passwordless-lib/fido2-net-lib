@@ -7,12 +7,11 @@ using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
-    public class FileSystemMetadataRepository : IMetadataRepository
+    public sealed class FileSystemMetadataRepository : IMetadataRepository
     {
-        protected readonly string _path;
-
-        protected readonly IDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
-        protected MetadataBLOBPayload? _blob;
+        private readonly string _path;
+        private readonly IDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
+        private MetadataBLOBPayload? _blob;
 
         public FileSystemMetadataRepository(string path)
         {
@@ -23,7 +22,7 @@ namespace Fido2NetLib
         public async Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             if (_blob is null)
-                await GetBLOB();
+                await GetBLOBAsync();
 
             if (!string.IsNullOrEmpty(entry.AaGuid) && Guid.TryParse(entry.AaGuid, out Guid parsedAaGuid))
             {
@@ -34,7 +33,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        public Task<MetadataBLOBPayload> GetBLOB()
+        public Task<MetadataBLOBPayload> GetBLOBAsync()
         {
             if (Directory.Exists(_path))
             {

@@ -12,9 +12,9 @@ using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
 {   
-    public class ConformanceMetadataRepository : IMetadataRepository
+    public sealed class ConformanceMetadataRepository : IMetadataRepository
     {
-        protected const string ROOT_CERT = "MIICaDCCAe6gAwIBAgIPBCqih0DiJLW7+UHXx/o1MAoGCCqGSM49BAMDMGcxCzAJ" +
+        private const string ROOT_CERT = "MIICaDCCAe6gAwIBAgIPBCqih0DiJLW7+UHXx/o1MAoGCCqGSM49BAMDMGcxCzAJ" +
                                         "BgNVBAYTAlVTMRYwFAYDVQQKDA1GSURPIEFsbGlhbmNlMScwJQYDVQQLDB5GQUtF" +
                                         "IE1ldGFkYXRhIDMgQkxPQiBST09UIEZBS0UxFzAVBgNVBAMMDkZBS0UgUm9vdCBG" +
                                         "QUtFMB4XDTE3MDIwMTAwMDAwMFoXDTQ1MDEzMTIzNTk1OVowZzELMAkGA1UEBhMC" +
@@ -28,8 +28,8 @@ namespace Fido2NetLib
                                         "xubSa3y3v5ormpPqCwfqn9s0MLBAtzCIgxQ/zkzPKctkiwoPtDzI51KnAjAmeMyg" +
                                         "X2S5Ht8+e+EQnezLJBJXtnkRWY+Zt491wgt/AwSs5PHHMv5QgjELOuMxQBc=";
 
-        protected readonly string? _blobUrl;
-        protected readonly HttpClient _httpClient;
+        private readonly string? _blobUrl;
+        private readonly HttpClient _httpClient;
 
         private readonly string _origin = "http://localhost";
 
@@ -46,7 +46,7 @@ namespace Fido2NetLib
             return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
-        public async Task<MetadataBLOBPayload> GetBLOB()
+        public async Task<MetadataBLOBPayload> GetBLOBAsync()
         {
             var req = new
             {
@@ -204,18 +204,18 @@ namespace Fido2NetLib
                         var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
                         var crlFile = await DownloadDataAsync(cdp);
                         if (true == CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
-                            throw new Fido2VerificationException(string.Format("Cert {0} found in CRL {1}", element.Certificate.Subject, cdp));
+                            throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");
                     }
                 }
 
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
-                if (rootCert.Thumbprint == certChain.ChainElements[certChain.ChainElements.Count - 1].Certificate.Thumbprint &&
+                if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
                     certChain.ChainElements.Count == (blobCertStrings.Count + 1) &&
                     // and that the root cert has exactly one status listed against it
-                    certChain.ChainElements[certChain.ChainElements.Count - 1].ChainElementStatus.Length == 1 &&
+                    certChain.ChainElements[^1].ChainElementStatus.Length == 1 &&
                     // and that that status is a status of exactly UntrustedRoot
-                    certChain.ChainElements[certChain.ChainElements.Count - 1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                    certChain.ChainElements[^1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
                 {
                     // if we are good so far, that is a good sign
                     certChainIsValid = true;

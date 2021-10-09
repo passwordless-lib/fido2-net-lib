@@ -1,6 +1,7 @@
 ﻿#nullable disable
 
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Linq;
 
@@ -93,13 +94,7 @@ namespace Fido2NetLib.Objects
 
                     _flags = (AuthenticatorFlags)reader.ReadByte();
 
-                    var signCountBytes = reader.ReadBytes(sizeof(uint));
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        // Sign count is provided by the authenticator as big endian, convert if we are on little endian system
-                        signCountBytes = signCountBytes.Reverse().ToArray();
-                    }
-                    SignCount = BitConverter.ToUInt32(signCountBytes, 0);
+                    SignCount = BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(sizeof(uint)));
 
                     // Attested credential data is only present if the AT flag is set
                     if (HasAttestedCredentialData)
@@ -138,12 +133,7 @@ namespace Fido2NetLib.Objects
 
                     writer.Write((byte)_flags);
 
-                    var signCount = BitConverter.GetBytes(SignCount);
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        Array.Reverse(signCount);
-                    }
-                    writer.Write(signCount);
+                    writer.WriteUInt32BigEndian(SignCount);
 
                     if (HasAttestedCredentialData)
                     {

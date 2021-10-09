@@ -94,10 +94,10 @@ namespace Fido2NetLib
 
             // 7. Compute the hash of response.clientDataJSON using SHA-256.
             byte[] clientDataHash, rpIdHash;
-            using (var sha = CryptoUtils.GetHasher(HashAlgorithmName.SHA256))
+            using (var sha256 = SHA256.Create())
             {
-                clientDataHash = sha.ComputeHash(Raw.Response.ClientDataJson);
-                rpIdHash = sha.ComputeHash(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
+                clientDataHash = sha256.ComputeHash(Raw.Response.ClientDataJson);
+                rpIdHash = sha256.ComputeHash(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
             }
 
             // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.

@@ -19,15 +19,6 @@ namespace fido2_net_lib.Test
 
             // Assert
             Assert.Equal(data, decodedBytes);
-        }           
-
-        [Fact]
-        public void EncodeThrowsOnNull()
-        {
-            Assert.Throws<ArgumentNullException>(() =>
-            {
-                var encodedBytes = Base64Url.Encode(null);
-            });
         }
 
         [Fact]

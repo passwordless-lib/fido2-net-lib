@@ -11,6 +11,14 @@ namespace Fido2NetLib
 {
     public static class CryptoUtils
     {
+        public static byte[] Sha256HashData(byte[] data)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                return sha256.ComputeHash(data);
+            }
+        }
+
         public static HashAlgorithm GetHasher(HashAlgorithmName hashName)
         {
             switch (hashName.Name)
@@ -82,7 +90,7 @@ namespace Fido2NetLib
                 var valid = chain.Build(trustPath[0]);
 
                 // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
+                var chainRoot = chain.ChainElements[^1].Certificate;
                 valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
 
                 if (true == valid)
@@ -94,41 +102,52 @@ namespace Fido2NetLib
         public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
         {
             var decoded = AsnElt.Decode(ecDsaSig);
-            var r = decoded.Sub[0].GetOctetString();
-            var s = decoded.Sub[1].GetOctetString();
+            var r = decoded.Sub[0].GetOctetString().AsSpan();
+            var s = decoded.Sub[1].GetOctetString().AsSpan();
 
             // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
             // ASN.1 requires storing positive integer values with any leading 0s removed
             // Convert ASN.1 format to IEEE P-1363 format 
             // determine coefficient size 
+
+            // common coefficient sizes include: 32, 48, and 64
             var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
-            // Create byte array to copy R into 
-            var P1363R = new byte[coefficientSize];
+            // Create buffer to copy R into 
+            Span<byte> p1363R = coefficientSize <= 64
+                ? stackalloc byte[coefficientSize]
+                : new byte[coefficientSize];
 
             if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
             {
-                r.Skip(1).ToArray().CopyTo(P1363R, coefficientSize - r.Length + 1);
+                r.Slice(1).CopyTo(p1363R.Slice(coefficientSize - r.Length + 1));
             }
             else
             {
-                r.CopyTo(P1363R, coefficientSize - r.Length);
+                r.CopyTo(p1363R.Slice(coefficientSize - r.Length));
             }
 
             // Create byte array to copy S into 
-            var P1363S = new byte[coefficientSize];
+            Span<byte> p1363S = coefficientSize <= 64
+                ? stackalloc byte[coefficientSize]
+                : new byte[coefficientSize];
 
             if (0x0 == s[0] && (s[1] & (1 << 7)) != 0)
             {
-                s.Skip(1).ToArray().CopyTo(P1363S, coefficientSize - s.Length + 1);
+                s.Slice(1).CopyTo(p1363S.Slice(coefficientSize - s.Length + 1));
             }
             else
             {
-                s.CopyTo(P1363S, coefficientSize - s.Length);
+                s.CopyTo(p1363S.Slice(coefficientSize - s.Length));
             }
 
             // Concatenate R + S coordinates and return the raw signature
-            return P1363R.Concat(P1363S).ToArray();
+            var concated = new byte[p1363R.Length + p1363S.Length];
+
+            p1363R.CopyTo(concated);
+            p1363S.CopyTo(concated.AsSpan(p1363R.Length));
+
+            return concated;
         }
 
         /// <summary>
@@ -187,7 +206,7 @@ namespace Fido2NetLib
             var cdp = "";
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value.Equals("2.5.29.31")) // id-ce-CRLDistributionPoints
+                if (ext.Oid.Value is "2.5.29.31") // id-ce-CRLDistributionPoints
                 {
                     var asnData = AsnElt.Decode(ext.RawData);
                     cdp = System.Text.Encoding.ASCII.GetString(asnData.Sub[0].Sub[0].Sub[0].Sub[0].GetOctetString());

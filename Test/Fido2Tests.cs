@@ -20,6 +20,7 @@ using System.Buffers.Binary;
 
 namespace fido2_net_lib.Test
 {
+
     // todo: Create tests and name Facts and json files better.
     public class Fido2Tests
     {
@@ -224,11 +225,7 @@ namespace fido2_net_lib.Test
                     ErrorMessage = "",
                     PubKeyCredParams = new List<PubKeyCredParam>()
                     {
-                        new PubKeyCredParam
-                        {
-                            Alg = COSE.Algorithm.ES256,
-                            Type = PublicKeyCredentialType.PublicKey,
-                        }
+                        new PubKeyCredParam(COSE.Algorithm.ES256)
                     },
                     Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                     Status = "ok",
@@ -538,6 +535,7 @@ namespace fido2_net_lib.Test
         {
             var jsonPost = JsonConvert.DeserializeObject<AuthenticatorAttestationRawResponse>(File.ReadAllText("./attestationResultsNone.json"));
             var options = JsonConvert.DeserializeObject<CredentialCreateOptions>(File.ReadAllText("./attestationOptionsNone.json"));
+
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             await o.VerifyAsync(options, _config, (x) => Task.FromResult(true), _metadataService, null);
         }
@@ -750,7 +748,7 @@ namespace fido2_net_lib.Test
         internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
             byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
         {
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type.AsSpan()).ToString());
+            var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
 
             IEnumerable<byte> raw = null;
             var uniqueLen = new byte[2];

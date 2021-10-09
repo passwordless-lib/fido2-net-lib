@@ -12,7 +12,7 @@ namespace Fido2NetLib
 {
     internal sealed class Tpm : AttestationVerifier
     {
-        public static readonly List<string> TPMManufacturers = new List<string>
+        public static readonly HashSet<string> TPMManufacturers = new HashSet<string>
         {
             "id:FFFFF1D0", // FIDO testing TPM
             // From https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Version-1.02-Revision-1.00.pdf
@@ -54,11 +54,10 @@ namespace Fido2NetLib
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
             // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
             PubArea? pubArea = null;
-            if (null != attStmt["pubArea"] &&
-                CBORType.ByteString == attStmt["pubArea"].Type &&
-                0 != attStmt["pubArea"].GetByteString().Length)
+            if (attStmt["pubArea"] is {  Type: CBORType.ByteString } pubAreaObject &&
+                pubAreaObject.GetByteString().Length != 0)
             {
-                pubArea = new PubArea(attStmt["pubArea"].GetByteString());
+                pubArea = new PubArea(pubAreaObject.GetByteString());
             }
 
             if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
@@ -93,11 +92,10 @@ namespace Fido2NetLib
 
             // 4. Validate that certInfo is valid
             CertInfo? certInfo = null;
-            if (null != attStmt["certInfo"] &&
-                CBORType.ByteString == attStmt["certInfo"].Type &&
-                0 != attStmt["certInfo"].GetByteString().Length)
+            if (attStmt["certInfo"] is { Type: CBORType.ByteString } certInfoObject &&
+                certInfoObject.GetByteString().Length != 0)
             {
-                certInfo = new CertInfo(attStmt["certInfo"].GetByteString());
+                certInfo = new CertInfo(certInfoObject.GetByteString());
             }
 
             if (certInfo is null)
@@ -129,7 +127,7 @@ namespace Fido2NetLib
             // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
             // 5. If x5c is present, this indicates that the attestation type is not ECDAA
-            if (null != X5c && CBORType.Array == X5c.Type && 0 != X5c.Count)
+            if (X5c is { Type: CBORType.Array } && X5c.Count != 0)
             {
                 if (X5c.Values is null || X5c.Values.Count is 0 ||
                     CBORType.ByteString != X5c.Values.First().Type ||
@@ -232,7 +230,7 @@ namespace Fido2NetLib
 
             foreach (var extension in extensions)
             {
-                if (extension.Oid.Value.Equals("2.5.29.17")) // subject alternative name
+                if (extension.Oid.Value is "2.5.29.17") // subject alternative name
                 {
                     if (0 == extension.RawData.Length)
                         throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
@@ -244,7 +242,7 @@ namespace Fido2NetLib
                     subjectAlternativeName.CheckTag(AsnElt.SEQUENCE);
                     subjectAlternativeName.CheckNumSubMin(1);
 
-                    var generalName = subjectAlternativeName.Sub.FirstOrDefault(o => o.TagClass == AsnElt.CONTEXT && o.TagValue == AsnElt.OCTET_STRING);
+                    var generalName = subjectAlternativeName.Sub.FirstOrDefault(o => o is { TagClass: AsnElt.CONTEXT, TagValue: AsnElt.OCTET_STRING });
 
                     if (generalName != null)
                     {
@@ -350,11 +348,11 @@ namespace Fido2NetLib
         {
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value.Equals("2.5.29.37") && ext is X509EnhancedKeyUsageExtension enhancedKeyUsageExtension)
+                if (ext.Oid.Value is "2.5.29.37" && ext is X509EnhancedKeyUsageExtension enhancedKeyUsageExtension)
                 {
                     foreach (var oid in enhancedKeyUsageExtension.EnhancedKeyUsages)
                     {
-                        if (expectedEnhancedKeyUsages.Equals(oid.Value))
+                        if (expectedEnhancedKeyUsages.Equals(oid.Value, StringComparison.Ordinal))
                             return true;
                     }
 
@@ -515,6 +513,7 @@ namespace Fido2NetLib
         public byte[] AttestedName { get; private set; }
         public byte[] AttestedQualifiedNameBuffer { get; private set; }
     }
+
     // TPMT_PUBLIC, TPMv2-Part2, section 12.2.4
     public class PubArea
     {
@@ -525,7 +524,7 @@ namespace Fido2NetLib
 
             // TPMI_ALG_PUBLIC
             Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            var tpmalg = (TpmAlg)Enum.Parse(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type).ToString());
+            var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
 
             // TPMI_ALG_HASH 
             Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
@@ -603,7 +602,8 @@ namespace Fido2NetLib
         public byte[]? CurveID { get; private set; }
         public byte[]? KDF { get; private set; }
         public byte[] Unique { get; private set; }
-        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.Parse(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID).ToString());
+        public TpmEccCurve EccCurve => (TpmEccCurve)Enum.ToObject(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID));
+
         public ECPoint ECPoint
         {
             get

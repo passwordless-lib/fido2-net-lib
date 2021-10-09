@@ -8,7 +8,6 @@ namespace Fido2NetLib
 {
     public class SimpleMetadataService : IMetadataService
     {
-
         protected readonly List<IMetadataRepository> _repositories;
         protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
         protected readonly ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
@@ -65,7 +64,7 @@ namespace Fido2NetLib
 
         protected virtual async Task InitializeRepository(IMetadataRepository repository)
         {
-            var blob = await repository.GetBLOB();
+            var blob = await repository.GetBLOBAsync();
 
             foreach (var entry in blob.Entries)
             {
