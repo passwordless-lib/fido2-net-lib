@@ -137,7 +137,7 @@ namespace Fido2NetLib
                 ? algEl.GetString()!
                 : throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
-            var blobCertStrings = tokenHeader.TryGetProperty("x5c", out var x5cEl)
+            var blobCertStrings = tokenHeader.TryGetProperty("x5c", out var x5cEl) && x5cEl.ValueKind is JsonValueKind.Array
                 ? x5cEl.ToStringArray()
                 : throw new ArgumentException("No x5c array was present in the BLOB header.");
 

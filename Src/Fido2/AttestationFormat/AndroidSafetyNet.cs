@@ -62,7 +62,7 @@ namespace Fido2NetLib
             using var jwtHeaderJsonDoc = JsonDocument.Parse(Base64Url.Decode(jwtHeaderString));
             var jwtHeaderJson = jwtHeaderJsonDoc.RootElement;
 
-            string[] x5cStrings = jwtHeaderJson.TryGetProperty("x5c", out var x5cEl)
+            string[] x5cStrings = jwtHeaderJson.TryGetProperty("x5c", out var x5cEl) && x5cEl.ValueKind is JsonValueKind.Array
                 ? x5cEl.ToStringArray()
                 : throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
 
