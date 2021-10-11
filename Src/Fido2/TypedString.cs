@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
-    [JsonConverter(typeof(ToStringJsonConverter))]
+    [JsonConverter(typeof(ToStringJsonConverter<TypedString>))]
     public class TypedString : IEquatable<TypedString>
     {
         [JsonConstructor]
@@ -12,7 +12,7 @@ namespace Fido2NetLib
             Value = value;
         }
 
-        public string Value { get; private set; }
+        public string Value { get; }
 
         public static implicit operator string(TypedString op) { return op.Value; }
 
@@ -34,10 +34,7 @@ namespace Fido2NetLib
             if (GetType() != other.GetType())
                 return false;
 
-            if (Value == other.Value)
-                return true;
-
-            return false;
+            return string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
         public override bool Equals(object? obj)
@@ -61,7 +58,6 @@ namespace Fido2NetLib
         public override int GetHashCode()
         {
             return Value.GetHashCode();
-            //throw new NotImplementedException("Your lightweight hashing algorithm, consistent with Equals method, here...");
         }
     }
 }

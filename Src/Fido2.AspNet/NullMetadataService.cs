@@ -15,7 +15,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        Task IMetadataService.Initialize()
+        Task IMetadataService.InitializeAsync()
         {
             return Task.CompletedTask;
         }

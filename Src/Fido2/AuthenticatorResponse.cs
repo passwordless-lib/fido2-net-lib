@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -10,23 +10,22 @@ namespace Fido2NetLib
     /// </summary>
     public class AuthenticatorResponse
     {
-        protected AuthenticatorResponse(ReadOnlySpan<byte> clientDataJson)
+        protected AuthenticatorResponse(ReadOnlySpan<byte> utf8EncodedJson)
         {
-            if (clientDataJson.Length is 0)
-                throw new Fido2VerificationException("clientDataJson may not be empty");
+            if (utf8EncodedJson.Length is 0)
+                throw new Fido2VerificationException("utf8EncodedJson may not be empty");
 
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON
-            var jsonText = Encoding.UTF8.GetString(clientDataJson);
-
+            
             // 2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext
             // Note: C may be any implementation-specific data structure representation, as long as C’s components are referenceable, as required by this algorithm.
             // We call this AuthenticatorResponse
             AuthenticatorResponse response;
             try
             {
-                response = JsonConvert.DeserializeObject<AuthenticatorResponse>(jsonText);
+                response = JsonSerializer.Deserialize<AuthenticatorResponse>(utf8EncodedJson)!;
             }
-            catch (Exception e) when (e is JsonReaderException || e is JsonSerializationException)
+            catch (Exception e) when (e is JsonException)
             {
                 throw new Fido2VerificationException("Malformed clientDataJson");
             }
@@ -39,18 +38,20 @@ namespace Fido2NetLib
         }
 
 #nullable disable
-        [JsonConstructor]
-        private AuthenticatorResponse()
+        public AuthenticatorResponse() // for deserialization
         {
 
         }
 #nullable enable
 
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
         [JsonConverter(typeof(Base64UrlConverter))]
+        [JsonPropertyName("challenge")]
         public byte[] Challenge { get; set; }
 
+        [JsonPropertyName("origin")]
         public string Origin { get; set; }
 
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding

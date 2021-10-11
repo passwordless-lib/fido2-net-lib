@@ -1,6 +1,5 @@
-﻿using System.Text.Json.Serialization;
-
-using Newtonsoft.Json;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -18,7 +17,7 @@ namespace Fido2NetLib
         /// <remarks>
         /// This value MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement. 
         /// </remarks>
-        [JsonProperty("legalHeader")]
+        [JsonPropertyName("legalHeader")]
         public string LegalHeader { get; set; }
 
         /// <summary>   
@@ -27,24 +26,25 @@ namespace Fido2NetLib
         /// <remarks>
         /// Serial numbers MUST be consecutive and strictly monotonic, i.e. the successor BLOB will have a no value exactly incremented by one.
         /// </remarks>
-        [JsonProperty("no", Required = Required.Always)]
+        [JsonPropertyName("no"), Required]
         public int Number { get; set; }
+
         /// <summary>
         /// Gets or sets a formatted date (ISO-8601) when the next update will be provided at latest.
         /// </summary>
-        [JsonProperty("nextUpdate", Required = Required.Always)]
+        [JsonPropertyName("nextUpdate"), Required]
         public string NextUpdate { get; set; }
         
         /// <summary>
         /// Gets or sets a list of zero or more entries of <see cref="MetadataBLOBPayloadEntry"/>.
         /// </summary>
-        [JsonProperty("entries", Required = Required.Always)]
+        [JsonPropertyName("entries"), Required]
         public MetadataBLOBPayloadEntry[] Entries { get; set; }
 
         /// <summary>
         /// The "alg" property from the original JWT header. Used to validate MetadataStatements.
         /// </summary>
-        [JsonProperty("jwtAlg", Required = Required.Default)]
+        [JsonPropertyName("jwtAlg")]
         public string JwtAlg { get; set; }
     }
 }

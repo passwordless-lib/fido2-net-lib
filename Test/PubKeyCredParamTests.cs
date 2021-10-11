@@ -1,7 +1,7 @@
-﻿using Fido2NetLib;
-using Fido2NetLib.Objects;
+﻿using System.Text.Json;
 
-using Newtonsoft.Json;
+using Fido2NetLib;
+using Fido2NetLib.Objects;
 
 using Xunit;
 
@@ -14,7 +14,7 @@ namespace fido2_net_lib.Test
         {
             string json = @"{""type"":""public-key"",""alg"":-7}";
 
-            var model = JsonConvert.DeserializeObject<PubKeyCredParam>(json);
+            var model = JsonSerializer.Deserialize<PubKeyCredParam>(json);
 
             Assert.Equal(PublicKeyCredentialType.PublicKey, model.Type);
             Assert.Equal(COSE.Algorithm.ES256, model.Alg);
@@ -25,7 +25,7 @@ namespace fido2_net_lib.Test
         {
             string json = @"{""type"":""public-key"",""alg"":-47}";
 
-            var model = JsonConvert.DeserializeObject<PubKeyCredParam>(json);
+            var model = JsonSerializer.Deserialize<PubKeyCredParam>(json);
 
             Assert.Equal(PublicKeyCredentialType.PublicKey, model.Type);
             Assert.Equal(COSE.Algorithm.ES256K, model.Alg);

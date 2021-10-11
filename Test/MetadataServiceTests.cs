@@ -11,20 +11,18 @@ namespace Test
 {
     public class MetadataServiceTests
     {
-
         [Fact]
         public async Task ConformanceTestClient()
         {
             var client = new ConformanceMetadataRepository(null, "http://localhost");
 
             var blob = await client.GetBLOBAsync();
-
+            
             Assert.True(blob.Entries.Length > 0);
 
-            var entry_1 = await client.GetMetadataStatement(blob, blob.Entries[blob.Entries.Length - 1]);
+            var entry_1 = await client.GetMetadataStatementAsync(blob, blob.Entries[^1]);
 
             Assert.NotNull(entry_1.Description);
-
         }
 
         [Fact]
@@ -50,7 +48,7 @@ namespace Test
                 memCache,
                 provider.GetService<ILogger<DistributedCacheMetadataService>>());
 
-            await service.Initialize();
+            await service.InitializeAsync();
 
             var entry = service.GetEntry(Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"));
 

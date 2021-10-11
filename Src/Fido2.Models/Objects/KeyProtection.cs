@@ -1,6 +1,5 @@
 ﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -12,13 +11,12 @@ namespace Fido2NetLib
      * https://fidoalliance.org/specs/fido-uaf-v1.0-ps-20141208/fido-uaf-reg-v1.0-ps-20141208.html#key-protection-types
      * type {Object}
      */
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(FidoEnumConverter<KeyProtection>))]
     public enum KeyProtection
     {
         /// <summary>
         /// This flag must be set if the authenticator uses software-based key management. Exclusive in authenticator metadata with KEY_PROTECTION_HARDWARE, KEY_PROTECTION_TEE, KEY_PROTECTION_SECURE_ELEMENT
         /// </summary>
-
         [EnumMember(Value = "software")]
         SOFTWARE = 1,
         /// <summary>

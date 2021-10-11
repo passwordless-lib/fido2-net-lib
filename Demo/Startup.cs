@@ -26,7 +26,7 @@ namespace Fido2Demo
             {
                 // we don't care about antiforgery in the demo
                 opts.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
-            }).AddNewtonsoftJson(); // the FIDO2 library requires Json.NET
+            });
 
             // Use the in-memory implementation of IDistributedCache.
             services.AddDistributedMemoryCache();

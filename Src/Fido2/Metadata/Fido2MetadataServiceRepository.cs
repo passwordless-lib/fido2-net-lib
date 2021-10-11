@@ -6,9 +6,9 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 
 namespace Fido2NetLib
 {
@@ -44,13 +44,12 @@ namespace Fido2NetLib
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        public async Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             var statementBase64Url = await DownloadStringAsync(entry.Url);
             
             var statementBytes = Base64Url.Decode(statementBase64Url);
-            var statementString = Encoding.UTF8.GetString(statementBytes, 0, statementBytes.Length);
-            var statement = Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataStatement>(statementString);
+            var statement = JsonSerializer.Deserialize<MetadataStatement>(statementBytes)!;
 
             using (HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(blob.JwtAlg)))
             {
@@ -132,47 +131,43 @@ namespace Fido2NetLib
             if (jwtParts.Length != 3)
                 throw new ArgumentException("The JWT does not have the 3 expected components");
 
-            var blobHeaderString = jwtParts.First();
-            var blobHeader = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(blobHeaderString)));
+            var blobHeaderString = jwtParts[0];
+            using var blobHeaderDoc = JsonDocument.Parse(Base64Url.Decode(blobHeaderString));
+            var blobHeader = blobHeaderDoc.RootElement;
 
-            var blobAlg = blobHeader["alg"]?.Value<string>();
+            string blobAlg = blobHeader.TryGetProperty("alg", out var algEl)
+                ? algEl.GetString()!
+                : throw new ArgumentNullException("No alg value was present in the BLOB header.");
 
-            if (blobAlg is null)
-                throw new ArgumentNullException("No alg value was present in the BLOB header.");
+            string[] keyStrings = blobHeader.TryGetProperty("x5c", out var x5cEl) && x5cEl.ValueKind is JsonValueKind.Array
+                ? x5cEl.ToStringArray()
+                : throw new ArgumentNullException("No x5c array was present in the BLOB header.");
 
-            var x5cArray = blobHeader["x5c"] as JArray;
-
-            if (x5cArray is null)
-                throw new Exception("No x5c array was present in the BLOB header.");
-
-            var keyStrings = x5cArray.Values<string>().ToList();
-
-            if (keyStrings.Count == 0)
+            if (keyStrings.Length is 0)
                 throw new ArgumentException("No keys were present in the BLOB header.");
 
             var rootCert = GetX509Certificate(ROOT_CERT);
-            var blobCerts = keyStrings.Select(o => GetX509Certificate(o)).ToArray();
+            var blobCerts = new X509Certificate2[keyStrings.Length];
+            var keys = new SecurityKey[keyStrings.Length];
 
-            var keys = new List<SecurityKey>();
-
-            foreach (var certString in keyStrings)
+            for (int i = 0; i < blobCerts.Length; i++)
             {
-                var cert = GetX509Certificate(certString);
+                var cert = GetX509Certificate(keyStrings[i]);
 
-                var ecdsaPublicKey = cert.GetECDsaPublicKey();
-                if (ecdsaPublicKey != null)
-                {
-                    keys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
-                    continue;
-                }
+                blobCerts[i] = cert;
 
-                var rsaPublicKey = cert.GetRSAPublicKey();
-                if (rsaPublicKey != null)
+                if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
                 {
-                    keys.Add(new RsaSecurityKey(rsaPublicKey));
-                    continue;
+                    keys[i] = new ECDsaSecurityKey(ecdsaPublicKey);
                 }
-                throw new Fido2MetadataException("Unknown certificate algorithm");
+                else if (cert.GetRSAPublicKey() is RSA rsaPublicKey)
+                {
+                    keys[i] = new RsaSecurityKey(rsaPublicKey);
+                }
+                else
+                {
+                    throw new Fido2MetadataException("Unknown certificate algorithm");
+                }
             }
             var blobPublicKeys = keys.ToArray();
 
@@ -224,7 +219,7 @@ namespace Fido2NetLib
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
                 if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
-                    certChain.ChainElements.Count == (keyStrings.Count + 1) &&
+                    certChain.ChainElements.Count == (keyStrings.Length + 1) &&
                     // and that the root cert has exactly one status listed against it
                     certChain.ChainElements[^1].ChainElementStatus.Length == 1 &&
                     // and that that status is a status of exactly UntrustedRoot
@@ -246,7 +241,7 @@ namespace Fido2NetLib
 
             var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var blob =  Newtonsoft.Json.JsonConvert.DeserializeObject<MetadataBLOBPayload>(blobPayload);
+            var blob =  JsonSerializer.Deserialize<MetadataBLOBPayload>(blobPayload)!;
             blob.JwtAlg = blobAlg;
             return blob;
         }

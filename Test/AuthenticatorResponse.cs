@@ -52,15 +52,14 @@ namespace Test
                 SHA256.HashData(Encoding.UTF8.GetBytes(origin)),
                 AuthenticatorFlags.UP | AuthenticatorFlags.AT,
                 0,
-                acd,
-                null
-                ).ToByteArray();
+                acd
+            ).ToByteArray();
 
             byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new 
             {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp
             });
             var rawResponse = new AuthenticatorAttestationRawResponse
             {
@@ -153,14 +152,13 @@ namespace Test
                 SHA256.HashData(Encoding.UTF8.GetBytes(origin)),
                 AuthenticatorFlags.UP | AuthenticatorFlags.AT,
                 0,
-                acd,
-                null
-                ).ToByteArray();
+                acd
+            ).ToByteArray();
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
             {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp,
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp
             });
 
             var rawResponse = new AuthenticatorAttestationRawResponse
@@ -413,9 +411,9 @@ namespace Test
             var challenge = RandomGenerator.Default.GenerateBytes(128);
             var rp = "https://www.passwordless.dev";
             byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp,
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp,
             });
 
             var rawResponse = new AuthenticatorAttestationRawResponse
@@ -478,9 +476,9 @@ namespace Test
             var challenge = RandomGenerator.Default.GenerateBytes(128);
             var rp = "https://www.passwordless.dev";
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp,
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp,
             });
 
             var rawResponse = new AuthenticatorAttestationRawResponse
@@ -546,14 +544,14 @@ namespace Test
                 SHA256.HashData(Encoding.UTF8.GetBytes("passwordless.dev")),
                 AuthenticatorFlags.UV,
                 0,
-                null,
                 null
-                ).ToByteArray();
+            ).ToByteArray();
+
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
             {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp,
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp,
             });
 
             var rawResponse = new AuthenticatorAttestationRawResponse
@@ -619,15 +617,14 @@ namespace Test
                 SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
                 AuthenticatorFlags.UV,
                 0,
-                null,
                 null
-                ).ToByteArray();
+            ).ToByteArray();
 
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new 
             {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp
             });
 
             var rawResponse = new AuthenticatorAttestationRawResponse
@@ -693,14 +690,14 @@ namespace Test
                 SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
                 AuthenticatorFlags.UP | AuthenticatorFlags.UV,
                 0,
-                null,
                 null
-                ).ToByteArray();
+            ).ToByteArray();
+
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
             {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp,
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp,
             });
 
             var rawResponse = new AuthenticatorAttestationRawResponse
@@ -767,14 +764,14 @@ namespace Test
                 SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
                 AuthenticatorFlags.AT | AuthenticatorFlags.UP | AuthenticatorFlags.UV,
                 0,
-                acd,
-                null
-                ).ToByteArray();
+                acd
+            ).ToByteArray();
+
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
             {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp,
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp,
             });
                    
             var rawResponse = new AuthenticatorAttestationRawResponse
@@ -841,14 +838,13 @@ namespace Test
                 SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
                 AuthenticatorFlags.AT | AuthenticatorFlags.UP | AuthenticatorFlags.UV,
                 0,
-                acd,
-                null
-                ).ToByteArray();
+                acd
+            ).ToByteArray();
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
             {
-                Type = "webauthn.create",
-                Challenge = challenge,
-                Origin = rp,
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp,
             });
 
             var rawResponse = new AuthenticatorAttestationRawResponse

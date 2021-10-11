@@ -34,6 +34,6 @@ namespace Fido2NetLib
         /// <summary>
         /// Initializes the metadata service.
         /// </summary>
-        Task Initialize();
+        Task InitializeAsync();
     }
 }

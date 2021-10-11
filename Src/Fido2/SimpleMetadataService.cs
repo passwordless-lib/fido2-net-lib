@@ -53,7 +53,7 @@ namespace Fido2NetLib
         {
             if (entry.AaGuid != null)
             {
-                var statement = await repository.GetMetadataStatement(blob, entry);
+                var statement = await repository.GetMetadataStatementAsync(blob, entry);
 
                 if (!string.IsNullOrWhiteSpace(statement.AaGuid))
                 {
@@ -79,7 +79,7 @@ namespace Fido2NetLib
             }
         }
 
-        public virtual async Task Initialize()
+        public virtual async Task InitializeAsync()
         {
             foreach (var repository in _repositories)
             {

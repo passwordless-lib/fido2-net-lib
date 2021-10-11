@@ -2,9 +2,10 @@
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json.Serialization;
+
 using Fido2NetLib.Objects;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+
 using PeterO.Cbor;
 
 namespace Fido2NetLib
@@ -18,7 +19,7 @@ namespace Fido2NetLib
         REVOKED = AuthenticatorStatus.REVOKED
     };
 
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(FidoEnumConverter<MetadataAttestationType>))]
     internal enum MetadataAttestationType
     {
         [EnumMember(Value = "basic_full")]

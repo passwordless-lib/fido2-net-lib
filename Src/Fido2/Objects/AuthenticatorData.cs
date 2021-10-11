@@ -68,7 +68,7 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public Extensions Extensions;
 
-        public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData acd, Extensions exts)
+        public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData acd, Extensions exts = null)
         {
             RpIdHash = rpIdHash;
             _flags = flags;

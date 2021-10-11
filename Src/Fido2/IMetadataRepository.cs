@@ -6,6 +6,6 @@ namespace Fido2NetLib
     {
         Task<MetadataBLOBPayload> GetBLOBAsync();
 
-        Task<MetadataStatement?> GetMetadataStatement(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry);
+        Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry);
     }
 }

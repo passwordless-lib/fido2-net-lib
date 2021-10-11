@@ -23,7 +23,7 @@ namespace Fido2Demo
                             new FileSystemMetadataRepository(cacheDir)
                         };
                         _instance = new SimpleMetadataService(repos);
-                        _instance.Initialize().Wait();
+                        _instance.InitializeAsync().Wait();
                     }
                 }
             }
