@@ -8,15 +8,6 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal enum UndesiredAuthenticatorStatus
-    {
-        ATTESTATION_KEY_COMPROMISE = AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE,
-        USER_VERIFICATION_BYPASS = AuthenticatorStatus.USER_VERIFICATION_BYPASS,
-        USER_KEY_REMOTE_COMPROMISE = AuthenticatorStatus.USER_KEY_REMOTE_COMPROMISE,
-        USER_KEY_PHYSICAL_COMPROMISE = AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
-        REVOKED = AuthenticatorStatus.REVOKED
-    };
-
     internal class Packed : AttestationVerifier
     {
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)

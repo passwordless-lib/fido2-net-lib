@@ -201,8 +201,10 @@ namespace Fido2NetLib
             // Check status resports for authenticator with undesirable status
             foreach (var report in entry?.StatusReports ?? Array.Empty<StatusReport>())
             {
-                if (Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), (UndesiredAuthenticatorStatus)report.Status))
-                    throw new Fido2VerificationException("Authenticator found with undesirable status");
+                if (report.Status.IsUndesired())
+                {
+                    throw new Fido2VerificationException($"Authenticator found with undesirable status. Was {report.Status}");
+                }
             }
 
             // 16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
