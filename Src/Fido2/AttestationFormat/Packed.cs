@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Security.Cryptography.X509Certificates;
-using System.Text.Json.Serialization;
 
 using Fido2NetLib.Objects;
 
@@ -18,23 +16,6 @@ namespace Fido2NetLib
         USER_KEY_PHYSICAL_COMPROMISE = AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
         REVOKED = AuthenticatorStatus.REVOKED
     };
-
-    [JsonConverter(typeof(FidoEnumConverter<MetadataAttestationType>))]
-    internal enum MetadataAttestationType
-    {
-        [EnumMember(Value = "basic_full")]
-        ATTESTATION_BASIC_FULL = 0x3e07,
-        [EnumMember(Value = "basic_surrogate")]
-        ATTESTATION_BASIC_SURROGATE = 0x3e08,
-        [EnumMember(Value = "ecdaa")]
-        ATTESTATION_ECDAA = 0x3e09,
-        [EnumMember(Value = "attca")]
-        ATTESTATION_PRIVACY_CA = 0x3e10,
-        [EnumMember(Value = "anonca")]
-        ATTESTATION_ANONCA = 0x3e0c,
-        [EnumMember(Value = "none")]
-        ATTESTATION_NONE = 0x3e0b
-    }
 
     internal class Packed : AttestationVerifier
     {
