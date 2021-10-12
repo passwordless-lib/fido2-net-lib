@@ -8,11 +8,11 @@ namespace Fido2NetLib
     /// </summary>
     public static class AuthDataHelper
     {
-        public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset, ushort len = 0)
+        public static byte[] GetSizedByteArray(ReadOnlySpan<byte> ab, ref int offset, ushort len = 0)
         {
             if ((0 == len) && ((offset + 2) <= ab.Length))
             {
-                len = BinaryPrimitives.ReadUInt16BigEndian(ab.Slice(offset, 2).Span);
+                len = BinaryPrimitives.ReadUInt16BigEndian(ab.Slice(offset, 2));
                 offset += 2;
             }
             byte[] result = null!;

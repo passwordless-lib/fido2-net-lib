@@ -344,6 +344,7 @@ namespace Fido2NetLib
 
             return (tpmManufacturer, tpmModel, tpmVersion);
         }
+
         private static bool EKUFromAttnCertExts(X509ExtensionCollection exts, string expectedEnhancedKeyUsages)
         {
             foreach (var ext in exts)
@@ -375,6 +376,7 @@ namespace Fido2NetLib
         TPM_ECC_BN_P638,    // 0x0011 curve to support ECDAA
         TPM_ECC_SM2_P256    // 0x0020 
     }
+
     public enum TpmAlg : ushort
     {
         // TCG TPM Rev 2.0, part 2, structures, section 6.3, TPM_ALG_ID
@@ -414,6 +416,7 @@ namespace Fido2NetLib
         TPM_ALG_CFB, // 43
         TPM_ALG_ECB // 44
     };
+
     // TPMS_ATTEST, TPMv2-Part2, section 10.12.8
     public class CertInfo
     {
@@ -424,7 +427,8 @@ namespace Fido2NetLib
             {TpmAlg.TPM_ALG_SHA384, (384/8) },
             {TpmAlg.TPM_ALG_SHA512, (512/8) }
         };
-        public static (ushort size, byte[] name) NameFromTPM2BName(Memory<byte> ab, ref int offset)
+
+        public static (ushort size, byte[] name) NameFromTPM2BName(ReadOnlySpan<byte> ab, ref int offset)
         {
             // TCG TPM Rev 2.0, part 2, structures, section 10.5.3, TPM2B_NAME
             // This buffer holds a Name for any entity type. 
