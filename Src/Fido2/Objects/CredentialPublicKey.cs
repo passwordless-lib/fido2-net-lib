@@ -9,7 +9,7 @@ using PeterO.Cbor;
 
 namespace Fido2NetLib.Objects
 {
-    public class CredentialPublicKey
+    public sealed class CredentialPublicKey
     {
         public CredentialPublicKey(Stream stream) : this(CBORObject.Read(stream))
         {

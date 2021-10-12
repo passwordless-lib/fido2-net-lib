@@ -5,7 +5,7 @@ namespace Fido2NetLib.Objects
     /// <summary>
     /// <see cref="https://www.w3.org/TR/webauthn/#extensions"/>
     /// </summary>
-    public class Extensions
+    public sealed class Extensions
     {
         private readonly byte[] _extensionBytes;
         public Extensions(byte[] extensions)
