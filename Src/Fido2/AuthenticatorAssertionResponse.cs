@@ -135,7 +135,7 @@ namespace Fido2NetLib
             // See Server-ServerAuthenticatorAssertionResponse-Resp3 Test server processing authenticatorData
             // P-5 Send a valid ServerAuthenticatorAssertionResponse both authenticatorData.flags.UV and authenticatorData.flags.UP are not set, for userVerification set to "preferred", and check that server succeeds
             // P-8 Send a valid ServerAuthenticatorAssertionResponse both authenticatorData.flags.UV and authenticatorData.flags.UP are not set, for userVerification set to "discouraged", and check that server succeeds
-            //if ((false == authData.UserPresent) && (options.UserVerification != UserVerificationRequirement.Discouraged && options.UserVerification != UserVerificationRequirement.Preferred)) throw new Fido2VerificationException("User Present flag not set in authenticator data");
+            // if ((!authData.UserPresent) && (options.UserVerification != UserVerificationRequirement.Discouraged && options.UserVerification != UserVerificationRequirement.Preferred)) throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 13 If user verification is required for this assertion, verify that the User Verified bit of the flags in aData is set.
             // UNLESS...userPresent is true?

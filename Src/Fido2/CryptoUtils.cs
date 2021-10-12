@@ -87,13 +87,13 @@ namespace Fido2NetLib
                         chain.ChainPolicy.ExtraStore.Add(cert);
                     }
                 }
-                var valid = chain.Build(trustPath[0]);
+                bool valid = chain.Build(trustPath[0]);
 
                 // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
                 var chainRoot = chain.ChainElements[^1].Certificate;
                 valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
 
-                if (true == valid)
+                if (valid)
                     return true;
             }
             return false;

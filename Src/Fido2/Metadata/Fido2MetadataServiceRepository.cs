@@ -211,7 +211,7 @@ namespace Fido2NetLib
                     {
                         var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
                         var crlFile = await DownloadDataAsync(cdp);
-                        if (true == CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
+                        if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
                             throw new Fido2VerificationException(string.Format("Cert {0} found in CRL {1}", element.Certificate.Subject, cdp));
                     }
                 }

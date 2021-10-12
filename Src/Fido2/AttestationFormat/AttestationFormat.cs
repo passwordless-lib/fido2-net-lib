@@ -42,8 +42,8 @@ namespace Fido2NetLib
                 decodedAaguid.CheckPrimitive();
                 aaguid = decodedAaguid.GetOctetString();
 
-                //The extension MUST NOT be marked as critical
-                if (true == ext.Critical)
+                // The extension MUST NOT be marked as critical
+                if (ext.Critical)
                     throw new Fido2VerificationException("extension MUST NOT be marked as critical");
             }
 
