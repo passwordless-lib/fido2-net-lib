@@ -204,7 +204,7 @@ namespace Fido2NetLib
                     (!aaguid.AsSpan().SequenceEqual(Guid.Empty.ToByteArray())) &&
                     (AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid) != 0))
                 {
-                    throw new Fido2VerificationException(string.Format("aaguid malformed, expected {0}, got {1}", AuthData.AttestedCredentialData.AaGuid, new Guid(aaguid)));
+                    throw new Fido2VerificationException($"aaguid malformed, expected {AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
                 }
 
                 return (AttestationType.AttCa, trustPath);

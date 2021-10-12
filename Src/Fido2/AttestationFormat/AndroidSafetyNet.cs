@@ -136,7 +136,7 @@ namespace Fido2NetLib
             var notBefore = DateTime.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
             if ((notAfter < timestampMs) || ((notBefore) > timestampMs))
             {
-                throw new Fido2VerificationException(string.Format("SafetyNet timestampMs must be present and between one minute ago and now, got: {0}", timestampMs.ToString()));
+                throw new Fido2VerificationException($"SafetyNet timestampMs must be present and between one minute ago and now, got: {timestampMs}");
             }
 
             // 3. Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
