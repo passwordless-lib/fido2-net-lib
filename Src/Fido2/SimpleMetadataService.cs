@@ -49,7 +49,7 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        protected virtual async Task LoadEntryStatementAsync(IMetadataRepository repository, MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             if (entry.AaGuid != null)
             {
@@ -62,7 +62,7 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task InitializeRepository(IMetadataRepository repository)
+        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository)
         {
             var blob = await repository.GetBLOBAsync();
 
@@ -73,7 +73,7 @@ namespace Fido2NetLib
                     if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
                     {
                         //Load if it doesn't already exist
-                        await LoadEntryStatement(repository, blob, entry);
+                        await LoadEntryStatementAsync(repository, blob, entry);
                     }
                 }
             }
@@ -83,7 +83,7 @@ namespace Fido2NetLib
         {
             foreach (var repository in _repositories)
             {
-                await InitializeRepository(repository);
+                await InitializeRepositoryAsync(repository);
             }
             _initialized = true;
         }
