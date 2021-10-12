@@ -53,8 +53,9 @@ namespace Fido2NetLib
             };
 
             var content = new StringContent(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
-            var result = JsonSerializer.Deserialize<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
+            using var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            var result = await JsonSerializer.DeserializeAsync<MDSGetEndpointResponse>(responseStream);
             var conformanceEndpoints = result.Result;
 
             var combinedBlob = new MetadataBLOBPayload
