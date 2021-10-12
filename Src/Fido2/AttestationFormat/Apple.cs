@@ -44,7 +44,7 @@ namespace Fido2NetLib
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             if (X5c is null || X5c.Type != CBORType.Array || X5c.Count < 2 ||
-                X5c.Values is null || 0 == X5c.Values.Count ||
+                X5c.Values is null || X5c.Values.Count is 0 ||
                 X5c.Values.First().Type != CBORType.ByteString ||
                 X5c.Values.First().GetByteString().Length is 0)
             {

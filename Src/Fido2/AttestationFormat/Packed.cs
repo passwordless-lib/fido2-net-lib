@@ -52,7 +52,7 @@ namespace Fido2NetLib
                 {
                     if (enumerator is null || enumerator.Current is null
                         || CBORType.ByteString != enumerator.Current.Type
-                        || 0 == enumerator.Current.GetByteString().Length)
+                        || enumerator.Current.GetByteString().Length is 0)
                         throw new Fido2VerificationException("Malformed x5c cert found in packed attestation statement");
 
                     var x5ccert = new X509Certificate2(enumerator.Current.GetByteString());

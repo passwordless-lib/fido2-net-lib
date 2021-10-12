@@ -10,7 +10,7 @@ namespace Fido2NetLib
     {
         public static byte[] GetSizedByteArray(ReadOnlySpan<byte> ab, ref int offset, ushort len = 0)
         {
-            if ((0 == len) && ((offset + 2) <= ab.Length))
+            if (len is 0 && ((offset + 2) <= ab.Length))
             {
                 len = BinaryPrimitives.ReadUInt16BigEndian(ab.Slice(offset, 2));
                 offset += 2;

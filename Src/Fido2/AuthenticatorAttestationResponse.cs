@@ -32,7 +32,7 @@ namespace Fido2NetLib
             if (rawResponse is null || rawResponse.Response is null)
                 throw new Fido2VerificationException("Expected rawResponse, got null");
 
-            if (rawResponse.Response.AttestationObject is null || 0 == rawResponse.Response.AttestationObject.Length)
+            if (rawResponse.Response.AttestationObject is null || rawResponse.Response.AttestationObject.Length is 0)
                 throw new Fido2VerificationException("Missing AttestationObject");
 
             // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.

@@ -96,7 +96,7 @@ namespace Fido2NetLib
                 }
             }
             
-            return (0 == softwareEnforcedOriginValue && 0 == teeEnforcedOriginValue);
+            return (softwareEnforcedOriginValue is 0 && teeEnforcedOriginValue is 0);
         }
 
         public static bool IsPurposeSign(byte[] attExtBytes)
