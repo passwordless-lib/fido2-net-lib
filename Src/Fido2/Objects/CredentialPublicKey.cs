@@ -34,13 +34,14 @@ namespace Fido2NetLib.Objects
             _alg = (COSE.Algorithm)alg;
             _cpk.Add(COSE.KeyCommonParameter.KeyType, _type);
             _cpk.Add(COSE.KeyCommonParameter.Alg, alg);
-            if (COSE.KeyType.RSA == _type)
+
+            if (_type is COSE.KeyType.RSA)
             {
                 var keyParams = cert.GetRSAPublicKey().ExportParameters(false);
                 _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus);
                 _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent);
             }
-            if (COSE.KeyType.EC2 == _type)
+            else if (_type is COSE.KeyType.EC2)
             {
                 var ecDsaPubKey = cert.GetECDsaPublicKey();
                 var keyParams = ecDsaPubKey.ExportParameters(false);
@@ -76,7 +77,7 @@ namespace Fido2NetLib.Objects
             }
         }
 
-        public bool Verify(byte[] data, byte[] sig)
+        public bool Verify(ReadOnlySpan<byte> data, byte[] sig)
         {
             switch (_type)
             {
@@ -101,115 +102,92 @@ namespace Fido2NetLib.Objects
 
         internal RSA CreateRsa()
         {
-            if (_type is COSE.KeyType.RSA)
+            if (_type != COSE.KeyType.RSA)
             {
-                return RSA.Create(new RSAParameters
-                {
-                    Modulus = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
-                    Exponent = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
-                });
+                throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
             }
 
-            throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
+            return RSA.Create(new RSAParameters
+            {
+                Modulus = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
+                Exponent = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
+            });            
         }
 
         internal ECDsa CreateECDsa()
         {
-            if (_type is COSE.KeyType.EC2)
+            if (_type != COSE.KeyType.EC2)
             {
-                var point = new ECPoint
-                {
-                    X = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(),
-                    Y = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString(),
-                };
-                ECCurve curve;
-                var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
-                switch (_alg)
-                {
-                    case COSE.Algorithm.ES256K:
-                        switch (crv)
-                        {
-                            case COSE.EllipticCurve.P256K:
-                                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                                {
-                                    // see https://github.com/dotnet/runtime/issues/47770
-                                    throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");
-                                }
-                                curve = ECCurve.CreateFromFriendlyName("secP256k1");
-                                break;
-                            default:
-                                throw new InvalidOperationException($"Missing or unknown crv {crv}");
-                        }
-                        break;
-                    case COSE.Algorithm.ES256:
-                        switch (crv)
-                        {
-                            case COSE.EllipticCurve.P256:
-                                curve = ECCurve.NamedCurves.nistP256;
-                                break;
-
-                            default:
-                                throw new InvalidOperationException($"Missing or unknown crv {crv}");
-                        }
-                        break;
-                    case COSE.Algorithm.ES384:
-                        switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
-                        {
-                            case COSE.EllipticCurve.P384:
-                                curve = ECCurve.NamedCurves.nistP384;
-                                break;
-                            default:
-                                throw new InvalidOperationException($"Missing or unknown crv {crv}");
-                        }
-                        break;
-                    case COSE.Algorithm.ES512:
-                        switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
-                        {
-                            case COSE.EllipticCurve.P521:
-                                curve = ECCurve.NamedCurves.nistP521;
-                                break;
-                            default:
-                                throw new InvalidOperationException($"Missing or unknown crv {crv}");
-                        }
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Missing or unknown alg {_alg}");
-                }
-                return ECDsa.Create(new ECParameters
-                {
-                    Q = point,
-                    Curve = curve
-                });
+                throw new InvalidOperationException($"Must be a EC2 key. Was {_type}");
             }
 
-            throw new InvalidOperationException($"Must be a EC2 key. Was {_type}");
+           
+            var point = new ECPoint
+            {
+                X = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(),
+                Y = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString(),
+            };
 
+            ECCurve curve;
+
+            var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
+
+            // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+
+            switch (_alg)
+            {
+                case COSE.Algorithm.ES256K when (crv is COSE.EllipticCurve.P256K):
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) // see https://github.com/dotnet/runtime/issues/47770
+                    {
+                        throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");
+                    }
+
+                    curve = ECCurve.CreateFromFriendlyName("secP256k1");
+                    break;
+                case COSE.Algorithm.ES256 when (crv is COSE.EllipticCurve.P256):
+                    curve = ECCurve.NamedCurves.nistP256;             
+                    break;
+                case COSE.Algorithm.ES384 when (crv is COSE.EllipticCurve.P384):
+                    curve = ECCurve.NamedCurves.nistP384;
+                    break;                   
+                case COSE.Algorithm.ES512 when(crv is COSE.EllipticCurve.P521):
+                    curve = ECCurve.NamedCurves.nistP521;
+                    break;
+                default:
+                    throw new InvalidOperationException($"Missing or unknown alg {_alg}");
+            }
+
+            return ECDsa.Create(new ECParameters
+            {
+                Q = point,
+                Curve = curve
+            });
         }
 
         internal RSASignaturePadding Padding
         {
             get
             {
-                if (_type == COSE.KeyType.RSA)
+                if (_type != COSE.KeyType.RSA)
                 {
-                    switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case COSE.Algorithm.PS256:
-                        case COSE.Algorithm.PS384:
-                        case COSE.Algorithm.PS512:
-                            return RSASignaturePadding.Pss;
-
-                        case COSE.Algorithm.RS1:
-                        case COSE.Algorithm.RS256:
-                        case COSE.Algorithm.RS384:
-                        case COSE.Algorithm.RS512:
-                            return RSASignaturePadding.Pkcs1;
-                        default:
-                            throw new InvalidOperationException($"Missing or unknown alg {_alg}");
-                    }
+                    throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
                 }
 
-                throw new InvalidOperationException($"Must be a RSA key. Was {_type}");
+                switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                {
+                    case COSE.Algorithm.PS256:
+                    case COSE.Algorithm.PS384:
+                    case COSE.Algorithm.PS512:
+                        return RSASignaturePadding.Pss;
+
+                    case COSE.Algorithm.RS1:
+                    case COSE.Algorithm.RS256:
+                    case COSE.Algorithm.RS384:
+                    case COSE.Algorithm.RS512:
+                        return RSASignaturePadding.Pkcs1;
+                    default:
+                        throw new InvalidOperationException($"Missing or unknown alg {_alg}");
+                }
             }
         }
 
@@ -217,26 +195,26 @@ namespace Fido2NetLib.Objects
         {
             get
             {
-                if (_type == COSE.KeyType.OKP)
+                if (_type != COSE.KeyType.OKP)
                 {
-                    switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                    {
-                        case COSE.Algorithm.EdDSA:
-                            var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
-                            switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
-                            {
-                                case COSE.EllipticCurve.Ed25519:
-                                    return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(), KeyBlobFormat.RawPublicKey);
-
-                                default:
-                                    throw new InvalidOperationException($"Missing or unknown crv {crv}");
-                            }
-                        default:
-                            throw new InvalidOperationException($"Missing or unknown alg {_alg}");
-                    }
+                    throw new InvalidOperationException($"Must be a OKP key. Was {_type}");
                 }
+              
+                switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                {
+                    case COSE.Algorithm.EdDSA:
+                        var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
+                        switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                        {
+                            case COSE.EllipticCurve.Ed25519:
+                                return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(), KeyBlobFormat.RawPublicKey);
 
-                throw new InvalidOperationException($"Must be a OKP key. Was {_type}");
+                            default:
+                                throw new InvalidOperationException($"Missing or unknown crv {crv}");
+                        }
+                    default:
+                        throw new InvalidOperationException($"Missing or unknown alg {_alg}");
+                }
             }
         }
 
