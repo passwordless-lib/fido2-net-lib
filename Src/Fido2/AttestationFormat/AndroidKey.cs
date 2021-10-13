@@ -103,38 +103,39 @@ namespace Fido2NetLib
 
         public static bool IsPurposeSign(byte[] attExtBytes)
         {
-            long softwareEnforcedPurposeValue = 2;
-            long teeEnforcedPurposeValue = 2;
+            int softwareEnforcedPurposeValue = 2;
+            int teeEnforcedPurposeValue = 2;
             // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
             // purpose tag is 1
-            var keyDescription = AsnElt.Decode(attExtBytes);
-            var softwareEnforced = keyDescription.GetSub(6).Sub;
-            foreach (AsnElt s in softwareEnforced)
+            var keyDescription = Asn1Element.Decode(attExtBytes);
+            var softwareEnforced = keyDescription[6].Sequence;
+
+            foreach (Asn1Element s in softwareEnforced)
             {
                 switch (s.TagValue)
                 {
                     case 1:
-                        softwareEnforcedPurposeValue = s.Sub[0].Sub[0].GetInteger();
+                        softwareEnforcedPurposeValue = s[0][0].GetInt32();
                         break;
                     default:
                         break;
                 }
             }
 
-            var teeEnforced = keyDescription.GetSub(7).Sub;
-            foreach (AsnElt s in teeEnforced)
+            var teeEnforced = keyDescription[7].Sequence;
+            foreach (Asn1Element s in teeEnforced)
             {
                 switch (s.TagValue)
                 {
                     case 1:
-                        teeEnforcedPurposeValue = s.Sub[0].Sub[0].GetInteger();
+                        teeEnforcedPurposeValue = s[0][0].GetInt32();
                         break;
                     default:
                         break;
                 }
             }
 
-            return (2 == softwareEnforcedPurposeValue && 2 == teeEnforcedPurposeValue);
+            return (softwareEnforcedPurposeValue is 2 && teeEnforcedPurposeValue is 2);
         }
 
         public override (AttestationType, X509Certificate2[]) Verify()

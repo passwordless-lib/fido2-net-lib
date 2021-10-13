@@ -2,6 +2,8 @@
 using System.Formats.Asn1;
 using System.Linq;
 
+using Asn1;
+
 using Fido2NetLib;
 
 using Xunit;
@@ -18,8 +20,6 @@ namespace Test
             var element = Asn1Element.Decode(data);
 
             Assert.Equal(Asn1Tag.Sequence, element.Tag);
-
-
             Assert.Equal(8, element.Sequence.Count);
             Assert.Equal(new[] { 2, 10, 2, 10, 4, 4, 16, 16 }, element.Sequence.Select(element => element.TagValue).ToArray());
 
@@ -41,5 +41,39 @@ namespace Test
 
             Assert.Equal(new[] { 701, 709 }, element[6].Sequence.Select(element => element.TagValue).ToArray());
         }
+
+        [Fact]
+        public void DecodeContextSpecificConstructedSet()
+        {
+            byte[] data = Convert.FromBase64String("MGACAQMgAwQBAAIBAiADBAEABCABfDdfwPehWBVL2KIcBZflxAraVzzPoB2bIb9ZUqt97gQQ7PlbfpnmqCgDZgrEb1eHiTARv4U9BgIEYWcoF6EFMQMCAQEwB7+FPgMCAQA=");
+
+            var element = Asn1Element.Decode(data);
+
+            Assert.Equal(Asn1Tag.Sequence, element.Tag);
+            Assert.Equal(8, element.Sequence.Count);
+            Assert.Equal(new[] { 2, 0, 2, 0, 4, 4, 16, 16 }, element.Sequence.Select(element => element.TagValue).ToArray());
+
+            var element6       = element[6];
+            var element6_1     = element[6][1];
+            var element6_1_0   = element[6][1][0];
+            var element6_1_0_0 = element[6][1][0][0];
+
+            Assert.True(element6.IsSequence);
+            Assert.Equal(701, element6[0].TagValue);
+
+
+            Assert.True(element6_1.IsConstructed);
+            Assert.Equal(TagClass.ContextSpecific, element6_1.TagClass);
+            Assert.Equal(1, element6_1.TagValue);
+            Assert.Equal(1, element6_1.Sequence.Count);
+
+            Assert.Equal(Asn1Tag.SetOf, element6_1_0.Tag);
+
+            Assert.Equal(2, element6_1_0_0.TagValue);  
+            Assert.Equal(1, element6_1_0_0.GetInt32());           
+        }
     }
 }
+
+
+//  throw new Exception(string.Join(", ", element[6].Sequence.Select(element => element.TagValue)));

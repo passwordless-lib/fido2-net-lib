@@ -31,11 +31,15 @@ namespace Fido2NetLib
 
         public int TagValue => _tag.TagValue;
 
+        public TagClass TagClass => _tag.TagClass;
+
         public bool IsSequence => _tag == Asn1Tag.Sequence;
 
         public bool IsInteger => _tag == Asn1Tag.Integer;
 
         public bool IsBinary => _tag == Asn1Tag.PrimitiveOctetString;
+
+        public bool IsConstructed => _tag.IsConstructed;
 
         public int GetInt32()
         {
@@ -56,6 +60,10 @@ namespace Fido2NetLib
             {
                 return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf()));
             }
+            else if (tag.IsConstructed && tag.TagClass is TagClass.ContextSpecific)
+            {
+                return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf(tag)));
+            }
             else
             {
                 return new Asn1Element(tag, reader.ReadEncodedValue());
@@ -71,7 +79,7 @@ namespace Fido2NetLib
                 Asn1Tag tag = reader.PeekTag();
 
                 Asn1Element el;
-
+               
                 if (tag == Asn1Tag.Sequence)
                 {
                     el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSequence()));
@@ -79,6 +87,10 @@ namespace Fido2NetLib
                 else if (tag == Asn1Tag.SetOf)
                 {
                     el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf()));
+                }
+                else if (tag.IsConstructed && tag.TagClass is TagClass.ContextSpecific)
+                {
+                    el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf(tag)));
                 }
                 else
                 {
