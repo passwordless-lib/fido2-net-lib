@@ -41,24 +41,10 @@ namespace Fido2NetLib
         public string[] AttestationCertificateKeyIdentifiers { get; set; }
 
         /// <summary>
-        /// Gets or sets the hash value computed over the base64url encoding of the UTF-8 representation of the JSON encoded metadata statement available at url.
+        /// Gets or sets the metadata statement.
         /// </summary>
-        /// <remarks>
-        /// The hash algorithm related to the signature algorithm specified in the JWTHeader (see Metadata BLOB) must be used.
-        /// <para>This method of base64url encoding the UTF-8 representation is also used by JWT [JWT] to avoid encoding ambiguities.</para>
-        /// </remarks>
-        [JsonPropertyName("hash")]
-        public string Hash { get; set; }
-
-        /// <summary>
-        /// Gets or sets the Uniform resource locator (URL) of the encoded metadata statement for this authenticator model (identified by its AAID, AAGUID or attestationCertificateKeyIdentifier).
-        /// </summary>
-        /// <remarks>
-        /// This URL must point to the base64url encoding of the UTF-8 representation of the JSON encoded metadata statement.
-        /// <para>If this field is missing, the metadata statement has not been published.</para>
-        /// </remarks>
-        [JsonPropertyName("url")]
-        public string Url { get; set; }
+        [JsonPropertyName("metadataStatement")]
+        public MetadataStatement MetadataStatement { get; set; }
 
         /// <summary>
         /// Gets or sets the status of the FIDO Biometric Certification of one or more biometric components of the Authenticator.
@@ -92,11 +78,5 @@ namespace Fido2NetLib
         /// </remarks>
         [JsonPropertyName("rogueListHash")]
         public string RogueListHash { get; set; }
-
-        /// <summary>
-        /// Gets or sets the metadata statement.
-        /// </summary>
-        [JsonPropertyName("metadataStatement")]
-        public MetadataStatement MetadataStatement { get; set; }
     }
 }

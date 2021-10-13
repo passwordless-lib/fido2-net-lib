@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
@@ -44,30 +42,9 @@ namespace Fido2NetLib
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
-            var statementBase64Url = await DownloadStringAsync(entry.Url);
-            
-            var statementBytes = Base64Url.Decode(statementBase64Url);
-            var statement = JsonSerializer.Deserialize<MetadataStatement>(statementBytes)!;
-
-            using (HashAlgorithm hasher = CryptoUtils.GetHasher(new HashAlgorithmName(blob.JwtAlg)))
-            {
-                statement.Hash = Base64Url.Encode(hasher.ComputeHash(Encoding.UTF8.GetBytes(statementBase64Url)));
-            }
-
-            if (!HashesAreEqual(entry.Hash, statement.Hash))
-                throw new Fido2VerificationException("BLOB entry and statement hashes do not match");
-
-            return statement;
-        }
-
-        private bool HashesAreEqual(string a, string b)
-        {
-            var hashA = Base64Url.Decode(a);
-            var hashB = Base64Url.Decode(b);
-
-            return hashA.SequenceEqual(hashB);
+            return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
         public async Task<MetadataBLOBPayload> GetBLOBAsync()
@@ -90,21 +67,6 @@ namespace Fido2NetLib
         private async Task<byte[]> DownloadDataAsync(string url)
         {
             return await _httpClient.GetByteArrayAsync(url);
-        }
-
-        private ECDsaSecurityKey GetECDsaPublicKey(string certString)
-        {
-            try
-            {
-                var certBytes = Convert.FromBase64String(certString);
-                var cert = new X509Certificate2(certBytes);
-                var publicKey = cert.GetECDsaPublicKey();
-                return new ECDsaSecurityKey(publicKey);
-            }
-            catch(Exception ex)
-            {
-                throw new ArgumentException("Could not parse X509 certificate.", ex);
-            }  
         }
 
         private X509Certificate2 GetX509Certificate(string certString)
