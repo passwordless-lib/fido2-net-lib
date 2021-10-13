@@ -83,6 +83,11 @@ namespace Fido2NetLib
             return AsnDecoder.TryReadInt32(_encodedValue.Span, AsnEncodingRules.BER, out int value, out int _) ? value : throw new Exception("Not an integer");
         }
 
+        public byte[] GetBitString()
+        {
+            return AsnDecoder.ReadBitString(_encodedValue.Span, AsnEncodingRules.BER, out int _, out int _);
+        }
+
         public static Asn1Element Decode(ReadOnlyMemory<byte> data)
         {
             var reader = new AsnReader(data, AsnEncodingRules.BER);

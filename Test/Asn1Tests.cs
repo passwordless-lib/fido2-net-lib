@@ -2,8 +2,6 @@
 using System.Formats.Asn1;
 using System.Linq;
 
-using Asn1;
-
 using Fido2NetLib;
 
 using Xunit;
@@ -12,6 +10,32 @@ namespace Test
 {
     public class Asn1Tests
     {
+        [Fact]
+        public void DecodeBitString()
+        {
+            byte[] data = Convert.FromBase64String("AwIFIA==");
+
+            var element = Asn1Element.Decode(data);
+
+            Assert.Equal(Asn1Tag.PrimitiveBitString, element.Tag);
+
+            Assert.Equal("IA==", Convert.ToBase64String(element.GetBitString()));
+        }
+
+        [Fact]
+        public void DecodeConstructedObject()
+        {
+            byte[] data = Convert.FromBase64String("MCShIgQgnGACFUCz4Zg03+N+xiRFyJ4bKU95LORrlBPDIw7zhoE=");
+
+            var element = Asn1Element.Decode(data);
+
+            Assert.True(element.IsConstructed);
+
+            element[0][0].EnsureTag(Asn1Tag.PrimitiveOctetString);
+
+            Assert.Equal("nGACFUCz4Zg03+N+xiRFyJ4bKU95LORrlBPDIw7zhoE=", Convert.ToBase64String(element[0][0].GetOctetString()));
+        }
+
         [Fact]
         public void DecodeOctetString()
         {
