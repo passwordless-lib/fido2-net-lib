@@ -11,6 +11,24 @@ namespace Test
     public class Asn1Tests
     {
         [Fact]
+        public void DecodeEcDsaSig()
+        {
+            byte[] ecDsaSig = Convert.FromBase64String("MEUCIDelsTyfT/3Z6UO1KBz1j/GBoQmDN/2MXxsfGZNon1dsAiEAqsl2tTaUhnNoFTokqm4B/RegC9y5z/bSsAwtBXsQwdg=");
+
+            var decoded = Asn1Element.Decode(ecDsaSig);
+
+            Assert.Equal(Asn1Tag.Integer, decoded[0].Tag);
+            Assert.Equal(Asn1Tag.Integer, decoded[1].Tag);
+
+            var r = decoded[0].GetIntegerBytes();
+            var s = decoded[1].GetIntegerBytes();
+
+            Assert.Equal("N6WxPJ9P/dnpQ7UoHPWP8YGhCYM3/YxfGx8Zk2ifV2w=", Convert.ToBase64String(r));
+            Assert.Equal("AKrJdrU2lIZzaBU6JKpuAf0XoAvcuc/20rAMLQV7EMHY", Convert.ToBase64String(s));
+
+
+        }
+        [Fact]
         public void DecodeBitString()
         {
             byte[] data = Convert.FromBase64String("AwIFIA==");

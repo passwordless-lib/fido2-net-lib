@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Formats.Asn1;
+using System.Numerics;
 
 namespace Fido2NetLib
 {
@@ -73,9 +74,24 @@ namespace Fido2NetLib
             }
         }
 
+        public BigInteger GetBigInteger()
+        {
+            return AsnDecoder.ReadInteger(_encodedValue.Span, AsnEncodingRules.DER, out _);
+        }
+
+        public ReadOnlySpan<byte> GetIntegerBytes()
+        {
+            return AsnDecoder.ReadIntegerBytes(_encodedValue.Span, AsnEncodingRules.DER, out _);
+        }
+
         public byte[] GetOctetString()
         {
             return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _);
+        }
+
+        public byte[] GetOctetString(Asn1Tag expectedTag)
+        {
+            return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _, expectedTag);
         }
 
         public int GetInt32()
