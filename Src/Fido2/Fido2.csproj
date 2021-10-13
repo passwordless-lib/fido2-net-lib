@@ -5,7 +5,7 @@
   </PropertyGroup>
   <!-- Sourced Libraries -->
   <Import Project="../../ExternalLibs/AsnElt/AsnElt.Include.props" />
- 
+  
   <ItemGroup>
     <None Remove="Fido2MetadataServiceRepository.cs" />
     <None Remove="FileSystemMetadataRepository.cs" />
@@ -19,11 +19,10 @@
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
     <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
     <PackageReference Include="PeterO.Cbor" Version="4.1.3" />
+    <PackageReference Include="System.Formats.Asn1" Version="5.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.6.0" />
   </ItemGroup>
 
-  <!-- Attach a build warning in relation to our .NETStandard2.0
-   / NET46X missing APIs issue -->
   <ItemGroup>
     <!-- 
       The name of the file must equal to the name of the package which is currently

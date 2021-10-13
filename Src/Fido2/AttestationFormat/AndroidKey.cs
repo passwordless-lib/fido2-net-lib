@@ -34,10 +34,11 @@ namespace Fido2NetLib
         {
             // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
             // check both software and tee enforced AuthorizationList objects for presense of "allApplications" tag, number 600
-            var keyDescription = AsnElt.Decode(attExtBytes);
 
-            var softwareEnforced = keyDescription.GetSub(6).Sub;
-            foreach (AsnElt s in softwareEnforced)
+            var keyDescription = Asn1Element.Decode(attExtBytes);
+
+            var softwareEnforced = keyDescription[6].Sequence;
+            foreach (Asn1Element s in softwareEnforced)
             {
                 switch (s.TagValue)
                 {
@@ -48,8 +49,8 @@ namespace Fido2NetLib
                 }
             }
 
-            var teeEnforced = keyDescription.GetSub(7).Sub;
-            foreach (AsnElt s in teeEnforced)
+            var teeEnforced = keyDescription[7].Sequence;
+            foreach (Asn1Element s in teeEnforced)
             {
                 switch (s.TagValue)
                 {
@@ -70,6 +71,7 @@ namespace Fido2NetLib
             // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
             // origin tag is 702
             var keyDescription = AsnElt.Decode(attExtBytes);
+
             var softwareEnforced = keyDescription.GetSub(6).Sub;
             foreach (AsnElt s in softwareEnforced)
             {
