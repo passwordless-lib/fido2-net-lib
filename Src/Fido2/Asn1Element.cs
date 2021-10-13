@@ -41,6 +41,38 @@ namespace Fido2NetLib
 
         public bool IsConstructed => _tag.IsConstructed;
 
+        internal void EnsureSequenceLength(int length)
+        {
+            if (Sequence.Count != length)
+            {
+                throw new AsnContentException($"Must have {length} sequence elements");
+            }
+        }
+
+        public void EnsureTag(Asn1Tag tag)
+        {
+            if (Tag != tag)
+            {
+                throw new AsnContentException($"Tag must be {tag}. Was {tag}");
+            }
+        }
+
+        internal void EnsureConstructed()
+        {
+            if (!IsConstructed)
+            {
+                throw new AsnContentException("Must be constructed");
+            }
+        }
+
+        internal void EnsurePrimitive()
+        {
+            if (IsConstructed)
+            {
+                throw new AsnContentException("Must be a primitive");
+            }
+        }
+
         public byte[] GetOctetString()
         {
             return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _);
