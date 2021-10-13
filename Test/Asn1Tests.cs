@@ -13,6 +13,20 @@ namespace Test
     public class Asn1Tests
     {
         [Fact]
+        public void DecodeOctetString()
+        {
+            byte[] data = Convert.FromBase64String("MIHPAgECCgEAAgEBCgEABCDc0UoXtU1CwwItW3ne2faKDcFCabFI31BufXEFVK/ENwQAMGm/hT0IAgYBXtPjz6C/hUVZBFcwVTEvMC0EKGNvbS5hbmRyb2lkLmtleXN0b3JlLmFuZHJvaWRrZXlzdG9yZWRlbW8CAQExIgQgdM/LUHSI9SkQhZHHpQWRnzJ3MvvB2ANSauqYAAbS2JgwMqEFMQMCAQKiAwIBA6MEAgIBAKUFMQMCAQSqAwIBAb+DeAMCAQK/hT4DAgEAv4U/AgUA");
+
+            var element = Asn1Element.Decode(data);
+
+            Assert.True(element[4].IsOctetString);
+            Assert.Equal(Asn1Tag.PrimitiveOctetString, element[4].Tag);
+
+
+            Assert.Equal("3NFKF7VNQsMCLVt53tn2ig3BQmmxSN9Qbn1xBVSvxDc=", Convert.ToBase64String(element[4].GetOctetString()));
+        }
+
+        [Fact]
         public void Decode()
         {
             byte[] data = Convert.FromBase64String("MIHPAgECCgEAAgEBCgEABCDc0UoXtU1CwwItW3ne2faKDcFCabFI31BufXEFVK/ENwQAMGm/hT0IAgYBXtPjz6C/hUVZBFcwVTEvMC0EKGNvbS5hbmRyb2lkLmtleXN0b3JlLmFuZHJvaWRrZXlzdG9yZWRlbW8CAQExIgQgdM/LUHSI9SkQhZHHpQWRnzJ3MvvB2ANSauqYAAbS2JgwMqEFMQMCAQKiAwIBA6MEAgIBAKUFMQMCAQSqAwIBAb+DeAMCAQK/hT4DAgEAv4U/AgUA");
@@ -35,7 +49,7 @@ namespace Test
             Assert.True(element[0].IsInteger);
             Assert.Equal(2, element[0].GetInt32());
 
-            Assert.True(element[4].IsBinary);
+            Assert.True(element[4].IsOctetString);
 
             Assert.True(element[6].IsSequence);
 

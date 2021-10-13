@@ -37,9 +37,14 @@ namespace Fido2NetLib
 
         public bool IsInteger => _tag == Asn1Tag.Integer;
 
-        public bool IsBinary => _tag == Asn1Tag.PrimitiveOctetString;
+        public bool IsOctetString => _tag == Asn1Tag.PrimitiveOctetString;
 
         public bool IsConstructed => _tag.IsConstructed;
+
+        public byte[] GetOctetString()
+        {
+            return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _);
+        }
 
         public int GetInt32()
         {
