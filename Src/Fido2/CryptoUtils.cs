@@ -45,9 +45,9 @@ namespace Fido2NetLib
             }
         }
 
-        public static HashAlgorithmName HashAlgFromCOSEAlg(int alg)
+        public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
         {
-            return (COSE.Algorithm)alg switch
+            return alg switch
             {
                 COSE.Algorithm.RS1 => HashAlgorithmName.SHA1,
                 COSE.Algorithm.ES256 => HashAlgorithmName.SHA256,

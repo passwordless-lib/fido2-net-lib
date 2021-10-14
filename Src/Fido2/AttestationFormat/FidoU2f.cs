@@ -87,7 +87,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex);
             }
 
-            var coseAlg = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
+            var coseAlg = (COSE.Algorithm)CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
             var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(coseAlg);
 
             if (!pubKey.VerifyData(verificationData, ecsig, hashAlg))

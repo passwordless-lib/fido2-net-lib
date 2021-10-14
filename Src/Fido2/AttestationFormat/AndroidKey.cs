@@ -185,7 +185,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Failed to decode android key attestation signature from ASN.1 encoded form", ex);
             }
 
-            if (!androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
+            if (!androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)Alg.AsInt32())))
                 throw new Fido2VerificationException("Invalid android key attestation signature");
 
             // 3. Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.

@@ -117,14 +117,14 @@ namespace Fido2NetLib
             if (Alg is null || true != Alg.IsNumber)
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
                 
-            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(Alg.AsInt32())))
+            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)Alg.AsInt32())))
             {
                 if (!hasher.ComputeHash(Data).AsSpan().SequenceEqual(certInfo.ExtraData))
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
             }
 
             // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
-            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(certInfo.Alg)))
+            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)certInfo.Alg)))
             {
                 if (!hasher.ComputeHash(pubArea.Raw).AsSpan().SequenceEqual(certInfo.AttestedName))
                     throw new Fido2VerificationException("Hash value mismatch attested and pubArea");

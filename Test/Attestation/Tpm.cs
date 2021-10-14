@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
@@ -179,7 +179,7 @@ namespace Test.Attestation
                                     unique.ToArray() // Unique
                                 );
                                 
-                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                                 byte[] hashedData = _attToBeSignedHash(hashAlg);
                                 
                                 byte[] hashedPubArea;
@@ -313,7 +313,7 @@ namespace Test.Attestation
 
                                 byte[] hashedData;
                                 byte[] hashedPubArea;
-                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                                 using (var hasher = CryptoUtils.GetHasher(hashAlg))
                                 {
                                     hashedData = hasher.ComputeHash(data);
@@ -491,7 +491,7 @@ namespace Test.Attestation
                     byte[] hashedData;
                     byte[] hashedPubArea;
 
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((int)alg)))
+                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -651,7 +651,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -798,7 +798,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -945,7 +945,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1098,7 +1098,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1244,7 +1244,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1393,7 +1393,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1539,7 +1539,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1682,7 +1682,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1829,8 +1829,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
+                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -1973,7 +1972,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2116,7 +2115,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2274,7 +2273,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2431,7 +2430,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2589,7 +2588,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2732,7 +2731,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2875,7 +2874,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3025,7 +3024,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3168,7 +3167,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3308,7 +3307,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3457,7 +3456,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3599,7 +3598,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3742,7 +3741,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3885,7 +3884,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4029,7 +4028,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4169,7 +4168,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4316,7 +4315,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4459,7 +4458,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4608,7 +4607,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4748,7 +4747,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4894,7 +4893,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5040,7 +5039,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5183,7 +5182,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5323,7 +5322,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5463,7 +5462,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5603,7 +5602,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5746,7 +5745,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5895,7 +5894,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6044,7 +6043,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6197,7 +6196,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6337,7 +6336,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6491,7 +6490,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6641,7 +6640,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6793,7 +6792,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6948,7 +6947,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7103,7 +7102,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7252,7 +7251,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7399,7 +7398,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7546,7 +7545,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7705,7 +7704,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7849,7 +7848,7 @@ namespace Test.Attestation
 
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
