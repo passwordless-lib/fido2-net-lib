@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -7512,72 +7513,85 @@ namespace Test.Attestation
             }
         }
         
-        internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
-            byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
+        internal static byte[] CreatePubArea(
+            ReadOnlySpan<byte> type, 
+            ReadOnlySpan<byte> alg, 
+            ReadOnlySpan<byte> attributes, 
+            ReadOnlySpan<byte> policy,
+            ReadOnlySpan<byte> symmetric,
+            ReadOnlySpan<byte> scheme,
+            ReadOnlySpan<byte> keyBits, 
+            ReadOnlySpan<byte> exponent,
+            ReadOnlySpan<byte> curveID,
+            ReadOnlySpan<byte> kdf, 
+            ReadOnlySpan<byte> unique)
         {
             var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
 
-            IEnumerable<byte> raw = null;
             var uniqueLen = BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray();
 
-            if (TpmAlg.TPM_ALG_RSA == tpmalg)
+            var raw = new MemoryStream();
+
+            if (tpmalg is TpmAlg.TPM_ALG_RSA)
             {
-                raw
-                     = type
-                    .Concat(alg)
-                    .Concat(attributes)
-                    .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(policy)
-                    .Concat(symmetric)
-                    .Concat(scheme)
-                    .Concat(keyBits)
-                    .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)))
-                    .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(unique);
+                raw.Write(type);
+                raw.Write(alg);
+                raw.Write(attributes);
+                raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
+                raw.Write(policy);
+                raw.Write(symmetric);
+                raw.Write(scheme);
+                raw.Write(keyBits);
+                raw.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
+                raw.Write(BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray());
+                raw.Write(unique); ;
             }
-            if (TpmAlg.TPM_ALG_ECC == tpmalg)
+            else if (tpmalg is TpmAlg.TPM_ALG_ECC)
             {
-                raw = type
-                    .Concat(alg)
-                    .Concat(attributes)
-                    .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(policy)
-                    .Concat(symmetric)
-                    .Concat(scheme)
-                    .Concat(curveID)
-                    .Concat(kdf)
-                    .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(unique);
+                raw.Write(type);
+                raw.Write(alg);
+                raw.Write(attributes);
+                raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
+                raw.Write(policy);
+                raw.Write(symmetric);
+                raw.Write(scheme);
+                raw.Write(curveID);
+                raw.Write(kdf);
+                raw.Write(BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray());
+                raw.Write(unique);
             }
 
             return raw.ToArray();
         }
 
-        internal static byte[] CreateCertInfo(byte[] magic, byte[] type, byte[] qualifiedSigner,
-            byte[] extraData, byte[] clock, byte[] resetCount, byte[] restartCount,
-            byte[] safe, byte[] firmwareRevision, byte[] tPM2BName, byte[] attestedQualifiedNameBuffer)
+        internal static byte[] CreateCertInfo(
+            ReadOnlySpan<byte> magic,
+            ReadOnlySpan<byte> type,
+            ReadOnlySpan<byte> qualifiedSigner,
+            ReadOnlySpan<byte> extraData,
+            ReadOnlySpan<byte> clock,
+            ReadOnlySpan<byte> resetCount,
+            ReadOnlySpan<byte> restartCount,
+            ReadOnlySpan<byte> safe,
+            ReadOnlySpan<byte> firmwareRevision,
+            ReadOnlySpan<byte> tPM2BName, 
+            ReadOnlySpan<byte> attestedQualifiedNameBuffer)
         {
-            IEnumerable<byte> raw = magic
-                .Concat(type)
-                .Concat(qualifiedSigner)
-                .Concat(extraData)
-                .Concat(clock)
-                .Concat(resetCount)
-                .Concat(restartCount)
-                .Concat(safe)
-                .Concat(firmwareRevision)
-                .Concat(tPM2BName)
-                .Concat(attestedQualifiedNameBuffer);
+            var stream = new MemoryStream();
 
-            return raw.ToArray();
+            stream.Write(magic);
+            stream.Write(type);
+            stream.Write(qualifiedSigner);
+            stream.Write(extraData);
+            stream.Write(clock);
+            stream.Write(resetCount);
+            stream.Write(restartCount);
+            stream.Write(safe);
+            stream.Write(firmwareRevision);
+            stream.Write(tPM2BName);
+            stream.Write(attestedQualifiedNameBuffer);
+
+            return stream.ToArray();
         }
 
         internal static RSASignaturePadding GetRSASignaturePaddingForCoseAlgorithm(COSE.Algorithm alg)
