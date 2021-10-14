@@ -26,7 +26,8 @@ namespace fido2_net_lib.Test
     {
         private static readonly IMetadataService _metadataService;
         private static readonly Fido2Configuration _config;
-        public static readonly List<object[]> _validCOSEParameters;
+        public static readonly List<(COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve)> _validCOSEParameters;
+
 
         static Fido2Tests()
         {
@@ -55,19 +56,21 @@ namespace fido2_net_lib.Test
 
             _config = new Fido2Configuration { Origin = "https://localhost:44329" };
 
-            _validCOSEParameters = new List<object[]>
+            var noCurve = COSE.EllipticCurve.Reserved;
+
+            _validCOSEParameters = new ()
             {
-                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256 },
-                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384 },
-                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521 },
-                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS256 },
-                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS384 },
-                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.RS512 },
-                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS256 },
-                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS384 },
-                new object[2] { COSE.KeyType.RSA, COSE.Algorithm.PS512 },
-                new object[3] { COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519 },
-                new object[3] { COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K }
+                new (COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256),
+                new (COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384),
+                new (COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521),
+                new (COSE.KeyType.RSA, COSE.Algorithm.RS256, noCurve),
+                new (COSE.KeyType.RSA, COSE.Algorithm.RS384, noCurve),
+                new (COSE.KeyType.RSA, COSE.Algorithm.RS512, noCurve),
+                new (COSE.KeyType.RSA, COSE.Algorithm.PS256, noCurve),
+                new (COSE.KeyType.RSA, COSE.Algorithm.PS384, noCurve),
+                new (COSE.KeyType.RSA, COSE.Algorithm.PS512, noCurve),
+                new (COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519),
+                new (COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K)
             };
         }
        
@@ -731,15 +734,17 @@ namespace fido2_net_lib.Test
         public void TestAssertionResponse()
         {
             AssertionVerificationResult avr;
-            _validCOSEParameters.ForEach(async delegate (object[] param)
+            _validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
             {
-                if (param.Length == 3)
+                var (type, alg, curve) = param;
+
+                if (curve != default)
                 {
-                    avr = await MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+                    avr = await MakeAssertionResponse(type, alg, curve);
                 }
                 else
                 {
-                    avr = await MakeAssertionResponse((COSE.KeyType)param[0], (COSE.Algorithm)param[1]);
+                    avr = await MakeAssertionResponse(type, alg);
                 }
                 Assert.Equal("", avr.ErrorMessage);
                 Assert.Equal("ok", avr.Status);
@@ -1030,16 +1035,15 @@ namespace fido2_net_lib.Test
             return new CredentialPublicKey(cpk);
         }
 
-        internal static CredentialPublicKey MakeCredentialPublicKey(object[] param)
+        internal static CredentialPublicKey MakeCredentialPublicKey((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param)
         {
-            var kty = (COSE.KeyType)param[0];
-            var alg = (COSE.Algorithm)param[1];
+            var (kty, alg, crv) = param;
+
             CredentialPublicKey cpk = null;
             switch (kty)
             {
                 case COSE.KeyType.EC2:
                     {
-                        var crv = (COSE.EllipticCurve)param[2];
                         var ecdsa = MakeECDsa(alg, crv);
                         var ecparams = ecdsa.ExportParameters(true);
                         cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);

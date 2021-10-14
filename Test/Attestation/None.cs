@@ -1,5 +1,7 @@
 ﻿using fido2_net_lib.Test;
 using Fido2NetLib;
+using Fido2NetLib.Objects;
+
 using PeterO.Cbor;
 using Xunit;
 
@@ -14,7 +16,7 @@ namespace Test.Attestation
         [Fact]
         public void TestNone()
         {
-            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
             {
                 _attestationObject.Add("attStmt", CBORObject.NewMap());
                 _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(param);

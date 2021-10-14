@@ -24,7 +24,7 @@ namespace Test.Attestation
                 "MIICNDCCAbqgAwIBAgIQViVTlcen+0Dr4ijYJghTtjAKBggqhkjOPQQDAzBLMR8wHQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMB4XDTIwMDMxODE4MzgwMVoXDTMwMDMxMzAwMDAwMFowSDEcMBoGA1UEAwwTQXBwbGUgV2ViQXV0aG4gQ0EgMTETMBEGA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTB2MBAGByqGSM49AgEGBSuBBAAiA2IABIMuhy8mFJGBAiW59fzWu2N4tfVfP8sEW8c1mTR1/VSQRN+b/hkhF2XGmh3aBQs41FCDQBpDT7JNES1Ww+HPv8uYkf7AaWCBvvlsvHfIjd2vRqWu4d1RW1r6q5O+nAsmkaNmMGQwEgYDVR0TAQH/BAgwBgEB/wIBADAfBgNVHSMEGDAWgBQm12TZxXjCWmfRp95rEtAbY/HG1zAdBgNVHQ4EFgQU666CxP+hrFtR1M8kYQUAvmO9d4gwDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQDdixo0gaX62du052V7hB4UTCe3W4dqQYbCsUdXUDNyJ+/lVEV+9kiVDGMuXEg+cMECMCyKYETcIB/P5ZvDTSkwwUh4Udlg7Wp18etKyr44zSW4l9DIBb7wx/eLB6VxxugOBw=="
             };
             _attestationObject = CBORObject.NewMap().Add("fmt", "apple");
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -35,7 +35,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -60,11 +59,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, crv);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();

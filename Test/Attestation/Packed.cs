@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using fido2_net_lib.Test;
@@ -20,14 +19,14 @@ namespace Test.Attestation
         [Fact]
         public void TestSelf()
         {
-            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
             {
-                var crv = (param.Length == 3) ? (COSE.EllipticCurve)param[2] : COSE.EllipticCurve.Reserved;
+                var (type, alg, crv) = param;
 
-                var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], crv);
+                var signature = SignData(type, alg, crv);
 
                 _attestationObject.Set("attStmt", CBORObject.NewMap()
-                    .Add("alg", (COSE.Algorithm)param[1])
+                    .Add("alg", alg)
                     .Add("sig", signature));
 
                 var res = await MakeAttestationResponse();
@@ -47,11 +46,13 @@ namespace Test.Attestation
                 _attestationObject = CBORObject.NewMap().Add("fmt", "packed");
             });
         }
+
         [Fact]
         public void TestSelfAlgMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
+            var signature = SignData(type, alg, curve);
 
             _attestationObject.Add("attStmt", CBORObject.NewMap()
                 .Add("alg", COSE.Algorithm.ES384)
@@ -60,13 +61,14 @@ namespace Test.Attestation
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Algorithm mismatch between credential public key and authenticator data in self attestation statement", ex.Result.Message);
         }
+
         [Fact]
         public void TestSelfBadSig()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", CBORObject.NewMap()
-                .Add("alg", (COSE.Algorithm)param[1])
+                .Add("alg", alg)
                 .Add("sig", new byte[] { 0x30, 0x45, 0x02, 0x20, 0x11, 0x9b, 0x6f, 0xa8, 0x1c, 0xe1, 0x75, 0x9e, 0xbe, 0xf1, 0x52, 0xa6, 0x99, 0x40, 0x5e, 0xd6, 0x6a, 0xcc, 0x01, 0x33, 0x65, 0x18, 0x05, 0x00, 0x96, 0x28, 0x29, 0xbe, 0x85, 0x57, 0xb7, 0x1d, 0x02, 0x21, 0x00, 0x94, 0x50, 0x1d, 0xf1, 0x90, 0x03, 0xa4, 0x4d, 0xa4, 0xdf, 0x9f, 0xbb, 0xb5, 0xe4, 0xce, 0x91, 0x6b, 0xc3, 0x90, 0xe8, 0x38, 0x99, 0x66, 0x4f, 0xa5, 0xc4, 0x0c, 0xf3, 0xed, 0xe3, 0xda, 0x83 }));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Failed to validate signature", ex.Result.Message);
@@ -75,8 +77,8 @@ namespace Test.Attestation
         [Fact]
         public void TestMissingAlg()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", CBORObject.NewMap()
                 .Add("sig", signature));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -86,8 +88,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAlgNaN()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", CBORObject.NewMap()
                 .Add("alg", "invalid alg")
                 .Add("sig", signature));
@@ -98,10 +100,10 @@ namespace Test.Attestation
         [Fact]
         public void TestSigNull()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", CBORObject.NewMap()
-                .Add("alg", (COSE.Algorithm)param[1])
+                .Add("alg", alg)
                 .Add("sig", null));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
@@ -110,10 +112,10 @@ namespace Test.Attestation
         [Fact]
         public void TestSigNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", CBORObject.NewMap()
-                .Add("alg", (COSE.Algorithm)param[1])
+                .Add("alg", alg)
                 .Add("sig", "walrus"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
@@ -122,10 +124,10 @@ namespace Test.Attestation
         [Fact]
         public void TestSigByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], (COSE.EllipticCurve)param[2]);
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", CBORObject.NewMap()
-                .Add("alg", (COSE.Algorithm)param[1])
+                .Add("alg", alg)
                 .Add("sig", CBORObject.FromObject(new byte[0])));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
@@ -134,9 +136,11 @@ namespace Test.Attestation
         [Fact]
         public void TestFull()
         {
-            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
             {
-                if (COSE.KeyType.OKP == (COSE.KeyType)param[0])
+                var (type, alg, curve) = param;
+
+                if (type is COSE.KeyType.OKP)
                 {
                     return;
                 }
@@ -147,7 +151,7 @@ namespace Test.Attestation
 
                 Fido2.CredentialMakeResult res = null;
 
-                switch ((COSE.KeyType)param[0])
+                switch (type)
                 {
                     case COSE.KeyType.EC2:
                         using (var ecdsaRoot = ECDsa.Create())
@@ -155,7 +159,6 @@ namespace Test.Attestation
                             var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                             rootRequest.CertificateExtensions.Add(caExt);
 
-                            var curve = (COSE.EllipticCurve)param[2];
                             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                             switch (curve)
                             {
@@ -202,10 +205,10 @@ namespace Test.Attestation
                                     .Add(CBORObject.FromObject(attestnCert.RawData))
                                     .Add(CBORObject.FromObject(root.RawData));
 
-                                var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                                 _attestationObject.Set("attStmt", CBORObject.NewMap()
-                                    .Add("alg", (COSE.Algorithm)param[1])
+                                    .Add("alg", alg)
                                     .Add("sig", signature)
                                     .Add("x5c", X5c));
 
@@ -217,7 +220,7 @@ namespace Test.Attestation
                         using (RSA rsaRoot = RSA.Create())
                         {
                             RSASignaturePadding padding = RSASignaturePadding.Pss;
-                            switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+                            switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                             {
                                 case COSE.Algorithm.RS1:
                                 case COSE.Algorithm.RS256:
@@ -257,10 +260,10 @@ namespace Test.Attestation
                                     .Add(CBORObject.FromObject(attestnCert.RawData))
                                     .Add(CBORObject.FromObject(root.RawData));
 
-                                var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], COSE.EllipticCurve.Reserved, rsa: rsaAtt);
+                                var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, rsa: rsaAtt);
 
                                 _attestationObject.Set("attStmt", CBORObject.NewMap()
-                                    .Add("alg", (COSE.Algorithm)param[1])
+                                    .Add("alg", alg)
                                     .Add("sig", signature)
                                     .Add("x5c", X5c));
 
@@ -298,7 +301,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullMissingX5c()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -309,7 +312,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -338,10 +340,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", null));
 
@@ -354,7 +356,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullX5cNotArray()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -365,7 +367,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -394,10 +395,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", "boomerang"));
 
@@ -410,7 +411,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullX5cCountNotOne()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -421,7 +422,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -450,10 +450,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])).Add(CBORObject.FromObject(new byte[0]))));
 
@@ -466,7 +466,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullX5cValueNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -477,7 +477,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -506,10 +505,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", "x".ToArray()));
 
@@ -522,7 +521,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullX5cValueZeroLengthByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -533,7 +532,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -562,10 +560,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0]))));
 
@@ -578,7 +576,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullX5cCertExpired()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow.AddDays(-7);
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -589,7 +587,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -618,10 +615,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
@@ -634,7 +631,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullX5cCertNotYetValid()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow.AddDays(1);
             DateTimeOffset notAfter = notBefore.AddDays(7);
@@ -645,7 +642,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -674,10 +670,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
@@ -690,7 +686,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullInvalidAlg()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -701,7 +697,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -730,7 +725,7 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("alg", 42)
@@ -746,7 +741,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullInvalidSig()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -757,7 +752,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -786,10 +780,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", new byte[] { 0x30, 0x45, 0x02, 0x20, 0x11, 0x9b, 0x6f, 0xa8, 0x1c, 0xe1, 0x75, 0x9e, 0xbe, 0xf1, 0x52, 0xa6, 0x99, 0x40, 0x5e, 0xd6, 0x6a, 0xcc, 0x01, 0x33, 0x65, 0x18, 0x05, 0x00, 0x96, 0x28, 0x29, 0xbe, 0x85, 0x57, 0xb7, 0x1d, 0x02, 0x21, 0x00, 0x94, 0x50, 0x1d, 0xf1, 0x90, 0x03, 0xa4, 0x4d, 0xa4, 0xdf, 0x9f, 0xbb, 0xb5, 0xe4, 0xce, 0x91, 0x6b, 0xc3, 0x90, 0xe8, 0x38, 0x99, 0x66, 0x4f, 0xa5, 0xc4, 0x0c, 0xf3, 0xed, 0xe3, 0xda, 0x83 })
                         .Add("x5c", X5c));
 
@@ -802,7 +796,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullAttCertNotV3()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -813,7 +807,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -845,10 +838,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(rawAttestnCert))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
@@ -871,7 +864,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullAttCertSubject()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -882,7 +875,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -911,10 +903,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
@@ -927,7 +919,7 @@ namespace Test.Attestation
         [Fact]
         public async void TestAttCertSubjectCommaAsync()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -938,7 +930,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -967,10 +958,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
@@ -984,7 +975,7 @@ namespace Test.Attestation
         [Fact]
         public void TestFullAttCertAaguidNotMatchAuthdata()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -995,7 +986,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -1027,10 +1017,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 
@@ -1043,7 +1033,8 @@ namespace Test.Attestation
         [Fact]
         public void TestFullAttCertCAFlagSet()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            (COSE.KeyType type, COSE.Algorithm alg, COSE.EllipticCurve curve) = Fido2Tests._validCOSEParameters[0];
+
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -1054,7 +1045,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -1083,10 +1073,10 @@ namespace Test.Attestation
                         .Add(CBORObject.FromObject(attestnCert.RawData))
                         .Add(CBORObject.FromObject(root.RawData));
 
-                    var signature = SignData((COSE.KeyType)param[0], (COSE.Algorithm)param[1], curve, ecdsa: ecdsaAtt);
+                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", (COSE.Algorithm)param[1])
+                        .Add("alg", alg)
                         .Add("sig", signature)
                         .Add("x5c", X5c));
 

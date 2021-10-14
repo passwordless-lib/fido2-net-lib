@@ -65,23 +65,23 @@ namespace Test.Attestation
         [Fact]
         public void TestTPM()
         {
-            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
             {
-                if (COSE.KeyType.OKP == (COSE.KeyType)param[0])
+                var (type, alg, curve) = param;
+
+                if (type is COSE.KeyType.OKP)
                 {
                     return; // no OKP support in TPM
                 }
 
-                var alg = (COSE.Algorithm)param[1];
-
-                if ((COSE.KeyType)param[0] is COSE.KeyType.EC2 && alg is COSE.Algorithm.ES256K)
+                if (type is COSE.KeyType.EC2 && alg is COSE.Algorithm.ES256K)
                 {
                     return; // no secp256k1 support in TPM
                 }
 
                 tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
-                switch ((COSE.KeyType)param[0])
+                switch (type)
                 {
                     case COSE.KeyType.EC2:
                         using (var ecdsaRoot = ECDsa.Create())
@@ -91,7 +91,6 @@ namespace Test.Attestation
 
                             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
 
-                            var curve = (COSE.EllipticCurve)param[2];
                             switch (curve)
                             {
                                 case COSE.EllipticCurve.P384:
@@ -134,11 +133,11 @@ namespace Test.Attestation
                                 var ecparams = ecdsaAtt.ExportParameters(true);
 
                                 var cpk = CBORObject.NewMap();
-                                cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                                cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                                cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                                cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                                 cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                                 cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                                cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                                cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                                 var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                                 var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -223,7 +222,7 @@ namespace Test.Attestation
                                     new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                 );
 
-                                byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                                byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                                 _attestationObject.Add("attStmt", CBORObject.NewMap()
                                     .Add("ver", "2.0")
@@ -238,7 +237,7 @@ namespace Test.Attestation
                     case COSE.KeyType.RSA:
                         using (RSA rsaRoot = RSA.Create())
                         {
-                            RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                            RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                             var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                             rootRequest.CertificateExtensions.Add(caExt);
@@ -274,8 +273,8 @@ namespace Test.Attestation
                                 var rsaparams = rsaAtt.ExportParameters(true);
 
                                 var cpk = CBORObject.NewMap();
-                                cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                                cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                                cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                                cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                                 cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                                 cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -343,7 +342,7 @@ namespace Test.Attestation
                                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                     );
 
-                                byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                                byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                                 _attestationObject.Set("attStmt", CBORObject.NewMap()
                                     .Add("ver", "2.0")
@@ -378,14 +377,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANTCGConformant()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -440,8 +438,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -510,7 +508,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -542,14 +540,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMSigNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -588,8 +585,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -657,7 +654,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -677,14 +674,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMSigNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -723,8 +719,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -792,7 +788,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -812,14 +808,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMSigByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -858,8 +853,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -927,7 +922,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -947,9 +942,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMVersionNot2()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
             if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
@@ -961,7 +955,7 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1000,8 +994,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1068,7 +1062,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "3.0")
@@ -1088,14 +1082,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1134,8 +1127,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1202,7 +1195,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1221,14 +1214,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1270,8 +1262,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1339,7 +1331,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1359,14 +1351,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1405,8 +1396,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1473,7 +1464,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1492,14 +1483,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1535,8 +1525,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1545,11 +1535,9 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    var tpmalg = TpmAlg.TPM_ALG_RSA;
-                    var type = tpmalg.ToUInt16BigEndianBytes();
                     var policy = new byte[] { 0x00 };
                     var pubArea
-                         = type
+                         = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes()
                         .Concat(tpmAlg)
                         .Concat(new byte[] { 0x00, 0x00, 0x00, 0x00 })
                         .Concat(BitConverter.GetBytes((UInt16)policy.Length)
@@ -1605,7 +1593,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1625,14 +1613,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1671,8 +1658,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1739,7 +1726,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1759,14 +1746,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniquePublicKeyMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1802,8 +1788,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1872,7 +1858,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1892,14 +1878,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueExponentMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -1935,8 +1920,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2003,7 +1988,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2023,8 +2008,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueXValueMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
             tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
 
             using (var ecdsaRoot = ECDsa.Create())
@@ -2033,8 +2018,6 @@ namespace Test.Attestation
                 rootRequest.CertificateExtensions.Add(caExt);
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-
-                var curve = (COSE.EllipticCurve)param[2];
 
                 using (rootCert = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -2068,11 +2051,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString().Reverse().ToArray();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -2157,7 +2140,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2176,8 +2159,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueYValueMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
             tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
 
             using (var ecdsaRoot = ECDsa.Create())
@@ -2186,8 +2169,6 @@ namespace Test.Attestation
                 rootRequest.CertificateExtensions.Add(caExt);
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-
-                var curve = (COSE.EllipticCurve)param[2];
 
                 using (rootCert = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -2221,11 +2202,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString().Reverse().ToArray();
@@ -2310,7 +2291,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2330,8 +2311,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueCurveMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
             tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
 
             using (var ecdsaRoot = ECDsa.Create())
@@ -2340,8 +2321,6 @@ namespace Test.Attestation
                 rootRequest.CertificateExtensions.Add(caExt);
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-
-                var curve = (COSE.EllipticCurve)param[2];
 
                 using (rootCert = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -2375,11 +2354,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -2464,7 +2443,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2484,14 +2463,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -2527,8 +2505,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2595,7 +2573,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2615,14 +2593,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -2658,8 +2635,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2726,7 +2703,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2746,9 +2723,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
             if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
@@ -2760,7 +2736,7 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -2796,8 +2772,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2864,7 +2840,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2884,14 +2860,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoBadMagic()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -2927,8 +2902,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2995,7 +2970,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3015,14 +2990,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoBadType()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3055,8 +3029,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3123,7 +3097,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3143,14 +3117,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoExtraDataZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3192,8 +3165,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3259,7 +3232,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3279,14 +3252,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BNameIsHandle()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3322,8 +3294,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3390,7 +3362,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3410,14 +3382,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BNoName()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3453,8 +3424,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3521,7 +3492,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3541,14 +3512,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BExtraBytes()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3584,8 +3554,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3653,7 +3623,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3673,14 +3643,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BInvalidHashAlg()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3716,8 +3685,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3784,7 +3753,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3804,14 +3773,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BInvalidTPMALGID()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3844,8 +3812,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3912,7 +3880,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3933,14 +3901,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAlgNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -3979,8 +3946,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4047,7 +4014,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4067,14 +4034,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAlgNotNumber()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -4110,8 +4076,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4178,7 +4144,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4198,14 +4164,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAlgMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -4247,8 +4212,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4315,7 +4280,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4335,14 +4300,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaAttestedDataMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -4375,8 +4339,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4446,7 +4410,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4466,14 +4430,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMMissingX5c()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -4509,8 +4472,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4577,7 +4540,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4597,14 +4560,13 @@ namespace Test.Attestation
         [Fact]
         public void TestX5cNotArray()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -4643,8 +4605,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4711,7 +4673,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4731,14 +4693,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMX5cCountZero()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -4774,8 +4735,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4842,7 +4803,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4862,14 +4823,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMX5cValuesNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -4902,8 +4862,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4970,7 +4930,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4990,14 +4950,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMX5cValuesCountZero()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5030,8 +4989,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5098,7 +5057,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5118,14 +5077,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMFirstX5cValueNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5158,8 +5116,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5226,7 +5184,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5246,14 +5204,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMFirstX5cValueByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5289,8 +5246,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5357,7 +5314,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5377,14 +5334,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMBadSignature()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5426,8 +5382,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5494,7 +5450,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
                     signature[signature.Length - 1] ^= 0xff;
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
@@ -5514,14 +5470,13 @@ namespace Test.Attestation
         [Fact]        
         public void TestTPMAikCertNotV3()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5563,8 +5518,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5631,7 +5586,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5660,14 +5615,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSubjectNotEmpty()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5704,8 +5658,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5772,7 +5726,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5792,14 +5746,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANMissing()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5832,8 +5785,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5900,7 +5853,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5920,14 +5873,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -5974,8 +5926,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6042,7 +5994,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6062,14 +6014,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANNoManufacturer()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -6112,8 +6063,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6180,7 +6131,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6200,14 +6151,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANNoModel()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -6252,8 +6202,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6320,7 +6270,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6340,14 +6290,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANNoVersion()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -6395,8 +6344,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6463,7 +6412,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6483,14 +6432,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANInvalidManufacturer()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -6538,8 +6486,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6606,7 +6554,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6626,14 +6574,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertEKUMissingTCGKP()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -6675,8 +6622,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6743,7 +6690,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6763,14 +6710,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertCATrue()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -6809,8 +6755,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6877,7 +6823,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6897,14 +6843,13 @@ namespace Test.Attestation
         [Fact]
         public async void TestTPMAikCertMisingAAGUID()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -6943,8 +6888,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7011,7 +6956,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7042,14 +6987,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertAAGUIDNotMatchAuthData()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -7090,8 +7034,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7158,7 +7102,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7178,15 +7122,13 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMECDAANotSupported()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
-
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
 
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
@@ -7222,8 +7164,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7290,7 +7232,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
