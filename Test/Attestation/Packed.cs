@@ -187,11 +187,8 @@ namespace Test.Attestation
                                 attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                                 var serial = new byte[12];
+                                RandomNumberGenerator.Fill(serial);
 
-                                using (var rng = RandomNumberGenerator.Create())
-                                {
-                                    rng.GetBytes(serial);
-                                }
                                 using (X509Certificate2 publicOnly = attRequest.Create(
                                     root,
                                     notBefore,
@@ -245,11 +242,8 @@ namespace Test.Attestation
                                 attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                                 var serial = new byte[12];
+                                RandomNumberGenerator.Fill(serial);
 
-                                using (var rng = RandomNumberGenerator.Create())
-                                {
-                                    rng.GetBytes(serial);
-                                }
                                 using (X509Certificate2 publicOnly = attRequest.Create(
                                     root,
                                     notBefore,
@@ -329,11 +323,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -388,11 +379,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -447,11 +435,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -506,11 +491,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -565,11 +547,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -624,11 +603,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -683,11 +659,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -742,11 +715,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -801,11 +771,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -860,11 +827,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -932,11 +896,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -991,11 +952,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -1054,11 +1012,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(notIdFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -1113,11 +1068,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
