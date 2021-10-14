@@ -22,8 +22,8 @@ namespace Test.Attestation
         private DateTimeOffset notBefore, notAfter;
         private X509EnhancedKeyUsageExtension tcgKpAIKCertExt;
         private X509Extension aikCertSanExt;
-        private IEnumerable<byte> unique, exponent, curveId, kdf;
-        private byte[] type, tpmAlg;
+        private byte[] unique, exponent, curveId, kdf;
+        private byte[] tpmAlg;
 
         public Tpm()
         {
@@ -32,7 +32,7 @@ namespace Test.Attestation
             exponent = null;
             curveId = null;
             kdf = null;
-            type = new byte[2];
+            var type = new byte[2];
             tpmAlg = new byte[2];
 
             notBefore = DateTimeOffset.UtcNow;
@@ -153,7 +153,7 @@ namespace Test.Attestation
                                     .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                                         .Reverse()
                                                         .ToArray())
-                                    .Concat(y);
+                                    .Concat(y).ToArray();
 
                                 var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                                 {
@@ -164,20 +164,19 @@ namespace Test.Attestation
 
                                 curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                                 kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL); // should this be big endian?
-                                type = TpmAlg.TPM_ALG_ECC.ToUInt16BigEndianBytes();
 
                                 var pubArea = CreatePubArea(
-                                    type, // Type
+                                    TpmAlg.TPM_ALG_ECC, // Type
                                     tpmAlg, // Alg
                                     new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                                     new byte[] { 0x00 }, // Policy
                                     new byte[] { 0x00, 0x10 }, // Symmetric
                                     new byte[] { 0x00, 0x10 }, // Scheme
                                     new byte[] { 0x80, 0x00 }, // KeyBits
-                                    exponent?.ToArray(), // Exponent
-                                    curveId?.ToArray(), // CurveID
-                                    kdf?.ToArray(), // KDF
-                                    unique.ToArray() // Unique
+                                    exponent, // Exponent
+                                    curveId, // CurveID
+                                    kdf, // KDF
+                                    unique // Unique
                                 );
                                 
                                 var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -284,20 +283,19 @@ namespace Test.Attestation
 
                                 unique = rsaparams.Modulus;
                                 exponent = rsaparams.Exponent;
-                                type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                                 var pubArea = CreatePubArea(
-                                    type, // Type
+                                    TpmAlg.TPM_ALG_RSA, // Type
                                     tpmAlg, // Alg
                                     new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                                     new byte[] { 0x00 }, // Policy
                                     new byte[] { 0x00, 0x10 }, // Symmetric
                                     new byte[] { 0x00, 0x10 }, // Scheme
                                     new byte[] { 0x80, 0x00 }, // KeyBits
-                                    exponent?.ToArray(), // Exponent
-                                    curveId?.ToArray(), // CurveID
-                                    kdf?.ToArray(), // KDF
-                                    unique.ToArray() // Unique
+                                    exponent, // Exponent
+                                    curveId, // CurveID
+                                    kdf, // KDF
+                                    unique // Unique
                                 );
 
                                 byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -453,20 +451,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -606,20 +603,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -745,20 +741,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -884,20 +879,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -1029,20 +1023,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -1167,20 +1160,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -1308,20 +1300,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -1446,20 +1437,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -1581,8 +1571,8 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
-                    var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
+                    var tpmalg = TpmAlg.TPM_ALG_RSA;
+                    var type = tpmalg.ToUInt16BigEndianBytes();
                     var policy = new byte[] { 0x00 };
                     var pubArea
                          = type
@@ -1720,19 +1710,18 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
                         new byte[0] // Unique
                     );
 
@@ -1855,19 +1844,18 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
                         unique.Reverse().ToArray() // Unique
                     );
 
@@ -1990,10 +1978,9 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
@@ -2001,9 +1988,9 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
                         new byte[] { 0x00, 0x01, 0x00 } , // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -2137,7 +2124,7 @@ namespace Test.Attestation
                         .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                             .Reverse()
                                             .ToArray())
-                        .Concat(y);
+                        .Concat(y).ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                     {
@@ -2148,20 +2135,19 @@ namespace Test.Attestation
 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_ECC, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -2294,7 +2280,7 @@ namespace Test.Attestation
                         .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                             .Reverse()
                                             .ToArray())
-                        .Concat(y);
+                        .Concat(y).ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                                 {
@@ -2305,20 +2291,19 @@ namespace Test.Attestation
 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_ECC, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -2452,7 +2437,7 @@ namespace Test.Attestation
                         .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                             .Reverse()
                                             .ToArray())
-                        .Concat(y);
+                        .Concat(y).ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                     {
@@ -2463,20 +2448,19 @@ namespace Test.Attestation
 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[2]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_ECC, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -2598,20 +2582,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -2733,20 +2716,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -2875,20 +2857,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3010,20 +2991,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3142,20 +3122,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3283,20 +3262,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3417,20 +3395,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3552,20 +3529,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3687,20 +3663,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3823,20 +3798,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -3955,20 +3929,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -4094,20 +4067,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -4229,20 +4201,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -4370,20 +4341,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -4502,20 +4472,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -4640,20 +4609,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -4778,20 +4746,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -4913,20 +4880,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -5045,20 +5011,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -5177,20 +5142,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -5309,20 +5273,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -5444,20 +5407,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -5585,20 +5547,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -5726,20 +5687,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -5871,20 +5831,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -6003,20 +5962,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -6149,20 +6107,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -6291,20 +6248,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -6435,20 +6391,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -6582,20 +6537,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -6729,20 +6683,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -6870,20 +6823,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -7008,20 +6960,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -7146,20 +7097,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -7297,20 +7247,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -7433,20 +7382,19 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
                     byte[] data = new byte[_authData.Length + _clientDataHash.Length];
@@ -7514,7 +7462,7 @@ namespace Test.Attestation
         }
         
         internal static byte[] CreatePubArea(
-            ReadOnlySpan<byte> type, 
+            TpmAlg type, 
             ReadOnlySpan<byte> alg, 
             ReadOnlySpan<byte> attributes, 
             ReadOnlySpan<byte> policy,
@@ -7524,17 +7472,15 @@ namespace Test.Attestation
             ReadOnlySpan<byte> exponent,
             ReadOnlySpan<byte> curveID,
             ReadOnlySpan<byte> kdf, 
-            ReadOnlySpan<byte> unique)
+            ReadOnlySpan<byte> unique = default)
         {
-            var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
-
             var uniqueLen = BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray();
 
             var raw = new MemoryStream();
 
-            if (tpmalg is TpmAlg.TPM_ALG_RSA)
+            if (type is TpmAlg.TPM_ALG_RSA)
             {
-                raw.Write(type);
+                raw.Write(type.ToUInt16BigEndianBytes());
                 raw.Write(alg);
                 raw.Write(attributes);
                 raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
@@ -7546,9 +7492,9 @@ namespace Test.Attestation
                 raw.Write(BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray());
                 raw.Write(unique); ;
             }
-            else if (tpmalg is TpmAlg.TPM_ALG_ECC)
+            else if (type is TpmAlg.TPM_ALG_ECC)
             {
-                raw.Write(type);
+                raw.Write(type.ToUInt16BigEndianBytes());
                 raw.Write(alg);
                 raw.Write(attributes);
                 raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
