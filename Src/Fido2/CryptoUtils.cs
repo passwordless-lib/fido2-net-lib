@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -15,10 +12,8 @@ namespace Fido2NetLib
     {
         public static byte[] Sha256HashData(byte[] data)
         {
-            using (var sha256 = SHA256.Create())
-            {
-                return sha256.ComputeHash(data);
-            }
+            using var sha256 = SHA256.Create();
+            return sha256.ComputeHash(data);
         }
 
         public static HashAlgorithm GetHasher(HashAlgorithmName hashName)
