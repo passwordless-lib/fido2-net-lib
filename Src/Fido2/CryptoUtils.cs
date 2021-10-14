@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -218,21 +219,39 @@ namespace Fido2NetLib
             }
             return cdp;
         }
+
         public static bool IsCertInCRL(byte[] crl, X509Certificate2 cert)
         {
             var asnData = Asn1Element.Decode(crl);
+
             if (7 > asnData[0].Sequence.Count)
                 return false; // empty CRL
 
-            var revokedCertificates = asnData[0][5].Sequence;
-            var revoked = new List<long>();
+            // Certificate users MUST be able to handle serialNumber values up to 20 octets.
 
-            foreach (Asn1Element s in revokedCertificates)
+            var revokedCertificates = asnData[0][5].Sequence;
+            var revoked = new List<byte[]>();
+
+            foreach (Asn1Element element in revokedCertificates)
             {
-                revoked.Add(BinaryPrimitives.ReadInt64BigEndian(s[0].GetIntegerBytes()));
+                var revokedSerialNumber = element[0].GetIntegerBytes().ToArray();
+
+                Array.Reverse(revokedSerialNumber); // convert to little-endian order
+
+                revoked.Add(revokedSerialNumber);
             }
 
-            return revoked.Contains(BitConverter.ToInt64(cert.GetSerialNumber(), 0));
+            var certificateSerialNumber = cert.GetSerialNumber(); // little-endian ordered
+
+            foreach (var revokedSerialNumber in revoked)
+            {
+                if (revokedSerialNumber.AsSpan().SequenceEqual(certificateSerialNumber))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
