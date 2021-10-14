@@ -23,7 +23,7 @@ namespace Fido2NetLib
 
         public IReadOnlyList<Asn1Element> Sequence
         {
-            get => _elements ?? (IReadOnlyList<Asn1Element>) Array.Empty<Asn1Element>();
+            get => _elements ?? (IReadOnlyList<Asn1Element>)Array.Empty<Asn1Element>();
         }
 
         public Asn1Element this[int index] => Sequence[index];
@@ -33,8 +33,6 @@ namespace Fido2NetLib
         public int TagValue => _tag.TagValue;
 
         public TagClass TagClass => _tag.TagClass;
-
-        public ReadOnlyMemory<byte> EncodedValue => _encodedValue;
 
         public bool IsSequence => _tag == Asn1Tag.Sequence;
 
