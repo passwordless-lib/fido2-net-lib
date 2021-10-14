@@ -229,7 +229,7 @@ namespace Fido2NetLib
             }
         }
 
-        private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
+        private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new ()
         {
             { 1, TpmEccCurve.TPM_ECC_NIST_P256},
             { 2, TpmEccCurve.TPM_ECC_NIST_P384},
