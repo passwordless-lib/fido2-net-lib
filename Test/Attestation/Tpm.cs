@@ -238,16 +238,8 @@ namespace Test.Attestation
                     case COSE.KeyType.RSA:
                         using (RSA rsaRoot = RSA.Create())
                         {
-                            RSASignaturePadding padding = RSASignaturePadding.Pss;
-                            switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                            {
-                                case COSE.Algorithm.RS1:
-                                case COSE.Algorithm.RS256:
-                                case COSE.Algorithm.RS384:
-                                case COSE.Algorithm.RS512:
-                                    padding = RSASignaturePadding.Pkcs1;
-                                    break;
-                            }
+                            RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                             var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                             rootRequest.CertificateExtensions.Add(caExt);
 
@@ -396,16 +388,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -572,16 +556,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -719,16 +695,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -866,16 +834,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1020,16 +980,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1166,16 +1118,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1311,16 +1255,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1461,16 +1397,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1606,16 +1534,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1750,16 +1670,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1896,16 +1808,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2040,16 +1944,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2656,16 +2552,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2799,16 +2687,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2949,16 +2829,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3092,16 +2964,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3235,16 +3099,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3375,16 +3231,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3523,16 +3371,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3666,16 +3506,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3809,16 +3641,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3953,16 +3777,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4096,16 +3912,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4237,16 +4045,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4383,16 +4183,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4526,16 +4318,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4675,16 +4459,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4818,16 +4594,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4961,16 +4729,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5107,16 +4867,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5250,16 +5002,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5390,16 +5134,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5530,16 +5266,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5670,16 +5398,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5813,16 +5533,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5962,16 +5674,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6120,16 +5824,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6264,16 +5960,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6404,16 +6092,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6558,16 +6238,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6708,16 +6380,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6860,16 +6524,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7015,16 +6671,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7170,16 +6818,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7317,19 +6957,10 @@ namespace Test.Attestation
             var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
-
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7464,19 +7095,10 @@ namespace Test.Attestation
             var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
-
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7624,16 +7246,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7773,16 +7387,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm((COSE.Algorithm)param[1]);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7974,6 +7580,20 @@ namespace Test.Attestation
             return raw.ToArray();
         }
 
+        internal static RSASignaturePadding GetRSASignaturePaddingForCoseAlgorithm(COSE.Algorithm alg)
+        {
+            // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+
+            if (alg is COSE.Algorithm.RS1 or COSE.Algorithm.RS256 or COSE.Algorithm.RS384 or COSE.Algorithm.RS512)
+            {
+                return RSASignaturePadding.Pkcs1;
+            }
+            else
+            {
+                return RSASignaturePadding.Pss;
+            }
+        }
+
         internal static TpmAlg GetTmpAlg(COSE.Algorithm alg)
         {
             if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
@@ -7994,7 +7614,7 @@ namespace Test.Attestation
             }
             else
             {
-                throw new Exception("Unknown alg:" + alg.ToString());
+                throw new Exception($"Unknown alg. Was {alg}");
             }
         }
     }
