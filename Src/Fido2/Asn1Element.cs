@@ -34,6 +34,8 @@ namespace Fido2NetLib
 
         public TagClass TagClass => _tag.TagClass;
 
+        public ReadOnlyMemory<byte> EncodedValue => _encodedValue;
+
         public bool IsSequence => _tag == Asn1Tag.Sequence;
 
         public bool IsInteger => _tag == Asn1Tag.Integer;
@@ -42,35 +44,67 @@ namespace Fido2NetLib
 
         public bool IsConstructed => _tag.IsConstructed;
 
-        internal void EnsureSequenceLength(int length)
+        internal static Asn1Element CreateSequence(List<Asn1Element> elements)
+        {
+            return new Asn1Element(Asn1Tag.Sequence, Array.Empty<byte>(), elements);
+        }
+
+        internal static Asn1Element CreateSetOf(List<Asn1Element> elements)
+        {
+            return new Asn1Element(Asn1Tag.SetOf, Array.Empty<byte>(), elements);
+        }
+
+        internal void CheckExactSequenceLength(int length)
         {
             if (Sequence.Count != length)
             {
-                throw new AsnContentException($"Must have {length} sequence elements");
+                string s = length != 1 ? "s" : "";
+                throw new AsnContentException($"Must have exactly {length} element{s}. Found {Sequence.Count} elements.");
             }
         }
 
-        public void EnsureTag(Asn1Tag tag)
+        internal void CheckMinimumSequenceLength(int minimumLength)
+        {
+            if (Sequence.Count < minimumLength)
+            {
+                string s = minimumLength != 1 ? "s" : "";
+
+                throw new AsnContentException($"Must have at least {minimumLength} element{s}. Found {Sequence.Count} elements.");
+            }
+        }
+
+        public void CheckTag(Asn1Tag tag)
         {
             if (Tag != tag)
-            {
-                throw new AsnContentException($"Tag must be {tag}. Was {tag}");
-            }
+                throw new AsnContentException($"Tag must be {tag}. Was {Tag}");
         }
 
-        internal void EnsureConstructed()
+        internal void CheckConstructed()
         {
             if (!IsConstructed)
-            {
                 throw new AsnContentException("Must be constructed");
-            }
         }
 
-        internal void EnsurePrimitive()
+        internal void CheckPrimitive()
         {
             if (IsConstructed)
-            {
                 throw new AsnContentException("Must be a primitive");
+        }
+
+        internal string GetOID()
+        {
+            return AsnDecoder.ReadObjectIdentifier(_encodedValue.Span, AsnEncodingRules.DER, out int _);            
+        }
+
+        internal string GetString()
+        {
+            if (TagValue == (int)UniversalTagNumber.UTF8String)
+            {
+                return AsnDecoder.ReadCharacterString(_encodedValue.Span, AsnEncodingRules.BER, UniversalTagNumber.UTF8String, out _);
+            }
+            else
+            {
+                throw new Exception("Unknown tag: " + Tag);
             }
         }
 

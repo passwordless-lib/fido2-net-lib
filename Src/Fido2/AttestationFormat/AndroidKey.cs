@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Asn1;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
@@ -24,10 +23,11 @@ namespace Fido2NetLib
 
         public static byte[] GetAttestationChallenge(byte[] attExtBytes)
         {
-            var keyDescription = AsnElt.Decode(attExtBytes);
             // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
             // attestationChallenge at index 4
-            return keyDescription.GetSub(4).GetOctetString();
+
+            var keyDescription = Asn1Element.Decode(attExtBytes);
+            return keyDescription[4].GetOctetString();
         }
 
         public static bool FindAllApplicationsField(byte[] attExtBytes)
@@ -66,32 +66,32 @@ namespace Fido2NetLib
 
         public static bool IsOriginGenerated(byte[] attExtBytes)
         {
-            long softwareEnforcedOriginValue = 0;
-            long teeEnforcedOriginValue = 0;
+            int softwareEnforcedOriginValue = 0;
+            int teeEnforcedOriginValue = 0;
             // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
             // origin tag is 702
-            var keyDescription = AsnElt.Decode(attExtBytes);
+            var keyDescription = Asn1Element.Decode(attExtBytes);
 
-            var softwareEnforced = keyDescription.GetSub(6).Sub;
-            foreach (AsnElt s in softwareEnforced)
+            var softwareEnforced = keyDescription[6].Sequence;
+            foreach (Asn1Element s in softwareEnforced)
             {
                 switch (s.TagValue)
                 {
                     case 702:
-                        softwareEnforcedOriginValue = s.Sub[0].GetInteger();
+                        softwareEnforcedOriginValue = s[0].GetInt32();
                         break;
                     default:
                         break;
                 }
             }
             
-            var teeEnforced = keyDescription.GetSub(7).Sub;
-            foreach (AsnElt s in teeEnforced)
+            var teeEnforced = keyDescription[7].Sequence;
+            foreach (Asn1Element s in teeEnforced)
             {
                 switch (s.TagValue)
                 {
                     case 702:
-                        teeEnforcedOriginValue = s.Sub[0].GetInteger();
+                        teeEnforcedOriginValue = s[0].GetInt32();
                         break;
                     default:
                         break;

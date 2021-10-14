@@ -9,6 +9,7 @@ using PeterO.Cbor;
 using Xunit;
 using Asn1;
 using Fido2NetLib;
+using System.Formats.Asn1;
 
 namespace Test.Attestation
 {
@@ -184,6 +185,9 @@ namespace Test.Attestation
             _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(new byte[] { 0xf1, 0xd0 }));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Failed to decode android key attestation signature from ASN.1 encoded form", ex.Result.Message);
+
+            var innerException = (AsnContentException)ex.Result.InnerException;
+            Assert.Equal("The ASN.1 value is invalid.", innerException.Message);
         }
 
         [Fact]

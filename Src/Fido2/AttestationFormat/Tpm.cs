@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Asn1;
+
 using Fido2NetLib.Objects;
+
 using PeterO.Cbor;
 
 namespace Fido2NetLib
@@ -251,20 +253,18 @@ namespace Fido2NetLib
 
                     foundSAN = true;
 
-                    var subjectAlternativeName = AsnElt.Decode(extension.RawData);
-                    subjectAlternativeName.CheckConstructed();
-                    subjectAlternativeName.CheckTag(AsnElt.SEQUENCE);
-                    subjectAlternativeName.CheckNumSubMin(1);
+                    var subjectAlternativeName = Asn1Element.Decode(extension.RawData);
+                    subjectAlternativeName.CheckTag(new Asn1Tag(UniversalTagNumber.Sequence, isConstructed: true));
+                    subjectAlternativeName.CheckMinimumSequenceLength(1);
 
-                    if (subjectAlternativeName.Sub.FirstOrDefault(o => o is { TagClass: AsnElt.CONTEXT, TagValue: AsnElt.OCTET_STRING }) is AsnElt generalName)
+                    if (subjectAlternativeName.Sequence.FirstOrDefault(o => o is { TagClass: TagClass.ContextSpecific, TagValue: 4 /*Octet-String */ }) is Asn1Element generalName)
                     {
                         generalName.CheckConstructed();
-                        generalName.CheckNumSub(1);
+                        generalName.CheckExactSequenceLength(1);
 
-                        var nameSequence = generalName.GetSub(0);
-                        nameSequence.CheckConstructed();
-                        nameSequence.CheckTag(AsnElt.SEQUENCE);
-                        nameSequence.CheckNumSubMin(1);
+                        var nameSequence = generalName[0];
+                        nameSequence.CheckTag(new Asn1Tag(UniversalTagNumber.Sequence, isConstructed: true));
+                        nameSequence.CheckMinimumSequenceLength(1);
 
                         /*
                          
@@ -307,28 +307,36 @@ namespace Fido2NetLib
 
                          */
 
-                        var deviceAttributes = nameSequence.Sub;
-                        if (1 != deviceAttributes.FirstOrDefault().Sub.Length)
+                        var deviceAttributes = nameSequence.Sequence;
+
+                        if (deviceAttributes[0].Sequence.Count != 1)
                         {
-                            deviceAttributes = deviceAttributes.FirstOrDefault().Sub.Select(o => AsnElt.Make(AsnElt.SET, o)).ToArray();
+                            var wrappedElements = new List<Asn1Element>(deviceAttributes[0].Sequence.Count);
+
+                            foreach (Asn1Element o in deviceAttributes[0].Sequence)
+                            {
+                                wrappedElements.Add(Asn1Element.CreateSetOf(new List<Asn1Element>(1) { 
+                                    Asn1Element.CreateSequence((List<Asn1Element>)o.Sequence) 
+                                }));
+                            }
+
+                            deviceAttributes = wrappedElements;
                         }
 
-                        foreach (AsnElt propertySet in deviceAttributes)
+                        foreach (Asn1Element propertySet in deviceAttributes)
                         {
-                            propertySet.CheckTag(AsnElt.SET);
-                            propertySet.CheckNumSub(1);
+                            propertySet.CheckTag(Asn1Tag.SetOf);
+                            propertySet.CheckExactSequenceLength(1);
 
-                            var propertySequence = propertySet.GetSub(0);
-                            propertySequence.CheckTag(AsnElt.SEQUENCE);
-                            propertySequence.CheckNumSub(2);
+                            var propertySequence = propertySet[0];
+                            propertySequence.CheckTag(Asn1Tag.Sequence);
+                            propertySequence.CheckExactSequenceLength(2);
 
-                            var propertyOid = propertySequence.GetSub(0);
-                            propertyOid.CheckTag(AsnElt.OBJECT_IDENTIFIER);
-                            propertyOid.CheckPrimitive();
+                            var propertyOid = propertySequence[0];
+                            propertyOid.CheckTag(Asn1Tag.ObjectIdentifier);
 
-                            var propertyValue = propertySequence.GetSub(1);
-                            propertyValue.CheckTag(AsnElt.UTF8String);
-                            propertyValue.CheckPrimitive();
+                            var propertyValue = propertySequence[1];
+                            propertyValue.CheckTag(new Asn1Tag(UniversalTagNumber.UTF8String));
 
                             switch (propertyOid.GetOID())
                             {

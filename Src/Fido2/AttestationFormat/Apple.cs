@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using Asn1;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
@@ -18,20 +18,17 @@ namespace Fido2NetLib
 
             try
             {
-                var appleAttestationASN = AsnElt.Decode(appleExtension.RawData);
-                appleAttestationASN.CheckConstructed();
-                appleAttestationASN.CheckTag(AsnElt.SEQUENCE);
-                appleAttestationASN.CheckNumSub(1);
+                var appleAttestationASN = Asn1Element.Decode(appleExtension.RawData);
+                appleAttestationASN.CheckTag(new Asn1Tag(UniversalTagNumber.Sequence, isConstructed: true));
+                appleAttestationASN.CheckExactSequenceLength(1);
 
-                var sequence = appleAttestationASN.GetSub(0);
-                sequence.CheckConstructed();
-                sequence.CheckNumSub(1);
+                var appleAttestationASNSequence = appleAttestationASN[0];
+                appleAttestationASNSequence.CheckConstructed();
+                appleAttestationASNSequence.CheckExactSequenceLength(1);
 
-                var context = sequence.GetSub(0);
-                context.CheckPrimitive();
-                context.CheckTag(AsnElt.OCTET_STRING);
+                appleAttestationASNSequence[0].CheckTag(Asn1Tag.PrimitiveOctetString);
 
-                return context.GetOctetString();
+                return appleAttestationASNSequence[0].GetOctetString();
             }
 
             catch (Exception ex)

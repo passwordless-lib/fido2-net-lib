@@ -4,8 +4,8 @@ using PeterO.Cbor;
 using System;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
-using Asn1;
 using System.Linq;
+using System.Formats.Asn1;
 
 namespace Fido2NetLib
 {
@@ -37,9 +37,8 @@ namespace Fido2NetLib
             var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
             if (null != ext)
             {
-                var decodedAaguid = AsnElt.Decode(ext.RawData);
-                decodedAaguid.CheckTag(AsnElt.OCTET_STRING);
-                decodedAaguid.CheckPrimitive();
+                var decodedAaguid = Asn1Element.Decode(ext.RawData);
+                decodedAaguid.CheckTag(Asn1Tag.PrimitiveOctetString);
                 aaguid = decodedAaguid.GetOctetString();
 
                 // The extension MUST NOT be marked as critical
@@ -63,19 +62,21 @@ namespace Fido2NetLib
         {
             var u2ftransports = new byte();
             var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.3.6.1.4.1.45724.2.1.1");
-            if (null != ext)
+            if (ext != null)
             {
-                var decodedU2Ftransports = AsnElt.Decode(ext.RawData);
+                var decodedU2Ftransports = Asn1Element.Decode(ext.RawData);
                 decodedU2Ftransports.CheckPrimitive();
 
                 // some certificates seem to have this encoded as an octet string
                 // instead of a bit string, attempt to correct
-                if (AsnElt.OCTET_STRING == decodedU2Ftransports.TagValue)
+                if (decodedU2Ftransports.Tag == Asn1Tag.PrimitiveOctetString)
                 {
-                    ext.RawData[0] = AsnElt.BIT_STRING;
-                    decodedU2Ftransports = AsnElt.Decode(ext.RawData);
+                    ext.RawData[0] = (byte)UniversalTagNumber.BitString;
+                    decodedU2Ftransports = Asn1Element.Decode(ext.RawData);
                 }
-                decodedU2Ftransports.CheckTag(AsnElt.BIT_STRING);
+
+                decodedU2Ftransports.CheckTag(Asn1Tag.PrimitiveBitString);
+
                 u2ftransports = decodedU2Ftransports.GetBitString()[0];
             }
 

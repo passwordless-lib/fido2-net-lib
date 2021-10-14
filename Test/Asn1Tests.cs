@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Formats.Asn1;
 using System.Linq;
+using System.Text;
 
 using Fido2NetLib;
 
@@ -10,6 +11,20 @@ namespace Test
 {
     public class Asn1Tests
     {
+        [Fact]
+        public void DecodeObjectIdentifierAsOctetString()
+        {
+            byte[] data = Convert.FromBase64String("MD8wPaA7oDmGN2h0dHBzOi8vbWRzMy5jZXJ0aW5mcmEuZmlkb2FsbGlhbmNlLm9yZy9jcmwvTURTQ0EtMS5jcmw=");
+
+            var decoded = Asn1Element.Decode(data);
+
+            Assert.Equal(new Asn1Tag(TagClass.ContextSpecific, (int) UniversalTagNumber.ObjectIdentifier), decoded[0][0][0][0].Tag);
+
+            var cdp = Encoding.ASCII.GetString(decoded[0][0][0][0].GetOctetString(decoded[0][0][0][0].Tag));
+
+            Assert.Equal("https://mds3.certinfra.fidoalliance.org/crl/MDSCA-1.crl", cdp);
+        }
+
         [Fact]
         public void DecodeEcDsaSig()
         {
@@ -49,7 +64,7 @@ namespace Test
 
             Assert.True(element.IsConstructed);
 
-            element[0][0].EnsureTag(Asn1Tag.PrimitiveOctetString);
+            element[0][0].CheckTag(Asn1Tag.PrimitiveOctetString);
 
             Assert.Equal("nGACFUCz4Zg03+N+xiRFyJ4bKU95LORrlBPDIw7zhoE=", Convert.ToBase64String(element[0][0].GetOctetString()));
         }
