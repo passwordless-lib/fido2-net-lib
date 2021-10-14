@@ -224,21 +224,19 @@ namespace Fido2NetLib
 
             // Certificate users MUST be able to handle serialNumber values up to 20 octets.
 
-            var revokedCertificates = asnData[0][5].Sequence;
-            var revoked = new List<byte[]>();
+            var revokedAsnSequence = asnData[0][5].Sequence;
+            var revokedSerialNumbers = new byte[revokedAsnSequence.Count][];
 
-            foreach (Asn1Element element in revokedCertificates)
+            for (int i = 0; i < revokedAsnSequence.Count; i++)
             {
-                var revokedSerialNumber = element[0].GetIntegerBytes().ToArray();
-
-                Array.Reverse(revokedSerialNumber); // convert to little-endian order
-
-                revoked.Add(revokedSerialNumber);
+                revokedSerialNumbers[i] = revokedAsnSequence[i][0].GetIntegerBytes().ToArray();
             }
 
-            var certificateSerialNumber = cert.GetSerialNumber(); // little-endian ordered
+            var certificateSerialNumber = cert.GetSerialNumber().ToArray(); // defensively copy
 
-            foreach (var revokedSerialNumber in revoked)
+            Array.Reverse(certificateSerialNumber); // convert to big-endian order
+
+            foreach (var revokedSerialNumber in revokedSerialNumbers)
             {
                 if (revokedSerialNumber.AsSpan().SequenceEqual(certificateSerialNumber))
                 {
