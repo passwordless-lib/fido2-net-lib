@@ -298,9 +298,7 @@ namespace Test.Attestation
                                     unique // Unique
                                 );
 
-                                byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                                Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                                Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
+                                byte[] data = Concat(_authData, _clientDataHash);
 
                                 byte[] hashedData;
                                 byte[] hashedPubArea;
@@ -466,10 +464,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
 
@@ -618,10 +613,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -756,10 +748,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -894,10 +883,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -1038,10 +1024,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -1175,10 +1158,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -1315,10 +1295,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -1452,10 +1429,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -1586,11 +1560,8 @@ namespace Test.Attestation
                         .Concat(new byte[] { 0x00, 0x10 })
                         .Concat(new byte[] { 0x80, 0x00 })
                         .Concat(BitConverter.GetBytes(exponent.ToArray()[0] + (exponent.ToArray()[1] << 8) + (exponent.ToArray()[2] << 16)));
-                   
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
 
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -1725,10 +1696,7 @@ namespace Test.Attestation
                         new byte[0] // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
@@ -1859,13 +1827,11 @@ namespace Test.Attestation
                         unique.Reverse().ToArray() // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
+
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1993,10 +1959,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -2150,10 +2113,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -2306,10 +2266,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -2463,10 +2420,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -2597,10 +2551,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -2731,10 +2682,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -2872,10 +2820,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3006,10 +2951,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3137,10 +3079,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3277,10 +3216,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3410,10 +3346,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3544,10 +3477,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3678,10 +3608,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3813,10 +3740,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -3944,10 +3868,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -4082,10 +4003,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -4216,10 +4134,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -4356,10 +4271,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -4487,10 +4399,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -4624,10 +4533,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -4761,10 +4667,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -4895,10 +4798,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5026,10 +4926,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5157,10 +5054,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5288,10 +5182,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5422,10 +5313,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5562,10 +5450,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5702,10 +5587,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5846,10 +5728,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -5977,10 +5856,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -6122,10 +5998,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -6263,10 +6136,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -6406,10 +6276,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -6552,10 +6419,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -6698,10 +6562,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -6838,10 +6699,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -6975,10 +6833,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -7112,10 +6967,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -7262,10 +7114,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -7397,10 +7246,7 @@ namespace Test.Attestation
                         unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
@@ -7576,6 +7422,15 @@ namespace Test.Attestation
             {
                 throw new Exception($"Unknown alg. Was {alg}");
             }
+        }
+
+        internal static byte[] Concat(byte[] a, byte[] b)
+        {
+            byte[] data = new byte[a.Length + b.Length];
+            Buffer.BlockCopy(a, 0, data, 0, a.Length);
+            Buffer.BlockCopy(b, 0, data, a.Length, b.Length);
+
+            return data;
         }
     }
 }
