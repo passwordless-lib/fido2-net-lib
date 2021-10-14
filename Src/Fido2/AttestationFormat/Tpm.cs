@@ -163,7 +163,7 @@ namespace Fido2NetLib
 
                 // 5biii. The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
                 // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
-                (string tpmManufacturer, string tpmModel, string tpmVersion) = SANFromAttnCertExts(aikCert.Extensions);
+                (string? tpmManufacturer, string? tpmModel, string? tpmVersion) = SANFromAttnCertExts(aikCert.Extensions);
 
                 // From https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf
                 // "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName 
@@ -172,9 +172,9 @@ namespace Fido2NetLib
                 // and SHOULD be non-critical if subject is non-empty"
 
                 // Best I can figure to do for now?
-                if (tpmManufacturer is "" ||
-                    tpmModel is "" ||
-                    tpmVersion is "")
+                if (string.IsNullOrEmpty(tpmManufacturer) ||
+                    string.IsNullOrEmpty(tpmModel) ||
+                    string.IsNullOrEmpty(tpmVersion))
                 {
                     throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
                 }
@@ -236,11 +236,11 @@ namespace Fido2NetLib
             { 3, TpmEccCurve.TPM_ECC_NIST_P521}
         };
 
-        private static (string, string, string) SANFromAttnCertExts(X509ExtensionCollection extensions)
+        private static (string?, string?, string?) SANFromAttnCertExts(X509ExtensionCollection extensions)
         {
-            string tpmManufacturer = "";
-            string tpmModel = "";
-            string tpmVersion = "";
+            string? tpmManufacturer = null;
+            string? tpmModel = null;
+            string? tpmVersion = null;
 
             var foundSAN = false;
 
