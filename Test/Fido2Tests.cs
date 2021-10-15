@@ -9,7 +9,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Asn1;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 using Microsoft.Extensions.Caching.Distributed;
@@ -21,14 +20,12 @@ using Xunit;
 
 namespace fido2_net_lib.Test
 {
-
     // todo: Create tests and name Facts and json files better.
     public class Fido2Tests
     {
         private static readonly IMetadataService _metadataService;
         private static readonly Fido2Configuration _config;
         public static readonly List<(COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve)> _validCOSEParameters;
-
 
         static Fido2Tests()
         {
@@ -180,7 +177,7 @@ namespace fido2_net_lib.Test
 
                 _attestationObject = CBORObject.NewMap();
 
-                _asnEncodedAaguid = AsnElt.MakeBlob(AttestedCredentialData.AaGuidToBigEndian(_aaguid)).Encode();
+                _asnEncodedAaguid = AsnHelper.GetBlob(AttestedCredentialData.AaGuidToBigEndian(_aaguid));
 
                 idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
             }
