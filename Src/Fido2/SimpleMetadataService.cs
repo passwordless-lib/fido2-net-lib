@@ -36,8 +36,6 @@ namespace Fido2NetLib
 
                 if (_metadataStatements.ContainsKey(aaguid))
                 {
-                    if (entry.Hash != _metadataStatements[aaguid].Hash)
-                        throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
                     entry.MetadataStatement = _metadataStatements[aaguid];
                 }
 
