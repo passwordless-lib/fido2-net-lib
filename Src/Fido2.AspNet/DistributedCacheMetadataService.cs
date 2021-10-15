@@ -44,13 +44,11 @@ namespace Fido2NetLib
             if (!IsInitialized())
                 throw new InvalidOperationException("MetadataService must be initialized");
 
-            if (_entries.ContainsKey(aaguid))
+            if (_entries.TryGetValue(aaguid, out MetadataBLOBPayloadEntry entry))
             {
-                var entry = _entries[aaguid];
-
-                if (_metadataStatements.ContainsKey(aaguid))
+                if (_metadataStatements.TryGetValue(aaguid, out var statement))
                 {
-                    entry.MetadataStatement = _metadataStatements[aaguid];
+                    entry.MetadataStatement = statement;
                 }
 
                 return entry;

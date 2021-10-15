@@ -479,9 +479,9 @@ namespace Fido2NetLib
             if (Enum.IsDefined(typeof(TpmAlg), size))
             {
                 var tpmalg = (TpmAlg)size;
-                if (tpmAlgToDigestSizeMap.ContainsKey(tpmalg))
+                if (tpmAlgToDigestSizeMap.TryGetValue(tpmalg, out ushort tplAlgDigestSize))
                 {
-                    name = AuthDataHelper.GetSizedByteArray(ab, ref offset, tpmAlgToDigestSizeMap[tpmalg]);
+                    name = AuthDataHelper.GetSizedByteArray(ab, ref offset, tplAlgDigestSize);
                 }
                 else
                 {
