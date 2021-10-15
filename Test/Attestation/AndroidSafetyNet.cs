@@ -22,7 +22,7 @@ namespace Test.Attestation
         public AndroidSafetyNet()
         {
             _attestationObject = CBORObject.NewMap().Add("fmt", "android-safetynet");
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -33,7 +33,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -58,11 +57,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -123,7 +122,7 @@ namespace Test.Attestation
         [Fact]
         public async void TestAndroidSafetyNetRSA()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -157,8 +156,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -341,7 +340,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetResponseClaimTimestampExpired()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -352,7 +351,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -377,11 +375,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -426,7 +424,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetResponseClaimTimestampNotYetValid()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -437,7 +435,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -462,11 +459,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -511,7 +508,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetResponseClaimTimestampMissing()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -522,7 +519,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -547,11 +543,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -595,7 +591,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetResponseClaimNonceMissing()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -606,7 +602,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -631,11 +626,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -679,7 +674,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetResponseClaimNonceInvalid()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -690,7 +685,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -715,11 +709,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -765,7 +759,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetResponseClaimNonceNotBase64String()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -776,7 +770,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -801,11 +794,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -850,7 +843,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetAttestationCertSubjectInvalid()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -861,7 +854,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -886,11 +878,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -935,7 +927,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetCtsProfileMatchMissing()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -946,7 +938,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -971,11 +962,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -1019,7 +1010,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidSafetyNetCtsProfileMatchFalse()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -1030,7 +1021,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -1055,11 +1045,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();

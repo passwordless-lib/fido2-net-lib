@@ -14,6 +14,9 @@
     <None Include="@(TestFiles)" />
   </ItemGroup>
 
+  <!-- Sourced Libraries -->
+  <Import Project="../ExternalLibs/AsnElt/AsnElt.Include.props" />
+  
   <ItemGroup>
     <ProjectReference Include="..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
     <ProjectReference Include="..\Src\Fido2.Models\Fido2.Models.csproj" />
@@ -29,18 +32,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.Extensions.DependencyInjection">
-      <HintPath>..\..\..\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.extensions.dependencyinjection\2.2.0\lib\netcoreapp2.0\Microsoft.Extensions.DependencyInjection.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.Extensions.DependencyInjection">
-      <HintPath>..\..\..\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.extensions.dependencyinjection\2.2.0\lib\netcoreapp2.0\Microsoft.Extensions.DependencyInjection.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

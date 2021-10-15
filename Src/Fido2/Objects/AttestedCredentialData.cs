@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Fido2NetLib.Objects
 {
-    public class AttestedCredentialData
+    public sealed class AttestedCredentialData
     {
         /// <summary>
         /// Minimum length of the attested credential data structure.  AAGUID + credentialID length + credential ID + credential public key.

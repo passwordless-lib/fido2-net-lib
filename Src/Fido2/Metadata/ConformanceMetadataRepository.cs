@@ -53,8 +53,9 @@ namespace Fido2NetLib
             };
 
             var content = new StringContent(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
-            var result = JsonSerializer.Deserialize<MDSGetEndpointResponse>(await response.Content.ReadAsStringAsync());
+            using var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            var result = await JsonSerializer.DeserializeAsync<MDSGetEndpointResponse>(responseStream);
             var conformanceEndpoints = result.Result;
 
             var combinedBlob = new MetadataBLOBPayload
@@ -200,7 +201,7 @@ namespace Fido2NetLib
                     {
                         var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
                         var crlFile = await DownloadDataAsync(cdp);
-                        if (true == CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
+                        if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
                             throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");
                     }
                 }

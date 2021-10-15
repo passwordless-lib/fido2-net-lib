@@ -35,15 +35,17 @@ namespace Fido2NetLib
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
             // CBOR decoding on it to extract the contained fields
             // (handled in base class)
-            if ((CBORType.TextString != attStmt["ver"].Type) ||
-                (0 == attStmt["ver"].AsString().Length))
+            if (attStmt["ver"].Type != CBORType.TextString ||
+                attStmt["ver"].AsString().Length is 0)
+            {
                 throw new Fido2VerificationException("Invalid version in SafetyNet data");
+            }
 
             // 2. Verify that response is a valid SafetyNet response of version ver
             var ver = attStmt["ver"].AsString();
 
-            if ((CBORType.ByteString != attStmt["response"].Type) ||
-                (0 == attStmt["response"].GetByteString().Length))
+            if (attStmt["response"].Type != CBORType.ByteString ||
+                attStmt["response"].GetByteString().Length is 0)
                 throw new Fido2VerificationException("Invalid response in SafetyNet data");
 
             var response = attStmt["response"].GetByteString();
@@ -65,7 +67,6 @@ namespace Fido2NetLib
             string[] x5cStrings = jwtHeaderJson.TryGetProperty("x5c", out var x5cEl) && x5cEl.ValueKind is JsonValueKind.Array
                 ? x5cEl.ToStringArray()
                 : throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
-
 
             if (x5cStrings.Length is 0)
                 throw new Fido2VerificationException("No keys were present in the TOC header in SafetyNet response JWT");
@@ -102,10 +103,7 @@ namespace Fido2NetLib
             SecurityToken validatedToken;
             try
             { 
-                tokenHandler.ValidateToken(
-                    responseJWT,
-                    validationParameters,
-                    out validatedToken);
+                tokenHandler.ValidateToken(responseJWT, validationParameters, out validatedToken);
             }
             catch (SecurityTokenException ex)
             {
@@ -120,7 +118,7 @@ namespace Fido2NetLib
 
             foreach (var claim in jwtToken.Claims)
             {
-                if (claim is { Type: "nonce", ValueType: "http://www.w3.org/2001/XMLSchema#string" }  && claim.Value.Length != 0)
+                if (claim is { Type: "nonce", ValueType: "http://www.w3.org/2001/XMLSchema#string" } && claim.Value.Length != 0)
                 {
                     nonce = claim.Value;
                 }
@@ -138,7 +136,7 @@ namespace Fido2NetLib
             var notBefore = DateTime.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
             if ((notAfter < timestampMs) || ((notBefore) > timestampMs))
             {
-                throw new Fido2VerificationException(string.Format("SafetyNet timestampMs must be present and between one minute ago and now, got: {0}", timestampMs.ToString()));
+                throw new Fido2VerificationException($"SafetyNet timestampMs must be present and between one minute ago and now, got: {timestampMs}");
             }
 
             // 3. Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
@@ -154,19 +152,18 @@ namespace Fido2NetLib
             {
                 throw new Fido2VerificationException("Nonce value not base64string in SafetyNet attestation", ex);
             }
+            
+            var dataHash = CryptoUtils.Sha256HashData(Data);
 
-            using (var sha256 = SHA256.Create())
-            {
-                var dataHash = sha256.ComputeHash(Data);
-                if (false == dataHash.SequenceEqual(nonceHash))
-                    throw new Fido2VerificationException(
-                        string.Format(
-                            "SafetyNet response nonce / hash value mismatch, nonce {0}, hash {1}", 
-                            BitConverter.ToString(nonceHash).Replace("-", ""), 
-                            BitConverter.ToString(dataHash).Replace("-", "")
-                            )
-                        );
-            }
+            if (!dataHash.AsSpan().SequenceEqual(nonceHash))
+                throw new Fido2VerificationException(
+                    string.Format(
+                        "SafetyNet response nonce / hash value mismatch, nonce {0}, hash {1}", 
+                        BitConverter.ToString(nonceHash).Replace("-", ""), 
+                        BitConverter.ToString(dataHash).Replace("-", "")
+                        )
+                    );
+            
 
             // 4. Let attestationCert be the attestation certificate
             var attestationCert = certs[0];

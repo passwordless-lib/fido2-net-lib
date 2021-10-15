@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -21,8 +22,8 @@ namespace Test.Attestation
         private DateTimeOffset notBefore, notAfter;
         private X509EnhancedKeyUsageExtension tcgKpAIKCertExt;
         private X509Extension aikCertSanExt;
-        private IEnumerable<byte> unique, exponent, curveId, kdf;
-        private byte[] type, tpmAlg;
+        private byte[] unique, exponent, curveId, kdf;
+        private byte[] tpmAlg;
 
         public Tpm()
         {
@@ -31,7 +32,7 @@ namespace Test.Attestation
             exponent = null;
             curveId = null;
             kdf = null;
-            type = new byte[2];
+            var type = new byte[2];
             tpmAlg = new byte[2];
 
             notBefore = DateTimeOffset.UtcNow;
@@ -64,23 +65,23 @@ namespace Test.Attestation
         [Fact]
         public void TestTPM()
         {
-            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
             {
-                if (COSE.KeyType.OKP == (COSE.KeyType)param[0])
+                var (type, alg, curve) = param;
+
+                if (type is COSE.KeyType.OKP)
                 {
                     return; // no OKP support in TPM
                 }
 
-                var alg = (COSE.Algorithm)param[1];
-
-                if ((COSE.KeyType)param[0] is COSE.KeyType.EC2 && alg is COSE.Algorithm.ES256K)
+                if (type is COSE.KeyType.EC2 && alg is COSE.Algorithm.ES256K)
                 {
                     return; // no secp256k1 support in TPM
                 }
 
                 tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
-                switch ((COSE.KeyType)param[0])
+                switch (type)
                 {
                     case COSE.KeyType.EC2:
                         using (var ecdsaRoot = ECDsa.Create())
@@ -90,7 +91,6 @@ namespace Test.Attestation
 
                             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
 
-                            var curve = (COSE.EllipticCurve)param[2];
                             switch (curve)
                             {
                                 case COSE.EllipticCurve.P384:
@@ -133,11 +133,11 @@ namespace Test.Attestation
                                 var ecparams = ecdsaAtt.ExportParameters(true);
 
                                 var cpk = CBORObject.NewMap();
-                                cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                                cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                                cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                                cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                                 cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                                 cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                                cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                                cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                                 var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                                 var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -152,7 +152,7 @@ namespace Test.Attestation
                                     .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                                         .Reverse()
                                                         .ToArray())
-                                    .Concat(y);
+                                    .Concat(y).ToArray();
 
                                 var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                                 {
@@ -163,23 +163,22 @@ namespace Test.Attestation
 
                                 curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                                 kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL); // should this be big endian?
-                                type = TpmAlg.TPM_ALG_ECC.ToUInt16BigEndianBytes();
 
                                 var pubArea = CreatePubArea(
-                                    type, // Type
+                                    TpmAlg.TPM_ALG_ECC, // Type
                                     tpmAlg, // Alg
                                     new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                                     new byte[] { 0x00 }, // Policy
                                     new byte[] { 0x00, 0x10 }, // Symmetric
                                     new byte[] { 0x00, 0x10 }, // Scheme
                                     new byte[] { 0x80, 0x00 }, // KeyBits
-                                    exponent?.ToArray(), // Exponent
-                                    curveId?.ToArray(), // CurveID
-                                    kdf?.ToArray(), // KDF
-                                    unique.ToArray() // Unique
+                                    exponent, // Exponent
+                                    curveId, // CurveID
+                                    kdf, // KDF
+                                    unique // Unique
                                 );
                                 
-                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                                 byte[] hashedData = _attToBeSignedHash(hashAlg);
                                 
                                 byte[] hashedPubArea;
@@ -223,7 +222,7 @@ namespace Test.Attestation
                                     new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                 );
 
-                                byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                                byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                                 _attestationObject.Add("attStmt", CBORObject.NewMap()
                                     .Add("ver", "2.0")
@@ -238,16 +237,8 @@ namespace Test.Attestation
                     case COSE.KeyType.RSA:
                         using (RSA rsaRoot = RSA.Create())
                         {
-                            RSASignaturePadding padding = RSASignaturePadding.Pss;
-                            switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                            {
-                                case COSE.Algorithm.RS1:
-                                case COSE.Algorithm.RS256:
-                                case COSE.Algorithm.RS384:
-                                case COSE.Algorithm.RS512:
-                                    padding = RSASignaturePadding.Pkcs1;
-                                    break;
-                            }
+                            RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                             var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                             rootRequest.CertificateExtensions.Add(caExt);
 
@@ -282,8 +273,8 @@ namespace Test.Attestation
                                 var rsaparams = rsaAtt.ExportParameters(true);
 
                                 var cpk = CBORObject.NewMap();
-                                cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                                cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                                cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                                cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                                 cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                                 cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -291,29 +282,26 @@ namespace Test.Attestation
 
                                 unique = rsaparams.Modulus;
                                 exponent = rsaparams.Exponent;
-                                type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                                 var pubArea = CreatePubArea(
-                                    type, // Type
+                                    TpmAlg.TPM_ALG_RSA, // Type
                                     tpmAlg, // Alg
                                     new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                                     new byte[] { 0x00 }, // Policy
                                     new byte[] { 0x00, 0x10 }, // Symmetric
                                     new byte[] { 0x00, 0x10 }, // Scheme
                                     new byte[] { 0x80, 0x00 }, // KeyBits
-                                    exponent?.ToArray(), // Exponent
-                                    curveId?.ToArray(), // CurveID
-                                    kdf?.ToArray(), // KDF
-                                    unique.ToArray() // Unique
+                                    exponent, // Exponent
+                                    curveId, // CurveID
+                                    kdf, // KDF
+                                    unique // Unique
                                 );
 
-                                byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                                Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                                Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
+                                byte[] data = Concat(_authData, _clientDataHash);
 
                                 byte[] hashedData;
                                 byte[] hashedPubArea;
-                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                                var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                                 using (var hasher = CryptoUtils.GetHasher(hashAlg))
                                 {
                                     hashedData = hasher.ComputeHash(data);
@@ -354,7 +342,7 @@ namespace Test.Attestation
                                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                     );
 
-                                byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                                byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                                 _attestationObject.Set("attStmt", CBORObject.NewMap()
                                     .Add("ver", "2.0")
@@ -389,23 +377,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANTCGConformant()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -459,8 +438,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -468,30 +447,26 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
 
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((int)alg)))
+                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -533,7 +508,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -565,23 +540,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMSigNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -619,8 +585,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -629,29 +595,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -692,7 +654,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -712,23 +674,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMSigNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -766,8 +719,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -776,29 +729,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -839,7 +788,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -859,23 +808,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMSigByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -913,8 +853,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -923,29 +863,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -986,7 +922,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1006,9 +942,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMVersionNot2()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
             if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
@@ -1020,16 +955,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1067,8 +994,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1076,29 +1003,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1139,7 +1062,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "3.0")
@@ -1159,23 +1082,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1213,8 +1127,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1222,29 +1136,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1285,7 +1195,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1304,23 +1214,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1361,8 +1262,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1371,29 +1272,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1434,7 +1331,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1454,23 +1351,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1508,8 +1396,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1517,29 +1405,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1580,7 +1464,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1599,23 +1483,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1650,8 +1525,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1660,11 +1535,9 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
-                    var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
                     var policy = new byte[] { 0x00 };
                     var pubArea
-                         = type
+                         = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes()
                         .Concat(tpmAlg)
                         .Concat(new byte[] { 0x00, 0x00, 0x00, 0x00 })
                         .Concat(BitConverter.GetBytes((UInt16)policy.Length)
@@ -1675,14 +1548,11 @@ namespace Test.Attestation
                         .Concat(new byte[] { 0x00, 0x10 })
                         .Concat(new byte[] { 0x80, 0x00 })
                         .Concat(BitConverter.GetBytes(exponent.ToArray()[0] + (exponent.ToArray()[1] << 8) + (exponent.ToArray()[2] << 16)));
-                   
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
 
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -1723,7 +1593,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1743,23 +1613,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1797,8 +1658,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1807,30 +1668,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
                         new byte[0] // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
+                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
                     {
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
@@ -1870,7 +1726,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -1890,23 +1746,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniquePublicKeyMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -1941,8 +1788,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -1951,29 +1798,26 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
                         unique.Reverse().ToArray() // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
+
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2014,7 +1858,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2034,23 +1878,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueExponentMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2085,8 +1920,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2094,10 +1929,9 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
@@ -2105,18 +1939,15 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
                         new byte[] { 0x00, 0x01, 0x00 } , // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2157,7 +1988,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2177,8 +2008,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueXValueMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
             tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
 
             using (var ecdsaRoot = ECDsa.Create())
@@ -2187,8 +2018,6 @@ namespace Test.Attestation
                 rootRequest.CertificateExtensions.Add(caExt);
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-
-                var curve = (COSE.EllipticCurve)param[2];
 
                 using (rootCert = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -2222,11 +2051,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString().Reverse().ToArray();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -2241,7 +2070,7 @@ namespace Test.Attestation
                         .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                             .Reverse()
                                             .ToArray())
-                        .Concat(y);
+                        .Concat(y).ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                     {
@@ -2252,29 +2081,25 @@ namespace Test.Attestation
 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_ECC, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2315,7 +2140,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2334,8 +2159,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueYValueMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
             tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
 
             using (var ecdsaRoot = ECDsa.Create())
@@ -2344,8 +2169,6 @@ namespace Test.Attestation
                 rootRequest.CertificateExtensions.Add(caExt);
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-
-                var curve = (COSE.EllipticCurve)param[2];
 
                 using (rootCert = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -2379,11 +2202,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString().Reverse().ToArray();
@@ -2398,7 +2221,7 @@ namespace Test.Attestation
                         .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                             .Reverse()
                                             .ToArray())
-                        .Concat(y);
+                        .Concat(y).ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                                 {
@@ -2409,29 +2232,25 @@ namespace Test.Attestation
 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_ECC, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2472,7 +2291,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2492,8 +2311,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaUniqueCurveMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[0];
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
             tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
 
             using (var ecdsaRoot = ECDsa.Create())
@@ -2502,8 +2321,6 @@ namespace Test.Attestation
                 rootRequest.CertificateExtensions.Add(caExt);
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-
-                var curve = (COSE.EllipticCurve)param[2];
 
                 using (rootCert = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -2537,11 +2354,11 @@ namespace Test.Attestation
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
                     cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    cpk.Add(COSE.KeyTypeParameter.Crv, curve);
 
                     var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
@@ -2556,7 +2373,7 @@ namespace Test.Attestation
                         .Concat(BitConverter.GetBytes((UInt16)y.Length)
                                             .Reverse()
                                             .ToArray())
-                        .Concat(y);
+                        .Concat(y).ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                     {
@@ -2567,29 +2384,25 @@ namespace Test.Attestation
 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[2]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_ECC).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_ECC, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2630,7 +2443,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, ecdsaAtt, null, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2650,23 +2463,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2701,8 +2505,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2710,29 +2514,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2773,7 +2573,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2793,23 +2593,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2844,8 +2635,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -2853,29 +2644,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -2916,7 +2703,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -2936,9 +2723,8 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             if (alg is COSE.Algorithm.ES256 or COSE.Algorithm.PS256 or COSE.Algorithm.RS256)
                 tpmAlg = TpmAlg.TPM_ALG_SHA256.ToUInt16BigEndianBytes();
             if (alg is COSE.Algorithm.ES384 or COSE.Algorithm.PS384 or COSE.Algorithm.RS384)
@@ -2950,16 +2736,8 @@ namespace Test.Attestation
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -2994,8 +2772,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3003,29 +2781,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3066,7 +2840,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3086,23 +2860,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoBadMagic()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3137,8 +2902,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3146,29 +2911,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3209,7 +2970,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3229,23 +2990,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoBadType()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3277,8 +3029,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3286,29 +3038,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3349,7 +3097,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3369,23 +3117,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoExtraDataZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3426,8 +3165,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3435,29 +3174,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3497,7 +3232,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3517,23 +3252,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BNameIsHandle()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3568,8 +3294,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3577,29 +3303,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3640,7 +3362,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3660,23 +3382,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BNoName()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3711,8 +3424,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3720,29 +3433,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3783,7 +3492,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3803,23 +3512,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BExtraBytes()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3854,8 +3554,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -3863,29 +3563,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -3927,7 +3623,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -3947,23 +3643,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BInvalidHashAlg()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -3998,8 +3685,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4007,29 +3694,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4070,7 +3753,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4090,23 +3773,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMCertInfoTPM2BInvalidTPMALGID()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4138,8 +3812,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4147,29 +3821,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4210,7 +3880,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4231,23 +3901,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAlgNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4285,8 +3946,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4294,29 +3955,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4357,7 +4014,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4377,23 +4034,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAlgNotNumber()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4428,8 +4076,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4437,29 +4085,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4500,7 +4144,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4520,23 +4164,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAlgMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4577,8 +4212,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4586,29 +4221,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4649,7 +4280,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4669,23 +4300,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMPubAreaAttestedDataMismatch()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4717,8 +4339,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4726,29 +4348,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4792,7 +4410,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4812,23 +4430,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMMissingX5c()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -4863,8 +4472,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -4872,29 +4481,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -4935,7 +4540,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -4955,23 +4560,14 @@ namespace Test.Attestation
         [Fact]
         public void TestX5cNotArray()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5009,8 +4605,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5018,29 +4614,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5081,7 +4673,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5101,23 +4693,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMX5cCountZero()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5152,8 +4735,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5161,29 +4744,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5224,7 +4803,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5244,23 +4823,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMX5cValuesNull()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5292,8 +4862,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5301,29 +4871,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5364,7 +4930,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5384,23 +4950,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMX5cValuesCountZero()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5432,8 +4989,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5441,29 +4998,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5504,7 +5057,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5524,23 +5077,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMFirstX5cValueNotByteString()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5572,8 +5116,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5581,29 +5125,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5644,7 +5184,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5664,23 +5204,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMFirstX5cValueByteStringZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5715,8 +5246,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5724,29 +5255,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5787,7 +5314,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5807,23 +5334,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMBadSignature()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -5864,8 +5382,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -5873,29 +5391,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -5936,7 +5450,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
                     signature[signature.Length - 1] ^= 0xff;
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
@@ -5956,23 +5470,14 @@ namespace Test.Attestation
         [Fact]        
         public void TestTPMAikCertNotV3()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6013,8 +5518,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6022,29 +5527,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6085,7 +5586,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6114,23 +5615,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSubjectNotEmpty()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6166,8 +5658,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6175,29 +5667,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6238,7 +5726,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6258,23 +5746,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANMissing()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6306,8 +5785,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6315,29 +5794,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6378,7 +5853,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6398,23 +5873,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANZeroLen()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6460,8 +5926,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6469,29 +5935,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6532,7 +5994,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6552,23 +6014,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANNoManufacturer()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6610,8 +6063,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6619,29 +6072,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6682,7 +6131,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6702,23 +6151,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANNoModel()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6762,8 +6202,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6771,29 +6211,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6834,7 +6270,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -6854,23 +6290,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANNoVersion()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -6917,8 +6344,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -6926,29 +6353,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -6989,7 +6412,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7009,23 +6432,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertSANInvalidManufacturer()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7072,8 +6486,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7081,29 +6495,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7144,7 +6554,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7164,23 +6574,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertEKUMissingTCGKP()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7221,8 +6622,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7230,29 +6631,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7293,7 +6690,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7313,24 +6710,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertCATrue()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
-
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7368,8 +6755,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7377,29 +6764,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7440,7 +6823,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7460,24 +6843,14 @@ namespace Test.Attestation
         [Fact]
         public async void TestTPMAikCertMisingAAGUID()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
-
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7515,8 +6888,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7524,29 +6897,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7587,7 +6956,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7618,23 +6987,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMAikCertAAGUIDNotMatchAuthData()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
-            var alg = (COSE.Algorithm)param[1];
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7674,8 +7034,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7683,29 +7043,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7746,7 +7102,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7766,24 +7122,14 @@ namespace Test.Attestation
         [Fact]
         public void TestTPMECDAANotSupported()
         {
-            var param = Fido2Tests._validCOSEParameters[3];
-
-            var alg = (COSE.Algorithm)param[1];
+            var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
 
             using (RSA rsaRoot = RSA.Create())
             {
-                RSASignaturePadding padding = RSASignaturePadding.Pss;
-                switch ((COSE.Algorithm)param[1]) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-                {
-                    case COSE.Algorithm.RS1:
-                    case COSE.Algorithm.RS256:
-                    case COSE.Algorithm.RS384:
-                    case COSE.Algorithm.RS512:
-                        padding = RSASignaturePadding.Pkcs1;
-                        break;
-                }
+                RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
+
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
@@ -7818,8 +7164,8 @@ namespace Test.Attestation
                     var rsaparams = rsaAtt.ExportParameters(true);
 
                     var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
+                    cpk.Add(COSE.KeyCommonParameter.KeyType, type);
+                    cpk.Add(COSE.KeyCommonParameter.Alg, alg);
                     cpk.Add(COSE.KeyTypeParameter.N, rsaparams.Modulus);
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
@@ -7827,29 +7173,25 @@ namespace Test.Attestation
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
-                    type = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_RSA).Reverse().ToArray();
 
                     var pubArea = CreatePubArea(
-                        type, // Type
+                        TpmAlg.TPM_ALG_RSA, // Type
                         tpmAlg, // Alg
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
                         new byte[] { 0x00 }, // Policy
                         new byte[] { 0x00, 0x10 }, // Symmetric
                         new byte[] { 0x00, 0x10 }, // Scheme
                         new byte[] { 0x80, 0x00 }, // KeyBits
-                        exponent?.ToArray(), // Exponent
-                        curveId?.ToArray(), // CurveID
-                        kdf?.ToArray(), // KDF
-                        unique.ToArray() // Unique
+                        exponent, // Exponent
+                        curveId, // CurveID
+                        kdf, // KDF
+                        unique // Unique
                     );
 
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-
+                    byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
                     byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg((int)alg);
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     using (var hasher = CryptoUtils.GetHasher(hashAlg))
                     {
                         hashedData = hasher.ComputeHash(data);
@@ -7890,7 +7232,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
-                    byte[] signature = Fido2Tests.SignData((COSE.KeyType)param[0], alg, certInfo, null, rsaAtt, null);
+                    byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -7907,72 +7249,97 @@ namespace Test.Attestation
             }
         }
         
-        internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
-            byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
+        internal static byte[] CreatePubArea(
+            TpmAlg type, 
+            ReadOnlySpan<byte> alg, 
+            ReadOnlySpan<byte> attributes, 
+            ReadOnlySpan<byte> policy,
+            ReadOnlySpan<byte> symmetric,
+            ReadOnlySpan<byte> scheme,
+            ReadOnlySpan<byte> keyBits, 
+            ReadOnlySpan<byte> exponent,
+            ReadOnlySpan<byte> curveID,
+            ReadOnlySpan<byte> kdf, 
+            ReadOnlySpan<byte> unique = default)
         {
-            var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
-
-            IEnumerable<byte> raw = null;
             var uniqueLen = BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray();
 
-            if (TpmAlg.TPM_ALG_RSA == tpmalg)
+            var raw = new MemoryStream();
+
+            if (type is TpmAlg.TPM_ALG_RSA)
             {
-                raw
-                     = type
-                    .Concat(alg)
-                    .Concat(attributes)
-                    .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(policy)
-                    .Concat(symmetric)
-                    .Concat(scheme)
-                    .Concat(keyBits)
-                    .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)))
-                    .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(unique);
+                raw.Write(type.ToUInt16BigEndianBytes());
+                raw.Write(alg);
+                raw.Write(attributes);
+                raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
+                raw.Write(policy);
+                raw.Write(symmetric);
+                raw.Write(scheme);
+                raw.Write(keyBits);
+                raw.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
+                raw.Write(BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray());
+                raw.Write(unique); ;
             }
-            if (TpmAlg.TPM_ALG_ECC == tpmalg)
+            else if (type is TpmAlg.TPM_ALG_ECC)
             {
-                raw = type
-                    .Concat(alg)
-                    .Concat(attributes)
-                    .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(policy)
-                    .Concat(symmetric)
-                    .Concat(scheme)
-                    .Concat(curveID)
-                    .Concat(kdf)
-                    .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                        .Reverse()
-                        .ToArray())
-                    .Concat(unique);
+                raw.Write(type.ToUInt16BigEndianBytes());
+                raw.Write(alg);
+                raw.Write(attributes);
+                raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
+                raw.Write(policy);
+                raw.Write(symmetric);
+                raw.Write(scheme);
+                raw.Write(curveID);
+                raw.Write(kdf);
+                raw.Write(BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray());
+                raw.Write(unique);
             }
 
             return raw.ToArray();
         }
 
-        internal static byte[] CreateCertInfo(byte[] magic, byte[] type, byte[] qualifiedSigner,
-            byte[] extraData, byte[] clock, byte[] resetCount, byte[] restartCount,
-            byte[] safe, byte[] firmwareRevision, byte[] tPM2BName, byte[] attestedQualifiedNameBuffer)
+        internal static byte[] CreateCertInfo(
+            ReadOnlySpan<byte> magic,
+            ReadOnlySpan<byte> type,
+            ReadOnlySpan<byte> qualifiedSigner,
+            ReadOnlySpan<byte> extraData,
+            ReadOnlySpan<byte> clock,
+            ReadOnlySpan<byte> resetCount,
+            ReadOnlySpan<byte> restartCount,
+            ReadOnlySpan<byte> safe,
+            ReadOnlySpan<byte> firmwareRevision,
+            ReadOnlySpan<byte> tPM2BName, 
+            ReadOnlySpan<byte> attestedQualifiedNameBuffer)
         {
-            IEnumerable<byte> raw = magic
-                .Concat(type)
-                .Concat(qualifiedSigner)
-                .Concat(extraData)
-                .Concat(clock)
-                .Concat(resetCount)
-                .Concat(restartCount)
-                .Concat(safe)
-                .Concat(firmwareRevision)
-                .Concat(tPM2BName)
-                .Concat(attestedQualifiedNameBuffer);
+            var stream = new MemoryStream();
 
-            return raw.ToArray();
+            stream.Write(magic);
+            stream.Write(type);
+            stream.Write(qualifiedSigner);
+            stream.Write(extraData);
+            stream.Write(clock);
+            stream.Write(resetCount);
+            stream.Write(restartCount);
+            stream.Write(safe);
+            stream.Write(firmwareRevision);
+            stream.Write(tPM2BName);
+            stream.Write(attestedQualifiedNameBuffer);
+
+            return stream.ToArray();
+        }
+
+        internal static RSASignaturePadding GetRSASignaturePaddingForCoseAlgorithm(COSE.Algorithm alg)
+        {
+            // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+
+            if (alg is COSE.Algorithm.RS1 or COSE.Algorithm.RS256 or COSE.Algorithm.RS384 or COSE.Algorithm.RS512)
+            {
+                return RSASignaturePadding.Pkcs1;
+            }
+            else
+            {
+                return RSASignaturePadding.Pss;
+            }
         }
 
         internal static TpmAlg GetTmpAlg(COSE.Algorithm alg)
@@ -7995,8 +7362,17 @@ namespace Test.Attestation
             }
             else
             {
-                throw new Exception("Unknown alg:" + alg.ToString());
+                throw new Exception($"Unknown alg. Was {alg}");
             }
+        }
+
+        internal static byte[] Concat(byte[] a, byte[] b)
+        {
+            byte[] data = new byte[a.Length + b.Length];
+            Buffer.BlockCopy(a, 0, data, 0, a.Length);
+            Buffer.BlockCopy(b, 0, data, a.Length, b.Length);
+
+            return data;
         }
     }
 }

@@ -3,7 +3,7 @@
     /// <summary>
     /// Paramters used for callback function to check that the CredentialId is unique user
     /// </summary>
-    public class IsCredentialIdUniqueToUserParams
+    public sealed class IsCredentialIdUniqueToUserParams
     {
         public byte[] CredentialId { get; set; }
         public Fido2User User { get; set; }

@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Asn1;
+using System.Text;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -13,10 +12,8 @@ namespace Fido2NetLib
     {
         public static byte[] Sha256HashData(byte[] data)
         {
-            using (var sha256 = SHA256.Create())
-            {
-                return sha256.ComputeHash(data);
-            }
+            using var sha256 = SHA256.Create();
+            return sha256.ComputeHash(data);
         }
 
         public static HashAlgorithm GetHasher(HashAlgorithmName hashName)
@@ -48,9 +45,9 @@ namespace Fido2NetLib
             }
         }
 
-        public static HashAlgorithmName HashAlgFromCOSEAlg(int alg)
+        public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
         {
-            return (COSE.Algorithm)alg switch
+            return alg switch
             {
                 COSE.Algorithm.RS1 => HashAlgorithmName.SHA1,
                 COSE.Algorithm.ES256 => HashAlgorithmName.SHA256,
@@ -87,13 +84,13 @@ namespace Fido2NetLib
                         chain.ChainPolicy.ExtraStore.Add(cert);
                     }
                 }
-                var valid = chain.Build(trustPath[0]);
+                bool valid = chain.Build(trustPath[0]);
 
                 // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
                 var chainRoot = chain.ChainElements[^1].Certificate;
                 valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
 
-                if (true == valid)
+                if (valid)
                     return true;
             }
             return false;
@@ -101,9 +98,9 @@ namespace Fido2NetLib
 
         public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
         {
-            var decoded = AsnElt.Decode(ecDsaSig);
-            var r = decoded.Sub[0].GetOctetString().AsSpan();
-            var s = decoded.Sub[1].GetOctetString().AsSpan();
+            var decoded = Asn1Element.Decode(ecDsaSig);
+            var r = decoded[0].GetIntegerBytes();
+            var s = decoded[1].GetIntegerBytes();
 
             // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
             // ASN.1 requires storing positive integer values with any leading 0s removed
@@ -208,27 +205,46 @@ namespace Fido2NetLib
             {
                 if (ext.Oid.Value is "2.5.29.31") // id-ce-CRLDistributionPoints
                 {
-                    var asnData = AsnElt.Decode(ext.RawData);
-                    cdp = System.Text.Encoding.ASCII.GetString(asnData.Sub[0].Sub[0].Sub[0].Sub[0].GetOctetString());
+                    var asnData = Asn1Element.Decode(ext.RawData);
+
+                    var el = asnData[0][0][0][0];
+
+                    cdp = Encoding.ASCII.GetString(el.GetOctetString(el.Tag));
                 }
             }
             return cdp;
         }
+
         public static bool IsCertInCRL(byte[] crl, X509Certificate2 cert)
         {
-            var asnData = AsnElt.Decode(crl);
-            if (7 > asnData.Sub[0].Sub.Length)
+            var asnData = Asn1Element.Decode(crl);
+
+            if (7 > asnData[0].Sequence.Count)
                 return false; // empty CRL
 
-            var revokedCertificates = asnData.Sub[0].Sub[5].Sub;
-            var revoked = new List<long>();
+            // Certificate users MUST be able to handle serialNumber values up to 20 octets.
 
-            foreach (AsnElt s in revokedCertificates)
+            var revokedAsnSequence = asnData[0][5].Sequence;
+            var revokedSerialNumbers = new byte[revokedAsnSequence.Count][];
+
+            for (int i = 0; i < revokedAsnSequence.Count; i++)
             {
-                revoked.Add(BinaryPrimitives.ReadInt64BigEndian(s.Sub[0].GetOctetString()));
+                revokedSerialNumbers[i] = revokedAsnSequence[i][0].GetIntegerBytes().ToArray();
             }
 
-            return revoked.Contains(BitConverter.ToInt64(cert.GetSerialNumber(), 0));
+            var certificateSerialNumber = cert.GetSerialNumber().ToArray(); // defensively copy
+
+            Array.Reverse(certificateSerialNumber); // convert to big-endian order
+
+            foreach (var revokedSerialNumber in revokedSerialNumbers)
+            {
+                if (revokedSerialNumber.AsSpan().SequenceEqual(certificateSerialNumber))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

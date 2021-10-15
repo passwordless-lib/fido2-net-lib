@@ -1,8 +1,7 @@
 ﻿using System;
+using System.Formats.Asn1;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Asn1;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
@@ -19,20 +18,17 @@ namespace Fido2NetLib
 
             try
             {
-                var appleAttestationASN = AsnElt.Decode(appleExtension.RawData);
-                appleAttestationASN.CheckConstructed();
-                appleAttestationASN.CheckTag(AsnElt.SEQUENCE);
-                appleAttestationASN.CheckNumSub(1);
+                var appleAttestationASN = Asn1Element.Decode(appleExtension.RawData);
+                appleAttestationASN.CheckTag(new Asn1Tag(UniversalTagNumber.Sequence, isConstructed: true));
+                appleAttestationASN.CheckExactSequenceLength(1);
 
-                var sequence = appleAttestationASN.GetSub(0);
-                sequence.CheckConstructed();
-                sequence.CheckNumSub(1);
+                var appleAttestationASNSequence = appleAttestationASN[0];
+                appleAttestationASNSequence.CheckConstructed();
+                appleAttestationASNSequence.CheckExactSequenceLength(1);
 
-                var context = sequence.GetSub(0);
-                context.CheckPrimitive();
-                context.CheckTag(AsnElt.OCTET_STRING);
+                appleAttestationASNSequence[0].CheckTag(Asn1Tag.PrimitiveOctetString);
 
-                return context.GetOctetString();
+                return appleAttestationASNSequence[0].GetOctetString();
             }
 
             catch (Exception ex)
@@ -44,11 +40,13 @@ namespace Fido2NetLib
         public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
-            if (X5c is null || CBORType.Array != X5c.Type || X5c.Count < 2 ||
-                    X5c.Values is null || 0 == X5c.Values.Count ||
-                    CBORType.ByteString != X5c.Values.First().Type ||
-                    0 == X5c.Values.First().GetByteString().Length)
+            if (X5c is null || X5c.Type != CBORType.Array || X5c.Count < 2 ||
+                X5c.Values is null || X5c.Values.Count is 0 ||
+                X5c.Values.First().Type != CBORType.ByteString ||
+                X5c.Values.First().GetByteString().Length is 0)
+            {
                 throw new Fido2VerificationException("Malformed x5c in Apple attestation");
+            }
 
             // 2. Verify x5c is a valid certificate chain starting from the credCert to the Apple WebAuthn root certificate.
             // This happens in AuthenticatorAttestationResponse.VerifyAsync using metadata from MDS3
@@ -80,7 +78,7 @@ namespace Fido2NetLib
             var cpk = new CredentialPublicKey(credCert, coseAlg);
 
             // Finally, compare byte sequence of CredentialPublicKey built from credCert with byte sequence of CredentialPublicKey from AttestedCredentialData from authData
-            if (!cpk.GetBytes().SequenceEqual(AuthData.AttestedCredentialData.CredentialPublicKey.GetBytes()))
+            if (!cpk.GetBytes().AsSpan().SequenceEqual(AuthData.AttestedCredentialData.CredentialPublicKey.GetBytes()))
                 throw new Fido2VerificationException("Credential public key in Apple attestation does not match subject public key of credCert");
 
             // 7. If successful, return implementation-specific values representing attestation type Anonymous CA and attestation trust path x5c.

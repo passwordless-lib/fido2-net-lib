@@ -3,7 +3,7 @@
     /// <summary>
     /// Paramters used for callback function
     /// </summary>
-    public class IsUserHandleOwnerOfCredentialIdParams
+    public sealed class IsUserHandleOwnerOfCredentialIdParams
     {
         public byte[] UserHandle { get; }
         public byte[] CredentialId { get; }
