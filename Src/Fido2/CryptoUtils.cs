@@ -132,12 +132,7 @@ namespace Fido2NetLib
             }
 
             // Concatenate R + S coordinates and return the raw signature
-            var concated = new byte[p1363R.Length + p1363S.Length];
-
-            p1363R.CopyTo(concated);
-            p1363S.CopyTo(concated.AsSpan(p1363R.Length));
-
-            return concated;
+            return DataHelper.Concat(p1363R, p1363S);
         }
 
         /// <summary>

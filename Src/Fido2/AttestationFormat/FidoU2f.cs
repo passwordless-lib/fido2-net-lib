@@ -62,7 +62,7 @@ namespace Fido2NetLib
             var y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
 
             // 4c.Let publicKeyU2F be the concatenation 0x04 || x || y
-            var publicKeyU2F = new byte[1] { 0x4 }.Concat(x).Concat(y).ToArray();
+            var publicKeyU2F = DataHelper.Concat(stackalloc byte[1] { 0x4 }, x, y);
 
             // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
             var verificationData = new byte[1] { 0x00 };
