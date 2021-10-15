@@ -65,13 +65,13 @@ namespace Fido2NetLib
             var publicKeyU2F = DataHelper.Concat(stackalloc byte[1] { 0x4 }, x, y);
 
             // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
-            var verificationData = new byte[1] { 0x00 };
-            verificationData = verificationData
-                                .Concat(AuthData.RpIdHash)
-                                .Concat(clientDataHash)
-                                .Concat(AuthData.AttestedCredentialData.CredentialID)
-                                .Concat(publicKeyU2F.ToArray())
-                                .ToArray();
+            byte[] verificationData = DataHelper.Concat(
+                stackalloc byte[1] { 0x00 },
+                AuthData.RpIdHash,
+                clientDataHash,
+                AuthData.AttestedCredentialData.CredentialID,
+                publicKeyU2F
+            );
 
             // 6. Verify the sig using verificationData and certificate public key
             if (Sig is null || Sig.Type != CBORType.ByteString || Sig.GetByteString().Length is 0)
