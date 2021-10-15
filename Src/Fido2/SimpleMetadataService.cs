@@ -22,7 +22,7 @@ namespace Fido2NetLib
 
         public bool ConformanceTesting()
         {
-            return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
+            return _repositories[0].GetType() == typeof(ConformanceMetadataRepository);
         }
 
         public MetadataBLOBPayloadEntry? GetEntry(Guid aaguid)

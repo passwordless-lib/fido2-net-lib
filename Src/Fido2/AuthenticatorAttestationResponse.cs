@@ -179,7 +179,7 @@ namespace Fido2NetLib
                 }
                 else // otherwise, ensure the certificate is self signed
                 {
-                    X509Certificate2 trustPath0 = trustPath.First();
+                    X509Certificate2 trustPath0 = trustPath[0];
 
                     if (!string.Equals(trustPath0.Subject, trustPath0.Issuer, StringComparison.Ordinal))
                     {
