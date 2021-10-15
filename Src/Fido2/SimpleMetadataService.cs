@@ -32,9 +32,9 @@ namespace Fido2NetLib
 
             if (_entries.TryGetValue(aaguid, out MetadataBLOBPayloadEntry? entry))
             {
-                if (_metadataStatements.ContainsKey(aaguid))
+                if (_metadataStatements.TryGetValue(aaguid, out var metadataStatement))
                 {
-                    entry.MetadataStatement = _metadataStatements[aaguid];
+                    entry.MetadataStatement = metadataStatement;
                 }
 
                 return entry;
