@@ -122,7 +122,7 @@ namespace Fido2NetLib.Objects
 
         public override string ToString()
         {
-            return $"AAGUID: {AaGuid}, CredentialID: {CredentialID.ToString().Replace("-", "")}, CredentialPublicKey: {CredentialPublicKey}";
+            return $"AAGUID: {AaGuid}, CredentialID: {Convert.ToHexString(CredentialID)}, CredentialPublicKey: {CredentialPublicKey}";
         }
 
         public byte[] ToByteArray()
