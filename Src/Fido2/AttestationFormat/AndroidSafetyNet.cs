@@ -153,17 +153,12 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Nonce value not base64string in SafetyNet attestation", ex);
             }
             
-            var dataHash = CryptoUtils.Sha256HashData(Data);
+            var dataHash = SHA256.HashData(Data);
 
             if (!dataHash.AsSpan().SequenceEqual(nonceHash))
-                throw new Fido2VerificationException(
-                    string.Format(
-                        "SafetyNet response nonce / hash value mismatch, nonce {0}, hash {1}", 
-                        BitConverter.ToString(nonceHash).Replace("-", ""), 
-                        BitConverter.ToString(dataHash).Replace("-", "")
-                        )
-                    );
-            
+            {
+                throw new Fido2VerificationException($"SafetyNet response nonce / hash value mismatch, nonce {Convert.ToHexString(nonceHash)}, hash {Convert.ToHexString(dataHash)}");
+            }
 
             // 4. Let attestationCert be the attestation certificate
             var attestationCert = certs[0];

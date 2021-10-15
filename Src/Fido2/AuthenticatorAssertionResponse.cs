@@ -113,19 +113,14 @@ namespace Fido2NetLib
 
             // 11. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
 
-            byte[] hashedClientDataJson;
-            byte[] hashedRpId;
-            using (var sha = SHA256.Create())
-            {
-                // 11
-                // https://www.w3.org/TR/webauthn/#sctn-appid-extension
-                // FIDO AppID Extension:
-                // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
-                var rpid = Raw.Extensions?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
-                hashedRpId = sha.ComputeHash(Encoding.UTF8.GetBytes(rpid ?? string.Empty));
-                // 15
-                hashedClientDataJson = sha.ComputeHash(Raw.Response.ClientDataJson);
-            }
+            // https://www.w3.org/TR/webauthn/#sctn-appid-extension
+            // FIDO AppID Extension:
+            // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
+            var rpid = Raw.Extensions?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
+            byte[] hashedRpId = SHA256.HashData(Encoding.UTF8.GetBytes(rpid ?? string.Empty));
+            // 15
+            byte[] hashedClientDataJson = SHA256.HashData(Raw.Response.ClientDataJson);
+            
 
             if (!authData.RpIdHash.SequenceEqual(hashedRpId))
                 throw new Fido2VerificationException("Hash mismatch RPID");
