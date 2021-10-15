@@ -56,7 +56,7 @@ namespace Fido2NetLib
             using var response = await _httpClient.PostAsync(_getEndpointsUrl, content);
             var responseStream = await response.Content.ReadAsStreamAsync();
             var result = await JsonSerializer.DeserializeAsync<MDSGetEndpointResponse>(responseStream);
-            var conformanceEndpoints = result.Result;
+            var conformanceEndpoints = result!.Result;
 
             var combinedBlob = new MetadataBLOBPayload
             {
@@ -231,7 +231,7 @@ namespace Fido2NetLib
 
             var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var blob = JsonSerializer.Deserialize<MetadataBLOBPayload>(blobPayload);
+            var blob = JsonSerializer.Deserialize<MetadataBLOBPayload>(blobPayload)!;
             blob.JwtAlg = blobAlg;
             return blob;
         }

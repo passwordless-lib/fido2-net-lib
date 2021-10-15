@@ -37,13 +37,13 @@ namespace Fido2NetLib.Objects
 
             if (_type is COSE.KeyType.RSA)
             {
-                var keyParams = cert.GetRSAPublicKey().ExportParameters(false);
+                var keyParams = cert.GetRSAPublicKey()!.ExportParameters(false);
                 _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus);
                 _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent);
             }
             else if (_type is COSE.KeyType.EC2)
             {
-                var ecDsaPubKey = cert.GetECDsaPublicKey();
+                var ecDsaPubKey = cert.GetECDsaPublicKey()!;
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
                 if (keyParams.Curve.Oid.FriendlyName is "secP256k1")
@@ -51,7 +51,7 @@ namespace Fido2NetLib.Objects
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName, StringComparison.Ordinal))
+                    if (keyParams.Curve.Oid.FriendlyName!.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
                     if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName, StringComparison.Ordinal))
@@ -62,7 +62,7 @@ namespace Fido2NetLib.Objects
                 }
                 else
                 {
-                    if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
+                    if (keyParams.Curve.Oid.Value!.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
                         _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
 
                     if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value, StringComparison.Ordinal))

@@ -12,7 +12,7 @@ namespace Fido2NetLib
     {
         public static byte[] GetAppleAttestationExtensionValue(X509ExtensionCollection exts)
         {
-            var appleExtension = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.2.840.113635.100.8.2");
+            var appleExtension = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid!.Value is "1.2.840.113635.100.8.2");
             
             if (appleExtension is null || appleExtension.RawData is null || appleExtension.RawData.Length < 0x26)
                 throw new Fido2VerificationException("Extension with OID 1.2.840.113635.100.8.2 not found on Apple attestation credCert");
