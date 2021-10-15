@@ -11,7 +11,6 @@ namespace Fido2NetLib
     public partial class Fido2 : IFido2
     {
         private readonly Fido2Configuration _config;
-        private readonly RandomNumberGenerator _crypto;
         private readonly IMetadataService? _metadataService;
 
         public Fido2(
@@ -19,7 +18,6 @@ namespace Fido2NetLib
             IMetadataService? metadataService = null)
         {
             _config = config;
-            _crypto = RandomNumberGenerator.Create();
             _metadataService = metadataService;
         }
 
@@ -50,7 +48,7 @@ namespace Fido2NetLib
             AuthenticationExtensionsClientInputs? extensions = null)
         {
             var challenge = new byte[_config.ChallengeSize];
-            _crypto.GetBytes(challenge);
+            RandomNumberGenerator.Fill(challenge);
 
             var options = CredentialCreateOptions.Create(_config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials, extensions);
             return options;
@@ -89,7 +87,7 @@ namespace Fido2NetLib
             AuthenticationExtensionsClientInputs? extensions = null)
         {
             var challenge = new byte[_config.ChallengeSize];
-            _crypto.GetBytes(challenge);
+            RandomNumberGenerator.Fill(challenge);
 
             var options = AssertionOptions.Create(_config, challenge, allowedCredentials, userVerification, extensions);
             return options;
