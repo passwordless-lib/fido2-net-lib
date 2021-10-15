@@ -45,15 +45,11 @@ namespace Test.Attestation
                 },
                 false);
 
-
-            var tpmManufacturer = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.1"), AsnElt.MakeString(AsnElt.UTF8String, "id:FFFFF1D0") });
-            var tpmModel = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.2"), AsnElt.MakeString(AsnElt.UTF8String, "FIDO2-NET-LIB-TEST-TPM") });
-            var tpmVersion = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.3"), AsnElt.MakeString(AsnElt.UTF8String, "id:F1D00002") });
-            var tpmDeviceAttributes = AsnElt.Make(AsnElt.SET, new AsnElt[] { tpmManufacturer, tpmModel, tpmVersion });
-            var tpmDirectoryName = AsnElt.Make(AsnElt.SEQUENCE, tpmDeviceAttributes);
-            var tpmGeneralName = AsnElt.MakeExplicit(AsnElt.OCTET_STRING, tpmDirectoryName);
-            var tpmSAN = AsnElt.Make(AsnElt.SEQUENCE, tpmGeneralName);
-            var asnEncodedSAN = tpmSAN.Encode();
+            byte[] asnEncodedSAN = TpmSanEncoder.Encode(
+                manufacturer : "id:FFFFF1D0", 
+                model        : "FIDO2-NET-LIB-TEST-TPM",
+                version      : "id:F1D00002"
+            );
 
             aikCertSanExt = new X509Extension(
                 "2.5.29.17",
@@ -382,17 +378,11 @@ namespace Test.Attestation
 
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
-                    var tcpaTpmManufacturer = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.1"), AsnElt.MakeString(AsnElt.UTF8String, "id:FFFFF1D0") });
-                    var tcpaTpmModel = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.2"), AsnElt.MakeString(AsnElt.UTF8String, "FIDO2-NET-LIB-TestTPMAikCertSANTCGConformant") });
-                    var tcpaTpmVersion = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { AsnElt.MakeOID("2.23.133.2.3"), AsnElt.MakeString(AsnElt.UTF8String, "id:F1D00002") });
-                    var asnEncodedSAN = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                AsnElt.Make(AsnElt.CONTEXT, AsnElt.OCTET_STRING, AsnElt.Make(
-                    AsnElt.SEQUENCE, new AsnElt[] {
-                        AsnElt.Make(AsnElt.SET, tcpaTpmManufacturer),
-                        AsnElt.Make(AsnElt.SET, tcpaTpmModel),
-                        AsnElt.Make(AsnElt.SET, tcpaTpmVersion)
-                    })
-                )}).Encode();
+                    byte[] asnEncodedSAN = TpmSanEncoder.Encode(
+                        manufacturer : "id:FFFFF1D0",
+                        model        : "FIDO2-NET-LIB-TestTPMAikCertSANTCGConformant",
+                        version      : "id:F1D00002"
+                    );
 
                     var aikCertSanExt = new X509Extension(
                         "2.5.29.17",
@@ -662,11 +652,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -693,7 +680,6 @@ namespace Test.Attestation
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
-
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
