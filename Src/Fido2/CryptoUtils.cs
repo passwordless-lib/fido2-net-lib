@@ -145,50 +145,15 @@ namespace Fido2NetLib
         /// </summary>
         /// <param name="pemStr">source string.</param>
         /// <returns>output byte array.</returns>
-        public static byte[] PemToBytes(string pemStr)
+        public static byte[] PemToBytes(ReadOnlySpan<char> pemStr)
         {
-            const string PemStartStr = "-----BEGIN";
-            const string PemEndStr = "-----END";
-            byte[] retval;
-            var lines = pemStr.Split('\n');
-            var base64Str = "";
-            bool started = false, ended = false;
-            string cline;
-            for (var i = 0; i < lines.Length; i++)
-            {
-                cline = lines[i].ToUpper();
-                if (cline is "")
-                    continue;
-                if (cline.Length > PemStartStr.Length)
-                {
-                    if (!started && cline.Substring(0, PemStartStr.Length) == PemStartStr)
-                    {
-                        started = true;
-                        continue;
-                    }
-                }
-                if (cline.Length > PemEndStr.Length)
-                {
-                    if (cline.Substring(0, PemEndStr.Length) == PemEndStr)
-                    {
-                        ended = true;
-                        break;
-                    }
-                }
-                if (started)
-                {
-                    base64Str += lines[i];
-                }
-            }
-            if (!(started && ended))
-            {
-                throw new Exception("'BEGIN'/'END' line is missing.");
-            }
-            base64Str = base64Str.Replace("\r", "");
-            base64Str = base64Str.Replace("\n", "");
-            base64Str = base64Str.Replace("\n", " ");
-            retval = Convert.FromBase64String(base64Str);
-            return retval;
+            var range = PemEncoding.Find(pemStr);
+
+            byte[] data = new byte[range.DecodedDataLength];
+
+            Convert.TryFromBase64Chars(pemStr[range.Base64Data], data, out _);
+
+            return data;
         }
 
         public static string CDPFromCertificateExts(X509ExtensionCollection exts)
