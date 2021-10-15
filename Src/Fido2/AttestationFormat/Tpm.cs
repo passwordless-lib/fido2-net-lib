@@ -68,10 +68,10 @@ namespace Fido2NetLib
             int coseKty = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
             if (coseKty is 3) // RSA
             {
-                var coseMod = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(); // modulus 
-                var coseExp = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString(); // exponent
+                byte[] coseMod = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(); // modulus 
+                byte[] coseExp = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString(); // exponent
 
-                if (!coseMod.ToArray().SequenceEqual(pubArea.Unique.ToArray()))
+                if (!coseMod.SequenceEqual(pubArea.Unique))
                     throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
                 if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent)
                     throw new Fido2VerificationException("Public key exponent mismatch between pubArea and credentialPublicKey");

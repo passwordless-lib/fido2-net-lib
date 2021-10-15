@@ -131,7 +131,7 @@ namespace Fido2NetLib
                     throw new Fido2MetadataException("Unknown certificate algorithm");
                 }
             }
-            var blobPublicKeys = keys.ToArray();
+            var blobPublicKeys = keys.ToArray(); // defensive copy
 
             var certChain = new X509Chain();
             certChain.ChainPolicy.ExtraStore.Add(rootCert);
@@ -143,7 +143,7 @@ namespace Fido2NetLib
                 ValidateAudience = false,
                 ValidateLifetime = false,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKeys = blobPublicKeys,
+                IssuerSigningKeys = blobPublicKeys
             };
 
             var tokenHandler = new JwtSecurityTokenHandler()
