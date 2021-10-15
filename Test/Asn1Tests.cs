@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Formats.Asn1;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 
 using Fido2NetLib;
@@ -11,6 +12,16 @@ namespace Test
 {
     public class Asn1Tests
     {
+        [Fact]
+        public void EncodeTpmSan()
+        {
+            Assert.Equal("MG2kazBpMRYwFAYFZ4EFAgEMC2lkOkZGRkZGMUQwMTcwNQYFZ4EFAgIMLEZJRE8yLU5FVC1MSUItVGVzdFRQTUFpa0NlcnRTQU5UQ0dDb25mb3JtYW50MRYwFAYFZ4EFAgMMC2lkOkYxRDAwMDAy", Convert.ToBase64String(TpmSanEncoder.Encode(
+                ( new Oid("2.23.133.2.1"), "id:FFFFF1D0" ),
+                ( new Oid("2.23.133.2.2"), "FIDO2-NET-LIB-TestTPMAikCertSANTCGConformant" ),
+                ( new Oid("2.23.133.2.3"), "id:F1D00002")
+            )));
+        }
+
         [Fact]
         public void DecodeObjectIdentifierAsOctetString()
         {
