@@ -21,16 +21,8 @@ namespace Fido2NetLib
         internal CBORObject EcdaaKeyId => attStmt["ecdaaKeyId"];
         internal AuthenticatorData AuthData => new AuthenticatorData(authenticatorData);
         internal CBORObject CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject();
-        internal byte[] Data
-        {
-            get
-            {
-                byte[] data = new byte[authenticatorData.Length + clientDataHash.Length];
-                Buffer.BlockCopy(authenticatorData, 0, data, 0, authenticatorData.Length);
-                Buffer.BlockCopy(clientDataHash, 0, data, authenticatorData.Length, clientDataHash.Length);
-                return data;
-            }
-        }
+        internal byte[] Data => DataHelper.Concat(authenticatorData, clientDataHash);
+
         internal static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
         {
             byte[] aaguid = null;

@@ -151,10 +151,8 @@ namespace Fido2NetLib
             // Done earlier, hashedClientDataJson
 
             // 16. Using the credential public key looked up in step 3, verify that sig is a valid signature over the binary concatenation of aData and hash.
-            var data = new byte[Raw.Response.AuthenticatorData.Length + hashedClientDataJson.Length];
-            Buffer.BlockCopy(Raw.Response.AuthenticatorData, 0, data, 0, Raw.Response.AuthenticatorData.Length);
-            Buffer.BlockCopy(hashedClientDataJson, 0, data, Raw.Response.AuthenticatorData.Length, hashedClientDataJson.Length);
-
+            byte[] data = DataHelper.Concat(Raw.Response.AuthenticatorData, hashedClientDataJson);
+         
             if (storedPublicKey is null || storedPublicKey.Length is 0) 
                 throw new Fido2VerificationException("Stored public key is null or empty");
 
