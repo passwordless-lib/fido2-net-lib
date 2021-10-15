@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Formats.Asn1;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
@@ -62,7 +63,7 @@ namespace Fido2NetLib
             var nonceToHash = Data;
 
             // 4. Perform SHA-256 hash of nonceToHash to produce nonce.
-            byte[] nonce = CryptoUtils.Sha256HashData(nonceToHash);
+            byte[] nonce = SHA256.HashData(nonceToHash);
 
             // 5. Verify nonce matches the value of the extension with OID ( 1.2.840.113635.100.8.2 ) in credCert.
             var appleExtensionBytes = GetAppleAttestationExtensionValue(credCert.Extensions);
