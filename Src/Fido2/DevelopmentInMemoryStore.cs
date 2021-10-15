@@ -28,7 +28,7 @@ namespace Fido2NetLib.Development
             return _storedCredentials.Where(c => c.UserId.AsSpan().SequenceEqual(user.Id)).ToList();
         }
 
-        public StoredCredential GetCredentialById(byte[] id)
+        public StoredCredential? GetCredentialById(byte[] id)
         {
             return _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(id));
         }
@@ -40,7 +40,7 @@ namespace Fido2NetLib.Development
 
         public void UpdateCounter(byte[] credentialId, uint counter)
         {
-            var cred = _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
+            var cred = _storedCredentials.First(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
             cred.SignatureCounter = counter;
         }
 

@@ -161,7 +161,7 @@ namespace Fido2NetLib
             var cdp = "";
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value is "2.5.29.31") // id-ce-CRLDistributionPoints
+                if (ext.Oid!.Value is "2.5.29.31") // id-ce-CRLDistributionPoints
                 {
                     var asnData = Asn1Element.Decode(ext.RawData);
 

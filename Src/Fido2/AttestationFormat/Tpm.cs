@@ -246,7 +246,7 @@ namespace Fido2NetLib
 
             foreach (var extension in extensions)
             {
-                if (extension.Oid.Value is "2.5.29.17") // subject alternative name
+                if (extension.Oid!.Value is "2.5.29.17") // subject alternative name
                 {
                     if (extension.RawData.Length is 0)
                         throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
@@ -369,7 +369,7 @@ namespace Fido2NetLib
         {
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value is "2.5.29.37" && ext is X509EnhancedKeyUsageExtension enhancedKeyUsageExtension)
+                if (ext.Oid!.Value is "2.5.29.37" && ext is X509EnhancedKeyUsageExtension enhancedKeyUsageExtension)
                 {
                     foreach (var oid in enhancedKeyUsageExtension.EnhancedKeyUsages)
                     {

@@ -46,7 +46,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("AttestationObject invalid CBOR", ex);
             }
 
-            static bool IsType(CBORObject? obj, CBORType type) => obj is not null && obj.Type == type;
+            static bool IsType(CBORObject obj, CBORType type) => obj is not null && obj.Type == type;
 
             if (!IsType(cborAttestation["fmt"], CBORType.TextString) ||
                 !IsType(cborAttestation["attStmt"], CBORType.Map) ||
