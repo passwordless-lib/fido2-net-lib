@@ -510,11 +510,11 @@ namespace Fido2NetLib
 
             Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
             if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
-                throw new Fido2VerificationException("Bad magic number " + BitConverter.ToString(Magic).Replace("-",""));
+                throw new Fido2VerificationException("Bad magic number " + Convert.ToHexString(Magic));
 
             Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
             if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
-                throw new Fido2VerificationException("Bad structure tag " + BitConverter.ToString(Type).Replace("-", ""));
+                throw new Fido2VerificationException("Bad structure tag " + Convert.ToHexString(Type));
 
             QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
 
