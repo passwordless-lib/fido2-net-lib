@@ -3,7 +3,6 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Asn1;
@@ -144,15 +143,11 @@ namespace Test.Attestation
 
                                 _credentialPublicKey = new CredentialPublicKey(cpk);
 
-                                unique = BitConverter
-                                    .GetBytes((UInt16)x.Length)
-                                    .Reverse()
-                                    .ToArray()
+                                unique = GetUInt16BigEndianBytes(x.Length)
                                     .Concat(x)
-                                    .Concat(BitConverter.GetBytes((UInt16)y.Length)
-                                                        .Reverse()
-                                                        .ToArray())
-                                    .Concat(y).ToArray();
+                                    .Concat(GetUInt16BigEndianBytes(y.Length))
+                                    .Concat(y)
+                                    .ToArray();
 
                                 var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                                 {
@@ -187,11 +182,7 @@ namespace Test.Attestation
                                     hashedPubArea = hasher.ComputeHash(pubArea);
                                 }
 
-                                IEnumerable<byte> extraData = BitConverter
-                                    .GetBytes((UInt16)hashedData.Length)
-                                    .Reverse()
-                                    .ToArray()
-                                    .Concat(hashedData);
+                                byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                                 var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                                 {
@@ -201,24 +192,21 @@ namespace Test.Attestation
                                     {TpmAlg.TPM_ALG_SHA512, (512/8) }
                                 };
 
-                                var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                                var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                                IEnumerable<byte> tpm2bName = new byte[] { }
-                                    .Concat(tpm2bNameLen)
-                                    .Concat(tpmAlg)
-                                    .Concat(hashedPubArea);
+                                byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                                 var certInfo = CreateCertInfo(
                                     new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                                     new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                                     new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                                    extraData.ToArray(), // ExtraData
+                                    extraData, // ExtraData
                                     new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                                     new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                                     new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                                     new byte[] { 0x00 }, // Safe
                                     new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                                    tpm2bName.ToArray(), // TPM2BName
+                                    tpm2bName, // TPM2BName
                                     new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                 );
 
@@ -307,11 +295,8 @@ namespace Test.Attestation
                                     hashedData = hasher.ComputeHash(data);
                                     hashedPubArea = hasher.ComputeHash(pubArea);
                                 }
-                                IEnumerable<byte> extraData = BitConverter
-                                    .GetBytes((UInt16)hashedData.Length)
-                                    .Reverse()
-                                    .ToArray()
-                                    .Concat(hashedData);
+
+                                byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                                 var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                                 {
@@ -321,24 +306,21 @@ namespace Test.Attestation
                                     {TpmAlg.TPM_ALG_SHA512, (512/8) }
                                 };
 
-                                var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                                var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                                IEnumerable<byte> tpm2bName = new byte[] { }
-                                    .Concat(tpm2bNameLen)
-                                    .Concat(tpmAlg)
-                                    .Concat(hashedPubArea);
+                                byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                                 var certInfo = CreateCertInfo(
                                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                                        extraData.ToArray(), // ExtraData
+                                        extraData, // ExtraData
                                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                                         new byte[] { 0x00 }, // Safe
                                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                                        tpm2bName.ToArray(), // TPM2BName
+                                        tpm2bName, // TPM2BName
                                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                                     );
 
@@ -472,14 +454,9 @@ namespace Test.Attestation
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
 
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-
                     {
                         {TpmAlg.TPM_ALG_SHA1,   (160/8) },
                         {TpmAlg.TPM_ALG_SHA256, (256/8) },
@@ -487,24 +464,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm1bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm1bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm1bName = new byte[] { }
-                        .Concat(tpm1bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm1bName = DataHelper.Concat(tpm1bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm1bName.ToArray(), // TPM2BName
+                            tpm1bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -619,11 +593,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -633,26 +604,23 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -753,11 +721,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -767,24 +732,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
+                            tpm2bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -887,11 +849,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -901,24 +860,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
+                            tpm2bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -1027,11 +983,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1041,24 +994,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
+                            tpm2bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -1160,11 +1110,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1174,24 +1121,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
+                            tpm2bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -1296,11 +1240,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1310,24 +1251,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
+                            tpm2bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -1429,11 +1367,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1443,24 +1378,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -1540,14 +1472,12 @@ namespace Test.Attestation
                          = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes()
                         .Concat(tpmAlg)
                         .Concat(new byte[] { 0x00, 0x00, 0x00, 0x00 })
-                        .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                            .Reverse()
-                            .ToArray())
+                        .Concat(GetUInt16BigEndianBytes(policy.Length))
                         .Concat(policy)
                         .Concat(new byte[] { 0x00, 0x10 })
                         .Concat(new byte[] { 0x00, 0x10 })
                         .Concat(new byte[] { 0x80, 0x00 })
-                        .Concat(BitConverter.GetBytes(exponent.ToArray()[0] + (exponent.ToArray()[1] << 8) + (exponent.ToArray()[2] << 16)));
+                        .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
 
                     byte[] data = Concat(_authData, _clientDataHash);
                     byte[] hashedData;
@@ -1558,11 +1488,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea.ToArray());
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1572,24 +1499,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -1691,11 +1615,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1705,26 +1626,23 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -1823,11 +1741,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1837,18 +1752,15 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -1953,11 +1865,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -1967,18 +1876,15 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -2062,15 +1968,11 @@ namespace Test.Attestation
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
-                    unique = BitConverter
-                        .GetBytes((UInt16)x.Length)
-                        .Reverse()
-                        .ToArray()
+                    unique = GetUInt16BigEndianBytes(x.Length)
                         .Concat(x)
-                        .Concat(BitConverter.GetBytes((UInt16)y.Length)
-                                            .Reverse()
-                                            .ToArray())
-                        .Concat(y).ToArray();
+                        .Concat(GetUInt16BigEndianBytes(y.Length))
+                        .Concat(y)
+                        .ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                     {
@@ -2105,11 +2007,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -2119,24 +2018,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -2213,22 +2109,18 @@ namespace Test.Attestation
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
-                    unique = BitConverter
-                        .GetBytes((UInt16)x.Length)
-                        .Reverse()
-                        .ToArray()
+                    unique = GetUInt16BigEndianBytes(x.Length)
                         .Concat(x)
-                        .Concat(BitConverter.GetBytes((UInt16)y.Length)
-                                            .Reverse()
-                                            .ToArray())
-                        .Concat(y).ToArray();
+                        .Concat(GetUInt16BigEndianBytes(y.Length))
+                        .Concat(y)
+                        .ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
-                                {
-                                    { 1, TpmEccCurve.TPM_ECC_NIST_P256},
-                                    { 2, TpmEccCurve.TPM_ECC_NIST_P384},
-                                    { 3, TpmEccCurve.TPM_ECC_NIST_P521},
-                                };
+                    {
+                        { 1, TpmEccCurve.TPM_ECC_NIST_P256},
+                        { 2, TpmEccCurve.TPM_ECC_NIST_P384},
+                        { 3, TpmEccCurve.TPM_ECC_NIST_P521},
+                    };
 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
@@ -2256,11 +2148,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -2270,26 +2159,23 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
@@ -2365,15 +2251,11 @@ namespace Test.Attestation
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
-                    unique = BitConverter
-                        .GetBytes((UInt16)x.Length)
-                        .Reverse()
-                        .ToArray()
+                    unique = GetUInt16BigEndianBytes(x.Length)
                         .Concat(x)
-                        .Concat(BitConverter.GetBytes((UInt16)y.Length)
-                                            .Reverse()
-                                            .ToArray())
-                        .Concat(y).ToArray();
+                        .Concat(GetUInt16BigEndianBytes(y.Length))
+                        .Concat(y)
+                        .ToArray();
 
                     var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
                     {
@@ -2408,11 +2290,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -2422,18 +2301,15 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -2538,11 +2414,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -2552,18 +2425,15 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -2668,11 +2538,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -2682,26 +2549,23 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -2805,40 +2669,34 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
+                        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
+                        { TpmAlg.TPM_ALG_SHA256, (256/8) },
+                        { TpmAlg.TPM_ALG_SHA384, (384/8) },
+                        { TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -2935,40 +2793,34 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
+                        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
+                        { TpmAlg.TPM_ALG_SHA256, (256/8) },
+                        { TpmAlg.TPM_ALG_SHA384, (384/8) },
+                        { TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }, // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }, // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3062,40 +2914,34 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
+                        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
+                        { TpmAlg.TPM_ALG_SHA256, (256/8) },
+                        { TpmAlg.TPM_ALG_SHA384, (384/8) },
+                        { TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }, // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }, // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3211,26 +3057,23 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            new byte[0], // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        new byte[0], // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3327,11 +3170,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -3341,7 +3181,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -3352,7 +3192,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -3457,11 +3297,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -3471,7 +3308,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -3482,7 +3319,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -3587,11 +3424,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -3613,7 +3447,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -3718,11 +3552,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -3732,7 +3563,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -3743,7 +3574,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -3761,8 +3592,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm", ex.Result.Message);
@@ -3845,11 +3675,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -3859,7 +3686,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -3870,7 +3697,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -3979,11 +3806,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -3993,26 +3817,23 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4109,11 +3930,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -4123,7 +3941,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -4134,7 +3952,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -4245,11 +4063,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -4259,7 +4074,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -4270,7 +4085,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -4372,11 +4187,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -4386,7 +4198,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
 
                     hashedPubArea[hashedPubArea.Length - 1] ^= 0xFF;
@@ -4400,7 +4212,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -4505,11 +4317,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -4519,7 +4328,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -4530,7 +4339,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -4638,11 +4447,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -4652,7 +4458,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -4663,7 +4469,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -4768,11 +4574,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -4782,7 +4585,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -4793,7 +4596,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -4895,11 +4698,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -4909,7 +4709,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -4920,7 +4720,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5022,11 +4822,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5036,7 +4833,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5047,7 +4844,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5149,11 +4946,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5163,7 +4957,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5174,7 +4968,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5279,11 +5073,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5293,7 +5084,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5304,7 +5095,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5415,11 +5206,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5429,7 +5217,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5440,7 +5228,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5551,11 +5339,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5565,7 +5350,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5576,7 +5361,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5691,11 +5476,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5705,7 +5487,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5716,7 +5498,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5818,11 +5600,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5832,7 +5611,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5843,7 +5622,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -5959,11 +5738,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -5973,7 +5749,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -5984,7 +5760,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -6096,11 +5872,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -6110,7 +5883,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -6121,7 +5894,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -6235,11 +6008,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -6249,7 +6019,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -6260,7 +6030,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -6377,11 +6147,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -6391,7 +6158,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -6402,7 +6169,7 @@ namespace Test.Attestation
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -6519,11 +6286,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -6533,7 +6297,7 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -6544,7 +6308,7 @@ namespace Test.Attestation
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
@@ -6585,10 +6349,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -6655,11 +6416,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -6669,24 +6427,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -6788,11 +6543,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -6802,24 +6554,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData.ToArray(), // ExtraData
+                            extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
+                            tpm2bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -6921,11 +6670,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -6935,24 +6681,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -7067,12 +6810,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
 
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
                         {TpmAlg.TPM_ALG_SHA1,   (160/8) },
@@ -7081,24 +6820,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -7197,11 +6933,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)hashedData.Length)
-                        .Reverse()
-                        .ToArray()
-                        .Concat(hashedData);
+
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
                     {
@@ -7211,24 +6944,21 @@ namespace Test.Attestation
                         {TpmAlg.TPM_ALG_SHA512, (512/8) }
                     };
 
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                        extraData.ToArray(), // ExtraData
+                        extraData, // ExtraData
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -7262,8 +6992,6 @@ namespace Test.Attestation
             ReadOnlySpan<byte> kdf, 
             ReadOnlySpan<byte> unique = default)
         {
-            var uniqueLen = BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray();
-
             var raw = new MemoryStream();
 
             if (type is TpmAlg.TPM_ALG_RSA)
@@ -7271,13 +6999,13 @@ namespace Test.Attestation
                 raw.Write(type.ToUInt16BigEndianBytes());
                 raw.Write(alg);
                 raw.Write(attributes);
-                raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
+                raw.Write(GetUInt16BigEndianBytes(policy.Length));
                 raw.Write(policy);
                 raw.Write(symmetric);
                 raw.Write(scheme);
                 raw.Write(keyBits);
                 raw.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
-                raw.Write(BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray());
+                raw.Write(GetUInt16BigEndianBytes(unique.Length));
                 raw.Write(unique); ;
             }
             else if (type is TpmAlg.TPM_ALG_ECC)
@@ -7285,13 +7013,13 @@ namespace Test.Attestation
                 raw.Write(type.ToUInt16BigEndianBytes());
                 raw.Write(alg);
                 raw.Write(attributes);
-                raw.Write(BitConverter.GetBytes((UInt16)policy.Length).Reverse().ToArray());
+                raw.Write(GetUInt16BigEndianBytes(policy.Length));
                 raw.Write(policy);
                 raw.Write(symmetric);
                 raw.Write(scheme);
                 raw.Write(curveID);
                 raw.Write(kdf);
-                raw.Write(BitConverter.GetBytes((UInt16)unique.Length).Reverse().ToArray());
+                raw.Write(GetUInt16BigEndianBytes(unique.Length));
                 raw.Write(unique);
             }
 
@@ -7326,6 +7054,20 @@ namespace Test.Attestation
             stream.Write(attestedQualifiedNameBuffer);
 
             return stream.ToArray();
+        }
+
+        internal static byte[] GetUInt16BigEndianBytes(int value)
+        {
+            return GetUInt16BigEndianBytes((UInt16)value);
+        }
+
+        internal static byte[] GetUInt16BigEndianBytes(UInt16 value)
+        {
+            var buffer = new byte[2];
+
+            BinaryPrimitives.WriteUInt16BigEndian(buffer, value);
+
+            return buffer;
         }
 
         internal static RSASignaturePadding GetRSASignaturePaddingForCoseAlgorithm(COSE.Algorithm alg)
