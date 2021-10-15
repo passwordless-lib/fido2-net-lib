@@ -163,7 +163,7 @@ namespace Fido2NetLib
                 certChain.ChainPolicy.ExtraStore.AddRange(blobCerts.Skip(1).ToArray());
             }
             
-            var certChainIsValid = certChain.Build(blobCerts.First());
+            var certChainIsValid = certChain.Build(blobCerts[0]);
             // if the root is trusted in the context we are running in, valid should be true here
             if (!certChainIsValid)
             {
