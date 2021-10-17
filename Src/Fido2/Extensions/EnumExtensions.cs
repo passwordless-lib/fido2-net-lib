@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 
 namespace Fido2NetLib
 {
-    public static class EnumExtensions
+    internal static class EnumExtensions
     {
         /// <summary>
         /// Gets the enum value from EnumMemberAttribute's value.
