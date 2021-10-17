@@ -6,7 +6,7 @@ namespace Fido2NetLib
     /// <summary>
     /// Helper functions that implements https://w3c.github.io/webauthn/#authenticator-data
     /// </summary>
-    public static class AuthDataHelper
+    internal static class AuthDataHelper
     {
         public static byte[] GetSizedByteArray(ReadOnlySpan<byte> ab, ref int offset, ushort len = 0)
         {
