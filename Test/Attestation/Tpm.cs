@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Asn1;
 using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
@@ -23,6 +22,21 @@ namespace Test.Attestation
         private X509Extension aikCertSanExt;
         private byte[] unique, exponent, curveId, kdf;
         private byte[] tpmAlg;
+
+        private static readonly Dictionary<TpmAlg, ushort> TpmAlgToDigestSizeMap = new ()
+        {
+            { TpmAlg.TPM_ALG_SHA1,   (160/8) },
+            { TpmAlg.TPM_ALG_SHA256, (256/8) },
+            { TpmAlg.TPM_ALG_SHA384, (384/8) },
+            { TpmAlg.TPM_ALG_SHA512, (512/8) }
+        };
+
+        private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new ()
+        {
+            { 1, TpmEccCurve.TPM_ECC_NIST_P256},
+            { 2, TpmEccCurve.TPM_ECC_NIST_P384},
+            { 3, TpmEccCurve.TPM_ECC_NIST_P521},
+        };
 
         public Tpm()
         {
@@ -51,10 +65,7 @@ namespace Test.Attestation
                 version      : "id:F1D00002"
             );
 
-            aikCertSanExt = new X509Extension(
-                "2.5.29.17",
-                asnEncodedSAN,
-                false);
+            aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
         }
 
         [Fact]
@@ -143,14 +154,7 @@ namespace Test.Attestation
                                     .Concat(x)
                                     .Concat(GetUInt16BigEndianBytes(y.Length))
                                     .Concat(y)
-                                    .ToArray();
-
-                                var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
-                                {
-                                    { 1, TpmEccCurve.TPM_ECC_NIST_P256},
-                                    { 2, TpmEccCurve.TPM_ECC_NIST_P384},
-                                    { 3, TpmEccCurve.TPM_ECC_NIST_P521},
-                                };
+                                    .ToArray();                               
 
                                 curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                                 kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL); // should this be big endian?
@@ -179,14 +183,6 @@ namespace Test.Attestation
                                 }
 
                                 byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                                var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                                {
-                                    {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                                    {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                                    {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                                    {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                                };
 
                                 var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
@@ -293,32 +289,22 @@ namespace Test.Attestation
                                 }
 
                                 byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                                var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                                {
-                                    {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                                    {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                                    {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                                    {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                                };
-
-                                var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                                byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                                 byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                                 var certInfo = CreateCertInfo(
-                                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                                        extraData, // ExtraData
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                                        new byte[] { 0x00 }, // Safe
-                                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                                        tpm2bName, // TPM2BName
-                                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                                    );
+                                    new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                                    new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                                    new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                                    extraData, // ExtraData
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                                    new byte[] { 0x00 }, // Safe
+                                    new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                                    tpm2bName, // TPM2BName
+                                    new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                                );
 
                                 byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -375,7 +361,6 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     byte[] asnEncodedSAN = TpmSanEncoder.Encode(
@@ -445,32 +430,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm1bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm1bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm1bName = DataHelper.Concat(tpm1bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm1bName, // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm1bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -481,7 +456,6 @@ namespace Test.Attestation
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
                         .Add("pubArea", pubArea));
-
 
                     var res = MakeAttestationResponse().Result;
 
@@ -515,20 +489,14 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -555,7 +523,6 @@ namespace Test.Attestation
                     cpk.Add(COSE.KeyTypeParameter.E, rsaparams.Exponent);
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
-
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -585,17 +552,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -621,7 +578,6 @@ namespace Test.Attestation
                         .Add("sig", null)
                         .Add("certInfo", certInfo)
                         .Add("pubArea", pubArea));
-
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
@@ -708,33 +664,23 @@ namespace Test.Attestation
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
 
-                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);                   
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName, // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -776,11 +722,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -837,32 +780,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName, // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -911,11 +844,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -971,32 +901,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName, // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -1006,8 +926,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("FIDO2 only supports TPM 2.0", ex.Result.Message);
@@ -1029,20 +948,14 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -1098,32 +1011,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName, // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -1155,20 +1058,14 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -1199,7 +1096,6 @@ namespace Test.Attestation
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
-
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
 
@@ -1228,32 +1124,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName, // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -1286,20 +1172,14 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -1355,17 +1235,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -1450,7 +1320,6 @@ namespace Test.Attestation
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
-
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
                     var policy = new byte[] { 0x00 };
@@ -1476,17 +1345,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -1543,11 +1402,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -1603,14 +1459,6 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
 
                     var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
@@ -1699,7 +1547,6 @@ namespace Test.Attestation
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
 
-
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
 
@@ -1729,17 +1576,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -1752,7 +1589,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -1853,32 +1690,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -1959,14 +1786,7 @@ namespace Test.Attestation
                         .Concat(GetUInt16BigEndianBytes(y.Length))
                         .Concat(y)
                         .ToArray();
-
-                    var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
-                    {
-                        { 1, TpmEccCurve.TPM_ECC_NIST_P256},
-                        { 2, TpmEccCurve.TPM_ECC_NIST_P384},
-                        { 3, TpmEccCurve.TPM_ECC_NIST_P521},
-                    };
-
+                 
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
@@ -1995,17 +1815,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -2101,13 +1911,6 @@ namespace Test.Attestation
                         .Concat(y)
                         .ToArray();
 
-                    var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
-                    {
-                        { 1, TpmEccCurve.TPM_ECC_NIST_P256},
-                        { 2, TpmEccCurve.TPM_ECC_NIST_P384},
-                        { 3, TpmEccCurve.TPM_ECC_NIST_P521},
-                    };
-
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32()]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
@@ -2136,17 +1939,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -2243,13 +2036,6 @@ namespace Test.Attestation
                         .Concat(y)
                         .ToArray();
 
-                    var CoseCurveToTpm = new Dictionary<int, TpmEccCurve>
-                    {
-                        { 1, TpmEccCurve.TPM_ECC_NIST_P256},
-                        { 2, TpmEccCurve.TPM_ECC_NIST_P384},
-                        { 3, TpmEccCurve.TPM_ECC_NIST_P521},
-                    };
-
                     curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[2]).Reverse().ToArray();
                     kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
@@ -2278,32 +2064,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
 
@@ -2313,8 +2089,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Curve mismatch between pubArea and credentialPublicKey", ex.Result.Message);
@@ -2402,32 +2177,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -2526,17 +2291,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -2657,17 +2412,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        { TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        { TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        { TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -2781,17 +2526,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        { TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        { TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        { TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -2902,17 +2637,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        { TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        { TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        { TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -2969,11 +2694,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -3030,21 +2752,8 @@ namespace Test.Attestation
                         hashedData = hasher.ComputeHash(data);
                         hashedPubArea = hasher.ComputeHash(pubArea);
                     }
-                    IEnumerable<byte> extraData = BitConverter
-                        .GetBytes((UInt16)0)
-                        .Reverse()
-                        .ToArray();
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] extraData = GetUInt16BigEndianBytes(0);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -3158,35 +2867,26 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(new byte[] { 0x00, 0x04 })
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(
+                        tpm2bNameLen,
+                        new byte[] { 0x00, 0x04 },
+                        hashedPubArea
+                    );
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3219,10 +2919,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3285,35 +2982,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(new byte[] { 0x00, 0x00 })
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, new byte[] { 0x00, 0x00 }, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3323,8 +3007,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Unexpected no name found in TPM2B_NAME", ex.Result.Message);
@@ -3346,10 +3029,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3413,15 +3093,7 @@ namespace Test.Attestation
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = BitConverter.GetBytes((UInt16)(tpmAlg.Length + hashedPubArea.Length + 1)).Reverse().ToArray();
+                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length + 1);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
                         .Concat(tpm2bNameLen)
@@ -3430,18 +3102,18 @@ namespace Test.Attestation
                         .Concat(new byte[] { 0x00 });
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName.ToArray(), // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3451,8 +3123,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Unexpected extra bytes found in TPM2B_NAME", ex.Result.Message);
@@ -3474,10 +3145,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3540,35 +3208,26 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(new byte[] { 0x00, 0x10 })
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(
+                        tpm2bNameLen,
+                        new byte[] { 0x00, 0x10 },
+                        hashedPubArea
+                    );
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3663,35 +3322,26 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(new byte[] { 0xff, 0xff })
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(
+                        tpm2bNameLen,
+                        new byte[] { 0xff, 0xff },
+                        hashedPubArea
+                    );
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3701,15 +3351,13 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM_ALG_ID found in TPM2B_NAME", ex.Result.Message);
                 }
             }
         }
-
 
         [Fact]
         public void TestTPMAlgNull()
@@ -3794,17 +3442,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -3829,8 +3467,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
@@ -3852,10 +3489,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3919,20 +3553,13 @@ namespace Test.Attestation
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
                     var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(
+                        tpm2bNameLen,
+                        tpmAlg,
+                        hashedPubArea
+                    );
 
                     var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3944,7 +3571,7 @@ namespace Test.Attestation
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                             new byte[] { 0x00 }, // Safe
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
+                            tpm2bName, // TPM2BName
                             new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                         );
 
@@ -4051,35 +3678,26 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(
+                        tpm2bNameLen,
+                        tpmAlg,
+                        hashedPubArea
+                    );
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4089,8 +3707,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("Hash value mismatch extraData and attToBeSigned", ex.Result.Message);
@@ -4175,38 +3792,25 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
+                    hashedPubArea[^1] ^= 0xFF;
 
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-
-                    hashedPubArea[hashedPubArea.Length - 1] ^= 0xFF;
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
                     
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4306,34 +3910,27 @@ namespace Test.Attestation
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
                     var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(
+                        tpm2bNameLen,
+                        tpmAlg,
+                        hashedPubArea
+                    );
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName.ToArray(), // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4375,11 +3972,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -4435,35 +4029,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4496,10 +4077,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4562,35 +4140,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4686,35 +4251,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4810,35 +4362,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -4934,35 +4473,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -5061,35 +4587,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -5122,20 +4635,14 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -5194,21 +4701,8 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5220,12 +4714,12 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
-                    signature[signature.Length - 1] ^= 0xff;
+                    signature[^1] ^= 0xff;
 
                     _attestationObject.Add("attStmt", CBORObject.NewMap()
                         .Add("ver", "2.0")
@@ -5264,11 +4758,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -5327,23 +4818,10 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
-
-                var certInfo = CreateCertInfo(
+                    var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                         new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                         new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
@@ -5353,7 +4831,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -5464,14 +4942,6 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
 
                     var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
@@ -5589,14 +5059,6 @@ namespace Test.Attestation
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
                     var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     IEnumerable<byte> tpm2bName = new byte[] { }
@@ -5671,11 +5133,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         rootCert,
                         notBefore,
@@ -5726,21 +5185,8 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5752,7 +5198,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -5860,21 +5306,8 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5886,7 +5319,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -5898,8 +5331,7 @@ namespace Test.Attestation
                         .Add("x5c", X5c)
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
@@ -5930,7 +5362,6 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
                     var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x05, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
@@ -5996,21 +5427,8 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -6022,7 +5440,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -6136,20 +5554,9 @@ namespace Test.Attestation
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
                     var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -6161,7 +5568,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -6274,35 +5681,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName.ToArray(), // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -6404,17 +5798,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -6471,11 +5855,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(caExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -6531,32 +5912,22 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                            extraData, // ExtraData
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                            new byte[] { 0x00 }, // Safe
-                            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                            tpm2bName, // TPM2BName
-                            new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                        );
+                        new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                        new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                        new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                        extraData, // ExtraData
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                        new byte[] { 0x00 }, // Safe
+                        new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                        tpm2bName, // TPM2BName
+                        new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+                    );
 
                     byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -6598,11 +5969,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
-                    //attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
+                    // attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -6658,17 +6026,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -6798,16 +6156,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -6921,17 +6270,7 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpmAlgToDigestSizeMap = new Dictionary<TpmAlg, ushort>
-                    {
-                        {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-                        {TpmAlg.TPM_ALG_SHA256, (256/8) },
-                        {TpmAlg.TPM_ALG_SHA384, (384/8) },
-                        {TpmAlg.TPM_ALG_SHA512, (512/8) }
-                    };
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
@@ -6956,8 +6295,7 @@ namespace Test.Attestation
                         .Add("ecdaaKeyId", new byte[0])
                         .Add("sig", signature)
                         .Add("certInfo", certInfo)
-                        .Add("pubArea", pubArea));
-                    
+                        .Add("pubArea", pubArea));                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("ECDAA support for TPM attestation is not yet implemented", ex.Result.Message);
