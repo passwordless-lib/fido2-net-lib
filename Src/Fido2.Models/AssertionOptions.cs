@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -58,7 +59,7 @@ namespace Fido2NetLib
                 Challenge = challenge,
                 Timeout = config.Timeout,
                 RpId = config.ServerDomain,
-                AllowCredentials = allowedCredentials ?? new List<PublicKeyCredentialDescriptor>(),
+                AllowCredentials = allowedCredentials ?? Array.Empty<PublicKeyCredentialDescriptor>(),
                 UserVerification = userVerification,
                 Extensions = extensions
             };
