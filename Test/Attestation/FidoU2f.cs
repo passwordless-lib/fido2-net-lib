@@ -33,15 +33,16 @@ namespace Test.Attestation
 
                     var x = _credentialPublicKey.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
                     var y = _credentialPublicKey.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
-                    var publicKeyU2F = new byte[1] { 0x4 }.Concat(x).Concat(y).ToArray();
 
-                    var verificationData = new byte[1] { 0x00 };
-                    verificationData = verificationData
-                                        .Concat(_rpIdHash)
-                                        .Concat(_clientDataHash)
-                                        .Concat(_credentialID)
-                                        .Concat(publicKeyU2F.ToArray())
-                                        .ToArray();
+                    byte[] publicKeyU2F = DataHelper.Concat(new byte[1] { 0x4 }, x, y);
+                    
+                    byte[] verificationData = DataHelper.Concat(
+                        new byte[1] { 0x00 },
+                        _rpIdHash,
+                        _clientDataHash,
+                        _credentialID,
+                        publicKeyU2F
+                    );
 
                     byte[] signature = Fido2Tests.SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, verificationData, ecdsaAtt, null, null);
 
