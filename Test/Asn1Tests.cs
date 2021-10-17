@@ -156,6 +156,3 @@ namespace Test
         }
     }
 }
-
-
-//  throw new Exception(string.Join(", ", element[6].Sequence.Select(element => element.TagValue)));
