@@ -812,17 +812,19 @@ namespace fido2_net_lib.Test
             byte[] extraData, byte[] clock, byte[] resetCount, byte[] restartCount,
             byte[] safe, byte[] firmwareRevision, byte[] tPM2BName, byte[] attestedQualifiedNameBuffer)
         {
-            IEnumerable<byte> raw = magic
-                .Concat(type)
-                .Concat(qualifiedSigner)
-                .Concat(extraData)
-                .Concat(clock)
-                .Concat(resetCount)
-                .Concat(restartCount)
-                .Concat(safe)
-                .Concat(firmwareRevision)
-                .Concat(tPM2BName)
-                .Concat(attestedQualifiedNameBuffer);
+            var raw = new MemoryStream();
+
+            raw.Write(magic);
+            raw.Write(type);
+            raw.Write(qualifiedSigner);
+            raw.Write(extraData);
+            raw.Write(clock);
+            raw.Write(resetCount);
+            raw.Write(restartCount);
+            raw.Write(safe);
+            raw.Write(firmwareRevision);
+            raw.Write(tPM2BName);
+            raw.Write(attestedQualifiedNameBuffer);
 
             return raw.ToArray();
         }
