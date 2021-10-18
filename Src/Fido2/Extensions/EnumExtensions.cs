@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Serialization;
 
 namespace Fido2NetLib
 {
-    internal static class EnumExtensions
+    public static class EnumExtensions
     {
         /// <summary>
         /// Gets the enum value from EnumMemberAttribute's value.
@@ -14,7 +11,7 @@ namespace Fido2NetLib
         /// <param name="value">The EnumMemberAttribute's value.</param>
         /// <param name="ignoreCase">ignores the case when comparing values.</param>
         /// <returns>TEnum.</returns>
-        /// <exception cref="System.ArgumentException">No XmlEnumAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value</exception>
+        /// <exception cref="ArgumentException">No XmlEnumAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value</exception>
         public static TEnum ToEnum<TEnum>(this string value, bool ignoreCase = true) where TEnum : struct, Enum
         {
             // Try to parse it normally on the first try
@@ -22,14 +19,12 @@ namespace Fido2NetLib
                 return result;
 
             // Try with value from EnumMemberAttribute
-            var values = Enum.GetValues(typeof(TEnum)).OfType<TEnum>().ToArray();
-            foreach (var val in values)
+            if (EnumNameMapper<TEnum>.TryGetValue(value, ignoreCase, out result))
             {
-                if (ToEnumMemberValue(val)!.Equals(value, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
-                    return val;
+                return result;
             }
 
-            throw new ArgumentException($"Value '{value}' is not a valid enum name of '{typeof(TEnum)}' ({nameof(ignoreCase)}={ignoreCase}). Valid values are: {string.Join(", ", values.Select(v => v.ToEnumMemberValue()))}.");
+            throw new ArgumentException($"Value '{value}' is not a valid enum name of '{typeof(TEnum)}' ({nameof(ignoreCase)}={ignoreCase}). Valid values are: {string.Join(", ", EnumNameMapper<TEnum>.GetNames())}.");
         }
 
         /// <summary>
@@ -38,13 +33,10 @@ namespace Fido2NetLib
         /// <typeparam name="TEnum">The type of enum.</typeparam>
         /// <param name="value">The enum's value.</param>
         /// <returns>string.</returns>
-        public static string? ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, Enum
+        public static string ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, Enum
         {
-            return typeof(TEnum).GetTypeInfo()
-                                .DeclaredMembers
-                                .SingleOrDefault(x => x.Name == value.ToString())
-                                ?.GetCustomAttribute<EnumMemberAttribute>(false)
-                                ?.Value;
+            return EnumNameMapper<TEnum>.GetName(value);
         }
+
     }
 }
