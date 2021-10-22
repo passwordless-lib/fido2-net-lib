@@ -19,7 +19,6 @@ namespace Fido2NetLib.Cbor
 
         public virtual CborObject? this[string name] => null;
 
-
         public static explicit operator string(CborObject obj)
         {
             return ((CborTextString)obj).Value;
@@ -68,7 +67,7 @@ namespace Fido2NetLib.Cbor
 
             while (reader.PeekState() != CborReaderState.EndArray)
             {
-                items.Add(CborObject.Read(reader));
+                items.Add(Read(reader));
             }
 
             reader.ReadEndArray();
@@ -84,10 +83,10 @@ namespace Fido2NetLib.Cbor
 
             while (!(reader.PeekState() is CborReaderState.EndMap or CborReaderState.Finished))
             {
-                string name = reader.ReadTextString();
-                var value = Read(reader);
+                CborObject k = Read(reader);
+                CborObject v = Read(reader);
 
-                map.Add(name, value);
+                map.Add(k, v);
             }
 
             reader.ReadEndMap();

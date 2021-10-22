@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib.Cbor
+﻿using System;
+
+namespace Fido2NetLib.Cbor
 {
     internal sealed class CborTextString : CborObject
     {
@@ -12,5 +14,15 @@
         public int Length => Value.Length;
 
         public string Value { get; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is CborTextString other && other.Value.Equals(Value, StringComparison.Ordinal);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Type, Value);
+        }
     }
 }
