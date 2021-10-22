@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Formats.Cbor;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -302,7 +303,7 @@ namespace Test
 
         [Theory]
         [InlineData(new byte[] { 0x66, 0x6f, 0x6f })]
-        public void TestAuthenticatorAttestationObjectBadCBOR(byte[] value)
+        public async void TestAuthenticatorAttestationObjectBadCBOR(byte[] value)
         {
             var rawResponse = new AuthenticatorAttestationRawResponse
             {
@@ -314,6 +315,10 @@ namespace Test
 
             var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
             Assert.Equal("AttestationObject invalid CBOR", ex.Message);
+
+            var innerEx = (CborContentException)ex.InnerException;
+
+            Assert.Equal("Declared definite length of CBOR data item exceeds available buffer size.", innerEx.Message);
         }
 
         [Theory]

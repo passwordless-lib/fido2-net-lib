@@ -80,14 +80,14 @@ namespace Test.Attestation
         {
             _attestationObject["attStmt"].Set("x5c", null);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Malformed x5c in fido - u2f attestation", ex.Result.Message);
+            Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cNotArray()
         {
             _attestationObject["attStmt"].Set("x5c", "boomerang");
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Malformed x5c in fido - u2f attestation", ex.Result.Message);
+            Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cCountNotOne()
@@ -95,7 +95,7 @@ namespace Test.Attestation
             _attestationObject["attStmt"]
                 .Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])).Add(CBORObject.FromObject(new byte[0])));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Malformed x5c in fido - u2f attestation", ex.Result.Message);
+            Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cValueNotByteString()

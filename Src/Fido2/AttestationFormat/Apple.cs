@@ -3,6 +3,8 @@ using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 
@@ -41,10 +43,7 @@ namespace Fido2NetLib
         public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
-            if (X5c is null || X5c.Type != CBORType.Array || X5c.Count < 2 ||
-                X5c.Values is null || X5c.Values.Count is 0 ||
-                X5c.Values.First().Type != CBORType.ByteString ||
-                X5c.Values.First().GetByteString().Length is 0)
+            if (!(X5c is CborArray { Count: >= 2 } x5cArray && x5cArray[0] is CborByteString {  Length: > 0 }))
             {
                 throw new Fido2VerificationException("Malformed x5c in Apple attestation");
             }
@@ -52,8 +51,8 @@ namespace Fido2NetLib
             // 2. Verify x5c is a valid certificate chain starting from the credCert to the Apple WebAuthn root certificate.
             // This happens in AuthenticatorAttestationResponse.VerifyAsync using metadata from MDS3
 
-            var trustPath = X5c.Values
-                .Select(x => new X509Certificate2(x.GetByteString()))
+            var trustPath = x5cArray.Values
+                .Select(x => new X509Certificate2((byte[])x))
                 .ToArray();
 
             // credCert is the first certificate in the trust path

@@ -1,24 +1,24 @@
 ﻿#nullable disable
 
-using PeterO.Cbor;
-using System;
-using System.Security.Cryptography.X509Certificates;
-using Fido2NetLib.Objects;
-using System.Linq;
 using System.Formats.Asn1;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using Fido2NetLib.Cbor;
+using Fido2NetLib.Objects;
+using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
     public abstract class AttestationVerifier
     {
-        public CBORObject attStmt;
+        public CborMap attStmt;
         public byte[] authenticatorData;
         public byte[] clientDataHash;
 
-        internal CBORObject Sig => attStmt["sig"];
-        internal CBORObject X5c => attStmt["x5c"];
-        internal CBORObject Alg => attStmt["alg"];
-        internal CBORObject EcdaaKeyId => attStmt["ecdaaKeyId"];
+        internal CborObject Sig => attStmt["sig"];
+        internal CborObject X5c => attStmt["x5c"];
+        internal CborObject Alg => attStmt["alg"];
+        internal CborObject EcdaaKeyId => attStmt["ecdaaKeyId"];
         internal AuthenticatorData AuthData => new AuthenticatorData(authenticatorData);
         internal CBORObject CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject();
         internal byte[] Data => DataHelper.Concat(authenticatorData, clientDataHash);
@@ -74,7 +74,7 @@ namespace Fido2NetLib
 
             return u2ftransports;
         }
-        public virtual (AttestationType, X509Certificate2[]) Verify(CBORObject attStmt, byte[] authenticatorData, byte[] clientDataHash)
+        public virtual (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, byte[] authenticatorData, byte[] clientDataHash)
         {
             this.attStmt = attStmt;
             this.authenticatorData = authenticatorData;
