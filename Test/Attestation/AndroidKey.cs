@@ -7,9 +7,9 @@ using fido2_net_lib.Test;
 using Fido2NetLib.Objects;
 using PeterO.Cbor;
 using Xunit;
-using Asn1;
-using Fido2NetLib;
 using System.Formats.Asn1;
+using Fido2NetLib;
+using fido2_net_lib;
 
 namespace Test.Attestation
 {
@@ -17,27 +17,26 @@ namespace Test.Attestation
     {
         public byte[] EncodeAttestationRecord()
         {
-            var attestationVersion = AsnElt.MakeInteger(3);
-            var attestationSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var keymasterVersion = AsnElt.MakeInteger(2);
-            var keymasterSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var attestationChallenge = AsnElt.MakeBlob(_clientDataHash);
-            var uniqueId = AsnElt.MakeBlob(_credentialID);
-            var creationDateTime = AsnElt.MakeExplicit(701, AsnElt.MakeInteger(DateTimeOffset.Now.ToUnixTimeSeconds()));
-            var softwareEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { creationDateTime });
-            var purpose = AsnElt.MakeExplicit(1, AsnElt.MakeSetOf(new AsnElt[] { AsnElt.MakeInteger(2) }));
-            var origin = AsnElt.MakeExplicit(702, AsnElt.MakeInteger(0));
-            var teeEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { purpose, origin });
-            return AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                attestationVersion,
-                attestationSecurityLevel,
-                keymasterVersion,
-                keymasterSecurityLevel,
-                attestationChallenge,
-                uniqueId,
-                softwareEnforced,
-                teeEnforced
-            }).Encode();
+            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+
+            using (writer.PushSequence()) // KeyDescription
+            {
+                writer.WriteInteger(3); // attestationVersion
+                writer.WriteNull();
+                writer.WriteInteger(2);
+                writer.WriteNull();
+                writer.WriteOctetString(_clientDataHash);
+                writer.WriteOctetString(_credentialID);
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+            }
+            return writer.Encode();
         }
         public AndroidKey()
         {
@@ -257,28 +256,29 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordAllApplicationsSoftware()
         {
-            var attestationVersion = AsnElt.MakeInteger(3);
-            var attestationSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var keymasterVersion = AsnElt.MakeInteger(2);
-            var keymasterSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var attestationChallenge = AsnElt.MakeBlob(_clientDataHash);
-            var uniqueId = AsnElt.MakeBlob(_credentialID);
-            var allApplications = AsnElt.MakeExplicit(600, AsnElt.Make(AsnElt.SEQUENCE, null));
-            var creationDateTime = AsnElt.MakeExplicit(701, AsnElt.MakeInteger(DateTimeOffset.Now.ToUnixTimeSeconds()));
-            var softwareEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { creationDateTime, allApplications });
-            var purpose = AsnElt.MakeExplicit(1, AsnElt.MakeSetOf(new AsnElt[] { AsnElt.MakeInteger(2) }));
-            var origin = AsnElt.MakeExplicit(702, AsnElt.MakeInteger(0));
-            var teeEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { purpose, origin });
-            var attRecord = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                attestationVersion,
-                attestationSecurityLevel,
-                keymasterVersion,
-                keymasterSecurityLevel,
-                attestationChallenge,
-                uniqueId,
-                softwareEnforced,
-                teeEnforced
-            }).Encode();
+            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+
+            using (writer.PushSequence()) // KeyDescription
+            {
+                writer.WriteInteger(3); // attestationVersion
+                writer.WriteNull();
+                writer.WriteInteger(2);
+                writer.WriteNull();
+                writer.WriteOctetString(_clientDataHash);
+                writer.WriteOctetString(_credentialID);
+                using (writer.PushSequence())
+                {
+                    using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 600)))
+                    {
+                        writer.WriteNull();
+                    }
+                }
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+            }
+            var attRecord = writer.Encode();
 
             _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
             X509Certificate2 attestnCert;
@@ -308,28 +308,29 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordAllApplicationsTee()
         {
-            var attestationVersion = AsnElt.MakeInteger(3);
-            var attestationSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var keymasterVersion = AsnElt.MakeInteger(2);
-            var keymasterSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var attestationChallenge = AsnElt.MakeBlob(_clientDataHash);
-            var uniqueId = AsnElt.MakeBlob(_credentialID);
-            var creationDateTime = AsnElt.MakeExplicit(701, AsnElt.MakeInteger(DateTimeOffset.Now.ToUnixTimeSeconds()));
-            var softwareEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { creationDateTime });
-            var purpose = AsnElt.MakeExplicit(1, AsnElt.MakeSetOf(new AsnElt[] { AsnElt.MakeInteger(2) }));
-            var allApplications = AsnElt.MakeExplicit(600, AsnElt.Make(AsnElt.SEQUENCE, null));
-            var origin = AsnElt.MakeExplicit(702, AsnElt.MakeInteger(0));
-            var teeEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { purpose, origin, allApplications });
-            var attRecord = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                attestationVersion,
-                attestationSecurityLevel,
-                keymasterVersion,
-                keymasterSecurityLevel,
-                attestationChallenge,
-                uniqueId,
-                softwareEnforced,
-                teeEnforced
-            }).Encode();
+            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+
+            using (writer.PushSequence()) // KeyDescription
+            {
+                writer.WriteInteger(3); // attestationVersion
+                writer.WriteNull();
+                writer.WriteInteger(2);
+                writer.WriteNull();
+                writer.WriteOctetString(_clientDataHash);
+                writer.WriteOctetString(_credentialID);
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+                using (writer.PushSequence())
+                {
+                    using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 600)))
+                    {
+                        writer.WriteNull();
+                    }
+                }
+            }
+            var attRecord = writer.Encode();
 
             _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
             X509Certificate2 attestnCert;
@@ -359,27 +360,29 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordOriginSoftware()
         {
-            var attestationVersion = AsnElt.MakeInteger(3);
-            var attestationSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var keymasterVersion = AsnElt.MakeInteger(2);
-            var keymasterSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var attestationChallenge = AsnElt.MakeBlob(_clientDataHash);
-            var uniqueId = AsnElt.MakeBlob(_credentialID);
-            var creationDateTime = AsnElt.MakeExplicit(701, AsnElt.MakeInteger(DateTimeOffset.Now.ToUnixTimeSeconds()));
-            var softwareEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { creationDateTime });
-            var purpose = AsnElt.MakeExplicit(1, AsnElt.MakeSetOf(new AsnElt[] { AsnElt.MakeInteger(2) }));
-            var origin = AsnElt.MakeExplicit(702, AsnElt.MakeInteger(3));
-            var teeEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { purpose, origin });
-            var attRecord = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                attestationVersion,
-                attestationSecurityLevel,
-                keymasterVersion,
-                keymasterSecurityLevel,
-                attestationChallenge,
-                uniqueId,
-                softwareEnforced,
-                teeEnforced
-            }).Encode();
+            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+
+            using (writer.PushSequence()) // KeyDescription
+            {
+                writer.WriteInteger(3); // attestationVersion
+                writer.WriteNull();
+                writer.WriteInteger(2);
+                writer.WriteNull();
+                writer.WriteOctetString(_clientDataHash);
+                writer.WriteOctetString(_credentialID);
+                using (writer.PushSequence())
+                {
+                    using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 702)))
+                    {
+                        writer.WriteInteger(1);
+                    }
+                }
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+            }
+            var attRecord = writer.Encode();
 
             _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
             X509Certificate2 attestnCert;
@@ -407,29 +410,31 @@ namespace Test.Attestation
         }
 
         [Fact]
-        public void TestAndroidKeyX5cCertAttestationRecordOriginTeeTee()
+        public void TestAndroidKeyX5cCertAttestationRecordOriginTee()
         {
-            var attestationVersion = AsnElt.MakeInteger(3);
-            var attestationSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var keymasterVersion = AsnElt.MakeInteger(2);
-            var keymasterSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var attestationChallenge = AsnElt.MakeBlob(_clientDataHash);
-            var uniqueId = AsnElt.MakeBlob(_credentialID);
-            var creationDateTime = AsnElt.MakeExplicit(701, AsnElt.MakeInteger(DateTimeOffset.Now.ToUnixTimeSeconds()));
-            var origin = AsnElt.MakeExplicit(702, AsnElt.MakeInteger(3));
-            var softwareEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { creationDateTime, origin });
-            var purpose = AsnElt.MakeExplicit(1, AsnElt.MakeSetOf(new AsnElt[] { AsnElt.MakeInteger(2) }));
-            var teeEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { purpose });
-            var attRecord = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                attestationVersion,
-                attestationSecurityLevel,
-                keymasterVersion,
-                keymasterSecurityLevel,
-                attestationChallenge,
-                uniqueId,
-                softwareEnforced,
-                teeEnforced
-            }).Encode();
+            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+
+            using (writer.PushSequence()) // KeyDescription
+            {
+                writer.WriteInteger(3); // attestationVersion
+                writer.WriteNull();
+                writer.WriteInteger(2);
+                writer.WriteNull();
+                writer.WriteOctetString(_clientDataHash);
+                writer.WriteOctetString(_credentialID);
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+                using (writer.PushSequence())
+                {
+                    using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 702)))
+                    {
+                        writer.WriteInteger(1);
+                    }
+                }
+            }
+            var attRecord = writer.Encode();
 
             _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
             X509Certificate2 attestnCert;
@@ -459,27 +464,32 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordPurposeSoftware()
         {
-            var attestationVersion = AsnElt.MakeInteger(3);
-            var attestationSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var keymasterVersion = AsnElt.MakeInteger(2);
-            var keymasterSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var attestationChallenge = AsnElt.MakeBlob(_clientDataHash);
-            var uniqueId = AsnElt.MakeBlob(_credentialID);
-            var purpose = AsnElt.MakeExplicit(1, AsnElt.MakeSetOf(new AsnElt[] { AsnElt.MakeInteger(1) }));
-            var creationDateTime = AsnElt.MakeExplicit(701, AsnElt.MakeInteger(DateTimeOffset.Now.ToUnixTimeSeconds()));
-            var softwareEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { creationDateTime, purpose });
-            var origin = AsnElt.MakeExplicit(702, AsnElt.MakeInteger(0));
-            var teeEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { origin });
-            var attRecord = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                attestationVersion,
-                attestationSecurityLevel,
-                keymasterVersion,
-                keymasterSecurityLevel,
-                attestationChallenge,
-                uniqueId,
-                softwareEnforced,
-                teeEnforced
-            }).Encode();
+            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+
+            using (writer.PushSequence()) // KeyDescription
+            {
+                writer.WriteInteger(3); // attestationVersion
+                writer.WriteNull();
+                writer.WriteInteger(2);
+                writer.WriteNull();
+                writer.WriteOctetString(_clientDataHash);
+                writer.WriteOctetString(_credentialID);
+                using (writer.PushSequence())
+                {
+                    using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1)))
+                    {
+                        using (writer.PushSetOf())
+                        {
+                            writer.WriteInteger(1);
+                        }
+                    }
+                }
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+            }
+            var attRecord = writer.Encode();
 
             _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
             X509Certificate2 attestnCert;
@@ -509,27 +519,32 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordPurposeTee()
         {
-            var attestationVersion = AsnElt.MakeInteger(3);
-            var attestationSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var keymasterVersion = AsnElt.MakeInteger(2);
-            var keymasterSecurityLevel = AsnElt.Make(AsnElt.UNIVERSAL, AsnElt.MakeBlob(new byte[] { 0 }));
-            var attestationChallenge = AsnElt.MakeBlob(_clientDataHash);
-            var uniqueId = AsnElt.MakeBlob(_credentialID);
-            var creationDateTime = AsnElt.MakeExplicit(701, AsnElt.MakeInteger(DateTimeOffset.Now.ToUnixTimeSeconds()));
-            var softwareEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { creationDateTime });
-            var purpose = AsnElt.MakeExplicit(1, AsnElt.MakeSetOf(new AsnElt[] { AsnElt.MakeInteger(1) }));
-            var origin = AsnElt.MakeExplicit(702, AsnElt.MakeInteger(0));
-            var teeEnforced = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] { purpose, origin });
-            var attRecord = AsnElt.Make(AsnElt.SEQUENCE, new AsnElt[] {
-                attestationVersion,
-                attestationSecurityLevel,
-                keymasterVersion,
-                keymasterSecurityLevel,
-                attestationChallenge,
-                uniqueId,
-                softwareEnforced,
-                teeEnforced
-            }).Encode();
+            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+
+            using (writer.PushSequence()) // KeyDescription
+            {
+                writer.WriteInteger(3); // attestationVersion
+                writer.WriteNull();
+                writer.WriteInteger(2);
+                writer.WriteNull();
+                writer.WriteOctetString(_clientDataHash);
+                writer.WriteOctetString(_credentialID);
+                using (writer.PushSequence())
+                {
+                    writer.WriteNull();
+                }
+                using (writer.PushSequence())
+                {
+                    using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1)))
+                    {
+                        using (writer.PushSetOf())
+                        {
+                            writer.WriteInteger(1);
+                        }
+                    }
+                }
+            }
+            var attRecord = writer.Encode();
 
             _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
             X509Certificate2 attestnCert;
