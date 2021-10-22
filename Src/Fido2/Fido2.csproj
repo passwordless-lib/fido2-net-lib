@@ -17,6 +17,7 @@
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
     <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
     <PackageReference Include="PeterO.Cbor" Version="4.1.3" />
+    <PackageReference Include="System.Formats.Cbor" Version="5.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.6.0" />
   </ItemGroup>
 
