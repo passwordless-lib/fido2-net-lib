@@ -9,7 +9,6 @@ using PeterO.Cbor;
 using Xunit;
 using System.Formats.Asn1;
 using Fido2NetLib;
-using fido2_net_lib;
 
 namespace Test.Attestation
 {
@@ -22,16 +21,16 @@ namespace Test.Attestation
             using (writer.PushSequence()) // KeyDescription
             {
                 writer.WriteInteger(3); // attestationVersion
-                writer.WriteNull();
-                writer.WriteInteger(2);
-                writer.WriteNull();
-                writer.WriteOctetString(_clientDataHash);
-                writer.WriteOctetString(_credentialID);
-                using (writer.PushSequence())
+                writer.WriteNull(); // attestationSecurityLevel
+                writer.WriteInteger(2); // keymasterVersion
+                writer.WriteNull(); // keymasterSecurityLevel
+                writer.WriteOctetString(_clientDataHash); // attestationChallenge
+                writer.WriteOctetString(_credentialID); // uniqueId
+                using (writer.PushSequence()) // softwareEnforced
                 {
                     writer.WriteNull();
                 }
-                using (writer.PushSequence())
+                using (writer.PushSequence()) // teeEnforced
                 {
                     writer.WriteNull();
                 }
