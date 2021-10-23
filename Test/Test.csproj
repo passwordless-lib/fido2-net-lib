@@ -13,10 +13,6 @@
     </Content>
     <None Include="@(TestFiles)" />
   </ItemGroup>
-
-  <!-- Sourced Libraries -->
-  <Import Project="../ExternalLibs/AsnElt/AsnElt.Include.props" />
-  
   <ItemGroup>
     <ProjectReference Include="..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
     <ProjectReference Include="..\Src\Fido2.Models\Fido2.Models.csproj" />
