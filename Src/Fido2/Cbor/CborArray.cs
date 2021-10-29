@@ -1,9 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 
 namespace Fido2NetLib.Cbor
 {
-    internal sealed class CborArray : CborObject
+    internal sealed class CborArray : CborObject, IEnumerable<CborObject>
     {
+        public CborArray()
+        {
+            Values = new List<CborObject>();
+        }
+
         public CborArray(List<CborObject> values)
         {
             Values = values;
@@ -16,5 +22,24 @@ namespace Fido2NetLib.Cbor
         public List<CborObject> Values { get; }
 
         public override CborObject this[int index] => Values[index];
+
+        public void Add(CborObject value)
+        {
+            Values.Add(value);
+        }
+
+        public void Add(byte[] value)
+        {
+            Values.Add(new CborByteString(value));
+        }
+
+        public void Add(string value)
+        {
+            Values.Add(new CborTextString(value));
+        }
+
+        public IEnumerator<CborObject> GetEnumerator() => Values.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => Values.GetEnumerator();
     }
 }

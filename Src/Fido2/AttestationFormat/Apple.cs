@@ -6,7 +6,6 @@ using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -73,7 +72,7 @@ namespace Fido2NetLib
 
             // 6. Verify credential public key matches the Subject Public Key of credCert.
             // First, obtain COSE algorithm being used from credential public key
-            var coseAlg = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
+            var coseAlg = (int)CredentialPublicKey[COSE.KeyCommonParameter.Alg];
 
             // Next, build temporary CredentialPublicKey for comparison from credCert and COSE algorithm
             var cpk = new CredentialPublicKey(credCert, coseAlg);

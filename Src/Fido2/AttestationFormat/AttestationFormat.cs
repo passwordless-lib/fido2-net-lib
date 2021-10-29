@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -20,7 +19,7 @@ namespace Fido2NetLib
         internal CborObject Alg => attStmt["alg"];
         internal CborObject EcdaaKeyId => attStmt["ecdaaKeyId"];
         internal AuthenticatorData AuthData => new AuthenticatorData(authenticatorData);
-        internal CBORObject CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCBORObject();
+        internal CborMap CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCborObject();
         internal byte[] Data => DataHelper.Concat(authenticatorData, clientDataHash);
 
         internal static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)

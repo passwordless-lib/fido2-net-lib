@@ -9,8 +9,6 @@ using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
-using PeterO.Cbor;
-
 namespace Fido2NetLib
 {
     internal sealed class Tpm : AttestationVerifier
@@ -65,11 +63,11 @@ namespace Fido2NetLib
             if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
                 throw new Fido2VerificationException("Missing or malformed pubArea");
 
-            int coseKty = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
+            int coseKty = (int)CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
             if (coseKty is 3) // RSA
             {
-                byte[] coseMod = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(); // modulus 
-                byte[] coseExp = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString(); // exponent
+                byte[] coseMod = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
+                byte[] coseExp = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
                 if (!coseMod.SequenceEqual(pubArea.Unique))
                     throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
@@ -78,9 +76,9 @@ namespace Fido2NetLib
             }
             else if (coseKty is 2) // ECC
             {
-                var curve = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
-                var x = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                var y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+                var curve = (int)CredentialPublicKey[COSE.KeyTypeParameter.Crv];
+                var x = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.X];
+                var y = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.Y];
 
                 if (pubArea.EccCurve != CoseCurveToTpm[curve])
                     throw new Fido2VerificationException("Curve mismatch between pubArea and credentialPublicKey");

@@ -9,8 +9,8 @@ using System.Text.Json;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using Microsoft.IdentityModel.Tokens;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {

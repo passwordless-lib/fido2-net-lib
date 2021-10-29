@@ -25,5 +25,32 @@ namespace Fido2NetLib.Cbor.Tests
 
             Assert.True(data.AsSpan().SequenceEqual(@object.Encode()));
         }
+
+        [Fact]
+        public void CanReadObjectAndIgnoreRemainingData()
+        {
+            byte[] data = Convert.FromBase64String("pQECAzguIVggy6rAanAqDpv7VJqZVJWgUVG6jIQvURLOH9Ylf/+nyesiWCDb75V3vgcbm7P0M1pI55cc6EkopDxVV7RXKQfm/xNlNyAIoWd0ZXN0aW5n9Q==");
+
+            var map = (CborMap)CborObject.Decode(data, out int read);
+
+            Assert.Equal(88, data.Length);
+            Assert.Equal(78, read);
+
+            var keys = map.Keys.Select(k => ((CborInteger)k).Value);
+
+            Assert.Equal(2,    ((CborInteger)map[new CborInteger(1)]).Value);
+            Assert.Equal(-47,  ((CborInteger)map[new CborInteger(3)]).Value);
+            Assert.Equal("y6rAanAqDpv7VJqZVJWgUVG6jIQvURLOH9Ylf/+nyes=", Convert.ToBase64String(((CborByteString)map[new CborInteger(-2)]).Value));
+            Assert.Equal("2++Vd74HG5uz9DNaSOeXHOhJKKQ8VVe0VykH5v8TZTc=", Convert.ToBase64String(((CborByteString)map[new CborInteger(-3)]).Value));
+            Assert.Equal(8,    ((CborInteger)map[new CborInteger(-1)]).Value);
+
+            // Ensure we ignored the remaining data
+
+            var encoded = map.Encode();
+
+            Assert.Equal("pQECAzguIVggy6rAanAqDpv7VJqZVJWgUVG6jIQvURLOH9Ylf/+nyesiWCDb75V3vgcbm7P0M1pI55cc6EkopDxVV7RXKQfm/xNlNyAI", Convert.ToBase64String(encoded));
+
+            Assert.Equal(78, encoded.Length);
+        }
     }
 }

@@ -15,6 +15,17 @@ namespace Fido2NetLib.Cbor
             return Read(reader);
         }
 
+        public static CborObject Decode(ReadOnlyMemory<byte> data, out int bytesRead)
+        {
+            var reader = new CborReader(data);
+
+            var result = Read(reader);
+
+            bytesRead = data.Length - reader.BytesRemaining;
+
+            return result;
+        }
+
         public virtual CborObject this[int index] => null!;
 
         public virtual CborObject? this[string name] => null;
@@ -34,6 +45,11 @@ namespace Fido2NetLib.Cbor
             return (int)((CborInteger)obj).Value;
         }
 
+        public static explicit operator long(CborObject obj)
+        {
+            return ((CborInteger)obj).Value;
+        }
+
         private static CborObject Read(CborReader reader)
         {
             CborReaderState s = reader.PeekState();
@@ -43,6 +59,7 @@ namespace Fido2NetLib.Cbor
                 CborReaderState.StartMap        => ReadMap(reader),
                 CborReaderState.StartArray      => ReadArray(reader),
                 CborReaderState.TextString      => new CborTextString(reader.ReadTextString()),
+                CborReaderState.Boolean         => new CborBoolean(reader.ReadBoolean()),
                 CborReaderState.ByteString      => new CborByteString(reader.ReadByteString()),
                 CborReaderState.UnsignedInteger => new CborInteger(reader.ReadInt64()),
                 CborReaderState.NegativeInteger => new CborInteger(reader.ReadInt64()),
@@ -62,9 +79,9 @@ namespace Fido2NetLib.Cbor
         {
             var items = new List<CborObject>();
 
-            reader.ReadStartArray();
+            int? count = reader.ReadStartArray();
 
-            while (reader.PeekState() != CborReaderState.EndArray)
+            while (!(reader.PeekState() is CborReaderState.EndArray or CborReaderState.Finished))
             {
                 items.Add(Read(reader));
             }

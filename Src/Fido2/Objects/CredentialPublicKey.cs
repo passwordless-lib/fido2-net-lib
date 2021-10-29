@@ -1,45 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Fido2NetLib.Cbor;
 using NSec.Cryptography;
-using PeterO.Cbor;
 
 namespace Fido2NetLib.Objects
 {
     public sealed class CredentialPublicKey
     {
-        public CredentialPublicKey(Stream stream) : this(CBORObject.Read(stream))
-        {
-        }
+        public CredentialPublicKey(byte[] cpk) : this((CborMap)CborObject.Parse(cpk)) { }
 
-        public CredentialPublicKey(byte[] cpk) : this(CBORObject.DecodeFromBytes(cpk))
-        {
-        }
-
-        public CredentialPublicKey(CBORObject cpk)
+        public CredentialPublicKey(CborMap cpk)
         {
             _cpk = cpk;
-            _type = (COSE.KeyType)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
-            _alg = (COSE.Algorithm)cpk[CBORObject.FromObject(COSE.KeyCommonParameter.Alg)].AsInt32();
+            _type = (COSE.KeyType)(int)cpk[COSE.KeyCommonParameter.KeyType];
+            _alg = (COSE.Algorithm)(int)cpk[COSE.KeyCommonParameter.Alg];
         }
 
         public CredentialPublicKey(X509Certificate2 cert, int alg)
         {
-            _cpk = CBORObject.NewMap();
+            _cpk = new CborMap();
+
             var keyAlg = cert.GetKeyAlgorithm();
             _type = CoseKeyTypeFromOid[keyAlg];
             _alg = (COSE.Algorithm)alg;
-            _cpk.Add(COSE.KeyCommonParameter.KeyType, _type);
-            _cpk.Add(COSE.KeyCommonParameter.Alg, alg);
+            _cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)_type);
+            _cpk.Add((int)COSE.KeyCommonParameter.Alg, alg);
 
             if (_type is COSE.KeyType.RSA)
             {
                 var keyParams = cert.GetRSAPublicKey()!.ExportParameters(false);
-                _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus);
-                _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent);
+                _cpk.Add((int)COSE.KeyTypeParameter.N, keyParams.Modulus!);
+                _cpk.Add((int)COSE.KeyTypeParameter.E, keyParams.Exponent!);
             }
             else if (_type is COSE.KeyType.EC2)
             {
@@ -47,33 +41,33 @@ namespace Fido2NetLib.Objects
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
                 if (keyParams.Curve.Oid.FriendlyName is "secP256k1")
-                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256K);
+                    _cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P256K);
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     if (keyParams.Curve.Oid.FriendlyName!.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
+                        _cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P256);
 
                     if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
+                        _cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P384);
 
                     if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
+                        _cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P521);
                 }
                 else
                 {
                     if (keyParams.Curve.Oid.Value!.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
+                        _cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P256);
 
                     if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
+                        _cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P384);
                     
                     if (keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
+                        _cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P521);
                 }
 
-                _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X);
-                _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y);
+                _cpk.Add((int)COSE.KeyTypeParameter.X, keyParams.Q.X!);
+                _cpk.Add((int)COSE.KeyTypeParameter.Y, keyParams.Q.Y!);
             }
         }
 
@@ -109,8 +103,8 @@ namespace Fido2NetLib.Objects
 
             return RSA.Create(new RSAParameters
             {
-                Modulus = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(),
-                Exponent = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString()
+                Modulus = (byte[])_cpk[COSE.KeyTypeParameter.N],
+                Exponent = (byte[])_cpk[COSE.KeyTypeParameter.E]
             });            
         }
 
@@ -124,13 +118,13 @@ namespace Fido2NetLib.Objects
            
             var point = new ECPoint
             {
-                X = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(),
-                Y = _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString(),
+                X = (byte[])_cpk[COSE.KeyTypeParameter.X],
+                Y = (byte[])_cpk[COSE.KeyTypeParameter.Y],
             };
 
             ECCurve curve;
 
-            var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
+            var crv = (COSE.EllipticCurve)(int)_cpk[new CborInteger((int)COSE.KeyTypeParameter.Crv)]!;
 
             // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
 
@@ -203,11 +197,11 @@ namespace Fido2NetLib.Objects
                 switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                 {
                     case COSE.Algorithm.EdDSA:
-                        var crv = (COSE.EllipticCurve)_cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
+                        var crv = (COSE.EllipticCurve)(int)_cpk[new CborInteger((int)COSE.KeyTypeParameter.Crv)]!;
                         switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                         {
                             case COSE.EllipticCurve.Ed25519:
-                                return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, _cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString(), KeyBlobFormat.RawPublicKey);
+                                return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, (byte[])_cpk[COSE.KeyTypeParameter.X], KeyBlobFormat.RawPublicKey);
 
                             default:
                                 throw new InvalidOperationException($"Missing or unknown crv {crv}");
@@ -222,7 +216,7 @@ namespace Fido2NetLib.Objects
 
         internal readonly COSE.Algorithm _alg;
 
-        internal readonly CBORObject _cpk;
+        internal readonly CborMap _cpk;
 
         internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new ()
         {
@@ -230,14 +224,16 @@ namespace Fido2NetLib.Objects
             { "1.2.840.113549.1.1.1", COSE.KeyType.RSA}
         };
 
-        public override string ToString()
+        public static CredentialPublicKey Decode(ReadOnlyMemory<byte> cpk, out int bytesRead)
         {
-            return _cpk.ToString();
+            var map = (CborMap)CborObject.Decode(cpk, out bytesRead);
+
+            return new CredentialPublicKey(map);
         }
 
         public byte[] GetBytes()
         {
-            return _cpk.EncodeToBytes();
+            return _cpk.Encode();
         }
 
         public bool IsSameAlg(COSE.Algorithm alg)
@@ -245,7 +241,7 @@ namespace Fido2NetLib.Objects
             return _alg.Equals(alg);
         }
 
-        public CBORObject GetCBORObject()
+        public CborMap GetCborObject()
         {
             return _cpk;
         }

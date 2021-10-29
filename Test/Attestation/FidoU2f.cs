@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 using fido2_net_lib.Test;
+
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
+
 using Xunit;
 
 namespace Test.Attestation
@@ -25,14 +27,16 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { 
+                        attestnCert.RawData
+                    };
+
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
                     _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecparams.Q.X, ecparams.Q.Y);
 
-                    var x = _credentialPublicKey.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                    var y = _credentialPublicKey.GetCBORObject()[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+                    var x = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.X];
+                    var y = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.Y];
 
                     byte[] publicKeyU2F = DataHelper.Concat(new byte[1] { 0x4 }, x, y);
                     
@@ -46,7 +50,10 @@ namespace Test.Attestation
 
                     byte[] signature = Fido2Tests.SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, verificationData, ecdsaAtt, null, null);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap().Add("x5c", X5c).Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                }
             }
 
@@ -78,36 +85,35 @@ namespace Test.Attestation
         [Fact]
         public void TestU2fMissingX5c()
         {
-            _attestationObject["attStmt"].Set("x5c", null);
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", CborNull.Instance);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cNotArray()
         {
-            _attestationObject["attStmt"].Set("x5c", "boomerang");
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborTextString("boomerang"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cCountNotOne()
         {
-            _attestationObject["attStmt"]
-                .Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])).Add(CBORObject.FromObject(new byte[0])));
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { new byte[0], new byte[0] });
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cValueNotByteString()
         {
-            _attestationObject["attStmt"].Set("x5c", "x".ToArray());
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborTextString("x"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cValueZeroLengthByteString()
         {
-            _attestationObject["attStmt"].Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])));
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { new byte[0] });
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
@@ -123,49 +129,50 @@ namespace Test.Attestation
 
                 using (var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    _attestationObject["attStmt"].Set("x5c", CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData)));
-                    ;
+                    var attnStmt = (CborMap)_attestationObject["attStmt"];
+                    attnStmt.Set("x5c", new CborArray { attestnCert.RawData });
                 }
             }
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve", ex.Result.Message);
         }
+
         [Fact]
         public void TestU2fSigNull()
         {
-            _attestationObject["attStmt"].Set("sig", null);
+            ((CborMap)_attestationObject["attStmt"]).Set("sig", CborNull.Instance);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }
         [Fact]
         public void TestU2fSigNotByteString()
         {
-            _attestationObject["attStmt"].Set("sig", "walrus");
+            ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborTextString("walrus"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }
         [Fact]
         public void TestU2fSigByteStringZeroLen()
         {
-            _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(new byte[0]));
+            ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborByteString(new byte[0]));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }
         [Fact]
         public void TestU2fSigNotASN1()
         {
-            _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(new byte[] { 0xf1, 0xd0 }));
+            ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborByteString(new byte[] { 0xf1, 0xd0 }));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex.Result.Message);
         }
         [Fact]
         public void TestU2fBadSig()
         {
-            var sig = _attestationObject["attStmt"]["sig"].GetByteString();
+            var attnStmt = (CborMap)_attestationObject["attStmt"];
+            var sig = (byte[])attnStmt["sig"];
             sig[sig.Length - 1] ^= 0xff;
-            _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(sig));
+            attnStmt.Set("sig", new CborByteString(sig));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }

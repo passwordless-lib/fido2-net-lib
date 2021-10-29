@@ -6,10 +6,13 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using NSec.Cryptography;
-using PeterO.Cbor;
+
 using Xunit;
 
 namespace Test
@@ -69,7 +72,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "none").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "none" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -169,7 +176,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "none").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "none" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -234,7 +245,7 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().EncodeToBytes(),
+                    AttestationObject = new CborMap().Encode(),
                     ClientDataJson = clientDataJson
                 },
                 Extensions = new AuthenticationExtensionsClientOutputs()
@@ -361,7 +372,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "testing").Add("attStmt", CBORObject.NewMap()).Add("authData", new byte[0]).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "testing" },
+                        { "attStmt", new CborMap() },
+                        { "authData", new byte[0] }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -428,7 +443,11 @@ namespace Test
                 RawId = value,
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "testing").Add("attStmt", CBORObject.NewMap()).Add("authData", new byte[0]).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "testing" },
+                        { "attStmt", new CborMap() },
+                        { "authData", new byte[0] }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -493,7 +512,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "testing").Add("attStmt", CBORObject.NewMap()).Add("authData", new byte[0]).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "testing" },
+                        { "attStmt", new CborMap() },
+                        { "authData", new byte[0] }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -566,7 +589,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "testing").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "testing" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -639,7 +666,12 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "testing").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "testing" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
+
                     ClientDataJson = clientDataJson
                 },
             };
@@ -712,7 +744,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "testing").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "testing" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -786,7 +822,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "testing").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "testing" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };
@@ -859,7 +899,11 @@ namespace Test
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = CBORObject.NewMap().Add("fmt", "none").Add("attStmt", CBORObject.NewMap()).Add("authData", authData).EncodeToBytes(),
+                    AttestationObject = new CborMap {
+                        { "fmt", "none" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
                     ClientDataJson = clientDataJson
                 },
             };

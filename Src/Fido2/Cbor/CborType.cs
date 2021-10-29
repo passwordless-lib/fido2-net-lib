@@ -4,6 +4,7 @@
     {       
         Map,
         Array,
+        Boolean,
         Integer,
         TextString,
         ByteString,

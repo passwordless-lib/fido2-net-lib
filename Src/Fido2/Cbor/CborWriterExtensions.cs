@@ -15,6 +15,10 @@ namespace Fido2NetLib.Cbor
             {
                 writer.WriteByteString(data.Value);
             }
+            else if (@object is CborBoolean boolean)
+            {
+                writer.WriteBoolean(boolean.Value);
+            }
             else if (@object is CborInteger number)
             {
                 writer.WriteInt64(number.Value);
@@ -27,9 +31,13 @@ namespace Fido2NetLib.Cbor
             {
                 writer.WriteArray(array);
             }
+            else if (@object.Type == CborType.Null)
+            {
+                writer.WriteNull();
+            }
             else
             {
-                throw new Exception("Unknown object: " + @object.Type.ToString());
+                throw new Exception($"Unknown type. Was  {@object.Type}");
             }
         }
 

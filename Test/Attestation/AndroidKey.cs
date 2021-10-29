@@ -1,14 +1,14 @@
 ﻿using System;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using fido2_net_lib.Test;
-using Fido2NetLib.Objects;
-using PeterO.Cbor;
-using Xunit;
-using System.Formats.Asn1;
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
+using Fido2NetLib.Objects;
+using Xunit;
 
 namespace Test.Attestation
 {
@@ -39,7 +39,7 @@ namespace Test.Attestation
         }
         public AndroidKey()
         {
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -49,15 +49,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
         }
@@ -82,7 +82,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeySigNull()
         {
-            _attestationObject["attStmt"].Set("sig", null);
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("sig", CborNull.Instance);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android-key attestation signature", ex.Result.Message);
         }
@@ -90,7 +91,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeySigNotByteString()
         {
-            _attestationObject["attStmt"].Set("sig", "walrus");
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("sig", new CborTextString("walrus"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android-key attestation signature", ex.Result.Message);
         }
@@ -98,7 +100,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeySigByteStringZeroLen()
         {
-            _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(new byte[0]));
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("sig", new CborByteString(new byte[0]));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android-key attestation signature", ex.Result.Message);
         }
@@ -106,14 +109,16 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyMissingX5c()
         {
-            _attestationObject["attStmt"].Set("x5c", null);
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", CborNull.Instance);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
         }
         [Fact]
         public void TestAndroidKeyX5cNotArray()
         {
-            _attestationObject["attStmt"].Set("x5c", "boomerang");
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", new CborTextString("boomerang"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
         }
@@ -121,7 +126,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cValueNotByteString()
         {
-            _attestationObject["attStmt"].Set("x5c", "x".ToArray());
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", new CborTextString("x"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
         }
@@ -129,7 +135,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cValueZeroLengthByteString()
         {
-            _attestationObject["attStmt"].Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])));
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", new CborArray { new byte[0] });
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
         }
@@ -137,10 +144,11 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyInvalidPublicKey()
         {
-            var attestnCert = _attestationObject["attStmt"]["x5c"].Values.FirstOrDefault().GetByteString();
+            var attestnCert = (byte[])_attestationObject["attStmt"]["x5c"][0];
             attestnCert[0] ^= 0xff;
-            var X5c = CBORObject.NewArray().Add(CBORObject.FromObject(attestnCert));
-            _attestationObject["attStmt"].Set("x5c", X5c);
+            var X5c = new CborArray { attestnCert };
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", X5c);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.StartsWith("Failed to extract public key from android key: ", ex.Result.Message);
         }
@@ -148,7 +156,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyMissingAlg()
         {
-            _attestationObject["attStmt"].Remove("alg");
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Remove("alg");
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android key attestation algorithm", ex.Result.Message);
         }
@@ -156,7 +165,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyAlgNull()
         {
-            _attestationObject["attStmt"].Set("alg", null);
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("alg", CborNull.Instance);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android key attestation algorithm", ex.Result.Message);
         }
@@ -164,7 +174,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyAlgNaN()
         {
-            _attestationObject["attStmt"].Set("alg", "invalid alg");
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("alg", new CborTextString("invalid alg"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android key attestation algorithm", ex.Result.Message);
         }
@@ -172,7 +183,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyAlgNotInMap()
         {
-            _attestationObject["attStmt"].Set("alg", -1);
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("alg", new CborInteger(-1));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Unrecognized COSE alg value", ex.Result.Message);
         }
@@ -180,7 +192,8 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeySigNotASN1()
         {
-            _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(new byte[] { 0xf1, 0xd0 }));
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("sig", new CborByteString(new byte[] { 0xf1, 0xd0 }));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Failed to decode android key attestation signature from ASN.1 encoded form", ex.Result.Message);
 
@@ -191,9 +204,10 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyBadSig()
         {
-            var sig = _attestationObject["attStmt"]["sig"].GetByteString();
-            sig[sig.Length - 1] ^= 0xff;
-            _attestationObject["attStmt"].Set("sig", CBORObject.FromObject(sig));
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            var sig = (byte[])attStmt["sig"];
+            sig[^1] ^= 0xff;
+            attStmt.Set("sig", new CborByteString(sig));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android key attestation signature", ex.Result.Message);
         }
@@ -201,7 +215,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertMissingAttestationRecordExt()
         {
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -209,15 +223,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -227,7 +241,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordExtMalformed()
         {
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -237,15 +251,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var x5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", x5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -255,7 +269,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordAllApplicationsSoftware()
         {
-            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+            var writer = new AsnWriter(AsnEncodingRules.BER);
 
             using (writer.PushSequence()) // KeyDescription
             {
@@ -279,7 +293,7 @@ namespace Test.Attestation
             }
             var attRecord = writer.Encode();
 
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -289,15 +303,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -331,7 +345,7 @@ namespace Test.Attestation
             }
             var attRecord = writer.Encode();
 
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -341,15 +355,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -383,7 +397,7 @@ namespace Test.Attestation
             }
             var attRecord = writer.Encode();
 
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -393,15 +407,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -435,7 +449,7 @@ namespace Test.Attestation
             }
             var attRecord = writer.Encode();
 
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -445,15 +459,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -490,7 +504,7 @@ namespace Test.Attestation
             }
             var attRecord = writer.Encode();
 
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -500,15 +514,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -545,7 +559,7 @@ namespace Test.Attestation
             }
             var attRecord = writer.Encode();
 
-            _attestationObject = CBORObject.NewMap().Add("fmt", "android-key");
+            _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
             using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
             {
@@ -555,15 +569,15 @@ namespace Test.Attestation
 
                 using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
                 {
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData));
+                    var X5c = new CborArray { attestnCert.RawData };
 
                     byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap()
-                        .Add("alg", COSE.Algorithm.ES256)
-                        .Add("x5c", X5c)
-                        .Add("sig", signature));
+                    _attestationObject.Add("attStmt", new CborMap {
+                        { "alg", COSE.Algorithm.ES256 },
+                        { "x5c", X5c },
+                        { "sig", signature }
+                    });
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
