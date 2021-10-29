@@ -19,10 +19,13 @@ namespace Fido2NetLib
         {
         }
 
-        public AuthenticatorAssertionRawResponse Raw { get; set; }
-        public byte[] AuthenticatorData { get; set; }
-        public byte[] Signature { get; set; }
-        public byte[] UserHandle { get; set; }
+        public AuthenticatorAssertionRawResponse Raw { get; init; }
+
+        public byte[] AuthenticatorData { get; init; }
+
+        public byte[] Signature { get; init; }
+
+        public byte[] UserHandle { get; init; }
 
         public static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
         {
@@ -118,9 +121,7 @@ namespace Fido2NetLib
             // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
             var rpid = Raw.Extensions?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
             byte[] hashedRpId = SHA256.HashData(Encoding.UTF8.GetBytes(rpid ?? string.Empty));
-            // 15
-            byte[] hashedClientDataJson = SHA256.HashData(Raw.Response.ClientDataJson);
-            
+            byte[] hashedClientDataJson = SHA256.HashData(Raw.Response.ClientDataJson);            
 
             if (!authData.RpIdHash.SequenceEqual(hashedRpId))
                 throw new Fido2VerificationException("Hash mismatch RPID");
