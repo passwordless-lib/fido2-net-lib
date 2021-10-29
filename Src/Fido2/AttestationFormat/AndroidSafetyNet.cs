@@ -7,9 +7,10 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using Microsoft.IdentityModel.Tokens;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -35,20 +36,18 @@ namespace Fido2NetLib
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
             // CBOR decoding on it to extract the contained fields
             // (handled in base class)
-            if (attStmt["ver"].Type != CBORType.TextString ||
-                attStmt["ver"].AsString().Length is 0)
+            if (!(attStmt["ver"] is CborTextString { Length: > 0 }))
             {
                 throw new Fido2VerificationException("Invalid version in SafetyNet data");
             }
 
             // 2. Verify that response is a valid SafetyNet response of version ver
-            var ver = attStmt["ver"].AsString();
+            var ver = (string)attStmt["ver"];
 
-            if (attStmt["response"].Type != CBORType.ByteString ||
-                attStmt["response"].GetByteString().Length is 0)
+            if (!(attStmt["response"] is CborByteString { Length: > 0}))
                 throw new Fido2VerificationException("Invalid response in SafetyNet data");
 
-            var response = attStmt["response"].GetByteString();
+            var response = (byte[])attStmt["response"];
             var responseJWT = Encoding.UTF8.GetString(response);
 
             if (string.IsNullOrWhiteSpace(responseJWT))

@@ -6,8 +6,9 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -36,21 +37,21 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Missing AttestationObject");
 
             // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
-            CBORObject cborAttestation;
+            CborMap cborAttestation;
             try
             {
-                cborAttestation = CBORObject.DecodeFromBytes(rawResponse.Response.AttestationObject);
+                cborAttestation = (CborMap)CborObject.Decode(rawResponse.Response.AttestationObject);
             }
-            catch (CBORException ex)
+            catch (Exception ex)
             {
                 throw new Fido2VerificationException("AttestationObject invalid CBOR", ex);
             }
 
-            static bool IsType(CBORObject obj, CBORType type) => obj is not null && obj.Type == type;
+            static bool IsType(CborObject obj, CborType type) => obj is not null && obj.Type == type;
 
-            if (!IsType(cborAttestation["fmt"], CBORType.TextString) ||
-                !IsType(cborAttestation["attStmt"], CBORType.Map) ||
-                !IsType(cborAttestation["authData"], CBORType.ByteString))
+            if (!IsType(cborAttestation["fmt"], CborType.TextString) ||
+                !IsType(cborAttestation["attStmt"], CborType.Map) ||
+                !IsType(cborAttestation["authData"], CborType.ByteString))
             {
                 throw new Fido2VerificationException("Malformed AttestationObject");
             }
@@ -60,9 +61,9 @@ namespace Fido2NetLib
                 Raw = rawResponse,
                 AttestationObject = new ParsedAttestationObject
                 (
-                    fmt      : cborAttestation["fmt"].AsString(),
-                    attStmt  : cborAttestation["attStmt"], // convert to dictionary?
-                    authData : cborAttestation["authData"].GetByteString()
+                    fmt      : (string)cborAttestation["fmt"],
+                    attStmt  : (CborMap)cborAttestation["attStmt"],
+                    authData : (byte[])cborAttestation["authData"]
                 )
             };
             return response;
@@ -238,7 +239,7 @@ namespace Fido2NetLib
         /// </summary>
         public sealed class ParsedAttestationObject
         {
-            public ParsedAttestationObject(string fmt, CBORObject attStmt, byte[] authData)
+            public ParsedAttestationObject(string fmt, CborMap attStmt, byte[] authData)
             {
                 Fmt = fmt;
                 AttStmt = attStmt;
@@ -246,7 +247,7 @@ namespace Fido2NetLib
             }
 
             public string Fmt { get; }
-            public CBORObject AttStmt { get; }
+            public CborMap AttStmt { get; }
             public byte[] AuthData { get; }
         }
     }

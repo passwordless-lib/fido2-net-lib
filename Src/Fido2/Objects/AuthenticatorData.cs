@@ -1,8 +1,9 @@
 ﻿#nullable disable
 
 using System;
-using System.Buffers.Binary;
 using System.IO;
+
+using Fido2NetLib.Cbor;
 
 namespace Fido2NetLib.Objects
 {
@@ -86,40 +87,38 @@ namespace Fido2NetLib.Objects
                 throw new Fido2VerificationException($"Authenticator data is less than the minimum structure length of {MinLength}");
 
             // Input parsing
-            using var stream = new MemoryStream(authData, false);
+            var reader = new MemoryReader(authData);
 
-            using (var reader = new BinaryReader(stream))
+            RpIdHash = reader.ReadBytes(SHA256HashLenBytes);
+
+            _flags = (AuthenticatorFlags)reader.ReadByte();
+
+            SignCount = reader.ReadUInt32BigEndian();
+
+            // Attested credential data is only present if the AT flag is set
+            if (HasAttestedCredentialData)
             {
-                RpIdHash = reader.ReadBytes(SHA256HashLenBytes);
+                // Decode attested credential data, which starts at the next byte past the minimum length of the structure.
+                AttestedCredentialData = new AttestedCredentialData(authData.AsMemory(reader.Position), out int bytesRead);
 
-                _flags = (AuthenticatorFlags)reader.ReadByte();
-
-                SignCount = BinaryPrimitives.ReadUInt32BigEndian(reader.ReadBytes(sizeof(uint)));
-
-                // Attested credential data is only present if the AT flag is set
-                if (HasAttestedCredentialData)
-                {
-                    // Decode attested credential data, which starts at the next byte past the minimum length of the structure.
-                    AttestedCredentialData = new AttestedCredentialData(reader);
-                }
-
-                // Extensions data is only present if the ED flag is set
-                if (HasExtensionsData)
-                {
-                    // "CBORObject.Read: This method will read from the stream until the end 
-                    // of the CBOR object is reached or an error occurs, whichever happens first."
-                    //
-                    // Read the CBOR object from the stream
-                    var ext = PeterO.Cbor.CBORObject.Read(reader.BaseStream);
-
-                    // Encode the CBOR object back to a byte array.
-                    Extensions = new Extensions(ext.EncodeToBytes());
-                }
-
-                // There should be no bytes left over after decoding all data from the structure
-                if (stream.Position != stream.Length)
-                    throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
+                reader.Advance(bytesRead);
             }
+
+            // Extensions data is only present if the ED flag is set
+            if (HasExtensionsData)
+            {
+                // Read the CBOR object
+                var ext = CborObject.Decode(authData.AsMemory(reader.Position), out int bytesRead);
+
+                reader.Advance(bytesRead);
+
+                // Encode the CBOR object back to a byte array.
+                Extensions = new Extensions(ext.Encode());
+            }
+
+            // There should be no bytes left over after decoding all data from the structure
+            if (reader.RemainingBytes != 0)
+                throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");            
         }
 
         public byte[] ToByteArray()

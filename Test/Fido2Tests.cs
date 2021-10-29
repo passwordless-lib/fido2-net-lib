@@ -9,13 +9,17 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 using NSec.Cryptography;
-using PeterO.Cbor;
+
 using Xunit;
 
 namespace fido2_net_lib.Test
@@ -79,7 +83,7 @@ namespace fido2_net_lib.Test
 
         public abstract class Attestation
         {
-            public CBORObject _attestationObject;
+            public CborMap _attestationObject;
             public CredentialPublicKey _credentialPublicKey;
             public const string rp = "https://www.passwordless.dev";
             public byte[] _challenge;
@@ -142,7 +146,7 @@ namespace fido2_net_lib.Test
             {
                 get
                 {
-                    var extBytes = CBORObject.NewMap().Add("testing", true).EncodeToBytes();
+                    var extBytes = new CborMap { { "testing", true } }.Encode();
                     return new Extensions(extBytes);
                 }
             }
@@ -175,16 +179,20 @@ namespace fido2_net_lib.Test
 
                 _signCount = BitConverter.ToUInt16(signCount, 0);
 
-                _attestationObject = CBORObject.NewMap();
+                _attestationObject = new CborMap();
 
                 _asnEncodedAaguid = AsnHelper.GetBlob(AttestedCredentialData.AaGuidToBigEndian(_aaguid));
 
                 idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
             }
 
-            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
+            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse(CborMap? attestationObject = null)
             {
-                _attestationObject.Set("authData", _authData);
+                if (attestationObject is not null)
+                {
+                }
+
+                _attestationObject.Set("authData", new CborByteString(_authData));
 
                 var attestationResponse = new AuthenticatorAttestationRawResponse
                 {
@@ -193,7 +201,7 @@ namespace fido2_net_lib.Test
                     RawId = new byte[] { 0xf1, 0xd0 },
                     Response = new AuthenticatorAttestationRawResponse.ResponseData()
                     {
-                        AttestationObject = _attestationObject.EncodeToBytes(),
+                        AttestationObject = _attestationObject.Encode(),
                         ClientDataJson = _clientDataJson,
                     },
                     Extensions = new AuthenticationExtensionsClientOutputs()
@@ -506,8 +514,8 @@ namespace fido2_net_lib.Test
         public void TestAuthenticatorDataPa2rsing()
         {
             var bs = new byte[] { 1, 2, 3 };
-            var x = CBORObject.NewMap().Add("bytes", bs);
-            var s = x["bytes"].GetByteString();
+            var x = new CborMap { { "bytes", bs } };
+            var s = (byte[])x["bytes"];
 
             Assert.Equal(s, bs);
         }
@@ -705,7 +713,7 @@ namespace fido2_net_lib.Test
             var cpk = MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecparams.Q.X, ecparams.Q.Y);
 
             var acd = new AttestedCredentialData(aaguid, credentialID, cpk);
-            var extBytes = CBORObject.NewMap().Add("testing", true).EncodeToBytes();
+            var extBytes = new CborMap { { "testing", true } }.Encode();
             var exts = new Extensions(extBytes);
 
             var ad = new AuthenticatorData(rpIdHash, flags, signCount, acd, exts);
@@ -872,7 +880,7 @@ namespace fido2_net_lib.Test
                 }
             }
             var acd = new AttestedCredentialData(aaguid, credentialID, cpk);
-            var extBytes = CBORObject.NewMap().Add("testing", true).EncodeToBytes();
+            var extBytes = new CborMap { { "testing", true } }.Encode();
             var exts = new Extensions(extBytes);
 
             var ad = new AuthenticatorData(rpIdHash, flags, (uint)(signCount + 1), acd, exts);
@@ -1018,23 +1026,24 @@ namespace fido2_net_lib.Test
 
         internal static CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve? crv, byte[] x, byte[] y, byte[] n, byte[] e)
         {
-            var cpk = CBORObject.NewMap();
-            cpk.Add(COSE.KeyCommonParameter.KeyType, kty);
-            cpk.Add(COSE.KeyCommonParameter.Alg, alg);
+            var cpk = new CborMap();
+
+            cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)kty);
+            cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
             switch (kty)
             {
                 case COSE.KeyType.EC2:
-                    cpk.Add(COSE.KeyTypeParameter.X, x);
-                    cpk.Add(COSE.KeyTypeParameter.Y, y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, crv);
+                    cpk.Add((int)COSE.KeyTypeParameter.X, x);
+                    cpk.Add((int)COSE.KeyTypeParameter.Y, y);
+                    cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)crv);
                     break;
                 case COSE.KeyType.RSA:
-                    cpk.Add(COSE.KeyTypeParameter.N, n);
-                    cpk.Add(COSE.KeyTypeParameter.E, e);
+                    cpk.Add((int)COSE.KeyTypeParameter.N, n);
+                    cpk.Add((int)COSE.KeyTypeParameter.E, e);
                     break;
                 case COSE.KeyType.OKP:
-                    cpk.Add(COSE.KeyTypeParameter.X, x);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, crv);
+                    cpk.Add((int)COSE.KeyTypeParameter.X, x);
+                    cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)crv);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kty), kty, "Invalid COSE key type");

@@ -82,42 +82,58 @@ namespace Fido2NetLib.Objects
             CredentialPublicKey = cpk;
         }
 
-        public AttestedCredentialData(byte[] bytes) : this(new BinaryReader(new MemoryStream(bytes, false)))
-        {
-        }
 
         /// <summary>
         /// Decodes attested credential data.
         /// </summary>
-        public AttestedCredentialData(BinaryReader reader)
+        public AttestedCredentialData(byte[] data)
+            : this(data, out _)
         {
-            if (reader.BaseStream.Length < _minLength)
+        }
+    
+        internal AttestedCredentialData(ReadOnlyMemory<byte> data, out int bytesRead)
+        {
+            if (data.Length < _minLength)
                 throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+
+            int position = 0;
+
             // First 16 bytes is AAGUID
-            var aaguidBytes = reader.ReadBytes(Marshal.SizeOf(typeof(Guid)));
+            var aaguidBytes = data[..16];
+
+            position += 16;
 
             if (BitConverter.IsLittleEndian)
             {
                 // GUID from authenticator is big endian. If we are on a little endian system, convert.
-                AaGuid = FromBigEndian(aaguidBytes);
+                AaGuid = FromBigEndian(aaguidBytes.ToArray());
             }
             else
             {
-                AaGuid = new Guid(aaguidBytes);
+                AaGuid = new Guid(aaguidBytes.Span);
             }
 
             // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
-            var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(reader.ReadBytes(sizeof(ushort)));
+            var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(data.Slice(position, 2).Span);
+
+            position += 2;
 
             // Read the credential ID bytes
-            CredentialID = reader.ReadBytes(credentialIDLen);
+            CredentialID = data.Slice(position, credentialIDLen).ToArray();
+
+            position += credentialIDLen;
 
             // "Determining attested credential data's length, which is variable, involves determining 
             // credentialPublicKey's beginning location given the preceding credentialId's length, and 
             // then determining the credentialPublicKey's length"
 
+
             // Read the CBOR object from the stream
-            CredentialPublicKey = new CredentialPublicKey(reader.BaseStream);
+            CredentialPublicKey = CredentialPublicKey.Decode(data[position..], out int read);
+
+            position += read;
+
+            bytesRead = position;
         }
 
         public override string ToString()

@@ -6,9 +6,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -47,29 +46,28 @@ namespace Fido2NetLib
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             // (handled in base class)
-            if (Sig is null || Sig.Type != CBORType.ByteString || Sig.GetByteString().Length is 0)
+            if (!(Sig is CborByteString { Length: > 0 }))
                 throw new Fido2VerificationException("Invalid TPM attestation signature");
 
-            if (attStmt["ver"].AsString() is not "2.0")
+            if ((string)attStmt["ver"] is not "2.0")
                 throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
 
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
             // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
             PubArea? pubArea = null;
-            if (attStmt["pubArea"] is { Type: CBORType.ByteString } pubAreaObject &&
-                pubAreaObject.GetByteString().Length != 0)
+            if (attStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
             {
-                pubArea = new PubArea(pubAreaObject.GetByteString());
+                pubArea = new PubArea(pubAreaObject.Value);
             }
 
             if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
                 throw new Fido2VerificationException("Missing or malformed pubArea");
 
-            int coseKty = CredentialPublicKey[CBORObject.FromObject(COSE.KeyCommonParameter.KeyType)].AsInt32();
+            int coseKty = (int)CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
             if (coseKty is 3) // RSA
             {
-                byte[] coseMod = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.N)].GetByteString(); // modulus 
-                byte[] coseExp = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.E)].GetByteString(); // exponent
+                byte[] coseMod = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
+                byte[] coseExp = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
                 if (!coseMod.SequenceEqual(pubArea.Unique))
                     throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
@@ -78,9 +76,9 @@ namespace Fido2NetLib
             }
             else if (coseKty is 2) // ECC
             {
-                var curve = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Crv)].AsInt32();
-                var x = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                var y = CredentialPublicKey[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+                var curve = (int)CredentialPublicKey[COSE.KeyTypeParameter.Crv];
+                var x = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.X];
+                var y = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.Y];
 
                 if (pubArea.EccCurve != CoseCurveToTpm[curve])
                     throw new Fido2VerificationException("Curve mismatch between pubArea and credentialPublicKey");
@@ -97,10 +95,9 @@ namespace Fido2NetLib
 
             // 4. Validate that certInfo is valid
             CertInfo? certInfo = null;
-            if (attStmt["certInfo"] is { Type: CBORType.ByteString } certInfoObject &&
-                certInfoObject.GetByteString().Length != 0)
+            if (attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject)
             {
-                certInfo = new CertInfo(certInfoObject.GetByteString());
+                certInfo = new CertInfo((byte[])certInfoObject);
             }
             else
             {
@@ -114,10 +111,10 @@ namespace Fido2NetLib
             // Handled in CertInfo constructor, see CertInfo.Type
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (Alg is null || true != Alg.IsNumber)
+            if (Alg is null || Alg is not CborInteger)
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
                 
-            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)Alg.AsInt32())))
+            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)(int)Alg)))
             {
                 if (!hasher.ComputeHash(Data).AsSpan().SequenceEqual(certInfo.ExtraData))
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
@@ -133,22 +130,19 @@ namespace Fido2NetLib
             // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
             // 5. If x5c is present, this indicates that the attestation type is not ECDAA
-            if (X5c is { Type: CBORType.Array } && X5c.Count != 0)
+            if (X5c is CborArray {  Length: > 0 } x5cArray)
             {
-                if (X5c.Values is null ||
-                    X5c.Values.Count is 0 ||
-                    X5c.Values.First().Type != CBORType.ByteString ||
-                    X5c.Values.First().GetByteString().Length is 0)
+                if (!(x5cArray[0] is CborByteString { Length: > 0 }))
                 {
                     throw new Fido2VerificationException("Malformed x5c in TPM attestation");
                 }
 
                 // 5a. Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
-                var aikCert = new X509Certificate2(X5c.Values.First().GetByteString());
+                var aikCert = new X509Certificate2((byte[])x5cArray[0]);
 
-                var cpk = new CredentialPublicKey(aikCert, Alg.AsInt32());
+                var cpk = new CredentialPublicKey(aikCert, (int)Alg);
 
-                if (!cpk.Verify(certInfo.Raw, Sig.GetByteString()))
+                if (!cpk.Verify(certInfo.Raw, (byte[])Sig))
                     throw new Fido2VerificationException("Bad signature in TPM with aikCert");
 
                 // 5b. Verify that aikCert meets the TPM attestation statement certificate requirements
@@ -196,8 +190,8 @@ namespace Fido2NetLib
                 // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] 
                 // are both OPTIONAL as the status of many attestation certificates is available through metadata services.
                 // See, for example, the FIDO Metadata Service [FIDOMetadataService].
-                var trustPath = X5c.Values
-                    .Select(x => new X509Certificate2(x.GetByteString()))
+                var trustPath = x5cArray.Values
+                    .Select(x => new X509Certificate2((byte[])x))
                     .ToArray();
 
                 // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
