@@ -186,12 +186,8 @@ namespace fido2_net_lib.Test
                 idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
             }
 
-            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse(CborMap? attestationObject = null)
+            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
             {
-                if (attestationObject is not null)
-                {
-                }
-
                 _attestationObject.Set("authData", new CborByteString(_authData));
 
                 var attestationResponse = new AuthenticatorAttestationRawResponse
@@ -268,7 +264,7 @@ namespace fido2_net_lib.Test
                 ECDsa ecdsa = null;
                 RSA rsa = null;
                 Key privateKey = null;
-                byte[] expandedPrivateKey = null, publicKey = null;
+                byte[] expandedPrivateKey, publicKey = null;
 
                 switch (kty)
                 {
