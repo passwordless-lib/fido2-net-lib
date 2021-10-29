@@ -42,12 +42,12 @@ namespace Fido2NetLib
             }
 
             // 2. Verify that response is a valid SafetyNet response of version ver
-            var ver = (string)attStmt["ver"];
+            var ver = (string)attStmt["ver"]!;
 
             if (!(attStmt["response"] is CborByteString { Length: > 0}))
                 throw new Fido2VerificationException("Invalid response in SafetyNet data");
 
-            var response = (byte[])attStmt["response"];
+            var response = (byte[])attStmt["response"]!;
             var responseJWT = Encoding.UTF8.GetString(response);
 
             if (string.IsNullOrWhiteSpace(responseJWT))
@@ -71,12 +71,11 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("No keys were present in the TOC header in SafetyNet response JWT");
 
             var certs = new X509Certificate2[x5cStrings.Length];
-            var keys = new List<SecurityKey>();
+            var keys = new List<SecurityKey>(certs.Length);
 
             for (int i = 0; i < certs.Length; i++)
             {
-                var certString = x5cStrings[i];
-                var cert = GetX509Certificate(certString);
+                var cert = GetX509Certificate(x5cStrings[i]);
                 certs[i] = cert;
 
                 if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
@@ -109,9 +108,9 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("SafetyNet response security token validation failed", ex);
             }
 
-            var nonce = "";
+            string? nonce = null;
             bool? ctsProfileMatch = null;
-            var timestampMs = DateTimeHelper.UnixEpoch;
+            DateTimeOffset? timestamp = null;
 
             var jwtToken = (JwtSecurityToken)validatedToken;
 
@@ -127,19 +126,24 @@ namespace Fido2NetLib
                 }
                 if (claim is { Type: "timestampMs", ValueType: "http://www.w3.org/2001/XMLSchema#integer64" })
                 {
-                    timestampMs = DateTimeHelper.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
+                    timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
                 }
             }
 
-            var notAfter = DateTime.UtcNow.AddMilliseconds(_driftTolerance);
-            var notBefore = DateTime.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
-            if ((notAfter < timestampMs) || ((notBefore) > timestampMs))
+            if (!timestamp.HasValue)
             {
-                throw new Fido2VerificationException($"SafetyNet timestampMs must be present and between one minute ago and now, got: {timestampMs}");
+                throw new Fido2VerificationException($"SafetyNet timestampMs not found SafetyNet attestation");
+            }
+
+            var notAfter = DateTimeOffset.UtcNow.AddMilliseconds(_driftTolerance);
+            var notBefore = DateTimeOffset.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
+            if ((notAfter < timestamp) || ((notBefore) > timestamp.Value))
+            {
+                throw new Fido2VerificationException($"SafetyNet timestampMs must be between one minute ago and now, got: {timestamp:o}");
             }
 
             // 3. Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
-            if (nonce is "")
+            if (string.IsNullOrEmpty(nonce))
                 throw new Fido2VerificationException("Nonce value not found in SafetyNet attestation");
 
             byte[] nonceHash;

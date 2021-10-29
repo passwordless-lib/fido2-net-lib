@@ -77,7 +77,7 @@ namespace Test.Attestation
 
                     var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                    List<Claim> claims = new List<Claim>
+                    var claims = new List<Claim>
                     {
                         new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                         new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
@@ -443,7 +443,7 @@ namespace Test.Attestation
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.StartsWith("SafetyNet timestampMs must be present and between one minute ago and now, got:", ex.Result.Message);
+            Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Result.Message);
         }
 
         [Fact]
@@ -499,7 +499,7 @@ namespace Test.Attestation
 
                     var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                    List<Claim> claims = new List<Claim>
+                    var claims = new List<Claim>
                     {
                         new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                         new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
@@ -530,7 +530,7 @@ namespace Test.Attestation
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.StartsWith("SafetyNet timestampMs must be present and between one minute ago and now, got:", ex.Result.Message);
+            Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Result.Message);
         }
 
         [Fact]
@@ -616,7 +616,7 @@ namespace Test.Attestation
                 }
             }
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.StartsWith("SafetyNet timestampMs must be present and between one minute ago and now, got:", ex.Result.Message);
+            Assert.Equal("SafetyNet timestampMs not found SafetyNet attestation", ex.Result.Message);
         }
 
         [Fact]
