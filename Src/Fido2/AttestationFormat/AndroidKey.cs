@@ -151,25 +151,37 @@ namespace Fido2NetLib
 
             // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
             // using the attestation public key in attestnCert with the algorithm specified in alg
-            if (!(X5c is CborArray { Length: > 0 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
+            if (!(X5c is CborArray { Length: > 0 } x5cArray))
                 throw new Fido2VerificationException("Malformed x5c in android-key attestation");
-
-
-            X509Certificate2 androidKeyCert;
-            ECDsa androidKeyPubKey;
-            try
-            {
-                androidKeyCert = new X509Certificate2((byte[])x5cArray[0]);
-                androidKeyPubKey = androidKeyCert.GetECDsaPublicKey()!; // attestation public key
-            }
-            catch (Exception ex)
-            {
-                throw new Fido2VerificationException("Failed to extract public key from android key: " + ex.Message, ex);
-            }
 
             if (!(Alg is CborInteger))
                 throw new Fido2VerificationException("Invalid android key attestation algorithm");
 
+            var alg = (COSE.Algorithm)(int)Alg;
+            var trustPath = new X509Certificate2[x5cArray.Length];
+
+            for (int i = 0; i < x5cArray.Length; i++)
+            {
+                if (x5cArray[i] is CborByteString { Length: > 0 } x5cObject)
+                {
+                    try
+                    {
+                        trustPath[i] = new X509Certificate2(x5cObject.Value);
+                    }
+                    catch (Exception ex) when (i is 0)
+                    {
+                        throw new Fido2VerificationException("Failed to extract public key from android key: " + ex.Message, ex);
+                    }
+                }
+                else
+                {
+                    throw new Fido2VerificationException("Malformed x5c in android-key attestation");
+                }
+            }
+
+            X509Certificate2 androidKeyCert = trustPath[0];
+            ECDsa androidKeyPubKey = androidKeyCert.GetECDsaPublicKey()!; // attestation public key
+          
             byte[] ecsig;
             try
             {
@@ -180,7 +192,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Failed to decode android key attestation signature from ASN.1 encoded form", ex);
             }
 
-            if (!androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)(int)Alg)))
+            if (!androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(alg)))
                 throw new Fido2VerificationException("Invalid android key attestation signature");
 
             // 3. Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
@@ -216,10 +228,6 @@ namespace Fido2NetLib
             // 5bii. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
             if (!IsPurposeSign(attExtBytes))
                 throw new Fido2VerificationException("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
-
-            var trustPath = x5cArray.Values
-                .Select(x => new X509Certificate2((byte[])x))
-                .ToArray();
 
             return (AttestationType.Basic, trustPath);
         }
