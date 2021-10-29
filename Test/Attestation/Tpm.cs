@@ -15,10 +15,10 @@ namespace Test.Attestation
 {
     public class Tpm : Fido2Tests.Attestation
     {
-        private X500DistinguishedName attDN = new X500DistinguishedName("");
-        private X509Certificate2 rootCert, attestnCert;
+        private readonly X500DistinguishedName attDN = new X500DistinguishedName("");
+        private X509Certificate2 attestnCert;
         private DateTimeOffset notBefore, notAfter;
-        private X509EnhancedKeyUsageExtension tcgKpAIKCertExt;
+        private readonly X509EnhancedKeyUsageExtension tcgKpAIKCertExt;
         private X509Extension aikCertSanExt;
         private byte[] unique, exponent, curveId, kdf;
         private byte[] tpmAlg;
@@ -107,10 +107,7 @@ namespace Test.Attestation
                                     break;
                             }
 
-                            using (rootCert = rootRequest.CreateSelfSigned(
-                                notBefore,
-                                notAfter))
-
+                            using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                             using (var ecdsaAtt = ECDsa.Create(eCCurve))
                             {
                                 var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
@@ -140,11 +137,11 @@ namespace Test.Attestation
                                 var ecparams = ecdsaAtt.ExportParameters(true);
 
                                 var cpk = new CborMap { 
-                                    { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                                    { (int)COSE.KeyCommonParameter.Alg, (int)alg},
-                                    { (int)COSE.KeyTypeParameter.X, ecparams.Q.X},
-                                    { (int)COSE.KeyTypeParameter.Y, ecparams.Q.Y},
-                                    { (int)COSE.KeyTypeParameter.Crv, (int)curve},
+                                    { COSE.KeyCommonParameter.KeyType, type },
+                                    { COSE.KeyCommonParameter.Alg, alg},
+                                    { COSE.KeyTypeParameter.X, ecparams.Q.X},
+                                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y},
+                                    { COSE.KeyTypeParameter.Crv, curve},
                                 };
 
                                 var x = (byte[])cpk[COSE.KeyTypeParameter.X];
@@ -225,10 +222,7 @@ namespace Test.Attestation
                             var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                             rootRequest.CertificateExtensions.Add(caExt);
 
-                            using (rootCert = rootRequest.CreateSelfSigned(
-                                notBefore,
-                                notAfter))
-
+                            using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                             using (var rsaAtt = RSA.Create())
                             {
                                 var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -358,10 +352,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -402,13 +393,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -498,7 +483,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -527,13 +512,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -611,10 +590,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -636,22 +612,14 @@ namespace Test.Attestation
                         attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
                     }
 
-                    var X5c = new CborArray { 
+                    var X5c = new CborArray {
                         attestnCert.RawData,
                         rootCert.RawData
                     };   
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg,     (int)alg },
-                        { (int)COSE.KeyTypeParameter.N,         rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E,         rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -729,10 +697,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -761,15 +726,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -855,10 +812,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -887,15 +841,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -973,7 +919,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -1002,13 +948,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -1086,7 +1026,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -1097,11 +1037,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
-
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
+                    RandomNumberGenerator.Fill(serial);
+                    
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         rootCert,
                         notBefore,
@@ -1118,15 +1055,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -1204,7 +1133,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -1233,13 +1162,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -1317,10 +1240,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -1349,13 +1269,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -1431,10 +1345,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -1463,14 +1374,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
-
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -1549,10 +1453,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -1578,15 +1479,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -1665,10 +1561,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -1697,15 +1590,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -1783,10 +1668,7 @@ namespace Test.Attestation
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var ecdsaAtt = ECDsa.Create(eCCurve))
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
@@ -1911,10 +1793,7 @@ namespace Test.Attestation
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var ecdsaAtt = ECDsa.Create(eCCurve))
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
@@ -1936,7 +1815,7 @@ namespace Test.Attestation
                         attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                     }
 
-                    var X5c = new CborArray {
+                    var x5c = new CborArray {
                         attestnCert.RawData,
                         rootCert.RawData
                     };
@@ -2013,7 +1892,7 @@ namespace Test.Attestation
                     _attestationObject.Add("attStmt", new CborMap { 
                         { "ver", "2.0" },
                         { "alg", (int)alg },
-                        { "x5c", X5c },
+                        { "x5c", x5c },
                         { "sig", signature },
                         { "certInfo", certInfo },
                         { "pubArea", pubArea }
@@ -2040,10 +1919,7 @@ namespace Test.Attestation
 
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var ecdsaAtt = ECDsa.Create(eCCurve))
                 {
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
@@ -2074,11 +1950,11 @@ namespace Test.Attestation
 
                     var cpk = new CborMap
                     {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.X, ecparams.Q.X },
-                        { (int)COSE.KeyTypeParameter.Y, ecparams.Q.Y },
-                        { (int)COSE.KeyTypeParameter.Crv, (int)curve }
+                        { COSE.KeyCommonParameter.KeyType, type },
+                        { COSE.KeyCommonParameter.Alg, alg },
+                        { COSE.KeyTypeParameter.X, ecparams.Q.X },
+                        { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                        { COSE.KeyTypeParameter.Crv, curve }
                     };
 
                     var x = (byte[])cpk[COSE.KeyTypeParameter.X];
@@ -2168,10 +2044,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -2200,13 +2073,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -2285,10 +2152,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -2317,13 +2181,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -2408,10 +2266,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -2437,15 +2292,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+                    
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -2524,10 +2374,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -2556,13 +2403,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -2640,7 +2481,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -2669,13 +2510,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -2753,10 +2588,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -2788,15 +2620,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -2874,10 +2698,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -2906,13 +2727,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -2994,7 +2809,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3023,13 +2838,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3107,7 +2916,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3136,13 +2945,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3226,7 +3029,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3255,13 +3058,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3292,11 +3089,7 @@ namespace Test.Attestation
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-                    byte[] tpm2bName = DataHelper.Concat(
-                        tpm2bNameLen,
-                        new byte[] { 0x00, 0x10 },
-                        hashedPubArea
-                    );
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, new byte[] { 0x00, 0x10 }, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3343,7 +3136,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3369,15 +3162,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3459,20 +3247,14 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -3491,15 +3273,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3577,7 +3354,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3605,13 +3382,7 @@ namespace Test.Attestation
                     };
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3695,10 +3466,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3733,15 +3501,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3823,7 +3583,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3849,15 +3609,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -3939,7 +3694,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -3968,15 +3723,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4060,10 +3810,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4085,19 +3832,14 @@ namespace Test.Attestation
                         attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
                     }
 
-                    var X5c = new CborArray {
+                    var x5c = new CborArray {
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4175,7 +3917,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4204,15 +3946,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4290,7 +4024,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4319,13 +4053,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4403,7 +4131,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4432,13 +4160,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4517,7 +4239,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4543,15 +4265,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4629,17 +4346,14 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                     attRequest.CertificateExtensions.Add(notCAExt);
-
                     attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
                     attRequest.CertificateExtensions.Add(aikCertSanExt);
-
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
@@ -4658,15 +4372,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4744,7 +4453,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4775,13 +4484,7 @@ namespace Test.Attestation
                     };
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4860,10 +4563,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -4895,13 +4595,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -4989,10 +4683,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attDN = new X500DistinguishedName("CN=Testing, OU=Not Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
@@ -5022,15 +4713,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5060,13 +4743,8 @@ namespace Test.Attestation
                     }
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-                    IEnumerable<byte> tpm2bName = new byte[] { }
-                        .Concat(tpm2bNameLen)
-                        .Concat(tpmAlg)
-                        .Concat(hashedPubArea);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                     var certInfo = CreateCertInfo(
                         new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5078,7 +4756,7 @@ namespace Test.Attestation
                         new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
                         new byte[] { 0x00 }, // Safe
                         new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                        tpm2bName.ToArray(), // TPM2BName
+                        tpm2bName, // TPM2BName
                         new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
                     );
 
@@ -5091,8 +4769,7 @@ namespace Test.Attestation
                         { "sig", signature},
                         { "certInfo", certInfo },
                         { "pubArea", pubArea }
-                    });
-                    
+                    });                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aikCert subject must be empty", ex.Result.Message);
@@ -5114,7 +4791,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -5140,15 +4817,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5232,10 +4904,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -5272,13 +4941,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5356,10 +5019,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -5392,15 +5052,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5478,10 +5133,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -5515,15 +5167,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5601,10 +5248,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -5645,15 +5289,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5733,10 +5369,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -5756,11 +5389,8 @@ namespace Test.Attestation
                     attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         rootCert,
                         notBefore,
@@ -5777,13 +5407,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5862,7 +5486,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -5876,11 +5500,8 @@ namespace Test.Attestation
                     //attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                     var serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         rootCert,
                         notBefore,
@@ -5894,15 +5515,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -5980,10 +5596,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -6013,15 +5626,7 @@ namespace Test.Attestation
                        
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap
-                    {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg,     (int)alg },
-                        { (int)COSE.KeyTypeParameter.N,         rsaparams.Modulus },
-                        { (int)COSE.KeyTypeParameter.E,         rsaparams.Exponent }
-                    };
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -6099,10 +5704,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -6131,13 +5733,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -6227,10 +5823,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -6264,13 +5857,7 @@ namespace Test.Attestation
 
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -6326,8 +5913,7 @@ namespace Test.Attestation
                         { "sig", signature },
                         { "certInfo", certInfo },
                         { "pubArea", pubArea }
-                    });
-                    
+                    });                    
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
                     Assert.Equal("aaguid malformed, expected f1d0f1d0-f1d0-f1d0-f1d0-f1d0f1d0f1d0, got d0f1d0f1-d0f1-d0f1-f1d0-f1d0f1d0f1d0", ex.Result.Message);
@@ -6349,10 +5935,7 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                using (rootCert = rootRequest.CreateSelfSigned(
-                    notBefore,
-                    notAfter))
-
+                using (var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter))
                 using (var rsaAtt = RSA.Create())
                 {
                     var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
@@ -6378,15 +5961,10 @@ namespace Test.Attestation
                         attestnCert.RawData,
                         rootCert.RawData
                     };
+
                     var rsaparams = rsaAtt.ExportParameters(true);
 
-                    var cpk = new CborMap();
-                    cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                    cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                    cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                    _credentialPublicKey = new CredentialPublicKey(cpk);
+                    _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                     unique = rsaparams.Modulus;
                     exponent = rsaparams.Exponent;
@@ -6539,6 +6117,20 @@ namespace Test.Attestation
             BinaryPrimitives.WriteUInt16BigEndian(buffer, value);
 
             return buffer;
+        }
+
+
+        internal static CredentialPublicKey GetRSACredentialPublicKey(COSE.KeyType type, COSE.Algorithm alg, RSAParameters rsaparams)
+        {
+            var cpk = new CborMap
+            {
+                { COSE.KeyCommonParameter.KeyType, type },
+                { COSE.KeyCommonParameter.Alg, alg },
+                { COSE.KeyTypeParameter.N, rsaparams.Modulus },
+                { COSE.KeyTypeParameter.E, rsaparams.Exponent }
+            };
+
+            return new CredentialPublicKey(cpk);
         }
 
         internal static RSASignaturePadding GetRSASignaturePaddingForCoseAlgorithm(COSE.Algorithm alg)

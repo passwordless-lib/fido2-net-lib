@@ -77,11 +77,6 @@ namespace Fido2NetLib.Cbor
             items.Add(new(new CborTextString(key), new CborInteger(value)));
         }
 
-        internal void Add(string key, COSE.Algorithm value)
-        {
-            items.Add(new(new CborTextString(key), new CborInteger((int)value)));
-        }
-
         public void Add(string key, string value)
         {
             items.Add(new(new CborTextString(key), new CborTextString(value)));
@@ -95,6 +90,31 @@ namespace Fido2NetLib.Cbor
         internal void Add(CborObject key, CborObject value)
         {
             items.Add(new (key, value));
+        }
+
+        internal void Add(string key, COSE.Algorithm value)
+        {
+            items.Add(new(new CborTextString(key), new CborInteger((int)value)));
+        }
+
+        internal void Add(COSE.KeyCommonParameter key, COSE.KeyType value)
+        {
+            items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
+        }
+
+        internal void Add(COSE.KeyCommonParameter key, COSE.Algorithm value)
+        {
+            items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
+        }
+
+        internal void Add(COSE.KeyTypeParameter key, COSE.EllipticCurve value)
+        {
+            items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
+        }
+
+        internal void Add(COSE.KeyTypeParameter key, byte[] value)
+        {
+            items.Add(new(new CborInteger((int)key), new CborByteString(value)));
         }
 
         public bool ContainsKey(CborObject key)
@@ -124,8 +144,6 @@ namespace Fido2NetLib.Cbor
         {
             return items.GetEnumerator();
         }
-
-
 
         internal CborObject this[COSE.KeyCommonParameter key] => GetValue((long)key);
 

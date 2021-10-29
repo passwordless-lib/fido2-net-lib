@@ -1,7 +1,6 @@
 ﻿#nullable disable
 
 using System;
-using System.Buffers.Binary;
 using System.IO;
 
 using Fido2NetLib.Cbor;
@@ -119,8 +118,7 @@ namespace Fido2NetLib.Objects
 
             // There should be no bytes left over after decoding all data from the structure
             if (reader.RemainingBytes != 0)
-                throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
-            
+                throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");            
         }
 
         public byte[] ToByteArray()
