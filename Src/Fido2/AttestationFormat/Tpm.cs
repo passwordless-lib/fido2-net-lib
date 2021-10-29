@@ -132,7 +132,7 @@ namespace Fido2NetLib
             // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
             // 5. If x5c is present, this indicates that the attestation type is not ECDAA
-            if (X5c is CborArray {  Count: > 0 } x5cArray)
+            if (X5c is CborArray {  Length: > 0 } x5cArray)
             {
                 if (!(x5cArray[0] is CborByteString { Length: > 0 }))
                 {

@@ -43,7 +43,7 @@ namespace Fido2NetLib
             // 2. If x5c is present, this indicates that the attestation type is not ECDAA
             if (X5c != null)
             {
-                if (!(X5c is CborArray { Count: > 0 } x5cArray) || EcdaaKeyId != null)
+                if (!(X5c is CborArray { Length: > 0 } x5cArray) || EcdaaKeyId != null)
                     throw new Fido2VerificationException("Malformed x5c array in packed attestation statement");
 
                 var enumerator = x5cArray.Values.GetEnumerator();

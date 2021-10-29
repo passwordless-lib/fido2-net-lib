@@ -11,10 +11,10 @@ namespace Fido2NetLib.Cbor
 
         public override CborType Type => CborType.Array;
 
-        public int Count => Values.Count;
+        public int Length => Values.Count;
 
         public List<CborObject> Values { get; }
 
-        public override CborObject? this[int index] => Values[index];
+        public override CborObject this[int index] => Values[index];
     }
 }

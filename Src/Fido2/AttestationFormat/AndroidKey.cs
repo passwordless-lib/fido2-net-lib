@@ -151,7 +151,7 @@ namespace Fido2NetLib
 
             // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
             // using the attestation public key in attestnCert with the algorithm specified in alg
-            if (!(X5c is CborArray { Count: > 0 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
+            if (!(X5c is CborArray { Length: > 0 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
                 throw new Fido2VerificationException("Malformed x5c in android-key attestation");
 
 

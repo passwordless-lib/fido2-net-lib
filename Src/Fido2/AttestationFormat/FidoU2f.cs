@@ -23,7 +23,7 @@ namespace Fido2NetLib
             // (handled in base class)
 
             // 2a. Check that x5c has exactly one element and let attCert be that element.
-            if (!(X5c is CborArray { Count: 1 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
+            if (!(X5c is CborArray { Length: 1 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
             {
                 throw new Fido2VerificationException("Malformed x5c in fido-u2f attestation");
             }

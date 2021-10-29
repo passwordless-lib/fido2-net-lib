@@ -43,7 +43,7 @@ namespace Fido2NetLib
         public override (AttestationType, X509Certificate2[]) Verify()
         {
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
-            if (!(X5c is CborArray { Count: >= 2 } x5cArray && x5cArray[0] is CborByteString {  Length: > 0 }))
+            if (!(X5c is CborArray { Length: >= 2 } x5cArray && x5cArray[0] is CborByteString {  Length: > 0 }))
             {
                 throw new Fido2VerificationException("Malformed x5c in Apple attestation");
             }
