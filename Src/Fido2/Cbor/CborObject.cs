@@ -91,6 +91,15 @@ namespace Fido2NetLib.Cbor
             reader.ReadEndMap();
 
             return map;
-        }  
+        }
+
+        public byte[] Encode()
+        {
+            var writer = new CborWriter();
+
+            writer.WriteObject(this);
+
+            return writer.Encode();
+        }
     }
 }
