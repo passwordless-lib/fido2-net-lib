@@ -38,7 +38,6 @@ namespace Fido2NetLib.Cbor
         {
             CborReaderState s = reader.PeekState();
 
-
             return s switch
             {
                 CborReaderState.StartMap        => ReadMap(reader),
@@ -48,7 +47,7 @@ namespace Fido2NetLib.Cbor
                 CborReaderState.UnsignedInteger => new CborInteger(reader.ReadInt64()),
                 CborReaderState.NegativeInteger => new CborInteger(reader.ReadInt64()),
                 CborReaderState.Null            => ReadNull(reader),
-                _ => throw new Exception("Unhandled:" + s.ToString())
+                _                               => throw new Exception($"Unhandled state. Was {s}")
             };
         }
 
@@ -77,9 +76,9 @@ namespace Fido2NetLib.Cbor
 
         private static CborMap ReadMap(CborReader reader)
         {
-            var map = new CborMap();
+            int? count = reader.ReadStartMap();
 
-            reader.ReadStartMap();
+            var map = count.HasValue ? new CborMap(count.Value) : new CborMap();
 
             while (!(reader.PeekState() is CborReaderState.EndMap or CborReaderState.Finished))
             {
@@ -92,6 +91,6 @@ namespace Fido2NetLib.Cbor
             reader.ReadEndMap();
 
             return map;
-        }
+        }  
     }
 }
