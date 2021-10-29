@@ -10,7 +10,7 @@ namespace Fido2NetLib.Objects
 {
     public sealed class CredentialPublicKey
     {
-        public CredentialPublicKey(byte[] cpk) : this((CborMap)CborObject.Parse(cpk)) { }
+        public CredentialPublicKey(byte[] cpk) : this((CborMap)CborObject.Decode(cpk)) { }
 
         public CredentialPublicKey(CborMap cpk)
         {

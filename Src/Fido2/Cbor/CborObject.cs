@@ -8,7 +8,7 @@ namespace Fido2NetLib.Cbor
     {
         public abstract CborType Type { get; }
 
-        public static CborObject Parse(ReadOnlyMemory<byte> data)
+        public static CborObject Decode(ReadOnlyMemory<byte> data)
         {
             var reader = new CborReader(data);
 

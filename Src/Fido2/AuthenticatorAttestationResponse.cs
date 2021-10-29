@@ -40,7 +40,7 @@ namespace Fido2NetLib
             CborMap cborAttestation;
             try
             {
-                cborAttestation = (CborMap)CborObject.Parse(rawResponse.Response.AttestationObject);
+                cborAttestation = (CborMap)CborObject.Decode(rawResponse.Response.AttestationObject);
             }
             catch (Exception ex)
             {
