@@ -77,9 +77,11 @@ namespace Fido2NetLib.Cbor
 
         private static CborArray ReadArray(CborReader reader)
         {
-            var items = new List<CborObject>();
-
             int? count = reader.ReadStartArray();
+
+            var items = count != null
+                ? new List<CborObject>(count.Value)
+                : new List<CborObject>();
 
             while (!(reader.PeekState() is CborReaderState.EndArray or CborReaderState.Finished))
             {

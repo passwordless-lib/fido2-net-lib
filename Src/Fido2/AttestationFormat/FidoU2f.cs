@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -90,9 +89,8 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Invalid fido-u2f attestation signature");
 
             // 7. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
-            var trustPath = ((CborArray)X5c).Values
-                .Select(x => new X509Certificate2((byte[])x))
-                .ToArray();
+
+            var trustPath = new X509Certificate2[1] { attCert };
 
             return (AttestationType.AttCa, trustPath);
         }

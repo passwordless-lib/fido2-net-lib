@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -143,21 +144,20 @@ namespace Fido2NetLib
                 : throw new ArgumentException("No x5c array was present in the BLOB header.");
 
             var rootCert = GetX509Certificate(ROOT_CERT);
-            var blobCertificates = new List<X509Certificate2>();
+            var blobCertificates = new X509Certificate2[blobCertStrings.Length]; 
             var blobPublicKeys = new List<SecurityKey>();
 
-            foreach (var certString in blobCertStrings)
+            for (int i = 0; i < blobCertStrings.Length; i++)
             {
-                var cert = GetX509Certificate(certString);
-                blobCertificates.Add(cert);
+                var cert = GetX509Certificate(blobCertStrings[i]);
+                blobCertificates[i] = cert;
 
-                var ecdsaPublicKey = cert.GetECDsaPublicKey();
-                if(ecdsaPublicKey != null)
+                if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
                     blobPublicKeys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
                 
-                var rsa = cert.GetRSAPublicKey();
-                if(rsa != null)
+                else if (cert.GetRSAPublicKey() is RSA rsa)
                     blobPublicKeys.Add(new RsaSecurityKey(rsa));
+
             }
  
             var certChain = new X509Chain();
@@ -185,7 +185,7 @@ namespace Fido2NetLib
                 validationParameters,
                 out var validatedToken);
 
-            if(blobCertificates.Count > 1)
+            if(blobCertificates.Length > 1)
             {
                 certChain.ChainPolicy.ExtraStore.AddRange(blobCertificates.Skip(1).ToArray());
             }

@@ -50,9 +50,12 @@ namespace Fido2NetLib
             // 2. Verify x5c is a valid certificate chain starting from the credCert to the Apple WebAuthn root certificate.
             // This happens in AuthenticatorAttestationResponse.VerifyAsync using metadata from MDS3
 
-            var trustPath = x5cArray.Values
-                .Select(x => new X509Certificate2((byte[])x))
-                .ToArray();
+            var trustPath = new X509Certificate2[x5cArray.Length];
+
+            for (int i = 0; i < trustPath.Length; i++)
+            {
+                trustPath[i] = new X509Certificate2((byte[])x5cArray[i]);
+            }
 
             // credCert is the first certificate in the trust path
             var credCert = trustPath[0];
@@ -72,7 +75,7 @@ namespace Fido2NetLib
 
             // 6. Verify credential public key matches the Subject Public Key of credCert.
             // First, obtain COSE algorithm being used from credential public key
-            var coseAlg = (int)CredentialPublicKey[COSE.KeyCommonParameter.Alg];
+            var coseAlg = (COSE.Algorithm)(int)CredentialPublicKey[COSE.KeyCommonParameter.Alg];
 
             // Next, build temporary CredentialPublicKey for comparison from credCert and COSE algorithm
             var cpk = new CredentialPublicKey(credCert, coseAlg);

@@ -60,11 +60,11 @@ namespace Test.Attestation
 
                     var cpk = new CborMap
                     {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.X, ecparams.Q.X },
-                        { (int)COSE.KeyTypeParameter.Y, ecparams.Q.Y },
-                        { (int)COSE.KeyTypeParameter.Crv, (int)crv }
+                        { COSE.KeyCommonParameter.KeyType, type },
+                        { COSE.KeyCommonParameter.Alg, alg },
+                        { COSE.KeyTypeParameter.X, ecparams.Q.X },
+                        { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                        { COSE.KeyTypeParameter.Crv, crv }
                     };
 
                     var x = (byte[])cpk[COSE.KeyTypeParameter.X];

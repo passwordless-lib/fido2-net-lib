@@ -186,12 +186,8 @@ namespace fido2_net_lib.Test
                 idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
             }
 
-            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse(CborMap? attestationObject = null)
+            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
             {
-                if (attestationObject is not null)
-                {
-                }
-
                 _attestationObject.Set("authData", new CborByteString(_authData));
 
                 var attestationResponse = new AuthenticatorAttestationRawResponse
@@ -268,7 +264,7 @@ namespace fido2_net_lib.Test
                 ECDsa ecdsa = null;
                 RSA rsa = null;
                 Key privateKey = null;
-                byte[] expandedPrivateKey = null, publicKey = null;
+                byte[] expandedPrivateKey, publicKey = null;
 
                 switch (kty)
                 {
@@ -1028,21 +1024,22 @@ namespace fido2_net_lib.Test
         {
             var cpk = new CborMap();
 
-            cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)kty);
-            cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
+            cpk.Add(COSE.KeyCommonParameter.KeyType, kty);
+            cpk.Add(COSE.KeyCommonParameter.Alg, alg);
+
             switch (kty)
             {
                 case COSE.KeyType.EC2:
-                    cpk.Add((int)COSE.KeyTypeParameter.X, x);
-                    cpk.Add((int)COSE.KeyTypeParameter.Y, y);
+                    cpk.Add(COSE.KeyTypeParameter.X, x);
+                    cpk.Add(COSE.KeyTypeParameter.Y, y);
                     cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)crv);
                     break;
                 case COSE.KeyType.RSA:
-                    cpk.Add((int)COSE.KeyTypeParameter.N, n);
-                    cpk.Add((int)COSE.KeyTypeParameter.E, e);
+                    cpk.Add(COSE.KeyTypeParameter.N, n);
+                    cpk.Add(COSE.KeyTypeParameter.E, e);
                     break;
                 case COSE.KeyType.OKP:
-                    cpk.Add((int)COSE.KeyTypeParameter.X, x);
+                    cpk.Add(COSE.KeyTypeParameter.X, x);
                     cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)crv);
                     break;
                 default:
@@ -1074,7 +1071,7 @@ namespace fido2_net_lib.Test
                     }
                 case COSE.KeyType.OKP:
                     {
-                        MakeEdDSA(out var privateKeySeed, out byte[] publicKey, out byte[] expandedPrivateKey);
+                        MakeEdDSA(out var privateKeySeed, out byte[] publicKey, out _);
                         cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
                         break;
                     }
