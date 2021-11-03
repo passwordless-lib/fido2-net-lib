@@ -79,9 +79,15 @@ namespace Fido2NetLib
                 }
                 bool valid = chain.Build(trustPath[0]);
 
-                // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                var chainRoot = chain.ChainElements[^1].Certificate;
-                valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
+                // FIDO MDS contains trust anchors that are not necessarily a root CA, the device attestation must validate with one of them
+                if (chain.ChainElements.Count > trustPath.Length)
+                {
+                    // because we are using AllowUnknownCertificateAuthority we have to verify that the trust anchor matches ourselves
+                    var trustAnchor = chain.ChainElements[trustPath.Length].Certificate;
+                    valid = valid && trustAnchor.RawData.SequenceEqual(attestationRootCert.RawData);
+                }
+                else
+                    valid = false;
 
                 if (valid)
                     return true;
