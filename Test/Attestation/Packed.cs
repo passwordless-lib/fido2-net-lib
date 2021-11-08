@@ -88,6 +88,30 @@ namespace Test.Attestation
         }
 
         [Fact]
+        public void TestEcdaaKeyIdPresent()
+        {
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
+            _attestationObject.Add("attStmt", new CborMap {
+                { "alg", alg },
+                { "sig", signature },
+                { "ecdaaKeyId", signature }
+            });
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("ECDAA is not yet implemented", ex.Result.Message);
+        }
+
+        [Fact]
+        public void TestEmptyAttStmt()
+        {
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+            var signature = SignData(type, alg, crv);
+            _attestationObject.Add("attStmt", new CborMap { });
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("Attestation format packed must have attestation statement", ex.Result.Message);
+        }
+
+        [Fact]
         public void TestAlgNaN()
         {
             var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];

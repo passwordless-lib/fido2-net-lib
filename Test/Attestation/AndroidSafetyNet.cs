@@ -328,6 +328,22 @@ namespace Test.Attestation
         }
 
         [Fact]
+        public void TestAndroidSafetyNetResponseJWTX5cInvalidString()
+        {
+            var response = (byte[])_attestationObject["attStmt"]["response"];
+            var jwtParts = Encoding.UTF8.GetString(response).Split('.');
+            var jwtHeaderJSON = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(jwtParts.First())));
+            jwtHeaderJSON.Remove("x5c");
+            jwtHeaderJSON.Add("x5c", JToken.FromObject(new List<string> { "RjFEMA=="}));
+            jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwtHeaderJSON)));
+            response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("response", new CborByteString(response));
+            var ex = Assert.ThrowsAsync<System.ArgumentException>(() => MakeAttestationResponse());
+            Assert.Equal("Could not parse X509 certificate.", ex.Result.Message);
+        }
+
+        [Fact]
         public void TestAndroidSafetyNetJwtInvalid()
         {
             var response = (byte[])_attestationObject["attStmt"]["response"];
