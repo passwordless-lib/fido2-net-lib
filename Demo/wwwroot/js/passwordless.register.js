@@ -8,6 +8,7 @@ async function handleRegisterSubmit(event) {
 
     // possible values: none, direct, indirect
     let attestation_type = "none";
+
     // possible values: <empty>, platform, cross-platform
     let authenticator_attachment = "";
 
@@ -16,8 +17,6 @@ async function handleRegisterSubmit(event) {
 
     // possible values: true,false
     let require_resident_key = "false";
-
-
 
     // prepare form post data
     var data = new FormData();

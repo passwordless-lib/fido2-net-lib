@@ -18,8 +18,6 @@ async function handleRegisterSubmit(event) {
     // NOTE: For usernameless scenarios, resident key must be set to true.
     let require_resident_key = "true";
 
-
-
     // prepare form post data
     var data = new FormData();
     //data.append('username', username);

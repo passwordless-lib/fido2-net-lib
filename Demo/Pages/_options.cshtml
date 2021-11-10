@@ -8,37 +8,40 @@
             <p>These settings are typically administred by the RP but for demo purposes we expose them to you for testing behaviours and browser support</p>
             <form id="options">
                 <div class="field">
-                    <label class="label">Attestation type</label>
+                    <label class="label">Attestation</label>
                     <div class="control">
                         <div class="select">
                             <select id="option-attestation">
-                                <option selected value="none">None</option>
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="none">None</option>
                                 <option value="indirect">Indirect</option>
                                 <option value="direct">Direct</option>
+                                <option value="enterprise">Enterprise</option>
                             </select>
                         </div>
                     </div>
                 </div>
                 <div class="field">
-                    <label class="label">Authenticator</label>
+                    <label class="label">Authenticator Attachment</label>
                     <div class="control">
                         <div class="select">
                             <select id="option-authenticator">
-                                <option selected value="">Not specified</option>
-                                <option value="cross-platform">Cross Platform (Token)</option>
+                                <option selected value="undefined">Undefined</option>
                                 <option value="platform">Platform (TPM)</option>
+                                <option value="cross-platform">Cross-Platform (Security Key)</option>
                             </select>
                         </div>
                     </div>
                 </div>
                 <div class="field">
-                    <label class="label">User verification</label>
+                    <label class="label">User Verification</label>
                     <div class="control">
                         <div class="select">
                             <select id="option-userverification">
+                                <option selected value="undefined">Undefined</option>
                                 <option value="required">Required</option>
                                 <option value="preferred">Preferred</option>
-                                <option selected value="discouraged">Discouraged</option>
+                                <option value="discouraged">Discouraged</option>
                             </select>
                         </div>
                     </div>
@@ -46,13 +49,154 @@
 
                 </div>
                 <div class="field">
-                    <label class="label">Resident Key</label>
+                    <label class="label">Require Resident Key</label>
                     <div class="control">
-                        <label class="checkbox">
-                            <input type="checkbox" id="option-residentkey">
-                            Use Resident key
+                        <label class="select">
+                            <select id="option-requireresidentkey">
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="false">False</option>
+                                <option value="true">True</option>
+                            </select>
                         </label>
                     </div>
+                </div>
+                <div class="field">
+                    <label class="label">Resident Key (L2)</label>
+                    <div class="control">
+                        <label class="select">
+                            <select id="option-residentkey">
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="discouraged">Discouraged</option>
+                                <option value="preferred">Preferred</option>
+                                <option value="required">Required</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">RP Info</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-rpinfo">
+                                <option value="undefined" selected>Undefined RP ID</option>
+                                <option value="normal">This domain</option>
+                                <option value="suffix">Suffix to this domain</option>
+                                <option value="securityerror">foo.com</option>
+                                <option value="emptyrpid">Empty RP ID</option>
+                                <option value="emptyrpname">Empty RP Name</option>
+                                <option value="emptyrpicon">Empty RP Icon</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">CredProtect Extension</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-credprotect">
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="userVerificationOptional">UVOptional</option>
+                                <option value="userVerificationOptionalWithCredentialIDList">UVOptionalWithCredIDList</option>
+                                <option value="userVerificationRequired">UVRequired</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Enforce CredProtect</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-credprotectenforce">
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="false">False</option>
+                                <option value="true">True</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">HMAC Extension</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-hmaccreate">
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="false">False</option>
+                                <option value="true">True</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">MinPinLength Extension</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-minPinLength">
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="false">False</option>
+                                <option value="true">True</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">LargeBlob Extension</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-largeBlob">
+                                <option value="undefined" selected>Undefined</option>
+                                <option value="preferred">Preferred</option>
+                                <option value="required">Required</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mdl-grid mdl-grid--no-spacing">
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-ES256">
+                        <input type="checkbox" id="option-ES256" class="mdl-checkbox__input" checked>
+                        <span class="mdl-checkbox__label">Use ES256</span>
+                    </label>
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-ES384">
+                        <input type="checkbox" id="option-ES384" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label">Use ES384</span>
+                    </label>
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-ES512">
+                        <input type="checkbox" id="option-ES512" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label">Use ES512</span>
+                    </label>
+                </div>
+                <div class="mdl-grid mdl-grid--no-spacing">
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-RS256">
+                        <input type="checkbox" id="option-RS256" class="mdl-checkbox__input" checked>
+                        <span class="mdl-checkbox__label">Use RS256</span>
+                    </label>
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-RS384">
+                        <input type="checkbox" id="option-RS384" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label">Use RS384</span>
+                    </label>
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-RS512">
+                        <input type="checkbox" id="option-RS512" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label">Use RS512</span>
+                    </label>
+                </div>
+                <div class="mdl-grid mdl-grid--no-spacing">
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-PS256">
+                        <input type="checkbox" id="option-PS256" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label">Use PS256</span>
+                    </label>
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-PS384">
+                        <input type="checkbox" id="option-PS384" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label">Use PS384</span>
+                    </label>
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-PS512">
+                        <input type="checkbox" id="option-PS512" class="mdl-checkbox__input">
+                        <span class="mdl-checkbox__label">Use PS512</span>
+                    </label>
+                </div>
+                <div class="mdl-grid mdl-grid--no-spacing">
+                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-cell mdl-cell--6-col" for="option-EdDSA">
+                        <input type="checkbox" id="option-EdDSA" class="mdl-checkbox__input" checked>
+                        <span class="mdl-checkbox__label">Use EdDSA</span>
+                    </label>
                 </div>
             </form>
         </div>
