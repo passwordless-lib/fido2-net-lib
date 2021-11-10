@@ -64,34 +64,76 @@ namespace Fido2NetLib
 
         public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
         {
-            foreach (var attestationRootCert in attestationRootCertificates)
+            // https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#widl-MetadataStatement-attestationRootCertificates
+
+            // Each element of this array represents a PKIX [RFC5280] X.509 certificate that is a valid trust anchor for this authenticator model.
+            // Multiple certificates might be used for different batches of the same model.
+            // The array does not represent a certificate chain, but only the trust anchor of that chain.
+            // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
+
+            // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
+            if (trustPath.Length == 1 && trustPath[0].Subject.CompareTo(trustPath[0].Issuer) == 0)
             {
-                var chain = new X509Chain();
-                chain.ChainPolicy.ExtraStore.Add(attestationRootCert);
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                if (trustPath.Length > 1)
+                foreach (X509Certificate2? cert in attestationRootCertificates)
                 {
-                    foreach (var cert in trustPath.Skip(1).Reverse())
+                    if (cert.Thumbprint.CompareTo(trustPath[0].Thumbprint) == 0)
+                        return true;
+                }
+                return false;
+            }
+
+            // If the attestation cert is not self signed, we will need to build a chain
+            var chain = new X509Chain();
+
+            // Put all potential trust anchors into extra store
+            chain.ChainPolicy.ExtraStore.AddRange(attestationRootCertificates);
+
+            // We don't know the root here, so allow unknown root, and turn off revocation checking
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+            // trustPath[0] is the attestation cert, if there are more in the array than just that, add those to the extra store as well, but skip attestation cert
+            if (trustPath.Length > 1)
+            {
+                foreach (X509Certificate2? cert in trustPath.Skip(1)) // skip attestation cert
+                {
+                    chain.ChainPolicy.ExtraStore.Add(cert);
+                }
+            }
+
+            // try to build a chain with what we've got
+            if (chain.Build(trustPath[0]))
+            {
+                // if that validated, we should have a root for this chain now, add it to the custom trust store
+                chain.ChainPolicy.CustomTrustStore.Clear();
+                chain.ChainPolicy.CustomTrustStore.Add(chain.ChainElements[^1].Certificate);
+
+                // explicitly trust the custom root we just added
+                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+
+                // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
+                if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+
+                // don't allow unknown root now that we have a custom root
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+
+                // now, verify chain again with all checks turned on
+                if (chain.Build(trustPath[0]))
+                {
+                    // if the chain validates, make sure one of the attestation root certificates is one of the chain elements
+                    foreach (X509Certificate2? attestationRootCertificate in attestationRootCertificates)
                     {
-                        chain.ChainPolicy.ExtraStore.Add(cert);
+                        // skip the first element, as that is the attestation cert
+                        if (chain.ChainElements
+                            .Cast<X509ChainElement>()
+                            .Skip(1)
+                            .Any(x => x.Certificate.Thumbprint == attestationRootCertificate.Thumbprint))
+                            return true;
                     }
                 }
-                bool valid = chain.Build(trustPath[0]);
-
-                // FIDO MDS contains trust anchors that are not necessarily a root CA, the device attestation must validate with one of them
-                if (chain.ChainElements.Count > trustPath.Length)
-                {
-                    // because we are using AllowUnknownCertificateAuthority we have to verify that the trust anchor matches ourselves
-                    var trustAnchor = chain.ChainElements[trustPath.Length].Certificate;
-                    valid = valid && trustAnchor.RawData.SequenceEqual(attestationRootCert.RawData);
-                }
-                else
-                    valid = false;
-
-                if (valid)
-                    return true;
             }
+
             return false;
         }
 
