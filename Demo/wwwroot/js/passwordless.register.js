@@ -12,7 +12,7 @@ async function handleRegisterSubmit(event) {
     let authenticator_attachment = "";
 
     // possible values: preferred, required, discouraged
-    let user_verification = "preferred";
+    let user_verification = "discouraged";
 
     // possible values: true,false
     let require_resident_key = "false";
