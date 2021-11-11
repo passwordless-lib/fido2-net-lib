@@ -4,11 +4,11 @@
     <VersionPrefix>3.0.0</VersionPrefix>
     <VersionSuffix>beta1</VersionSuffix>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
-    <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
+    <RepositoryUrl>https://github.com/passwordless-lib/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>fido2 webauthn</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
-    <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/passwordless-lib/fido2-net-lib</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   <!-- Global Variables -->
