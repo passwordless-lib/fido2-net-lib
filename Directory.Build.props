@@ -1,9 +1,8 @@
 <Project>
   <!-- Package Metadata -->
   <PropertyGroup>
-    <VersionPrefix>2.0.2</VersionPrefix>
-    <VersionSuffix>
-    </VersionSuffix>
+    <VersionPrefix>3.0.0</VersionPrefix>
+    <VersionSuffix>beta1</VersionSuffix>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/abergs/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -12,17 +11,14 @@
     <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
-  
   <!-- Global Variables -->
   <PropertyGroup>
     <SupportedTargetFrameworks>net5.0</SupportedTargetFrameworks>
   </PropertyGroup>
-  
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
     <LangVersion>9</LangVersion>
   </PropertyGroup>
-  
   <!--MISC-->
   <PropertyGroup>
     <!-- Avoid annoying build warnings when packing using the solution file -->
