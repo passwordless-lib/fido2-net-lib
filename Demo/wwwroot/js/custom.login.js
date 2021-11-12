@@ -4,7 +4,11 @@ async function handleSignInSubmit(event) {
     event.preventDefault();
 
     let username = this.username.value;
-    let user_verification = value("#option-userverification");
+    let user_verification = "discouraged";
+
+    if (value("#option-userverification") !== "undefined") {
+        user_verification = value("#option-userverification");
+    }
 
     // prepare form post data
     var formData = new FormData();

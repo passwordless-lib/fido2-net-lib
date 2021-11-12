@@ -15,7 +15,7 @@ async function handleRegisterSubmit(event) {
     let authenticator_attachment = "";
 
     if (value("#option-authenticator") !== "undefined") {
-        createCredentialOptions.authenticatorSelection.authenticatorAttachment = value("#option-authenticator");
+        authenticator_attachment = value("#option-authenticator");
     }
 
     let user_verification = "discouraged";
@@ -266,7 +266,6 @@ async function fetchMakeCredentialOptions(formData) {
     return data;
 }
 
-
 // This should be used to verify the auth data with the server
 async function registerNewCredential(newCredential) {
     // Move data into Arrays incase it is super long
@@ -287,29 +286,29 @@ async function registerNewCredential(newCredential) {
 
     let response;
     try {
-        response = await registerCredentialWithServer(data);
-    } catch (e) {
-        showErrorAlert(e);
+            response = await registerCredentialWithServer(data);
+        } catch (e) {
+            showErrorAlert(e);
     }
 
-    console.log("Credential Object", response);
+            console.log("Credential Object", response);
 
-    // show error
-    if (response.status !== "ok") {
-        console.log("Error creating credential");
-        console.log(response.errorMessage);
-        showErrorAlert(response.errorMessage);
-        return;
-    }
+            // show error
+            if (response.status !== "ok") {
+                console.log("Error creating credential");
+                console.log(response.errorMessage);
+                showErrorAlert(response.errorMessage);
+                return;
+            }
 
-    // show success 
-    Swal.fire({
-        title: 'Registration Successful!',
-        text: 'You\'ve registered successfully.',
-        type: 'success',
-        timer: 2000
-    });
-
+            // show success 
+            Swal.fire({
+                title: 'Registration Successful!',
+                text: 'You\'ve registered successfully.',
+                type: 'success',
+                timer: 2000
+            });
+ 
     // redirect to dashboard?
     //window.location.href = "/dashboard/" + state.user.displayName;
 }
