@@ -63,7 +63,7 @@
                             </a>
                             <a class="navbar-item" href="https://opencollective.com/passwordless">
                                 Become a backer
-                            </a>                            
+                            </a>
                             <span class="navbar-item">
                                 <a class="button is-info is-inverted" href="https://github.com/passwordless-lib/fido2-net-lib">
                                     <span class="icon">
@@ -114,6 +114,58 @@
         </div>
     </section>
     @RenderBody()
+    <dialog class="mdl-dialog" id="creationDataDialog">
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button close" id="creationDataDialog_xButton">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <h3 class="mdl-dialog__title">Credential Creation Data</h3>
+        <div class="mdl-dialog__content">
+            <p>
+                <b>Require Resident Key</b>
+                <br>
+                <span id="creationData_residentKey"></span>
+            </p>
+            <p>
+                <b>Authenticator Data</b>
+                <br>
+                <span id="creationData_authenticatorData"></span>
+            </p>
+            <p>
+                <b>Authenticator Data in Hex</b>
+                <br>
+                <span id="creationData_authenticatorDataHex"></span>
+            </p>
+            <p>
+                <b>Public Key</b>
+                <br>
+                <span id="creationData_publicKey"></span>
+            </p>
+            <p>
+                <b>Extension Data</b>
+                <br>
+                <span id="creationData_extensionData"></span>
+            </p>
+            <p>
+                <b>Attestation Statement Chain</b>
+                <br>
+                <span id="creationData_attestationStatementChainJSON"></span>
+            </p>
+            <p>
+                <b>Attestation Statement in Hex</b>
+                <br>
+                <span id="creationData_attestationStatementHex"></span>
+            </p>
+
+        </div>
+
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button close" id="creationDataDialog_closeButton">
+                Close
+            </button>
+        </div>
+    </dialog>
     <footer class="footer" style="        margin-top: 20vh">
         <div class="content has-text-centered">
             <p>
@@ -123,7 +175,7 @@
 
             <p><small>Supported by the <a href="https://dotnetfoundation.org">.NET Foundation</a></small></p>
             <img src="~/images/dotnetfoundation_v4_horizontal.svg" alt=".NET foundation logo" width="220" />
-            
+
             <p><small>Illustrations from <a href="https://medium.com/@@herrjemand/introduction-to-webauthn-api-5fd1fb46c285">Ackermann Yuriy</a></small></p>
         </div>
     </footer>

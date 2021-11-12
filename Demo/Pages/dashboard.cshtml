@@ -52,8 +52,11 @@
                     if (_mds != null)
                     {
                         var entry = _mds.GetEntry(item.AaGuid);
-                        desc = entry.MetadataStatement.Description.ToString();
-                        icon = entry.MetadataStatement.Icon.ToString();
+                        if (entry != null)
+                        {
+                            desc = entry.MetadataStatement.Description.ToString();
+                            icon = entry.MetadataStatement.Icon.ToString();
+                        }
                     }
 
                 }

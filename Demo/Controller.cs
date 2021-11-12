@@ -8,7 +8,7 @@ using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.Extensions.DependencyInjection;
 using static Fido2NetLib.Fido2;
 
 namespace Fido2Demo
@@ -20,9 +20,11 @@ namespace Fido2Demo
         public static IMetadataService _mds;
         public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
-        public MyController(IFido2 fido2)
+        public MyController(IFido2 fido2, IMetadataService metadataService)
         {
             _fido2 = fido2;
+
+            _mds = metadataService;
         }
 
         private string FormatException(Exception e)
