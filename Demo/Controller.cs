@@ -20,9 +20,11 @@ namespace Fido2Demo
         public static IMetadataService _mds;
         public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
-        public MyController(IFido2 fido2)
+        public MyController(IFido2 fido2, IMetadataService metadataService)
         {
             _fido2 = fido2;
+
+            _mds = metadataService;
         }
 
         private string FormatException(Exception e)
