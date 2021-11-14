@@ -5,24 +5,14 @@ namespace Fido2NetLib
 {
     internal class NullMetadataService : IMetadataService
     {
-        bool IMetadataService.ConformanceTesting()
+        public Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid)
+        {
+            return Task.FromResult((MetadataBLOBPayloadEntry)null);
+        }
+
+        public bool ConformanceTesting()
         {
             return false;
-        }
-
-        MetadataBLOBPayloadEntry IMetadataService.GetEntry(Guid aaguid)
-        {
-            return null;
-        }
-
-        Task IMetadataService.InitializeAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        bool IMetadataService.IsInitialized()
-        {
-            return true;
         }
     }
 }

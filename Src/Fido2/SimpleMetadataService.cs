@@ -88,5 +88,10 @@ namespace Fido2NetLib
         {
             return _initialized;
         }
+
+        public Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid)
+        {
+            return Task.FromResult(GetEntry(aaguid));
+        }
     }
 }

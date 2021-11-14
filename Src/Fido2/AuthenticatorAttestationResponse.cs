@@ -147,13 +147,16 @@ namespace Fido2NetLib
 
             // 15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
             // For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
-            var entry = metadataService?.GetEntry(authData.AttestedCredentialData.AaGuid);
 
+            MetadataBLOBPayloadEntry metadataEntry = null;
+            if(metadataService != null)
+                metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid);
+            
             // while conformance testing, we must reject any authenticator that we cannot get metadata for
-            if (metadataService?.ConformanceTesting() is true && entry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
+            if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
                 throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
 
-            if (trustPath != null && entry?.MetadataStatement?.AttestationTypes is not null)
+            if (trustPath != null && metadataEntry?.MetadataStatement?.AttestationTypes is not null)
             {
                 static bool ContainsAttestationType(MetadataBLOBPayloadEntry entry, MetadataAttestationType type)
                 {
@@ -161,10 +164,10 @@ namespace Fido2NetLib
                 }
 
                 // If the authenticator's metadata requires basic full attestation, build and verify the chain
-                if (ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_BASIC_FULL) ||
-                    ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_PRIVACY_CA))
+                if (ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_BASIC_FULL) ||
+                    ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_PRIVACY_CA))
                 {
-                    string[] certStrings = entry.MetadataStatement.AttestationRootCertificates;
+                    string[] certStrings = metadataEntry.MetadataStatement.AttestationRootCertificates;
                     var attestationRootCertificates = new X509Certificate2[certStrings.Length];
 
                     for (int i = 0; i < attestationRootCertificates.Length; i++)
@@ -178,7 +181,7 @@ namespace Fido2NetLib
                     }
                 }
 
-                else if (ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_ANONCA))
+                else if (ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_ANONCA))
                 {
                     // skip verification for Anonymization CA (AnonCA)
                 }
@@ -201,7 +204,7 @@ namespace Fido2NetLib
             }
 
             // Check status resports for authenticator with undesirable status
-            foreach (var report in entry?.StatusReports ?? Array.Empty<StatusReport>())
+            foreach (var report in metadataEntry?.StatusReports ?? Array.Empty<StatusReport>())
             {
                 if (report.Status.IsUndesired())
                 {

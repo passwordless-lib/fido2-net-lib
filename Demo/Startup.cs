@@ -29,7 +29,9 @@ namespace Fido2Demo
             });
 
             // Use the in-memory implementation of IDistributedCache.
+            services.AddMemoryCache();
             services.AddDistributedMemoryCache();
+
             services.AddSession(options =>
             {
                 // Set a short timeout for easy testing.
