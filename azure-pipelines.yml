@@ -14,10 +14,11 @@ jobs:
   steps:
   - task: NuGetToolInstaller@1
     displayName: Install latest NuGet
-  - task: DotNetCoreInstaller@1
-    displayName: Use .NET Core sdk 3.1
+  - task: UseDotNet@2
+    displayName: 'Use .NET 5.0 SDK'
     inputs:
-      version: 3.1.x
+      packageType: 'sdk'
+      version: '5.0.x'
   - task: DotNetCoreCLI@2
     displayName: dotnet restore
     inputs:
@@ -50,7 +51,7 @@ jobs:
     displayName: Publish website
     inputs:
       command: publish
-      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework netcoreapp3.1'
+      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework net5.0'
   - task: PublishBuildArtifacts@1
     displayName: Copy website to artifacts
     inputs:
@@ -72,7 +73,7 @@ jobs:
   - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
     displayName: ReportGenerator
     inputs:
-      reports: '$(Build.SourcesDirectory)/Test/coverage.netcoreapp3.1.cobertura.xml'
+      reports: '$(Build.SourcesDirectory)/Test/coverage.net5.0.cobertura.xml'
       targetdir: '$(Build.SourcesDirectory)/CodeCoverage'
       reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges'
       assemblyfilters: '-xunit*'

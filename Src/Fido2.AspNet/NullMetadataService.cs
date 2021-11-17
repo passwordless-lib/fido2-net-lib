@@ -10,12 +10,12 @@ namespace Fido2NetLib
             return false;
         }
 
-        MetadataTOCPayloadEntry IMetadataService.GetEntry(Guid aaguid)
+        MetadataBLOBPayloadEntry IMetadataService.GetEntry(Guid aaguid)
         {
             return null;
         }
 
-        Task IMetadataService.Initialize()
+        Task IMetadataService.InitializeAsync()
         {
             return Task.CompletedTask;
         }

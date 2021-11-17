@@ -1,6 +1,5 @@
 ﻿using System.Runtime.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
@@ -8,7 +7,7 @@ namespace Fido2NetLib.Objects
     /// A WebAuthn Relying Party may require user verification for some of its operations but not for others, and may use this type to express its needs.
     /// https://w3c.github.io/webauthn/#enumdef-userverificationrequirement
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(FidoEnumConverter<UserVerificationRequirement>))]
     public enum UserVerificationRequirement
     {
         /// <summary>

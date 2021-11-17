@@ -1,12 +1,12 @@
 ﻿namespace Fido2NetLib.Objects
 {
-    public class AttestationType : TypedString
+    public sealed class AttestationType : TypedString
     {
-        public static readonly AttestationType None = new AttestationType("none");
-        public static readonly AttestationType Basic = new AttestationType("basic");
-        public static readonly AttestationType Self = new AttestationType("self");
-        public static readonly AttestationType AttCa = new AttestationType("attca");
-        public static readonly AttestationType ECDAA = new AttestationType("ecdaa");
+        public static readonly AttestationType None  = new ("none");
+        public static readonly AttestationType Basic = new ("basic");
+        public static readonly AttestationType Self  = new ("self");
+        public static readonly AttestationType AttCa = new ("attca");
+        public static readonly AttestationType ECDAA = new ("ecdaa");
 
         private AttestationType(string value) : base(value)
         {

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Asn1;
+using System.Text;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -39,9 +38,9 @@ namespace Fido2NetLib
             }
         }
 
-        public static HashAlgorithmName HashAlgFromCOSEAlg(int alg)
+        public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
         {
-            return (COSE.Algorithm)alg switch
+            return alg switch
             {
                 COSE.Algorithm.RS1 => HashAlgorithmName.SHA1,
                 COSE.Algorithm.ES256 => HashAlgorithmName.SHA256,
@@ -53,6 +52,7 @@ namespace Fido2NetLib
                 COSE.Algorithm.RS256 => HashAlgorithmName.SHA256,
                 COSE.Algorithm.RS384 => HashAlgorithmName.SHA384,
                 COSE.Algorithm.RS512 => HashAlgorithmName.SHA512,
+                COSE.Algorithm.ES256K => HashAlgorithmName.SHA256,
                 (COSE.Algorithm)4 => HashAlgorithmName.SHA1,
                 (COSE.Algorithm)11 => HashAlgorithmName.SHA256,
                 (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
@@ -64,69 +64,123 @@ namespace Fido2NetLib
 
         public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
         {
-            foreach (var attestationRootCert in attestationRootCertificates)
+            // https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#widl-MetadataStatement-attestationRootCertificates
+
+            // Each element of this array represents a PKIX [RFC5280] X.509 certificate that is a valid trust anchor for this authenticator model.
+            // Multiple certificates might be used for different batches of the same model.
+            // The array does not represent a certificate chain, but only the trust anchor of that chain.
+            // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
+
+            // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
+            if (trustPath.Length == 1 && trustPath[0].Subject.CompareTo(trustPath[0].Issuer) == 0)
             {
-                var chain = new X509Chain();
-                chain.ChainPolicy.ExtraStore.Add(attestationRootCert);
-                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                if (trustPath.Length > 1)
+                foreach (X509Certificate2? cert in attestationRootCertificates)
                 {
-                    foreach (var cert in trustPath.Skip(1).Reverse())
+                    if (cert.Thumbprint.CompareTo(trustPath[0].Thumbprint) == 0)
+                        return true;
+                }
+                return false;
+            }
+
+            // If the attestation cert is not self signed, we will need to build a chain
+            var chain = new X509Chain();
+
+            // Put all potential trust anchors into extra store
+            chain.ChainPolicy.ExtraStore.AddRange(attestationRootCertificates);
+
+            // We don't know the root here, so allow unknown root, and turn off revocation checking
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+            // trustPath[0] is the attestation cert, if there are more in the array than just that, add those to the extra store as well, but skip attestation cert
+            if (trustPath.Length > 1)
+            {
+                foreach (X509Certificate2? cert in trustPath.Skip(1)) // skip attestation cert
+                {
+                    chain.ChainPolicy.ExtraStore.Add(cert);
+                }
+            }
+
+            // try to build a chain with what we've got
+            if (chain.Build(trustPath[0]))
+            {
+                // if that validated, we should have a root for this chain now, add it to the custom trust store
+                chain.ChainPolicy.CustomTrustStore.Clear();
+                chain.ChainPolicy.CustomTrustStore.Add(chain.ChainElements[^1].Certificate);
+
+                // explicitly trust the custom root we just added
+                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+
+                // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
+                if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+
+                // don't allow unknown root now that we have a custom root
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+
+                // now, verify chain again with all checks turned on
+                if (chain.Build(trustPath[0]))
+                {
+                    // if the chain validates, make sure one of the attestation root certificates is one of the chain elements
+                    foreach (X509Certificate2? attestationRootCertificate in attestationRootCertificates)
                     {
-                        chain.ChainPolicy.ExtraStore.Add(cert);
+                        // skip the first element, as that is the attestation cert
+                        if (chain.ChainElements
+                            .Cast<X509ChainElement>()
+                            .Skip(1)
+                            .Any(x => x.Certificate.Thumbprint == attestationRootCertificate.Thumbprint))
+                            return true;
                     }
                 }
-                var valid = chain.Build(trustPath[0]);
-
-                // because we are using AllowUnknownCertificateAuthority we have to verify that the root matches ourselves
-                var chainRoot = chain.ChainElements[chain.ChainElements.Count - 1].Certificate;
-                valid = valid && chainRoot.RawData.SequenceEqual(attestationRootCert.RawData);
-
-                if (true == valid)
-                    return true;
             }
+
             return false;
         }
 
         public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
         {
-            var decoded = AsnElt.Decode(ecDsaSig);
-            var r = decoded.Sub[0].GetOctetString();
-            var s = decoded.Sub[1].GetOctetString();
+            var decoded = Asn1Element.Decode(ecDsaSig);
+            var r = decoded[0].GetIntegerBytes();
+            var s = decoded[1].GetIntegerBytes();
 
             // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
             // ASN.1 requires storing positive integer values with any leading 0s removed
             // Convert ASN.1 format to IEEE P-1363 format 
             // determine coefficient size 
+
+            // common coefficient sizes include: 32, 48, and 64
             var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
-            // Create byte array to copy R into 
-            var P1363R = new byte[coefficientSize];
+            // Create buffer to copy R into 
+            Span<byte> p1363R = coefficientSize <= 64
+                ? stackalloc byte[coefficientSize]
+                : new byte[coefficientSize];
 
             if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
             {
-                r.Skip(1).ToArray().CopyTo(P1363R, coefficientSize - r.Length + 1);
+                r.Slice(1).CopyTo(p1363R.Slice(coefficientSize - r.Length + 1));
             }
             else
             {
-                r.CopyTo(P1363R, coefficientSize - r.Length);
+                r.CopyTo(p1363R.Slice(coefficientSize - r.Length));
             }
 
             // Create byte array to copy S into 
-            var P1363S = new byte[coefficientSize];
+            Span<byte> p1363S = coefficientSize <= 64
+                ? stackalloc byte[coefficientSize]
+                : new byte[coefficientSize];
 
             if (0x0 == s[0] && (s[1] & (1 << 7)) != 0)
             {
-                s.Skip(1).ToArray().CopyTo(P1363S, coefficientSize - s.Length + 1);
+                s.Slice(1).CopyTo(p1363S.Slice(coefficientSize - s.Length + 1));
             }
             else
             {
-                s.CopyTo(P1363S, coefficientSize - s.Length);
+                s.CopyTo(p1363S.Slice(coefficientSize - s.Length));
             }
 
             // Concatenate R + S coordinates and return the raw signature
-            return P1363R.Concat(P1363S).ToArray();
+            return DataHelper.Concat(p1363R, p1363S);
         }
 
         /// <summary>
@@ -134,50 +188,15 @@ namespace Fido2NetLib
         /// </summary>
         /// <param name="pemStr">source string.</param>
         /// <returns>output byte array.</returns>
-        public static byte[] PemToBytes(string pemStr)
+        public static byte[] PemToBytes(ReadOnlySpan<char> pemStr)
         {
-            const string PemStartStr = "-----BEGIN";
-            const string PemEndStr = "-----END";
-            byte[] retval = null;
-            var lines = pemStr.Split('\n');
-            var base64Str = "";
-            bool started = false, ended = false;
-            var cline = "";
-            for (var i = 0; i < lines.Length; i++)
-            {
-                cline = lines[i].ToUpper();
-                if (cline == "")
-                    continue;
-                if (cline.Length > PemStartStr.Length)
-                {
-                    if (!started && cline.Substring(0, PemStartStr.Length) == PemStartStr)
-                    {
-                        started = true;
-                        continue;
-                    }
-                }
-                if (cline.Length > PemEndStr.Length)
-                {
-                    if (cline.Substring(0, PemEndStr.Length) == PemEndStr)
-                    {
-                        ended = true;
-                        break;
-                    }
-                }
-                if (started)
-                {
-                    base64Str += lines[i];
-                }
-            }
-            if (!(started && ended))
-            {
-                throw new Exception("'BEGIN'/'END' line is missing.");
-            }
-            base64Str = base64Str.Replace("\r", "");
-            base64Str = base64Str.Replace("\n", "");
-            base64Str = base64Str.Replace("\n", " ");
-            retval = Convert.FromBase64String(base64Str);
-            return retval;
+            var range = PemEncoding.Find(pemStr);
+
+            byte[] data = new byte[range.DecodedDataLength];
+
+            Convert.TryFromBase64Chars(pemStr[range.Base64Data], data, out _);
+
+            return data;
         }
 
         public static string CDPFromCertificateExts(X509ExtensionCollection exts)
@@ -185,31 +204,44 @@ namespace Fido2NetLib
             var cdp = "";
             foreach (var ext in exts)
             {
-                if (ext.Oid.Value.Equals("2.5.29.31")) // id-ce-CRLDistributionPoints
+                if (ext.Oid!.Value is "2.5.29.31") // id-ce-CRLDistributionPoints
                 {
-                    var asnData = AsnElt.Decode(ext.RawData);
-                    cdp = System.Text.Encoding.ASCII.GetString(asnData.Sub[0].Sub[0].Sub[0].Sub[0].GetOctetString());
+                    var asnData = Asn1Element.Decode(ext.RawData);
+
+                    var el = asnData[0][0][0][0];
+
+                    cdp = Encoding.ASCII.GetString(el.GetOctetString(el.Tag));
                 }
             }
             return cdp;
         }
+
         public static bool IsCertInCRL(byte[] crl, X509Certificate2 cert)
         {
-            var pemCRL = System.Text.Encoding.ASCII.GetString(crl);
-            var crlBytes = PemToBytes(pemCRL);
-            var asnData = AsnElt.Decode(crlBytes);
-            if (7 > asnData.Sub[0].Sub.Length)
+            var asnData = Asn1Element.Decode(crl);
+
+            if (7 > asnData[0].Sequence.Count)
                 return false; // empty CRL
 
-            var revokedCertificates = asnData.Sub[0].Sub[5].Sub;
-            var revoked = new List<long>();
+            // Certificate users MUST be able to handle serialNumber values up to 20 octets.
 
-            foreach (AsnElt s in revokedCertificates)
+            var certificateSerialNumber = cert.GetSerialNumber().ToArray(); // defensively copy
+
+            Array.Reverse(certificateSerialNumber); // convert to big-endian order
+
+            var revokedAsnSequence = asnData[0][5].Sequence;
+            
+            for (int i = 0; i < revokedAsnSequence.Count; i++)
             {
-                revoked.Add(BitConverter.ToInt64(s.Sub[0].GetOctetString().Reverse().ToArray(), 0));
-            }
+                ReadOnlySpan<byte> revokedSerialNumber = revokedAsnSequence[i][0].GetIntegerBytes();
 
-            return revoked.Contains(BitConverter.ToInt64(cert.GetSerialNumber(), 0));
+                if (revokedSerialNumber.SequenceEqual(certificateSerialNumber))
+                {
+                    return true;
+                }
+            }
+            
+            return false;
         }
     }
 }

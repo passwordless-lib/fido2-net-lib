@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
-  <!-- Sourced Libraries -->
-  <Import Project="../../ExternalLibs/AsnElt/AsnElt.Include.props" />
+   
   <ItemGroup>
     <None Remove="Fido2MetadataServiceRepository.cs" />
     <None Remove="FileSystemMetadataRepository.cs" />
@@ -15,16 +15,11 @@
   <!-- References -->
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="NSec.Cryptography" Version="20.2.0" />
-    <PackageReference Include="PeterO.Cbor" Version="4.1.3" />
+    <PackageReference Include="System.Formats.Cbor" Version="5.0.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.6.0" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.7.0" />
   </ItemGroup>
 
-  <!-- Attach a build warning in relation to our .NETStandard2.0
-   / NET46X missing APIs issue -->
   <ItemGroup>
     <!-- 
       The name of the file must equal to the name of the package which is currently
@@ -32,8 +27,8 @@
     -->
     <Content Include="build/fido2.targets" PackagePath="build/" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
-    <PackageReference Update="PeterO.Numbers" Version="1.6.0" />
   </ItemGroup>
 </Project>

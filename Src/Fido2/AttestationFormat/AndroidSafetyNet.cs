@@ -2,22 +2,23 @@
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
+
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
-    internal class AndroidSafetyNet : AttestationVerifier
+    internal sealed class AndroidSafetyNet : AttestationVerifier
     {
         private readonly int _driftTolerance;
 
-        private X509Certificate2 GetX509Certificate(string certString)
+        private static X509Certificate2 GetX509Certificate(string certString)
         {
             try
             {
@@ -35,18 +36,18 @@ namespace Fido2NetLib
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
             // CBOR decoding on it to extract the contained fields
             // (handled in base class)
-            if ((CBORType.TextString != attStmt["ver"].Type) ||
-                (0 == attStmt["ver"].AsString().Length))
+            if (!(attStmt["ver"] is CborTextString { Length: > 0 }))
+            {
                 throw new Fido2VerificationException("Invalid version in SafetyNet data");
+            }
 
             // 2. Verify that response is a valid SafetyNet response of version ver
-            var ver = attStmt["ver"].AsString();
+            var ver = (string)attStmt["ver"]!;
 
-            if ((CBORType.ByteString != attStmt["response"].Type) ||
-                (0 == attStmt["response"].GetByteString().Length))
+            if (!(attStmt["response"] is CborByteString { Length: > 0}))
                 throw new Fido2VerificationException("Invalid response in SafetyNet data");
 
-            var response = attStmt["response"].GetByteString();
+            var response = (byte[])attStmt["response"]!;
             var responseJWT = Encoding.UTF8.GetString(response);
 
             if (string.IsNullOrWhiteSpace(responseJWT))
@@ -57,33 +58,34 @@ namespace Fido2NetLib
             if (jwtParts.Length != 3)
                 throw new Fido2VerificationException("SafetyNet response JWT does not have the 3 expected components");
 
-            var jwtHeaderString = jwtParts.First();
-            var jwtHeaderJSON = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(jwtHeaderString)));
+            string jwtHeaderString = jwtParts[0];
 
-            var x5cArray = jwtHeaderJSON["x5c"] as JArray;
+            using var jwtHeaderJsonDoc = JsonDocument.Parse(Base64Url.Decode(jwtHeaderString));
+            var jwtHeaderJson = jwtHeaderJsonDoc.RootElement;
 
-            if (x5cArray == null)
-                throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
-            var x5cStrings = x5cArray.Values<string>().ToList();
+            string[] x5cStrings = jwtHeaderJson.TryGetProperty("x5c", out var x5cEl) && x5cEl.ValueKind is JsonValueKind.Array
+                ? x5cEl.ToStringArray()
+                : throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
 
-            if (x5cStrings.Count == 0)
+            if (x5cStrings.Length is 0)
                 throw new Fido2VerificationException("No keys were present in the TOC header in SafetyNet response JWT");
 
-            var certs = new List<X509Certificate2>();
-            var keys = new List<SecurityKey>();
+            var certs = new X509Certificate2[x5cStrings.Length];
+            var keys = new List<SecurityKey>(certs.Length);
 
-            foreach (var certString in x5cStrings)
+            for (int i = 0; i < certs.Length; i++)
             {
-                var cert = GetX509Certificate(certString);
-                certs.Add(cert);
+                var cert = GetX509Certificate(x5cStrings[i]);
+                certs[i] = cert;
 
-                var ecdsaPublicKey = cert.GetECDsaPublicKey();
-                if (ecdsaPublicKey != null)
+                if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
+                {
                     keys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
-
-                var rsaPublicKey = cert.GetRSAPublicKey();
-                if (rsaPublicKey != null)
+                }
+                else if (cert.GetRSAPublicKey() is RSA rsaPublicKey)
+                {
                     keys.Add(new RsaSecurityKey(rsaPublicKey));
+                }
             }
 
             var validationParameters = new TokenValidationParameters
@@ -96,51 +98,55 @@ namespace Fido2NetLib
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken validatedToken = null;
+            SecurityToken validatedToken;
             try
             { 
-                tokenHandler.ValidateToken(
-                    responseJWT,
-                    validationParameters,
-                    out validatedToken);
+                tokenHandler.ValidateToken(responseJWT, validationParameters, out validatedToken);
             }
             catch (SecurityTokenException ex)
             {
                 throw new Fido2VerificationException("SafetyNet response security token validation failed", ex);
             }
 
-            var nonce = "";
+            string? nonce = null;
             bool? ctsProfileMatch = null;
-            var timestampMs = DateTimeHelper.UnixEpoch;
+            DateTimeOffset? timestamp = null;
 
-            var jwtToken = validatedToken as JwtSecurityToken;
+            var jwtToken = (JwtSecurityToken)validatedToken;
 
             foreach (var claim in jwtToken.Claims)
             {
-                if (("nonce" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#string" == claim.ValueType) && (0 != claim.Value.Length))
+                if (claim is { Type: "nonce", ValueType: "http://www.w3.org/2001/XMLSchema#string" } && claim.Value.Length != 0)
+                {
                     nonce = claim.Value;
-                if (("ctsProfileMatch" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#boolean" == claim.ValueType))
+                }
+                if (claim is { Type: "ctsProfileMatch", ValueType: "http://www.w3.org/2001/XMLSchema#boolean" })
                 {
                     ctsProfileMatch = bool.Parse(claim.Value);
                 }
-                if (("timestampMs" == claim.Type) && ("http://www.w3.org/2001/XMLSchema#integer64" == claim.ValueType))
+                if (claim is { Type: "timestampMs", ValueType: "http://www.w3.org/2001/XMLSchema#integer64" })
                 {
-                    timestampMs = DateTimeHelper.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
+                    timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
                 }
             }
 
-            var notAfter = DateTime.UtcNow.AddMilliseconds(_driftTolerance);
-            var notBefore = DateTime.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
-            if ((notAfter < timestampMs) || ((notBefore) > timestampMs))
+            if (!timestamp.HasValue)
             {
-                throw new Fido2VerificationException(string.Format("SafetyNet timestampMs must be present and between one minute ago and now, got: {0}", timestampMs.ToString()));
+                throw new Fido2VerificationException($"SafetyNet timestampMs not found SafetyNet attestation");
+            }
+
+            var notAfter = DateTimeOffset.UtcNow.AddMilliseconds(_driftTolerance);
+            var notBefore = DateTimeOffset.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
+            if ((notAfter < timestamp) || ((notBefore) > timestamp.Value))
+            {
+                throw new Fido2VerificationException($"SafetyNet timestampMs must be between one minute ago and now, got: {timestamp:o}");
             }
 
             // 3. Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
-            if ("" == nonce)
+            if (string.IsNullOrEmpty(nonce))
                 throw new Fido2VerificationException("Nonce value not found in SafetyNet attestation");
 
-            byte[] nonceHash = null;
+            byte[] nonceHash;
             try
             {
                 nonceHash = Convert.FromBase64String(nonce);
@@ -150,17 +156,12 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("Nonce value not base64string in SafetyNet attestation", ex);
             }
 
-            using (var hasher = CryptoUtils.GetHasher(HashAlgorithmName.SHA256))
+            Span<byte> dataHash = stackalloc byte[32];
+            SHA256.HashData(Data, dataHash);
+
+            if (!dataHash.SequenceEqual(nonceHash))
             {
-                var dataHash = hasher.ComputeHash(Data);
-                if (false == dataHash.SequenceEqual(nonceHash))
-                    throw new Fido2VerificationException(
-                        string.Format(
-                            "SafetyNet response nonce / hash value mismatch, nonce {0}, hash {1}", 
-                            BitConverter.ToString(nonceHash).Replace("-", ""), 
-                            BitConverter.ToString(dataHash).Replace("-", "")
-                            )
-                        );
+                throw new Fido2VerificationException($"SafetyNet response nonce / hash value mismatch, nonce {Convert.ToHexString(nonceHash)}, hash {Convert.ToHexString(dataHash)}");
             }
 
             // 4. Let attestationCert be the attestation certificate
@@ -168,11 +169,11 @@ namespace Fido2NetLib
             var subject = attestationCert.GetNameInfo(X509NameType.DnsName, false);
 
             // 5. Verify that the attestation certificate is issued to the hostname "attest.android.com"
-            if (false == ("attest.android.com").Equals(subject))
+            if (subject is not "attest.android.com")
                 throw new Fido2VerificationException(string.Format("SafetyNet attestation cert DnsName invalid, want {0}, got {1}", "attest.android.com", subject));
 
             // 6. Verify that the ctsProfileMatch attribute in the payload of response is true
-            if (null == ctsProfileMatch)
+            if (ctsProfileMatch is null)
                 throw new Fido2VerificationException("SafetyNet response ctsProfileMatch missing");
                         
             if (true != ctsProfileMatch)

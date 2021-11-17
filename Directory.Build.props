@@ -12,19 +12,17 @@
     <PackageProjectUrl>https://github.com/abergs/fido2-net-lib</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
-  <!-- GLOBALLY USABLE VARIABLES -->
+  
+  <!-- Global Variables -->
   <PropertyGroup>
-    <!-- Establish a preset but make it an active choice for each project. -->
-    <SupportedNonMetaTargetFrameWorks>netcoreapp3.1</SupportedNonMetaTargetFrameWorks>
-    <!-- Can't have test project target .netstandard - only implementations not metaframeworks -->
-    <SupportedTargetFrameworks>netstandard2.0;netstandard2.1;$(SupportedNonMetaTargetFrameWorks)</SupportedTargetFrameworks>
+    <SupportedTargetFrameworks>net5.0</SupportedTargetFrameworks>
   </PropertyGroup>
+  
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
-    <!-- Pin down language version -->
-    <LangVersion>8</LangVersion>
-    <!-- Running with "latest" means time alone will make builds non-reproducable... aww hell na -->
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
+  
   <!--MISC-->
   <PropertyGroup>
     <!-- Avoid annoying build warnings when packing using the solution file -->

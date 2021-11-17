@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib
+﻿using System.Text.Json.Serialization;
+
+namespace Fido2NetLib
 {
     /// <summary>
     /// Describes the status of an authenticator model as identified by its AAID and potentially some additional information (such as a specific attestation key).
@@ -6,6 +8,7 @@
     /// <remarks>
     /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#authenticatorstatus-enum"/>
     /// </remarks>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum AuthenticatorStatus
     {
         /// <summary>

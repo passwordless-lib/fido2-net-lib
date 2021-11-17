@@ -1,9 +1,9 @@
 # FIDO2 .NET Library (WebAuthn)
 A working implementation library + demo for [FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/) using [.NET](https://dotnet.microsoft.com/)  
 [![Build Status](https://dev.azure.com/anders/Fido2/_apis/build/status/abergs.fido2-net-lib?branchName=master)](https://dev.azure.com/anders/Fido2/_build/latest?definitionId=10&branchName=master)
-[![codecov](https://codecov.io/gh/abergs/fido2-net-lib/branch/master/graph/badge.svg)](https://codecov.io/gh/abergs/fido2-net-lib)
+[![codecov](https://codecov.io/gh/passwordless-lib/fido2-net-lib/branch/master/graph/badge.svg)](https://codecov.io/gh/passwordless-lib/fido2-net-lib)
 [![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless)
-[![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/) [Releases & Change log](https://github.com/abergs/fido2-net-lib/releases)
+[![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/) [Releases & Change log](https://github.com/passwordless-lib/fido2-net-lib/releases)
 
 ### 💡 Passwordless API now available!
 
@@ -14,11 +14,11 @@ The quickest way to get started with FIDO2 and WebAuthn is with the [Passwordles
 ### Purpose
 
 <img align="right" width="100px" src="https://dotnetfoundation.org/img/logo_big.svg" />
-Our purpose is to enable passwordless sign in for all .net apps (asp, core, native).
+Our purpose is to enable passwordless sign in for all .NET apps (asp, core, native).
 
 To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.com/) [FIDO2 Server](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html) / [WebAuthn relying party](https://www.w3.org/TR/webauthn/#relying-party) library for the easy validation of [registration](https://www.w3.org/TR/webauthn/#usecase-registration) ([attestation](https://www.w3.org/TR/webauthn/#attestation)) and [authentication](https://www.w3.org/TR/webauthn/#usecase-authentication) ([assertion](https://www.w3.org/TR/webauthn/#authentication-assertion)) of [FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) credentials, in order to increase the adoption of the technology, ultimately defeating phishing attacks.
 
-This projects is part of the [.net foundation](https://dotnetfoundation.org)
+This project is part of the [.NET foundation](https://dotnetfoundation.org)
 
 
 ```Install-Package Fido2```
@@ -49,7 +49,7 @@ Read more:
 
 - ✅ Attestation API & verification (Register and verify credentials/authenticators)  
 - ✅ Assertion API & verification (Authenticate users)
-- ✅ 100% pass rate in [conformance testing](#conformance-testing-tool) ([results](https://github.com/abergs/fido2-net-lib/issues/13#issuecomment-457318859))
+- ✅ 100% pass rate in [conformance testing](#conformance-testing-tool) ([results](https://github.com/passwordless-lib/fido2-net-lib/issues/13#issuecomment-457318859))
 - ✅ FIDO2 security keys aka roaming authenticators ([spec](https://www.w3.org/TR/webauthn/#roaming-authenticators)), like SoloKeys [Solo](https://github.com/solokeys/solo/blob/master/README.md), Yubico [YubiKey](https://www.yubico.com/products/yubikey-hardware/), and Feitian [BioPass FIDO2](https://www.ftsafe.com/Products/FIDO2))
 - ✅ Device embedded authenticators aka platform authenticators ([spec](https://www.w3.org/TR/webauthn/#platform-authenticators)), like [Android Key](https://source.android.com/security/keystore/attestation) and [TPM](https://trustedcomputinggroup.org/resource/trusted-platform-module-2-0-a-brief-introduction/))
 - ✅ Backwards compatibility with FIDO U2F authenticators ([spec](https://www.w3.org/TR/#conforming-authenticators-u2f))
@@ -57,18 +57,17 @@ Read more:
 - ✅ [Face ID and Touch ID for the Web](https://webkit.org/blog/11312/meet-face-id-and-touch-id-for-the-web/) (aka "Apple Hello") 
 - ✅ All currently referenced cryptographic algorithms for FIDO2 Server ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other))
 - ✅ All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", "apple", and "none" ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html))
-- ✅ FIDO2 Server attestation validation via FIDO Metadata Service ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html))
+- ✅ FIDO2 Server attestation validation via FIDO Metadata Service V3 ([spec](https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html))
 - ✅ WebAuthn extensions ([spec](https://www.w3.org/TR/webauthn/#extensions))
 - ✅ Examples & demos
 - ✅ Intellisense documentation
-- 💤 [Formal documentation](https://github.com/abergs/fido2-net-lib/issues/53)
-- 💤 Recommended [usage patterns](https://github.com/abergs/fido2-net-lib/issues/54)
+- 💤 [Formal documentation](https://github.com/passwordless-lib/fido2-net-lib/issues/53)
+- 💤 Recommended [usage patterns](https://github.com/passwordless-lib/fido2-net-lib/issues/54)
 
 ## Configuration
 
-  *Only some options are mentioned here, see the [Configuration](https://github.com/abergs/fido2-net-lib/blob/master/fido2-net-lib/Fido2NetLib.cs) class for all options*
+  *Only some options are mentioned here, see the [Configuration](https://github.com/passwordless-lib/fido2-net-lib/blob/master/fido2-net-lib/Fido2NetLib.cs) class for all options*
 
-* `fido2:MDSAccessKey` - App Secret / environment variable that holds the FIDO2 MDS AccessKey. *Required when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 * `fido2:MDSCacheDirPath` - App Secret / environment variable that sets the cache path for the MDS. Defaults to "current user's temporary folder"/fido2mdscache. *Optional when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
 
 ## Examples
@@ -77,7 +76,7 @@ See the [demo controller](Demo/Controller.cs) for full examples of both [attesta
 
 See the [test controller](Demo/TestController.cs) for examples of how to pass the [conformance tests](#conformance-testing-tool).
 
-See the [Active Directory Store information](https://github.com/abergs/fido2-net-lib/issues/68#issuecomment-451758622) and [example credential store](https://github.com/abergs/fido2-net-lib/blob/ActiveDirectory/fido2-net-lib/ActiveDirectoryStore.cs) for ideas on how to integrate this library with an on-premises Active Directory.
+See the [Active Directory Store information](https://github.com/passwordless-lib/fido2-net-lib/issues/68#issuecomment-451758622) and [example credential store](https://github.com/passwordless-lib/fido2-net-lib/blob/ActiveDirectory/fido2-net-lib/ActiveDirectoryStore.cs) for ideas on how to integrate this library with an on-premises Active Directory.
 
 ### Create attestation Options
 
@@ -216,8 +215,8 @@ For more information see the [.NET Foundation Code of Conduct](https://dotnetfou
 
 ### Code Contributors
 
-This project exists thanks to all the people who contribute. [[Contribute](https://github.com/abergs/fido2-net-lib/tree/master#contributing)].
-<a href="https://github.com/abergs/fido2-net-lib/graphs/contributors"><img src="https://opencollective.com/passwordless/contributors.svg?width=890&button=false" /></a>
+This project exists thanks to all the people who contribute. [[Contribute](https://github.com/passwordless-lib/fido2-net-lib/tree/master#contributing)].
+<a href="https://github.com/passwordless-lib/fido2-net-lib/graphs/contributors"><img src="https://opencollective.com/passwordless/contributors.svg?width=890&button=false" /></a>
 
 ### Financial Contributors
 

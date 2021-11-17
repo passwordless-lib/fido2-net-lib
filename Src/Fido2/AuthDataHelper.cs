@@ -1,21 +1,21 @@
 ﻿using System;
-using System.Linq;
+using System.Buffers.Binary;
 
 namespace Fido2NetLib
 {
     /// <summary>
     /// Helper functions that implements https://w3c.github.io/webauthn/#authenticator-data
     /// </summary>
-    public static class AuthDataHelper
+    internal static class AuthDataHelper
     {
-        public static byte[] GetSizedByteArray(Memory<byte> ab, ref int offset, ushort len = 0)
+        public static byte[] GetSizedByteArray(ReadOnlySpan<byte> ab, ref int offset, ushort len = 0)
         {
-            if ((0 == len) && ((offset + 2) <= ab.Length))
+            if (len is 0 && ((offset + 2) <= ab.Length))
             {
-                len = BitConverter.ToUInt16(ab.Slice(offset, 2).ToArray().Reverse().ToArray(), 0);
+                len = BinaryPrimitives.ReadUInt16BigEndian(ab.Slice(offset, 2));
                 offset += 2;
             }
-            byte[] result = null;
+            byte[] result = null!;
             if ((0 < len) && ((offset + len) <= ab.Length)) 
             {
                 result = ab.Slice(offset, len).ToArray();

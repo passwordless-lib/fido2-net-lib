@@ -3,21 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Fido2NetLib.Objects;
 using Fido2NetLib;
+using Fido2NetLib.Development;
+using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Fido2NetLib.Development;
-using static Fido2NetLib.Fido2;
-using System.IO;
-using Microsoft.Extensions.Options;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using static Fido2NetLib.Fido2;
 
 namespace Fido2Demo
 {
-
     [Route("api/[controller]")]
     public class MyController : Controller
     {
@@ -76,14 +71,7 @@ namespace Fido2Demo
                 var exts = new AuthenticationExtensionsClientInputs() 
                 { 
                     Extensions = true, 
-                    UserVerificationIndex = true, 
-                    Location = true, 
                     UserVerificationMethod = true, 
-                    BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds 
-                    { 
-                        FAR = float.MaxValue, 
-                        FRR = float.MaxValue 
-                    } 
                 };
 
                 var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
@@ -140,7 +128,7 @@ namespace Fido2Demo
             }
             catch (Exception e)
             {
-                return Json(new CredentialMakeResult { Status = "error", ErrorMessage = FormatException(e) });
+                return Json(new CredentialMakeResult(status: "error", errorMessage: FormatException(e), result: null));
             }
         }
 
@@ -155,9 +143,7 @@ namespace Fido2Demo
                 if (!string.IsNullOrEmpty(username))
                 {
                     // 1. Get user from DB
-                    var user = DemoStorage.GetUser(username);
-                    if (user == null)
-                        throw new ArgumentException("Username was not registered");
+                    var user = DemoStorage.GetUser(username) ?? throw new ArgumentException("Username was not registered");
 
                     // 2. Get registered credentials from database
                     existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
@@ -165,14 +151,6 @@ namespace Fido2Demo
 
                 var exts = new AuthenticationExtensionsClientInputs()
                 { 
-                    SimpleTransactionAuthorization = "FIDO", 
-                    GenericTransactionAuthorization = new TxAuthGenericArg 
-                    { 
-                        ContentType = "text/plain", 
-                        Content = new byte[] { 0x46, 0x49, 0x44, 0x4F } 
-                    }, 
-                    UserVerificationIndex = true, 
-                    Location = true, 
                     UserVerificationMethod = true 
                 };
 
@@ -208,12 +186,7 @@ namespace Fido2Demo
                 var options = AssertionOptions.FromJson(jsonOptions);
 
                 // 2. Get registered credential from database
-                var creds = DemoStorage.GetCredentialById(clientResponse.Id);
-
-                if(creds == null)
-                {
-                    throw new Exception("Unknown credentials");
-                }
+                var creds = DemoStorage.GetCredentialById(clientResponse.Id) ?? throw new Exception("Unknown credentials");
 
                 // 3. Get credential counter from database
                 var storedCounter = creds.SignatureCounter;

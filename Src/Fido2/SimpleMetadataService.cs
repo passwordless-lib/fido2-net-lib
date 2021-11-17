@@ -3,44 +3,38 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace Fido2NetLib
 {
     public class SimpleMetadataService : IMetadataService
     {
-
         protected readonly List<IMetadataRepository> _repositories;
         protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
-        protected readonly ConcurrentDictionary<Guid, MetadataTOCPayloadEntry> _entries;
+        protected readonly ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
         protected bool _initialized;
 
         public SimpleMetadataService(IEnumerable<IMetadataRepository> repositories)
         {
             _repositories = repositories.ToList();
             _metadataStatements = new ConcurrentDictionary<Guid, MetadataStatement>();
-            _entries = new ConcurrentDictionary<Guid, MetadataTOCPayloadEntry>();
+            _entries = new ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry>();
         }
 
         public bool ConformanceTesting()
         {
-            return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
+            return _repositories[0].GetType() == typeof(ConformanceMetadataRepository);
         }
 
-        public MetadataTOCPayloadEntry GetEntry(Guid aaguid)
+        public MetadataBLOBPayloadEntry? GetEntry(Guid aaguid)
         {
             if (!IsInitialized())
                 throw new InvalidOperationException("MetadataService must be initialized");
 
-            if (_entries.ContainsKey(aaguid))
+            if (_entries.TryGetValue(aaguid, out MetadataBLOBPayloadEntry? entry))
             {
-                var entry = _entries[aaguid];
-
-                if (_metadataStatements.ContainsKey(aaguid))
+                if (_metadataStatements.TryGetValue(aaguid, out var metadataStatement))
                 {
-                    if (entry.Hash != _metadataStatements[aaguid].Hash)
-                        throw new Fido2VerificationException("Authenticator metadata statement has invalid hash");
-                    entry.MetadataStatement = _metadataStatements[aaguid];
+                    entry.MetadataStatement = metadataStatement;
                 }
 
                 return entry;
@@ -51,41 +45,41 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task LoadEntryStatement(IMetadataRepository repository, MetadataTOCPayload toc, MetadataTOCPayloadEntry entry)
+        protected virtual async Task LoadEntryStatementAsync(IMetadataRepository repository, MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
         {
             if (entry.AaGuid != null)
             {
-                var statement = await repository.GetMetadataStatement(toc, entry);
+                var statement = await repository.GetMetadataStatementAsync(blob, entry);
 
-                if (!string.IsNullOrWhiteSpace(statement.AaGuid))
+                if (!string.IsNullOrWhiteSpace(statement?.AaGuid))
                 {
                     _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
                 }
             }
         }
 
-        protected virtual async Task InitializeRepository(IMetadataRepository repository)
+        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository)
         {
-            var toc = await repository.GetToc();
+            var blob = await repository.GetBLOBAsync();
 
-            foreach (var entry in toc.Entries)
+            foreach (var entry in blob.Entries)
             {
                 if (!string.IsNullOrEmpty(entry.AaGuid))
                 {
                     if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
                     {
                         //Load if it doesn't already exist
-                        await LoadEntryStatement(repository, toc, entry);
+                        await LoadEntryStatementAsync(repository, blob, entry);
                     }
                 }
             }
         }
 
-        public virtual async Task Initialize()
+        public virtual async Task InitializeAsync()
         {
             foreach (var repository in _repositories)
             {
-                await InitializeRepository(repository);
+                await InitializeRepositoryAsync(repository);
             }
             _initialized = true;
         }

@@ -1,30 +1,31 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.Reflection;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
-    public class ToStringJsonConverter : JsonConverter
+    public class ToStringJsonConverter<T> : JsonConverter<T>
+        where T: notnull
     {
-        public override bool CanConvert(Type objectType)
+        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return true;
-        }
+            string text = reader.GetString();
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            var p = objectType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(string) }, null);
+            var p = typeof(T).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(string) }, null);
             if (p != null)
             {
-                return p.Invoke(new object[] { (string)reader.Value });
+                return (T)p.Invoke(new object[] { text });
             }
 
-            return null;
+            throw new JsonException("Invalid T");
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
         {
-            writer.WriteValue(value.ToString());
+            writer.WriteStringValue(value.ToString());
         }
     }
 }

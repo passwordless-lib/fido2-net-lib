@@ -6,10 +6,11 @@ using System.Security.Cryptography.X509Certificates;
 using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
 using Xunit;
 using System.Threading.Tasks;
 using System.Text;
+using System.Text.Json;
+using Fido2NetLib.Cbor;
 
 namespace Test.Attestation
 {
@@ -22,8 +23,8 @@ namespace Test.Attestation
                 "MIICRDCCAcmgAwIBAgIGAXUCfWGDMAoGCCqGSM49BAMCMEgxHDAaBgNVBAMME0FwcGxlIFdlYkF1dGhuIENBIDExEzARBgNVBAoMCkFwcGxlIEluYy4xEzARBgNVBAgMCkNhbGlmb3JuaWEwHhcNMjAxMDA3MDk0NjEyWhcNMjAxMDA4MDk1NjEyWjCBkTFJMEcGA1UEAwxANjEyNzZmYzAyZDNmZThkMTZiMzNiNTU0OWQ4MTkyMzZjODE3NDZhODNmMmU5NGE2ZTRiZWUxYzcwZjgxYjViYzEaMBgGA1UECwwRQUFBIENlcnRpZmljYXRpb24xEzARBgNVBAoMCkFwcGxlIEluYy4xEzARBgNVBAgMCkNhbGlmb3JuaWEwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAR5/lkIu1EpyAk4t1TATSs0DvpmFbmHaYv1naTlPqPm/vsD2qEnDVgE6KthwVqsokNcfb82nXHKFcUjsABKG3W3o1UwUzAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIE8DAzBgkqhkiG92NkCAIEJjAkoSIEIJxgAhVAs+GYNN/jfsYkRcieGylPeSzka5QTwyMO84aBMAoGCCqGSM49BAMCA2kAMGYCMQDaHBjrI75xAF7SXzyF5zSQB/Lg9PjTdyye+w7stiqy84K6lmo8d3fIptYjLQx81bsCMQCvC8MSN+aewiaU0bMsdxRbdDerCJJj3xJb3KZwloevJ3daCmCcrZrAPYfLp2kDOsg=",
                 "MIICNDCCAbqgAwIBAgIQViVTlcen+0Dr4ijYJghTtjAKBggqhkjOPQQDAzBLMR8wHQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMB4XDTIwMDMxODE4MzgwMVoXDTMwMDMxMzAwMDAwMFowSDEcMBoGA1UEAwwTQXBwbGUgV2ViQXV0aG4gQ0EgMTETMBEGA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTB2MBAGByqGSM49AgEGBSuBBAAiA2IABIMuhy8mFJGBAiW59fzWu2N4tfVfP8sEW8c1mTR1/VSQRN+b/hkhF2XGmh3aBQs41FCDQBpDT7JNES1Ww+HPv8uYkf7AaWCBvvlsvHfIjd2vRqWu4d1RW1r6q5O+nAsmkaNmMGQwEgYDVR0TAQH/BAgwBgEB/wIBADAfBgNVHSMEGDAWgBQm12TZxXjCWmfRp95rEtAbY/HG1zAdBgNVHQ4EFgQU666CxP+hrFtR1M8kYQUAvmO9d4gwDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQDdixo0gaX62du052V7hB4UTCe3W4dqQYbCsUdXUDNyJ+/lVEV+9kiVDGMuXEg+cMECMCyKYETcIB/P5ZvDTSkwwUh4Udlg7Wp18etKyr44zSW4l9DIBb7wx/eLB6VxxugOBw=="
             };
-            _attestationObject = CBORObject.NewMap().Add("fmt", "apple");
-            var param = Fido2Tests._validCOSEParameters[0];
+            _attestationObject = new CborMap { { "fmt", "apple" } };
+            var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
@@ -34,7 +35,6 @@ namespace Test.Attestation
                 var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
                 rootRequest.CertificateExtensions.Add(caExt);
 
-                var curve = (COSE.EllipticCurve)param[2];
                 ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
                 using (root = rootRequest.CreateSelfSigned(
                     notBefore,
@@ -45,11 +45,8 @@ namespace Test.Attestation
                     var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                     byte[] serial = new byte[12];
+                    RandomNumberGenerator.Fill(serial);
 
-                    using (var rng = RandomNumberGenerator.Create())
-                    {
-                        rng.GetBytes(serial);
-                    }
                     using (X509Certificate2 publicOnly = attRequest.Create(
                         root,
                         notBefore,
@@ -61,81 +58,84 @@ namespace Test.Attestation
 
                     var ecparams = ecdsaAtt.ExportParameters(true);
 
-                    var cpk = CBORObject.NewMap();
-                    cpk.Add(COSE.KeyCommonParameter.KeyType, (COSE.KeyType)param[0]);
-                    cpk.Add(COSE.KeyCommonParameter.Alg, (COSE.Algorithm)param[1]);
-                    cpk.Add(COSE.KeyTypeParameter.X, ecparams.Q.X);
-                    cpk.Add(COSE.KeyTypeParameter.Y, ecparams.Q.Y);
-                    cpk.Add(COSE.KeyTypeParameter.Crv, (COSE.EllipticCurve)param[2]);
+                    var cpk = new CborMap
+                    {
+                        { COSE.KeyCommonParameter.KeyType, type },
+                        { COSE.KeyCommonParameter.Alg, alg },
+                        { COSE.KeyTypeParameter.X, ecparams.Q.X },
+                        { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                        { COSE.KeyTypeParameter.Crv, crv }
+                    };
 
-                    var x = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.X)].GetByteString();
-                    var y = cpk[CBORObject.FromObject(COSE.KeyTypeParameter.Y)].GetByteString();
+                    var x = (byte[])cpk[COSE.KeyTypeParameter.X];
+                    var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
 
                     _credentialPublicKey = new CredentialPublicKey(cpk);
-                    var X5c = CBORObject.NewArray()
-                        .Add(CBORObject.FromObject(attestnCert.RawData))
-                        .Add(CBORObject.FromObject(root.RawData));
 
-                    _attestationObject.Add("attStmt", CBORObject.NewMap().Add("x5c", X5c));
+                    var X5c = new CborArray {
+                        attestnCert.RawData,
+                        root.RawData
+                    };
+
+                    _attestationObject.Add("attStmt", new CborMap { { "x5c", X5c } });
                 }
             }
         }
         [Fact]
         public void TestAppleMissingX5c()
         {
-            _attestationObject["attStmt"].Set("x5c", null);
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", CborNull.Instance);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
         [Fact]
         public void TestAppleX5cNotArray()
         {
-            _attestationObject["attStmt"].Set("x5c", "boomerang");
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", new CborTextString("boomerang"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
         [Fact]
         public void TestAppleX5cCountNotOne()
         {
-            _attestationObject["attStmt"]
-                .Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])).Add(CBORObject.FromObject(new byte[0])));
+            var emptyX5c = new CborArray { new byte[0], new byte[0] };
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", emptyX5c);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
         [Fact]
         public void TestAppleX5cValueNotByteString()
         {
-            _attestationObject["attStmt"].Set("x5c", "x".ToArray());
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", new CborTextString("x"));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
         [Fact]
         public void TestAppleX5cValueZeroLengthByteString()
         {
-            _attestationObject["attStmt"].Set("x5c", CBORObject.NewArray().Add(CBORObject.FromObject(new byte[0])));
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", new CborArray { new byte[0] });
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
 
         [Fact]
-        public void TestAppleChainValidationFail()
-        {
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
-            Assert.Equal("Invalid certificate chain in Apple attestation", ex.Result.Message);
-        }
-
-        [Fact(Skip = "Cert chain issues")]
         public void TestAppleInvalidNonce()
         {
             var trustPath = validX5cStrings
                 .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
                 .ToArray();
 
-            var X5c = CBORObject.NewArray()
-                .Add(CBORObject.FromObject(trustPath[0].RawData))
-                .Add(CBORObject.FromObject(trustPath[1].RawData));
-
-            _attestationObject["attStmt"].Set("x5c", X5c);
+            var x5c = new CborArray { 
+                trustPath[0].RawData,
+                trustPath[1].RawData
+            };
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", x5c);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Mismatch between nonce and credCert attestation extension in Apple attestation", ex.Result.Message);
         }
@@ -149,21 +149,22 @@ namespace Test.Attestation
                 .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
                 .ToArray();
 
-            var X5c = CBORObject.NewArray()
-                .Add(CBORObject.FromObject(trustPath[0].RawData))
-                .Add(CBORObject.FromObject(trustPath[1].RawData));
+            var X5c = new CborArray {
+                { trustPath[0].RawData },
+                { trustPath[1].RawData }
+            };
 
-            _attestationObject["attStmt"].Set("x5c", X5c);
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", X5c);
 
             var authData = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, _exts).ToByteArray();
-            _attestationObject.Set("authData", authData);
+            _attestationObject.Set("authData", new CborByteString(authData));
             var clientData = new
             {
-                Type = "webauthn.create",
-                Challenge = _challenge,
-                Origin = "6cc3c9e7967a.ngrok.io",
+                type = "webauthn.create",
+                challenge = _challenge,
+                origin = "6cc3c9e7967a.ngrok.io",
             };
-            var clientDataJson = Encoding.UTF8.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(clientData));
+            var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
 
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {
@@ -172,7 +173,7 @@ namespace Test.Attestation
                 RawId = new byte[] { 0xf1, 0xd0 },
                 Response = new AuthenticatorAttestationRawResponse.ResponseData()
                 {
-                    AttestationObject = _attestationObject.EncodeToBytes(),
+                    AttestationObject = _attestationObject.Encode(),
                     ClientDataJson = clientDataJson,
                 }
             };
@@ -190,11 +191,7 @@ namespace Test.Attestation
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam
-                    {
-                        Alg = COSE.Algorithm.ES256,
-                        Type = PublicKeyCredentialType.PublicKey,
-                    }
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
                 Rp = new PublicKeyCredentialRpEntity("6cc3c9e7967a.ngrok.io", "6cc3c9e7967a.ngrok.io", ""),
                 Status = "ok",

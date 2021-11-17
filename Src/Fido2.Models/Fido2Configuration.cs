@@ -73,6 +73,7 @@ namespace Fido2NetLib
         /// <summary>
         /// MDSCacheDirPath
         /// </summary>
+
         public string MDSCacheDirPath { get; set; }
 
         /// <summary>

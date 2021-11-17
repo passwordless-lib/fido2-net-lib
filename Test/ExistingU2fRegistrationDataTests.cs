@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
+
 using Xunit;
 
 namespace fido2_net_lib.Test
@@ -61,13 +63,12 @@ namespace fido2_net_lib.Test
                 Origin = "https://localhost:44336" //data was generated with this origin
             });
 
-            var res = await fido2.MakeAssertionAsync(authResponse, options, publicKey.EncodeToBytes(), 0, null);
+            var res = await fido2.MakeAssertionAsync(authResponse, options, publicKey.Encode(), 0, null);
 
             Assert.Equal("ok", res.Status);
-
         }
 
-        public static CBORObject CreatePublicKeyFromU2fRegistrationData(byte[] keyHandleData, byte[] publicKeyData)
+        public static CborMap CreatePublicKeyFromU2fRegistrationData(byte[] keyHandleData, byte[] publicKeyData)
         {
             var x = new byte[32];
             var y = new byte[32];
@@ -80,15 +81,16 @@ namespace fido2_net_lib.Test
                 Y = y,
             };
 
-            var coseKey = CBORObject.NewMap();
+            var coseKey = new CborMap
+            {
+                { COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2 },
+                { (int)COSE.KeyCommonParameter.Alg, -7 },
 
-            coseKey.Add(COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2);
-            coseKey.Add(COSE.KeyCommonParameter.Alg, -7);
+                { COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256 },
 
-            coseKey.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
-
-            coseKey.Add(COSE.KeyTypeParameter.X, point.X);
-            coseKey.Add(COSE.KeyTypeParameter.Y, point.Y);
+                { COSE.KeyTypeParameter.X, point.X },
+                { COSE.KeyTypeParameter.Y, point.Y }
+            };
 
             return coseKey;
         }

@@ -11,17 +11,13 @@ namespace Fido2NetLib
     public partial class Fido2 : IFido2
     {
         private readonly Fido2Configuration _config;
-
-        private readonly RandomNumberGenerator _crypto;
-
-        private readonly IMetadataService _metadataService;
+        private readonly IMetadataService? _metadataService;
 
         public Fido2(
             Fido2Configuration config,
-            IMetadataService metadataService = null)
+            IMetadataService? metadataService = null)
         {
             _config = config;
-            _crypto = RandomNumberGenerator.Create();
             _metadataService = metadataService;
         }
 
@@ -33,7 +29,7 @@ namespace Fido2NetLib
         public CredentialCreateOptions RequestNewCredential(
             Fido2User user,
             List<PublicKeyCredentialDescriptor> excludeCredentials,
-            AuthenticationExtensionsClientInputs extensions = null)
+            AuthenticationExtensionsClientInputs? extensions = null)
         {
             return RequestNewCredential(user, excludeCredentials, AuthenticatorSelection.Default, AttestationConveyancePreference.None, extensions);
         }
@@ -49,10 +45,10 @@ namespace Fido2NetLib
             List<PublicKeyCredentialDescriptor> excludeCredentials,
             AuthenticatorSelection authenticatorSelection,
             AttestationConveyancePreference attestationPreference,
-            AuthenticationExtensionsClientInputs extensions = null)
+            AuthenticationExtensionsClientInputs? extensions = null)
         {
             var challenge = new byte[_config.ChallengeSize];
-            _crypto.GetBytes(challenge);
+            RandomNumberGenerator.Fill(challenge);
 
             var options = CredentialCreateOptions.Create(_config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials, extensions);
             return options;
@@ -68,18 +64,17 @@ namespace Fido2NetLib
             AuthenticatorAttestationRawResponse attestationResponse,
             CredentialCreateOptions origChallenge,
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-            byte[] requestTokenBindingId = null)
+            byte[]? requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
             var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId);
 
             // todo: Set Errormessage etc.
-            return new CredentialMakeResult 
-            { 
-                Status = "ok", 
-                ErrorMessage = string.Empty, 
-                Result = success 
-            };
+            return new CredentialMakeResult(
+                status       : "ok",
+                errorMessage : string.Empty,
+                result       : success
+            );
         }
 
         /// <summary>
@@ -89,10 +84,10 @@ namespace Fido2NetLib
         public AssertionOptions GetAssertionOptions(
             IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials,
             UserVerificationRequirement? userVerification,
-            AuthenticationExtensionsClientInputs extensions = null)
+            AuthenticationExtensionsClientInputs? extensions = null)
         {
             var challenge = new byte[_config.ChallengeSize];
-            _crypto.GetBytes(challenge);
+            RandomNumberGenerator.Fill(challenge);
 
             var options = AssertionOptions.Create(_config, challenge, allowedCredentials, userVerification, extensions);
             return options;
@@ -108,7 +103,7 @@ namespace Fido2NetLib
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-            byte[] requestTokenBindingId = null)
+            byte[]? requestTokenBindingId = null)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 
@@ -125,9 +120,16 @@ namespace Fido2NetLib
         /// <summary>
         /// Result of parsing and verifying attestation. Used to transport Public Key back to RP
         /// </summary>
-        public class CredentialMakeResult : Fido2ResponseBase
+        public sealed class CredentialMakeResult : Fido2ResponseBase
         {
-            public AttestationVerificationSuccess Result { get; internal set; }
+            public CredentialMakeResult(string status, string errorMessage, AttestationVerificationSuccess result)
+            {
+                Status = status;
+                ErrorMessage = errorMessage;
+                Result = result;
+            }
+
+            public AttestationVerificationSuccess Result { get; }
 
             // todo: add debuginfo?
         }

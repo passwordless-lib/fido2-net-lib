@@ -1,12 +1,15 @@
-﻿using Newtonsoft.Json;
+﻿#nullable disable
+
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
-    internal class MDSGetEndpointResponse
+    internal sealed class MDSGetEndpointResponse
     {
-        [JsonProperty("status", Required = Required.Always)]
+        [JsonPropertyName("status")]
         public string Status { get; set; }
-        [JsonProperty("result", Required = Required.Always)]
+
+        [JsonPropertyName("result")]
         public string[] Result { get; set; }
     }
 }

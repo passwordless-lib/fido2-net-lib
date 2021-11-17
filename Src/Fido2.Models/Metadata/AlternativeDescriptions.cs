@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
@@ -23,7 +23,7 @@ namespace Fido2NetLib
         /// <para>Each description SHALL NOT exceed a maximum length of 200 characters.</para>
         /// <para>Description values can contain any UTF-8 characters.</para>
         /// </remarks>
-        [JsonProperty("alternativeDescriptions")]
+        [JsonPropertyName("alternativeDescriptions")]
         public Dictionary<string, string> IETFLanguageCodesMembers { get; set; }
     }
 }

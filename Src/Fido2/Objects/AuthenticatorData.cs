@@ -1,10 +1,13 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.IO;
-using System.Linq;
+
+using Fido2NetLib.Cbor;
 
 namespace Fido2NetLib.Objects
 {
-    public class AuthenticatorData
+    public sealed class AuthenticatorData
     {
         /// <summary>
         /// Minimum length of the authenticator data structure.
@@ -65,7 +68,7 @@ namespace Fido2NetLib.Objects
         /// </summary>
         public Extensions Extensions;
 
-        public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData acd, Extensions exts)
+        public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData acd, Extensions exts = null)
         {
             RpIdHash = rpIdHash;
             _flags = flags;
@@ -77,84 +80,71 @@ namespace Fido2NetLib.Objects
         public AuthenticatorData(byte[] authData)
         {
             // Input validation
-            if (authData == null)
+            if (authData is null)
                 throw new Fido2VerificationException("Authenticator data cannot be null");
+
             if (authData.Length < MinLength)
                 throw new Fido2VerificationException($"Authenticator data is less than the minimum structure length of {MinLength}");
 
             // Input parsing
-            using (var stream = new MemoryStream(authData, false))
+            var reader = new MemoryReader(authData);
+
+            RpIdHash = reader.ReadBytes(SHA256HashLenBytes);
+
+            _flags = (AuthenticatorFlags)reader.ReadByte();
+
+            SignCount = reader.ReadUInt32BigEndian();
+
+            // Attested credential data is only present if the AT flag is set
+            if (HasAttestedCredentialData)
             {
-                using (var reader = new BinaryReader(stream))
-                {
-                    RpIdHash = reader.ReadBytes(SHA256HashLenBytes);
+                // Decode attested credential data, which starts at the next byte past the minimum length of the structure.
+                AttestedCredentialData = new AttestedCredentialData(authData.AsMemory(reader.Position), out int bytesRead);
 
-                    _flags = (AuthenticatorFlags)reader.ReadByte();
-
-                    var signCountBytes = reader.ReadBytes(sizeof(uint));
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        // Sign count is provided by the authenticator as big endian, convert if we are on little endian system
-                        signCountBytes = signCountBytes.Reverse().ToArray();
-                    }
-                    SignCount = BitConverter.ToUInt32(signCountBytes, 0);
-
-                    // Attested credential data is only present if the AT flag is set
-                    if (HasAttestedCredentialData)
-                    {
-                        // Decode attested credential data, which starts at the next byte past the minimum length of the structure.
-                        AttestedCredentialData = new AttestedCredentialData(reader);
-                    }
-
-                    // Extensions data is only present if the ED flag is set
-                    if (HasExtensionsData)
-                    {
-
-                        // "CBORObject.Read: This method will read from the stream until the end 
-                        // of the CBOR object is reached or an error occurs, whichever happens first."
-                        //
-                        // Read the CBOR object from the stream
-                        var ext = PeterO.Cbor.CBORObject.Read(reader.BaseStream);
-
-                        // Encode the CBOR object back to a byte array.
-                        Extensions = new Extensions(ext.EncodeToBytes());
-                    }
-                    // There should be no bytes left over after decoding all data from the structure
-                    if (stream.Position != stream.Length)
-                        throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");
-                }
+                reader.Advance(bytesRead);
             }
+
+            // Extensions data is only present if the ED flag is set
+            if (HasExtensionsData)
+            {
+                // Read the CBOR object
+                var ext = CborObject.Decode(authData.AsMemory(reader.Position), out int bytesRead);
+
+                reader.Advance(bytesRead);
+
+                // Encode the CBOR object back to a byte array.
+                Extensions = new Extensions(ext.Encode());
+            }
+
+            // There should be no bytes left over after decoding all data from the structure
+            if (reader.RemainingBytes != 0)
+                throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");            
         }
 
         public byte[] ToByteArray()
         {
-            using (var ms = new MemoryStream())
+            using var ms = new MemoryStream();
+
+            using (var writer = new BinaryWriter(ms))
             {
-                using (var writer = new BinaryWriter(ms))
+                writer.Write(RpIdHash);
+
+                writer.Write((byte)_flags);
+
+                writer.WriteUInt32BigEndian(SignCount);
+
+                if (HasAttestedCredentialData)
                 {
-                    writer.Write(RpIdHash);
-
-                    writer.Write((byte)_flags);
-
-                    var signCount = BitConverter.GetBytes(SignCount);
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        Array.Reverse(signCount);
-                    }
-                    writer.Write(signCount);
-
-                    if (HasAttestedCredentialData)
-                    {
-                        writer.Write(AttestedCredentialData.ToByteArray());
-                    }
-
-                    if (HasExtensionsData)
-                    {
-                        writer.Write(Extensions.GetBytes());
-                    }
+                    writer.Write(AttestedCredentialData.ToByteArray());
                 }
-                return ms.ToArray();
+
+                if (HasExtensionsData)
+                {
+                    writer.Write(Extensions.GetBytes());
+                }
             }
+
+            return ms.ToArray();
         }
     }
 }

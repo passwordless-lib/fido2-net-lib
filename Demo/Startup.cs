@@ -27,9 +27,9 @@ namespace Fido2Demo
             {
                 // we don't care about antiforgery in the demo
                 opts.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
-            }).AddNewtonsoftJson(); // the FIDO2 library requires Json.NET
+            });
 
-            // Adds a default in-memory implementation of IDistributedCache.
+            // Use the in-memory implementation of IDistributedCache.
             services.AddDistributedMemoryCache();
             services.AddSession(options =>
             {
@@ -48,21 +48,12 @@ namespace Fido2Demo
                 options.ServerName = "FIDO2 Test";
                 options.Origins = new HashSet<string> { Configuration["fido2:origin"] };
                 options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
-                options.MDSAccessKey = Configuration["fido2:MDSAccessKey"];
                 options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
             })
             .AddCachedMetadataService(config =>
             {
-                //They'll be used in a "first match wins" way in the order registered
-                
-                if (!string.IsNullOrWhiteSpace(Configuration["fido2:MDSAccessKey"]))
-                {
-                    config.AddFidoMetadataRepository(Configuration["fido2:MDSAccessKey"]);
-                }
-                config.AddStaticMetadataRepository();
+                config.AddFidoMetadataRepository();
             });
-
-        
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

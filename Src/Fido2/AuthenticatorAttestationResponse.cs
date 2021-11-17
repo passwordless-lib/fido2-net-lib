@@ -1,11 +1,14 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
 
 namespace Fido2NetLib
 {
@@ -15,51 +18,54 @@ namespace Fido2NetLib
     /// It contains information about the new credential that can be used to identify it for later use, 
     /// and metadata that can be used by the Relying Party to assess the characteristics of the credential during registration.
     /// </summary>
-    public class AuthenticatorAttestationResponse : AuthenticatorResponse
+    public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     {
-        private AuthenticatorAttestationResponse(byte[] clientDataJson) : base(clientDataJson)
+        private AuthenticatorAttestationResponse(byte[] clientDataJson) 
+            : base(clientDataJson)
         {
         }
 
-        public ParsedAttestationObject AttestationObject { get; set; }
+        public ParsedAttestationObject AttestationObject { get; init; }
+
         public AuthenticatorAttestationRawResponse Raw { get; private set; }
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
-            if (null == rawResponse || null == rawResponse.Response)
+            if (rawResponse?.Response is null)
                 throw new Fido2VerificationException("Expected rawResponse, got null");
 
-            if (null == rawResponse.Response.AttestationObject || 0 == rawResponse.Response.AttestationObject.Length)
+            if (rawResponse.Response.AttestationObject is null || rawResponse.Response.AttestationObject.Length is 0)
                 throw new Fido2VerificationException("Missing AttestationObject");
 
             // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
-            CBORObject cborAttestation;
+            CborMap cborAttestation;
             try
             {
-                cborAttestation = CBORObject.DecodeFromBytes(rawResponse.Response.AttestationObject);
+                cborAttestation = (CborMap)CborObject.Decode(rawResponse.Response.AttestationObject);
             }
-            catch (CBORException ex)
+            catch (Exception ex)
             {
                 throw new Fido2VerificationException("AttestationObject invalid CBOR", ex);
             }
 
-            if (null == cborAttestation["fmt"]
-                || CBORType.TextString != cborAttestation["fmt"].Type
-                || null == cborAttestation["attStmt"]
-                || CBORType.Map != cborAttestation["attStmt"].Type
-                || null == cborAttestation["authData"]
-                || CBORType.ByteString != cborAttestation["authData"].Type)
+            static bool IsType(CborObject obj, CborType type) => obj is not null && obj.Type == type;
+
+            if (!IsType(cborAttestation["fmt"], CborType.TextString) ||
+                !IsType(cborAttestation["attStmt"], CborType.Map) ||
+                !IsType(cborAttestation["authData"], CborType.ByteString))
+            {
                 throw new Fido2VerificationException("Malformed AttestationObject");
+            }
 
             var response = new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
             {
                 Raw = rawResponse,
-                AttestationObject = new ParsedAttestationObject()
-                {
-                    Fmt = cborAttestation["fmt"].AsString(),
-                    AttStmt = cborAttestation["attStmt"], // convert to dictionary?
-                    AuthData = cborAttestation["authData"].GetByteString()
-                }
+                AttestationObject = new ParsedAttestationObject
+                (
+                    fmt      : (string)cborAttestation["fmt"],
+                    attStmt  : (CborMap)cborAttestation["attStmt"],
+                    authData : (byte[])cborAttestation["authData"]
+                )
             };
             return response;
         }
@@ -73,7 +79,7 @@ namespace Fido2NetLib
             // Above handled in base class constructor
 
             // 3. Verify that the value of C.type is webauthn.create
-            if (Type != "webauthn.create")
+            if (Type is not "webauthn.create")
                 throw new Fido2VerificationException("AttestationResponse is not type webauthn.create");
 
             // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
@@ -82,7 +88,7 @@ namespace Fido2NetLib
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
             BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId);
 
-            if (Raw.Id == null || Raw.Id.Length == 0)
+            if (Raw.Id is null || Raw.Id.Length == 0)
                 throw new Fido2VerificationException("AttestationResponse is missing Id");
 
             if (Raw.Type != PublicKeyCredentialType.PublicKey)
@@ -91,22 +97,18 @@ namespace Fido2NetLib
             var authData = new AuthenticatorData(AttestationObject.AuthData);
 
             // 7. Compute the hash of response.clientDataJSON using SHA-256.
-            byte[] clientDataHash, rpIdHash;
-            using (var sha = CryptoUtils.GetHasher(HashAlgorithmName.SHA256))
-            {
-                clientDataHash = sha.ComputeHash(Raw.Response.ClientDataJson);
-                rpIdHash = sha.ComputeHash(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
-            }
+            byte[] clientDataHash = SHA256.HashData(Raw.Response.ClientDataJson);
+            byte[] rpIdHash = SHA256.HashData(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));           
 
             // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
             // Handled in AuthenticatorAttestationResponse::Parse()
 
             // 9. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party
-            if (false == authData.RpIdHash.SequenceEqual(rpIdHash))
+            if (!authData.RpIdHash.AsSpan().SequenceEqual(rpIdHash))
                 throw new Fido2VerificationException("Hash mismatch RPID");
 
             // 10. Verify that the User Present bit of the flags in authData is set.
-            if (false == authData.UserPresent)
+            if (!authData.UserPresent)
                 throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
@@ -120,7 +122,7 @@ namespace Fido2NetLib
             
             // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
 
-            if (false == authData.HasAttestedCredentialData)
+            if (!authData.HasAttestedCredentialData)
                 throw new Fido2VerificationException("Attestation flag not set on attestation data");
 
             // 13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. 
@@ -135,8 +137,8 @@ namespace Fido2NetLib
                 "android-safetynet" => new AndroidSafetyNet(),  // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
                 "fido-u2f" => new FidoU2f(),                    // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
                 "packed" => new Packed(),                       // https://www.w3.org/TR/webauthn/#packed-attestation
-                "apple" => new Apple(),                       // https://www.w3.org/TR/webauthn/#apple-anonymous-attestation
-                _ => throw new Fido2VerificationException("Missing or unknown attestation type"),
+                "apple" => new Apple(),                         // https://www.w3.org/TR/webauthn/#apple-anonymous-attestation
+                _ => throw new Fido2VerificationException("Missing or unknown attestation type")
             };
 
             // 14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
@@ -148,39 +150,63 @@ namespace Fido2NetLib
             var entry = metadataService?.GetEntry(authData.AttestedCredentialData.AaGuid);
 
             // while conformance testing, we must reject any authenticator that we cannot get metadata for
-            if (metadataService?.ConformanceTesting() == true && null == entry && AttestationType.None != attType && "fido-u2f" != AttestationObject.Fmt)
+            if (metadataService?.ConformanceTesting() is true && entry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
                 throw new Fido2VerificationException("AAGUID not found in MDS test metadata");
 
-            if (null != trustPath)
+            if (trustPath != null && entry?.MetadataStatement?.AttestationTypes is not null)
             {
-                // If the authenticator is listed as in the metadata as one that should produce a basic full attestation, build and verify the chain
-                if ((entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) ||
-                    (entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false))
+                static bool ContainsAttestationType(MetadataBLOBPayloadEntry entry, MetadataAttestationType type)
                 {
-                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
-                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                        .ToArray();
+                    return entry.MetadataStatement.AttestationTypes.Contains(type.ToEnumMemberValue());
+                }
 
-                    if (false == CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates))
+                // If the authenticator's metadata requires basic full attestation, build and verify the chain
+                if (ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_BASIC_FULL) ||
+                    ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_PRIVACY_CA))
+                {
+                    string[] certStrings = entry.MetadataStatement.AttestationRootCertificates;
+                    var attestationRootCertificates = new X509Certificate2[certStrings.Length];
+
+                    for (int i = 0; i < attestationRootCertificates.Length; i++)
+                    {
+                        attestationRootCertificates[i] = new X509Certificate2(Convert.FromBase64String(certStrings[i]));
+                    }
+
+                    if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates))
                     {
                         throw new Fido2VerificationException("Invalid certificate chain");
                     }
                 }
 
-                // If the authenticator is not listed as one that should produce a basic full attestation, the certificate should be self signed
-                if ((!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_BASIC_FULL) ?? false) &&
-                    (!entry?.MetadataStatement?.AttestationTypes.Contains((ushort)MetadataAttestationType.ATTESTATION_ATTCA) ?? false))
+                else if (ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_ANONCA))
                 {
-                    if (trustPath.FirstOrDefault().Subject != trustPath.FirstOrDefault().Issuer)
-                        throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
+                    // skip verification for Anonymization CA (AnonCA)
                 }
+                else // otherwise, ensure the certificate is self signed
+                {
+                    X509Certificate2 trustPath0 = trustPath[0];
+
+                    if (!string.Equals(trustPath0.Subject, trustPath0.Issuer, StringComparison.Ordinal))
+                    {
+                        // TODO: Improve this error message
+                        throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
+                    }
+                }
+
+                // TODO: Verify all MetadataAttestationTypes are correctly handled
+
+                // [ ] ATTESTATION_ECDAA "ecdaa"    | currently handled as self signed  w/ no test coverage
+                // [ ] ATTESTATION_ANONCA "anonca"  | currently not verified            w/ no test coverage
+                // [ ] ATTESTATION_NONE "none"      | currently handled as self signed  w/ no test coverage               
             }
 
             // Check status resports for authenticator with undesirable status
-            foreach (var report in entry?.StatusReports ?? Enumerable.Empty<StatusReport>())
+            foreach (var report in entry?.StatusReports ?? Array.Empty<StatusReport>())
             {
-                if (true == Enum.IsDefined(typeof(UndesiredAuthenticatorStatus), (UndesiredAuthenticatorStatus)report.Status))
-                    throw new Fido2VerificationException("Authenticator found with undesirable status");
+                if (report.Status.IsUndesired())
+                {
+                    throw new Fido2VerificationException($"Authenticator found with undesirable status. Was {report.Status}");
+                }
             }
 
             // 16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
@@ -215,11 +241,18 @@ namespace Fido2NetLib
         /// <summary>
         /// The AttestationObject after CBOR parsing
         /// </summary>
-        public class ParsedAttestationObject
+        public sealed class ParsedAttestationObject
         {
-            public string Fmt { get; set; }
-            public byte[] AuthData { get; set; }
-            public CBORObject AttStmt { get; set; }
+            public ParsedAttestationObject(string fmt, CborMap attStmt, byte[] authData)
+            {
+                Fmt = fmt;
+                AttStmt = attStmt;
+                AuthData = authData;
+            }
+
+            public string Fmt { get; }
+            public CborMap AttStmt { get; }
+            public byte[] AuthData { get; }
         }
     }
 }

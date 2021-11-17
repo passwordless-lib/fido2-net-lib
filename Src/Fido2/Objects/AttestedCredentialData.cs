@@ -1,16 +1,85 @@
-﻿using System;
+﻿#nullable disable
+
+using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Fido2NetLib.Objects
 {
-    public class AttestedCredentialData
+    public sealed class AttestedCredentialData
     {
         /// <summary>
         /// Minimum length of the attested credential data structure.  AAGUID + credentialID length + credential ID + credential public key.
         /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
         /// </summary>
         private readonly int _minLength = Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
+
+        /// <summary>
+        /// Instantiates an AttestedCredentialData object from an aaguid, credentialID, and CredentialPublicKey
+        /// </summary>
+        /// <param name="aaguid"></param>
+        /// <param name="credentialID"></param>
+        /// <param name="cpk"></param>
+        public AttestedCredentialData(Guid aaguid, byte[] credentialID, CredentialPublicKey cpk)
+        {
+            AaGuid = aaguid;
+            CredentialID = credentialID;
+            CredentialPublicKey = cpk;
+        }
+
+        /// <summary>
+        /// Decodes attested credential data.
+        /// </summary>
+        public AttestedCredentialData(byte[] data)
+            : this(data, out _)
+        {
+        }
+    
+        internal AttestedCredentialData(ReadOnlyMemory<byte> data, out int bytesRead)
+        {
+            if (data.Length < _minLength)
+                throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+
+            int position = 0;
+
+            // First 16 bytes is AAGUID
+            var aaguidBytes = data[..16];
+
+            position += 16;
+
+            if (BitConverter.IsLittleEndian)
+            {
+                // GUID from authenticator is big endian. If we are on a little endian system, convert.
+                AaGuid = FromBigEndian(aaguidBytes.ToArray());
+            }
+            else
+            {
+                AaGuid = new Guid(aaguidBytes.Span);
+            }
+
+            // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
+            var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(data.Slice(position, 2).Span);
+
+            position += 2;
+
+            // Read the credential ID bytes
+            CredentialID = data.Slice(position, credentialIDLen).ToArray();
+
+            position += credentialIDLen;
+
+            // "Determining attested credential data's length, which is variable, involves determining 
+            // credentialPublicKey's beginning location given the preceding credentialId's length, and 
+            // then determining the credentialPublicKey's length"
+
+
+            // Read the CBOR object from the stream
+            CredentialPublicKey = CredentialPublicKey.Decode(data[position..], out int read);
+
+            position += read;
+
+            bytesRead = position;
+        }
 
         /// <summary>
         /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
@@ -66,105 +135,36 @@ namespace Fido2NetLib.Objects
             return aaguid;
         }
 
-        /// <summary>
-        /// Instantiates an AttestedCredentialData object from an aaguid, credentialID, and CredentialPublicKey
-        /// </summary>
-        /// <param name="aaguid"></param>
-        /// <param name="credentialID"></param>
-        /// <param name="cpk"></param>
-        public AttestedCredentialData(Guid aaguid, byte[] credentialID, CredentialPublicKey cpk)
-        {
-            AaGuid = aaguid;
-            CredentialID = credentialID;
-            CredentialPublicKey = cpk;
-        }
-
-        public AttestedCredentialData(byte[] bytes) : this(new BinaryReader(new MemoryStream(bytes, false)))
-        {
-        }
-
-        /// <summary>
-        /// Decodes attested credential data.
-        /// </summary>
-        public AttestedCredentialData(BinaryReader reader)
-        {
-            if (reader.BaseStream.Length < _minLength)
-                throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
-            // First 16 bytes is AAGUID
-            var aaguidBytes = reader.ReadBytes(Marshal.SizeOf(typeof(Guid)));
-
-            if (BitConverter.IsLittleEndian)
-            {
-                // GUID from authenticator is big endian. If we are on a little endian system, convert.
-                AaGuid = FromBigEndian(aaguidBytes);
-            }
-            else
-            {
-                AaGuid = new Guid(aaguidBytes);
-            }
-
-            // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
-            var credentialIDLenBytes = reader.ReadBytes(sizeof(ushort));
-
-            if (BitConverter.IsLittleEndian)
-            {
-                // Credential ID length from authenticator is big endian.  If we are on little endian system, convert.
-                Array.Reverse(credentialIDLenBytes);
-            }
-
-            // Convert the read bytes to uint16 so we know how many bytes to read for the credential ID
-            var credentialIDLen = BitConverter.ToUInt16(credentialIDLenBytes, 0);
-
-            // Read the credential ID bytes
-            CredentialID = reader.ReadBytes(credentialIDLen);
-
-            // "Determining attested credential data's length, which is variable, involves determining 
-            // credentialPublicKey's beginning location given the preceding credentialId's length, and 
-            // then determining the credentialPublicKey's length"
-
-            // Read the CBOR object from the stream
-            CredentialPublicKey = new CredentialPublicKey(reader.BaseStream);
-        }
-
         public override string ToString()
         {
-            return $"AAGUID: {AaGuid}, CredentialID: {CredentialID.ToString().Replace("-", "")}, CredentialPublicKey: {CredentialPublicKey}";
+            return $"AAGUID: {AaGuid}, CredentialID: {Convert.ToHexString(CredentialID)}, CredentialPublicKey: {CredentialPublicKey}";
         }
 
         public byte[] ToByteArray()
         {
-            using (var ms = new MemoryStream())
+            using var ms = new MemoryStream();
+            using (var writer = new BinaryWriter(ms))
             {
-                using (var writer = new BinaryWriter(ms))
+                // Write the aaguid bytes out, reverse if we're on a little endian system
+                if (BitConverter.IsLittleEndian)
                 {
-                    // Write the aaguid bytes out, reverse if we're on a little endian system
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        writer.Write(AaGuidToBigEndian(AaGuid));
-                    }
-                    else
-                    {
-                        writer.Write(AaGuid.ToByteArray());
-                    }
-
-                    // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
-                    var credentialIDLen = (ushort)CredentialID.Length;
-                    var credentialIDLenBytes = BitConverter.GetBytes(credentialIDLen);
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        Array.Reverse(credentialIDLenBytes);
-                    }
-
-                    writer.Write(credentialIDLenBytes);
-
-                    // Write CredentialID bytes
-                    writer.Write(CredentialID);
-
-                    // Write credential public key bytes
-                    writer.Write(CredentialPublicKey.GetBytes());
+                    writer.Write(AaGuidToBigEndian(AaGuid));
                 }
-                return ms.ToArray();
+                else
+                {
+                    writer.Write(AaGuid.ToByteArray());
+                }
+
+                // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
+                writer.WriteUInt16BigEndian((ushort)CredentialID.Length);
+
+                // Write CredentialID bytes
+                writer.Write(CredentialID);
+
+                // Write credential public key bytes
+                writer.Write(CredentialPublicKey.GetBytes());
             }
+            return ms.ToArray();
         }
     }
 }

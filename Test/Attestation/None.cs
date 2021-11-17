@@ -1,8 +1,9 @@
-﻿using System.Linq;
-using fido2_net_lib.Test;
+﻿using fido2_net_lib.Test;
+
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using PeterO.Cbor;
+
 using Xunit;
 
 namespace Test.Attestation
@@ -11,14 +12,15 @@ namespace Test.Attestation
     {
         public None()
         {
-            _attestationObject = CBORObject.NewMap().Add("fmt", "none");
+            _attestationObject = new CborMap { { "fmt", "none" } };
         }
+
         [Fact]
         public void TestNone()
         {
-            Fido2Tests._validCOSEParameters.ForEach(async delegate (object[] param)
+            Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
             {
-                _attestationObject.Add("attStmt", CBORObject.NewMap());
+                _attestationObject.Add("attStmt", new CborMap());
                 _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(param);
                 Fido2.CredentialMakeResult res = null;
 
@@ -36,13 +38,13 @@ namespace Test.Attestation
                 Assert.Equal("Test User", res.Result.User.DisplayName);
                 Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
                 Assert.Equal("testuser", res.Result.User.Name);
-                _attestationObject = CBORObject.NewMap().Add("fmt", "none");
+                _attestationObject = new CborMap { { "fmt", "none" } };
             });
         }
         [Fact]
         public void TestNoneWithAttStmt()
         {
-            _attestationObject.Add("attStmt", CBORObject.NewMap().Add("foo", "bar"));
+            _attestationObject.Add("attStmt", new CborMap { { "foo", "bar" } });
             _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Attestation format none should have no attestation statement", ex.Result.Message);
