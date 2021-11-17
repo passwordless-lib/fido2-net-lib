@@ -66,14 +66,8 @@ namespace Fido2NetLib
         }
 
         /// <summary>
-        /// MDSAccessKey
-        /// </summary>
-        public string MDSAccessKey { get; set; }
-
-        /// <summary>
         /// MDSCacheDirPath
         /// </summary>
-
         public string MDSCacheDirPath { get; set; }
 
         /// <summary>
