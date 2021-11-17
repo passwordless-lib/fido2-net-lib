@@ -116,7 +116,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = expectedOrigin,
+                Origins = new HashSet<string> { expectedOrigin },
             });
 
             var result = await lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback);
@@ -220,7 +220,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = expectedOrigin,
+                Origins = new HashSet<string> { expectedOrigin },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -416,7 +416,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -487,7 +487,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -556,7 +556,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -633,7 +633,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -711,7 +711,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -788,7 +788,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -866,7 +866,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
@@ -943,7 +943,7 @@ namespace Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origin = rp,
+                Origins = new HashSet<string> { rp },
             });
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));

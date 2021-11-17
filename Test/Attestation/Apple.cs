@@ -213,7 +213,7 @@ namespace Test.Attestation
             {
                 ServerDomain = "6cc3c9e7967a.ngrok.io",
                 ServerName = "6cc3c9e7967a.ngrok.io",
-                Origin = "6cc3c9e7967a.ngrok.io",
+                Origins = new HashSet<string> { "https://6cc3c9e7967a.ngrok.io" },
             });
 
             var credentialMakeResult = lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
