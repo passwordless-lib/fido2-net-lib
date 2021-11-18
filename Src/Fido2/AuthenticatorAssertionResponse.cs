@@ -1,6 +1,8 @@
+﻿using System;
+using System.Collections.Generic;
+
 ﻿#nullable disable
 
-using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -44,8 +46,8 @@ namespace Fido2NetLib
         /// Implements alghoritm from https://www.w3.org/TR/webauthn/#verifying-assertion
         /// </summary>
         /// <param name="options">The assertionoptions that was sent to the client</param>
-        /// <param name="expectedOrigin">
-        /// The expected server origin, used to verify that the signature is sent to the expected server
+        /// <param name="fullyQualifiedExpectedOrigins">
+        /// The expected fully qualified server origins, used to verify that the signature is sent to the expected server
         /// </param>
         /// <param name="storedPublicKey">The stored public key for this CredentialId</param>
         /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
@@ -53,13 +55,13 @@ namespace Fido2NetLib
         /// <param name="requestTokenBindingId"></param>
         public async Task<AssertionVerificationResult> VerifyAsync(
             AssertionOptions options,
-            string expectedOrigin,
+            HashSet<string> fullyQualifiedExpectedOrigins,
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
             byte[] requestTokenBindingId)
         {
-            BaseVerify(expectedOrigin, options.Challenge, requestTokenBindingId);
+            BaseVerify(fullyQualifiedExpectedOrigins, options.Challenge, requestTokenBindingId);
 
             if (Raw.Type != PublicKeyCredentialType.PublicKey)
                 throw new Fido2VerificationException("AssertionResponse Type is not set to public-key");
