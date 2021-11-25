@@ -81,6 +81,7 @@ namespace Fido2NetLib
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
                     // Add additional as appropriate
+                    Ed25519,
                     ES256,
                     RS256,
                     PS256,
@@ -90,7 +91,6 @@ namespace Fido2NetLib
                     ES512,
                     RS512,
                     PS512,
-                    Ed25519,
                 },
                 AuthenticatorSelection = authenticatorSelection,
                 Attestation = attestationConveyancePreference,
