@@ -251,13 +251,7 @@ namespace Test.Attestation
 
                                 var rsaparams = rsaAtt.ExportParameters(true);
 
-                                var cpk = new CborMap();
-                                cpk.Add((int)COSE.KeyCommonParameter.KeyType, (int)type);
-                                cpk.Add((int)COSE.KeyCommonParameter.Alg, (int)alg);
-                                cpk.Add((int)COSE.KeyTypeParameter.N, rsaparams.Modulus);
-                                cpk.Add((int)COSE.KeyTypeParameter.E, rsaparams.Exponent);
-
-                                _credentialPublicKey = new CredentialPublicKey(cpk);
+                                _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
 
                                 unique = rsaparams.Modulus;
                                 exponent = rsaparams.Exponent;
@@ -1699,11 +1693,11 @@ namespace Test.Attestation
 
                     var cpk = new CborMap
                     {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.X, ecparams.Q.X },
-                        { (int)COSE.KeyTypeParameter.Y, ecparams.Q.Y },
-                        { (int)COSE.KeyTypeParameter.Crv, (int)curve }
+                        { COSE.KeyCommonParameter.KeyType, type },
+                        { COSE.KeyCommonParameter.Alg, alg },
+                        { COSE.KeyTypeParameter.X, ecparams.Q.X },
+                        { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                        { COSE.KeyTypeParameter.Crv, curve }
                     };
 
                     var x = ((byte[])cpk[COSE.KeyTypeParameter.X]).Reverse().ToArray();
@@ -1824,11 +1818,11 @@ namespace Test.Attestation
 
                     var cpk = new CborMap
                     {
-                        { (int)COSE.KeyCommonParameter.KeyType, (int)type },
-                        { (int)COSE.KeyCommonParameter.Alg, (int)alg },
-                        { (int)COSE.KeyTypeParameter.X, ecparams.Q.X },
-                        { (int)COSE.KeyTypeParameter.Y, ecparams.Q.Y },
-                        { (int)COSE.KeyTypeParameter.Crv, (int)curve }
+                        { COSE.KeyCommonParameter.KeyType, type },
+                        { COSE.KeyCommonParameter.Alg, alg },
+                        { COSE.KeyTypeParameter.X, ecparams.Q.X },
+                        { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                        { COSE.KeyTypeParameter.Crv, curve }
                     };
 
                     var x = (byte[])cpk[COSE.KeyTypeParameter.X];

@@ -9,6 +9,8 @@ namespace Fido2NetLib
 {
     internal class Packed : AttestationVerifier
     {
+        private static readonly string[] s_newLine = new string[] { Environment.NewLine };
+
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
             // parse the DN string using standard rules
@@ -16,7 +18,7 @@ namespace Fido2NetLib
 
             // form the string for splitting using new lines to avoid issues with commas
             var dictSubjectString = dictSubjectObj.Decode(X500DistinguishedNameFlags.UseNewLines); 
-            var dictSubject = dictSubjectString.Split(new string[] { Environment.NewLine }, StringSplitOptions.None)
+            var dictSubject = dictSubjectString.Split(s_newLine, StringSplitOptions.None)
                                           .Select(part => part.Split('='))
                                           .ToDictionary(split => split[0], split => split[1]);
 
@@ -37,8 +39,10 @@ namespace Fido2NetLib
             if (!(Sig is CborByteString { Length: > 0 }))
                 throw new Fido2VerificationException("Invalid packed attestation signature");
 
-            if (Alg is null || Alg is not CborInteger)
+            if (!(Alg is CborInteger))
                 throw new Fido2VerificationException("Invalid packed attestation algorithm");
+
+            var alg = (COSE.Algorithm)(int)Alg;
 
             // 2. If x5c is present, this indicates that the attestation type is not ECDAA
             if (X5c != null)
@@ -46,26 +50,33 @@ namespace Fido2NetLib
                 if (!(X5c is CborArray { Length: > 0 } x5cArray) || EcdaaKeyId != null)
                     throw new Fido2VerificationException("Malformed x5c array in packed attestation statement");
 
-                var enumerator = x5cArray.Values.GetEnumerator();
-                while (enumerator.MoveNext())
+                var trustPath = new X509Certificate2[x5cArray.Length];
+
+                for (int i = 0; i < trustPath.Length; i++)
                 {
-                    if (!(enumerator.Current is CborByteString {  Length: > 0 }))
+                    if (X5c[i] is CborByteString { Length: > 0 } x5cObject)
+                    {
+                        var x5cCert = new X509Certificate2(x5cObject.Value);
+
+                        // X509Certificate2.NotBefore/.NotAfter return LOCAL DateTimes, so
+                        // it's correct to compare using DateTime.Now.
+                        if (DateTime.Now < x5cCert.NotBefore || DateTime.Now > x5cCert.NotAfter)
+                            throw new Fido2VerificationException("Packed signing certificate expired or not yet valid");
+
+                        trustPath[i] = x5cCert;
+                    }
+                    else
+                    {
                         throw new Fido2VerificationException("Malformed x5c cert found in packed attestation statement");
-
-                    var x5ccert = new X509Certificate2((byte[])enumerator.Current);
-
-                    // X509Certificate2.NotBefore/.NotAfter return LOCAL DateTimes, so
-                    // it's correct to compare using DateTime.Now.
-                    if (DateTime.Now < x5ccert.NotBefore || DateTime.Now > x5ccert.NotAfter)
-                        throw new Fido2VerificationException("Packed signing certificate expired or not yet valid");
+                    }                   
                 }
 
                 // The attestation certificate attestnCert MUST be the first element in the array.
-                var attestnCert = new X509Certificate2((byte[])x5cArray[0]);
+                X509Certificate2 attestnCert = trustPath[0];
 
                 // 2a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
                 // using the attestation public key in attestnCert with the algorithm specified in alg
-                var cpk = new CredentialPublicKey(attestnCert, (int)Alg);
+                var cpk = new CredentialPublicKey(attestnCert, alg);
 
                 if (!cpk.Verify(Data, (byte[])Sig))
                     throw new Fido2VerificationException("Invalid full packed signature");
@@ -92,7 +103,7 @@ namespace Fido2NetLib
                 // 2c. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 if (aaguid != null)
                 {
-                    if (0 != AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid))
+                    if (AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid) != 0)
                         throw new Fido2VerificationException("aaguid present in packed attestation cert exts but does not match aaguid from authData");
                 }
 
@@ -100,10 +111,7 @@ namespace Fido2NetLib
                 byte u2ftransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
 
                 // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
-                var trustPath = x5cArray.Values
-                    .Select(x => new X509Certificate2((byte[])x))
-                    .ToArray();
-
+                
                 return (AttestationType.AttCa, trustPath);
             }
 
@@ -124,7 +132,7 @@ namespace Fido2NetLib
             else
             {
                 // 4a. Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-                if (!AuthData.AttestedCredentialData.CredentialPublicKey.IsSameAlg((COSE.Algorithm)(int)Alg))
+                if (!AuthData.AttestedCredentialData.CredentialPublicKey.IsSameAlg(alg))
                     throw new Fido2VerificationException("Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 
                 // 4b. Verify that sig is a valid signature over the concatenation of authenticatorData and 

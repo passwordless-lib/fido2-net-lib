@@ -60,7 +60,7 @@ namespace fido2_net_lib.Test
 
             var fido2 = new Fido2(new Fido2Configuration
             {
-                Origin = "https://localhost:44336" //data was generated with this origin
+                Origins = new System.Collections.Generic.HashSet<string> { "https://localhost:44336" } //data was generated with this origin
             });
 
             var res = await fido2.MakeAssertionAsync(authResponse, options, publicKey.Encode(), 0, null);
@@ -83,13 +83,13 @@ namespace fido2_net_lib.Test
 
             var coseKey = new CborMap
             {
-                { (int)COSE.KeyCommonParameter.KeyType, (int)COSE.KeyType.EC2 },
+                { COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2 },
                 { (int)COSE.KeyCommonParameter.Alg, -7 },
 
-                { (int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P256 },
+                { COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256 },
 
-                { (int)COSE.KeyTypeParameter.X, point.X },
-                { (int)COSE.KeyTypeParameter.Y, point.Y }
+                { COSE.KeyTypeParameter.X, point.X },
+                { COSE.KeyTypeParameter.Y, point.Y }
             };
 
             return coseKey;

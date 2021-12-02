@@ -5,13 +5,14 @@
     /// </summary>
     public sealed class IsCredentialIdUniqueToUserParams
     {
-        public byte[] CredentialId { get; set; }
-        public Fido2User User { get; set; }
-
         public IsCredentialIdUniqueToUserParams(byte[] credentialId, Fido2User user)
         {
             CredentialId = credentialId;
             User = user;
         }
+
+        public byte[] CredentialId { get; }
+
+        public Fido2User User { get; }
     }
 }

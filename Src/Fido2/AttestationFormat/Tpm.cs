@@ -49,7 +49,7 @@ namespace Fido2NetLib
             if (!(Sig is CborByteString { Length: > 0 }))
                 throw new Fido2VerificationException("Invalid TPM attestation signature");
 
-            if ((string)attStmt["ver"] is not "2.0")
+            if ((string)attStmt["ver"]! is not "2.0")
                 throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
 
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
@@ -58,7 +58,7 @@ namespace Fido2NetLib
             if (attStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
             {
                 pubArea = new PubArea(pubAreaObject.Value);
-            }
+            }            
 
             if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
                 throw new Fido2VerificationException("Missing or malformed pubArea");
@@ -69,7 +69,7 @@ namespace Fido2NetLib
                 byte[] coseMod = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
                 byte[] coseExp = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
-                if (!coseMod.SequenceEqual(pubArea.Unique))
+                if (!coseMod.AsSpan().SequenceEqual(pubArea.Unique))
                     throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
                 if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent)
                     throw new Fido2VerificationException("Public key exponent mismatch between pubArea and credentialPublicKey");
@@ -94,7 +94,7 @@ namespace Fido2NetLib
             // See Data field of base class
 
             // 4. Validate that certInfo is valid
-            CertInfo? certInfo = null;
+            CertInfo certInfo;
             if (attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject)
             {
                 certInfo = new CertInfo((byte[])certInfoObject);
@@ -111,10 +111,12 @@ namespace Fido2NetLib
             // Handled in CertInfo constructor, see CertInfo.Type
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-            if (Alg is null || Alg is not CborInteger)
+            if (!(Alg is CborInteger))
                 throw new Fido2VerificationException("Invalid TPM attestation algorithm");
-                
-            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)(int)Alg)))
+
+            var alg = (COSE.Algorithm)(int)Alg;
+
+            using (HashAlgorithm hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
             {
                 if (!hasher.ComputeHash(Data).AsSpan().SequenceEqual(certInfo.ExtraData))
                     throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
@@ -130,17 +132,26 @@ namespace Fido2NetLib
             // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
             // 5. If x5c is present, this indicates that the attestation type is not ECDAA
-            if (X5c is CborArray {  Length: > 0 } x5cArray)
+            if (X5c is CborArray { Length: > 0 } x5cArray)
             {
-                if (!(x5cArray[0] is CborByteString { Length: > 0 }))
+                var trustPath = new X509Certificate2[x5cArray.Length];
+
+                for (int i = 0; i < x5cArray.Length; i++)
                 {
-                    throw new Fido2VerificationException("Malformed x5c in TPM attestation");
+                    if (x5cArray[i] is CborByteString { Length: > 0 } x5cObject)
+                    {
+                        trustPath[i] = new X509Certificate2(x5cObject.Value);
+                    }
+                    else
+                    {
+                        throw new Fido2VerificationException("Malformed x5c in TPM attestation");
+                    }
                 }
 
                 // 5a. Verify the sig is a valid signature over certInfo using the attestation public key in aikCert with the algorithm specified in alg.
-                var aikCert = new X509Certificate2((byte[])x5cArray[0]);
+                X509Certificate2 aikCert = trustPath[0];
 
-                var cpk = new CredentialPublicKey(aikCert, (int)Alg);
+                var cpk = new CredentialPublicKey(aikCert, alg);
 
                 if (!cpk.Verify(certInfo.Raw, (byte[])Sig))
                     throw new Fido2VerificationException("Bad signature in TPM with aikCert");
@@ -190,13 +201,9 @@ namespace Fido2NetLib
                 // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] 
                 // are both OPTIONAL as the status of many attestation certificates is available through metadata services.
                 // See, for example, the FIDO Metadata Service [FIDOMetadataService].
-                var trustPath = x5cArray.Values
-                    .Select(x => new X509Certificate2((byte[])x))
-                    .ToArray();
 
                 // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
-                var aaguid = AaguidFromAttnCertExts(aikCert.Extensions);
-                if (aaguid != null &&
+                if (AaguidFromAttnCertExts(aikCert.Extensions) is byte[] aaguid &&
                     (!aaguid.AsSpan().SequenceEqual(Guid.Empty.ToByteArray())) &&
                     (AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid) != 0))
                 {

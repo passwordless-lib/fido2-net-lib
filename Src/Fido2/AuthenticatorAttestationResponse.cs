@@ -25,12 +25,13 @@ namespace Fido2NetLib
         {
         }
 
-        public ParsedAttestationObject AttestationObject { get; set; }
+        public ParsedAttestationObject AttestationObject { get; init; }
+
         public AuthenticatorAttestationRawResponse Raw { get; private set; }
 
         public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
         {
-            if (rawResponse is null || rawResponse.Response is null)
+            if (rawResponse?.Response is null)
                 throw new Fido2VerificationException("Expected rawResponse, got null");
 
             if (rawResponse.Response.AttestationObject is null || rawResponse.Response.AttestationObject.Length is 0)
@@ -85,7 +86,7 @@ namespace Fido2NetLib
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
             // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-            BaseVerify(config.Origin, originalOptions.Challenge, requestTokenBindingId);
+            BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId);
 
             if (Raw.Id is null || Raw.Id.Length == 0)
                 throw new Fido2VerificationException("AttestationResponse is missing Id");
@@ -96,7 +97,6 @@ namespace Fido2NetLib
             var authData = new AuthenticatorData(AttestationObject.AuthData);
 
             // 7. Compute the hash of response.clientDataJSON using SHA-256.
-          
             byte[] clientDataHash = SHA256.HashData(Raw.Response.ClientDataJson);
             byte[] rpIdHash = SHA256.HashData(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));           
 
@@ -104,7 +104,7 @@ namespace Fido2NetLib
             // Handled in AuthenticatorAttestationResponse::Parse()
 
             // 9. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party
-            if (!authData.RpIdHash.SequenceEqual(rpIdHash))
+            if (!authData.RpIdHash.AsSpan().SequenceEqual(rpIdHash))
                 throw new Fido2VerificationException("Hash mismatch RPID");
 
             // 10. Verify that the User Present bit of the flags in authData is set.
@@ -164,9 +164,13 @@ namespace Fido2NetLib
                 if (ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_BASIC_FULL) ||
                     ContainsAttestationType(entry, MetadataAttestationType.ATTESTATION_PRIVACY_CA))
                 {
-                    var attestationRootCertificates = entry.MetadataStatement.AttestationRootCertificates
-                        .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-                        .ToArray();
+                    string[] certStrings = entry.MetadataStatement.AttestationRootCertificates;
+                    var attestationRootCertificates = new X509Certificate2[certStrings.Length];
+
+                    for (int i = 0; i < attestationRootCertificates.Length; i++)
+                    {
+                        attestationRootCertificates[i] = new X509Certificate2(Convert.FromBase64String(certStrings[i]));
+                    }
 
                     if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates))
                     {

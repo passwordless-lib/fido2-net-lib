@@ -26,7 +26,7 @@ namespace Fido2NetLib
         {
             byte[] aaguid = null;
             var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
-            if (null != ext)
+            if (ext != null)
             {
                 var decodedAaguid = Asn1Element.Decode(ext.RawData);
                 decodedAaguid.CheckTag(Asn1Tag.PrimitiveOctetString);
@@ -39,6 +39,7 @@ namespace Fido2NetLib
 
             return aaguid;
         }
+
         internal static bool IsAttnCertCACert(X509ExtensionCollection exts)
         {
             var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "2.5.29.19");
@@ -49,6 +50,7 @@ namespace Fido2NetLib
 
             return true;
         }
+
         internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
         {
             var u2ftransports = new byte();
@@ -73,6 +75,7 @@ namespace Fido2NetLib
 
             return u2ftransports;
         }
+
         public virtual (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, byte[] authenticatorData, byte[] clientDataHash)
         {
             this.attStmt = attStmt;
