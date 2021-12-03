@@ -22,7 +22,7 @@ namespace Fido2Demo
                             new ConformanceMetadataRepository(null, origin),
                             new FileSystemMetadataRepository(cacheDir)
                         };
-                        var simpleService = new SimpleMetadataService(repos);
+                        var simpleService = new ConformanceMetadataService(repos);
                         simpleService.InitializeAsync().Wait();
                         _instance = simpleService;
                     }
