@@ -314,7 +314,7 @@ namespace Test
 
         [Theory]
         [InlineData(new byte[] { 0x66, 0x6f, 0x6f })]
-        public async void TestAuthenticatorAttestationObjectBadCBOR(byte[] value)
+        public void TestAuthenticatorAttestationObjectBadCBOR(byte[] value)
         {
             var rawResponse = new AuthenticatorAttestationRawResponse
             {
