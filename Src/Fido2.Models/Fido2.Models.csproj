@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Fido2NetLib</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>
