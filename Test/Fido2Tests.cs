@@ -284,6 +284,7 @@ namespace fido2_net_lib.Test
                             privateKey = Key.Import(SignatureAlgorithm.Ed25519, expandedPrivateKey, KeyBlobFormat.RawPrivateKey);
                             break;
                         }
+                    default:
                         throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
                 }
 
@@ -872,6 +873,7 @@ namespace fido2_net_lib.Test
                             cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
                             break;
                         }
+                    default:
                         throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
                 }
             }
@@ -1075,6 +1077,7 @@ namespace fido2_net_lib.Test
                         cpk = MakeCredentialPublicKey(kty, alg, COSE.EllipticCurve.Ed25519, publicKey);
                         break;
                     }
+                default:
                     throw new ArgumentException(nameof(kty), $"Missing or unknown kty {kty}");
             }
             return cpk;
