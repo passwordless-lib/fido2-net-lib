@@ -48,7 +48,12 @@ namespace Fido2NetLib
         /// </summary>
         public HashSet<string> Origins
         {
-            get => _origins ?? new HashSet<string> { Origin };
+            get => _origins ?? new HashSet<string>
+            {
+#pragma warning disable CS0618
+                Origin
+#pragma warning restore CS0618
+            };
             set
             {
                 _origins = value;
@@ -61,7 +66,12 @@ namespace Fido2NetLib
         /// </summary>
         public HashSet<string> FullyQualifiedOrigins
         {
-            get => _fullyQualifiedOrigins ?? new HashSet<string> { Origin?.ToFullyQualifiedOrigin() };
+            get => _fullyQualifiedOrigins ?? new HashSet<string>
+            {
+#pragma warning disable CS0618
+                Origin?.ToFullyQualifiedOrigin()
+#pragma warning restore CS0618
+            };
             private set => _fullyQualifiedOrigins = value;
         }
 
