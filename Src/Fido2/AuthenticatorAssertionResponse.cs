@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-﻿#nullable disable
+#nullable disable
 
 using System.Linq;
 using System.Security.Cryptography;
