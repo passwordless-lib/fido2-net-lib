@@ -88,7 +88,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -192,7 +192,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -388,7 +388,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -459,7 +459,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -528,7 +528,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -605,7 +605,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -683,7 +683,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -760,7 +760,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -838,7 +838,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -915,7 +915,7 @@ namespace Test
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
@@ -948,6 +948,83 @@ namespace Test
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("CredentialId is not unique to this user", ex.Result.Message);
+        }
+
+        [Fact]
+        public void TestAuthenticatorAttestationResponseUVRequired()
+        {
+            var challenge = RandomGenerator.Default.GenerateBytes(128);
+            var rp = "https://www.passwordless.dev";
+            var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+            var authData = new AuthenticatorData(
+                SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
+                AuthenticatorFlags.AT | AuthenticatorFlags.UP,
+                0,
+                acd
+            ).ToByteArray();
+            var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                type = "webauthn.create",
+                challenge = challenge,
+                origin = rp,
+            });
+
+            var rawResponse = new AuthenticatorAttestationRawResponse
+            {
+                Type = PublicKeyCredentialType.PublicKey,
+                Id = new byte[] { 0xf1, 0xd0 },
+                RawId = new byte[] { 0xf1, 0xd0 },
+                Response = new AuthenticatorAttestationRawResponse.ResponseData()
+                {
+                    AttestationObject = new CborMap {
+                        { "fmt", "none" },
+                        { "attStmt", new CborMap() },
+                        { "authData", authData }
+                    }.Encode(),
+                    ClientDataJson = clientDataJson
+                },
+            };
+
+            var origChallenge = new CredentialCreateOptions
+            {
+                Attestation = AttestationConveyancePreference.Direct,
+                AuthenticatorSelection = new AuthenticatorSelection
+                {
+                    AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
+                    RequireResidentKey = true,
+                    UserVerification = UserVerificationRequirement.Required,
+                },
+                Challenge = challenge,
+                ErrorMessage = "",
+                PubKeyCredParams = new List<PubKeyCredParam>()
+                {
+                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                },
+                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Status = "ok",
+                User = new Fido2User
+                {
+                    Name = "testuser",
+                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    DisplayName = "Test User",
+                },
+                Timeout = 60000,
+            };
+
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            {
+                return Task.FromResult(true);
+            };
+
+            var lib = new Fido2(new Fido2Configuration()
+            {
+                ServerDomain = rp,
+                ServerName = rp,
+                Origins = new HashSet<string> { rp },
+            });
+
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+            Assert.Equal("User Verified flag not set in authenticator data and user verification was required", ex.Result.Message);
         }
 
         [Fact]
