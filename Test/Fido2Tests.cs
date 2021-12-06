@@ -223,7 +223,7 @@ namespace fido2_net_lib.Test
                     {
                         AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                         RequireResidentKey = true,
-                        UserVerification = UserVerificationRequirement.Required,
+                        UserVerification = UserVerificationRequirement.Discouraged,
                     },
                     Challenge = _challenge,
                     ErrorMessage = "",

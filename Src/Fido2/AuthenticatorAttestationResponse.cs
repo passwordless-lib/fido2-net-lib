@@ -112,14 +112,14 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
-            // see authData.UserVerified
-            // TODO: Make this a configurable option and add check to require
+            if (originalOptions.AuthenticatorSelection?.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
+                throw new Fido2VerificationException("User Verified flag not set in authenticator data and user verification was required");
 
             // 12. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, 
             // considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values 
             // in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., 
             // no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
-            
+
             // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
 
             if (!authData.HasAttestedCredentialData)
