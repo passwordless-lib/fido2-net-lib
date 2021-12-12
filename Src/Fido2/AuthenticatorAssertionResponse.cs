@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-
-#nullable disable
-
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Fido2NetLib.Objects;
+
+#nullable disable
 
 namespace Fido2NetLib
 {
@@ -59,7 +59,8 @@ namespace Fido2NetLib
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
-            byte[] requestTokenBindingId)
+            byte[] requestTokenBindingId,
+            CancellationToken cancellationToken)
         {
             BaseVerify(fullyQualifiedExpectedOrigins, options.Challenge, requestTokenBindingId);
 
@@ -86,7 +87,7 @@ namespace Fido2NetLib
                 if (UserHandle.Length is 0)
                     throw new Fido2VerificationException("Userhandle was empty DOMString. It should either be null or have a value.");
 
-                if (false == await isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle)))
+                if (false == await isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle), cancellationToken))
                 {
                     throw new Fido2VerificationException("User is not owner of the public key identitief by the credential id");
                 }

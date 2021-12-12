@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 
@@ -36,37 +37,37 @@ namespace Fido2NetLib
         private readonly string _blobUrl;
         private readonly HttpClient _httpClient;
 
-        public Fido2MetadataServiceRepository(HttpClient httpClient)
+        public Fido2MetadataServiceRepository(HttpClient? httpClient)
         {
             _blobUrl = "https://mds.fidoalliance.org/";
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken)
         {
             return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
-        public async Task<MetadataBLOBPayload> GetBLOBAsync()
+        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken)
         {
-            var rawBLOB = await GetRawBlobAsync();
-            return await DeserializeAndValidateBlobAsync(rawBLOB);
+            var rawBLOB = await GetRawBlobAsync(cancellationToken);
+            return await DeserializeAndValidateBlobAsync(rawBLOB, cancellationToken);
         }
 
-        private async Task<string> GetRawBlobAsync()
+        private async Task<string> GetRawBlobAsync(CancellationToken cancellationToken)
         {
             var url = _blobUrl;
-            return await DownloadStringAsync(url);
+            return await DownloadStringAsync(url, cancellationToken);
         }
 
-        private async Task<string> DownloadStringAsync(string url)
+        private async Task<string> DownloadStringAsync(string url, CancellationToken cancellationToken)
         {
-            return await _httpClient.GetStringAsync(url);
+            return await _httpClient.GetStringAsync(url, cancellationToken);
         }
 
-        private async Task<byte[]> DownloadDataAsync(string url)
+        private async Task<byte[]> DownloadDataAsync(string url, CancellationToken cancellationToken)
         {
-            return await _httpClient.GetByteArrayAsync(url);
+            return await _httpClient.GetByteArrayAsync(url, cancellationToken);
         }
 
         private X509Certificate2 GetX509Certificate(string certString)
@@ -82,7 +83,7 @@ namespace Fido2NetLib
             }
         }
 
-        private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt)
+        private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, CancellationToken cancellationToken)
         {
            
             if (string.IsNullOrWhiteSpace(rawBLOBJwt))
@@ -172,7 +173,7 @@ namespace Fido2NetLib
                     if (element.Certificate.Issuer != element.Certificate.Subject)
                     {
                         var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
-                        var crlFile = await DownloadDataAsync(cdp);
+                        var crlFile = await DownloadDataAsync(cdp, cancellationToken);
                         if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
                             throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");
                     }

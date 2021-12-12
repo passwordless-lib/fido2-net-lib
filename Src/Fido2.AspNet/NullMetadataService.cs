@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fido2NetLib
@@ -15,7 +16,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        Task IMetadataService.InitializeAsync()
+        Task IMetadataService.InitializeAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
         }

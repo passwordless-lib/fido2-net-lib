@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fido2NetLib
@@ -34,6 +35,6 @@ namespace Fido2NetLib
         /// <summary>
         /// Initializes the metadata service.
         /// </summary>
-        Task InitializeAsync();
+        Task InitializeAsync(CancellationToken cancellationToken = default);
     }
 }

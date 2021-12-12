@@ -107,12 +107,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -211,12 +211,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -407,12 +407,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -478,12 +478,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -547,12 +547,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -624,12 +624,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -702,12 +702,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -779,12 +779,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -857,12 +857,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -934,12 +934,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(false);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -1011,12 +1011,12 @@ namespace Test
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
