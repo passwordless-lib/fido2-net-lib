@@ -98,12 +98,12 @@ namespace Fido2NetLib
             return combinedBlob;
         }
 
-        protected Task<string> DownloadStringAsync(string url)
+        private Task<string> DownloadStringAsync(string url)
         {
             return _httpClient.GetStringAsync(url);
         }
 
-        protected Task<byte[]> DownloadDataAsync(string url)
+        private Task<byte[]> DownloadDataAsync(string url)
         {
             return _httpClient.GetByteArrayAsync(url);
         }
