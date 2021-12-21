@@ -7,7 +7,7 @@ using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
 {
-    public static class CryptoUtils
+    internal static class CryptoUtils
     {
         public static byte[] HashData(HashAlgorithmName hashName, ReadOnlySpan<byte> data)
         {
