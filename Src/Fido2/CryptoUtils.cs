@@ -9,33 +9,16 @@ namespace Fido2NetLib
 {
     public static class CryptoUtils
     {
-        public static HashAlgorithm GetHasher(HashAlgorithmName hashName)
+        public static byte[] HashData(HashAlgorithmName hashName, ReadOnlySpan<byte> data)
         {
-            switch (hashName.Name)
+            return hashName.Name switch
             {
-                case "SHA1":
-                    return SHA1.Create();
-                case "SHA256":
-                case "HS256":
-                case "RS256":
-                case "ES256":
-                case "PS256":
-                    return SHA256.Create();
-                case "SHA384":
-                case "HS384":
-                case "RS384":
-                case "ES384":
-                case "PS384":
-                    return SHA384.Create();
-                case "SHA512":
-                case "HS512":
-                case "RS512":
-                case "ES512":
-                case "PS512":
-                    return SHA512.Create();
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(hashName));
-            }
+                "SHA1"                                               => SHA1.HashData(data),
+                "SHA256" or "HS256" or "RS256" or "ES256" or "PS256" => SHA256.HashData(data),
+                "SHA384" or "HS384" or "RS384" or "ES384" or "PS384" => SHA384.HashData(data),
+                "SHA512" or "HS512" or "RS512" or "ES512" or "PS512" => SHA512.HashData(data),
+                _ => throw new ArgumentOutOfRangeException(nameof(hashName)),
+            };
         }
 
         public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
