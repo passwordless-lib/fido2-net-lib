@@ -55,12 +55,14 @@ namespace Fido2NetLib
             // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
 
             // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
-            if (trustPath.Length == 1 && trustPath[0].Subject.CompareTo(trustPath[0].Issuer) == 0)
+            if (trustPath.Length == 1 && trustPath[0].Subject.Equals(trustPath[0].Issuer, StringComparison.Ordinal))
             {
                 foreach (X509Certificate2? cert in attestationRootCertificates)
                 {
-                    if (cert.Thumbprint.CompareTo(trustPath[0].Thumbprint) == 0)
+                    if (cert.Thumbprint.Equals(trustPath[0].Thumbprint, StringComparison.Ordinal))
+                    {
                         return true;
+                    }
                 }
                 return false;
             }
