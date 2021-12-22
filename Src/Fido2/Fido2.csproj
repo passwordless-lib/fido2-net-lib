@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
     <Nullable>enable</Nullable>
+    <RootNamespace>Fido2NetLib</RootNamespace>
   </PropertyGroup>
    
   <ItemGroup>

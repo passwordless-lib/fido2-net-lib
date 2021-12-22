@@ -16,7 +16,7 @@ namespace Fido2NetLib
 {
     internal sealed class AndroidSafetyNet : AttestationVerifier
     {
-        private readonly int _driftTolerance;
+        private const int _driftTolerance = 0;
 
         private static X509Certificate2 GetX509Certificate(string certString)
         {

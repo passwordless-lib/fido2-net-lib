@@ -4,76 +4,100 @@ name: $(Rev:r)
 variables:
   BuildConfiguration: Release
   TargetVmImage: windows-latest
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
 
 jobs:
-# Prepare the environment for the other tasks
-- job: prepare
-  displayName: Prepare environment
-  pool:
-    vmImage: $(TargetVmImage)
-  steps:
-  - task: NuGetToolInstaller@1
-    displayName: Install latest NuGet
-  - task: UseDotNet@2
-    displayName: 'Use .NET 5.0 SDK'
-    inputs:
-      packageType: 'sdk'
-      version: '5.0.x'
-  - task: DotNetCoreCLI@2
-    displayName: dotnet restore
-    inputs:
-      command: restore
-      includeNuGetOrg: true
-      noCache: true
-
-# Build the main library
-- job: lib
-  displayName: Library build
-  pool:
-    vmImage: $(TargetVmImage)
-  dependsOn: prepare
-  steps:
-  - task: PowerShell@2
-    displayName: Run build script (lib only, release mode)
-    inputs:
-      targetType: filePath
-      filePath: ./scripts/buildRelease.ps1
-      arguments: '"-p:Version=$(Build.BuildNumber)-development"'
-
 # Publish the demo website
 - job: demo
   displayName: Demo build
   pool:
     vmImage: $(TargetVmImage)
-  dependsOn: lib
   steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET 5.0 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '5.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet-demo
+  - task: UseDotNet@2
+    displayName: 'Use .NET 6.0 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '6.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet-demo
   - task: DotNetCoreCLI@2
-    displayName: Publish website
+    displayName: 'dotnet restore'
+    inputs:
+      command: restore
+      projects: 'Demo/Demo.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build $(buildConfiguration)'
+    inputs:
+      command: build
+      arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
+      projects: 'Demo/Demo.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: Publish website [net5.0]
     inputs:
       command: publish
-      arguments: '--configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory) --framework net5.0'
-  - task: PublishBuildArtifacts@1
-    displayName: Copy website to artifacts
+      arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net5.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net5.0'
+      projects: 'Demo/Demo.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: Publish website [net6.0]
     inputs:
-      ArtifactName: demodrop
+      command: publish
+      arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net6.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net6.0'
+      projects: 'Demo/Demo.csproj'
+  - task: PublishBuildArtifacts@1
+    displayName: Copy website to artifacts [net5.0]
+    inputs:
+      pathToPublish: $(build.ArtifactStagingDirectory)/net5.0
+      artifactName: Demo .Net 5.0
+  - task: PublishBuildArtifacts@1
+    displayName: Copy website to artifacts [net6.0]
+    inputs:
+      pathToPublish: $(build.ArtifactStagingDirectory)/net6.0
+      artifactName: Demo .Net 6.0
 
 # Run unit tests
 - job: tests
   displayName: Unit tests
   pool:
     vmImage: $(TargetVmImage)
-  dependsOn: lib
   steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET 5.0 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '5.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
+  - task: UseDotNet@2
+    displayName: 'Use .NET 6.0 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '6.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet restore'
+    inputs:
+      command: restore
+      projects: 'Test/Test.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build $(buildConfiguration)'
+    inputs:
+      command: build
+      arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
+      projects: 'Test/Test.csproj'
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
       command: test
-      projects: '**/Test.csproj'
-      arguments: --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:ExcludeByFile="**/ExternalLibs/**"
+      projects: 'Test/Test.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo --collect:"XPlat Code Coverage"'
   - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
     displayName: ReportGenerator
     inputs:
-      reports: '$(Build.SourcesDirectory)/Test/coverage.net5.0.cobertura.xml'
+      reports: '$(Agent.TempDirectory)\**\coverage.cobertura.xml'
       targetdir: '$(Build.SourcesDirectory)/CodeCoverage'
       reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges'
       assemblyfilters: '-xunit*'
@@ -87,4 +111,4 @@ jobs:
     displayName: 'Upload coverage to Codecov'
     inputs:
       targetType: 'inline'
-      script: 'bash <(curl -s https://codecov.io/bash) -t 0b864a87-d3bc-4130-b942-81909f1064c0'
+      script: 'bash <(curl -s https://codecov.io/bash) -Z -t 0b864a87-d3bc-4130-b942-81909f1064c0 -f CodeCoverage/Cobertura.xml'

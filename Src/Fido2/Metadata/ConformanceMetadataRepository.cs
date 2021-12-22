@@ -28,14 +28,13 @@ namespace Fido2NetLib
                                         "xubSa3y3v5ormpPqCwfqn9s0MLBAtzCIgxQ/zkzPKctkiwoPtDzI51KnAjAmeMyg" +
                                         "X2S5Ht8+e+EQnezLJBJXtnkRWY+Zt491wgt/AwSs5PHHMv5QgjELOuMxQBc=";
 
-        private readonly string? _blobUrl;
         private readonly HttpClient _httpClient;
 
-        private readonly string _origin = "http://localhost";
+        private readonly string _origin;
 
         private readonly string _getEndpointsUrl = "https://mds3.certinfra.fidoalliance.org/getEndpoints";
 
-        public ConformanceMetadataRepository(HttpClient client, string origin)
+        public ConformanceMetadataRepository(HttpClient? client, string origin)
         {
             _httpClient = client ?? new HttpClient();
             _origin = origin;
@@ -82,7 +81,7 @@ namespace Fido2NetLib
                     continue;
                 }
                 
-                if(string.Compare(blob.NextUpdate, combinedBlob.NextUpdate) < 0)
+                if(string.Compare(blob.NextUpdate, combinedBlob.NextUpdate, StringComparison.InvariantCulture) < 0)
                     combinedBlob.NextUpdate = blob.NextUpdate;
                 if (combinedBlob.Number < blob.Number)
                     combinedBlob.Number = blob.Number;
