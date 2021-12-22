@@ -117,25 +117,14 @@ namespace fido2_net_lib.Test
                     });
                 }
             }
+
             public byte[] _clientDataHash => SHA256.HashData(_clientDataJson);
-            
-            public byte[] _attToBeSigned
-            {
-                get
-                {
-                    byte[] data = new byte[_authData.Length + _clientDataHash.Length];
-                    Buffer.BlockCopy(_authData, 0, data, 0, _authData.Length);
-                    Buffer.BlockCopy(_clientDataHash, 0, data, _authData.Length, _clientDataHash.Length);
-                    return data;
-                }
-            }
+
+            public byte[] _attToBeSigned => DataHelper.Concat(_authData, _clientDataHash);
 
             public byte[] _attToBeSignedHash(HashAlgorithmName alg)
             {
-                using (var hasher = CryptoUtils.GetHasher(alg))
-                {
-                    return hasher.ComputeHash(_attToBeSigned);
-                }
+                return CryptoUtils.HashData(alg, _attToBeSigned);                
             }
 
             public byte[] _credentialID;

@@ -173,13 +173,8 @@ namespace Test.Attestation
                                 );
                                 
                                 var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                                byte[] hashedData = _attToBeSignedHash(hashAlg);
-                                
-                                byte[] hashedPubArea;
-                                using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                                {
-                                    hashedPubArea = hasher.ComputeHash(pubArea);
-                                }
+                                byte[] hashedData = _attToBeSignedHash(hashAlg);                              
+                                byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                                
 
                                 byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
@@ -272,15 +267,11 @@ namespace Test.Attestation
 
                                 byte[] data = Concat(_authData, _clientDataHash);
 
-                                byte[] hashedData;
-                                byte[] hashedPubArea;
                                 var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                                using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                                {
-                                    hashedData = hasher.ComputeHash(data);
-                                    hashedPubArea = hasher.ComputeHash(pubArea);
-                                }
-
+                               
+                                byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                                byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                                
                                 byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                                 byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                                 byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -407,14 +398,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
 
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
+
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm1bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -526,14 +514,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -633,14 +617,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);                   
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -740,14 +720,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                 
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -855,14 +831,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                 
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -962,14 +934,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
+     
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -1069,14 +1038,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -1176,14 +1141,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -1281,15 +1242,11 @@ namespace Test.Attestation
                         .ToArray();
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea.ToArray());
-                    }
-
+              
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -1388,13 +1345,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    using (var hasher = CryptoUtils.GetHasher(CryptoUtils.HashAlgFromCOSEAlg(alg)))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
@@ -1496,15 +1450,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
 
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -1604,14 +1553,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
+
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -1729,14 +1674,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -1854,14 +1796,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                  
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -1980,14 +1918,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -2087,14 +2021,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
+
                     var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -2195,14 +2125,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -2309,14 +2235,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -2417,15 +2339,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -2524,14 +2442,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                   
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -2634,14 +2548,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
                     byte[] extraData = GetUInt16BigEndianBytes(0);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -2741,14 +2652,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                 
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -2852,15 +2759,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                  
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, new byte[] { 0x00, 0x00 }, hashedPubArea);
@@ -2959,15 +2862,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-
+           
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
                     var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length + 1);
@@ -3072,15 +2971,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-
+                   
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                   
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, new byte[] { 0x00, 0x10 }, hashedPubArea);
@@ -3179,14 +3074,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+               
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -3290,15 +3181,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-
+                
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                   
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -3396,14 +3283,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
@@ -3515,14 +3398,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -3626,14 +3505,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                   
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -3740,18 +3615,14 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                  
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
-                    var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+                    byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
                     byte[] tpm2bName = DataHelper.Concat(
                         tpm2bNameLen,
@@ -3853,14 +3724,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -3960,15 +3827,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                   
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -4067,14 +3930,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -4174,15 +4033,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                   
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -4282,14 +4137,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                    
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                 
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                  
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -4389,15 +4240,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                   
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -4498,15 +4345,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -4609,14 +4452,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -4727,15 +4566,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                 
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -4834,14 +4669,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
@@ -4955,14 +4786,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                  
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -5069,14 +4896,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -5184,14 +5007,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -5303,14 +5122,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+                    
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
@@ -5421,15 +5236,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
-
+                  
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                   
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -5532,14 +5343,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+              
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                  
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -5640,15 +5447,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                   
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -5747,14 +5550,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                    
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
@@ -5871,15 +5670,11 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
 
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                   
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+                    
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                     byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -5978,14 +5773,10 @@ namespace Test.Attestation
                     );
 
                     byte[] data = Concat(_authData, _clientDataHash);
-                    byte[] hashedData;
-                    byte[] hashedPubArea;
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                    using (var hasher = CryptoUtils.GetHasher(hashAlg))
-                    {
-                        hashedData = hasher.ComputeHash(data);
-                        hashedPubArea = hasher.ComputeHash(pubArea);
-                    }
+
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);

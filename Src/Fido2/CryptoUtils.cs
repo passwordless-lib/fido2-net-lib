@@ -7,35 +7,18 @@ using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
 {
-    public static class CryptoUtils
+    internal static class CryptoUtils
     {
-        public static HashAlgorithm GetHasher(HashAlgorithmName hashName)
+        public static byte[] HashData(HashAlgorithmName hashName, ReadOnlySpan<byte> data)
         {
-            switch (hashName.Name)
+            return hashName.Name switch
             {
-                case "SHA1":
-                    return SHA1.Create();
-                case "SHA256":
-                case "HS256":
-                case "RS256":
-                case "ES256":
-                case "PS256":
-                    return SHA256.Create();
-                case "SHA384":
-                case "HS384":
-                case "RS384":
-                case "ES384":
-                case "PS384":
-                    return SHA384.Create();
-                case "SHA512":
-                case "HS512":
-                case "RS512":
-                case "ES512":
-                case "PS512":
-                    return SHA512.Create();
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(hashName));
-            }
+                "SHA1"                                               => SHA1.HashData(data),
+                "SHA256" or "HS256" or "RS256" or "ES256" or "PS256" => SHA256.HashData(data),
+                "SHA384" or "HS384" or "RS384" or "ES384" or "PS384" => SHA384.HashData(data),
+                "SHA512" or "HS512" or "RS512" or "ES512" or "PS512" => SHA512.HashData(data),
+                _ => throw new ArgumentOutOfRangeException(nameof(hashName)),
+            };
         }
 
         public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
@@ -72,12 +55,14 @@ namespace Fido2NetLib
             // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
 
             // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
-            if (trustPath.Length == 1 && trustPath[0].Subject.CompareTo(trustPath[0].Issuer) == 0)
+            if (trustPath.Length == 1 && trustPath[0].Subject.Equals(trustPath[0].Issuer, StringComparison.Ordinal))
             {
                 foreach (X509Certificate2? cert in attestationRootCertificates)
                 {
-                    if (cert.Thumbprint.CompareTo(trustPath[0].Thumbprint) == 0)
+                    if (cert.Thumbprint.Equals(trustPath[0].Thumbprint, StringComparison.Ordinal))
+                    {
                         return true;
+                    }
                 }
                 return false;
             }
