@@ -1,6 +1,6 @@
 ﻿using Fido2NetLib.Cbor;
 
-namespace Fido2NetLib.Ctap;
+namespace Fido2NetLib.Ctap2;
 
 public abstract class CtapCommand
 {

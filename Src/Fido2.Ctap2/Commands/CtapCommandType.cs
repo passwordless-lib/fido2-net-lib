@@ -1,4 +1,4 @@
-﻿namespace Fido2NetLib.Ctap;
+﻿namespace Fido2NetLib.Ctap2;
 
 public enum CtapCommandType : byte
 {
