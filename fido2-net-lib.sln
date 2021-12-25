@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29111.141
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32002.185
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2", "Src\Fido2\Fido2.csproj", "{671046B3-32C4-4430-A71F-27192EACECD0}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Models", "Src\Fido2.Models\Fido2.Models.csproj", "{08AA0431-3BBF-49EF-8DEF-5433B3068D92}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.AspNet", "Src\Fido2.AspNet\Fido2.AspNet.csproj", "{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fido2.Ctap", "Src\Fido2.Ctap\Fido2.Ctap.csproj", "{5C392417-33D9-41F1-9968-EB22F17830E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C392417-33D9-41F1-9968-EB22F17830E5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C392417-33D9-41F1-9968-EB22F17830E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C392417-33D9-41F1-9968-EB22F17830E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C392417-33D9-41F1-9968-EB22F17830E5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
