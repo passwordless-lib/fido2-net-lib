@@ -3,15 +3,15 @@ using Fido2NetLib.Ctap2.Exceptions;
 
 namespace Fido2NetLib.Ctap2;
 
-public class FidoDeviceResponse
+public sealed class FidoAuthenticatorResponse
 {
-    public FidoDeviceResponse(CtapStatusCode status)
+    public FidoAuthenticatorResponse(CtapStatusCode status)
     {
         Status = status;
         Data = Array.Empty<byte>().AsMemory();
     }
 
-    public FidoDeviceResponse(byte[] message)
+    public FidoAuthenticatorResponse(byte[] message)
     {
         Status = (CtapStatusCode)message[0];
         Data = message.AsMemory(1);

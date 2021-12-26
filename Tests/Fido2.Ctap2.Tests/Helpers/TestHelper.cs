@@ -5,9 +5,9 @@ namespace Fido2NetLib.Ctap2.Tests;
 
 public class TestHelper
 {
-    public static FidoDeviceResponse GetResponse(ReadOnlySpan<char> text)
+    public static FidoAuthenticatorResponse GetResponse(ReadOnlySpan<char> text)
     {
-        return new FidoDeviceResponse(Convert.FromHexString(GetCborEncodedHexString(text)));
+        return new FidoAuthenticatorResponse(Convert.FromHexString(GetCborEncodedHexString(text)));
     }
 
     public static string GetCborEncodedHexString(ReadOnlySpan<char> text)

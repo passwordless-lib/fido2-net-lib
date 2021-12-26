@@ -1,6 +1,6 @@
 ﻿using Fido2NetLib.Ctap2;
 
-public abstract class AuthenticatorBase
+public abstract class FidoAuthenticator
 {
     public async ValueTask<AuthenticatorMakeCredentialResponse> MakeCredentialAsync(AuthenticatorMakeCredentialCommand command)
     {
@@ -57,5 +57,5 @@ public abstract class AuthenticatorBase
         return AuthenticatorGetNextAssertionResponse.FromCborObject(result.GetCborObject());
     }
 
-    protected abstract ValueTask<FidoDeviceResponse> ExecuteCommandAsync(CtapCommand command);
+    protected abstract ValueTask<FidoAuthenticatorResponse> ExecuteCommandAsync(CtapCommand command);
 }
