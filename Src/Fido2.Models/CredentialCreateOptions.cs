@@ -146,12 +146,13 @@ namespace Fido2NetLib
         public COSE.Algorithm Alg { get; }
     }
 
+#nullable enable
     /// <summary>
     /// PublicKeyCredentialRpEntity 
     /// </summary>
-    public class PublicKeyCredentialRpEntity
+    public sealed class PublicKeyCredentialRpEntity
     {
-        public PublicKeyCredentialRpEntity(string id, string name, string icon)
+        public PublicKeyCredentialRpEntity(string id, string name, string? icon = null)
         {
             Name = name;
             Id = id;
@@ -172,8 +173,9 @@ namespace Fido2NetLib
 
         [JsonPropertyName("icon")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string Icon { get; set; }
+        public string? Icon { get; set; }
     }
+#nullable disable
 
     /// <summary>
     /// WebAuthn Relying Parties may use the AuthenticatorSelectionCriteria dictionary to specify their requirements regarding authenticator attributes.
