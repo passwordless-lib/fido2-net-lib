@@ -6,18 +6,18 @@ public abstract class CtapCommand
 {
     public abstract CtapCommandType Type { get; }
 
-    protected abstract CborObject? GetObject();
+    protected virtual CborObject? GetParameters() => null;
 
     public byte[] GetPayload()
     {
-        var @object = GetObject();
+        CborObject? parameters = GetParameters();
 
-        if (@object is null)
+        if (parameters is null)
         {
             return new byte[] { (byte)Type };
         }
     
-        var encodedObject = @object.Encode();
+        var encodedObject = parameters.Encode();
 
         var result = new byte[encodedObject.Length + 1];
 

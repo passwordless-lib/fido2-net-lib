@@ -2,12 +2,15 @@
 
 public enum CtapCommandType : byte
 {
-    AuthenticatorMakeCredential   = 0x01,
-    AuthenticatorGetAssertion     = 0x02,
-    AuthenticatorGetInfo          = 4,
-    AuthenticatorClientPin        = 6,
-    AuthenticatorReset            = 0x07,
-    AuthenticatorGetNextAssertion = 8,
+    //                            | value    | has parameters
+    AuthenticatorMakeCredential   = 0x01, // | yes
+    AuthenticatorGetAssertion     = 0x02, // | yes
+    AuthenticatorGetInfo          = 0x04, // | no
+    AuthenticatorClientPin        = 0x06, // | yes
+    AuthenticatorReset            = 0x07, // | no
+    AuthenticatorGetNextAssertion = 0x08, // | no
+    AuthenticatorVendorFirst      = 0x40, // | NA
+    AuthenticatorVendorLast       = 0xBF, // | NA
 };
 
 public static class CtapCommandTypeHelper
@@ -22,8 +25,9 @@ public static class CtapCommandTypeHelper
             CtapCommandType.AuthenticatorClientPin        => "authenticatorClientPIN",
             CtapCommandType.AuthenticatorReset            => "authenticatorReset",
             CtapCommandType.AuthenticatorGetNextAssertion => "authenticatorGetNextAssertion",
-
-            _ => throw new Exception("Invalid command")
+            CtapCommandType.AuthenticatorVendorFirst      => "authenticatorVendorFirst",
+            CtapCommandType.AuthenticatorVendorLast       => "authenticatorVendorLast",
+            _                                             => throw new Exception("Invalid command")
         };
     }
 }
