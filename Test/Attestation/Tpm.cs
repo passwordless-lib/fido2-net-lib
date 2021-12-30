@@ -173,8 +173,8 @@ namespace Test.Attestation
                                 );
                                 
                                 var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                                byte[] hashedData = _attToBeSignedHash(hashAlg);                              
-                                byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                                
+                                byte[] hashedData = _attToBeSignedHash(hashAlg);
+                                byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
                                 byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
 
@@ -268,10 +268,10 @@ namespace Test.Attestation
                                 byte[] data = Concat(_authData, _clientDataHash);
 
                                 var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
-                               
+
                                 byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
                                 byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
-                                
+
                                 byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                                 byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                                 byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
@@ -515,9 +515,9 @@ namespace Test.Attestation
 
                     byte[] data = Concat(_authData, _clientDataHash);
 
-                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);                    
+                    var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
                     byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
-                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);                   
+                    byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
                     byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                     byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
