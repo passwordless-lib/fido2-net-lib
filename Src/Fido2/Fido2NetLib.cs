@@ -68,7 +68,7 @@ namespace Fido2NetLib
             AuthenticatorAttestationRawResponse attestationResponse,
             CredentialCreateOptions origChallenge,
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-            byte[]? requestTokenBindingId,
+            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
@@ -108,7 +108,7 @@ namespace Fido2NetLib
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-            byte[]? requestTokenBindingId,
+            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
