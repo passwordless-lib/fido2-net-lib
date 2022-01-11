@@ -60,13 +60,16 @@ namespace Fido2NetLib
         /// </summary>
         /// <param name="attestationResponse"></param>
         /// <param name="origChallenge"></param>
+        /// <param name="isCredentialIdUniqueToUser"></param>
+        /// <param name="requestTokenBindingId"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<CredentialMakeResult> MakeNewCredentialAsync(
             AuthenticatorAttestationRawResponse attestationResponse,
             CredentialCreateOptions origChallenge,
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
             byte[]? requestTokenBindingId,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
             var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
@@ -106,7 +109,7 @@ namespace Fido2NetLib
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
             byte[]? requestTokenBindingId,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 

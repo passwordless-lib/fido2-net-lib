@@ -53,6 +53,7 @@ namespace Fido2NetLib
         /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
         /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID</param>
         /// <param name="requestTokenBindingId"></param>
+        /// <param name="cancellationToken"></param>
         public async Task<AssertionVerificationResult> VerifyAsync(
             AssertionOptions options,
             HashSet<string> fullyQualifiedExpectedOrigins,
@@ -60,7 +61,7 @@ namespace Fido2NetLib
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
             byte[] requestTokenBindingId,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             BaseVerify(fullyQualifiedExpectedOrigins, options.Challenge, requestTokenBindingId);
 

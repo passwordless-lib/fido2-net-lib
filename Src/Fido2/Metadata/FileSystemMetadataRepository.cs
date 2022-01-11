@@ -20,7 +20,7 @@ namespace Fido2NetLib
             _entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
         }
 
-        public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken)
+        public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
         {
             if (_blob is null)
                 await GetBLOBAsync(cancellationToken);
@@ -34,7 +34,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken)
+        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
         {
             if (Directory.Exists(_path))
             {

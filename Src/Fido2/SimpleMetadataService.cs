@@ -76,7 +76,7 @@ namespace Fido2NetLib
             }
         }
 
-        public virtual async Task InitializeAsync(CancellationToken cancellationToken)
+        public virtual async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             foreach (var repository in _repositories)
             {

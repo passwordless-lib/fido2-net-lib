@@ -41,12 +41,12 @@ namespace Fido2NetLib
             _origin = origin;
         }
 
-        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken)
+        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
-        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken)
+        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
         {
             var req = new
             {
@@ -121,7 +121,7 @@ namespace Fido2NetLib
             }
         }
 
-        public async Task<MetadataBLOBPayload> DeserializeAndValidateBlob(string rawBLOBJwt, CancellationToken cancellationToken)
+        public async Task<MetadataBLOBPayload> DeserializeAndValidateBlob(string rawBLOBJwt, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(rawBLOBJwt))
                 throw new ArgumentNullException(nameof(rawBLOBJwt));

@@ -43,12 +43,12 @@ namespace Fido2NetLib
             _httpClient = httpClient ?? new HttpClient();
         }
 
-        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken)
+        public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<MetadataStatement?>(entry.MetadataStatement);
         }
 
-        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken)
+        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
         {
             var rawBLOB = await GetRawBlobAsync(cancellationToken);
             return await DeserializeAndValidateBlobAsync(rawBLOB, cancellationToken);

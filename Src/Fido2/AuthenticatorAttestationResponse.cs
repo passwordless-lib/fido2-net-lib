@@ -77,7 +77,7 @@ namespace Fido2NetLib
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
             IMetadataService metadataService,
             byte[] requestTokenBindingId,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             // https://www.w3.org/TR/webauthn/#registering-a-new-credential
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
