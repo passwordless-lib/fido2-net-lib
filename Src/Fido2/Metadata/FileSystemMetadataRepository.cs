@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fido2NetLib
@@ -19,10 +20,10 @@ namespace Fido2NetLib
             _entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
         }
 
-        public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
         {
             if (_blob is null)
-                await GetBLOBAsync();
+                await GetBLOBAsync(cancellationToken);
 
             if (!string.IsNullOrEmpty(entry.AaGuid) && Guid.TryParse(entry.AaGuid, out Guid parsedAaGuid))
             {
@@ -33,14 +34,15 @@ namespace Fido2NetLib
             return null;
         }
 
-        public Task<MetadataBLOBPayload> GetBLOBAsync()
+        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
         {
             if (Directory.Exists(_path))
             {
                 foreach (var filename in Directory.GetFiles(_path))
                 {
-                    var rawStatement = File.ReadAllText(filename);
-                    var statement = JsonSerializer.Deserialize<MetadataStatement>(rawStatement)!;
+                    await using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
+                    var statement = await JsonSerializer.DeserializeAsync<MetadataStatement>(fileStream, cancellationToken:cancellationToken);
+                    _ = statement ?? throw new NullReferenceException(nameof(statement));
                     var conformanceEntry = new MetadataBLOBPayloadEntry
                     {
                         AaGuid = statement.AaGuid,
@@ -65,7 +67,7 @@ namespace Fido2NetLib
                 Number = 1
             };
 
-            return Task.FromResult(_blob);
+            return _blob;
         }
     }
 }

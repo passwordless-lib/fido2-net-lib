@@ -117,15 +117,15 @@ namespace Fido2NetLib
             var alg = (COSE.Algorithm)(int)Alg;
 
             ReadOnlySpan<byte> dataHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg(alg), Data);
-            
+
             if (!dataHash.SequenceEqual(certInfo.ExtraData))
                 throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
-            
+
             // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
             ReadOnlySpan<byte> pubAreaRawHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)certInfo.Alg), pubArea.Raw);
-           
+
             if (!pubAreaRawHash.SequenceEqual(certInfo.AttestedName))
-                throw new Fido2VerificationException("Hash value mismatch attested and pubArea");            
+                throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
 
             // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 

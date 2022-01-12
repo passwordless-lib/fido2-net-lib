@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -36,7 +37,7 @@ namespace Fido2NetLib
 
         public virtual bool ConformanceTesting()
         {
-            return _repositories.First().GetType() == typeof(ConformanceMetadataRepository);
+            return _repositories.First() is ConformanceMetadataRepository;
         }
 
         public virtual MetadataBLOBPayloadEntry GetEntry(Guid aaguid)
@@ -147,11 +148,11 @@ namespace Fido2NetLib
             return null;
         }
 
-        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository)
+        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository, CancellationToken cancellationToken)
         {
             var blobCacheKey = GetTocCacheKey(repository);
 
-            var cachedToc = await _cache.GetStringAsync(blobCacheKey);
+            var cachedToc = await _cache.GetStringAsync(blobCacheKey, cancellationToken);
 
             MetadataBLOBPayload blob;
 
@@ -168,7 +169,7 @@ namespace Fido2NetLib
 
                 try
                 {
-                    blob = await repository.GetBLOBAsync();
+                    blob = await repository.GetBLOBAsync(cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -188,7 +189,8 @@ namespace Fido2NetLib
                         new DistributedCacheEntryOptions()
                         {
                             AbsoluteExpiration = cacheUntil
-                        });
+                        },
+                        cancellationToken);
                 }
             }
 
@@ -208,13 +210,13 @@ namespace Fido2NetLib
             }
         }
 
-        public virtual async Task InitializeAsync()
+        public virtual async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             foreach (var repository in _repositories)
             {
                 try
                 {
-                    await InitializeRepositoryAsync(repository);
+                    await InitializeRepositoryAsync(repository, cancellationToken);
                 }
                 catch (Exception ex)
                 {
