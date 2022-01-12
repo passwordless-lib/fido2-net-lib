@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Fido2NetLib;
 using Microsoft.Extensions.Caching.Distributed;
@@ -16,11 +17,13 @@ namespace Test
         {
             var client = new ConformanceMetadataRepository(null, "http://localhost");
 
-            var blob = await client.GetBLOBAsync();
+            var cancellationToken = CancellationToken.None;
+            
+            var blob = await client.GetBLOBAsync(cancellationToken);
             
             Assert.True(blob.Entries.Length > 0);
 
-            var entry_1 = await client.GetMetadataStatementAsync(blob, blob.Entries[^1]);
+            var entry_1 = await client.GetMetadataStatementAsync(blob, blob.Entries[^1], cancellationToken);
 
             Assert.NotNull(entry_1.Description);
         }
@@ -43,7 +46,7 @@ namespace Test
 
             var memCache = provider.GetService<IDistributedCache>();
 
-            var service = new DistributedCacheMetadataService(
+            IMetadataService service = new DistributedCacheMetadataService(
                 clients,
                 memCache,
                 provider.GetService<ILogger<DistributedCacheMetadataService>>());

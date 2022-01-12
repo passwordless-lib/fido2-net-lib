@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
@@ -70,7 +71,13 @@ namespace Fido2NetLib
             return response;
         }
 
-        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, Fido2Configuration config, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
+        public async Task<AttestationVerificationSuccess> VerifyAsync(
+            CredentialCreateOptions originalOptions,
+            Fido2Configuration config,
+            IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
+            IMetadataService metadataService,
+            byte[] requestTokenBindingId,
+            CancellationToken cancellationToken = default)
         {
             // https://www.w3.org/TR/webauthn/#registering-a-new-credential
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
@@ -216,7 +223,7 @@ namespace Fido2NetLib
 
             // 17. Check that the credentialId is not yet registered to any other user. 
             // If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration
-            if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialID, originalOptions.User)))
+            if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialID, originalOptions.User), cancellationToken))
             {
                 throw new Fido2VerificationException("CredentialId is not unique to this user");
             }

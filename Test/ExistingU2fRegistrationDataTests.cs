@@ -58,7 +58,7 @@ namespace fido2_net_lib.Test
                 }
             };
 
-            var fido2 = new Fido2(new Fido2Configuration
+            IFido2 fido2 = new Fido2(new Fido2Configuration
             {
                 Origins = new System.Collections.Generic.HashSet<string> { "https://localhost:44336" } //data was generated with this origin
             });
