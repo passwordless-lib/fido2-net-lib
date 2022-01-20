@@ -25,10 +25,28 @@ public sealed class AuthenticatorClientPinResponse
     /// This is optionally used to show in UI when collecting the PIN in Setting a new PIN, Changing existing PIN and Getting pinToken from the authenticator flows.
     /// </summary>
     [CborMember(0x03)]
-    public uint? Retries { get; set; }
+    public int? Retries { get; set; }
 
-    public static AuthenticatorClientPinResponse FromCborObject(CborObject cborObject)
+    public static AuthenticatorClientPinResponse FromCborObject(CborObject cbor)
     {
-        throw new NotImplementedException();
+        var result = new AuthenticatorClientPinResponse();
+
+        foreach (var (key, value) in (CborMap)cbor)
+        {
+            switch ((int)key)
+            {
+                case 0x01:
+                    result.KeyAgreement = new CredentialPublicKey((CborMap)value);
+                    break;
+                case 0x02:
+                    result.PinToken = (byte[])value;
+                    break;
+                case 0x03:
+                    result.Retries = (int)value;
+                    break;
+            }
+        }
+
+        return result;
     }
 }
