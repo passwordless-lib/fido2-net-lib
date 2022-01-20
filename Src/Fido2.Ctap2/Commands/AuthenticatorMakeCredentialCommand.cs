@@ -53,10 +53,10 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
     public PublicKeyCredentialDescriptor[]? ExcludeList { get; }
 
     [CborMember(0x06)]
-    public object? Extensions { get; }
+    public CborMap? Extensions { get; }
 
     [CborMember(0x07)]
-    public AuthenticatorMakeCredentialOptions Options { get; }
+    public AuthenticatorMakeCredentialOptions? Options { get; }
 
     /// <summary>
     /// First 16 bytes of HMAC-SHA-256 of clientDataHash using pinToken which platform got from the authenticator:
@@ -96,6 +96,12 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
             cbor.Add(0x05, ExcludeList.ToCborArray()); // excludeList
         }
 
+        // | { "hmac-secret": true }
+        if (Extensions != null)
+        {
+            cbor.Add(0x06, Extensions);
+        }
+
         if (Options is AuthenticatorMakeCredentialOptions options)
         {
             // 0x07 : options     
@@ -126,6 +132,7 @@ public sealed class AuthenticatorMakeCredentialOptions
     /// </summary>
     [CborMember("uv")]
     public bool? UserVerification { get; init; }
+
 
     public CborMap ToCborObject()
     {
