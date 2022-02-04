@@ -100,10 +100,7 @@ namespace Fido2NetLib
                 if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
                     chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
 
-                // don't allow unknown root now that we have a custom root
-                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
-
-                // now, verify chain again with all checks turned on
+                // now, verify chain again, but still allowing unknown roots if the intermediate does not have an Authority Information Access extension
                 if (chain.Build(trustPath[0]))
                 {
                     // if the chain validates, make sure one of the attestation root certificates is one of the chain elements
