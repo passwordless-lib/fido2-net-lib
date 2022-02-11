@@ -89,21 +89,27 @@ namespace Fido2NetLib
             // try to build a chain with what we've got
             if (chain.Build(trustPath[0]))
             {
-                // if that validated, we should have a root for this chain now, add it to the custom trust store
-                chain.ChainPolicy.CustomTrustStore.Clear();
-                chain.ChainPolicy.CustomTrustStore.Add(chain.ChainElements[^1].Certificate);
+                // if that validated, and we have found a root for the chain, add it to the custom trust store
+                if (chain.ChainElements[^1].Certificate.Subject.Equals(chain.ChainElements[^1].Certificate.Issuer))
+                {
+                    chain.ChainPolicy.CustomTrustStore.Clear();
+                    chain.ChainPolicy.CustomTrustStore.Add(chain.ChainElements[^1].Certificate);
 
-                // explicitly trust the custom root we just added
-                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                    // explicitly trust the custom root we just added
+                    chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+
+                    // don't allow unknown root now that we have a custom root
+                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+                }
 
                 // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
                 if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
                     chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
 
-                // now, verify chain again, but still allowing unknown roots if the intermediate does not have an Authority Information Access extension
+                // now, verify chain again with all checks turned on
                 if (chain.Build(trustPath[0]))
                 {
-                    // if the chain validates, make sure one of the attestation root certificates is one of the chain elements
+                    // if the chain validates, make sure one of the attestation root certificates passed in is one of the chain elements
                     foreach (X509Certificate2? attestationRootCertificate in attestationRootCertificates)
                     {
                         // skip the first element, as that is the attestation cert
@@ -183,17 +189,15 @@ namespace Fido2NetLib
 
         public static string CDPFromCertificateExts(X509ExtensionCollection exts)
         {
-            var cdp = "";
-            foreach (var ext in exts)
+            var cdp = string.Empty;
+            var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid!.Value is "2.5.29.31");
+            if (ext != null)
             {
-                if (ext.Oid!.Value is "2.5.29.31") // id-ce-CRLDistributionPoints
-                {
-                    var asnData = Asn1Element.Decode(ext.RawData);
+                var asnData = Asn1Element.Decode(ext.RawData);
 
-                    var el = asnData[0][0][0][0];
+                var el = asnData[0][0][0][0];
 
-                    cdp = Encoding.ASCII.GetString(el.GetOctetString(el.Tag));
-                }
+                cdp = Encoding.ASCII.GetString(el.GetOctetString(el.Tag));
             }
             return cdp;
         }
