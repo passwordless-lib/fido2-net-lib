@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Fido2NetLib;
 using Microsoft.Extensions.Caching.Distributed;
@@ -18,11 +19,13 @@ namespace Test
         {
             var client = new ConformanceMetadataRepository(null, "http://localhost");
 
-            var blob = await client.GetBLOBAsync();
+            var cancellationToken = CancellationToken.None;
+            
+            var blob = await client.GetBLOBAsync(cancellationToken);
             
             Assert.True(blob.Entries.Length > 0);
 
-            var entry_1 = await client.GetMetadataStatementAsync(blob, blob.Entries[^1]);
+            var entry_1 = await client.GetMetadataStatementAsync(blob, blob.Entries[^1], cancellationToken);
 
             Assert.NotNull(entry_1.Description);
         }
@@ -53,7 +56,7 @@ namespace Test
                 _number = 1;
             }
 
-            public Task<MetadataBLOBPayload> GetBLOBAsync()
+            public Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
             {
                 GetBLOBAsyncCount++;
 
@@ -76,7 +79,7 @@ namespace Test
 
             }
 
-            public Task<MetadataStatement> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+            public Task<MetadataStatement> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
             {
                 return Task.FromResult(entry.MetadataStatement);
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -47,7 +48,7 @@ namespace Fido2Demo
             {
                 options.ServerDomain = Configuration["fido2:serverDomain"];
                 options.ServerName = "FIDO2 Test";
-                options.Origin = Configuration["fido2:origin"];
+                options.Origins = new HashSet<string> { Configuration["fido2:origin"] };
                 options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
                 options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
             })

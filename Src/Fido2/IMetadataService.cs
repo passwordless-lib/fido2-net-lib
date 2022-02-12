@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fido2NetLib
@@ -10,7 +11,7 @@ namespace Fido2NetLib
         /// </summary>
         /// <param name="aaguid">The Authenticator Attestation GUID.</param>
         /// <returns>Returns the entry; Otherwise <c>null</c>.</returns>
-        Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid);
+        Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a value indicating whether the internal access token is valid.

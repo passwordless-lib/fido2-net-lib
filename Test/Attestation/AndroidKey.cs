@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Formats.Asn1;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -86,6 +85,14 @@ namespace Test.Attestation
             attStmt.Set("sig", CborNull.Instance);
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid android-key attestation signature", ex.Result.Message);
+        }
+
+        [Fact]
+        public void TestAndroidKeyAttStmtEmpty()
+        {
+            _attestationObject.Set("attStmt", new CborMap { });
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("Attestation format android-key must have attestation statement", ex.Result.Message);
         }
 
         [Fact]

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -44,6 +45,8 @@ namespace Fido2NetLib
         }
 #nullable enable
 
+        public const int MAX_ORIGINS_TO_PRINT = 5;
+
         [JsonPropertyName("type")]
         public string Type { get; set; }
 
@@ -56,7 +59,7 @@ namespace Fido2NetLib
 
         // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
 
-        protected void BaseVerify(string expectedOrigin, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
+        protected void BaseVerify(HashSet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
         {
             if (Type is not "webauthn.create" && Type is not "webauthn.get")
                 throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
@@ -68,12 +71,11 @@ namespace Fido2NetLib
             if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
                 throw new Fido2VerificationException("Challenge not equal to original challenge");
 
-            var fullyQualifiedOrigin = FullyQualifiedOrigin(Origin);
-            var fullyQualifiedExpectedOrigin = FullyQualifiedOrigin(expectedOrigin);
+            var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
 
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
-            if (!string.Equals(fullyQualifiedOrigin, fullyQualifiedExpectedOrigin, StringComparison.OrdinalIgnoreCase))
-                throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {fullyQualifiedExpectedOrigin} of {expectedOrigin}");
+            if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
+                throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
 
         }
 

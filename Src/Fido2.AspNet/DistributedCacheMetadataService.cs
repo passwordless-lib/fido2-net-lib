@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -90,11 +91,11 @@ namespace Fido2NetLib
             return _systemClock.UtcNow.Add(_defaultDistributedCacheInterval);
         }
 
-        protected virtual async Task<MetadataBLOBPayload> GetRepositoryPayloadWithErrorHandling(IMetadataRepository repository)
+        protected virtual async Task<MetadataBLOBPayload> GetRepositoryPayloadWithErrorHandling(IMetadataRepository repository, CancellationToken cancellationToken = default)
         {
             try
             {
-                return await repository.GetBLOBAsync();
+                return await repository.GetBLOBAsync(cancellationToken);
             }
             catch(Exception ex)
             {
@@ -103,7 +104,7 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task StoreDistributedCachedBlob(IMetadataRepository repository, MetadataBLOBPayload payload)
+        protected virtual async Task StoreDistributedCachedBlob(IMetadataRepository repository, MetadataBLOBPayload payload, CancellationToken cancellationToken = default)
         {
             await _distributedCache.SetStringAsync(
                 GetBlobCacheKey(repository),
@@ -111,14 +112,15 @@ namespace Fido2NetLib
                 new DistributedCacheEntryOptions()
                 {
                     AbsoluteExpiration = GetDistributedCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(payload))
-                });
+                }, 
+                cancellationToken);
         }
 
-        protected virtual async Task<MetadataBLOBPayload> GetDistributedCachedBlob(IMetadataRepository repository)
+        protected virtual async Task<MetadataBLOBPayload> GetDistributedCachedBlob(IMetadataRepository repository, CancellationToken cancellationToken = default)
         {
             var cacheKey = GetBlobCacheKey(repository);
 
-            var distributedCacheEntry = await _distributedCache.GetStringAsync(cacheKey);
+            var distributedCacheEntry = await _distributedCache.GetStringAsync(cacheKey, cancellationToken);
             if (distributedCacheEntry != null)
             {
                 try
@@ -129,10 +131,10 @@ namespace Fido2NetLib
                     //If the cache until time is in the past then update and return new data, otherwise return the cached value
                     if (nextUpdateTime == null || nextUpdateTime.Value.Add(_nextUpdateBufferPeriod) < _systemClock.UtcNow)
                     {
-                        var payload = await GetRepositoryPayloadWithErrorHandling(repository);
+                        var payload = await GetRepositoryPayloadWithErrorHandling(repository, cancellationToken);
                         if (payload != null)
                         {
-                            await StoreDistributedCachedBlob(repository, payload);
+                            await StoreDistributedCachedBlob(repository, payload, cancellationToken);
                             return payload;
                         }
                     }
@@ -145,27 +147,25 @@ namespace Fido2NetLib
                 }
             }
 
-            var repoBlob = await GetRepositoryPayloadWithErrorHandling(repository);
+            var repoBlob = await GetRepositoryPayloadWithErrorHandling(repository, cancellationToken);
             if (repoBlob != null)
             {
-                await StoreDistributedCachedBlob(repository, repoBlob);
+                await StoreDistributedCachedBlob(repository, repoBlob, cancellationToken);
             }
 
             return repoBlob;
         }
 
-        protected virtual async Task<MetadataBLOBPayload> GetMemoryCachedPayload(IMetadataRepository repository)
+        protected virtual async Task<MetadataBLOBPayload> GetMemoryCachedPayload(IMetadataRepository repository, CancellationToken cancellationToken = default)
         {
             var cacheKey = GetBlobCacheKey(repository);
 
             var memCacheEntry = await _memoryCache.GetOrCreateAsync<MetadataBLOBPayload>(cacheKey, async memCacheEntry =>
             {
-
-                var distributedCacheBlob = await GetDistributedCachedBlob(repository);
+                var distributedCacheBlob = await GetDistributedCachedBlob(repository, cancellationToken);
 
                 if(distributedCacheBlob != null)
                 {
-
                     var nextUpdateTime = GetNextUpdateTimeFromPayload(distributedCacheBlob);
 
                     memCacheEntry.AbsoluteExpiration = GetMemoryCacheAbsoluteExpiryTime(nextUpdateTime);
@@ -179,7 +179,7 @@ namespace Fido2NetLib
             return memCacheEntry;
         }
 
-        public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid)
+        public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
         {
             var aaguidComparisonString = aaguid.ToString("D");
 
@@ -189,7 +189,7 @@ namespace Fido2NetLib
                 {
                     foreach (var repo in _repositories)
                     {
-                        var cachedPayload = await GetMemoryCachedPayload(repo);
+                        var cachedPayload = await GetMemoryCachedPayload(repo, cancellationToken);
                         if (cachedPayload != null)
                         {
                             var matchingEntry = cachedPayload.Entries?.FirstOrDefault(o => o.AaGuid == aaguidComparisonString);

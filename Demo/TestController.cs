@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Fido2NetLib;
 using Fido2NetLib.Development;
@@ -22,13 +23,13 @@ namespace Fido2Demo
 
         public TestController(IOptions<Fido2Configuration> fido2Configuration)
         {
-            _origin = fido2Configuration.Value.Origin;
+            _origin = fido2Configuration.Value.FullyQualifiedOrigins.FirstOrDefault();
 
             _fido2 = new Fido2(new Fido2Configuration
             {
                 ServerDomain = fido2Configuration.Value.ServerDomain,
                 ServerName = fido2Configuration.Value.ServerName,
-                Origin = _origin,
+                Origins = fido2Configuration.Value.FullyQualifiedOrigins,
             }, 
             ConformanceTesting.MetadataServiceInstance(
                 System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance"), _origin)
@@ -80,7 +81,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/attestation/result")]
-        public async Task<JsonResult> MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse attestationResponse)
+        public async Task<JsonResult> MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
         {
 
             // 1. get the options we sent the client
@@ -88,14 +89,14 @@ namespace Fido2Demo
             var options = CredentialCreateOptions.FromJson(jsonOptions);
 
             // 2. Create callback so that lib can verify credential id is unique to this user
-            IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = static async (args, cancellationToken) =>
             {
-                var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
+                var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId, cancellationToken);
                 return users.Count <= 0;
             };
 
             // 2. Verify and make the credentials
-            var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback);
+            var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
 
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
@@ -151,7 +152,7 @@ namespace Fido2Demo
 
         [HttpPost]
         [Route("/assertion/result")]
-        public async Task<JsonResult> MakeAssertionTest([FromBody] AuthenticatorAssertionRawResponse clientResponse)
+        public async Task<JsonResult> MakeAssertionTest([FromBody] AuthenticatorAssertionRawResponse clientResponse, CancellationToken cancellationToken)
         {
             // 1. Get the assertion options we sent the client
             var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions");
@@ -164,14 +165,14 @@ namespace Fido2Demo
             var storedCounter = creds.SignatureCounter;
 
             // 4. Create callback to check if userhandle owns the credentialId
-            IsUserHandleOwnerOfCredentialIdAsync callback = async (args) =>
+            IsUserHandleOwnerOfCredentialIdAsync callback = static async (args, cancellationToken) =>
             {
-                var storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
+                var storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle, cancellationToken);
                 return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
             };
 
             // 5. Make the assertion
-            var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
+            var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback, cancellationToken: cancellationToken);
 
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.Counter);

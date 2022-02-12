@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fido2NetLib
@@ -22,10 +23,10 @@ namespace Fido2NetLib
 
         public bool ConformanceTesting()
         {
-            return _repositories[0].GetType() == typeof(ConformanceMetadataRepository);
+            return _repositories[0] is ConformanceMetadataRepository;
         }
 
-        public MetadataBLOBPayloadEntry? GetEntry(Guid aaguid)
+        protected virtual MetadataBLOBPayloadEntry? GetEntry(Guid aaguid)
         {
             if (!IsInitialized())
                 throw new InvalidOperationException("MetadataService must be initialized");
@@ -45,11 +46,11 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task LoadEntryStatementAsync(IMetadataRepository repository, MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry)
+        protected virtual async Task LoadEntryStatementAsync(IMetadataRepository repository, MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken)
         {
             if (entry.AaGuid != null)
             {
-                var statement = await repository.GetMetadataStatementAsync(blob, entry);
+                var statement = await repository.GetMetadataStatementAsync(blob, entry, cancellationToken);
 
                 if (!string.IsNullOrWhiteSpace(statement?.AaGuid))
                 {
@@ -58,9 +59,9 @@ namespace Fido2NetLib
             }
         }
 
-        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository)
+        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository, CancellationToken cancellationToken)
         {
-            var blob = await repository.GetBLOBAsync();
+            var blob = await repository.GetBLOBAsync(cancellationToken);
 
             foreach (var entry in blob.Entries)
             {
@@ -69,17 +70,17 @@ namespace Fido2NetLib
                     if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
                     {
                         //Load if it doesn't already exist
-                        await LoadEntryStatementAsync(repository, blob, entry);
+                        await LoadEntryStatementAsync(repository, blob, entry, cancellationToken);
                     }
                 }
             }
         }
 
-        public virtual async Task InitializeAsync()
+        public virtual async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             foreach (var repository in _repositories)
             {
-                await InitializeRepositoryAsync(repository);
+                await InitializeRepositoryAsync(repository, cancellationToken);
             }
             _initialized = true;
         }
@@ -89,7 +90,7 @@ namespace Fido2NetLib
             return _initialized;
         }
 
-        public Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid)
+        public virtual Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(GetEntry(aaguid));
         }

@@ -7,7 +7,7 @@ using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
 {
-    internal class Packed : AttestationVerifier
+    internal sealed class Packed : AttestationVerifier
     {
         private static readonly string[] s_newLine = new string[] { Environment.NewLine };
 

@@ -10,6 +10,7 @@ using Xunit;
 using System.Threading.Tasks;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using Fido2NetLib.Cbor;
 
 namespace Test.Attestation
@@ -81,6 +82,7 @@ namespace Test.Attestation
                 }
             }
         }
+
         [Fact]
         public void TestAppleMissingX5c()
         {
@@ -89,6 +91,7 @@ namespace Test.Attestation
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
+
         [Fact]
         public void TestAppleX5cNotArray()
         {
@@ -97,6 +100,7 @@ namespace Test.Attestation
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
+
         [Fact]
         public void TestAppleX5cCountNotOne()
         {
@@ -106,6 +110,7 @@ namespace Test.Attestation
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
+
         [Fact]
         public void TestAppleX5cValueNotByteString()
         {
@@ -114,6 +119,7 @@ namespace Test.Attestation
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
         }
+
         [Fact]
         public void TestAppleX5cValueZeroLengthByteString()
         {
@@ -121,6 +127,50 @@ namespace Test.Attestation
             attStmt.Set("x5c", new CborArray { new byte[0] });
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
+        }
+
+        [Fact]
+        public void TestAppleCertMissingExtension()
+        {
+            var invalidX5cStrings = validX5cStrings;
+            var invalidCert = Convert.FromBase64String(invalidX5cStrings[0]);
+            invalidCert[424] = 0x42;
+            invalidX5cStrings[0] = Convert.ToBase64String(invalidCert);
+
+            var trustPath = invalidX5cStrings
+                .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                .ToArray();
+
+            var x5c = new CborArray {
+                trustPath[0].RawData,
+                trustPath[1].RawData
+            };
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", x5c);
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("Extension with OID 1.2.840.113635.100.8.2 not found on Apple attestation credCert", ex.Result.Message);
+        }
+
+        [Fact]
+        public void TestAppleCertCorruptExtension()
+        {
+            var invalidX5cStrings = validX5cStrings;
+            var invalidCert = Convert.FromBase64String(invalidX5cStrings[0]);
+            invalidCert[429] = 0x03;
+            invalidX5cStrings[0] = Convert.ToBase64String(invalidCert);
+
+            var trustPath = invalidX5cStrings
+                .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
+                .ToArray();
+
+            var x5c = new CborArray {
+                trustPath[0].RawData,
+                trustPath[1].RawData
+            };
+            var attStmt = (CborMap)_attestationObject["attStmt"];
+            attStmt.Set("x5c", x5c);
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            Assert.Equal("Apple attestation extension has invalid data", ex.Result.Message);
         }
 
         [Fact]
@@ -141,11 +191,24 @@ namespace Test.Attestation
         }
 
         [Fact]
-        public void TestApplePublicKeyMismatch()
+        public async Task TestApplePublicKeyMismatch()
         {
             var cpkBytes = new byte[] { 0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21, 0x58, 0x20, 0x79, 0xfe, 0x59, 0x08, 0xbb, 0x51, 0x29, 0xc8, 0x09, 0x38, 0xb7, 0x54, 0xc0, 0x4d, 0x2b, 0x34, 0x0e, 0xfa, 0x66, 0x15, 0xb9, 0x87, 0x69, 0x8b, 0xf5, 0x9d, 0xa4, 0xe5, 0x3e, 0xa3, 0xe6, 0xfe, 0x22, 0x58, 0x20, 0xfb, 0x03, 0xda, 0xa1, 0x27, 0x0d, 0x58, 0x04, 0xe8, 0xab, 0x61, 0xc1, 0x5a, 0xac, 0xa2, 0x43, 0x5c, 0x7d, 0xbf, 0x36, 0x9d, 0x71, 0xca, 0x15, 0xc5, 0x23, 0xb0, 0x00, 0x4a, 0x1b, 0x75, 0xb7 };
             _credentialPublicKey = new CredentialPublicKey(cpkBytes);
-            var trustPath = validX5cStrings
+
+            var authData = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, _exts).ToByteArray();
+            _attestationObject.Set("authData", new CborByteString(authData));
+            var clientData = new
+            {
+                type = "webauthn.create",
+                challenge = _challenge,
+                origin = "https://www.passwordless.dev",
+            };
+            var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
+
+            var invalidX5cStrings = StackAllocSha256(authData, clientDataJson);
+
+            var trustPath = invalidX5cStrings
                 .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
                 .ToArray();
 
@@ -155,16 +218,6 @@ namespace Test.Attestation
             };
 
             ((CborMap)_attestationObject["attStmt"]).Set("x5c", X5c);
-
-            var authData = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, _exts).ToByteArray();
-            _attestationObject.Set("authData", new CborByteString(authData));
-            var clientData = new
-            {
-                type = "webauthn.create",
-                challenge = _challenge,
-                origin = "6cc3c9e7967a.ngrok.io",
-            };
-            var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
 
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {
@@ -185,7 +238,7 @@ namespace Test.Attestation
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
-                    UserVerification = UserVerificationRequirement.Required,
+                    UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = _challenge,
                 ErrorMessage = "",
@@ -193,7 +246,7 @@ namespace Test.Attestation
                 {
                     new PubKeyCredParam(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity("6cc3c9e7967a.ngrok.io", "6cc3c9e7967a.ngrok.io", ""),
+                Rp = new PublicKeyCredentialRpEntity("https://www.passwordless.dev", "6cc3c9e7967a.ngrok.io", ""),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -204,19 +257,34 @@ namespace Test.Attestation
                 Timeout = 60000,
             };
 
-            IsCredentialIdUniqueToUserAsyncDelegate callback = (args) =>
+            IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
             {
                 return Task.FromResult(true);
             };
 
-            var lib = new Fido2(new Fido2Configuration()
+            IFido2 lib = new Fido2(new Fido2Configuration()
             {
                 ServerDomain = "6cc3c9e7967a.ngrok.io",
                 ServerName = "6cc3c9e7967a.ngrok.io",
-                Origin = "6cc3c9e7967a.ngrok.io",
+                Origins = new HashSet<string> { "https://www.passwordless.dev" },
             });
 
-            var credentialMakeResult = lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
+            var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
+        }
+
+        private string[] StackAllocSha256(byte[] authData, byte[] clientDataJson)
+        {
+            var data = DataHelper.Concat(authData, SHA256.HashData(clientDataJson));
+            Span<byte> dataHash = stackalloc byte[32];
+            SHA256.HashData(data, dataHash);
+
+            var invalidX5cStrings = validX5cStrings;
+            var invalidCert = Convert.FromBase64String(invalidX5cStrings[0]);
+            Buffer.BlockCopy(dataHash.ToArray(), 0, invalidCert, 433, 32);
+            invalidCert[485] = 0xdb;
+            invalidX5cStrings[0] = Convert.ToBase64String(invalidCert);
+
+            return invalidX5cStrings;
         }
     }
 }

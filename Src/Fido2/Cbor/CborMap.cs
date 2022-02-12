@@ -166,8 +166,10 @@ namespace Fido2NetLib.Cbor
             throw new KeyNotFoundException($"Key '{key}' not found");
         }
 
+
         public CborObject? this[CborObject key]
         {
+#pragma warning disable CS8766
             get
             {
                 foreach (var item in items)
@@ -178,8 +180,9 @@ namespace Fido2NetLib.Cbor
                     }
                 }
 
-                return null!;
+                return null;
             }
+#pragma warning restore CS8766
         }
 
         public override CborObject? this[string name]

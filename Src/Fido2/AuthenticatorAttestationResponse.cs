@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
@@ -70,7 +71,13 @@ namespace Fido2NetLib
             return response;
         }
 
-        public async Task<AttestationVerificationSuccess> VerifyAsync(CredentialCreateOptions originalOptions, Fido2Configuration config, IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser, IMetadataService metadataService, byte[] requestTokenBindingId)
+        public async Task<AttestationVerificationSuccess> VerifyAsync(
+            CredentialCreateOptions originalOptions,
+            Fido2Configuration config,
+            IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
+            IMetadataService metadataService,
+            byte[] requestTokenBindingId,
+            CancellationToken cancellationToken = default)
         {
             // https://www.w3.org/TR/webauthn/#registering-a-new-credential
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
@@ -86,7 +93,7 @@ namespace Fido2NetLib
             // 5. Verify that the value of C.origin matches the Relying Party's origin.
             // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
             // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-            BaseVerify(config.Origin, originalOptions.Challenge, requestTokenBindingId);
+            BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId);
 
             if (Raw.Id is null || Raw.Id.Length == 0)
                 throw new Fido2VerificationException("AttestationResponse is missing Id");
@@ -112,14 +119,14 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
             // 11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
-            // see authData.UserVerified
-            // TODO: Make this a configurable option and add check to require
+            if (originalOptions.AuthenticatorSelection?.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
+                throw new Fido2VerificationException("User Verified flag not set in authenticator data and user verification was required");
 
             // 12. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, 
             // considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values 
             // in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., 
             // no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
-            
+
             // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
 
             if (!authData.HasAttestedCredentialData)
@@ -150,7 +157,7 @@ namespace Fido2NetLib
 
             MetadataBLOBPayloadEntry metadataEntry = null;
             if(metadataService != null)
-                metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid);
+                metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, cancellationToken);
             
             // while conformance testing, we must reject any authenticator that we cannot get metadata for
             if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
@@ -219,7 +226,7 @@ namespace Fido2NetLib
 
             // 17. Check that the credentialId is not yet registered to any other user. 
             // If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration
-            if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialID, originalOptions.User)))
+            if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialID, originalOptions.User), cancellationToken))
             {
                 throw new Fido2VerificationException("CredentialId is not unique to this user");
             }
