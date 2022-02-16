@@ -73,7 +73,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static IFido2MetadataServiceBuilder AddFidoMetadataRepository(this IFido2MetadataServiceBuilder builder, Action<IHttpClientBuilder> clientBuilder = null)
         {
-            var httpClientBuilder = builder.Services.AddHttpClient<IMetadataRepository, Fido2MetadataServiceRepository>();
+            var httpClientBuilder = builder.Services.AddHttpClient(nameof(Fido2MetadataServiceRepository));
 
             if(clientBuilder != null) clientBuilder(httpClientBuilder);
 

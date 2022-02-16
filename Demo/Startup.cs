@@ -54,7 +54,10 @@ namespace Fido2Demo
             })
             .AddCachedMetadataService(config =>
             {
-                config.AddFidoMetadataRepository();
+                config.AddFidoMetadataRepository(httpClientBuilder =>
+                {
+                    //TODO: any specific config you want for accessing the MDS
+                });
             });
         }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Formats.Asn1;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -38,19 +39,20 @@ namespace fido2_net_lib.Test
         {
             var services = new ServiceCollection();
 
-            var repos = new List<IMetadataRepository>
-            {
-                new Fido2MetadataServiceRepository(null)
-            };
-
             services.AddDistributedMemoryCache();
             services.AddMemoryCache();
             services.AddLogging();
+            services.AddHttpClient();
 
             var provider = services.BuildServiceProvider();
 
             var distributedCache = provider.GetService<IDistributedCache>();
             var memCache = provider.GetService<IMemoryCache>();
+
+            var repos = new List<IMetadataRepository>
+            {
+                new Fido2MetadataServiceRepository(provider.GetService<IHttpClientFactory>())
+            };
 
             IMetadataService service = new DistributedCacheMetadataService(
               repos,
