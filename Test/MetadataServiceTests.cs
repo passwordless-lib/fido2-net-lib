@@ -53,7 +53,7 @@ namespace Test
 
             await service.InitializeAsync();
 
-            var entry = service.GetEntry(Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"));
+            var entry = await service.GetEntryAsync(Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"));
 
             Assert.True(entry.MetadataStatement.Description == "Security Key by Yubico with NFC");
 

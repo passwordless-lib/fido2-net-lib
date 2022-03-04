@@ -28,6 +28,11 @@ namespace Fido2NetLib
 
         public MetadataBLOBPayloadEntry? GetEntry(Guid aaguid)
         {
+            return GetEntryAsync(aaguid).Result;
+        }
+
+        public Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid)
+        {
             if (!IsInitialized())
                 throw new InvalidOperationException("MetadataService must be initialized");
 
@@ -38,11 +43,11 @@ namespace Fido2NetLib
                     entry.MetadataStatement = metadataStatement;
                 }
 
-                return entry;
+                return Task.FromResult<MetadataBLOBPayloadEntry?>(entry);
             }
             else
             {
-                return null;
+                return Task.FromResult<MetadataBLOBPayloadEntry?>(null);
             }
         }
 
@@ -87,7 +92,12 @@ namespace Fido2NetLib
 
         public virtual bool IsInitialized()
         {
-            return _initialized;
+            return IsInitializedAsync().Result;
+        }
+
+        public virtual Task<bool> IsInitializedAsync()
+        {
+            return Task.FromResult(_initialized);
         }
     }
 }
