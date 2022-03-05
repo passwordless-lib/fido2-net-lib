@@ -154,7 +154,7 @@ namespace Fido2NetLib
 
             // 15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
             // For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
-            var entry = metadataService != null ? await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid) : null;
+            var entry = metadataService != null ? await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, cancellationToken) : null;
 
             // while conformance testing, we must reject any authenticator that we cannot get metadata for
             if (metadataService?.ConformanceTesting() is true && entry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")

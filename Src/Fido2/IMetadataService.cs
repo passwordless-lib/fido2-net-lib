@@ -21,8 +21,9 @@ namespace Fido2NetLib
         /// Gets the metadata payload entry by a guid.
         /// </summary>
         /// <param name="aaguid">The Authenticator Attestation GUID.</param>
+        /// <param name="cancellationToken">Cancellation token for this operation.</param>
         /// <returns>Returns the entry; Otherwise <c>null</c>.</returns>
-        Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid)
+        Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             return Task.FromResult(this?.GetEntry(aaguid));
@@ -49,10 +50,11 @@ namespace Fido2NetLib
         /// <summary>
         /// Gets a value indicating whether the metadata service is initialized.
         /// </summary>
+        /// <param name="cancellationToken">Cancellation token for this operation.</param>
         /// <returns>
         /// Returns <c>true</c> if the metadata service is initialized, or <c>false</c> if the metadata service is not initialized.
         /// </returns>
-        Task<bool> IsInitializedAsync()
+        Task<bool> IsInitializedAsync(CancellationToken cancellationToken = default)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             return Task.FromResult(IsInitialized());
@@ -62,6 +64,7 @@ namespace Fido2NetLib
         /// <summary>
         /// Initializes the metadata service.
         /// </summary>
+        /// <param name="cancellationToken">Cancellation token for this operation.</param>
         Task InitializeAsync(CancellationToken cancellationToken = default);
     }
 }

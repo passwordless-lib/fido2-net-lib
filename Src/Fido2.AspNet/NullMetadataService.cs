@@ -16,7 +16,7 @@ namespace Fido2NetLib
             return null;
         }
 
-        Task<MetadataBLOBPayloadEntry> IMetadataService.GetEntryAsync(Guid aaguid)
+        Task<MetadataBLOBPayloadEntry> IMetadataService.GetEntryAsync(Guid aaguid, CancellationToken cancellationToken)
         {
             return Task.FromResult<MetadataBLOBPayloadEntry>(null);
         }
@@ -31,7 +31,7 @@ namespace Fido2NetLib
             return true;
         }
 
-        Task<bool> IMetadataService.IsInitializedAsync()
+        Task<bool> IMetadataService.IsInitializedAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult(true);
         }
