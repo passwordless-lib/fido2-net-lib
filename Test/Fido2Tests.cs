@@ -18,7 +18,7 @@ using Fido2NetLib.Objects;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
+using Moq;
 using NSec.Cryptography;
 
 using Xunit;
@@ -622,6 +622,87 @@ namespace fido2_net_lib.Test
             var acdBytes = authData.AttestedCredentialData.ToByteArray();
             var acd = new AttestedCredentialData(acdBytes);
             Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
+        }
+
+        [Fact]
+        public async Task TestMdsStatusReportsSuccessAsync()
+        {
+            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationNoneOptions.json"));
+            var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
+
+            var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
+            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>()))
+                .Returns(new MetadataBLOBPayloadEntry()
+                {
+                    StatusReports = new StatusReport[]
+                    {
+                        new StatusReport() { Status = AuthenticatorStatus.FIDO_CERTIFIED }
+                    }
+                });
+            mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
+
+            var o = AuthenticatorAttestationResponse.Parse(response);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), mockMetadataService.Object, null, CancellationToken.None);
+        }
+
+        [Fact]
+        public async Task TestMdsStatusReportsUndesiredAsync()
+        {
+            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationNoneOptions.json"));
+            var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
+
+            var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
+            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>()))
+                .Returns(new MetadataBLOBPayloadEntry()
+                {
+                    StatusReports = new StatusReport[]
+                    {
+                        new StatusReport() { Status = AuthenticatorStatus.FIDO_CERTIFIED },
+                        new StatusReport() { Status = AuthenticatorStatus.REVOKED }
+                    }
+                });
+            mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
+
+            var o = AuthenticatorAttestationResponse.Parse(response);
+            await Assert.ThrowsAsync<UndesiredMetdatataStatusFido2VerificationException>(() =>
+                o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), mockMetadataService.Object, null, CancellationToken.None));
+        }
+
+        [Fact]
+        public async Task TestMdsStatusReportsUndesiredFixedAsync()
+        {
+            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationNoneOptions.json"));
+            var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
+
+            var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
+            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>()))
+                .Returns(new MetadataBLOBPayloadEntry()
+                {
+                    StatusReports = new StatusReport[]
+                    {
+                        new StatusReport() { Status = AuthenticatorStatus.FIDO_CERTIFIED },
+                        new StatusReport() { Status = AuthenticatorStatus.REVOKED },
+                        new StatusReport() { Status = AuthenticatorStatus.UPDATE_AVAILABLE }
+                    }
+                });
+            mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
+
+            var o = AuthenticatorAttestationResponse.Parse(response);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), mockMetadataService.Object, null, CancellationToken.None);
+        }
+
+        [Fact]
+        public async Task TestMdsStatusReportsNullAsync()
+        {
+            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationNoneOptions.json"));
+            var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
+
+            var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
+            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>())).Returns<MetadataBLOBPayloadEntry>(null);
+            mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
+
+            var o = AuthenticatorAttestationResponse.Parse(response);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), mockMetadataService.Object, null, CancellationToken.None);
         }
 
         //public void TestHasCorrentAAguid()
