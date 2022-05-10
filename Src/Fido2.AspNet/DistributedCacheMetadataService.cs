@@ -1,235 +1,211 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace Fido2NetLib
 {
     public class DistributedCacheMetadataService : IMetadataService
     {
-        protected readonly IDistributedCache _cache;
+        protected readonly IDistributedCache _distributedCache;
+        protected readonly IMemoryCache _memoryCache;
+        protected readonly ISystemClock _systemClock;
+
         protected readonly List<IMetadataRepository> _repositories;
-        protected readonly ILogger<DistributedCacheMetadataService> _log;
-        protected bool _initialized;
-        protected readonly TimeSpan _defaultCacheInterval = TimeSpan.FromHours(25);
+        protected readonly ILogger<DistributedCacheMetadataService> _logger;
 
-        protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
-        protected readonly ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
+        protected readonly TimeSpan _defaultMemoryCacheInterval = TimeSpan.FromHours(1);
+        protected readonly TimeSpan _nextUpdateBufferPeriod = TimeSpan.FromHours(25);
+        protected readonly TimeSpan _defaultDistributedCacheInterval = TimeSpan.FromDays(8);
 
-        protected const string CACHE_PREFIX = "DistributedCacheMetadataService";
+        protected const string CACHE_PREFIX = nameof(DistributedCacheMetadataService) + ":V2";
 
         public DistributedCacheMetadataService(
             IEnumerable<IMetadataRepository> repositories,
-            IDistributedCache cache,
-            ILogger<DistributedCacheMetadataService> log)
+            IDistributedCache distributedCache,
+            IMemoryCache memoryCache,
+            ILogger<DistributedCacheMetadataService> logger,
+            ISystemClock systemClock)
         {
+
+            if (repositories == null)
+                throw new ArgumentNullException(nameof(repositories));
+
             _repositories = repositories.ToList();
-            _cache = cache;
-            _metadataStatements = new ConcurrentDictionary<Guid, MetadataStatement>();
-            _entries = new ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry>();
-            _log = log;
+            _distributedCache = distributedCache;
+            _memoryCache = memoryCache;
+            _logger = logger;
+            _systemClock = systemClock;
         }
 
         public virtual bool ConformanceTesting()
         {
-            return _repositories.First() is ConformanceMetadataRepository;
+            return _repositories.Any(o => o.GetType() == typeof(ConformanceMetadataRepository));
         }
 
-        public virtual MetadataBLOBPayloadEntry GetEntry(Guid aaguid)
-        {
-            if (!IsInitialized())
-                throw new InvalidOperationException("MetadataService must be initialized");
-
-            if (_entries.TryGetValue(aaguid, out MetadataBLOBPayloadEntry entry))
-            {
-                if (_metadataStatements.TryGetValue(aaguid, out var statement))
-                {
-                    entry.MetadataStatement = statement;
-                }
-
-                return entry;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        protected virtual string GetTocCacheKey(IMetadataRepository repository)
+        protected virtual string GetBlobCacheKey(IMetadataRepository repository)
         {
             return $"{CACHE_PREFIX}:{repository.GetType().Name}:TOC";
         }
 
-        protected virtual string GetEntryCacheKey(IMetadataRepository repository, Guid aaGuid)
-        {
-            return $"{CACHE_PREFIX}:{repository.GetType().Name}:Entry:{aaGuid}";
-        }
-
-        protected virtual async Task LoadTocEntryStatement(
-            IMetadataRepository repository,
-            MetadataBLOBPayload blob,
-            MetadataBLOBPayloadEntry entry,
-            DateTime? cacheUntil = null)
-        {
-            if (entry.AaGuid != null && !_entries.ContainsKey(Guid.Parse(entry.AaGuid)))
-            {
-                var entryAaGuid = Guid.Parse(entry.AaGuid);
-
-                var cacheKey = GetEntryCacheKey(repository, entryAaGuid);
-
-                var cachedEntry = await _cache.GetStringAsync(cacheKey);
-                if (cachedEntry != null)
-                {
-                    var statement = JsonSerializer.Deserialize<MetadataStatement>(cachedEntry);
-                    if (!string.IsNullOrWhiteSpace(statement.AaGuid))
-                    {
-                        var aaGuid = Guid.Parse(statement.AaGuid);
-                        _metadataStatements.TryAdd(aaGuid, statement);
-                        _entries.TryAdd(aaGuid, entry);
-                    }
-                }
-                else
-                {
-                    _log?.LogInformation("Entry for {0} {1} not cached so loading from MDS...", entry.AaGuid, entry.MetadataStatement?.Description ?? entry.StatusReports?.FirstOrDefault().CertificationDescriptor ?? "(unknown)");
-
-                    try
-                    {
-                        if (!string.IsNullOrWhiteSpace(entry.AaGuid))
-                        {
-                            var statementJson = JsonSerializer.Serialize(entry.MetadataStatement, new JsonSerializerOptions { WriteIndented = true });
-
-                            _log?.LogDebug("{0}:{1}\n{2}", entry.AaGuid, entry.MetadataStatement.Description, statementJson);
-
-                            var aaGuid = Guid.Parse(entry.AaGuid);
-
-                            _metadataStatements.TryAdd(aaGuid, entry.MetadataStatement);
-                            _entries.TryAdd(aaGuid, entry);
-
-                            if (cacheUntil.HasValue)
-                            {
-                                await _cache.SetStringAsync(cacheKey, statementJson, new DistributedCacheEntryOptions
-                                {
-                                    AbsoluteExpiration = cacheUntil
-                                });
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _log?.LogError(ex, "Error getting MetadataStatement from {0} for AAGUID '{1}' ", repository.GetType().Name, entry.AaGuid);
-                        throw;
-                    }
-                }
-            }
-        }
-
-        private DateTime? GetCacheUntilTime(MetadataBLOBPayload blob)
+        protected virtual DateTimeOffset? GetNextUpdateTimeFromPayload(MetadataBLOBPayload blob)
         {
             if (!string.IsNullOrWhiteSpace(blob?.NextUpdate)
-                && DateTime.TryParseExact(
+                && DateTimeOffset.TryParseExact(
                     blob.NextUpdate,
-                    new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "o" }, //Sould be ISO8601 date but allow for other ISO formats too
+                    new[] { "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "o" }, //Sould be ISO8601 date but allow for other ISO-like formats too
                     System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
                     out var parsedDate))
             {
-                //NextUpdate is in the past to default to a useful number that will result us cross the date theshold for the next update
-                if (parsedDate < DateTime.UtcNow.AddMinutes(5))
-                    return DateTime.UtcNow.Add(_defaultCacheInterval);
-
                 return parsedDate;
             }
 
             return null;
         }
 
-        protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository, CancellationToken cancellationToken)
+        protected virtual DateTimeOffset GetMemoryCacheAbsoluteExpiryTime(DateTimeOffset? nextUpdateTime)
         {
-            var blobCacheKey = GetTocCacheKey(repository);
+            var expiryTime = _systemClock.UtcNow.GetNextIncrement(_defaultMemoryCacheInterval);
 
-            var cachedToc = await _cache.GetStringAsync(blobCacheKey, cancellationToken);
+            //Ensure that memory cache expiry time never exceeds the next update time from the service
+            if(nextUpdateTime.HasValue && expiryTime > nextUpdateTime.Value) expiryTime = nextUpdateTime.Value;
 
-            MetadataBLOBPayload blob;
+            return expiryTime;
+        }
 
-            DateTime? cacheUntil = null;
-
-            if (cachedToc != null)
+        protected virtual DateTimeOffset GetDistributedCacheAbsoluteExpiryTime(DateTimeOffset? nextUpdatTime)
+        {
+            if (nextUpdatTime.HasValue)
             {
-                blob = JsonSerializer.Deserialize<MetadataBLOBPayload>(cachedToc);
-                cacheUntil = GetCacheUntilTime(blob);
+                if (nextUpdatTime > _systemClock.UtcNow)
+                    return nextUpdatTime.Value.Add(_defaultDistributedCacheInterval);
             }
-            else
-            {
-                _log?.LogInformation($"BLOB for {repository.GetType().Name} not cached so loading from MDS...");
 
+            return _systemClock.UtcNow.Add(_defaultDistributedCacheInterval);
+        }
+
+        protected virtual async Task<MetadataBLOBPayload> GetRepositoryPayloadWithErrorHandling(IMetadataRepository repository, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await repository.GetBLOBAsync(cancellationToken);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Could not fetch metadata from {0}", repository.GetType().Name);
+                return null;
+            }
+        }
+
+        protected virtual async Task StoreDistributedCachedBlob(IMetadataRepository repository, MetadataBLOBPayload payload, CancellationToken cancellationToken = default)
+        {
+            await _distributedCache.SetStringAsync(
+                GetBlobCacheKey(repository),
+                JsonSerializer.Serialize(payload),
+                new DistributedCacheEntryOptions()
+                {
+                    AbsoluteExpiration = GetDistributedCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(payload))
+                }, 
+                cancellationToken);
+        }
+
+        protected virtual async Task<MetadataBLOBPayload> GetDistributedCachedBlob(IMetadataRepository repository, CancellationToken cancellationToken = default)
+        {
+            var cacheKey = GetBlobCacheKey(repository);
+
+            var distributedCacheEntry = await _distributedCache.GetStringAsync(cacheKey, cancellationToken);
+            if (distributedCacheEntry != null)
+            {
                 try
                 {
-                    blob = await repository.GetBLOBAsync(cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    _log?.LogError(ex, "Error getting BLOB from {0}", repository.GetType().Name);
-                    throw;
-                }
+                    var cachedBlob = JsonSerializer.Deserialize<MetadataBLOBPayload>(distributedCacheEntry);
+                    var nextUpdateTime = GetNextUpdateTimeFromPayload(cachedBlob);
 
-                _log?.LogInformation($"BLOB for {repository.GetType().Name} not cached so loading from MDS... Done.");
-
-                cacheUntil = GetCacheUntilTime(blob);
-
-                if (cacheUntil.HasValue)
-                {
-                    await _cache.SetStringAsync(
-                        blobCacheKey,
-                        JsonSerializer.Serialize(blob),
-                        new DistributedCacheEntryOptions()
+                    //If the cache until time is in the past then update and return new data, otherwise return the cached value
+                    if (nextUpdateTime == null || nextUpdateTime.Value.Add(_nextUpdateBufferPeriod) < _systemClock.UtcNow)
+                    {
+                        var payload = await GetRepositoryPayloadWithErrorHandling(repository, cancellationToken);
+                        if (payload != null)
                         {
-                            AbsoluteExpiration = cacheUntil
-                        },
-                        cancellationToken);
+                            await StoreDistributedCachedBlob(repository, payload, cancellationToken);
+                            return payload;
+                        }
+                    }
+
+                    return cachedBlob;
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "{0}: Invalid BLOB value in distributed cache", nameof(DistributedCacheMetadataService));
                 }
             }
 
-            foreach (var entry in blob.Entries)
+            var repoBlob = await GetRepositoryPayloadWithErrorHandling(repository, cancellationToken);
+            if (repoBlob != null)
             {
-                if (!string.IsNullOrEmpty(entry.AaGuid)) //Only load FIDO2 entries
-                {
-                    try
-                    {
-                        await LoadTocEntryStatement(repository, blob, entry, cacheUntil);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log?.LogError(ex, "Error getting statement from {0} for AAGUID '{1}'.\nTOC entry:\n{2} ", repository.GetType().Name, entry.AaGuid, JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = true }));
-                    }
-                }
+                await StoreDistributedCachedBlob(repository, repoBlob, cancellationToken);
             }
+
+            return repoBlob;
         }
 
-        public virtual async Task InitializeAsync(CancellationToken cancellationToken = default)
+        protected virtual async Task<MetadataBLOBPayload> GetMemoryCachedPayload(IMetadataRepository repository, CancellationToken cancellationToken = default)
         {
-            foreach (var repository in _repositories)
+            var cacheKey = GetBlobCacheKey(repository);
+
+            var memCacheEntry = await _memoryCache.GetOrCreateAsync<MetadataBLOBPayload>(cacheKey, async memCacheEntry =>
             {
-                try
+                var distributedCacheBlob = await GetDistributedCachedBlob(repository, cancellationToken);
+
+                if(distributedCacheBlob != null)
                 {
-                    await InitializeRepositoryAsync(repository, cancellationToken);
+                    var nextUpdateTime = GetNextUpdateTimeFromPayload(distributedCacheBlob);
+
+                    memCacheEntry.AbsoluteExpiration = GetMemoryCacheAbsoluteExpiryTime(nextUpdateTime);
+
+                    return distributedCacheBlob;
                 }
-                catch (Exception ex)
-                {
-                    //Catch and log this as we don't want issues with external services to prevent app startup
-                    _log?.LogCritical(ex, "Error initialising MDS client '{0}'", repository.GetType().Name);
-                }
-            }
-            _initialized = true;
+
+                return null;
+            });
+
+            return memCacheEntry;
         }
 
-        public virtual bool IsInitialized()
+        public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
         {
-            return _initialized;
+            var aaguidComparisonString = aaguid.ToString("D");
+
+            var memCacheEntry = await _memoryCache.GetOrCreateAsync<MetadataBLOBPayloadEntry>(
+                $"{CACHE_PREFIX}:{aaguidComparisonString}",
+                async entry =>
+                {
+                    foreach (var repo in _repositories)
+                    {
+                        var cachedPayload = await GetMemoryCachedPayload(repo, cancellationToken);
+                        if (cachedPayload != null)
+                        {
+                            var matchingEntry = cachedPayload.Entries?.FirstOrDefault(o => o.AaGuid == aaguidComparisonString);
+                            if (matchingEntry != null)
+                            {
+                                entry.AbsoluteExpiration = GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(cachedPayload));
+                                return matchingEntry;
+                            }
+                        }
+                    }
+
+                    return null;
+
+                });
+
+            return memCacheEntry;
         }
     }
 }

@@ -51,7 +51,7 @@
 
                     if (_mds != null)
                     {
-                        var entry = _mds.GetEntry(item.AaGuid);
+                        var entry = await _mds.GetEntryAsync(item.AaGuid);
                         desc = entry.MetadataStatement.Description.ToString();
                         icon = entry.MetadataStatement.Icon.ToString();
                     }
