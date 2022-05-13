@@ -14,12 +14,6 @@ jobs:
     vmImage: $(TargetVmImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 5.0 SDK'
-    inputs:
-      packageType: 'sdk'
-      version: '5.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-demo
-  - task: UseDotNet@2
     displayName: 'Use .NET 6.0 SDK'
     inputs:
       packageType: 'sdk'
@@ -37,22 +31,11 @@ jobs:
       arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
       projects: 'Demo/Demo.csproj'
   - task: DotNetCoreCLI@2
-    displayName: Publish website [net5.0]
-    inputs:
-      command: publish
-      arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net5.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net5.0'
-      projects: 'Demo/Demo.csproj'
-  - task: DotNetCoreCLI@2
     displayName: Publish website [net6.0]
     inputs:
       command: publish
       arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net6.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net6.0'
       projects: 'Demo/Demo.csproj'
-  - task: PublishBuildArtifacts@1
-    displayName: Copy website to artifacts [net5.0]
-    inputs:
-      pathToPublish: $(build.ArtifactStagingDirectory)/net5.0
-      artifactName: Demo .Net 5.0
   - task: PublishBuildArtifacts@1
     displayName: Copy website to artifacts [net6.0]
     inputs:
@@ -65,12 +48,6 @@ jobs:
   pool:
     vmImage: $(TargetVmImage)
   steps:
-  - task: UseDotNet@2
-    displayName: 'Use .NET 5.0 SDK'
-    inputs:
-      packageType: 'sdk'
-      version: '5.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: UseDotNet@2
     displayName: 'Use .NET 6.0 SDK'
     inputs:

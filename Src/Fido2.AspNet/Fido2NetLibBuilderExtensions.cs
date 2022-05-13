@@ -2,6 +2,8 @@
 using System.Net.Http;
 using Fido2NetLib;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -24,6 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddTransient<IFido2, Fido2>();
             services.AddSingleton<IMetadataService, NullMetadataService>(); //Default implementation if we choose not to enable MDS
+            services.TryAddSingleton<ISystemClock, SystemClock>();
         }
 
         public static IFido2NetLibBuilder AddFido2(this IServiceCollection services, Action<Fido2Configuration> setupAction)
@@ -67,29 +70,21 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return builder;
         }
-        public static IFido2MetadataServiceBuilder AddFidoMetadataRepository(
-            this IFido2MetadataServiceBuilder builder,
-            HttpClient client = null)
+
+        public static IFido2MetadataServiceBuilder AddFidoMetadataRepository(this IFido2MetadataServiceBuilder builder, Action<IHttpClientBuilder> clientBuilder = null)
         {
-            builder.Services.AddTransient<IMetadataRepository>(provider =>
-            {
-                return new Fido2MetadataServiceRepository(client);
-            });
+            var httpClientBuilder = builder.Services.AddHttpClient(nameof(Fido2MetadataServiceRepository));
+
+            if(clientBuilder != null) clientBuilder(httpClientBuilder);
+
+            builder.Services.AddTransient<IMetadataRepository, Fido2MetadataServiceRepository>();
 
             return builder;
         }
 
-        private static void AddMetadataService<TService>(this IFido2NetLibBuilder builder) where TService: class, IMetadataService
+        private static void AddMetadataService<TService>(this IFido2NetLibBuilder builder) where TService : class, IMetadataService
         {
-            builder.Services.AddSingleton<TService>();
-
-            //Use factory method and concrete type registration so we can do the initialisation in here automatically
-            builder.Services.AddSingleton<IMetadataService>(r =>
-            {
-                var service = r.GetService<TService>();
-                service.InitializeAsync().Wait();
-                return service;
-            });
+            builder.Services.AddScoped<IMetadataService, TService>();
         }
     }
 

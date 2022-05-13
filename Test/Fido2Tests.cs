@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Formats.Asn1;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -16,7 +17,9 @@ using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NSec.Cryptography;
@@ -36,24 +39,27 @@ namespace fido2_net_lib.Test
         {
             var services = new ServiceCollection();
 
-            var repos = new List<IMetadataRepository>
-            {
-                new Fido2MetadataServiceRepository(null)
-            };
-
             services.AddDistributedMemoryCache();
+            services.AddMemoryCache();
             services.AddLogging();
+            services.AddHttpClient();
 
             var provider = services.BuildServiceProvider();
 
-            var memCache = provider.GetService<IDistributedCache>();
+            var distributedCache = provider.GetService<IDistributedCache>();
+            var memCache = provider.GetService<IMemoryCache>();
+
+            var repos = new List<IMetadataRepository>
+            {
+                new Fido2MetadataServiceRepository(provider.GetService<IHttpClientFactory>())
+            };
 
             IMetadataService service = new DistributedCacheMetadataService(
-                repos,
-                memCache,
-                provider.GetService<ILogger<DistributedCacheMetadataService>>());
-
-            service.InitializeAsync().Wait();
+              repos,
+              distributedCache,
+              memCache,
+              provider.GetService<ILogger<DistributedCacheMetadataService>>(),
+              new SystemClock());
 
             _metadataService = service;
 
