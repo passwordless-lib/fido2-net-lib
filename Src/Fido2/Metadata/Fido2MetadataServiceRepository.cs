@@ -34,13 +34,12 @@ namespace Fido2NetLib
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH" +
         "WD9f";
 
-        private readonly string _blobUrl;
-        private readonly HttpClient _httpClient;
+        private readonly string _blobUrl = "https://mds.fidoalliance.org/";
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public Fido2MetadataServiceRepository(HttpClient? httpClient)
+        public Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory)
         {
-            _blobUrl = "https://mds.fidoalliance.org/";
-            _httpClient = httpClient ?? new HttpClient();
+            _httpClientFactory = httpClientFactory;
         }
 
         public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
@@ -62,12 +61,16 @@ namespace Fido2NetLib
 
         private async Task<string> DownloadStringAsync(string url, CancellationToken cancellationToken)
         {
-            return await _httpClient.GetStringAsync(url, cancellationToken);
+            return await _httpClientFactory
+                .CreateClient(nameof(Fido2MetadataServiceRepository))
+                .GetStringAsync(url, cancellationToken);
         }
 
         private async Task<byte[]> DownloadDataAsync(string url, CancellationToken cancellationToken)
         {
-            return await _httpClient.GetByteArrayAsync(url, cancellationToken);
+            return await _httpClientFactory
+                .CreateClient(nameof(Fido2MetadataServiceRepository))
+                .GetByteArrayAsync(url, cancellationToken);
         }
 
         private X509Certificate2 GetX509Certificate(string certString)
