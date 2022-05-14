@@ -211,7 +211,7 @@ namespace Fido2NetLib
             }
 
             // Check status resports for authenticator with undesirable status
-            var latestStatusReport = entry?.GetLatestStatusReport();
+            var latestStatusReport = metadataEntry?.GetLatestStatusReport();
             if (latestStatusReport != null && config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
             {
                 throw new UndesiredMetdatataStatusFido2VerificationException(latestStatusReport);

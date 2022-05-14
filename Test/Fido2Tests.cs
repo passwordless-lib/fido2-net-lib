@@ -637,8 +637,8 @@ namespace fido2_net_lib.Test
             var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
 
             var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
-            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>()))
-                .Returns(new MetadataBLOBPayloadEntry()
+            mockMetadataService.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new MetadataBLOBPayloadEntry()
                 {
                     StatusReports = new StatusReport[]
                     {
@@ -658,8 +658,8 @@ namespace fido2_net_lib.Test
             var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
 
             var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
-            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>()))
-                .Returns(new MetadataBLOBPayloadEntry()
+            mockMetadataService.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new MetadataBLOBPayloadEntry()
                 {
                     StatusReports = new StatusReport[]
                     {
@@ -681,8 +681,8 @@ namespace fido2_net_lib.Test
             var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
 
             var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
-            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>()))
-                .Returns(new MetadataBLOBPayloadEntry()
+            mockMetadataService.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new MetadataBLOBPayloadEntry()
                 {
                     StatusReports = new StatusReport[]
                     {
@@ -704,7 +704,7 @@ namespace fido2_net_lib.Test
             var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
 
             var mockMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
-            mockMetadataService.Setup(m => m.GetEntry(It.IsAny<Guid>())).Returns<MetadataBLOBPayloadEntry>(null);
+            mockMetadataService.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync((MetadataBLOBPayloadEntry)null);
             mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
 
             var o = AuthenticatorAttestationResponse.Parse(response);
