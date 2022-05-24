@@ -207,7 +207,7 @@ namespace Fido2NetLib
                 }
 
                 // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
-                if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
+                if (rootCert.Thumbprint.Equals(certChain.ChainElements[^1].Certificate.Thumbprint, StringComparison.Ordinal) &&
                     // and that the number of elements in the chain accounts for what was in x5c plus the root we added
                     certChain.ChainElements.Count == (blobCertStrings.Length + 1) &&
                     // and that the root cert has exactly one status listed against it
