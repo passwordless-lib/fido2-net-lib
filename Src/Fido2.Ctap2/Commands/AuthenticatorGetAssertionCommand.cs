@@ -77,10 +77,9 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
         var cbor = new CborMap
         {
             { 0x01, RpId },
-            { 0x02, ClientDataHash }
+            { 0x02, ClientDataHash },
+            { 0x03, AllowList.ToCborArray() } // allowList
         };
-
-        cbor.Add(0x03, AllowList.ToCborArray()); // allowList
 
         if (Extensions != null)
         {
@@ -101,7 +100,6 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
         return cbor;
     }
 }
-
 
 public sealed class AuthenticatorGetAssertionOptions
 {
