@@ -9,27 +9,27 @@ namespace Fido2NetLib.Cbor
 {
     public sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborObject>
     {
-        private readonly List<KeyValuePair<CborObject, CborObject>> items;
+        private readonly List<KeyValuePair<CborObject, CborObject>> _items;
 
         public CborMap()
         {
-            items = new();
+            _items = new();
         }
 
         public CborMap(int capacity)
         {
-            items = new(capacity);
+            _items = new(capacity);
         }
 
         public override CborType Type => CborType.Map;
 
-        public int Count => items.Count;
+        public int Count => _items.Count;
 
         public IEnumerable<CborObject> Keys
         {
             get
             {
-                foreach (var item in items)
+                foreach (var item in _items)
                 {
                     yield return item.Key;
                 }
@@ -40,7 +40,7 @@ namespace Fido2NetLib.Cbor
         {
             get
             {
-                foreach (var item in items)
+                foreach (var item in _items)
                 {
                     yield return item.Value;
                 }
@@ -49,82 +49,82 @@ namespace Fido2NetLib.Cbor
 
         public void Add(string key, CborObject value)
         {
-            items.Add(new (new CborTextString(key), value));
+            _items.Add(new (new CborTextString(key), value));
         }
 
         public void Add(string key, bool value)
         {
-            items.Add(new(new CborTextString(key), new CborBoolean(value)));
+            _items.Add(new(new CborTextString(key), (CborBoolean)value));
         }
 
         public void Add(long key, CborObject value)
         {
-            items.Add(new (new CborInteger(key), value));
+            _items.Add(new (new CborInteger(key), value));
         }
 
         public void Add(long key, byte[] value)
         {
-            items.Add(new(new CborInteger(key), new CborByteString(value)));
+            _items.Add(new(new CborInteger(key), new CborByteString(value)));
         }
 
         public void Add(long key, string value)
         {
-            items.Add(new(new CborInteger(key), new CborTextString(value)));
+            _items.Add(new(new CborInteger(key), new CborTextString(value)));
         }
 
         public void Add(long key, long value)
         {
-            items.Add(new(new CborInteger(key), new CborInteger(value)));
+            _items.Add(new(new CborInteger(key), new CborInteger(value)));
         }
 
         public void Add(string key, int value)
         {
-            items.Add(new(new CborTextString(key), new CborInteger(value)));
+            _items.Add(new(new CborTextString(key), new CborInteger(value)));
         }
 
         public void Add(string key, string value)
         {
-            items.Add(new(new CborTextString(key), new CborTextString(value)));
+            _items.Add(new(new CborTextString(key), new CborTextString(value)));
         }
 
         public void Add(string key, byte[] value)
         {
-            items.Add(new(new CborTextString(key), new CborByteString(value)));
+            _items.Add(new(new CborTextString(key), new CborByteString(value)));
         }
 
         internal void Add(CborObject key, CborObject value)
         {
-            items.Add(new (key, value));
+            _items.Add(new (key, value));
         }
 
         internal void Add(string key, COSE.Algorithm value)
         {
-            items.Add(new(new CborTextString(key), new CborInteger((int)value)));
+            _items.Add(new(new CborTextString(key), new CborInteger((int)value)));
         }
 
         internal void Add(COSE.KeyCommonParameter key, COSE.KeyType value)
         {
-            items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
+            _items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
         }
 
         internal void Add(COSE.KeyCommonParameter key, COSE.Algorithm value)
         {
-            items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
+            _items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
         }
 
         internal void Add(COSE.KeyTypeParameter key, COSE.EllipticCurve value)
         {
-            items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
+            _items.Add(new(new CborInteger((int)key), new CborInteger((int)value)));
         }
 
         internal void Add(COSE.KeyTypeParameter key, byte[] value)
         {
-            items.Add(new(new CborInteger((int)key), new CborByteString(value)));
+            _items.Add(new(new CborInteger((int)key), new CborByteString(value)));
         }
 
         public bool ContainsKey(CborObject key)
         {
-            foreach (var (k, _) in items)
+            foreach (var (k, _) in _items)
             {
                 if (k.Equals(key))
                     return true;
@@ -142,12 +142,12 @@ namespace Fido2NetLib.Cbor
 
         public IEnumerator<KeyValuePair<CborObject, CborObject>> GetEnumerator()
         {
-            return items.GetEnumerator();
+            return _items.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return items.GetEnumerator();
+            return _items.GetEnumerator();
         }
 
         internal CborObject this[COSE.KeyCommonParameter key] => GetValue((long)key);
@@ -160,7 +160,7 @@ namespace Fido2NetLib.Cbor
 
         public CborObject GetValue(long key)
         {
-            foreach (var item in items)
+            foreach (var item in _items)
             {
                 if (item.Key is CborInteger integerKey && integerKey.Value == key)
                 {
@@ -177,7 +177,7 @@ namespace Fido2NetLib.Cbor
 #pragma warning disable CS8766
             get
             {
-                foreach (var item in items)
+                foreach (var item in _items)
                 {
                     if (item.Key.Equals(key))
                     {
@@ -194,7 +194,7 @@ namespace Fido2NetLib.Cbor
         {
             get
             {
-                foreach (var item in items)
+                foreach (var item in _items)
                 {
                     if (item.Key is CborTextString keyText && keyText.Value.Equals(name, StringComparison.Ordinal))
                     {
@@ -208,11 +208,11 @@ namespace Fido2NetLib.Cbor
 
         internal void Remove(string key)
         {
-            for (int i = 0; i < items.Count; i++)
+            for (int i = 0; i < _items.Count; i++)
             {
-                if (items[i].Key is CborTextString textKey && textKey.Value.Equals(key, StringComparison.Ordinal))
+                if (_items[i].Key is CborTextString textKey && textKey.Value.Equals(key, StringComparison.Ordinal))
                 {
-                    items.RemoveAt(i);
+                    _items.RemoveAt(i);
 
                     return;
                 }
@@ -221,17 +221,17 @@ namespace Fido2NetLib.Cbor
 
         internal void Set(string key, CborObject value)
         {
-            for (int i = 0; i < items.Count; i++)
+            for (int i = 0; i < _items.Count; i++)
             {
-                if (items[i].Key is CborTextString textKey && textKey.Value.Equals(key, StringComparison.Ordinal))
+                if (_items[i].Key is CborTextString textKey && textKey.Value.Equals(key, StringComparison.Ordinal))
                 {
-                    items[i] = new KeyValuePair<CborObject, CborObject>(new CborTextString(key), value);
+                    _items[i] = new KeyValuePair<CborObject, CborObject>(new CborTextString(key), value);
 
                     return;
                 }
             }
 
-            items.Add(new(new CborTextString(key), value));
+            _items.Add(new(new CborTextString(key), value));
         }
     }
 }
