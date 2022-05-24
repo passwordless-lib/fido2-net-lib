@@ -78,7 +78,7 @@ namespace Fido2NetLib
                 Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
                 Timeout = config.Timeout,
                 User = user,
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PubKeyCredParams = new List<PubKeyCredParam>(10)
                 {
                     // Add additional as appropriate
                     PubKeyCredParam.ES256,

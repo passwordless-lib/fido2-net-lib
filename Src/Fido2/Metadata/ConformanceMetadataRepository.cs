@@ -145,7 +145,7 @@ namespace Fido2NetLib
 
             var rootCert = GetX509Certificate(ROOT_CERT);
             var blobCertificates = new X509Certificate2[blobCertStrings.Length]; 
-            var blobPublicKeys = new List<SecurityKey>();
+            var blobPublicKeys = new List<SecurityKey>(blobCertStrings.Length);
 
             for (int i = 0; i < blobCertStrings.Length; i++)
             {
