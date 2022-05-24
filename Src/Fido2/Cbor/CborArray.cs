@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Fido2NetLib.Cbor
 {
-    internal sealed class CborArray : CborObject, IEnumerable<CborObject>
+    public sealed class CborArray : CborObject, IEnumerable<CborObject>
     {
         public CborArray()
         {

@@ -67,6 +67,11 @@ namespace Fido2NetLib.Cbor
             items.Add(new(new CborInteger(key), new CborByteString(value)));
         }
 
+        public void Add(long key, string value)
+        {
+            items.Add(new(new CborInteger(key), new CborTextString(value)));
+        }
+
         public void Add(long key, long value)
         {
             items.Add(new(new CborInteger(key), new CborInteger(value)));

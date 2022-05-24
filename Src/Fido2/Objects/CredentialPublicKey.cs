@@ -24,6 +24,24 @@ namespace Fido2NetLib.Objects
             _alg = (COSE.Algorithm)(int)cpk[COSE.KeyCommonParameter.Alg];
         }
 
+
+        public CredentialPublicKey(ECDsa ecdsaPublicKey, COSE.Algorithm alg)
+        {
+            _type = COSE.KeyType.EC2;
+            _alg = alg;
+
+            var keyParams = ecdsaPublicKey.ExportParameters(false);
+
+            _cpk = new CborMap
+            {
+                { COSE.KeyCommonParameter.KeyType, _type },
+                { COSE.KeyCommonParameter.Alg, _alg },
+                { COSE.KeyTypeParameter.Crv, keyParams.Curve.ToCoseCurve() },
+                { COSE.KeyTypeParameter.X, keyParams.Q.X! },
+                { COSE.KeyTypeParameter.Y, keyParams.Q.Y! }
+            };
+        }
+
         public CredentialPublicKey(X509Certificate2 cert, COSE.Algorithm alg)
         {
             var keyAlg = cert.GetKeyAlgorithm();
@@ -46,32 +64,7 @@ namespace Fido2NetLib.Objects
                 var ecDsaPubKey = cert.GetECDsaPublicKey()!;
                 var keyParams = ecDsaPubKey.ExportParameters(false);
 
-                if (keyParams.Curve.Oid.FriendlyName is "secP256k1")
-                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256K);
-
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    if (keyParams.Curve.Oid.FriendlyName!.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
-
-                    else if (keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP384.Oid.FriendlyName, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
-
-                    else if(keyParams.Curve.Oid.FriendlyName.Equals(ECCurve.NamedCurves.nistP521.Oid.FriendlyName, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
-                }
-                else
-                {
-                    if (keyParams.Curve.Oid.Value!.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256);
-
-                    else if(keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP384.Oid.Value, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P384);
-
-                    else if(keyParams.Curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value, StringComparison.Ordinal))
-                        _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P521);
-                }
-
+                _cpk.Add(COSE.KeyTypeParameter.Crv, keyParams.Curve.ToCoseCurve());
                 _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X!);
                 _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y!);
             }
@@ -114,7 +107,7 @@ namespace Fido2NetLib.Objects
             });            
         }
 
-        internal ECDsa CreateECDsa()
+        public ECDsa CreateECDsa()
         {
             if (_type != COSE.KeyType.EC2)
             {
@@ -133,23 +126,23 @@ namespace Fido2NetLib.Objects
 
             // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
 
-            switch (_alg)
+            switch ((_alg, crv))
             {
-                case COSE.Algorithm.ES256K when (crv is COSE.EllipticCurve.P256K):
+                case (COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K):
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) // see https://github.com/dotnet/runtime/issues/47770
                     {
-                        throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");
+                        throw new PlatformNotSupportedException($"No support currently for secP256k1 on macOS");
                     }
 
                     curve = ECCurve.CreateFromFriendlyName("secP256k1");
                     break;
-                case COSE.Algorithm.ES256 when (crv is COSE.EllipticCurve.P256):
+                case (COSE.Algorithm.ES256, COSE.EllipticCurve.P256):
                     curve = ECCurve.NamedCurves.nistP256;             
                     break;
-                case COSE.Algorithm.ES384 when (crv is COSE.EllipticCurve.P384):
+                case (COSE.Algorithm.ES384, COSE.EllipticCurve.P384):
                     curve = ECCurve.NamedCurves.nistP384;
                     break;                   
-                case COSE.Algorithm.ES512 when(crv is COSE.EllipticCurve.P521):
+                case (COSE.Algorithm.ES512, COSE.EllipticCurve.P521):
                     curve = ECCurve.NamedCurves.nistP521;
                     break;
                 default:

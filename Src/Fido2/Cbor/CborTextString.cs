@@ -2,7 +2,7 @@
 
 namespace Fido2NetLib.Cbor
 {
-    internal sealed class CborTextString : CborObject
+    public sealed class CborTextString : CborObject
     {
         public CborTextString(string value)
         {
