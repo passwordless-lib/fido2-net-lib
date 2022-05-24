@@ -65,7 +65,7 @@ namespace Fido2NetLib.Cbor
                 CborReaderState.StartMap        => ReadMap(reader),
                 CborReaderState.StartArray      => ReadArray(reader),
                 CborReaderState.TextString      => new CborTextString(reader.ReadTextString()),
-                CborReaderState.Boolean         => new CborBoolean(reader.ReadBoolean()),
+                CborReaderState.Boolean         => (CborBoolean)reader.ReadBoolean(),
                 CborReaderState.ByteString      => new CborByteString(reader.ReadByteString()),
                 CborReaderState.UnsignedInteger => new CborInteger(reader.ReadInt64()),
                 CborReaderState.NegativeInteger => new CborInteger(reader.ReadInt64()),
