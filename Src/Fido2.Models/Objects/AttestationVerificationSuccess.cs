@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Security.Cryptography.X509Certificates;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
@@ -13,5 +14,7 @@ namespace Fido2NetLib.Objects
         public Fido2User User { get; set; }
         public string CredType { get; set; }
         public System.Guid Aaguid { get; set; }
+        public X509Certificate2 AttestationCertificate { get; set; }
+        public X509Certificate2[] AttestationCertificateChain { get; set; }
     }
 }
