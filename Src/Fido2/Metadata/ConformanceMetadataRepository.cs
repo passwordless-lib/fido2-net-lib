@@ -9,6 +9,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Fido2NetLib.Serialization;
+
 using Microsoft.IdentityModel.Tokens;
 
 namespace Fido2NetLib
@@ -231,7 +234,7 @@ namespace Fido2NetLib
 
             var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var blob = JsonSerializer.Deserialize<MetadataBLOBPayload>(blobPayload)!;
+            MetadataBLOBPayload blob = JsonSerializer.Deserialize(blobPayload, FidoModelSerializer.Default.MetadataBLOBPayload)!;
             blob.JwtAlg = blobAlg;
             return blob;
         }

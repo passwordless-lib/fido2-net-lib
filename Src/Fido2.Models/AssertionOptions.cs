@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Fido2NetLib.Objects;
+using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib
 {
@@ -67,12 +68,12 @@ namespace Fido2NetLib
 
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this);
+            return JsonSerializer.Serialize(this, FidoModelSerializer.Default.AssertionOptions);
         }
 
         public static AssertionOptions FromJson(string json)
         {
-            return JsonSerializer.Deserialize<AssertionOptions>(json);
+            return JsonSerializer.Deserialize(json, FidoModelSerializer.Default.AssertionOptions);
         }
     }
 }

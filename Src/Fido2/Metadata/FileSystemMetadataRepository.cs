@@ -6,6 +6,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Fido2NetLib.Serialization;
+
 namespace Fido2NetLib
 {
     public sealed class FileSystemMetadataRepository : IMetadataRepository
@@ -41,8 +43,7 @@ namespace Fido2NetLib
                 foreach (var filename in Directory.GetFiles(_path))
                 {
                     await using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
-                    var statement = await JsonSerializer.DeserializeAsync<MetadataStatement>(fileStream, cancellationToken:cancellationToken);
-                    _ = statement ?? throw new NullReferenceException(nameof(statement));
+                    MetadataStatement statement = await JsonSerializer.DeserializeAsync(fileStream, FidoModelSerializer.Default.MetadataStatement, cancellationToken:cancellationToken) ?? throw new NullReferenceException(nameof(statement));
                     var conformanceEntry = new MetadataBLOBPayloadEntry
                     {
                         AaGuid = statement.AaGuid,
@@ -61,7 +62,7 @@ namespace Fido2NetLib
 
             _blob = new MetadataBLOBPayload()
             {
-                Entries = _entries.Select(o => o.Value).ToArray(),
+                Entries = _entries.Select(static o => o.Value).ToArray(),
                 NextUpdate = "", //Empty means it won't get cached
                 LegalHeader = "Local FAKE",
                 Number = 1
