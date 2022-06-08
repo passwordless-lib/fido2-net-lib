@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
 {
-    internal sealed class MDSGetEndpointResponse
+    public sealed class MDSGetEndpointResponse
     {
         [JsonPropertyName("status")]
         public string Status { get; set; }

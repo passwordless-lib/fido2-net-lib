@@ -210,7 +210,7 @@ namespace Fido2NetLib
 
             var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var blob =  JsonSerializer.Deserialize(blobPayload, FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
+            MetadataBLOBPayload blob = JsonSerializer.Deserialize(blobPayload, FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
             blob.JwtAlg = blobAlg;
             return blob;
         }

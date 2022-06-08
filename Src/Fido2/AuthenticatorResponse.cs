@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Fido2NetLib.Serialization;
+
 namespace Fido2NetLib
 {
     /// <summary>
@@ -24,7 +26,7 @@ namespace Fido2NetLib
             AuthenticatorResponse response;
             try
             {
-                response = JsonSerializer.Deserialize<AuthenticatorResponse>(utf8EncodedJson)!;
+                response = JsonSerializer.Deserialize(utf8EncodedJson, FidoSerializerContext.Default.AuthenticatorResponse)!;
             }
             catch (Exception e) when (e is JsonException)
             {

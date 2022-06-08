@@ -3,6 +3,7 @@
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
     <Nullable>enable</Nullable>
     <RootNamespace>Fido2NetLib</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
    
   <ItemGroup>
