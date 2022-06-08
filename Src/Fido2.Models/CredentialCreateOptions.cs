@@ -102,12 +102,12 @@ namespace Fido2NetLib
 
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, FidoModelSerializer.Default.CredentialCreateOptions);
+            return JsonSerializer.Serialize(this, FidoModelSerializerContext.Default.CredentialCreateOptions);
         }
 
         public static CredentialCreateOptions FromJson(string json)
         {
-            return JsonSerializer.Deserialize(json, FidoModelSerializer.Default.CredentialCreateOptions);
+            return JsonSerializer.Deserialize(json, FidoModelSerializerContext.Default.CredentialCreateOptions);
         }
     }
 

@@ -68,12 +68,12 @@ namespace Fido2NetLib
 
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this, FidoModelSerializer.Default.AssertionOptions);
+            return JsonSerializer.Serialize(this, FidoModelSerializerContext.Default.AssertionOptions);
         }
 
         public static AssertionOptions FromJson(string json)
         {
-            return JsonSerializer.Deserialize(json, FidoModelSerializer.Default.AssertionOptions);
+            return JsonSerializer.Deserialize(json, FidoModelSerializerContext.Default.AssertionOptions);
         }
     }
 }

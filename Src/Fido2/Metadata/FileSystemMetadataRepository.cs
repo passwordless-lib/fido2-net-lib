@@ -43,7 +43,7 @@ namespace Fido2NetLib
                 foreach (var filename in Directory.GetFiles(_path))
                 {
                     await using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
-                    MetadataStatement statement = await JsonSerializer.DeserializeAsync(fileStream, FidoModelSerializer.Default.MetadataStatement, cancellationToken:cancellationToken) ?? throw new NullReferenceException(nameof(statement));
+                    MetadataStatement statement = await JsonSerializer.DeserializeAsync(fileStream, FidoModelSerializerContext.Default.MetadataStatement, cancellationToken:cancellationToken) ?? throw new NullReferenceException(nameof(statement));
                     var conformanceEntry = new MetadataBLOBPayloadEntry
                     {
                         AaGuid = statement.AaGuid,

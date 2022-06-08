@@ -7,6 +7,6 @@ namespace Fido2NetLib.Serialization;
 [JsonSerializable(typeof(MetadataBLOBPayload))]
 [JsonSerializable(typeof(CredentialCreateOptions))]
 [JsonSerializable(typeof(MetadataStatement))]
-public partial class FidoModelSerializer : JsonSerializerContext
+public partial class FidoModelSerializerContext : JsonSerializerContext
 {
 }
