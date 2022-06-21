@@ -331,3 +331,4 @@ ASALocalRun/
 /results
 /Test/coverage.netcoreapp3.1.cobertura.xml
 
+.DS_Store

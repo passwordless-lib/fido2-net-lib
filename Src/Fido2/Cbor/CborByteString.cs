@@ -1,6 +1,6 @@
 ﻿namespace Fido2NetLib.Cbor
 {
-    internal sealed class CborByteString : CborObject
+    public sealed class CborByteString : CborObject
     {
         public CborByteString(byte[] value)
         {

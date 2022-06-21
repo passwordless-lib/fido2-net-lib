@@ -48,12 +48,24 @@ namespace Fido2NetLib
         /// </summary>
         public HashSet<string> Origins
         {
-            get => _origins ?? new HashSet<string>
+            get
             {
-#pragma warning disable CS0618
-                Origin
-#pragma warning restore CS0618
-            };
+                if (_origins == null)
+                {
+                    _origins = new HashSet<string>();
+
+                    // Since we're depricating Origin we ease the transition to move the value automatically, unless its null
+#pragma warning disable CS0618 // Type or member is obsolete
+                    if (Origin != null)
+                    {
+                        _origins.Add(Origin);
+                    }
+#pragma warning restore CS0618 // Type or member is obsolete
+                }
+
+                return _origins;
+            }
+
             set
             {
                 _origins = value;

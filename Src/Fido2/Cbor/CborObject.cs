@@ -50,6 +50,12 @@ namespace Fido2NetLib.Cbor
             return ((CborInteger)obj).Value;
         }
 
+
+        public static explicit operator bool(CborObject obj)
+        {
+            return ((CborBoolean)obj).Value;
+        }
+
         private static CborObject Read(CborReader reader)
         {
             CborReaderState s = reader.PeekState();

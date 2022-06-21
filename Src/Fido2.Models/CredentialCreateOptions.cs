@@ -81,16 +81,16 @@ namespace Fido2NetLib
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
                     // Add additional as appropriate
-                    ES256,
-                    RS256,
-                    PS256,
-                    ES384,
-                    RS384,
-                    PS384,
-                    ES512,
-                    RS512,
-                    PS512,
-                    Ed25519,
+                    PubKeyCredParam.ES256,
+                    PubKeyCredParam.RS256,
+                    PubKeyCredParam.PS256,
+                    PubKeyCredParam.ES384,
+                    PubKeyCredParam.RS384,
+                    PubKeyCredParam.PS384,
+                    PubKeyCredParam.ES512,
+                    PubKeyCredParam.RS512,
+                    PubKeyCredParam.PS512,
+                    PubKeyCredParam.Ed25519,
                 },
                 AuthenticatorSelection = authenticatorSelection,
                 Attestation = attestationConveyancePreference,
@@ -108,17 +108,6 @@ namespace Fido2NetLib
         {
             return JsonSerializer.Deserialize<CredentialCreateOptions>(json);
         }
-
-        private static readonly PubKeyCredParam ES256   = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
-        private static readonly PubKeyCredParam ES384   = new(COSE.Algorithm.ES384);
-        private static readonly PubKeyCredParam ES512   = new(COSE.Algorithm.ES512);
-        private static readonly PubKeyCredParam RS256   = new(COSE.Algorithm.RS256); // Supported by windows hello
-        private static readonly PubKeyCredParam RS384   = new(COSE.Algorithm.RS384);
-        private static readonly PubKeyCredParam RS512   = new(COSE.Algorithm.RS512);
-        private static readonly PubKeyCredParam PS256   = new(COSE.Algorithm.PS256);
-        private static readonly PubKeyCredParam PS384   = new(COSE.Algorithm.PS384);
-        private static readonly PubKeyCredParam PS512   = new(COSE.Algorithm.PS512);
-        private static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
     }
 
     public sealed class PubKeyCredParam
@@ -144,14 +133,26 @@ namespace Fido2NetLib
         /// </summary>
         [JsonPropertyName("alg")]
         public COSE.Algorithm Alg { get; }
+
+        public static readonly PubKeyCredParam ES256   = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
+        public static readonly PubKeyCredParam ES384   = new(COSE.Algorithm.ES384);
+        public static readonly PubKeyCredParam ES512   = new(COSE.Algorithm.ES512);
+        public static readonly PubKeyCredParam RS256   = new(COSE.Algorithm.RS256); // Supported by windows hello
+        public static readonly PubKeyCredParam RS384   = new(COSE.Algorithm.RS384);
+        public static readonly PubKeyCredParam RS512   = new(COSE.Algorithm.RS512);
+        public static readonly PubKeyCredParam PS256   = new(COSE.Algorithm.PS256);
+        public static readonly PubKeyCredParam PS384   = new(COSE.Algorithm.PS384);
+        public static readonly PubKeyCredParam PS512   = new(COSE.Algorithm.PS512);
+        public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
     }
 
+#nullable enable
     /// <summary>
     /// PublicKeyCredentialRpEntity 
     /// </summary>
-    public class PublicKeyCredentialRpEntity
+    public sealed class PublicKeyCredentialRpEntity
     {
-        public PublicKeyCredentialRpEntity(string id, string name, string icon)
+        public PublicKeyCredentialRpEntity(string id, string name, string? icon = null)
         {
             Name = name;
             Id = id;
@@ -172,8 +173,9 @@ namespace Fido2NetLib
 
         [JsonPropertyName("icon")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string Icon { get; set; }
+        public string? Icon { get; set; }
     }
+#nullable disable
 
     /// <summary>
     /// WebAuthn Relying Parties may use the AuthenticatorSelectionCriteria dictionary to specify their requirements regarding authenticator attributes.
