@@ -93,6 +93,18 @@ namespace Fido2NetLib
         public string MDSCacheDirPath { get; set; }
 
         /// <summary>
+        /// List of metadata statuses for an authenticator that should cause attestations to be rejected.
+        /// </summary>
+        public AuthenticatorStatus[] UndesiredAuthenticatorMetadataStatuses { get; set; } = new AuthenticatorStatus[]
+        {
+            AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE,
+            AuthenticatorStatus.USER_VERIFICATION_BYPASS,
+            AuthenticatorStatus.USER_KEY_REMOTE_COMPROMISE,
+            AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
+            AuthenticatorStatus.REVOKED
+        };
+
+        /// <summary>
         /// Create the configuration for Fido2
         /// </summary>
         public Fido2Configuration()
