@@ -3,12 +3,18 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Fido2NetLib.Internal;
+using Fido2NetLib.Serialization;
+
 using Microsoft.IdentityModel.Tokens;
 
 namespace Fido2NetLib
@@ -48,15 +54,16 @@ namespace Fido2NetLib
 
         public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
         {
-            var req = new
+            var req = new GetBLOBRequest(_origin);
+
+            var content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(req, FidoSerializerContext.Default.GetBLOBRequest))
             {
-                endpoint = _origin
+                Headers = { { "Content-Type", "application/json" } }
             };
 
-            var content = new StringContent(JsonSerializer.Serialize(req), Encoding.UTF8, "application/json");
             using var response = await _httpClient.PostAsync(_getEndpointsUrl, content, cancellationToken);
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            var result = await JsonSerializer.DeserializeAsync<MDSGetEndpointResponse>(responseStream, cancellationToken: cancellationToken);
+            MDSGetEndpointResponse? result = await JsonSerializer.DeserializeAsync(responseStream, FidoSerializerContext.Default.MDSGetEndpointResponse, cancellationToken: cancellationToken);
             var conformanceEndpoints = result!.Result;
 
             var combinedBlob = new MetadataBLOBPayload
@@ -231,7 +238,7 @@ namespace Fido2NetLib
 
             var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
 
-            var blob = JsonSerializer.Deserialize<MetadataBLOBPayload>(blobPayload)!;
+            MetadataBLOBPayload blob = JsonSerializer.Deserialize(blobPayload, FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
             blob.JwtAlg = blobAlg;
             return blob;
         }

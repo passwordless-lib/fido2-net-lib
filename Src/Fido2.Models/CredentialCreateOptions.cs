@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Fido2NetLib.Objects;
+using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib
 {
@@ -101,12 +102,12 @@ namespace Fido2NetLib
 
         public string ToJson()
         {
-            return JsonSerializer.Serialize(this);
+            return JsonSerializer.Serialize(this, FidoModelSerializerContext.Default.CredentialCreateOptions);
         }
 
         public static CredentialCreateOptions FromJson(string json)
         {
-            return JsonSerializer.Deserialize<CredentialCreateOptions>(json);
+            return JsonSerializer.Deserialize(json, FidoModelSerializerContext.Default.CredentialCreateOptions);
         }
     }
 
