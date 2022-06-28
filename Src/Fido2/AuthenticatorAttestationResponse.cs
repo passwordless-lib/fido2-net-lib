@@ -241,6 +241,8 @@ namespace Fido2NetLib
                 Counter = authData.SignCount,
                 CredType = AttestationObject.Fmt,
                 Aaguid = authData.AttestedCredentialData.AaGuid,
+                AttestationCertificate = trustPath?.FirstOrDefault(),
+                AttestationCertificateChain = trustPath ?? Array.Empty<X509Certificate2>(),
             };
 
             return result;
