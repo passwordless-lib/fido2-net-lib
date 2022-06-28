@@ -158,7 +158,7 @@ public abstract class FidoAuthenticator
     {
         var command = new AuthenticatorClientPinCommand(pinProtocol: 0x01, subCommand: AuthenticatorClientPinSubCommand.GetKeyAgreement);
 
-        var result = await ExecuteClientPinCommandAsync(command);
+        var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
 
         var authenticatorKey = result.KeyAgreement!;
 

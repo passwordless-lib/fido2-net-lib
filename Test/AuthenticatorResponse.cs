@@ -375,7 +375,7 @@ namespace Test
                     AttestationObject = new CborMap {
                         { "fmt", "testing" },
                         { "attStmt", new CborMap() },
-                        { "authData", new byte[0] }
+                        { "authData", Array.Empty<byte>() }
                     }.Encode(),
                     ClientDataJson = clientDataJson
                 },

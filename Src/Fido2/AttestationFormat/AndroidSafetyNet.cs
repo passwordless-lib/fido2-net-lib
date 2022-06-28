@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
@@ -126,7 +127,7 @@ namespace Fido2NetLib
                 }
                 if (claim is { Type: "timestampMs", ValueType: "http://www.w3.org/2001/XMLSchema#integer64" })
                 {
-                    timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
+                    timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(double.Parse(claim.Value, CultureInfo.InvariantCulture));
                 }
             }
 

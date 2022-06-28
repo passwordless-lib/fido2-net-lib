@@ -2,8 +2,11 @@
 
 namespace Fido2NetLib.Cbor
 {
-    internal sealed class CborBoolean : CborObject
+    public sealed class CborBoolean : CborObject
     {
+        public static readonly CborBoolean True  = new(true);
+        public static readonly CborBoolean False = new(false);
+
         public CborBoolean(bool value)
         {
             Value = value;
@@ -17,5 +20,9 @@ namespace Fido2NetLib.Cbor
         {
             return HashCode.Combine(Type, Value);
         }
+
+        public static explicit operator CborBoolean(bool value) => value ? True : False;
+
+        public static implicit operator bool(CborBoolean value) => value.Value;
     }
 }

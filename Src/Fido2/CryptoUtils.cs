@@ -113,7 +113,7 @@ namespace Fido2NetLib
                         if (chain.ChainElements
                             .Cast<X509ChainElement>()
                             .Skip(1)
-                            .Any(x => x.Certificate.Thumbprint == attestationRootCertificate.Thumbprint))
+                            .Any(x => x.Certificate.Thumbprint.Equals(attestationRootCertificate.Thumbprint, StringComparison.Ordinal)))
                             return true;
                     }
                 }
