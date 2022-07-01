@@ -48,7 +48,7 @@ namespace Fido2Demo
             {
                 options.ServerDomain = Configuration["fido2:serverDomain"];
                 options.ServerName = "FIDO2 Test";
-                options.Origins = new List<string> { Configuration["fido2:origin"] };
+                options.Origins = Configuration.GetSection("fido2:origins").Get<List<string>>();
                 options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
                 options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
             })
