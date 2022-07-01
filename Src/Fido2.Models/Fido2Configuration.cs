@@ -46,13 +46,13 @@ namespace Fido2NetLib
         /// <summary>
         /// Server origins, including protocol host and port.
         /// </summary>
-        public HashSet<string> Origins
+        public List<string> Origins
         {
             get
             {
                 if (_origins == null)
                 {
-                    _origins = new HashSet<string>();
+                    _origins = new List<string>();
 
                     // Since we're depricating Origin we ease the transition to move the value automatically, unless its null
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -69,16 +69,16 @@ namespace Fido2NetLib
             set
             {
                 _origins = value;
-                _fullyQualifiedOrigins = new HashSet<string>(value.Select(o => o.ToFullyQualifiedOrigin()), StringComparer.OrdinalIgnoreCase);
+                _fullyQualifiedOrigins = new List<string>(value.Select(o => o.ToFullyQualifiedOrigin()));
             }
         }
 
         /// <summary>
         /// Fully Qualified Server origins, generated automatically from Origins.
         /// </summary>
-        public HashSet<string> FullyQualifiedOrigins
+        public List<string> FullyQualifiedOrigins
         {
-            get => _fullyQualifiedOrigins ?? new HashSet<string>
+            get => _fullyQualifiedOrigins ?? new List<string>
             {
 #pragma warning disable CS0618
                 Origin?.ToFullyQualifiedOrigin()
@@ -111,7 +111,7 @@ namespace Fido2NetLib
         {
         }
 
-        private HashSet<string> _origins;
-        private HashSet<string> _fullyQualifiedOrigins;
+        private List<string> _origins;
+        private List<string> _fullyQualifiedOrigins;
     }
 }

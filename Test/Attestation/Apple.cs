@@ -266,7 +266,7 @@ namespace Test.Attestation
             {
                 ServerDomain = "6cc3c9e7967a.ngrok.io",
                 ServerName = "6cc3c9e7967a.ngrok.io",
-                Origins = new HashSet<string> { "https://www.passwordless.dev" },
+                Origins = new List<string> { "https://www.passwordless.dev" },
             });
 
             var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);

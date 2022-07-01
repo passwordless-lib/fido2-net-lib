@@ -63,7 +63,7 @@ namespace fido2_net_lib.Test
 
             _metadataService = service;
 
-            _config = new Fido2Configuration { Origins = new HashSet<string> { "https://localhost:44329" } };
+            _config = new Fido2Configuration { Origins = new List<string> { "https://localhost:44329" } };
 
             var noCurve = COSE.EllipticCurve.Reserved;
 
@@ -247,7 +247,7 @@ namespace fido2_net_lib.Test
                 {
                     ServerDomain = rp,
                     ServerName = rp,
-                    Origins = new HashSet<string> { rp },
+                    Origins = new List<string> { rp },
                 });
                 
                 var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
@@ -583,7 +583,7 @@ namespace fido2_net_lib.Test
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationAppleResponse.json"));
             var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationAppleOptions.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            var config = new Fido2Configuration { Origins = new HashSet<string> { "https://6cc3c9e7967a.ngrok.io" } };
+            var config = new Fido2Configuration { Origins = new List<string> { "https://6cc3c9e7967a.ngrok.io" } };
             await o.VerifyAsync(options, config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
@@ -993,7 +993,7 @@ namespace fido2_net_lib.Test
             {
                 ServerDomain = rp,
                 ServerName = rp,
-                Origins = new HashSet<string> { rp },
+                Origins = new List<string> { rp },
             });
             var existingCredentials = new List<PublicKeyCredentialDescriptor>();
             var cred = new PublicKeyCredentialDescriptor

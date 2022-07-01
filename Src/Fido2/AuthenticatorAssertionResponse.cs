@@ -56,7 +56,7 @@ namespace Fido2NetLib
         /// <param name="cancellationToken"></param>
         public async Task<AssertionVerificationResult> VerifyAsync(
             AssertionOptions options,
-            HashSet<string> fullyQualifiedExpectedOrigins,
+            List<string> fullyQualifiedExpectedOrigins,
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
