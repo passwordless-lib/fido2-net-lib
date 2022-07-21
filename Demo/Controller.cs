@@ -9,6 +9,7 @@ using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+
 using static Fido2NetLib.Fido2;
 
 namespace Fido2Demo
