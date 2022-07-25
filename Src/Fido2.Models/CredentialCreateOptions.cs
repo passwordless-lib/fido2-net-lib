@@ -180,6 +180,7 @@ namespace Fido2NetLib
 
     /// <summary>
     /// WebAuthn Relying Parties may use the AuthenticatorSelectionCriteria dictionary to specify their requirements regarding authenticator attributes.
+    /// https://w3c.github.io/webauthn/#dictionary-authenticatorSelection
     /// </summary>
     public class AuthenticatorSelection
     {
@@ -189,6 +190,12 @@ namespace Fido2NetLib
         [JsonPropertyName("authenticatorAttachment")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public AuthenticatorAttachment? AuthenticatorAttachment { get; set; }
+
+        /// <summary>
+        /// Specifies the extent to which the Relying Party desires to create a client-side discoverable credential. For historical reasons the naming retains the deprecated “resident” terminology. The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, treating an unknown value as if the member does not exist. If no value is given then the effective value is required if requireResidentKey is true or discouraged if it is false or absent.
+        /// </summary>
+        [JsonPropertyName("residentKey")]
+        public ResidentKeyRequirement ResidentKey { get; set; }
 
         /// <summary>
         /// This member describes the Relying Parties' requirements regarding resident credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident public key credential source when creating a public key credential.
@@ -205,6 +212,7 @@ namespace Fido2NetLib
         public static AuthenticatorSelection Default => new AuthenticatorSelection
         {
             AuthenticatorAttachment = null,
+            ResidentKey = ResidentKeyRequirement.Required,
             RequireResidentKey = false,
             UserVerification = UserVerificationRequirement.Preferred
         };
