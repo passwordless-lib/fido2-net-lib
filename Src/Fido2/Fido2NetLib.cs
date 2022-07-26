@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -11,14 +12,16 @@ namespace Fido2NetLib
     /// </summary>
     public partial class Fido2 : IFido2
     {
+        private readonly IOptionsMonitor<Fido2Configuration> _configMonitor;
         private readonly Fido2Configuration _config;
         private readonly IMetadataService? _metadataService;
 
         public Fido2(
-            Fido2Configuration config,
+            IOptionsMonitor<Fido2Configuration> configMonitor,
             IMetadataService? metadataService = null)
         {
-            _config = config;
+            _configMonitor = configMonitor;
+            _config = _configMonitor.CurrentValue;
             _metadataService = metadataService;
         }
 

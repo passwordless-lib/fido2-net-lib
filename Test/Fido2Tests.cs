@@ -243,12 +243,13 @@ namespace fido2_net_lib.Test
                     return Task.FromResult(true);
                 };
 
-                IFido2 lib = new Fido2(new Fido2Configuration()
+                var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
                 {
                     ServerDomain = rp,
                     ServerName = rp,
                     Origins = new HashSet<string> { rp },
                 });
+                IFido2 lib = new Fido2(optionsMonitor);
                 
                 var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
 
@@ -989,12 +990,13 @@ namespace fido2_net_lib.Test
                 UserHandle = userHandle,
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
             var existingCredentials = new List<PublicKeyCredentialDescriptor>();
             var cred = new PublicKeyCredentialDescriptor
             {

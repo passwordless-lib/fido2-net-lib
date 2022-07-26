@@ -58,10 +58,11 @@ namespace fido2_net_lib.Test
                 }
             };
 
-            IFido2 fido2 = new Fido2(new Fido2Configuration
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration
             {
                 Origins = new System.Collections.Generic.HashSet<string> { "https://localhost:44336" } //data was generated with this origin
             });
+            IFido2 fido2 = new Fido2(optionsMonitor);
 
             var res = await fido2.MakeAssertionAsync(authResponse, options, publicKey.Encode(), 0, null);
 

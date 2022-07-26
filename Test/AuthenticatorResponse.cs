@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
@@ -112,12 +112,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { expectedOrigin },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var result = await lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback);
         }
@@ -216,12 +217,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { expectedOrigin },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.StartsWith("Fully qualified origin", ex.Result.Message);
@@ -412,12 +414,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("AttestationResponse is not type webauthn.create", ex.Result.Message);
@@ -483,12 +486,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("AttestationResponse is missing Id", ex.Result.Message);
@@ -552,12 +556,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("AttestationResponse is missing type with value 'public-key'", ex.Result.Message);
@@ -629,12 +634,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("Hash mismatch RPID", ex.Result.Message);
@@ -707,12 +713,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("User Present flag not set in authenticator data", ex.Result.Message);
@@ -784,12 +791,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("Attestation flag not set on attestation data", ex.Result.Message);
@@ -862,12 +870,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("Missing or unknown attestation type", ex.Result.Message);
@@ -939,12 +948,13 @@ namespace Test
                 return Task.FromResult(false);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("CredentialId is not unique to this user", ex.Result.Message);
@@ -1016,12 +1026,13 @@ namespace Test
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = rp,
                 ServerName = rp,
                 Origins = new HashSet<string> { rp },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
             Assert.Equal("User Verified flag not set in authenticator data and user verification was required", ex.Result.Message);

@@ -262,12 +262,13 @@ namespace Test.Attestation
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var optionsMonitor = new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration()
             {
                 ServerDomain = "6cc3c9e7967a.ngrok.io",
                 ServerName = "6cc3c9e7967a.ngrok.io",
                 Origins = new HashSet<string> { "https://www.passwordless.dev" },
             });
+            IFido2 lib = new Fido2(optionsMonitor);
 
             var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
         }

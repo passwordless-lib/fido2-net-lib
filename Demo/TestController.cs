@@ -24,13 +24,13 @@ namespace Fido2Demo
         public TestController(IOptions<Fido2Configuration> fido2Configuration)
         {
             _origin = fido2Configuration.Value.FullyQualifiedOrigins.FirstOrDefault();
-
-            _fido2 = new Fido2(new Fido2Configuration
+            
+            _fido2 = new Fido2(new TestOptionsMonitor<Fido2Configuration>(new Fido2Configuration
             {
                 ServerDomain = fido2Configuration.Value.ServerDomain,
                 ServerName = fido2Configuration.Value.ServerName,
                 Origins = fido2Configuration.Value.FullyQualifiedOrigins,
-            }, 
+            }), 
             ConformanceTesting.MetadataServiceInstance(
                 System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance"), _origin)
             );
