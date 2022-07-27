@@ -61,7 +61,7 @@ namespace Fido2Demo
                 var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
                 // 3. Create options
-                var authenticatorSelection = new AuthenticatorSelection
+                var authenticatorSelection = new AuthenticatorSelectionCriteria
                 {
                     RequireResidentKey = requireResidentKey,
                     UserVerification = userVerification.ToEnum<UserVerificationRequirement>()
@@ -70,11 +70,7 @@ namespace Fido2Demo
                 if (!string.IsNullOrEmpty(authType))
                     authenticatorSelection.AuthenticatorAttachment = authType.ToEnum<AuthenticatorAttachment>();
 
-                var exts = new AuthenticationExtensionsClientInputs() 
-                { 
-                    Extensions = true, 
-                    UserVerificationMethod = true, 
-                };
+                var exts = new AuthenticationExtensionsClientInputs();
 
                 var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
 
@@ -86,7 +82,7 @@ namespace Fido2Demo
             }
             catch (Exception e)
             {
-                return Json(new CredentialCreateOptions { Status = "error", ErrorMessage = FormatException(e) });
+                return Json(new PublicKeyCredentialCreationOptions { Status = "error", ErrorMessage = FormatException(e) });
             }
         }
 
@@ -98,7 +94,7 @@ namespace Fido2Demo
             {
                 // 1. get the options we sent the client
                 var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
-                var options = CredentialCreateOptions.FromJson(jsonOptions);
+                var options = PublicKeyCredentialCreationOptions.FromJson(jsonOptions);
 
                 // 2. Create callback so that lib can verify credential id is unique to this user
                 IsCredentialIdUniqueToUserAsyncDelegate callback = static async (args, cancellationToken) =>
@@ -173,7 +169,7 @@ namespace Fido2Demo
 
             catch (Exception e)
             {
-                return Json(new AssertionOptions { Status = "error", ErrorMessage = FormatException(e) });
+                return Json(new PublicKeyCredentialRequestOptions { Status = "error", ErrorMessage = FormatException(e) });
             }
         }
 
@@ -185,7 +181,7 @@ namespace Fido2Demo
             {
                 // 1. Get the assertion options we sent the client
                 var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions");
-                var options = AssertionOptions.FromJson(jsonOptions);
+                var options = PublicKeyCredentialRequestOptions.FromJson(jsonOptions);
 
                 // 2. Get registered credential from database
                 var creds = DemoStorage.GetCredentialById(clientResponse.Id) ?? throw new Exception("Unknown credentials");

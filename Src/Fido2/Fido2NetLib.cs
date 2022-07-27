@@ -23,35 +23,35 @@ namespace Fido2NetLib
         }
 
         /// <summary>
-        /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
+        /// Returns PublicKeyCredentialCreationOptions including a challenge to be sent to the browser/authr to create new credentials
         /// </summary>
         /// <returns></returns>
         /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
-        public CredentialCreateOptions RequestNewCredential(
+        public PublicKeyCredentialCreationOptions RequestNewCredential(
             Fido2User user,
             List<PublicKeyCredentialDescriptor> excludeCredentials,
             AuthenticationExtensionsClientInputs? extensions = null)
         {
-            return RequestNewCredential(user, excludeCredentials, AuthenticatorSelection.Default, AttestationConveyancePreference.None, extensions);
+            return RequestNewCredential(user, excludeCredentials, AuthenticatorSelectionCriteria.Default, AttestationConveyancePreference.None, extensions);
         }
 
         /// <summary>
-        /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
+        /// Returns PublicKeyCredentialCreationOptions including a challenge to be sent to the browser/authr to create new credentials
         /// </summary>
         /// <returns></returns>
         /// <param name="attestationPreference">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
         /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
-        public CredentialCreateOptions RequestNewCredential(
+        public PublicKeyCredentialCreationOptions RequestNewCredential(
             Fido2User user,
             List<PublicKeyCredentialDescriptor> excludeCredentials,
-            AuthenticatorSelection authenticatorSelection,
+            AuthenticatorSelectionCriteria authenticatorSelection,
             AttestationConveyancePreference attestationPreference,
             AuthenticationExtensionsClientInputs? extensions = null)
         {
             var challenge = new byte[_config.ChallengeSize];
             RandomNumberGenerator.Fill(challenge);
 
-            var options = CredentialCreateOptions.Create(_config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials, extensions);
+            var options = PublicKeyCredentialCreationOptions.Create(_config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials, extensions);
             return options;
         }
 
@@ -61,18 +61,16 @@ namespace Fido2NetLib
         /// <param name="attestationResponse"></param>
         /// <param name="origChallenge"></param>
         /// <param name="isCredentialIdUniqueToUser"></param>
-        /// <param name="requestTokenBindingId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<CredentialMakeResult> MakeNewCredentialAsync(
             AuthenticatorAttestationRawResponse attestationResponse,
-            CredentialCreateOptions origChallenge,
+            PublicKeyCredentialCreationOptions origChallenge,
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-            var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
+            var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
 
             // todo: Set Errormessage etc.
             return new CredentialMakeResult(
@@ -86,7 +84,7 @@ namespace Fido2NetLib
         /// Returns AssertionOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
         /// </summary>
         /// <returns></returns>
-        public AssertionOptions GetAssertionOptions(
+        public PublicKeyCredentialRequestOptions GetAssertionOptions(
             IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials,
             UserVerificationRequirement? userVerification,
             AuthenticationExtensionsClientInputs? extensions = null)
@@ -94,7 +92,7 @@ namespace Fido2NetLib
             var challenge = new byte[_config.ChallengeSize];
             RandomNumberGenerator.Fill(challenge);
 
-            var options = AssertionOptions.Create(_config, challenge, allowedCredentials, userVerification, extensions);
+            var options = PublicKeyCredentialRequestOptions.Create(_config, challenge, allowedCredentials, extensions, userVerification);
             return options;
         }
 
@@ -104,11 +102,10 @@ namespace Fido2NetLib
         /// <returns></returns>
         public async Task<AssertionVerificationResult> MakeAssertionAsync(
             AuthenticatorAssertionRawResponse assertionResponse,
-            AssertionOptions originalOptions,
+            PublicKeyCredentialRequestOptions originalOptions,
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
@@ -118,7 +115,6 @@ namespace Fido2NetLib
                                                           storedPublicKey,
                                                           storedSignatureCounter,
                                                           isUserHandleOwnerOfCredentialIdCallback,
-                                                          requestTokenBindingId,
                                                           cancellationToken);
 
             return result;

@@ -14,7 +14,7 @@
   "pubKeyCredParams": [
     {
       "type": "public-key",
-      "alg": -7
+      "alg": -65535
     },
     {
       "type": "public-key",

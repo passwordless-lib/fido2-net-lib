@@ -15,7 +15,6 @@ namespace Fido2NetLib
         [JsonPropertyName("id")]
         public byte[] Id { get; set; }
 
-        // might be wrong to base64url encode this...
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("rawId")]
         public byte[] RawId { get; set; }
@@ -32,16 +31,16 @@ namespace Fido2NetLib
         public class AssertionResponse
         {
             [JsonConverter(typeof(Base64UrlConverter))]
+            [JsonPropertyName("clientDataJSON")]
+            public byte[] ClientDataJson { get; set; }
+
+            [JsonConverter(typeof(Base64UrlConverter))]
             [JsonPropertyName("authenticatorData")]
             public byte[] AuthenticatorData { get; set; }
 
             [JsonConverter(typeof(Base64UrlConverter))]
             [JsonPropertyName("signature")]
             public byte[] Signature { get; set; }
-
-            [JsonConverter(typeof(Base64UrlConverter))]
-            [JsonPropertyName("clientDataJSON")]
-            public byte[] ClientDataJson { get; set; }
 
             [JsonPropertyName("userHandle")]
             [JsonConverter(typeof(Base64UrlConverter))]

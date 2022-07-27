@@ -10,7 +10,6 @@ using Xunit;
 using System.Threading.Tasks;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using Fido2NetLib.Cbor;
 
 namespace Test.Attestation
@@ -231,10 +230,10 @@ namespace Test.Attestation
                 }
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -242,11 +241,11 @@ namespace Test.Attestation
                 },
                 Challenge = _challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity("https://www.passwordless.dev", "6cc3c9e7967a.ngrok.io", ""),
+                Rp = new PublicKeyCredentialRpEntity("https://www.passwordless.dev"),
                 Status = "ok",
                 User = new Fido2User
                 {

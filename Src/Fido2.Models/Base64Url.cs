@@ -119,6 +119,7 @@ namespace Fido2NetLib
 
                 switch ((char)c)
                 {
+                    case '+' or '/' or '=': throw new Fido2VerificationException("Invalid base64url encoding");
                     case '-': c = (byte)'+'; break;
                     case '_': c = (byte)'/'; break;
                 }

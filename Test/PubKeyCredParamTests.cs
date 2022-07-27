@@ -7,14 +7,14 @@ using Xunit;
 
 namespace fido2_net_lib.Test
 {
-    public class PubKeyCredParamTests
+    public class PublicKeyCredentialParametersTests
     {
         [Fact]
         public void CanDeserializeES256()
         {
             string json = @"{""type"":""public-key"",""alg"":-7}";
 
-            var model = JsonSerializer.Deserialize<PubKeyCredParam>(json);
+            var model = JsonSerializer.Deserialize<PublicKeyCredentialParameters>(json);
 
             Assert.Equal(PublicKeyCredentialType.PublicKey, model.Type);
             Assert.Equal(COSE.Algorithm.ES256, model.Alg);
@@ -25,7 +25,7 @@ namespace fido2_net_lib.Test
         {
             string json = @"{""type"":""public-key"",""alg"":-47}";
 
-            var model = JsonSerializer.Deserialize<PubKeyCredParam>(json);
+            var model = JsonSerializer.Deserialize<PublicKeyCredentialParameters>(json);
 
             Assert.Equal(PublicKeyCredentialType.PublicKey, model.Type);
             Assert.Equal(COSE.Algorithm.ES256K, model.Alg);

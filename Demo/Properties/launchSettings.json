@@ -3,24 +3,15 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:4728/",
+      "applicationUrl": "https://localhost:44329/",
       "sslPort": 44329
     }
   },
   "profiles": {
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "Fido2Demo": {
+    "Demo": {
       "commandName": "Project",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:4729/"
+      "launchUrl": "https://localhost:44329",
+      "applicationUrl": "https://localhost:44329"
     }
   }
 }

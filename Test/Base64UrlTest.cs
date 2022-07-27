@@ -37,5 +37,17 @@ namespace fido2_net_lib.Test
                 Add(Array.Empty<byte>());
             }
         }
+
+        [Fact]
+        public void TestBase64EncodedString()
+        {
+            var ex = Assert.Throws<Fido2VerificationException>(() => Base64Url.DecodeUtf8(Encoding.UTF8.GetBytes("Xvg6kAhrcnvASuXpCDw38DcIn0waPdQE8dBHDumc===")));
+            Assert.True("Invalid base64url encoding" == ex.Message);
+            ex = Assert.Throws<Fido2VerificationException>(() => Base64Url.DecodeUtf8(Encoding.UTF8.GetBytes("Xvg6kAhrcnvASuX+pCDw38DcIn0waPdQE8dBHDumc")));
+            Assert.True("Invalid base64url encoding" == ex.Message);
+            ex = Assert.Throws<Fido2VerificationException>(() => Base64Url.DecodeUtf8(Encoding.UTF8.GetBytes("Xvg6kAhrcnvASuX/pCDw38DcIn0waPdQE8dBHDumc")));
+            Assert.True("Invalid base64url encoding" == ex.Message);
+            Assert.NotNull(Base64Url.DecodeUtf8(Encoding.UTF8.GetBytes("Xvg6kAhrcnvASuX-pCDw38DcIn0w_aPdQ_E8dBHDumc")));
+        }
     }
 }

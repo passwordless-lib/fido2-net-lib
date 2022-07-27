@@ -50,6 +50,7 @@ namespace Test
         public async Task TestAuthenticatorOrigins(string origin, string expectedOrigin)
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = origin;
             var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
             var authData = new AuthenticatorData(
@@ -81,10 +82,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -92,11 +93,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -154,6 +155,7 @@ namespace Test
         public void TestAuthenticatorOriginsFail(string origin, string expectedOrigin)
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = origin;
             var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
             var authData = new AuthenticatorData(
@@ -185,10 +187,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -196,11 +198,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -251,7 +253,7 @@ namespace Test
                 Extensions = new AuthenticationExtensionsClientOutputs()
                 {
                     AppID = true,
-                    AuthenticatorSelection = true,
+                    AuthenticatorSelectionCriteria = true,
                     Extensions = new string[] { "foo", "bar" },
                     Example = "test",
                     UserVerificationMethod = new ulong[][]
@@ -269,7 +271,7 @@ namespace Test
             Assert.True(rawResponse.Response.AttestationObject.SequenceEqual(new byte[] { 0xa0 }));
             Assert.True(rawResponse.Response.ClientDataJson.SequenceEqual(clientDataJson));
             Assert.True(rawResponse.Extensions.AppID);
-            Assert.True(rawResponse.Extensions.AuthenticatorSelection);
+            Assert.True(rawResponse.Extensions.AuthenticatorSelectionCriteria);
             Assert.Equal(rawResponse.Extensions.Extensions, new string[] { "foo", "bar" });
             Assert.Equal("test", rawResponse.Extensions.Example);
             Assert.Equal((ulong)4, rawResponse.Extensions.UserVerificationMethod[0][0]);
@@ -381,10 +383,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -392,11 +394,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -429,6 +431,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseInvalidRawId(byte[] value)
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new {
                 type = "webauthn.create",
@@ -452,10 +455,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -463,11 +466,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -498,6 +501,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseInvalidRawType()
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new {
                 type = "webauthn.create",
@@ -521,10 +525,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -532,11 +536,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -567,6 +571,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseRpidMismatch()
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             var authData = new AuthenticatorData(
                 SHA256.HashData(Encoding.UTF8.GetBytes("passwordless.dev")),
@@ -598,10 +603,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -609,11 +614,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -644,6 +649,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseNotUserPresent()
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             var authData = new AuthenticatorData(
                 SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
@@ -676,10 +682,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -687,11 +693,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -722,6 +728,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseNoAttestedCredentialData()
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             var authData = new AuthenticatorData(
                 SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
@@ -753,10 +760,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -764,11 +771,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -799,6 +806,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseUnknownAttestationType()
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
             var authData = new AuthenticatorData(
@@ -831,10 +839,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -842,11 +850,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -877,6 +885,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseNotUniqueCredId()
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
             var authData = new AuthenticatorData(
@@ -908,10 +917,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -919,11 +928,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -954,6 +963,7 @@ namespace Test
         public void TestAuthenticatorAttestationResponseUVRequired()
         {
             var challenge = RandomNumberGenerator.GetBytes(128);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
             var rp = "https://www.passwordless.dev";
             var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
             var authData = new AuthenticatorData(
@@ -985,10 +995,10 @@ namespace Test
                 },
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var origChallenge = new PublicKeyCredentialCreationOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
-                AuthenticatorSelection = new AuthenticatorSelection
+                AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                     RequireResidentKey = true,
@@ -996,11 +1006,11 @@ namespace Test
                 },
                 Challenge = challenge,
                 ErrorMessage = "",
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256)
+                    new PublicKeyCredentialParameters(COSE.Algorithm.ES256)
                 },
-                Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                Rp = new PublicKeyCredentialRpEntity(rp),
                 Status = "ok",
                 User = new Fido2User
                 {
@@ -1055,7 +1065,7 @@ namespace Test
                 Extensions = new AuthenticationExtensionsClientOutputs()
                 {
                     AppID = true,
-                    AuthenticatorSelection = true,
+                    AuthenticatorSelectionCriteria = true,
                     Extensions = new string[] { "foo", "bar" },
                     Example = "test",
                     UserVerificationMethod = new ulong[][]
@@ -1075,7 +1085,7 @@ namespace Test
             Assert.True(assertionResponse.Response.ClientDataJson.SequenceEqual(clientDataJson));
             Assert.True(assertionResponse.Response.UserHandle.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
             Assert.True(assertionResponse.Extensions.AppID);
-            Assert.True(assertionResponse.Extensions.AuthenticatorSelection);
+            Assert.True(assertionResponse.Extensions.AuthenticatorSelectionCriteria);
             Assert.Equal(assertionResponse.Extensions.Extensions, new string[] { "foo", "bar" });
             Assert.Equal("test", assertionResponse.Extensions.Example);
             Assert.Equal((ulong)4, assertionResponse.Extensions.UserVerificationMethod[0][0]);

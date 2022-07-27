@@ -7,7 +7,7 @@ namespace Fido2NetLib.Objects
         /// <summary>
         /// This extension allows for passing of conformance tests
         /// </summary>
-        [JsonPropertyName("example.extension")]
+        [JsonPropertyName("example.extension.bool")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public object Example { get; set; }
 
@@ -25,7 +25,7 @@ namespace Fido2NetLib.Objects
         /// https://www.w3.org/TR/webauthn/#sctn-authenticator-selection-extension
         /// </summary>
         [JsonPropertyName("authnSel")]
-        public bool AuthenticatorSelection { get; set; }
+        public bool AuthenticatorSelectionCriteria { get; set; }
 
         /// <summary>
         /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator supports.

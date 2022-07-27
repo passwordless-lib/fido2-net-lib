@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects
 {
@@ -22,14 +23,14 @@ namespace Fido2NetLib.Objects
         /// <summary>
         /// This member contains the type of the public key credential the caller is referring to.
         /// </summary>
-        [JsonPropertyName("type")]
+        [JsonPropertyName("type"), Required]
         public PublicKeyCredentialType? Type { get; set; } = PublicKeyCredentialType.PublicKey;
 
         /// <summary>
         /// This member contains the credential ID of the public key credential the caller is referring to.
         /// </summary>
         [JsonConverter(typeof(Base64UrlConverter))]
-        [JsonPropertyName("id")]
+        [JsonPropertyName("id"), Required]
         public byte[] Id { get; set; }
 
 #nullable enable

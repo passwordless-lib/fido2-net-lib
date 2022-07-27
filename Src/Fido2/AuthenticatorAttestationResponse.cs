@@ -19,7 +19,7 @@ namespace Fido2NetLib
     /// It contains information about the new credential that can be used to identify it for later use, 
     /// and metadata that can be used by the Relying Party to assess the characteristics of the credential during registration.
     /// </summary>
-    public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
+    public sealed class AuthenticatorAttestationResponse : CollectedClientData
     {
         private AuthenticatorAttestationResponse(byte[] clientDataJson) 
             : base(clientDataJson)
@@ -72,28 +72,26 @@ namespace Fido2NetLib
         }
 
         public async Task<AttestationVerificationSuccess> VerifyAsync(
-            CredentialCreateOptions originalOptions,
+            PublicKeyCredentialCreationOptions originalOptions,
             Fido2Configuration config,
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
             IMetadataService metadataService,
-            byte[] requestTokenBindingId,
             CancellationToken cancellationToken = default)
         {
+
             // https://www.w3.org/TR/webauthn/#registering-a-new-credential
-            // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
-            // 2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.
+            // 5. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
+            // 6. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.
             // Note: C may be any implementation-specific data structure representation, as long as C’s components are referenceable, as required by this algorithm.
             // Above handled in base class constructor
 
-            // 3. Verify that the value of C.type is webauthn.create
+            // 7. Verify that the value of C.type is webauthn.create
             if (Type is not "webauthn.create")
                 throw new Fido2VerificationException("AttestationResponse is not type webauthn.create");
 
-            // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
-            // 5. Verify that the value of C.origin matches the Relying Party's origin.
-            // 6. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
-            // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-            BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId);
+            // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
+            // 9. Verify that the value of C.origin matches the Relying Party's origin.
+            BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge);
 
             if (Raw.Id is null || Raw.Id.Length == 0)
                 throw new Fido2VerificationException("AttestationResponse is missing Id");
@@ -103,36 +101,41 @@ namespace Fido2NetLib
 
             var authData = new AuthenticatorData(AttestationObject.AuthData);
 
-            // 7. Compute the hash of response.clientDataJSON using SHA-256.
-            byte[] clientDataHash = SHA256.HashData(Raw.Response.ClientDataJson);
+            // 10. Let hash be the result of computing a hash over response.clientDataJSON using SHA-256.
+            byte[] hash = SHA256.HashData(Raw.Response.ClientDataJson);
             byte[] rpIdHash = SHA256.HashData(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));           
 
-            // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
+            // 11. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
             // Handled in AuthenticatorAttestationResponse::Parse()
 
-            // 9. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party
+            // 12. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party
             if (!authData.RpIdHash.AsSpan().SequenceEqual(rpIdHash))
                 throw new Fido2VerificationException("Hash mismatch RPID");
 
-            // 10. Verify that the User Present bit of the flags in authData is set.
+            // 13. Verify that the User Present bit of the flags in authData is set.
             if (!authData.UserPresent)
                 throw new Fido2VerificationException("User Present flag not set in authenticator data");
 
-            // 11. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
-            if (originalOptions.AuthenticatorSelection?.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
+            // 14. If the Relying Party requires user verification for this registration, verify that the User Verified bit of the flags in authData is set.
+            if (originalOptions.AuthenticatorSelectionCriteria?.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
                 throw new Fido2VerificationException("User Verified flag not set in authenticator data and user verification was required");
 
-            // 12. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, 
+            if (!authData.HasAttestedCredentialData)
+                throw new Fido2VerificationException("Attestation flag not set on attestation data");
+
+            // 17. Verify that the "alg" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.
+            if (!originalOptions.PublicKeyCredentialParameters.Any(a => authData.AttestedCredentialData.CredentialPublicKey.IsSameAlg(a.Alg)))
+                throw new Fido2VerificationException("Alg in credential public key does not match any alg from pubKeyCredParams");
+
+            // 18. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, 
             // considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values 
             // in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., 
             // no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
 
             // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
 
-            if (!authData.HasAttestedCredentialData)
-                throw new Fido2VerificationException("Attestation flag not set on attestation data");
 
-            // 13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. 
+            // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. 
             // An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
             AttestationVerifier verifier = AttestationObject.Fmt switch
@@ -148,11 +151,11 @@ namespace Fido2NetLib
                 _ => throw new Fido2VerificationException("Missing or unknown attestation type")
             };
 
-            // 14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
+            // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
             // by using the attestation statement format fmt’s verification procedure given attStmt, authData and the hash of the serialized client data computed in step 7
-            (var attType, var trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+            (var attType, var trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, hash);
 
-            // 15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
+            // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys) for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
             // For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
             MetadataBLOBPayloadEntry metadataEntry = null;
@@ -180,6 +183,18 @@ namespace Fido2NetLib
                     for (int i = 0; i < attestationRootCertificates.Length; i++)
                     {
                         attestationRootCertificates[i] = new X509Certificate2(Convert.FromBase64String(certStrings[i]));
+                    }
+
+                    // FIDO conformance Server-ServerAuthenticatorAttestationResponse-Resp-5 Test server processing "packed" FULL attestation
+                    // Test F-10 Send ServerAuthenticatorAttestationResponse with FULL "packed" attestation, with attStmt.x5c containing full chain, and check that server returns an error
+                    if (ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_BASIC_FULL))
+                    {
+                        foreach (X509Certificate2 attestationRootCertificate in attestationRootCertificates)
+                        {
+                            // test for cert in x5c that should only be in metadata
+                            if (trustPath.Any(x => x.Thumbprint == attestationRootCertificate.Thumbprint && x.Subject.Equals(x.Issuer, StringComparison.Ordinal)))
+                                throw new Fido2VerificationException("Full packed attestation with x5c containing full chain detected");
+                        }
                     }
 
                     if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates))
@@ -219,19 +234,23 @@ namespace Fido2NetLib
                 }
             }
 
-            // 16. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
+            // 22. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
             // If self attestation was used, check if self attestation is acceptable under Relying Party policy.
             // If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 15.
             // Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.
 
-            // 17. Check that the credentialId is not yet registered to any other user. 
+            // 23. Verify that the credentialId is ≤ 1023 bytes. Credential IDs larger than this many bytes SHOULD cause the RP to fail this registration ceremony.
+            if (!(authData.AttestedCredentialData.CredentialID.Length <= 1023))
+                throw new Fido2VerificationException($"Credential ID must not be larger than 1023 bytes, was {authData.AttestedCredentialData.CredentialID.Length} bytes");
+
+            // 24. Check that the credentialId is not yet registered to any other user. 
             // If registration is requested for a credential that is already registered to a different user, the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration
             if (false == await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialID, originalOptions.User), cancellationToken))
             {
                 throw new Fido2VerificationException("CredentialId is not unique to this user");
             }
 
-            // 18. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the new credential with the account that was denoted in the options.user passed to create(), 
+            // 25. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the new credential with the account that was denoted in the options.user passed to create(), 
             // by associating it with the credentialId and credentialPublicKey in the attestedCredentialData in authData, as appropriate for the Relying Party's system.
             var result = new AttestationVerificationSuccess()
             {
@@ -244,7 +263,7 @@ namespace Fido2NetLib
             };
 
             return result;
-            // 19. If the attestation statement attStmt successfully verified but is not trustworthy per step 16 above, the Relying Party SHOULD fail the registration ceremony.
+            // 26. If the attestation statement attStmt successfully verified but is not trustworthy per step 16 above, the Relying Party SHOULD fail the registration ceremony.
             // This implementation throws if the outputs are not trustworthy for a particular attestation type.
         }
 

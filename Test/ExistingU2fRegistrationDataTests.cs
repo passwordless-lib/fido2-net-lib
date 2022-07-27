@@ -23,7 +23,7 @@ namespace fido2_net_lib.Test
             //key as cbor
             var publicKey = CreatePublicKeyFromU2fRegistrationData(keyHandleData, publicKeyData);
 
-            var options = new AssertionOptions
+            var options = new PublicKeyCredentialRequestOptions
             {
                 Challenge = Base64Url.Decode("mNxQVDWI8+ahBXeQJ8iS4jk5pDUd5KetZGVOwSkw2X0"),
                 RpId = "localhost",
@@ -35,6 +35,7 @@ namespace fido2_net_lib.Test
                           Type = PublicKeyCredentialType.PublicKey
                     }
                 },
+                UserVerification = UserVerificationRequirement.Discouraged,
                 Extensions = new AuthenticationExtensionsClientInputs
                 {
                     AppID = appId

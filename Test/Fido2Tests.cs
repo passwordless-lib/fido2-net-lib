@@ -168,7 +168,8 @@ namespace fido2_net_lib.Test
                 RandomNumberGenerator.Fill(_credentialID);
 
                 _challenge = new byte[128];
-                RandomNumberGenerator.Fill(_credentialID);
+                RandomNumberGenerator.Fill(_challenge);
+                _challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(_challenge));
 
                 var signCount = new byte[2];
                 RandomNumberGenerator.Fill(signCount);
@@ -189,7 +190,7 @@ namespace fido2_net_lib.Test
                 var attestationResponse = new AuthenticatorAttestationRawResponse
                 {
                     Type = PublicKeyCredentialType.PublicKey,
-                    Id = new byte[] { 0xf1, 0xd0 },
+                    Id = Encoding.UTF8.GetBytes(Base64Url.Encode(new byte[] { 0xf1, 0xd0 })),
                     RawId = new byte[] { 0xf1, 0xd0 },
                     Response = new AuthenticatorAttestationRawResponse.ResponseData()
                     {
@@ -199,7 +200,7 @@ namespace fido2_net_lib.Test
                     Extensions = new AuthenticationExtensionsClientOutputs()
                     {
                         AppID = true,
-                        AuthenticatorSelection = true,
+                        AuthenticatorSelectionCriteria = true,
                         Extensions = new string[] { "foo", "bar" },
                         Example = "test",
                         UserVerificationMethod = new ulong[][]
@@ -212,10 +213,10 @@ namespace fido2_net_lib.Test
                     }
                 };
 
-                var origChallenge = new CredentialCreateOptions
+                var origChallenge = new PublicKeyCredentialCreationOptions
                 {
                     Attestation = AttestationConveyancePreference.Direct,
-                    AuthenticatorSelection = new AuthenticatorSelection
+                    AuthenticatorSelectionCriteria = new AuthenticatorSelectionCriteria
                     {
                         AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
                         RequireResidentKey = true,
@@ -223,11 +224,11 @@ namespace fido2_net_lib.Test
                     },
                     Challenge = _challenge,
                     ErrorMessage = "",
-                    PubKeyCredParams = new List<PubKeyCredParam>()
+                    PublicKeyCredentialParameters = new List<PublicKeyCredentialParameters>()
                     {
-                        new PubKeyCredParam(COSE.Algorithm.ES256)
+                        new PublicKeyCredentialParameters(_credentialPublicKey._alg)
                     },
-                    Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+                    Rp = new PublicKeyCredentialRpEntity(rp),
                     Status = "ok",
                     User = new Fido2User
                     {
@@ -381,10 +382,10 @@ namespace fido2_net_lib.Test
         [Fact]
         public void TestStringIsSerializable()
         {
-            var x2 = new AuthenticatorSelection();
+            var x2 = new AuthenticatorSelectionCriteria();
             x2.UserVerification = UserVerificationRequirement.Discouraged;
             var json = JsonSerializer.Serialize(x2);
-            var c3 = JsonSerializer.Deserialize<AuthenticatorSelection>(json);
+            var c3 = JsonSerializer.Deserialize<AuthenticatorSelectionCriteria>(json);
 
             Assert.Equal(UserVerificationRequirement.Discouraged, c3.UserVerification);
 
@@ -429,11 +430,11 @@ namespace fido2_net_lib.Test
             //var key2 = "45-43-53-31-20-00-00-00-1D-60-44-D7-92-A0-0C-1E-3B-F9-58-5A-28-43-92-FD-F6-4F-BB-7F-8E-86-33-38-30-A4-30-5D-4E-2C-71-E3-53-3C-7B-98-81-99-FE-A9-DA-D9-24-8E-04-BD-C7-86-40-D3-03-1E-6E-00-81-7D-85-C3-A2-19-C9-21-85-8D";
             //var key2 = "45-43-53-31-20-00-00-00-A9-E9-12-2A-37-8A-F0-74-E7-BA-52-54-B0-91-55-46-DB-21-E5-2C-01-B8-FB-69-CD-E5-ED-02-B6-C3-16-E3-1A-59-16-C1-43-87-0D-04-B9-94-7F-CF-56-E5-AA-5E-96-8C-5B-27-8F-83-F4-E2-50-AB-B3-F6-28-A1-F8-9E";
 
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationNoneOptions.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationNoneOptions.json"));
             var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationNoneResponse.json"));
 
             var o = AuthenticatorAttestationResponse.Parse(response);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
 
             var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
             var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
@@ -446,7 +447,7 @@ namespace fido2_net_lib.Test
 
             // assertion
 
-            var aoptions = await GetAsync<AssertionOptions>("./assertionNoneOptions.json");
+            var aoptions = await GetAsync<PublicKeyCredentialRequestOptions>("./assertionNoneOptions.json");
             var aresponse = await GetAsync<AuthenticatorAssertionRawResponse>("./assertionNoneResponse.json");
 
             // signed assertion?
@@ -457,12 +458,12 @@ namespace fido2_net_lib.Test
         public async Task TestParsingAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./json1.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./options1.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./options1.json"));
 
             Assert.NotNull(jsonPost);
 
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
         }
 
         [Fact]
@@ -517,9 +518,9 @@ namespace fido2_net_lib.Test
         public async Task TestU2FAttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsU2F.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsU2F.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationOptionsU2F.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
@@ -527,9 +528,9 @@ namespace fido2_net_lib.Test
         public async Task TestPackedAttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsPacked.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsPacked.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationOptionsPacked.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             var authData = new AuthenticatorData(ad);
             Assert.True(authData.ToByteArray().SequenceEqual(ad));
@@ -541,18 +542,18 @@ namespace fido2_net_lib.Test
         public async Task TestNoneAttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsNone.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsNone.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationOptionsNone.json"));
 
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
         }
         [Fact]
         public async Task TestTPMSHA256AttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA256Response.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA256Options.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationTPMSHA256Options.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
@@ -560,9 +561,9 @@ namespace fido2_net_lib.Test
         public async Task TestTPMSHA1AttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA1Response.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA1Options.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationTPMSHA1Options.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
@@ -570,9 +571,9 @@ namespace fido2_net_lib.Test
         public async Task TestAndroidKeyAttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationAndroidKeyResponse.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationAndroidKeyOptions.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationAndroidKeyOptions.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
@@ -581,10 +582,10 @@ namespace fido2_net_lib.Test
         public async Task TestAppleAttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationAppleResponse.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationAppleOptions.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationAppleOptions.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
             var config = new Fido2Configuration { Origins = new HashSet<string> { "https://6cc3c9e7967a.ngrok.io" } };
-            await o.VerifyAsync(options, config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
@@ -593,9 +594,9 @@ namespace fido2_net_lib.Test
         public async Task TaskPackedAttestation512()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsPacked512.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsPacked512.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationOptionsPacked512.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             // TODO : Why read ad ? Is the test finished ?
         }
@@ -604,9 +605,9 @@ namespace fido2_net_lib.Test
         public async Task TestTrustKeyAttestationAsync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultTrustKeyT110.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsTrustKeyT110.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationOptionsTrustKeyT110.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             var authData = new AuthenticatorData(ad);
             Assert.True(authData.ToByteArray().SequenceEqual(ad));
@@ -619,9 +620,9 @@ namespace fido2_net_lib.Test
         public async Task TestInvalidU2FAttestationASync()
         {
             var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsATKey.json"));
-            var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsATKey.json"));
+            var options = JsonSerializer.Deserialize<PublicKeyCredentialCreationOptions>(await File.ReadAllTextAsync("./attestationOptionsATKey.json"));
             var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+            await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
             byte[] ad = o.AttestationObject.AuthData;
             var authData = new AuthenticatorData(ad);
             Assert.True(authData.ToByteArray().SequenceEqual(ad));
@@ -882,6 +883,7 @@ namespace fido2_net_lib.Test
 
             var challenge = new byte[128];
             RandomNumberGenerator.Fill(challenge);
+            challenge = Encoding.UTF8.GetBytes(Base64Url.Encode(challenge));
 
             var clientData = new
             {
@@ -922,7 +924,7 @@ namespace fido2_net_lib.Test
             };
             existingCredentials.Add(cred);
 
-            var options = lib.GetAssertionOptions(existingCredentials, null, null);
+            var options = lib.GetAssertionOptions(existingCredentials);
             options.Challenge = challenge;
             var response = new AuthenticatorAssertionRawResponse()
             {

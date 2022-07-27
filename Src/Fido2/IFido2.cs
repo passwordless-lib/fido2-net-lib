@@ -7,36 +7,34 @@ namespace Fido2NetLib
 {
     public interface IFido2
     {
-        AssertionOptions GetAssertionOptions(
+        PublicKeyCredentialRequestOptions GetAssertionOptions(
             IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, 
-            UserVerificationRequirement? userVerification, 
+            UserVerificationRequirement? userVerification = UserVerificationRequirement.Preferred, 
             AuthenticationExtensionsClientInputs? extensions = null);
 
         Task<AssertionVerificationResult> MakeAssertionAsync(
             AuthenticatorAssertionRawResponse assertionResponse,
-            AssertionOptions originalOptions,
+            PublicKeyCredentialRequestOptions originalOptions,
             byte[] storedPublicKey,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default);
 
         Task<Fido2.CredentialMakeResult> MakeNewCredentialAsync(
             AuthenticatorAttestationRawResponse attestationResponse,
-            CredentialCreateOptions origChallenge,
+            PublicKeyCredentialCreationOptions origChallenge,
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default);
 
-        CredentialCreateOptions RequestNewCredential(
+        PublicKeyCredentialCreationOptions RequestNewCredential(
             Fido2User user,
             List<PublicKeyCredentialDescriptor> excludeCredentials,
             AuthenticationExtensionsClientInputs? extensions = null);
 
-        CredentialCreateOptions RequestNewCredential(
+        PublicKeyCredentialCreationOptions RequestNewCredential(
             Fido2User user,
             List<PublicKeyCredentialDescriptor> excludeCredentials,
-            AuthenticatorSelection authenticatorSelection,
+            AuthenticatorSelectionCriteria authenticatorSelection,
             AttestationConveyancePreference attestationPreference,
             AuthenticationExtensionsClientInputs? extensions = null);
     }

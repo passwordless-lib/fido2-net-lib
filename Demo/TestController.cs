@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Fido2NetLib;
@@ -42,16 +43,7 @@ namespace Fido2Demo
         {
             var attType = opts.Attestation;
 
-            var username = Array.Empty<byte>();
-
-            try
-            {
-                username = Base64Url.Decode(opts.Username);
-            }
-            catch (FormatException)
-            {
-                username = Encoding.UTF8.GetBytes(opts.Username);
-            }
+            var username = Base64Url.Decode(opts.Username);
 
             // 1. Get user from DB by username (in our example, auto create missing users)
             var user = DemoStorage.GetOrAddUser(opts.Username, () => new Fido2User
@@ -64,13 +56,13 @@ namespace Fido2Demo
             // 2. Get user existing keys by username
             var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
-            //var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
-            var exts = new AuthenticationExtensionsClientInputs() { };
-            if (opts.Extensions?.Example != null)
-                exts.Example = opts.Extensions.Example;
-
             // 3. Create options
-            var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
+            var options = _fido2.RequestNewCredential(
+                user, 
+                existingKeys, 
+                opts.AuthenticatorSelection, 
+                opts.Attestation, 
+                (opts.Extensions?.Example == null) ? null : new() { Example = opts.Extensions.Example });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -86,7 +78,7 @@ namespace Fido2Demo
 
             // 1. get the options we sent the client
             var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
-            var options = CredentialCreateOptions.FromJson(jsonOptions);
+            var options = PublicKeyCredentialCreationOptions.FromJson(jsonOptions);
 
             // 2. Create callback so that lib can verify credential id is unique to this user
             IsCredentialIdUniqueToUserAsyncDelegate callback = static async (args, cancellationToken) =>
@@ -124,23 +116,11 @@ namespace Fido2Demo
             // 2. Get registered credentials from database
             var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
-            var uv = assertionClientParams.UserVerification;
-            if (null != assertionClientParams.authenticatorSelection)
-                uv = assertionClientParams.authenticatorSelection.UserVerification;
-
-            var exts = new AuthenticationExtensionsClientInputs
-            { 
-                AppID = _origin,
-                UserVerificationMethod = true
-            };
-            if (null != assertionClientParams.Extensions && null != assertionClientParams.Extensions.Example)
-                exts.Example = assertionClientParams.Extensions.Example;
-
             // 3. Create options
             var options = _fido2.GetAssertionOptions(
                 existingCredentials,
-                uv,
-                exts
+                assertionClientParams.UserVerification,
+                (null == assertionClientParams.Extensions?.Example) ? null : new() { Example = assertionClientParams.Extensions.Example }
             );
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
@@ -156,7 +136,7 @@ namespace Fido2Demo
         {
             // 1. Get the assertion options we sent the client
             var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions");
-            var options = AssertionOptions.FromJson(jsonOptions);
+            var options = PublicKeyCredentialRequestOptions.FromJson(jsonOptions);
 
             // 2. Get registered credential from database
             var creds = DemoStorage.GetCredentialById(clientResponse.Id);
@@ -193,8 +173,10 @@ namespace Fido2Demo
         public class TEST_AssertionClientParams
         {
             public string Username { get; set; }
+
+            [JsonPropertyName("userVerification")]
+            [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
             public UserVerificationRequirement? UserVerification { get; set; }
-            public AuthenticatorSelection authenticatorSelection { get; set; }
             public AuthenticationExtensionsClientOutputs Extensions { get; set; }
         }
 
@@ -203,7 +185,7 @@ namespace Fido2Demo
             public string DisplayName { get; set; }
             public string Username { get; set; }
             public AttestationConveyancePreference Attestation { get; set; }
-            public AuthenticatorSelection AuthenticatorSelection { get; set; }
+            public AuthenticatorSelectionCriteria AuthenticatorSelection { get; set; }
             public AuthenticationExtensionsClientOutputs Extensions { get; set; }
         }
     }
