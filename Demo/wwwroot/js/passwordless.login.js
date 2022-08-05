@@ -12,15 +12,15 @@ async function handleSignInSubmit(event) {
     // send to server for registering
     let makeAssertionOptions;
     try {
-        var res = await fetch('/assertionOptions', {
-            method: 'POST', // or 'PUT'
-            body: formData, // data can be `string` or {object}!
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        makeAssertionOptions = await res.json();
+        // use jquery ajax instead of fetch because of safari browser and platform authenticator
+        // https://github.com/passwordless-lib/fido2-net-lib/issues/303
+        makeAssertionOptions = await $.post({
+            url: '/assertionOptions',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+        }, 'json');
     } catch (e) {
         showErrorAlert("Request to server failed", e);
     }
@@ -97,7 +97,7 @@ async function verifyAssertionWithServer(assertedCredential) {
 
     let response;
     try {
-        let res = await fetch("/makeAssertion", {
+      let res = await fetch("/makeAssertion", {
             method: 'POST', // or 'PUT'
             body: JSON.stringify(data), // data can be `string` or {object}!
             headers: {
