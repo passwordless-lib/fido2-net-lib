@@ -158,7 +158,7 @@ async function registerNewCredential(newCredential) {
 }
 
 async function registerCredentialWithServer(formData) {
-  let response = await fetch('/makeCredential', {
+    let response = await fetch('/makeCredential', {
         method: 'POST', // or 'PUT'
         body: JSON.stringify(formData), // data can be `string` or {object}!
         headers: {
