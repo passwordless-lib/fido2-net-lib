@@ -5920,7 +5920,6 @@ namespace Test.Attestation
                 raw.Write(scheme);
                 raw.Write(curveID);
                 raw.Write(kdf);
-                raw.Write(GetUInt16BigEndianBytes(unique.Length));
                 raw.Write(unique);
             }
             else
