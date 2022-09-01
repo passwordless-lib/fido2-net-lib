@@ -175,7 +175,7 @@ namespace fido2_net_lib.Test
                 idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
             }
 
-            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponse()
+            public async Task<Fido2.CredentialMakeResult> MakeAttestationResponseAsync()
             {
                 _attestationObject.Set("authData", new CborByteString(_authData));
 
@@ -820,11 +820,11 @@ namespace fido2_net_lib.Test
 
                 if (curve != default)
                 {
-                    avr = await MakeAssertionResponse(type, alg, curve);
+                    avr = await MakeAssertionResponseAsync(type, alg, curve);
                 }
                 else
                 {
-                    avr = await MakeAssertionResponse(type, alg);
+                    avr = await MakeAssertionResponseAsync(type, alg);
                 }
                 Assert.Equal("", avr.ErrorMessage);
                 Assert.Equal("ok", avr.Status);
@@ -904,7 +904,15 @@ namespace fido2_net_lib.Test
             return raw.ToArray();
         }
         
-        internal static async Task<AssertionVerificationResult> MakeAssertionResponse(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve crv = COSE.EllipticCurve.P256, CredentialPublicKey cpk = null, ushort signCount = 0, ECDsa ecdsa = null, RSA rsa = null, byte[] expandedPrivateKey = null)
+        internal static async Task<AssertionVerificationResult> MakeAssertionResponseAsync(
+            COSE.KeyType kty,
+            COSE.Algorithm alg,
+            COSE.EllipticCurve crv = COSE.EllipticCurve.P256,
+            CredentialPublicKey cpk = null,
+            ushort signCount = 0,
+            ECDsa ecdsa = null,
+            RSA rsa = null,
+            byte[] expandedPrivateKey = null)
         {
             const string rp = "https://www.passwordless.dev";
             byte[] rpId = Encoding.UTF8.GetBytes(rp);

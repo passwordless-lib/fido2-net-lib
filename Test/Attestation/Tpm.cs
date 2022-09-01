@@ -300,7 +300,7 @@ namespace Test.Attestation
 
                         break;
                 }
-                var res = await MakeAttestationResponse();
+                var res = await MakeAttestationResponseAsync();
 
                 Assert.Equal(string.Empty, res.ErrorMessage);
                 Assert.Equal("ok", res.Status);
@@ -427,7 +427,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var res = MakeAttestationResponse().Result;
+                    var res = MakeAttestationResponseAsync().Result;
 
                     Assert.Equal(string.Empty, res.ErrorMessage);
                     Assert.Equal("ok", res.Status);
@@ -541,7 +541,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea },
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
                 }
             }
@@ -643,7 +643,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
                 }
             }
@@ -746,7 +746,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
                 }
             }
@@ -855,7 +855,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("FIDO2 only supports TPM 2.0", ex.Result.Message);
                 }
             }
@@ -958,7 +958,7 @@ namespace Test.Attestation
                         { "pubArea", CborNull.Instance },
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1060,7 +1060,7 @@ namespace Test.Attestation
                         { "pubArea", "banana" }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1162,7 +1162,7 @@ namespace Test.Attestation
                         { "pubArea", new byte[0] }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1262,7 +1262,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1366,7 +1366,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
                 }
             }
@@ -1468,7 +1468,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Public key mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -1570,7 +1570,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Public key exponent mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -1691,7 +1691,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("X-coordinate mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -1812,7 +1812,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Y-coordinate mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -1932,7 +1932,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Curve mismatch between pubArea and credentialPublicKey", ex.Result.Message);
                 }
             }
@@ -2035,7 +2035,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
                 }
             }
@@ -2137,7 +2137,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
                 }
             }
@@ -2247,7 +2247,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
                 }
             }
@@ -2349,7 +2349,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
                     
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Bad magic number 474354FF", ex.Result.Message);
                 }
             }
@@ -2451,7 +2451,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Bad structure tag 1780", ex.Result.Message);
                 }
             }
@@ -2554,7 +2554,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Bad extraData in certInfo", ex.Result.Message);
                 }
             }
@@ -2660,7 +2660,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Unexpected handle in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -2762,7 +2762,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Unexpected no name found in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -2870,7 +2870,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Unexpected extra bytes found in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -2972,7 +2972,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm", ex.Result.Message);
                 }
             }
@@ -3078,7 +3078,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid TPM_ALG_ID found in TPM2B_NAME", ex.Result.Message);
                 }
             }
@@ -3180,7 +3180,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
                 }
             }
@@ -3287,7 +3287,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
                 }
             }
@@ -3396,7 +3396,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Hash value mismatch extraData and attToBeSigned", ex.Result.Message);
                 }
             }
@@ -3502,7 +3502,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Hash value mismatch attested and pubArea", ex.Result.Message);
                 }
             }
@@ -3613,7 +3613,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
                 }
             }
@@ -3715,7 +3715,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
                 }
             }
@@ -3817,7 +3817,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
                 }
             }
@@ -3919,7 +3919,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -4022,7 +4022,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -4124,7 +4124,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -4226,7 +4226,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
                 }
             }
@@ -4328,7 +4328,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Bad signature in TPM with aikCert", ex.Result.Message);
                 }
             }
@@ -4436,13 +4436,13 @@ namespace Test.Attestation
                     if (OperatingSystem.IsMacOS())
                     {
                         // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
-                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponse());
+                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponseAsync());
                         Assert.Equal("Unknown format in import.", ex.Result.Message);
                     }
 
                     else
                     {
-                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                         Assert.Equal("aikCert must be V3", ex.Result.Message);
                     }
                 }
@@ -4546,7 +4546,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("aikCert subject must be empty", ex.Result.Message);
                 }
             }
@@ -4653,7 +4653,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("SAN missing from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -4763,7 +4763,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("SAN missing from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -4872,7 +4872,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -4982,7 +4982,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -5095,7 +5095,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
                 }
             }
@@ -5207,7 +5207,7 @@ namespace Test.Attestation
                     });
                     
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Result.Message);
                 }
             }
@@ -5312,7 +5312,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("aikCert EKU missing tcg-kp-AIKCertificate OID", ex.Result.Message);
                 }
             }
@@ -5415,7 +5415,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
                     
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("aikCert Basic Constraints extension CA component must be false", ex.Result.Message);
                 }
             }
@@ -5517,7 +5517,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var res = await MakeAttestationResponse();
+                    var res = await MakeAttestationResponseAsync();
 
                     Assert.Equal(string.Empty, res.ErrorMessage);
                     Assert.Equal("ok", res.Status);
@@ -5636,7 +5636,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });                    
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("aaguid malformed, expected f1d0f1d0-f1d0-f1d0-f1d0-f1d0f1d0f1d0, got d0f1d0f1-d0f1-d0f1-f1d0-f1d0f1d0f1d0", ex.Result.Message);
                 }
             }
@@ -5738,7 +5738,7 @@ namespace Test.Attestation
                         { "pubArea", pubArea }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("ECDAA support for TPM attestation is not yet implemented", ex.Result.Message);
                 }
             }

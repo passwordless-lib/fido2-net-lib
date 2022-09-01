@@ -58,7 +58,7 @@ namespace Test.Attestation
         [Fact]
         public async void TestU2f()
         {
-            var res = await MakeAttestationResponse();
+            var res = await MakeAttestationResponseAsync();
             Assert.Equal(string.Empty, res.ErrorMessage);
             Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.Aaguid);
@@ -76,42 +76,42 @@ namespace Test.Attestation
         public void TestU2fWithAaguid()
         {
             _aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Aaguid was not empty parsing fido-u2f atttestation statement", ex.Result.Message);
         }
         [Fact]
         public void TestU2fMissingX5c()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("x5c", CborNull.Instance);
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cNotArray()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborTextString("boomerang"));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cCountNotOne()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { new byte[0], new byte[0] });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cValueNotByteString()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborTextString("x"));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
         public void TestU2fX5cValueZeroLengthByteString()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { new byte[0] });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Malformed x5c in fido-u2f attestation", ex.Result.Message);
         }
         [Fact]
@@ -131,7 +131,7 @@ namespace Test.Attestation
                 }
             }
 
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve", ex.Result.Message);
         }
 
@@ -139,28 +139,28 @@ namespace Test.Attestation
         public void TestU2fSigNull()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("sig", CborNull.Instance);
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }
         [Fact]
         public void TestU2fSigNotByteString()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborTextString("walrus"));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }
         [Fact]
         public void TestU2fSigByteStringZeroLen()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborByteString(new byte[0]));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }
         [Fact]
         public void TestU2fSigNotASN1()
         {
             ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborByteString(new byte[] { 0xf1, 0xd0 }));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex.Result.Message);
         }
         [Fact]
@@ -170,7 +170,7 @@ namespace Test.Attestation
             var sig = (byte[])attnStmt["sig"];
             sig[sig.Length - 1] ^= 0xff;
             attnStmt.Set("sig", new CborByteString(sig));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid fido-u2f attestation signature", ex.Result.Message);
         }
     }

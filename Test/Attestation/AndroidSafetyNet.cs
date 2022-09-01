@@ -103,7 +103,7 @@ namespace Test.Attestation
         [Fact]
         public async void TestAndroidSafetyNet()
         {
-            var res = await MakeAttestationResponse();
+            var res = await MakeAttestationResponseAsync();
             Assert.Equal(string.Empty, res.ErrorMessage);
             Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.Aaguid);
@@ -194,7 +194,7 @@ namespace Test.Attestation
                         { "response", Encoding.UTF8.GetBytes(strToken) }
                     });
 
-                    var res = await MakeAttestationResponse();
+                    var res = await MakeAttestationResponseAsync();
                     Assert.Equal(string.Empty, res.ErrorMessage);
                     Assert.Equal("ok", res.Status);
                     Assert.Equal(_aaguid, res.Result.Aaguid);
@@ -216,7 +216,7 @@ namespace Test.Attestation
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("ver", new CborInteger(1));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid version in SafetyNet data", ex.Result.Message);
         }
 
@@ -225,7 +225,7 @@ namespace Test.Attestation
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("ver", CborNull.Instance);
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid version in SafetyNet data", ex.Result.Message);
         }
 
@@ -234,7 +234,7 @@ namespace Test.Attestation
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("ver", new CborTextString(""));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid version in SafetyNet data", ex.Result.Message);
         }
 
@@ -243,7 +243,7 @@ namespace Test.Attestation
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", CborNull.Instance);
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid response in SafetyNet data", ex.Result.Message);
         }
 
@@ -252,7 +252,7 @@ namespace Test.Attestation
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborTextString("telephone"));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid response in SafetyNet data", ex.Result.Message);
         }
 
@@ -261,7 +261,7 @@ namespace Test.Attestation
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborByteString(new byte[] { }));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid response in SafetyNet data", ex.Result.Message);
         }
 
@@ -270,7 +270,7 @@ namespace Test.Attestation
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborByteString(" "u8.ToArray()));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("SafetyNet response null or whitespace", ex.Result.Message);
         }
 
@@ -282,7 +282,7 @@ namespace Test.Attestation
             var jwtParts = responseJWT.Split('.');
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborByteString(Encoding.UTF8.GetBytes(jwtParts.First())));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("SafetyNet response JWT does not have the 3 expected components", ex.Result.Message);
         }
 
@@ -297,7 +297,7 @@ namespace Test.Attestation
             response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborByteString(response));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("SafetyNet response JWT header missing x5c", ex.Result.Message);
         }
 
@@ -313,7 +313,7 @@ namespace Test.Attestation
             response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborByteString(response));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("No keys were present in the TOC header in SafetyNet response JWT", ex.Result.Message);
         }
 
@@ -329,7 +329,7 @@ namespace Test.Attestation
             response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborByteString(response));
-            var ex = Assert.ThrowsAsync<System.ArgumentException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<System.ArgumentException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Could not parse X509 certificate.", ex.Result.Message);
         }
 
@@ -360,7 +360,7 @@ namespace Test.Attestation
             response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
             var attStmt = (CborMap)_attestationObject["attStmt"];
             attStmt.Set("response", new CborByteString(response));
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.StartsWith("SafetyNet response security token validation failed", ex.Result.Message);
         }
 
@@ -446,7 +446,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Result.Message);
         }
 
@@ -532,7 +532,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Result.Message);
         }
 
@@ -617,7 +617,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("SafetyNet timestampMs not found SafetyNet attestation", ex.Result.Message);
         }
 
@@ -702,7 +702,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Nonce value not found in SafetyNet attestation", ex.Result.Message);
         }
 
@@ -789,7 +789,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.StartsWith("SafetyNet response nonce / hash value mismatch", ex.Result.Message);
         }
 
@@ -875,7 +875,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Nonce value not base64string in SafetyNet attestation", ex.Result.Message);
         }
 
@@ -961,7 +961,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.StartsWith("SafetyNet attestation cert DnsName invalid", ex.Result.Message);
         }
 
@@ -1046,7 +1046,7 @@ namespace Test.Attestation
                     });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("SafetyNet response ctsProfileMatch missing", ex.Result.Message);
         }
 
@@ -1132,7 +1132,7 @@ namespace Test.Attestation
                      });
                 }
             }
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("SafetyNet response ctsProfileMatch false", ex.Result.Message);
         }
     }

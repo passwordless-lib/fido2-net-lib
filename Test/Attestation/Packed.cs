@@ -29,7 +29,7 @@ namespace Test.Attestation
                     { "sig", signature }
                 });
 
-                var res = await MakeAttestationResponse();
+                var res = await MakeAttestationResponseAsync();
 
                 Assert.Equal(string.Empty, res.ErrorMessage);
                 Assert.Equal("ok", res.Status);
@@ -59,7 +59,7 @@ namespace Test.Attestation
                 { "sig", signature }
             });
 
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Algorithm mismatch between credential public key and authenticator data in self attestation statement", ex.Result.Message);
         }
 
@@ -72,7 +72,7 @@ namespace Test.Attestation
                 { "alg", alg },
                 { "sig", new byte[] { 0x30, 0x45, 0x02, 0x20, 0x11, 0x9b, 0x6f, 0xa8, 0x1c, 0xe1, 0x75, 0x9e, 0xbe, 0xf1, 0x52, 0xa6, 0x99, 0x40, 0x5e, 0xd6, 0x6a, 0xcc, 0x01, 0x33, 0x65, 0x18, 0x05, 0x00, 0x96, 0x28, 0x29, 0xbe, 0x85, 0x57, 0xb7, 0x1d, 0x02, 0x21, 0x00, 0x94, 0x50, 0x1d, 0xf1, 0x90, 0x03, 0xa4, 0x4d, 0xa4, 0xdf, 0x9f, 0xbb, 0xb5, 0xe4, 0xce, 0x91, 0x6b, 0xc3, 0x90, 0xe8, 0x38, 0x99, 0x66, 0x4f, 0xa5, 0xc4, 0x0c, 0xf3, 0xed, 0xe3, 0xda, 0x83 } }
             });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Failed to validate signature", ex.Result.Message);
         }
 
@@ -82,7 +82,7 @@ namespace Test.Attestation
             var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
             var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", new CborMap { { "sig", signature } });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid packed attestation algorithm", ex.Result.Message);
         }
 
@@ -96,7 +96,7 @@ namespace Test.Attestation
                 { "sig", signature },
                 { "ecdaaKeyId", signature }
             });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("ECDAA is not yet implemented", ex.Result.Message);
         }
 
@@ -106,7 +106,7 @@ namespace Test.Attestation
             var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
             var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", new CborMap { });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Attestation format packed must have attestation statement", ex.Result.Message);
         }
 
@@ -119,7 +119,7 @@ namespace Test.Attestation
                 { "alg", "invalid alg" },
                 { "sig", signature }
             });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid packed attestation algorithm", ex.Result.Message);
         }
 
@@ -132,7 +132,7 @@ namespace Test.Attestation
                 { "alg", alg },
                 { "sig", CborNull.Instance }
             });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
         }
 
@@ -145,7 +145,7 @@ namespace Test.Attestation
                 { "alg", alg },
                 { "sig", "walrus" }
             });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
         }
 
@@ -158,7 +158,7 @@ namespace Test.Attestation
                 { "alg", alg },
                 { "sig", Array.Empty<byte>() }
             });
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
         }
 
@@ -243,7 +243,7 @@ namespace Test.Attestation
                                     { "x5c", X5c }
                                 });
 
-                                res = await MakeAttestationResponse();
+                                res = await MakeAttestationResponseAsync();
                             }
                         }
                         break;
@@ -298,7 +298,7 @@ namespace Test.Attestation
                                     { "x5c", X5c }
                                 });
 
-                                res = await MakeAttestationResponse();
+                                res = await MakeAttestationResponseAsync();
                             }
                         }
                         break;
@@ -377,7 +377,7 @@ namespace Test.Attestation
                         { "x5c", CborNull.Instance }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
                 }
             }
@@ -431,7 +431,7 @@ namespace Test.Attestation
                         { "x5c", "boomerang" }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
                 }
             }
@@ -485,7 +485,7 @@ namespace Test.Attestation
                         { "x5c", new CborArray { Array.Empty<byte>(), Array.Empty<byte>() } }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
                 }
             }
@@ -539,7 +539,7 @@ namespace Test.Attestation
                        { "x5c", new CborArray { "x" } }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
                 }
             }
@@ -593,7 +593,7 @@ namespace Test.Attestation
                         { "x5c", new CborArray { Array.Empty<byte>() } }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
                 }
             }
@@ -647,7 +647,7 @@ namespace Test.Attestation
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Packed signing certificate expired or not yet valid", ex.Result.Message);
                 }
             }
@@ -704,7 +704,7 @@ namespace Test.Attestation
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Packed signing certificate expired or not yet valid", ex.Result.Message);
                 }
             }
@@ -758,7 +758,7 @@ namespace Test.Attestation
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<InvalidOperationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<InvalidOperationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Missing or unknown alg 42", ex.Result.Message);
                 }
             }
@@ -815,7 +815,7 @@ namespace Test.Attestation
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid full packed signature", ex.Result.Message);
                 }
             }
@@ -875,13 +875,13 @@ namespace Test.Attestation
                     if (OperatingSystem.IsMacOS())
                     {
                         // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
-                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponse());
+                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponseAsync());
                         Assert.Equal("Unknown format in import.", ex.Result.Message);
                     }
 
                     else
                     {
-                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                         Assert.Equal("Packed x5c attestation certificate not V3", ex.Result.Message);
                     }
                 }
@@ -939,7 +939,7 @@ namespace Test.Attestation
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Invalid attestation cert subject", ex.Result.Message);
                 }
             }
@@ -996,7 +996,7 @@ namespace Test.Attestation
                         { "x5c", X5c },
                     });
 
-                    var res = await MakeAttestationResponse();
+                    var res = await MakeAttestationResponseAsync();
                     Assert.Equal(string.Empty, res.ErrorMessage);
                     Assert.Equal("ok", res.Status);
                 }
@@ -1057,7 +1057,7 @@ namespace Test.Attestation
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("aaguid present in packed attestation cert exts but does not match aaguid from authData", ex.Result.Message);
                 }
             }
@@ -1115,7 +1115,7 @@ namespace Test.Attestation
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
                     Assert.Equal("Attestation certificate has CA cert flag present", ex.Result.Message);
                 }
             }
