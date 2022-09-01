@@ -4,6 +4,7 @@
     <IsPackable>false</IsPackable>
     <LangVersion>preview</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>IDE0057</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
