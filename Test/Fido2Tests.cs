@@ -96,14 +96,7 @@ namespace fido2_net_lib.Test
             public X509BasicConstraintsExtension notCAExt = new X509BasicConstraintsExtension(false, false, 0, false);
             public X509Extension idFidoGenCeAaguidExt;
 
-            public byte[] _rpIdHash
-            {
-                get
-                {
-                    byte[] rpId = Encoding.UTF8.GetBytes(rp);
-                    return SHA256.HashData(rpId);
-                }
-            }
+            public byte[] _rpIdHash => SHA256.HashData(Encoding.UTF8.GetBytes(rp));
 
             public byte[] _clientDataJson
             {
