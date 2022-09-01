@@ -177,7 +177,7 @@ namespace Test.Attestation
 
                             var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-                            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+                            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                             var certInfo = CreateCertInfo(
                                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -268,7 +268,7 @@ namespace Test.Attestation
 
                             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
                             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-                            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+                            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
                             var certInfo = CreateCertInfo(
                                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -393,7 +393,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm1bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm1bName = DataHelper.Concat(tpm1bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm1bName = Concat(tpm1bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -503,7 +503,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -601,7 +601,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -699,7 +699,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -804,7 +804,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -904,7 +904,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1002,7 +1002,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1100,7 +1100,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1196,7 +1196,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1296,7 +1296,7 @@ namespace Test.Attestation
 
             var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1394,7 +1394,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1492,7 +1492,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1606,7 +1606,7 @@ namespace Test.Attestation
             byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1721,7 +1721,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1836,7 +1836,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -1934,7 +1934,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2032,7 +2032,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2137,7 +2137,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2235,7 +2235,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }, // Magic
@@ -2333,7 +2333,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2431,7 +2431,7 @@ namespace Test.Attestation
 
             byte[] extraData = GetUInt16BigEndianBytes(0);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2529,11 +2529,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(
-                tpm2bNameLen,
-                new byte[] { 0x00, 0x04 },
-                hashedPubArea
-            );
+            byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0x00, 0x04 }, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2631,7 +2627,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, new byte[] { 0x00, 0x00 }, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0x00, 0x00 }, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2728,8 +2724,7 @@ namespace Test.Attestation
             byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-            var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length + 1);
+            byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length + 1);
 
             IEnumerable<byte> tpm2bName = new byte[] { }
                 .Concat(tpm2bNameLen)
@@ -2833,7 +2828,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, new byte[] { 0x00, 0x10 }, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0x00, 0x10 }, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -2931,11 +2926,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(
-                tpm2bNameLen,
-                new byte[] { 0xff, 0xff },
-                hashedPubArea
-            );
+            byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0xff, 0xff }, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3033,7 +3024,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3130,28 +3121,22 @@ namespace Test.Attestation
             byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-            var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-            byte[] tpm2bName = DataHelper.Concat(
-                tpm2bNameLen,
-                tpmAlg,
-                hashedPubArea
-            );
+            byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
-                    new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                    new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                    new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
-                    extraData, // ExtraData
-                    new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
-                    new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
-                    new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
-                    new byte[] { 0x00 }, // Safe
-                    new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
-                    tpm2bName, // TPM2BName
-                    new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
-                );
+                new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+                new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                extraData, // ExtraData
+                new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
+                new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
+                new byte[] { 0x00, 0x00, 0x00, 0x00 }, // RestartCount
+                new byte[] { 0x00 }, // Safe
+                new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // FirmwareVersion
+                tpm2bName, // TPM2BName
+                new byte[] { 0x00, 0x00 } // AttestedQualifiedNameBuffer
+            );
 
             byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
@@ -3186,11 +3171,8 @@ namespace Test.Attestation
             var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
             attRequest.CertificateExtensions.Add(notCAExt);
-
             attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
             attRequest.CertificateExtensions.Add(aikCertSanExt);
-
             attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
             byte[] serial = RandomNumberGenerator.GetBytes(12);
@@ -3238,11 +3220,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(
-                tpm2bNameLen,
-                tpmAlg,
-                hashedPubArea
-            );
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3343,7 +3321,7 @@ namespace Test.Attestation
 
             hashedPubArea[^1] ^= 0xFF;
 
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3440,14 +3418,8 @@ namespace Test.Attestation
             byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-            byte[] tpm2bName = DataHelper.Concat(
-                tpm2bNameLen,
-                tpmAlg,
-                hashedPubArea
-            );
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3545,7 +3517,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3643,7 +3615,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3741,7 +3713,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3839,7 +3811,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -3938,7 +3910,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4036,7 +4008,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4134,7 +4106,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4237,7 +4209,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4346,7 +4318,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4550,7 +4522,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4652,7 +4624,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4754,7 +4726,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4855,10 +4827,8 @@ namespace Test.Attestation
             byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
-
-            var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -4907,7 +4877,6 @@ namespace Test.Attestation
             var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
             attRequest.CertificateExtensions.Add(notCAExt);
-
             attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
 
             var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x32, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x02, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
@@ -4962,7 +4931,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5061,7 +5030,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5159,7 +5128,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5257,7 +5226,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5371,7 +5340,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
@@ -5469,7 +5438,7 @@ namespace Test.Attestation
 
             byte[] extraData = Concat(GetUInt16BigEndianBytes(hashedData.Length), hashedData);
             byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
-            byte[] tpm2bName = DataHelper.Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
+            byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
             var certInfo = CreateCertInfo(
                 new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
