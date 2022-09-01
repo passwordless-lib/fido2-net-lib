@@ -40,24 +40,22 @@ namespace Test.Attestation
         {
             _attestationObject = new CborMap { { "fmt", "android-key" } };
             X509Certificate2 attestnCert;
-            using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
+            using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+            var attRequest = new CertificateRequest("CN=AndroidKeyTesting, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US", ecdsaAtt, HashAlgorithmName.SHA256);
+
+            attRequest.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.11129.2.1.17", EncodeAttestationRecord(), false));
+
+            using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
             {
-                var attRequest = new CertificateRequest("CN=AndroidKeyTesting, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US", ecdsaAtt, HashAlgorithmName.SHA256);
+                var X5c = new CborArray { attestnCert.RawData };
 
-                attRequest.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.11129.2.1.17", EncodeAttestationRecord(), false));
+                byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
-                using (attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2)))
-                {
-                    var X5c = new CborArray { attestnCert.RawData };
-
-                    byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", COSE.Algorithm.ES256 },
                         { "x5c", X5c },
                         { "sig", signature }
                     });
-                }
             }
         }
 
@@ -109,7 +107,7 @@ namespace Test.Attestation
         public void TestAndroidKeySigByteStringZeroLen()
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
-            attStmt.Set("sig", new CborByteString(new byte[0]));
+            attStmt.Set("sig", new CborByteString(Array.Empty<byte>()));
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Invalid android-key attestation signature", ex.Result.Message);
         }
@@ -144,7 +142,7 @@ namespace Test.Attestation
         public void TestAndroidKeyX5cValueZeroLengthByteString()
         {
             var attStmt = (CborMap)_attestationObject["attStmt"];
-            attStmt.Set("x5c", new CborArray { new byte[0] });
+            attStmt.Set("x5c", new CborArray { Array.Empty<byte>() });
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
             Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
         }

@@ -338,48 +338,46 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var X5c = new CborArray { attestnCert.RawData, root.RawData };
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", CborNull.Instance }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
             }
         }
 
@@ -392,48 +390,46 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var X5c = new CborArray { attestnCert.RawData, root.RawData };
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", "boomerang" }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
             }
         }
 
@@ -446,48 +442,46 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var x5c = new CborArray { attestnCert.RawData, root.RawData };
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var x5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                    var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature},
                         { "x5c", new CborArray { Array.Empty<byte>(), Array.Empty<byte>() } }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
             }
         }
 
@@ -500,48 +494,46 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var X5c = new CborArray { attestnCert.RawData, root.RawData };
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                    var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                        { "alg", alg },
                        { "sig", signature },
                        { "x5c", new CborArray { "x" } }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
             }
         }
 
@@ -554,48 +546,46 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var X5c = new CborArray { attestnCert.RawData, root.RawData };
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", new CborArray { Array.Empty<byte>() } }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Malformed x5c cert found in packed attestation statement", ex.Result.Message);
             }
         }
 
@@ -608,48 +598,46 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var X5c = new CborArray { attestnCert.RawData, root.RawData };
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Packed signing certificate expired or not yet valid", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Packed signing certificate expired or not yet valid", ex.Result.Message);
             }
         }
 
@@ -662,51 +650,49 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(7);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
-
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray {
+                var X5c = new CborArray {
                         attestnCert.RawData,
                         root.RawData
                     };
 
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Packed signing certificate expired or not yet valid", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Packed signing certificate expired or not yet valid", ex.Result.Message);
             }
         }
 
@@ -719,48 +705,46 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var X5c = new CborArray { attestnCert.RawData, root.RawData };
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", 42 },
                         { "sig", signature },
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<InvalidOperationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Missing or unknown alg 42", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<InvalidOperationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Missing or unknown alg 42", ex.Result.Message);
             }
         }
 
@@ -773,51 +757,49 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
-
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray {
+                var X5c = new CborArray {
                         attestnCert.RawData,
                         root.RawData
                     };
 
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", new byte[] { 0x30, 0x45, 0x02, 0x20, 0x11, 0x9b, 0x6f, 0xa8, 0x1c, 0xe1, 0x75, 0x9e, 0xbe, 0xf1, 0x52, 0xa6, 0x99, 0x40, 0x5e, 0xd6, 0x6a, 0xcc, 0x01, 0x33, 0x65, 0x18, 0x05, 0x00, 0x96, 0x28, 0x29, 0xbe, 0x85, 0x57, 0xb7, 0x1d, 0x02, 0x21, 0x00, 0x94, 0x50, 0x1d, 0xf1, 0x90, 0x03, 0xa4, 0x4d, 0xa4, 0xdf, 0x9f, 0xbb, 0xb5, 0xe4, 0xce, 0x91, 0x6b, 0xc3, 0x90, 0xe8, 0x38, 0x99, 0x66, 0x4f, 0xa5, 0xc4, 0x0c, 0xf3, 0xed, 0xe3, 0xda, 0x83 } },
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Invalid full packed signature", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Invalid full packed signature", ex.Result.Message);
             }
         }
 
@@ -830,60 +812,58 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                var rawAttestnCert = attestnCert.RawData;
+                rawAttestnCert[12] = 0x41;
 
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
+                var X5c = new CborArray { rawAttestnCert, root.RawData };
 
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    var rawAttestnCert = attestnCert.RawData;
-                    rawAttestnCert[12] = 0x41;
-
-                    var X5c = new CborArray { rawAttestnCert, root.RawData };
-
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
-
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature},
                         { "x5c", X5c }
                     });
 
-                    if (OperatingSystem.IsMacOS())
-                    {
-                        // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
-                        var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponseAsync());
-                        Assert.Equal("Unknown format in import.", ex.Result.Message);
-                    }
+                if (OperatingSystem.IsMacOS())
+                {
+                    // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
+                    var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponseAsync());
+                    Assert.Equal("Unknown format in import.", ex.Result.Message);
+                }
 
-                    else
-                    {
-                        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                        Assert.Equal("Packed x5c attestation certificate not V3", ex.Result.Message);
-                    }
+                else
+                {
+                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                    Assert.Equal("Packed x5c attestation certificate not V3", ex.Result.Message);
                 }
             }
         }
@@ -897,51 +877,48 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Not Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                byte[] serial = RandomNumberGenerator.GetBytes(12);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
-
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray {
+                var X5c = new CborArray {
                         attestnCert.RawData,
                         root.RawData
                     };
 
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Invalid attestation cert subject", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Invalid attestation cert subject", ex.Result.Message);
             }
         }
 
@@ -954,52 +931,50 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("""CN=Testing, OU=Authenticator Attestation, O="FIDO2-NET-LIB, Inc.", C=US""");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
-
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray {
+                var X5c = new CborArray {
                         attestnCert.RawData,
                         root.RawData
                     };
 
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", X5c },
                     });
 
-                    var res = await MakeAttestationResponseAsync();
-                    Assert.Equal(string.Empty, res.ErrorMessage);
-                    Assert.Equal("ok", res.Status);
-                }
+                var res = await MakeAttestationResponseAsync();
+                Assert.Equal(string.Empty, res.ErrorMessage);
+                Assert.Equal("ok", res.Status);
             }
         }
 
@@ -1012,54 +987,52 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(notCAExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                var notAsnEncodedAaguid = _asnEncodedAaguid;
+                notAsnEncodedAaguid[3] = 0x42;
+                var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
+                attRequest.CertificateExtensions.Add(notIdFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(notCAExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    var notAsnEncodedAaguid = _asnEncodedAaguid;
-                    notAsnEncodedAaguid[3] = 0x42;
-                    var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
-                    attRequest.CertificateExtensions.Add(notIdFidoGenCeAaguidExt);
-
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
-
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray {
+                var X5c = new CborArray {
                         attestnCert.RawData,
                         root.RawData
                     };
 
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("aaguid present in packed attestation cert exts but does not match aaguid from authData", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("aaguid present in packed attestation cert exts but does not match aaguid from authData", ex.Result.Message);
             }
         }
 
@@ -1073,51 +1046,49 @@ namespace Test.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            using (var ecdsaRoot = ECDsa.Create())
+            using var ecdsaRoot = ECDsa.Create();
+            var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+            rootRequest.CertificateExtensions.Add(caExt);
+
+            ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+            using (root = rootRequest.CreateSelfSigned(
+                notBefore,
+                notAfter))
+
+            using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
-                var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
-                rootRequest.CertificateExtensions.Add(caExt);
+                var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                attRequest.CertificateExtensions.Add(caExt);
 
-                ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-                using (root = rootRequest.CreateSelfSigned(
+                attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                var serial = new byte[12];
+                RandomNumberGenerator.Fill(serial);
+
+                using (X509Certificate2 publicOnly = attRequest.Create(
+                    root,
                     notBefore,
-                    notAfter))
-
-                using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                    notAfter,
+                    serial))
                 {
-                    var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                    attRequest.CertificateExtensions.Add(caExt);
+                    attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+                }
 
-                    attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                    var serial = new byte[12];
-                    RandomNumberGenerator.Fill(serial);
-
-                    using (X509Certificate2 publicOnly = attRequest.Create(
-                        root,
-                        notBefore,
-                        notAfter,
-                        serial))
-                    {
-                        attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                    }
-
-                    var X5c = new CborArray {
+                var X5c = new CborArray {
                         attestnCert.RawData,
                         root.RawData
                     };
 
-                    var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+                var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
-                    _attestationObject.Add("attStmt", new CborMap {
+                _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
                         { "x5c", X5c }
                     });
 
-                    var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-                    Assert.Equal("Attestation certificate has CA cert flag present", ex.Result.Message);
-                }
+                var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+                Assert.Equal("Attestation certificate has CA cert flag present", ex.Result.Message);
             }
         }
     }
