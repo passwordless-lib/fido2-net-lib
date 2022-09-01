@@ -39,8 +39,7 @@ public class Apple : Fido2Tests.Attestation
         {
             var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
-            byte[] serial = new byte[12];
-            RandomNumberGenerator.Fill(serial);
+            byte[] serial = RandomNumberGenerator.GetBytes(12);
 
             using (X509Certificate2 publicOnly = attRequest.Create(
                 root,
@@ -53,14 +52,13 @@ public class Apple : Fido2Tests.Attestation
 
             var ecparams = ecdsaAtt.ExportParameters(true);
 
-            var cpk = new CborMap
-                {
-                    { COSE.KeyCommonParameter.KeyType, type },
-                    { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
-                    { COSE.KeyTypeParameter.Crv, crv }
-                };
+            var cpk = new CborMap {
+                { COSE.KeyCommonParameter.KeyType, type },
+                { COSE.KeyCommonParameter.Alg, alg },
+                { COSE.KeyTypeParameter.X, ecparams.Q.X },
+                { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                { COSE.KeyTypeParameter.Crv, crv }
+            };
 
             var x = (byte[])cpk[COSE.KeyTypeParameter.X];
             var y = (byte[])cpk[COSE.KeyTypeParameter.Y];

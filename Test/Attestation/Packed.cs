@@ -52,7 +52,7 @@ public class Packed : Fido2Tests.Attestation
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
 
-        var signature = SignData(type, alg, curve);
+        byte[] signature = SignData(type, alg, curve);
 
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", COSE.Algorithm.ES384 },
@@ -173,7 +173,8 @@ public class Packed : Fido2Tests.Attestation
             {
                 return;
             }
-            X509Certificate2 root, attestnCert;
+
+            X509Certificate2 attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
@@ -207,44 +208,37 @@ public class Packed : Fido2Tests.Attestation
                                 break;
                         }
 
-                        using (root = rootRequest.CreateSelfSigned(
+                        using X509Certificate2 root = rootRequest.CreateSelfSigned(notBefore, notAfter);
+                        using var ecdsaAtt = ECDsa.Create(eCCurve);
+                        var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+                        attRequest.CertificateExtensions.Add(notCAExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                        byte[] serial = RandomNumberGenerator.GetBytes(12);
+
+                        using (X509Certificate2 publicOnly = attRequest.Create(
+                            root,
                             notBefore,
-                            notAfter))
-
-                        using (var ecdsaAtt = ECDsa.Create(eCCurve))
+                            notAfter,
+                            serial))
                         {
-                            var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
-                            attRequest.CertificateExtensions.Add(notCAExt);
-
-                            attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                            var serial = new byte[12];
-                            RandomNumberGenerator.Fill(serial);
-
-                            using (X509Certificate2 publicOnly = attRequest.Create(
-                                root,
-                                notBefore,
-                                notAfter,
-                                serial))
-                            {
-                                attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
-                            }
-
-                            var X5c = new CborArray {
-                                attestnCert.RawData,
-                                root.RawData
-                            };
-
-                            var signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
-
-                            _attestationObject.Set("attStmt", new CborMap {
-                                { "alg", alg },
-                                { "sig", signature },
-                                { "x5c", X5c }
-                            });
-
-                            res = await MakeAttestationResponseAsync();
+                            attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                         }
+
+                        var x5c = new CborArray {
+                            attestnCert.RawData,
+                            root.RawData
+                        };
+
+                        byte[] signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+
+                        _attestationObject.Set("attStmt", new CborMap {
+                            { "alg", alg },
+                            { "sig", signature },
+                            { "x5c", x5c }
+                        });
+
+                        res = await MakeAttestationResponseAsync();
                     }
                     break;
                 case COSE.KeyType.RSA:
@@ -264,41 +258,35 @@ public class Packed : Fido2Tests.Attestation
                         var rootRequest = new CertificateRequest(rootDN, rsaRoot, HashAlgorithmName.SHA256, padding);
                         rootRequest.CertificateExtensions.Add(caExt);
 
-                        using (root = rootRequest.CreateSelfSigned(
+                        using X509Certificate2 root = rootRequest.CreateSelfSigned(notBefore, notAfter);
+                        using var rsaAtt = RSA.Create();
+                        var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
+
+                        attRequest.CertificateExtensions.Add(notCAExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+
+                        byte[] serial = RandomNumberGenerator.GetBytes(12);
+
+                        using (X509Certificate2 publicOnly = attRequest.Create(
+                            root,
                             notBefore,
-                            notAfter))
-
-                        using (var rsaAtt = RSA.Create())
+                            notAfter,
+                            serial))
                         {
-                            var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
-
-                            attRequest.CertificateExtensions.Add(notCAExt);
-
-                            attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
-
-                            byte[] serial = RandomNumberGenerator.GetBytes(12);
-
-                            using (X509Certificate2 publicOnly = attRequest.Create(
-                                root,
-                                notBefore,
-                                notAfter,
-                                serial))
-                            {
-                                attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
-                            }
-
-                            var X5c = new CborArray { attestnCert.RawData, root.RawData };
-
-                            byte[] signature = SignData(type, alg, COSE.EllipticCurve.Reserved, rsa: rsaAtt);
-
-                            _attestationObject.Set("attStmt", new CborMap {
-                                { "alg", alg },
-                                { "sig", signature },
-                                { "x5c", X5c }
-                            });
-
-                            res = await MakeAttestationResponseAsync();
+                            attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
                         }
+
+                        var x5c = new CborArray { attestnCert.RawData, root.RawData };
+
+                        byte[] signature = SignData(type, alg, COSE.EllipticCurve.Reserved, rsa: rsaAtt);
+
+                        _attestationObject.Set("attStmt", new CborMap {
+                            { "alg", alg },
+                            { "sig", signature },
+                            { "x5c", x5c }
+                        });
+
+                        res = await MakeAttestationResponseAsync();
                     }
                     break;
                 case COSE.KeyType.OKP:
@@ -498,7 +486,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray { attestnCert.RawData, root.RawData };
+        var x5c = new CborArray { attestnCert.RawData, root.RawData };
 
         byte[] signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
 
@@ -543,7 +531,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray { attestnCert.RawData, root.RawData };
+        var x5c = new CborArray { attestnCert.RawData, root.RawData };
 
         byte[] signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
@@ -684,14 +672,14 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray { attestnCert.RawData, root.RawData };
+        var x5c = new CborArray { attestnCert.RawData, root.RawData };
 
         byte[] signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", 42 },
             { "sig", signature },
-            { "x5c", X5c }
+            { "x5c", x5c }
         });
 
         var ex = Assert.ThrowsAsync<InvalidOperationException>(() => MakeAttestationResponseAsync());
@@ -731,7 +719,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             root.RawData
         };
@@ -741,7 +729,7 @@ public class Packed : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
             { "sig", new byte[] { 0x30, 0x45, 0x02, 0x20, 0x11, 0x9b, 0x6f, 0xa8, 0x1c, 0xe1, 0x75, 0x9e, 0xbe, 0xf1, 0x52, 0xa6, 0x99, 0x40, 0x5e, 0xd6, 0x6a, 0xcc, 0x01, 0x33, 0x65, 0x18, 0x05, 0x00, 0x96, 0x28, 0x29, 0xbe, 0x85, 0x57, 0xb7, 0x1d, 0x02, 0x21, 0x00, 0x94, 0x50, 0x1d, 0xf1, 0x90, 0x03, 0xa4, 0x4d, 0xa4, 0xdf, 0x9f, 0xbb, 0xb5, 0xe4, 0xce, 0x91, 0x6b, 0xc3, 0x90, 0xe8, 0x38, 0x99, 0x66, 0x4f, 0xa5, 0xc4, 0x0c, 0xf3, 0xed, 0xe3, 0xda, 0x83 } },
-            { "x5c", X5c }
+            { "x5c", x5c }
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
@@ -784,14 +772,14 @@ public class Packed : Fido2Tests.Attestation
         var rawAttestnCert = attestnCert.RawData;
         rawAttestnCert[12] = 0x41;
 
-        var X5c = new CborArray { rawAttestnCert, root.RawData };
+        var x5c = new CborArray { rawAttestnCert, root.RawData };
 
         byte[] signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
 
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
             { "sig", signature},
-            { "x5c", X5c }
+            { "x5c", x5c }
         });
 
         if (OperatingSystem.IsMacOS())
@@ -840,7 +828,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             root.RawData
         };
@@ -850,7 +838,7 @@ public class Packed : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
             { "sig", signature },
-            { "x5c", X5c }
+            { "x5c", x5c }
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
@@ -891,7 +879,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             root.RawData
         };
@@ -901,7 +889,7 @@ public class Packed : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
             { "sig", signature },
-            { "x5c", X5c },
+            { "x5c", x5c },
         });
 
         var res = await MakeAttestationResponseAsync();
@@ -924,7 +912,7 @@ public class Packed : Fido2Tests.Attestation
 
         ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
         using X509Certificate2 root = rootRequest.CreateSelfSigned(notBefore, notAfter);
-        using var ecdsaAtt = ECDsa.Create(eCCurve);
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
@@ -944,7 +932,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             root.RawData
         };
@@ -954,7 +942,7 @@ public class Packed : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
             { "sig", signature },
-            { "x5c", X5c }
+            { "x5c", x5c }
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
@@ -995,7 +983,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             root.RawData
         };
@@ -1005,7 +993,7 @@ public class Packed : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
             { "sig", signature },
-            { "x5c", X5c }
+            { "x5c", x5c }
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
