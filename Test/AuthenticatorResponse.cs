@@ -11,8 +11,6 @@ using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
-using NSec.Cryptography;
-
 using Xunit;
 
 namespace Test
@@ -101,7 +99,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -205,7 +203,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -401,7 +399,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -472,7 +470,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -541,7 +539,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -569,7 +567,7 @@ namespace Test
             var challenge = RandomNumberGenerator.GetBytes(128);
             var rp = "https://www.passwordless.dev";
             var authData = new AuthenticatorData(
-                SHA256.HashData(Encoding.UTF8.GetBytes("passwordless.dev")),
+                SHA256.HashData("passwordless.dev"u8),
                 AuthenticatorFlags.UV,
                 0,
                 null
@@ -618,7 +616,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -696,7 +694,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -773,7 +771,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -851,7 +849,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -928,7 +926,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,
@@ -1005,7 +1003,7 @@ namespace Test
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,

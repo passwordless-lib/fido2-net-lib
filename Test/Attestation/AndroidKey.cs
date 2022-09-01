@@ -2,7 +2,6 @@
 using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
@@ -15,7 +14,7 @@ namespace Test.Attestation
     {
         public byte[] EncodeAttestationRecord()
         {
-            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+            var writer = new AsnWriter(AsnEncodingRules.BER);
 
             using (writer.PushSequence()) // KeyDescription
             {
@@ -36,6 +35,7 @@ namespace Test.Attestation
             }
             return writer.Encode();
         }
+
         public AndroidKey()
         {
             _attestationObject = new CborMap { { "fmt", "android-key" } };
@@ -60,6 +60,7 @@ namespace Test.Attestation
                 }
             }
         }
+
         [Fact]
         public async void TestAndroidKey()
         {
@@ -74,7 +75,7 @@ namespace Test.Attestation
             Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
             Assert.Null(res.Result.Status);
             Assert.Equal("Test User", res.Result.User.DisplayName);
-            Assert.Equal(Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+            Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
         }
 

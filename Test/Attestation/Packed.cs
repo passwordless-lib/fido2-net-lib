@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 using fido2_net_lib.Test;
+
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using Xunit;
 
 namespace Test.Attestation
@@ -42,7 +44,7 @@ namespace Test.Attestation
                 Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
                 Assert.Null(res.Result.Status);
                 Assert.Equal("Test User", res.Result.User.DisplayName);
-                Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+                Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
                 Assert.Equal("testuser", res.Result.User.Name);
                 _attestationObject = new CborMap { { "fmt", "packed" } };
             });
@@ -323,7 +325,7 @@ namespace Test.Attestation
                 Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
                 Assert.Null(res.Result.Status);
                 Assert.Equal("Test User", res.Result.User.DisplayName);
-                Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+                Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
                 Assert.Equal("testuser", res.Result.User.Name);
                 _attestationObject = new CborMap { { "fmt", "packed" } };
             });

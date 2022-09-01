@@ -72,7 +72,7 @@ namespace Test.Attestation
             Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
             Assert.Null(res.Result.Status);
             Assert.Equal("Test User", res.Result.User.DisplayName);
-            Assert.Equal(System.Text.Encoding.UTF8.GetBytes("testuser"), res.Result.User.Id);
+            Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
         }
         [Fact]

@@ -32,8 +32,8 @@ namespace fido2_net_lib.Test
         {
             public TestDataGenerator()
             {
-                Add(Encoding.UTF8.GetBytes("A"));
-                Add(Encoding.UTF8.GetBytes("This is a string fragment to test Base64Url encoding & decoding."));
+                Add("A"u8.ToArray());
+                Add("This is a string fragment to test Base64Url encoding & decoding."u8.ToArray());
                 Add(Array.Empty<byte>());
             }
         }

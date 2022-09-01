@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using fido2_net_lib.Test;
-using Fido2NetLib;
-using Fido2NetLib.Objects;
-using Xunit;
-using System.Threading.Tasks;
-using System.Text;
 using System.Text.Json;
-using System.Threading;
+using System.Threading.Tasks;
+
+using fido2_net_lib.Test;
+
+using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Objects;
+
+using Xunit;
 
 namespace Test.Attestation
 {
@@ -251,7 +252,7 @@ namespace Test.Attestation
                 User = new Fido2User
                 {
                     Name = "testuser",
-                    Id = Encoding.UTF8.GetBytes("testuser"),
+                    Id = "testuser"u8.ToArray(),
                     DisplayName = "Test User",
                 },
                 Timeout = 60000,

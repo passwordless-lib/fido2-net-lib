@@ -232,7 +232,7 @@ namespace fido2_net_lib.Test
                     User = new Fido2User
                     {
                         Name = "testuser",
-                        Id = Encoding.UTF8.GetBytes("testuser"),
+                        Id = "testuser"u8.ToArray(),
                         DisplayName = "Test User",
                     },
                     Timeout = 60000,
@@ -749,7 +749,7 @@ namespace fido2_net_lib.Test
             var sig = SignData(COSE.KeyType.RSA, COSE.Algorithm.RS256, acdBytes, null, rsa, null);
 
             Assert.True(cpk.Verify(acdBytes, sig));
-            sig[sig.Length - 1] ^= 0xff;
+            sig[^1] ^= 0xff;
             Assert.False(cpk.Verify(acdBytes, sig));
         }
 
@@ -769,14 +769,14 @@ namespace fido2_net_lib.Test
             var sig = SignData(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, acdBytes, null, null, privateKey);
 
             Assert.True(cpk.Verify(acdBytes, sig));
-            sig[sig.Length - 1] ^= 0xff;
+            sig[^1] ^= 0xff;
             Assert.False(cpk.Verify(acdBytes, sig));
         }
 
         [Fact]
         public void TestAuthenticatorData()
         {
-            byte[] rpId = Encoding.UTF8.GetBytes("fido2.azurewebsites.net/");
+            var rpId = "fido2.azurewebsites.net/"u8;
             var rpIdHash = SHA256.HashData(rpId);
             var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
             const ushort signCount = 0xf1d0;
@@ -1101,10 +1101,11 @@ namespace fido2_net_lib.Test
 
         internal static CredentialPublicKey MakeCredentialPublicKey(COSE.KeyType kty, COSE.Algorithm alg, COSE.EllipticCurve? crv, byte[] x, byte[] y, byte[] n, byte[] e)
         {
-            var cpk = new CborMap();
-
-            cpk.Add(COSE.KeyCommonParameter.KeyType, kty);
-            cpk.Add(COSE.KeyCommonParameter.Alg, alg);
+            var cpk = new CborMap
+            {
+                { COSE.KeyCommonParameter.KeyType, kty },
+                { COSE.KeyCommonParameter.Alg, alg }
+            };
 
             switch (kty)
             {
