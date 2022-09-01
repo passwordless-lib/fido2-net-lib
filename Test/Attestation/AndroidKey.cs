@@ -329,7 +329,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordAllApplicationsTee()
         {
-            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+            var writer = new AsnWriter(AsnEncodingRules.BER);
 
             using (writer.PushSequence()) // KeyDescription
             {
@@ -381,7 +381,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordOriginSoftware()
         {
-            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+            var writer = new AsnWriter(AsnEncodingRules.BER);
 
             using (writer.PushSequence()) // KeyDescription
             {
@@ -485,7 +485,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordPurposeSoftware()
         {
-            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+            var writer = new AsnWriter(AsnEncodingRules.BER);
 
             using (writer.PushSequence()) // KeyDescription
             {
@@ -540,7 +540,7 @@ namespace Test.Attestation
         [Fact]
         public void TestAndroidKeyX5cCertAttestationRecordPurposeTee()
         {
-            AsnWriter writer = new AsnWriter(AsnEncodingRules.BER);
+            var writer = new AsnWriter(AsnEncodingRules.BER);
 
             using (writer.PushSequence()) // KeyDescription
             {
