@@ -1102,7 +1102,7 @@ namespace Test.Attestation
 
                     var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                    List<Claim> claims = new List<Claim>
+                    var claims = new List<Claim>
                     {
                         new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                         new Claim("ctsProfileMatch", bool.FalseString, ClaimValueTypes.Boolean),

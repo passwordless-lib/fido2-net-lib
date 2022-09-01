@@ -1050,34 +1050,25 @@ namespace fido2_net_lib.Test
                     }
                     break;
                 case COSE.Algorithm.ES256:
-                    switch (crv)
+                    curve = crv switch
                     {
-                        case COSE.EllipticCurve.P256:
-                            curve = ECCurve.NamedCurves.nistP256;
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}");
-                    }
+                        COSE.EllipticCurve.P256 => ECCurve.NamedCurves.nistP256,
+                        _ => throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}"),
+                    };
                     break;
                 case COSE.Algorithm.ES384:
-                    switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                    curve = crv switch // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                     {
-                        case COSE.EllipticCurve.P384:
-                            curve = ECCurve.NamedCurves.nistP384;
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}");
-                    }
+                        COSE.EllipticCurve.P384 => ECCurve.NamedCurves.nistP384,
+                        _ => throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}"),
+                    };
                     break;
                 case COSE.Algorithm.ES512:
-                    switch (crv) // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                    curve = crv switch // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
                     {
-                        case COSE.EllipticCurve.P521:
-                            curve = ECCurve.NamedCurves.nistP521;
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}");
-                    }
+                        COSE.EllipticCurve.P521 => ECCurve.NamedCurves.nistP521,
+                        _ => throw new ArgumentOutOfRangeException(nameof(crv), $"Missing or unknown crv {crv}"),
+                    };
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
