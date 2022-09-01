@@ -1,12 +1,8 @@
-﻿using System;
-using System.Formats.Asn1;
-using System.Linq;
+﻿using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Text;
 
 using Fido2NetLib;
-
-using Xunit;
 
 namespace Test
 {

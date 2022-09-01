@@ -1,12 +1,12 @@
-﻿using System;
-using System.Formats.Asn1;
+﻿using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 using fido2_net_lib.Test;
+
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-using Xunit;
 
 namespace Test.Attestation
 {

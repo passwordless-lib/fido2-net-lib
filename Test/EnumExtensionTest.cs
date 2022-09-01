@@ -1,7 +1,5 @@
-﻿using System;
-using Fido2NetLib;
+﻿using Fido2NetLib;
 using Fido2NetLib.Objects;
-using Xunit;
 
 namespace fido2_net_lib.Test
 {

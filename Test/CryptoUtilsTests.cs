@@ -1,9 +1,6 @@
-﻿using System;
-using System.Security.Cryptography.X509Certificates;
+﻿using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib;
-
-using Xunit;
 
 namespace Test
 {

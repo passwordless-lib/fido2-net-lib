@@ -4,8 +4,6 @@ using System.Text.Json.Serialization;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 
-using Xunit;
-
 namespace Test.Converters
 {
     public class FidoEnumConverterTests

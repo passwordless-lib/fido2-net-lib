@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
+
 using Fido2NetLib;
-using Xunit;
 
 namespace fido2_net_lib.Test
 {

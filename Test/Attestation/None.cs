@@ -4,8 +4,6 @@ using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
-using Xunit;
-
 namespace Test.Attestation
 {
     public class None : Fido2Tests.Attestation

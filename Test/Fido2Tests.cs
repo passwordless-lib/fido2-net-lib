@@ -1,16 +1,9 @@
-﻿using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
+﻿using System.Buffers.Binary;
 using System.Formats.Asn1;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
@@ -21,10 +14,10 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
-using Moq;
-using NSec.Cryptography;
 
-using Xunit;
+using Moq;
+
+using NSec.Cryptography;
 
 namespace fido2_net_lib.Test
 {
@@ -260,7 +253,7 @@ namespace fido2_net_lib.Test
                 ECDsa ecdsa = null;
                 RSA rsa = null;
                 Key privateKey = null;
-                byte[] expandedPrivateKey, publicKey = null;
+                byte[] publicKey = null;
 
                 switch (kty)
                 {
@@ -276,7 +269,7 @@ namespace fido2_net_lib.Test
                         }
                     case COSE.KeyType.OKP:
                         {
-                            MakeEdDSA(out var privateKeySeed, out publicKey, out expandedPrivateKey);
+                            MakeEdDSA(out var privateKeySeed, out publicKey, out byte[] expandedPrivateKey);
                             privateKey = Key.Import(SignatureAlgorithm.Ed25519, expandedPrivateKey, KeyBlobFormat.RawPrivateKey);
                             break;
                         }
@@ -1132,7 +1125,7 @@ namespace fido2_net_lib.Test
         {
             var (kty, alg, crv) = param;
 
-            CredentialPublicKey cpk = null;
+            CredentialPublicKey cpk;
             switch (kty)
             {
                 case COSE.KeyType.EC2:

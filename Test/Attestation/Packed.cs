@@ -1,5 +1,4 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 using fido2_net_lib.Test;
@@ -7,8 +6,6 @@ using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-
-using Xunit;
 
 namespace Test.Attestation
 {
@@ -159,7 +156,7 @@ namespace Test.Attestation
             var signature = SignData(type, alg, crv);
             _attestationObject.Add("attStmt", new CborMap {
                 { "alg", alg },
-                { "sig", new byte[0] }
+                { "sig", Array.Empty<byte>() }
             });
             var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
             Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
@@ -253,7 +250,8 @@ namespace Test.Attestation
                     case COSE.KeyType.RSA:
                         using (RSA rsaRoot = RSA.Create())
                         {
-                            RSASignaturePadding padding = RSASignaturePadding.Pss;
+                            var padding = RSASignaturePadding.Pss;
+
                             switch (alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
                             {
                                 case COSE.Algorithm.RS1:
@@ -484,7 +482,7 @@ namespace Test.Attestation
                     _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature},
-                        { "x5c", new CborArray { new byte[0], new byte[0] } }
+                        { "x5c", new CborArray { Array.Empty<byte>(), Array.Empty<byte>() } }
                     });
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());
@@ -592,7 +590,7 @@ namespace Test.Attestation
                     _attestationObject.Add("attStmt", new CborMap {
                         { "alg", alg },
                         { "sig", signature },
-                        { "x5c", new CborArray { new byte[0] } }
+                        { "x5c", new CborArray { Array.Empty<byte>() } }
                     });
 
                     var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponse());

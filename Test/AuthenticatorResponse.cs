@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Formats.Cbor;
-using System.Linq;
+﻿using System.Formats.Cbor;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
-
-using Xunit;
 
 namespace Test
 {
