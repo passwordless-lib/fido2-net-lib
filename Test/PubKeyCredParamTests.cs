@@ -12,7 +12,7 @@ namespace fido2_net_lib.Test
         [Fact]
         public void CanDeserializeES256()
         {
-            string json = @"{""type"":""public-key"",""alg"":-7}";
+            string json = """{"type":"public-key","alg":-7}""";
 
             var model = JsonSerializer.Deserialize<PubKeyCredParam>(json);
 
@@ -23,7 +23,7 @@ namespace fido2_net_lib.Test
         [Fact]
         public void CanDeserializeES256K()
         {
-            string json = @"{""type"":""public-key"",""alg"":-47}";
+            string json = """{"type":"public-key","alg":-47}""";
 
             var model = JsonSerializer.Deserialize<PubKeyCredParam>(json);
 

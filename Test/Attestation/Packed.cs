@@ -954,7 +954,7 @@ namespace Test.Attestation
             X509Certificate2 root, attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
             DateTimeOffset notAfter = notBefore.AddDays(2);
-            var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=\"FIDO2-NET-LIB, Inc.\", C=US");
+            var attDN = new X500DistinguishedName("""CN=Testing, OU=Authenticator Attestation, O="FIDO2-NET-LIB, Inc.", C=US""");
 
             using (var ecdsaRoot = ECDsa.Create())
             {
