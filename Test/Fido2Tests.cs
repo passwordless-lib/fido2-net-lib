@@ -156,15 +156,11 @@ namespace fido2_net_lib.Test
             }
 
             public Attestation()
-            {   
-                _credentialID = new byte[16];
-                RandomNumberGenerator.Fill(_credentialID);
+            {
+                _credentialID = RandomNumberGenerator.GetBytes(16);
+                _challenge = RandomNumberGenerator.GetBytes(128);
 
-                _challenge = new byte[128];
-                RandomNumberGenerator.Fill(_credentialID);
-
-                var signCount = new byte[2];
-                RandomNumberGenerator.Fill(signCount);
+                byte[] signCount = RandomNumberGenerator.GetBytes(2);
 
                 _signCount = BitConverter.ToUInt16(signCount, 0);
 
@@ -368,14 +364,16 @@ namespace fido2_net_lib.Test
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
             }
-        }
-    
+        }    
 
         [Fact]
         public void TestStringIsSerializable()
         {
-            var x2 = new AuthenticatorSelection();
-            x2.UserVerification = UserVerificationRequirement.Discouraged;
+            var x2 = new AuthenticatorSelection
+            {
+                UserVerification = UserVerificationRequirement.Discouraged
+            };
+
             var json = JsonSerializer.Serialize(x2);
             var c3 = JsonSerializer.Deserialize<AuthenticatorSelection>(json);
 
