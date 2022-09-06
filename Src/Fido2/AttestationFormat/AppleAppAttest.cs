@@ -15,7 +15,7 @@ namespace Fido2NetLib
         {
             var appleExtension = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid!.Value is "1.2.840.113635.100.8.5");
 
-            if (appleExtension is null || appleExtension.RawData is null || appleExtension.RawData.Length < 0x26)
+            if (appleExtension is null || appleExtension.RawData is null)
                 throw new Fido2VerificationException("Extension with OID 1.2.840.113635.100.8.5 not found on Apple AppAttest credCert");
 
                 var appleAttestationASN = Asn1Element.Decode(appleExtension.RawData);
@@ -47,11 +47,16 @@ namespace Fido2NetLib
         internal static readonly string appleAppAttestationRootCA = "MIICITCCAaegAwIBAgIQC/O+DvHN0uD7jG5yH2IXmDAKBggqhkjOPQQDAzBSMSYwJAYDVQQDDB1BcHBsZSBBcHAgQXR0ZXN0YXRpb24gUm9vdCBDQTETMBEGA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTAeFw0yMDAzMTgxODMyNTNaFw00NTAzMTUwMDAwMDBaMFIxJjAkBgNVBAMMHUFwcGxlIEFwcCBBdHRlc3RhdGlvbiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERTHhmLW07ATaFQIEVwTtT4dyctdhNbJhFs/Ii2FdCgAHGbpphY3+d8qjuDngIN3WVhQUBHAoMeQ/cLiP1sOUtgjqK9auYen1mMEvRq9Sk3Jm5X8U62H+xTD3FE9TgS41o0IwQDAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBSskRBTM72+aEH/pwyp5frq5eWKoTAOBgNVHQ8BAf8EBAMCAQYwCgYIKoZIzj0EAwMDaAAwZQIwQgFGnByvsiVbpTKwSga0kP0e8EeDS4+sQmTvb7vn53O5+FRXgeLhpJ06ysC5PrOyAjEAp5U4xDgEgllF7En3VcE3iexZZtKeYnpqtijVoyFraWVIyd/dganmrduC1bmTBGwD";
         
         public static readonly X509Certificate2 AppleAppAttestRootCA = new(Convert.FromBase64String(appleAppAttestationRootCA));
-        
+
+        // From https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
+        // "aaguid field is either appattestdevelop if operating in the development environment"
+        // 61707061-7474-6573-7464-6576656c6f70
         internal static Guid devAaguid = FromBigEndian(Encoding.ASCII.GetBytes("appattestdevelop"));
-        
-        // TODO: Is this correct aaguid for production?
-        internal static Guid prodAaguid = FromBigEndian(Encoding.ASCII.GetBytes("appattest0000000"));
+
+        // "or appattest followed by seven 0x00 bytes if operating in the production environment"
+        // 61707061-7474-6573-7400-000000000000
+        // TODO: Is this actually the correct aaguid for production?
+        internal static Guid prodAaguid = new Guid("61707061-7474-6573-7400-000000000000");
 
         public override (AttestationType, X509Certificate2[]) Verify()
         {
