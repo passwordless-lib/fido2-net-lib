@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib.Cbor;
@@ -9,18 +9,25 @@ namespace Fido2NetLib
 {
     internal sealed class Packed : AttestationVerifier
     {
-        private static readonly string[] s_newLine = new string[] { Environment.NewLine };
-
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
             // parse the DN string using standard rules
             var dictSubjectObj = new X500DistinguishedName(attnCertSubj);
 
             // form the string for splitting using new lines to avoid issues with commas
-            var dictSubjectString = dictSubjectObj.Decode(X500DistinguishedNameFlags.UseNewLines); 
-            var dictSubject = dictSubjectString.Split(s_newLine, StringSplitOptions.None)
-                                          .Select(part => part.Split('='))
-                                          .ToDictionary(split => split[0], split => split[1]);
+            string dictSubjectString = dictSubjectObj.Decode(X500DistinguishedNameFlags.UseNewLines);
+
+            var dictSubject = new Dictionary<string, string>();
+
+            foreach (var line in dictSubjectString.AsSpan().EnumerateLines())
+            {
+                int equalIndex = line.IndexOf('=');
+
+                var lhs = line.Slice(0, equalIndex).ToString();
+                var rhs = line.Slice(equalIndex + 1).ToString();
+
+                dictSubject[lhs] = rhs;
+            }
 
             return dictSubject["C"].Length != 0 
                 && dictSubject["O"].Length != 0 
