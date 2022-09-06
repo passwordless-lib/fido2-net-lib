@@ -102,17 +102,15 @@ async function handleRegisterSubmit(event) {
 }
 
 async function fetchMakeCredentialOptions(formData) {
-    let response = await fetch('/makeCredentialOptions', {
-        method: 'POST', // or 'PUT'
-        body: formData, // data can be `string` or {object}!
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-
-    let data = await response.json();
-
-    return data;
+    // use jquery ajax instead of fetch because of safari browser and platform authenticator
+    // https://github.com/passwordless-lib/fido2-net-lib/issues/303
+    return await $.post({
+        url: '/makeCredentialOptions',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+    }, 'json');
 }
 
 
