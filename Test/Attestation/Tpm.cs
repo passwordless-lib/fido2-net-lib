@@ -126,10 +126,10 @@ public class Tpm : Fido2Tests.Attestation
                             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                         }
 
-                        var X5c = new CborArray {
-                                attestnCert.RawData,
-                                rootCert.RawData
-                            };
+                        var x5c = new CborArray {
+                            attestnCert.RawData,
+                            rootCert.RawData
+                        };
 
                         var ecparams = ecdsaAtt.ExportParameters(true);
 
@@ -198,7 +198,7 @@ public class Tpm : Fido2Tests.Attestation
                         _attestationObject.Add("attStmt", new CborMap {
                             { "ver", "2.0" },
                             { "alg", alg },
-                            { "x5c", X5c },
+                            { "x5c", x5c },
                             { "sig", signature },
                             { "certInfo", certInfo },
                             { "pubArea", pubArea }
