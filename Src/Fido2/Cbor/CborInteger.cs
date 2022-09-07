@@ -1,26 +1,25 @@
 ﻿using System;
 
-namespace Fido2NetLib.Cbor
+namespace Fido2NetLib.Cbor;
+
+internal sealed class CborInteger : CborObject
 {
-    internal sealed class CborInteger : CborObject
+    public CborInteger(long value)
     {
-        public CborInteger(long value)
-        {
-            Value = value;
-        }
+        Value = value;
+    }
 
-        public override CborType Type => CborType.Integer;
+    public override CborType Type => CborType.Integer;
 
-        public long Value { get; }
+    public long Value { get; }
 
-        public override bool Equals(object? obj)
-        {
-            return obj is CborInteger other && other.Value == Value;
-        }
+    public override bool Equals(object? obj)
+    {
+        return obj is CborInteger other && other.Value == Value;
+    }
 
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Type, Value);
-        }
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Type, Value);
     }
 }
