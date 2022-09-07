@@ -26,4 +26,5 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidCoseAlgorithmValue              = "Unrecognized COSE algorithm value";
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
     public static readonly string MissingAttestationType                 = "Missing attestation type";
+    public static readonly string UnimplementedAlgorithm_Ecdaa           = "ECDAA is not yet implemented";
 }

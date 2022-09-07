@@ -30,5 +30,6 @@ public enum Fido2ErrorCode
     MissingAuthenticatorResponseChallenge,
     InvalidAuthenticatorResponseChallenge,
     NonUniqueCredentialId,
-    AaGuidNotFound
+    AaGuidNotFound,
+    UnimplementedAlgorithm
 }
