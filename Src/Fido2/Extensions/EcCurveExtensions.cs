@@ -6,7 +6,7 @@ using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
 
-internal static class EcCurveExtensions;
+internal static class EcCurveExtensions
 {
     public static COSE.EllipticCurve ToCoseCurve(this ECCurve curve)
     {
