@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -47,10 +48,10 @@ namespace Fido2NetLib
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             // (handled in base class)
             if (!(Sig is CborByteString { Length: > 0 }))
-                throw new Fido2VerificationException("Invalid TPM attestation signature");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM attestation signature");
 
             if ((string)attStmt["ver"]! is not "2.0")
-                throw new Fido2VerificationException("FIDO2 only supports TPM 2.0");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "FIDO2 only supports TPM 2.0");
 
             // 2. Verify that the public key specified by the parameters and unique fields of pubArea
             // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
@@ -61,18 +62,19 @@ namespace Fido2NetLib
             }            
 
             if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
-                throw new Fido2VerificationException("Missing or malformed pubArea");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Missing or malformed pubArea");
 
             int coseKty = (int)CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
             if (coseKty is 3) // RSA
             {
-                byte[] coseMod = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
-                byte[] coseExp = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
+                ReadOnlySpan<byte> coseMod = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
+                ReadOnlySpan<byte> coseExp = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
-                if (!coseMod.AsSpan().SequenceEqual(pubArea.Unique))
-                    throw new Fido2VerificationException("Public key mismatch between pubArea and credentialPublicKey");
+                if (!coseMod.SequenceEqual(pubArea.Unique))
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Public key mismatch between pubArea and credentialPublicKey");
+
                 if ((coseExp[0] + (coseExp[1] << 8) + (coseExp[2] << 16)) != pubArea.Exponent)
-                    throw new Fido2VerificationException("Public key exponent mismatch between pubArea and credentialPublicKey");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Public key exponent mismatch between pubArea and credentialPublicKey");
             }
             else if (coseKty is 2) // ECC
             {
@@ -81,28 +83,22 @@ namespace Fido2NetLib
                 var y = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.Y];
 
                 if (pubArea.EccCurve != CoseCurveToTpm[curve])
-                    throw new Fido2VerificationException("Curve mismatch between pubArea and credentialPublicKey");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Curve mismatch between pubArea and credentialPublicKey");
 
                 if (!pubArea.ECPoint.X.AsSpan().SequenceEqual(x))
-                    throw new Fido2VerificationException("X-coordinate mismatch between pubArea and credentialPublicKey");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "X-coordinate mismatch between pubArea and credentialPublicKey");
 
                 if (!pubArea.ECPoint.Y.AsSpan().SequenceEqual(y))
-                    throw new Fido2VerificationException("Y-coordinate mismatch between pubArea and credentialPublicKey");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Y-coordinate mismatch between pubArea and credentialPublicKey");
             }
 
             // 3. Concatenate authenticatorData and clientDataHash to form attToBeSigned
             // See Data field of base class
 
             // 4. Validate that certInfo is valid
-            CertInfo certInfo;
-            if (attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject)
-            {
-                certInfo = new CertInfo((byte[])certInfoObject);
-            }
-            else
-            {
-                throw new Fido2VerificationException("CertInfo invalid parsing TPM format attStmt");
-            }
+            var certInfo = attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject
+                ? new CertInfo(certInfoObject.Value)
+                : throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "CertInfo invalid parsing TPM format attStmt");
 
             // 4a. Verify that magic is set to TPM_GENERATED_VALUE
             // Handled in CertInfo constructor, see CertInfo.Magic
@@ -112,20 +108,20 @@ namespace Fido2NetLib
 
             // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
             if (Alg is not CborInteger)
-                throw new Fido2VerificationException("Invalid TPM attestation algorithm");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM attestation algorithm");
 
             var alg = (COSE.Algorithm)(int)Alg;
 
             ReadOnlySpan<byte> dataHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg(alg), Data);
 
             if (!dataHash.SequenceEqual(certInfo.ExtraData))
-                throw new Fido2VerificationException("Hash value mismatch extraData and attToBeSigned");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch extraData and attToBeSigned");
 
             // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
             ReadOnlySpan<byte> pubAreaRawHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)certInfo.Alg), pubArea.Raw);
 
             if (!pubAreaRawHash.SequenceEqual(certInfo.AttestedName))
-                throw new Fido2VerificationException("Hash value mismatch attested and pubArea");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch attested and pubArea");
 
             // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
@@ -142,7 +138,7 @@ namespace Fido2NetLib
                     }
                     else
                     {
-                        throw new Fido2VerificationException("Malformed x5c in TPM attestation");
+                        throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c in TPM attestation");
                     }
                 }
 
@@ -152,17 +148,17 @@ namespace Fido2NetLib
                 var cpk = new CredentialPublicKey(aikCert, alg);
 
                 if (!cpk.Verify(certInfo.Raw, (byte[])Sig))
-                    throw new Fido2VerificationException("Bad signature in TPM with aikCert");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Bad signature in TPM with aikCert");
 
                 // 5b. Verify that aikCert meets the TPM attestation statement certificate requirements
                 // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
                 // 5bi. Version MUST be set to 3
                 if (aikCert.Version != 3)
-                    throw new Fido2VerificationException("aikCert must be V3");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert must be V3");
 
                 // 5bii. Subject field MUST be set to empty - they actually mean subject name
                 if (aikCert.SubjectName.Name.Length != 0)
-                    throw new Fido2VerificationException("aikCert subject must be empty");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert subject must be empty");
 
                 // 5biii. The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
                 // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
@@ -179,22 +175,22 @@ namespace Fido2NetLib
                     string.IsNullOrEmpty(tpmModel) ||
                     string.IsNullOrEmpty(tpmVersion))
                 {
-                    throw new Fido2VerificationException("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
                 }
 
                 if (!TPMManufacturers.Contains(tpmManufacturer))
-                    throw new Fido2VerificationException("Invalid TPM manufacturer found parsing TPM attestation");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM manufacturer found parsing TPM attestation");
 
                 // 5biiii. The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
                 // OID is 2.23.133.8.3
                 bool eku = EKUFromAttnCertExts(aikCert.Extensions, "2.23.133.8.3");
 
                 if (!eku)
-                    throw new Fido2VerificationException("aikCert EKU missing tcg-kp-AIKCertificate OID");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert EKU missing tcg-kp-AIKCertificate OID");
 
                 // 5biiiii. The Basic Constraints extension MUST have the CA component set to false.
                 if (IsAttnCertCACert(aikCert.Extensions))
-                    throw new Fido2VerificationException("aikCert Basic Constraints extension CA component must be false");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert Basic Constraints extension CA component must be false");
 
                 // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] 
                 // are both OPTIONAL as the status of many attestation certificates is available through metadata services.
@@ -224,7 +220,7 @@ namespace Fido2NetLib
             }
             else
             {
-                throw new Fido2VerificationException("Neither x5c nor ECDAA were found in the TPM attestation statement");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Neither x5c nor ECDAA were found in the TPM attestation statement");
             }
         }
 
@@ -248,7 +244,7 @@ namespace Fido2NetLib
                 if (extension.Oid!.Value is "2.5.29.17") // subject alternative name
                 {
                     if (extension.RawData.Length is 0)
-                        throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
+                        throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SAN missing from TPM attestation certificate");
 
                     foundSAN = true;
 
@@ -359,7 +355,7 @@ namespace Fido2NetLib
             }
 
             if (!foundSAN)
-                throw new Fido2VerificationException("SAN missing from TPM attestation certificate");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SAN missing from TPM attestation certificate");
 
             return (tpmManufacturer, tpmModel, tpmVersion);
         }
@@ -441,10 +437,10 @@ namespace Fido2NetLib
     {
         private static readonly Dictionary<TpmAlg, ushort> tpmAlgToDigestSizeMap = new()
         {
-            {TpmAlg.TPM_ALG_SHA1,   (160/8) },
-            {TpmAlg.TPM_ALG_SHA256, (256/8) },
-            {TpmAlg.TPM_ALG_SHA384, (384/8) },
-            {TpmAlg.TPM_ALG_SHA512, (512/8) }
+            { TpmAlg.TPM_ALG_SHA1,   (160/8) },
+            { TpmAlg.TPM_ALG_SHA256, (256/8) },
+            { TpmAlg.TPM_ALG_SHA384, (384/8) },
+            { TpmAlg.TPM_ALG_SHA512, (512/8) }
         };
 
         public static (ushort size, byte[] name) NameFromTPM2BName(ReadOnlySpan<byte> ab, ref int offset)

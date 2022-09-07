@@ -13,6 +13,7 @@ public enum Fido2ErrorCode
     UserPresentFlagNotSet,
     UnexpectedExtensions,
     MissingStoredPublicKey,
+    InvalidAttestation,
     InvalidAttestationObject,
     MalformedAttestationObject,
     AttestedCredentialDataFlagNotSet,
