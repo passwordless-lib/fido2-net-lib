@@ -2,6 +2,7 @@
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test.Attestation;
@@ -39,12 +40,16 @@ public class None : Fido2Tests.Attestation
             _attestationObject = new CborMap { { "fmt", "none" } };
         });
     }
+
     [Fact]
-    public void TestNoneWithAttStmt()
+    public async Task TestNoneWithAttStmt()
     {
         _attestationObject.Add("attStmt", new CborMap { { "foo", "bar" } });
         _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Attestation format none should have no attestation statement", ex.Result.Message);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Attestation format none should have no attestation statement", ex.Message);
     }
 }

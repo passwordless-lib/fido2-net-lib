@@ -6,6 +6,7 @@ using fido2_net_lib.Test;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test.Attestation;
@@ -143,7 +144,7 @@ public class Apple : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAppleCertCorruptExtension()
+    public async Task TestAppleCertCorruptExtension()
     {
         var invalidX5cStrings = validX5cStrings;
         var invalidCert = Convert.FromBase64String(invalidX5cStrings[0]);
@@ -160,8 +161,10 @@ public class Apple : Fido2Tests.Attestation
         };
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", x5c);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Apple attestation extension has invalid data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Apple attestation extension has invalid data", ex.Message);
     }
 
     [Fact]

@@ -5,6 +5,7 @@ using fido2_net_lib.Test;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test.Attestation;
@@ -70,11 +71,13 @@ public class FidoU2f : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestU2fWithAaguid()
+    public async Task TestU2fWithAaguid()
     {
         _aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Aaguid was not empty parsing fido-u2f atttestation statement", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Aaguid was not empty parsing fido-u2f atttestation statement", ex.Message);
     }
 
     [Fact]
