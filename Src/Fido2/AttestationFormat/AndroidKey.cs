@@ -156,7 +156,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c in android-key attestation");
 
             if (Alg is not CborInteger)
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid android key attestation algorithm");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid android-key attestation algorithm");
 
             var alg = (COSE.Algorithm)(int)Alg;
             var trustPath = new X509Certificate2[x5cArray.Length];

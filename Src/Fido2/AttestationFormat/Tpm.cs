@@ -209,7 +209,7 @@ namespace Fido2NetLib
             // If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (EcdaaKeyId != null)
             {
-                throw new Fido2VerificationException("ECDAA support for TPM attestation is not yet implemented");
+                throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, Fido2ErrorMessages.UnimplementedAlgorithm_Ecdaa_Tpm);
 
                 // Perform ECDAA-Verify on sig to verify that it is a valid signature over certInfo
                 // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
@@ -573,11 +573,11 @@ namespace Fido2NetLib
 
             if (tpmalg is TpmAlg.TPM_ALG_KEYEDHASH)
             {
-                throw new Fido2VerificationException("TPM_ALG_KEYEDHASH not yet supported");
+                throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "TPM_ALG_KEYEDHASH not yet supported");
             }
             if (tpmalg is TpmAlg.TPM_ALG_SYMCIPHER)
             {
-                throw new Fido2VerificationException("TPM_ALG_SYMCIPHER not yet supported");
+                throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "TPM_ALG_SYMCIPHER not yet supported");
             }
 
             // TPMS_ASYM_PARMS, for TPM_ALG_RSA and TPM_ALG_ECC
