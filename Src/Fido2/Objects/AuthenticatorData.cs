@@ -4,6 +4,7 @@ using System;
 using System.IO;
 
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 
 namespace Fido2NetLib.Objects
 {
@@ -13,7 +14,7 @@ namespace Fido2NetLib.Objects
         /// Minimum length of the authenticator data structure.
         /// <see cref="https://www.w3.org/TR/webauthn/#sec-authenticator-data"/>
         /// </summary>
-        private const int MinLength = SHA256HashLenBytes + sizeof(AuthenticatorFlags) + sizeof(UInt32);
+        internal const int MinLength = SHA256HashLenBytes + sizeof(AuthenticatorFlags) + sizeof(UInt32);
 
         private const int SHA256HashLenBytes = 32; // 256 bits, 8 bits per byte
 
@@ -81,10 +82,10 @@ namespace Fido2NetLib.Objects
         {
             // Input validation
             if (authData is null)
-                throw new Fido2VerificationException("Authenticator data cannot be null");
+                throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorData, Fido2ErrorMessages.MissingAuthenticatorData);
 
             if (authData.Length < MinLength)
-                throw new Fido2VerificationException($"Authenticator data is less than the minimum structure length of {MinLength}");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, Fido2ErrorMessages.InvalidAuthenticatorData_TooShort);
 
             // Input parsing
             var reader = new MemoryReader(authData);
@@ -98,7 +99,7 @@ namespace Fido2NetLib.Objects
             // Attested credential data is only present if the AT flag is set
             if (HasAttestedCredentialData)
             {
-                // Decode attested credential data, which starts at the next byte past the minimum length of the structure.
+                // Decode attested credential data, which starts at the next byte past the minimum length of the structure
                 AttestedCredentialData = new AttestedCredentialData(authData.AsMemory(reader.Position), out int bytesRead);
 
                 reader.Advance(bytesRead);
@@ -112,13 +113,13 @@ namespace Fido2NetLib.Objects
 
                 reader.Advance(bytesRead);
 
-                // Encode the CBOR object back to a byte array.
+                // Encode the CBOR object back to a byte array
                 Extensions = new Extensions(ext.Encode());
             }
 
-            // There should be no bytes left over after decoding all data from the structure
+            // Ensure there are no remaining bytes left over after decoding the structure
             if (reader.RemainingBytes != 0)
-                throw new Fido2VerificationException("Leftover bytes decoding AuthenticatorData");            
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, "Leftover bytes decoding AuthenticatorData");            
         }
 
         public byte[] ToByteArray()
