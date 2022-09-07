@@ -5,6 +5,8 @@ using System.Buffers.Binary;
 using System.IO;
 using System.Runtime.InteropServices;
 
+using Fido2NetLib.Exceptions;
+
 namespace Fido2NetLib.Objects
 {
     public sealed class AttestedCredentialData
@@ -39,7 +41,7 @@ namespace Fido2NetLib.Objects
         internal AttestedCredentialData(ReadOnlyMemory<byte> data, out int bytesRead)
         {
             if (data.Length < _minLength)
-                throw new Fido2VerificationException("Not enough bytes to be a valid AttestedCredentialData");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_TooShort);
 
             int position = 0;
 

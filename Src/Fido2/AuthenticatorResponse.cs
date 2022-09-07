@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib
@@ -35,6 +36,7 @@ namespace Fido2NetLib
 
             if (response is null)
                 throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
+
             Type = response.Type;
             Challenge = response.Challenge;
             Origin = response.Origin;
@@ -64,14 +66,14 @@ namespace Fido2NetLib
         protected void BaseVerify(HashSet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
         {
             if (Type is not "webauthn.create" && Type is not "webauthn.get")
-                throw new Fido2VerificationException($"Type not equal to 'webauthn.create' or 'webauthn.get'. Was: '{Type}'");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
 
             if (Challenge is null)
-                throw new Fido2VerificationException("Challenge cannot be null");
+                throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallange);
 
             // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
             if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
-                throw new Fido2VerificationException("Challenge not equal to original challenge");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, Fido2ErrorMessages.InvalidAuthenticatorResponseChallenge);
 
             var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
 

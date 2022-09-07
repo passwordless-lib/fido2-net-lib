@@ -8,12 +8,6 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <Compile Remove="MetadataStatements\**" />
-    <EmbeddedResource Remove="MetadataStatements\**" />
-    <None Remove="MetadataStatements\**" />
-  </ItemGroup>
-  
-  <ItemGroup>
     <Compile Remove="IMetadataService.cs" />
   </ItemGroup>
 

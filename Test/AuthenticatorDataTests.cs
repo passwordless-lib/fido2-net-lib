@@ -1,4 +1,5 @@
 ﻿using Fido2NetLib;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test;
@@ -10,7 +11,7 @@ public class AuthenticatorDataTests
     {
         byte[] ad = null;
         var ex = Assert.Throws<Fido2VerificationException>(() => new AuthenticatorData(ad));
-        Assert.Equal("Authenticator data cannot be null", ex.Message);
+        Assert.Equal(Fido2ErrorMessages.MissingAuthenticatorData, ex.Message);
     }
 
     [Fact]
