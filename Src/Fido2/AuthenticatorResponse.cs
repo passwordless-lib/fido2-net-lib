@@ -1,4 +1,6 @@
-﻿using System;
+﻿#pragma warning disable IDE0060 // Remove unused parameter
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -17,7 +19,7 @@ namespace Fido2NetLib
         protected AuthenticatorResponse(ReadOnlySpan<byte> utf8EncodedJson)
         {
             if (utf8EncodedJson.Length is 0)
-                throw new Fido2VerificationException("utf8EncodedJson may not be empty");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, "utf8EncodedJson may not be empty");
 
             // 1. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON
             
@@ -31,11 +33,11 @@ namespace Fido2NetLib
             }
             catch (Exception e) when (e is JsonException)
             {
-                throw new Fido2VerificationException("Malformed clientDataJson");
+                throw new Fido2VerificationException(Fido2ErrorCode.MalformedAuthenticatorResponse, "Malformed clientDataJson");
             }
 
             if (response is null)
-                throw new Fido2VerificationException("Deserialized authenticator response cannot be null");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, "Deserialized authenticator response cannot be null");
 
             Type = response.Type;
             Challenge = response.Challenge;
@@ -83,6 +85,7 @@ namespace Fido2NetLib
 
         }
 
+        /*
         private static string FullyQualifiedOrigin(string origin)
         {
             var uri = new Uri(origin);
@@ -92,5 +95,6 @@ namespace Fido2NetLib
 
             return origin;
         }
+        */
     }
 }
