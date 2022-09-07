@@ -131,6 +131,11 @@ namespace Fido2NetLib
             if (!authData.HasAttestedCredentialData)
                 throw new Fido2VerificationException(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, Fido2ErrorMessages.AttestedCredentialDataFlagNotSet);
 
+            if (string.IsNullOrEmpty(AttestationObject.Fmt))
+            {
+                throw new Fido2VerificationException(Fido2ErrorCode.MissingAttestationType, Fido2ErrorMessages.MissingAttestationType);
+            }
+
             // 13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. 
             //     An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name
             // https://www.w3.org/TR/webauthn/#defined-attestation-formats
@@ -144,7 +149,7 @@ namespace Fido2NetLib
                 "fido-u2f" => new FidoU2f(),                    // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
                 "packed" => new Packed(),                       // https://www.w3.org/TR/webauthn/#packed-attestation
                 "apple" => new Apple(),                         // https://www.w3.org/TR/webauthn/#apple-anonymous-attestation
-                _ => throw new Fido2VerificationException(Fido2ErrorCode.MissingOrUnknownAttestationType, "Missing or unknown attestation type")
+                _ => throw new Fido2VerificationException(Fido2ErrorCode.UnknownAttestationType, $"Unknown attestation type. Was '{AttestationObject.Fmt}'")
             };
 
             // 14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 

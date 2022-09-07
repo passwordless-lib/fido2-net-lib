@@ -4,6 +4,7 @@ using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
