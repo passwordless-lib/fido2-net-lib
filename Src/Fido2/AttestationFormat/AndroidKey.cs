@@ -42,25 +42,15 @@ namespace Fido2NetLib
             var softwareEnforced = keyDescription[6].Sequence;
             foreach (Asn1Element s in softwareEnforced)
             {
-                switch (s.TagValue)
-                {
-                    case 600:
-                        return true;
-                    default:
-                        break;
-                }
+                if (s.TagValue is 600)
+                    return true;
             }
 
             var teeEnforced = keyDescription[7].Sequence;
             foreach (Asn1Element s in teeEnforced)
             {
-                switch (s.TagValue)
-                {
-                    case 600:
-                        return true;
-                    default:
-                        break;
-                }
+                if (s.TagValue is 600)
+                    return true;
             }
 
             return false;
