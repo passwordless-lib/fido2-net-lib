@@ -25,4 +25,5 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidAuthenticatorData_TooShort      = $"Authenticator data is less than the minimum structure length of {AuthenticatorData.MinLength}";
     public static readonly string InvalidCoseAlgorithmValue              = "Unrecognized COSE algorithm value";
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
+    public static readonly string MissingAttestationType                 = "Missing attestation type";
 }

@@ -869,7 +869,8 @@ public class AuthenticatorResponse
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("Missing or unknown attestation type", ex.Result.Message);
+        Assert.Equal("Unknown attestation type. Was 'testing'", ex.Result.Message);
+        Assert.Equal(Fido2ErrorCode.UnknownAttestationType, ex.Result.Code);
     }
 
     [Fact]

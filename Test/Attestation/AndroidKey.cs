@@ -192,7 +192,7 @@ public class AndroidKey : Fido2Tests.Attestation
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("alg", new CborInteger(-1));
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Unrecognized COSE alg value", ex.Result.Message);
+        Assert.Equal("Unrecognized COSE algorithm value", ex.Result.Message);
     }
 
     [Fact]
