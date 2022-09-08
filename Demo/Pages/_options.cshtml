@@ -48,11 +48,15 @@
                 <div class="field">
                     <label class="label">Resident Key</label>
                     <div class="control">
-                        <label class="checkbox">
-                            <input type="checkbox" id="option-residentkey">
-                            Use Resident key
-                        </label>
+                        <div class="select">
+                            <select id="option-residentkey">
+                                <option value="required">Required</option>
+                                <option selected value="preferred">Preferred</option>
+                                <option value="discouraged">Discouraged</option>
+                            </select>
+                        </div>
                     </div>
+                    <p class="help">For register the client will guide the user through setting up user verification if needed to create a discoverable credential. This takes precedence over the setting of userVerification.</p>
                 </div>
             </form>
         </div>

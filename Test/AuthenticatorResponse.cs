@@ -87,7 +87,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -191,7 +191,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -387,7 +387,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -458,7 +458,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -527,7 +527,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -604,7 +604,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -682,7 +682,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -759,7 +759,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -837,7 +837,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -914,7 +914,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = challenge,
@@ -991,7 +991,7 @@ namespace Test
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Required,
                 },
                 Challenge = challenge,

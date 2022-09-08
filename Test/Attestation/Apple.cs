@@ -237,7 +237,7 @@ namespace Test.Attestation
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                    RequireResidentKey = true,
+                    ResidentKey = ResidentKeyRequirement.Required,
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = _challenge,
