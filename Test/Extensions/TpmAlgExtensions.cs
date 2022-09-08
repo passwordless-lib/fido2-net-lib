@@ -2,17 +2,16 @@
 
 using Fido2NetLib;
 
-namespace Test
+namespace Test;
+
+internal static class TpmAlgExtensions
 {
-    internal static class TpmAlgExtensions
+    public static byte[] ToUInt16BigEndianBytes(this TpmAlg alg)
     {
-        public static byte[] ToUInt16BigEndianBytes(this TpmAlg alg)
-        {
-            var bytes = new byte[2];
+        var bytes = new byte[2];
 
-            BinaryPrimitives.WriteUInt16BigEndian(bytes, (ushort)alg);
+        BinaryPrimitives.WriteUInt16BigEndian(bytes, (ushort)alg);
 
-            return bytes;
-        }
+        return bytes;
     }
 }

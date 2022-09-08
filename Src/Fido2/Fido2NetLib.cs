@@ -48,11 +48,9 @@ namespace Fido2NetLib
             AttestationConveyancePreference attestationPreference,
             AuthenticationExtensionsClientInputs? extensions = null)
         {
-            var challenge = new byte[_config.ChallengeSize];
-            RandomNumberGenerator.Fill(challenge);
+            byte[] challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
 
-            var options = CredentialCreateOptions.Create(_config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials, extensions);
-            return options;
+            return CredentialCreateOptions.Create(_config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials, extensions);
         }
 
         /// <summary>
@@ -91,11 +89,9 @@ namespace Fido2NetLib
             UserVerificationRequirement? userVerification,
             AuthenticationExtensionsClientInputs? extensions = null)
         {
-            var challenge = new byte[_config.ChallengeSize];
-            RandomNumberGenerator.Fill(challenge);
+            byte[] challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
 
-            var options = AssertionOptions.Create(_config, challenge, allowedCredentials, userVerification, extensions);
-            return options;
+            return AssertionOptions.Create(_config, challenge, allowedCredentials, userVerification, extensions);
         }
 
         /// <summary>

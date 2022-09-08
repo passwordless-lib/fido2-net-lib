@@ -611,6 +611,8 @@ namespace Fido2NetLib
                         Exponent = Convert.ToUInt32(Math.Pow(2, 16) + 1);
                     }
                 }
+                // TPM2B_PUBLIC_KEY_RSA
+                Unique = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
             }
 
             // TPMI_ECC_CURVE
@@ -625,10 +627,15 @@ namespace Fido2NetLib
             {
                 CurveID = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
                 KDF = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            }
 
-            // TPMU_PUBLIC_ID
-            Unique = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
+                // TPMS_ECC_POINT
+                ECPoint = new()
+                {
+                    X = AuthDataHelper.GetSizedByteArray(pubArea, ref offset),
+                    Y = AuthDataHelper.GetSizedByteArray(pubArea, ref offset),
+                };
+                Unique = DataHelper.Concat(ECPoint.X, ECPoint.Y);
+            }
 
             if (pubArea.Length != offset)
                 throw new Fido2VerificationException("Leftover bytes decoding pubArea");
@@ -645,21 +652,8 @@ namespace Fido2NetLib
         public uint Exponent { get; private set; }
         public byte[]? CurveID { get; private set; }
         public byte[]? KDF { get; private set; }
-        public byte[] Unique { get; private set; }
+        public byte[]? Unique { get; private set; }
         public TpmEccCurve EccCurve => (TpmEccCurve)Enum.ToObject(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID));
-
-        public ECPoint ECPoint
-        {
-            get
-            {
-                var point = new ECPoint();
-                var uniqueOffset = 0;
-                var size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
-                point.X = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BinaryPrimitives.ReadUInt16BigEndian(size));
-                size = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, 2);
-                point.Y = AuthDataHelper.GetSizedByteArray(Unique, ref uniqueOffset, BinaryPrimitives.ReadUInt16BigEndian(size));
-                return point;
-            }
-        }
+        public ECPoint ECPoint { get; private set; }
     }
 }
