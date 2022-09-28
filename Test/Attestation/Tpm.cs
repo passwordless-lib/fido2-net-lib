@@ -6,6 +6,7 @@ using fido2_net_lib.Test;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 using static Fido2NetLib.DataHelper;
@@ -3647,7 +3648,7 @@ public class Tpm : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestTPMX5cValuesNull()
+    public async Task TestTPMX5cValuesNull()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3740,8 +3741,8 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Message);
     }
 
     [Fact]
@@ -3840,7 +3841,7 @@ public class Tpm : Fido2Tests.Attestation
 
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Result.Message);
     }
 
     [Fact]
@@ -3938,7 +3939,7 @@ public class Tpm : Fido2Tests.Attestation
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Result.Message);
     }
 
     [Fact]
@@ -4036,7 +4037,7 @@ public class Tpm : Fido2Tests.Attestation
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in TPM attestation", ex.Result.Message);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Result.Message);
     }
 
     [Fact]

@@ -76,49 +76,57 @@ public class Apple : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAppleMissingX5c()
+    public async Task TestAppleMissingX5c()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", CborNull.Instance);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AppleAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestAppleX5cNotArray()
+    public async Task TestAppleX5cNotArray()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborTextString("boomerang"));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AppleAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestAppleX5cCountNotOne()
+    public async Task TestAppleX5cCountNotOne()
     {
         var emptyX5c = new CborArray { new byte[0], new byte[0] };
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", emptyX5c);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AppleAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestAppleX5cValueNotByteString()
+    public async Task TestAppleX5cValueNotByteString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborTextString("x"));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AppleAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestAppleX5cValueZeroLengthByteString()
+    public async Task TestAppleX5cValueZeroLengthByteString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborArray { new byte[0] });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in Apple attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AppleAttestation, ex.Message);
     }
 
     [Fact]

@@ -122,38 +122,46 @@ public class AndroidKey : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAndroidKeyMissingX5c()
+    public async Task TestAndroidKeyMissingX5c()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", CborNull.Instance);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation, ex.Message);
     }
     [Fact]
-    public void TestAndroidKeyX5cNotArray()
+    public async Task TestAndroidKeyX5cNotArray()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborTextString("boomerang"));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestAndroidKeyX5cValueNotByteString()
+    public async Task TestAndroidKeyX5cValueNotByteString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborTextString("x"));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestAndroidKeyX5cValueZeroLengthByteString()
+    public async Task TestAndroidKeyX5cValueZeroLengthByteString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborArray { Array.Empty<byte>() });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c in android-key attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation, ex.Message);
     }
 
     [Fact]

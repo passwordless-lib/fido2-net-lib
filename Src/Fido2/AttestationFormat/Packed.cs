@@ -97,7 +97,7 @@ namespace Fido2NetLib
                 // 2bii. Subject field MUST contain C, O, OU, CN
                 // OU must match "Authenticator Attestation"
                 if (!IsValidPackedAttnCertSubject(attestnCert.Subject))
-                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid attestation cert subject");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAttestationCertSubject);
 
                 // 2biii. If the related attestation root certificate is used for multiple authenticator models, 
                 // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
