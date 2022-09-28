@@ -138,7 +138,7 @@ namespace Fido2NetLib
                     }
                     else
                     {
-                        throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c in TPM attestation");
+                        throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_TpmAttestation);
                     }
                 }
 

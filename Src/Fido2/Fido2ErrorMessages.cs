@@ -26,7 +26,12 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidCoseAlgorithmValue              = "Unrecognized COSE algorithm value";
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
     public static readonly string MissingAttestationType                 = "Missing attestation type";
+    public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
 
     public static readonly string UnimplementedAlgorithm_Ecdaa_Packed    = "ECDAA support for packed attestation is not yet implemented";
     public static readonly string UnimplementedAlgorithm_Ecdaa_Tpm       = "ECDAA support for TPM attestation is not yet implemented";
+
+    public static readonly string MalformedX5c_AndroidKeyAttestation     = "Malformed x5c in android-key attestation";
+    public static readonly string MalformedX5c_AppleAttestation          = "Malformed x5c in Apple attestation";
+    public static readonly string MalformedX5c_TpmAttestation            = "Malformed x5c in TPM attestation";
 }

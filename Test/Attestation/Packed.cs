@@ -816,7 +816,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestFullAttCertSubject()
+    public async Task TestFullAttCertSubject()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 attestnCert;
@@ -860,8 +860,10 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid attestation cert subject", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.InvalidAttestationCertSubject, ex.Message);
     }
 
     [Fact]
@@ -917,7 +919,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestFullAttCertAaguidNotMatchAuthdata()
+    public async Task TestFullAttCertAaguidNotMatchAuthdata()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 attestnCert;
@@ -964,8 +966,10 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("aaguid present in packed attestation cert exts but does not match aaguid from authData", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("aaguid present in packed attestation cert exts but does not match aaguid from authData", ex.Message);
     }
 
     [Fact]

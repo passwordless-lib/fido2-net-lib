@@ -45,7 +45,7 @@ namespace Fido2NetLib
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
             if (!(X5c is CborArray { Length: >= 2 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
             {
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c in Apple attestation");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_AppleAttestation);
             }
 
             // 2. Verify x5c is a valid certificate chain starting from the credCert to the Apple WebAuthn root certificate.
