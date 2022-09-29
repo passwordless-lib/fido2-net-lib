@@ -124,6 +124,10 @@ namespace Fido2Demo
                     AaGuid = success.Result.Aaguid
                 });
 
+                // Remove Certificates from success because System.Text.Json cannot serialize them properly. See https://github.com/passwordless-lib/fido2-net-lib/issues/328
+                success.Result.AttestationCertificate = null;
+                success.Result.AttestationCertificateChain = null;
+
                 // 4. return "ok" to the client
                 return Json(success);
             }
