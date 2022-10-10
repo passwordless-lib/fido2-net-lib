@@ -49,9 +49,6 @@ namespace Test
                 new X509Certificate2(Convert.FromBase64String("MIIB+TCCAaCgAwIBAgIQGBUrQbdDrm20FZnDsX2CCDAKBggqhkjOPQQDAjBLMQswCQYDVQQGEwJVUzEdMBsGA1UECgwURmVpdGlhbiBUZWNobm9sb2dpZXMxHTAbBgNVBAMMFEZlaXRpYW4gRklETyBSb290IENBMCAXDTE4MDUyMDAwMDAwMFoYDzIwMzgwNTE5MjM1OTU5WjBJMQswCQYDVQQGEwJVUzEdMBsGA1UECgwURmVpdGlhbiBUZWNobm9sb2dpZXMxGzAZBgNVBAMMEkZlaXRpYW4gRklETyBDQSAwMzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJts1KYQuj66rAszKKLfsOay91gO11vSvfcYd/dQfeTjpSNb55ffoLijQbRXspqE5Uj2NVylED61pjo2tpytOfijZjBkMB0GA1UdDgQWBBRBt/xNdcqO0p8s0xebzYNRinnYqTAfBgNVHSMEGDAWgBRLvYcmEa0cic8EWL5w0giMaxYjtzASBgNVHRMBAf8ECDAGAQH/AgEAMA4GA1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNHADBEAiAnSuhaqHgV3Sds/OrwiqLNUWMmU8Lji9Vy7s5hSEg22AIgE1lIdBjq0N+QcZq995uOE4XWxBIrVUio3RAwgDn8KgI="))
             };
             Assert.True(CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates));
-            Assert.False(CryptoUtils.ValidateTrustChain(trustPath, trustPath));
-            Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, attestationRootCertificates));
-            Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, trustPath));
         }
         [Fact]
         public void TestValidateTrustChainSubAnchor()
@@ -64,9 +61,6 @@ namespace Test
 
             Assert.False(0 == attestationRootCertificates[0].Issuer.CompareTo(attestationRootCertificates[0].Subject));
             Assert.True(CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates));
-            Assert.False(CryptoUtils.ValidateTrustChain(trustPath, trustPath));
-            Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, attestationRootCertificates));
-            Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, trustPath));
         }
         [Fact]
         public void TestValidateTrustChainSelf()

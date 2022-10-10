@@ -174,6 +174,12 @@ namespace Fido2NetLib
                 if (ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_BASIC_FULL) ||
                     ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_PRIVACY_CA))
                 {
+                    if (trustPath.Any(c => string.Equals(c.Subject, c.Issuer, StringComparison.Ordinal)))
+                    {
+                        // TODO: Improve this error message
+                        throw new Fido2VerificationException("Attestation with unexpected full chain in trustPath");
+                    }
+
                     string[] certStrings = metadataEntry.MetadataStatement.AttestationRootCertificates;
                     var attestationRootCertificates = new X509Certificate2[certStrings.Length];
 

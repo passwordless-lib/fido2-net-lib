@@ -47,35 +47,27 @@ namespace Fido2NetLib
 
         public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
         {
-            // https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#widl-MetadataStatement-attestationRootCertificates
-
+            // https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.0-ps-20210518.html#dom-metadatastatement-attestationrootcertificates
+            // List of attestation trust anchors for the batch chain in the authenticator attestation.
             // Each element of this array represents a PKIX [RFC5280] X.509 certificate that is a valid trust anchor for this authenticator model.
             // Multiple certificates might be used for different batches of the same model.
             // The array does not represent a certificate chain, but only the trust anchor of that chain.
             // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
-
-            // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
-            if (trustPath.Length == 1 && trustPath[0].Subject.Equals(trustPath[0].Issuer, StringComparison.Ordinal))
+            
+            // Let's check the simplest case first. If there is only one cert in the trustPath and it is also in the roots, that's all the validation we need
+            if (trustPath.Length == 1 && attestationRootCertificates.Any(c => c.Thumbprint.Equals(trustPath[0].Thumbprint, StringComparison.Ordinal)))
             {
-                foreach (X509Certificate2? cert in attestationRootCertificates)
-                {
-                    if (cert.Thumbprint.Equals(trustPath[0].Thumbprint, StringComparison.Ordinal))
-                    {
-                        return true;
-                    }
-                }
-                return false;
+                return true;
             }
 
-            // If the attestation cert is not self signed, we will need to build a chain
+            // Otherwise, we will need to build a chain
             var chain = new X509Chain();
 
-            // Put all potential trust anchors into extra store
-            chain.ChainPolicy.ExtraStore.AddRange(attestationRootCertificates);
-
-            // We don't know the root here, so allow unknown root, and turn off revocation checking
-            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            // We don't know the root here, so allow unknown root
             chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+            // Turn off revocation checking for now
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
             // trustPath[0] is the attestation cert, if there are more in the array than just that, add those to the extra store as well, but skip attestation cert
             if (trustPath.Length > 1)
@@ -86,36 +78,65 @@ namespace Fido2NetLib
                 }
             }
 
-            // try to build a chain with what we've got
-            if (chain.Build(trustPath[0]))
+            bool valid = false;
+
+            // Check to see if all potential trust anchors have subject key identifier extension
+            var skidsPresent = true;
+
+            // Only care about this quirk on Linux, see https://github.com/dotnet/runtime/issues/31569
+            if (OperatingSystem.IsLinux())
             {
-                // if that validated, we should have a root for this chain now, add it to the custom trust store
-                chain.ChainPolicy.CustomTrustStore.Clear();
-                chain.ChainPolicy.CustomTrustStore.Add(chain.ChainElements[^1].Certificate);
+                skidsPresent = attestationRootCertificates.All(a => a.Extensions.Cast<X509Extension>().FirstOrDefault(e => e.Oid!.Value == "2.5.29.14") != null);
+            }
 
-                // explicitly trust the custom root we just added
-                chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
-
-                // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
-                if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
-
-                // don't allow unknown root now that we have a custom root
-                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
-
-                // now, verify chain again with all checks turned on
-                if (chain.Build(trustPath[0]))
+            if (skidsPresent)
+            {
+                // Put all potential trust anchors into extra store
+                chain.ChainPolicy.ExtraStore.AddRange(attestationRootCertificates);
+                valid = chain.Build(trustPath[0]);
+                if (valid && chain.ChainElements[^1].Certificate.Issuer.Equals(chain.ChainElements[^1].Certificate.Subject))
                 {
-                    // if the chain validates, make sure one of the attestation root certificates is one of the chain elements
-                    foreach (X509Certificate2? attestationRootCertificate in attestationRootCertificates)
+                    // if that validated, and we have a root for this chain now, add it to the custom trust store
+                    chain.ChainPolicy.CustomTrustStore.Clear();
+                    chain.ChainPolicy.CustomTrustStore.Add(chain.ChainElements[^1].Certificate);
+
+                    // explicitly trust the custom root we just added
+                    chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+
+                    // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
+                    if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
+
+                    // don't allow unknown root now that we have a custom root
+                    chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+
+                    valid = chain.Build(trustPath[0]);
+                }
+            }
+            else
+            {
+                foreach (X509Certificate2? attestationRootCertificate in attestationRootCertificates)
+                {
+                    chain.ChainPolicy.ExtraStore.Add(attestationRootCertificate);
+                    if (chain.Build(trustPath[0]))
                     {
-                        // skip the first element, as that is the attestation cert
-                        if (chain.ChainElements
-                            .Cast<X509ChainElement>()
-                            .Skip(1)
-                            .Any(x => x.Certificate.Thumbprint == attestationRootCertificate.Thumbprint))
-                            return true;
+                        valid = true;
                     }
+                    chain.ChainPolicy.ExtraStore.Remove(attestationRootCertificate);
+                }
+            }
+
+            if (valid)
+            {
+                // if the chain validates, make sure one of the attestation root certificates is one of the chain elements
+                foreach (X509Certificate2? attestationRootCertificate in attestationRootCertificates)
+                {
+                    // skip the first element, as that is the attestation cert
+                    if (chain.ChainElements
+                        .Cast<X509ChainElement>()
+                        .Skip(1)
+                        .Any(x => x.Certificate.Thumbprint == attestationRootCertificate.Thumbprint))
+                        return true;
                 }
             }
 
@@ -196,6 +217,7 @@ namespace Fido2NetLib
                     var el = asnData[0][0][0][0];
 
                     cdp = Encoding.ASCII.GetString(el.GetOctetString(el.Tag));
+                    return cdp;
                 }
             }
             return cdp;
