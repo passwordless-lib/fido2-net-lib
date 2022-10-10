@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Fido2NetLib;
 
@@ -12,7 +13,7 @@ public static class EnumExtensions
     /// <param name="ignoreCase">ignores the case when comparing values.</param>
     /// <returns>TEnum.</returns>
     /// <exception cref="ArgumentException">No XmlEnumAttribute code exists for type " + typeof(TEnum).ToString() + " corresponding to value of " + value</exception>
-    public static TEnum ToEnum<TEnum>(this string value, bool ignoreCase = true) where TEnum : struct, Enum
+    public static TEnum ToEnum<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(this string value, bool ignoreCase = true) where TEnum : struct, Enum
     {
         // Try to parse it normally on the first try
         if (Enum.TryParse<TEnum>(value, ignoreCase, out var result))
@@ -33,7 +34,7 @@ public static class EnumExtensions
     /// <typeparam name="TEnum">The type of enum.</typeparam>
     /// <param name="value">The enum's value.</param>
     /// <returns>string.</returns>
-    public static string ToEnumMemberValue<TEnum>(this TEnum value) where TEnum : struct, Enum
+    public static string ToEnumMemberValue<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>(this TEnum value) where TEnum : struct, Enum
     {
         return EnumNameMapper<TEnum>.GetName(value);
     }
