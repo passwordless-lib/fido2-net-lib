@@ -4,6 +4,7 @@ using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
+using System.Runtime.InteropServices;
 
 namespace Test.Attestation;
 
@@ -19,6 +20,10 @@ public class None : Fido2Tests.Attestation
     {
         Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
         {
+            // No support for P256K on OSX
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && param.Item3 == COSE.EllipticCurve.P256K)
+                return;
+
             _attestationObject.Add("attStmt", new CborMap());
             _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(param);
             Fido2.CredentialMakeResult res = null;

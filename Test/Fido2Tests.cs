@@ -1,5 +1,6 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Formats.Asn1;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -808,6 +809,10 @@ public class Fido2Tests
         _validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
         {
             var (type, alg, curve) = param;
+
+            // No support for P256K on OSX
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && curve == COSE.EllipticCurve.P256K)
+                return;
 
             if (curve != default)
             {
