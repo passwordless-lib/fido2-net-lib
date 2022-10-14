@@ -124,4 +124,4 @@ jobs:
     inputs:
       command: test
       projects: 'Test/Test.csproj'
-      arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo
+      arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo'
