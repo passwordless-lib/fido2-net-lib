@@ -7,6 +7,7 @@ using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
+using System.Runtime.InteropServices;
 
 namespace Test.Attestation;
 
@@ -23,6 +24,10 @@ public class Packed : Fido2Tests.Attestation
         Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
         {
             var (type, alg, crv) = param;
+
+            // No support for P256K on OSX
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && crv == COSE.EllipticCurve.P256K)
+                return;
 
             var signature = SignData(type, alg, crv);
 
@@ -192,6 +197,10 @@ public class Packed : Fido2Tests.Attestation
             {
                 return;
             }
+
+            // No support for P256K on OSX
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && curve == COSE.EllipticCurve.P256K)
+                return;
 
             X509Certificate2 attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;

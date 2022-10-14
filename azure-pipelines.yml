@@ -3,15 +3,15 @@ name: $(Rev:r)
 
 variables:
   BuildConfiguration: Release
-  TargetVmImage: windows-latest
+  TargetWindowsVMImage: windows-latest
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
 
 jobs:
-# Publish the demo website
+# Publish the demo website for windows-latest
 - job: demo
   displayName: Demo build
   pool:
-    vmImage: $(TargetVmImage)
+    vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
     displayName: 'Use .NET 6.0 SDK'
@@ -42,11 +42,11 @@ jobs:
       pathToPublish: $(build.ArtifactStagingDirectory)/net6.0
       artifactName: Demo .Net 6.0
 
-# Run unit tests
-- job: tests
-  displayName: Unit tests
+# Run unit tests for windows-latest and publish coverage
+- job: test-windows
+  displayName: Unit test windows
   pool:
-    vmImage: $(TargetVmImage)
+    vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
     displayName: 'Use .NET 6.0 SDK'
@@ -89,3 +89,39 @@ jobs:
     inputs:
       targetType: 'inline'
       script: 'bash <(curl -s https://codecov.io/bash) -Z -t 0b864a87-d3bc-4130-b942-81909f1064c0 -f CodeCoverage/Cobertura.xml'
+
+# Run unit tests for mac/linux
+- job: test-mac-linux
+  displayName: Unit test mac/linux
+  strategy:
+    matrix:
+      linux:
+        imageName: 'ubuntu-latest'
+      mac:
+        imageName: 'macOS-latest'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET 6.0 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '6.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet restore'
+    inputs:
+      command: restore
+      projects: 'Test/Test.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build $(buildConfiguration)'
+    inputs:
+      command: build
+      arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
+      projects: 'Test/Test.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: Run unit tests
+    inputs:
+      command: test
+      projects: 'Test/Test.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo
