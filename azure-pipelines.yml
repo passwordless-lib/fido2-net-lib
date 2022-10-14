@@ -43,7 +43,7 @@ jobs:
       artifactName: Demo .Net 6.0
 
 # Run unit tests for windows-latest and publish coverage
-- job: test-windows
+- job: test_windows
   displayName: Unit test windows
   pool:
     vmImage: $(TargetWindowsVMImage)
@@ -91,7 +91,7 @@ jobs:
       script: 'bash <(curl -s https://codecov.io/bash) -Z -t 0b864a87-d3bc-4130-b942-81909f1064c0 -f CodeCoverage/Cobertura.xml'
 
 # Run unit tests for mac/linux
-- job: test-mac-linux
+- job: test_mac_linux
   displayName: Unit test mac/linux
   strategy:
     matrix:
