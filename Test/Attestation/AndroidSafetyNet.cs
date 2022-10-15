@@ -8,6 +8,7 @@ using fido2_net_lib.Test;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 using Microsoft.IdentityModel.Tokens;
@@ -90,9 +91,9 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             }
 
             _attestationObject.Add("attStmt", new CborMap {
-                    { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
-                });
+                { "ver", "F1D0" },
+                { "response", Encoding.UTF8.GetBytes(strToken) }
+            });
         }
     }
     
@@ -870,7 +871,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAndroidSafetyNetAttestationCertSubjectInvalid()
+    public async Task TestAndroidSafetyNetAttestationCertSubjectInvalid()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -921,7 +922,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                List<Claim> claims = new List<Claim>
+                var claims = new List<Claim>
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
@@ -951,8 +952,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.StartsWith("SafetyNet attestation cert DnsName invalid", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.StartsWith("Invalid SafetyNet attestation cert DnsName", ex.Message);
     }
 
     [Fact]

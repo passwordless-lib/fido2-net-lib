@@ -5,7 +5,9 @@ using fido2_net_lib.Test;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
+using System.Runtime.InteropServices;
 
 namespace Test.Attestation;
 
@@ -15,12 +17,17 @@ public class Packed : Fido2Tests.Attestation
     {
         _attestationObject = new CborMap { { "fmt", "packed" } };
     }
+
     [Fact]
     public void TestSelf()
     {
         Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
         {
             var (type, alg, crv) = param;
+
+            // No support for P256K on OSX
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && crv == COSE.EllipticCurve.P256K)
+                return;
 
             var signature = SignData(type, alg, crv);
 
@@ -48,7 +55,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestSelfAlgMismatch()
+    public async Task TestSelfAlgMismatch()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
 
@@ -59,8 +66,10 @@ public class Packed : Fido2Tests.Attestation
             { "sig", signature }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Algorithm mismatch between credential public key and authenticator data in self attestation statement", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Algorithm mismatch between credential public key and authenticator data in self attestation statement", ex.Message);
     }
 
     [Fact]
@@ -77,17 +86,20 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestMissingAlg()
+    public async Task TestMissingAlg()
     {
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         var signature = SignData(type, alg, crv);
         _attestationObject.Add("attStmt", new CborMap { { "sig", signature } });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid packed attestation algorithm", ex.Result.Message);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Invalid packed attestation algorithm", ex.Message);
     }
 
     [Fact]
-    public void TestEcdaaKeyIdPresent()
+    public async Task TestEcdaaKeyIdPresent()
     {
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         var signature = SignData(type, alg, crv);
@@ -96,22 +108,28 @@ public class Packed : Fido2Tests.Attestation
             { "sig", signature },
             { "ecdaaKeyId", signature }
         });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("ECDAA is not yet implemented", ex.Result.Message);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.UnimplementedAlgorithm_Ecdaa_Packed, ex.Message);
     }
 
     [Fact]
-    public void TestEmptyAttStmt()
+    public async Task TestEmptyAttStmt()
     {
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         var signature = SignData(type, alg, crv);
         _attestationObject.Add("attStmt", new CborMap { });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Attestation format packed must have attestation statement", ex.Result.Message);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Attestation format packed must have attestation statement", ex.Message);
     }
 
     [Fact]
-    public void TestAlgNaN()
+    public async Task TestAlgNaN()
     {
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         var signature = SignData(type, alg, crv);
@@ -119,12 +137,15 @@ public class Packed : Fido2Tests.Attestation
             { "alg", "invalid alg" },
             { "sig", signature }
         });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid packed attestation algorithm", ex.Result.Message);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Invalid packed attestation algorithm", ex.Message);
     }
 
     [Fact]
-    public void TestSigNull()
+    public async Task TestSigNull()
     {
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         var signature = SignData(type, alg, crv);
@@ -132,8 +153,11 @@ public class Packed : Fido2Tests.Attestation
             { "alg", alg },
             { "sig", CborNull.Instance }
         });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Invalid packed attestation signature", ex.Message);
     }
 
     [Fact]
@@ -173,6 +197,10 @@ public class Packed : Fido2Tests.Attestation
             {
                 return;
             }
+
+            // No support for P256K on OSX
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && curve == COSE.EllipticCurve.P256K)
+                return;
 
             X509Certificate2 attestnCert;
             DateTimeOffset notBefore = DateTimeOffset.UtcNow;
@@ -623,7 +651,7 @@ public class Packed : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             root.RawData
         };
@@ -633,7 +661,7 @@ public class Packed : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
             { "sig", signature },
-            { "x5c", X5c }
+            { "x5c", x5c }
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
@@ -797,7 +825,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestFullAttCertSubject()
+    public async Task TestFullAttCertSubject()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 attestnCert;
@@ -841,8 +869,10 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid attestation cert subject", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.InvalidAttestationCertSubject, ex.Message);
     }
 
     [Fact]
@@ -898,7 +928,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestFullAttCertAaguidNotMatchAuthdata()
+    public async Task TestFullAttCertAaguidNotMatchAuthdata()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 attestnCert;
@@ -945,8 +975,10 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("aaguid present in packed attestation cert exts but does not match aaguid from authData", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("aaguid present in packed attestation cert exts but does not match aaguid from authData", ex.Message);
     }
 
     [Fact]

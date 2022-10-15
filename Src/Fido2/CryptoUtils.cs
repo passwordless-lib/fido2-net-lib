@@ -3,6 +3,8 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -25,23 +27,23 @@ namespace Fido2NetLib
         {
             return alg switch
             {
-                COSE.Algorithm.RS1 => HashAlgorithmName.SHA1,
-                COSE.Algorithm.ES256 => HashAlgorithmName.SHA256,
-                COSE.Algorithm.ES384 => HashAlgorithmName.SHA384,
-                COSE.Algorithm.ES512 => HashAlgorithmName.SHA512,
-                COSE.Algorithm.PS256 => HashAlgorithmName.SHA256,
-                COSE.Algorithm.PS384 => HashAlgorithmName.SHA384,
-                COSE.Algorithm.PS512 => HashAlgorithmName.SHA512,
-                COSE.Algorithm.RS256 => HashAlgorithmName.SHA256,
-                COSE.Algorithm.RS384 => HashAlgorithmName.SHA384,
-                COSE.Algorithm.RS512 => HashAlgorithmName.SHA512,
+                COSE.Algorithm.RS1    => HashAlgorithmName.SHA1,
+                COSE.Algorithm.ES256  => HashAlgorithmName.SHA256,
+                COSE.Algorithm.ES384  => HashAlgorithmName.SHA384,
+                COSE.Algorithm.ES512  => HashAlgorithmName.SHA512,
+                COSE.Algorithm.PS256  => HashAlgorithmName.SHA256,
+                COSE.Algorithm.PS384  => HashAlgorithmName.SHA384,
+                COSE.Algorithm.PS512  => HashAlgorithmName.SHA512,
+                COSE.Algorithm.RS256  => HashAlgorithmName.SHA256,
+                COSE.Algorithm.RS384  => HashAlgorithmName.SHA384,
+                COSE.Algorithm.RS512  => HashAlgorithmName.SHA512,
                 COSE.Algorithm.ES256K => HashAlgorithmName.SHA256,
-                (COSE.Algorithm)4 => HashAlgorithmName.SHA1,
-                (COSE.Algorithm)11 => HashAlgorithmName.SHA256,
-                (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
-                (COSE.Algorithm)13 => HashAlgorithmName.SHA512,
-                COSE.Algorithm.EdDSA => HashAlgorithmName.SHA512,
-                _ => throw new Fido2VerificationException("Unrecognized COSE alg value"),
+                (COSE.Algorithm)4     => HashAlgorithmName.SHA1,
+                (COSE.Algorithm)11    => HashAlgorithmName.SHA256,
+                (COSE.Algorithm)12    => HashAlgorithmName.SHA384,
+                (COSE.Algorithm)13    => HashAlgorithmName.SHA512,
+                COSE.Algorithm.EdDSA  => HashAlgorithmName.SHA512,
+                _ => throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCoseAlgorithmValue),
             };
         }
 
@@ -57,7 +59,7 @@ namespace Fido2NetLib
             // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
             if (trustPath.Length == 1 && trustPath[0].Subject.Equals(trustPath[0].Issuer, StringComparison.Ordinal))
             {
-                foreach (X509Certificate2? cert in attestationRootCertificates)
+                foreach (X509Certificate2 cert in attestationRootCertificates)
                 {
                     if (cert.Thumbprint.Equals(trustPath[0].Thumbprint, StringComparison.Ordinal))
                     {
@@ -80,7 +82,7 @@ namespace Fido2NetLib
             // trustPath[0] is the attestation cert, if there are more in the array than just that, add those to the extra store as well, but skip attestation cert
             if (trustPath.Length > 1)
             {
-                foreach (X509Certificate2? cert in trustPath.Skip(1)) // skip attestation cert
+                foreach (X509Certificate2 cert in trustPath.Skip(1)) // skip attestation cert
                 {
                     chain.ChainPolicy.ExtraStore.Add(cert);
                 }

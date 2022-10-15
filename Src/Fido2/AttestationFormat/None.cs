@@ -1,4 +1,6 @@
 ﻿using System.Security.Cryptography.X509Certificates;
+
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
@@ -8,7 +10,7 @@ namespace Fido2NetLib
         public override (AttestationType, X509Certificate2[]?) Verify()
         {
             if (attStmt.Count != 0)
-                throw new Fido2VerificationException("Attestation format none should have no attestation statement");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation format none should have no attestation statement");
 
             return (AttestationType.None, null);
         }

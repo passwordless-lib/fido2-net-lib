@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
 
 namespace Fido2NetLib
 {
-    public static class EnumNameMapper<TEnum>
+    public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>
         where TEnum: struct, Enum
     {
         private static readonly Dictionary<TEnum, string> valueToNames = GetIdToNameMap();

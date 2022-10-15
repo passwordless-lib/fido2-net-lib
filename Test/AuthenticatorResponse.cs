@@ -5,6 +5,7 @@ using System.Text.Json;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test;
@@ -310,14 +311,15 @@ public class AuthenticatorResponse
     {
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.ResponseData
             {
                 AttestationObject = value,
             }
         };
 
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
-        Assert.Equal("AttestationObject invalid CBOR", ex.Message);
+        Assert.Equal(Fido2ErrorMessages.InvalidAttestationObject, ex.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestationObject, ex.Code);
 
         var innerEx = (CborContentException)ex.InnerException;
 
@@ -335,14 +337,16 @@ public class AuthenticatorResponse
     {
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.ResponseData
             {
-                AttestationObject = value,
+                AttestationObject = value
             }
         };
 
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
-        Assert.Equal("Malformed AttestationObject", ex.Message);
+
+        Assert.Equal(Fido2ErrorCode.MalformedAttestationObject, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.MalformedAttestationObject, ex.Message);
     }
 
     [Fact]
@@ -404,7 +408,7 @@ public class AuthenticatorResponse
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        IFido2 lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -412,7 +416,7 @@ public class AuthenticatorResponse
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse is not type webauthn.create", ex.Result.Message);
+        Assert.Equal("AttestationResponse type must be webauthn.create", ex.Result.Message);
     }
 
     [Theory]
@@ -552,7 +556,7 @@ public class AuthenticatorResponse
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse is missing type with value 'public-key'", ex.Result.Message);
+        Assert.Equal("AttestationResponse type must be 'public-key'", ex.Result.Message);
     }
 
     [Fact]
@@ -621,7 +625,7 @@ public class AuthenticatorResponse
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        IFido2 lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -629,11 +633,12 @@ public class AuthenticatorResponse
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("Hash mismatch RPID", ex.Result.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidRpidHash, ex.Result.Code);
+        Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Result.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseNotUserPresent()
+    public async Task TestAuthenticatorAttestationResponseNotUserPresent()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -656,7 +661,7 @@ public class AuthenticatorResponse
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.ResponseData
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -679,7 +684,7 @@ public class AuthenticatorResponse
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
+            PubKeyCredParams = new List<PubKeyCredParam>
             {
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             },
@@ -706,8 +711,10 @@ public class AuthenticatorResponse
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("User Present flag not set in authenticator data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+
+        Assert.Equal(Fido2ErrorCode.UserPresentFlagNotSet, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.UserPresentFlagNotSet, ex.Message);
     }
 
     [Fact]
@@ -862,7 +869,8 @@ public class AuthenticatorResponse
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("Missing or unknown attestation type", ex.Result.Message);
+        Assert.Equal("Unknown attestation type. Was 'testing'", ex.Result.Message);
+        Assert.Equal(Fido2ErrorCode.UnknownAttestationType, ex.Result.Code);
     }
 
     [Fact]

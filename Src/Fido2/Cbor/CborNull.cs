@@ -1,9 +1,8 @@
-﻿namespace Fido2NetLib.Cbor
-{
-    public sealed class CborNull : CborObject
-    {
-        public static readonly CborNull Instance = new();
+﻿namespace Fido2NetLib.Cbor;
 
-        public override CborType Type => CborType.Null;
-    }
+public sealed class CborNull : CborObject
+{
+    public static readonly CborNull Instance = new();
+
+    public override CborType Type => CborType.Null;
 }

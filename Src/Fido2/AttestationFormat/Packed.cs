@@ -1,26 +1,34 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib
 {
     internal sealed class Packed : AttestationVerifier
     {
-        private static readonly string[] s_newLine = new string[] { Environment.NewLine };
-
         public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
         {
             // parse the DN string using standard rules
             var dictSubjectObj = new X500DistinguishedName(attnCertSubj);
 
             // form the string for splitting using new lines to avoid issues with commas
-            var dictSubjectString = dictSubjectObj.Decode(X500DistinguishedNameFlags.UseNewLines); 
-            var dictSubject = dictSubjectString.Split(s_newLine, StringSplitOptions.None)
-                                          .Select(part => part.Split('='))
-                                          .ToDictionary(split => split[0], split => split[1]);
+            string dictSubjectString = dictSubjectObj.Decode(X500DistinguishedNameFlags.UseNewLines);
+
+            var dictSubject = new Dictionary<string, string>();
+
+            foreach (var line in dictSubjectString.AsSpan().EnumerateLines())
+            {
+                int equalIndex = line.IndexOf('=');
+
+                var lhs = line.Slice(0, equalIndex).ToString();
+                var rhs = line.Slice(equalIndex + 1).ToString();
+
+                dictSubject[lhs] = rhs;
+            }
 
             return dictSubject["C"].Length != 0 
                 && dictSubject["O"].Length != 0 
@@ -34,13 +42,13 @@ namespace Fido2NetLib
             // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and 
             // perform CBOR decoding on it to extract the contained fields.
             if (attStmt.Count is 0)
-                throw new Fido2VerificationException("Attestation format packed must have attestation statement");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation format packed must have attestation statement");
 
             if (!(Sig is CborByteString { Length: > 0 }))
-                throw new Fido2VerificationException("Invalid packed attestation signature");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid packed attestation signature");
 
-            if (!(Alg is CborInteger))
-                throw new Fido2VerificationException("Invalid packed attestation algorithm");
+            if (Alg is not CborInteger)
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid packed attestation algorithm");
 
             var alg = (COSE.Algorithm)(int)Alg;
 
@@ -48,7 +56,7 @@ namespace Fido2NetLib
             if (X5c != null)
             {
                 if (!(X5c is CborArray { Length: > 0 } x5cArray) || EcdaaKeyId != null)
-                    throw new Fido2VerificationException("Malformed x5c array in packed attestation statement");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c array in packed attestation statement");
 
                 var trustPath = new X509Certificate2[x5cArray.Length];
 
@@ -61,13 +69,13 @@ namespace Fido2NetLib
                         // X509Certificate2.NotBefore/.NotAfter return LOCAL DateTimes, so
                         // it's correct to compare using DateTime.Now.
                         if (DateTime.Now < x5cCert.NotBefore || DateTime.Now > x5cCert.NotAfter)
-                            throw new Fido2VerificationException("Packed signing certificate expired or not yet valid");
+                            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Packed signing certificate expired or not yet valid");
 
                         trustPath[i] = x5cCert;
                     }
                     else
                     {
-                        throw new Fido2VerificationException("Malformed x5c cert found in packed attestation statement");
+                        throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c cert found in packed attestation statement");
                     }                   
                 }
 
@@ -79,17 +87,17 @@ namespace Fido2NetLib
                 var cpk = new CredentialPublicKey(attestnCert, alg);
 
                 if (!cpk.Verify(Data, (byte[])Sig))
-                    throw new Fido2VerificationException("Invalid full packed signature");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid full packed signature");
 
                 // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
                 // 2bi. Version MUST be set to 3
                 if (attestnCert.Version != 3)
-                    throw new Fido2VerificationException("Packed x5c attestation certificate not V3");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Packed x5c attestation certificate not V3");
 
                 // 2bii. Subject field MUST contain C, O, OU, CN
                 // OU must match "Authenticator Attestation"
                 if (!IsValidPackedAttnCertSubject(attestnCert.Subject))
-                    throw new Fido2VerificationException("Invalid attestation cert subject");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAttestationCertSubject);
 
                 // 2biii. If the related attestation root certificate is used for multiple authenticator models, 
                 // the Extension OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) MUST be present, containing the AAGUID as a 16-byte OCTET STRING
@@ -98,13 +106,13 @@ namespace Fido2NetLib
 
                 // 2biiii. The Basic Constraints extension MUST have the CA component set to false
                 if (IsAttnCertCACert(attestnCert.Extensions))
-                    throw new Fido2VerificationException("Attestation certificate has CA cert flag present");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation certificate has CA cert flag present");
 
                 // 2c. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
                 if (aaguid != null)
                 {
                     if (AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData.AaGuid) != 0)
-                        throw new Fido2VerificationException("aaguid present in packed attestation cert exts but does not match aaguid from authData");
+                        throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aaguid present in packed attestation cert exts but does not match aaguid from authData");
                 }
 
                 // id-fido-u2f-ce-transports 
@@ -118,7 +126,7 @@ namespace Fido2NetLib
             // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
             else if (EcdaaKeyId != null)
             {
-                throw new Fido2VerificationException("ECDAA is not yet implemented");
+                throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, Fido2ErrorMessages.UnimplementedAlgorithm_Ecdaa_Packed);
 
                 // 3a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
                 // using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId
@@ -133,12 +141,12 @@ namespace Fido2NetLib
             {
                 // 4a. Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
                 if (!AuthData.AttestedCredentialData.CredentialPublicKey.IsSameAlg(alg))
-                    throw new Fido2VerificationException("Algorithm mismatch between credential public key and authenticator data in self attestation statement");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 
                 // 4b. Verify that sig is a valid signature over the concatenation of authenticatorData and 
                 // clientDataHash using the credential public key with alg
                 if (!AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, (byte[])Sig))
-                    throw new Fido2VerificationException("Failed to validate signature");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Failed to validate signature");
 
                 return (AttestationType.Self, null);
             }
