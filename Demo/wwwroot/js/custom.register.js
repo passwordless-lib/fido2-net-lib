@@ -15,7 +15,7 @@ async function handleRegisterSubmit(event) {
     let user_verification = value("#option-userverification");
 
     // possible values: true,false
-    let require_resident_key = value("#option-residentkey");
+    let residentKey = value("#option-residentkey");
 
 
     // prepare form post data
@@ -25,7 +25,7 @@ async function handleRegisterSubmit(event) {
     data.append('attType', attestation_type);
     data.append('authType', authenticator_attachment);
     data.append('userVerification', user_verification);
-    data.append('requireResidentKey', require_resident_key);
+    data.append('residentKey', residentKey);
 
     // send to server for registering
     let makeCredentialOptions;

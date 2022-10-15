@@ -14,9 +14,9 @@ async function handleRegisterSubmit(event) {
     // possible values: preferred, required, discouraged
     let user_verification = "preferred";
 
-    // possible values: true,false
+    // possible values: discouraged, preferred, required
     // NOTE: For usernameless scenarios, resident key must be set to true.
-    let require_resident_key = "true";
+    let residentKey = "required";
 
 
 
@@ -27,7 +27,7 @@ async function handleRegisterSubmit(event) {
     data.append('attType', attestation_type);
     data.append('authType', authenticator_attachment);
     data.append('userVerification', user_verification);
-    data.append('requireResidentKey', require_resident_key);
+    data.append('residentKey', residentKey);
 
     // send to server for registering
     let makeCredentialOptions;
