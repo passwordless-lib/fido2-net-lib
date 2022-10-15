@@ -6,17 +6,28 @@ async function handleRegisterSubmit(event) {
     let username = this.username.value;
     let displayName = this.displayName.value;
 
-    // possible values: none, direct, indirect
-    let attestation_type = value("#option-attestation");
-    // possible values: <empty>, platform, cross-platform
-    let authenticator_attachment = value("#option-authenticator");
+    let attestation_type = "none";
 
-    // possible values: preferred, required, discouraged
-    let user_verification = value("#option-userverification");
+    if (value('#option-attestation') !== "undefined") {
+        attestation_type = value('#option-attestation');
+    }
 
-    // possible values: true,false
-    let residentKey = value("#option-residentkey");
+    let authenticator_attachment = "";
 
+    if (value("#option-authenticator") !== "undefined") {
+        authenticator_attachment = value("#option-authenticator");
+    }
+
+    let user_verification = "discouraged";
+
+    if (value("#option-userverification") !== "undefined") {
+        user_verification = value("#option-userverification");
+    }
+
+    let residentKey = "";
+    if (value("#option-residentkey") !== "undefined") {
+        residentKey = value("#option-residentkey");
+    }
 
     // prepare form post data
     var data = new FormData();
@@ -27,8 +38,6 @@ async function handleRegisterSubmit(event) {
     data.append('userVerification', user_verification);
     data.append('residentKey', residentKey);
 
-    // send to server for registering
-    let makeCredentialOptions;
     try {
         makeCredentialOptions = await fetchMakeCredentialOptions(data);
 
@@ -61,6 +70,156 @@ async function handleRegisterSubmit(event) {
     if (makeCredentialOptions.authenticatorSelection.authenticatorAttachment === null) makeCredentialOptions.authenticatorSelection.authenticatorAttachment = undefined;
 
     console.log("Credential Options Formatted", makeCredentialOptions);
+
+    // send to server for registering
+    var makeCredentialOptions = {
+        rp: {
+            name: "WebAuthn Test Server",
+            icon: "https://example.com/rpIcon.png"
+        },
+        user: {
+            id: makeCredentialOptions.user.id,
+            name: displayName,
+            user: displayName,
+            displayName: displayName,
+            icon: "https://example.com/userIcon.png"
+        },
+        challenge: makeCredentialOptions.challenge,
+        pubKeyCredParams: [],
+        timeout: 90000,
+        excludeCredentials: [],
+        authenticatorSelection: {
+            userVerification: "discouraged"
+        },
+        attestation: undefined,
+        extensions: {}
+    };
+
+    switch (value('#option-rpinfo')) {
+        case "normal":
+            makeCredentialOptions.rp.id = window.location.hostname;
+            break;
+        case "suffix":
+            makeCredentialOptions.rp.id = "suffix." + window.location.hostname;
+            break;
+        case "securityerror":
+            makeCredentialOptions.rp.id = "foo.com";
+            break;
+        case "emptyrpid":
+            makeCredentialOptions.rp.id = "";
+            break;
+        case "emptyrpname":
+            makeCredentialOptions.rp.name = undefined;
+            break;
+        case "emptyrpicon":
+            makeCredentialOptions.rp.icon = undefined;
+        case "undefined":
+        default:
+            break;
+    }
+
+    if (value('#option-ES256')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -7
+        });
+    }
+    if (value('#option-ES384')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -35
+        });
+    }
+    if (value('#option-ES512')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -36
+        });
+    }
+    if (value('#option-RS256')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -257
+        });
+    }
+    if (value('#option-RS384')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -258
+        });
+    }
+    if (value('#option-RS512')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -259
+        });
+    }
+    if (value('#option-PS256')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -37
+        });
+    }
+    if (value('#option-PS384')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -38
+        });
+    }
+    if (value('#option-PS512')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -39
+        });
+    }
+    if (value('#option-EdDSA')) {
+        makeCredentialOptions.pubKeyCredParams.push({
+            type: "public-key",
+            alg: -8
+        });
+    }
+
+    if (value('#option-attestation') !== "undefined") {
+        makeCredentialOptions.attestation = value('#option-attestation');
+    }
+
+    if (value('#option-requireresidentkey') !== "undefined") {
+        var requireResidentKey = (value('#option-requireresidentkey') == "true");
+        makeCredentialOptions.authenticatorSelection.requireResidentKey = requireResidentKey;
+    }
+
+    if (value('#option-residentkey') !== "undefined") {
+        makeCredentialOptions.authenticatorSelection.residentKey = value('#option-residentkey');
+    }
+
+    if (value('#option-credprotect') !== "undefined") {
+        var credProtect = value('#option-credprotect');
+        makeCredentialOptions.extensions.credentialProtectionPolicy = credProtect;
+    }
+
+    if (value('#option-credprotectenforce') !== "undefined") {
+        var enforceCredProtect = (value('#coption-credprotectenforce') == "true");
+        makeCredentialOptions.extensions.enforceCredentialProtectionPolicy = enforceCredProtect;
+    }
+
+    if (value('#option-hmaccreate') !== "undefined") {
+        var hmacCreateSecret = (value('#option-hmaccreate') == "true");
+        makeCredentialOptions.extensions.hmacCreateSecret = hmacCreateSecret;
+    }
+
+    if (value('#option-minPinLength') !== "undefined") {
+        var minPinLength = (value('#option-minPinLength') == "true");
+        makeCredentialOptions.extensions.minPinLength = minPinLength;
+    }
+
+    if (value('#option-largeBlob') !== "undefined") {
+        makeCredentialOptions.extensions.largeBlob = {};
+        makeCredentialOptions.extensions.largeBlob.support = value('#option-largeBlob');
+    }
+
+    if (value("#option-userverification") !== "undefined") {
+        makeCredentialOptions.authenticatorSelection.userVerification = value("#option-userverification");
+    }
 
     Swal.fire({
         title: 'Registering...',
@@ -97,19 +256,16 @@ async function handleRegisterSubmit(event) {
 }
 
 async function fetchMakeCredentialOptions(formData) {
-    let response = await fetch('/makeCredentialOptions', {
-        method: 'POST', // or 'PUT'
-        body: formData, // data can be `string` or {object}!
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-
-    let data = await response.json();
-
-    return data;
+    // use jquery ajax instead of fetch because of safari browser and platform authenticator
+    // https://github.com/passwordless-lib/fido2-net-lib/issues/303
+    return await $.post({
+        url: '/makeCredentialOptions',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+    }, 'json');
 }
-
 
 // This should be used to verify the auth data with the server
 async function registerNewCredential(newCredential) {
@@ -131,29 +287,29 @@ async function registerNewCredential(newCredential) {
 
     let response;
     try {
-        response = await registerCredentialWithServer(data);
-    } catch (e) {
-        showErrorAlert(e);
+            response = await registerCredentialWithServer(data);
+        } catch (e) {
+            showErrorAlert(e);
     }
 
-    console.log("Credential Object", response);
+            console.log("Credential Object", response);
 
-    // show error
-    if (response.status !== "ok") {
-        console.log("Error creating credential");
-        console.log(response.errorMessage);
-        showErrorAlert(response.errorMessage);
-        return;
-    }
+            // show error
+            if (response.status !== "ok") {
+                console.log("Error creating credential");
+                console.log(response.errorMessage);
+                showErrorAlert(response.errorMessage);
+                return;
+            }
 
-    // show success 
-    Swal.fire({
-        title: 'Registration Successful!',
-        text: 'You\'ve registered successfully.',
-        type: 'success',
-        timer: 2000
-    });
-
+            // show success 
+            Swal.fire({
+                title: 'Registration Successful!',
+                text: 'You\'ve registered successfully.',
+                type: 'success',
+                timer: 2000
+            });
+ 
     // redirect to dashboard?
     //window.location.href = "/dashboard/" + state.user.displayName;
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -80,9 +80,10 @@ namespace Fido2NetLib
                 Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
                 Timeout = config.Timeout,
                 User = user,
-                PubKeyCredParams = new List<PubKeyCredParam>(10)
+                PubKeyCredParams = new List<PubKeyCredParam>()
                 {
                     // Add additional as appropriate
+                    PubKeyCredParam.Ed25519,
                     PubKeyCredParam.ES256,
                     PubKeyCredParam.RS256,
                     PubKeyCredParam.PS256,
@@ -92,7 +93,7 @@ namespace Fido2NetLib
                     PubKeyCredParam.ES512,
                     PubKeyCredParam.RS512,
                     PubKeyCredParam.PS512,
-                    PubKeyCredParam.Ed25519,
+                    PubKeyCredParam.ES256K,
                 },
                 AuthenticatorSelection = authenticatorSelection,
                 Attestation = attestationConveyancePreference,
@@ -146,6 +147,7 @@ namespace Fido2NetLib
         public static readonly PubKeyCredParam PS384   = new(COSE.Algorithm.PS384);
         public static readonly PubKeyCredParam PS512   = new(COSE.Algorithm.PS512);
         public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
+        public static readonly PubKeyCredParam ES256K  = new(COSE.Algorithm.ES256K);
     }
 
 #nullable enable

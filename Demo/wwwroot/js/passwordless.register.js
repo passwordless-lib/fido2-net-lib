@@ -8,16 +8,15 @@ async function handleRegisterSubmit(event) {
 
     // possible values: none, direct, indirect
     let attestation_type = "none";
+
     // possible values: <empty>, platform, cross-platform
     let authenticator_attachment = "";
 
     // possible values: preferred, required, discouraged
-    let user_verification = "preferred";
+    let user_verification = "discouraged";
 
     // possible values: discouraged, preferred, required
     let residentKey = "discouraged";
-
-
 
     // prepare form post data
     var data = new FormData();
@@ -99,17 +98,15 @@ async function handleRegisterSubmit(event) {
 }
 
 async function fetchMakeCredentialOptions(formData) {
-    let response = await fetch('/makeCredentialOptions', {
-        method: 'POST', // or 'PUT'
-        body: formData, // data can be `string` or {object}!
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-
-    let data = await response.json();
-
-    return data;
+    // use jquery ajax instead of fetch because of safari browser and platform authenticator
+    // https://github.com/passwordless-lib/fido2-net-lib/issues/303
+    return await $.post({
+        url: '/makeCredentialOptions',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+    }, 'json');
 }
 
 

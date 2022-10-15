@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Fido2NetLib;
@@ -9,7 +11,9 @@ using Fido2NetLib.Objects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Fido2Demo
 {
@@ -44,14 +48,7 @@ namespace Fido2Demo
 
             var username = Array.Empty<byte>();
 
-            try
-            {
-                username = Base64Url.Decode(opts.Username);
-            }
-            catch (FormatException)
-            {
-                username = Encoding.UTF8.GetBytes(opts.Username);
-            }
+            username = Base64Url.Decode(opts.Username);
 
             // 1. Get user from DB by username (in our example, auto create missing users)
             var user = DemoStorage.GetOrAddUser(opts.Username, () => new Fido2User
@@ -71,6 +68,8 @@ namespace Fido2Demo
 
             // 3. Create options
             var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
+
+            options.PubKeyCredParams.Add(new PubKeyCredParam(COSE.Algorithm.RS1, PublicKeyCredentialType.PublicKey));
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -128,11 +127,8 @@ namespace Fido2Demo
             if (null != assertionClientParams.authenticatorSelection)
                 uv = assertionClientParams.authenticatorSelection.UserVerification;
 
-            var exts = new AuthenticationExtensionsClientInputs
-            { 
-                AppID = _origin,
-                UserVerificationMethod = true
-            };
+            var exts = new AuthenticationExtensionsClientInputs();
+
             if (null != assertionClientParams.Extensions && null != assertionClientParams.Extensions.Example)
                 exts.Example = assertionClientParams.Extensions.Example;
 

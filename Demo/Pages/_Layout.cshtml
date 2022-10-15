@@ -6,20 +6,21 @@
 <html lang="en">
 
 <head>
-    <title>FIDO2 &amp; Webauthn for .NET</title>
+    <title>FIDO2 &amp; WebAuthn for .NET</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
 
     <link href="https://fonts.googleapis.com/css?family=Work+Sans" rel="stylesheet">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2" defer></script>
+    <script type="text/javascript" src="~/js/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous" defer></script>
     <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>-->
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.1/sweetalert2.min.css" />
     <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">-->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css" rel="stylesheet" type="text/css" />
-    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <script src="https://use.fontawesome.com/releases/v5.3.1/js/all.js" defer></script>
     <style>
         html {
             scroll-behavior: smooth;
@@ -58,14 +59,14 @@
                             <a class="navbar-item" asp-page="/overview">
                                 Home
                             </a>
-                            <a class="navbar-item" href="https://github.com/abergs/fido2-net-lib#examples">
+                            <a class="navbar-item" href="https://github.com/passwordless-lib/fido2-net-lib#examples">
                                 Documentation
                             </a>
                             <a class="navbar-item" href="https://opencollective.com/passwordless">
                                 Become a backer
-                            </a>                            
+                            </a>
                             <span class="navbar-item">
-                                <a class="button is-info is-inverted" href="https://github.com/abergs/fido2-net-lib">
+                                <a class="button is-info is-inverted" href="https://github.com/passwordless-lib/fido2-net-lib">
                                     <span class="icon">
                                         <i class="fab fa-github"></i>
                                     </span>
@@ -114,16 +115,68 @@
         </div>
     </section>
     @RenderBody()
+    <dialog class="mdl-dialog" id="creationDataDialog">
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button close" id="creationDataDialog_xButton">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <h3 class="mdl-dialog__title">Credential Creation Data</h3>
+        <div class="mdl-dialog__content">
+            <p>
+                <b>Require Resident Key</b>
+                <br>
+                <span id="creationData_residentKey"></span>
+            </p>
+            <p>
+                <b>Authenticator Data</b>
+                <br>
+                <span id="creationData_authenticatorData"></span>
+            </p>
+            <p>
+                <b>Authenticator Data in Hex</b>
+                <br>
+                <span id="creationData_authenticatorDataHex"></span>
+            </p>
+            <p>
+                <b>Public Key</b>
+                <br>
+                <span id="creationData_publicKey"></span>
+            </p>
+            <p>
+                <b>Extension Data</b>
+                <br>
+                <span id="creationData_extensionData"></span>
+            </p>
+            <p>
+                <b>Attestation Statement Chain</b>
+                <br>
+                <span id="creationData_attestationStatementChainJSON"></span>
+            </p>
+            <p>
+                <b>Attestation Statement in Hex</b>
+                <br>
+                <span id="creationData_attestationStatementHex"></span>
+            </p>
+
+        </div>
+
+        <div class="mdl-dialog__actions">
+            <button type="button" class="mdl-button close" id="creationDataDialog_closeButton">
+                Close
+            </button>
+        </div>
+    </dialog>
     <footer class="footer" style="        margin-top: 20vh">
         <div class="content has-text-centered">
             <p>
-                <strong>Fido2 .NET library</strong> by <a href="https://github.com/abergs/">Anders Åberg</a>, <a href="https://github.com/aseigler">Alex Seigler</a> and <a href="https://github.com/abergs/fido2-net-lib/graphs/contributors">contributors</a>. The source code is licensed
-                <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. Available on <a href="https://github.com/abergs/fido2-net-lib">Github</a>
+                <strong>Fido2 .NET library</strong> by <a href="https://github.com/abergs/">Anders Åberg</a>, <a href="https://github.com/aseigler">Alex Seigler</a> and <a href="https://github.com/passwordless-lib/fido2-net-lib/graphs/contributors">contributors</a>. The source code is licensed
+                <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. Available on <a href="https://github.com/passwordless-lib/fido2-net-lib">Github</a>
             </p>
 
             <p><small>Supported by the <a href="https://dotnetfoundation.org">.NET Foundation</a></small></p>
             <img src="~/images/dotnetfoundation_v4_horizontal.svg" alt=".NET foundation logo" width="220" />
-            
+
             <p><small>Illustrations from <a href="https://medium.com/@@herrjemand/introduction-to-webauthn-api-5fd1fb46c285">Ackermann Yuriy</a></small></p>
         </div>
     </footer>

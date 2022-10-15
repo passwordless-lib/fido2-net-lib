@@ -4,7 +4,11 @@ async function handleSignInSubmit(event) {
     event.preventDefault();
 
     let username = this.username.value;
-    let user_verification = value("#option-userverification");
+    let user_verification = "discouraged";
+
+    if (value("#option-userverification") !== "undefined") {
+        user_verification = value("#option-userverification");
+    }
 
     // prepare form post data
     var formData = new FormData();
@@ -14,15 +18,15 @@ async function handleSignInSubmit(event) {
     // send to server for registering
     let makeAssertionOptions;
     try {
-        var res = await fetch('/assertionOptions', {
-            method: 'POST', // or 'PUT'
-            body: formData, // data can be `string` or {object}!
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        makeAssertionOptions = await res.json();
+        // use jquery ajax instead of fetch because of safari browser and platform authenticator
+        // https://github.com/passwordless-lib/fido2-net-lib/issues/303
+        makeAssertionOptions = await $.post({
+            url: '/assertionOptions',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+        }, 'json');
     } catch (e) {
         showErrorAlert("Request to server failed", e);
     }
