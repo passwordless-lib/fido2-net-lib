@@ -38,7 +38,7 @@ namespace Fido2Demo
                                                 [FromForm] string displayName,
                                                 [FromForm] string attType,
                                                 [FromForm] string authType,
-                                                [FromForm] bool requireResidentKey,
+                                                [FromForm] string residentKey,
                                                 [FromForm] string userVerification)
         {
             try
@@ -63,7 +63,7 @@ namespace Fido2Demo
                 // 3. Create options
                 var authenticatorSelection = new AuthenticatorSelection
                 {
-                    RequireResidentKey = requireResidentKey,
+                    ResidentKey = residentKey.ToEnum<ResidentKeyRequirement>(),
                     UserVerification = userVerification.ToEnum<UserVerificationRequirement>()
                 };
 

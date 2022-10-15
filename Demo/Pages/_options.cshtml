@@ -49,29 +49,18 @@
 
                 </div>
                 <div class="field">
-                    <label class="label">Require Resident Key</label>
+                    <label class="label">Resident Key</label>
                     <div class="control">
-                        <label class="select">
-                            <select id="option-requireresidentkey">
-                                <option value="undefined" selected>Undefined</option>
-                                <option value="false">False</option>
-                                <option value="true">True</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                <div class="field">
-                    <label class="label">Resident Key (L2)</label>
-                    <div class="control">
-                        <label class="select">
+                        <div class="select">
                             <select id="option-residentkey">
                                 <option value="undefined" selected>Undefined</option>
-                                <option value="discouraged">Discouraged</option>
-                                <option value="preferred">Preferred</option>
                                 <option value="required">Required</option>
+                                <option value="preferred">Preferred</option>
+                                <option value="discouraged">Discouraged</option>
                             </select>
-                        </label>
+                        </div>
                     </div>
+                    <p class="help">For register the client will guide the user through setting up user verification if needed to create a discoverable credential. This takes precedence over the setting of userVerification.</p>
                 </div>
                 <div class="field">
                     <label class="label">RP Info</label>

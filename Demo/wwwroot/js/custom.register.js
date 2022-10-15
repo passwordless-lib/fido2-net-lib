@@ -24,7 +24,10 @@ async function handleRegisterSubmit(event) {
         user_verification = value("#option-userverification");
     }
 
-    let require_resident_key = value("#option-residentkey");
+    let residentKey = "";
+    if (value("#option-residentkey") !== "undefined") {
+        residentKey = value("#option-residentkey");
+    }
 
     // prepare form post data
     var data = new FormData();
@@ -33,7 +36,7 @@ async function handleRegisterSubmit(event) {
     data.append('attType', attestation_type);
     data.append('authType', authenticator_attachment);
     data.append('userVerification', user_verification);
-    data.append('requireResidentKey', require_resident_key);
+    data.append('residentKey', residentKey);
 
     try {
         makeCredentialOptions = await fetchMakeCredentialOptions(data);

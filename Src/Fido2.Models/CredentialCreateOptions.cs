@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -182,6 +183,7 @@ namespace Fido2NetLib
 
     /// <summary>
     /// WebAuthn Relying Parties may use the AuthenticatorSelectionCriteria dictionary to specify their requirements regarding authenticator attributes.
+    /// https://w3c.github.io/webauthn/#dictionary-authenticatorSelection
     /// </summary>
     public class AuthenticatorSelection
     {
@@ -192,11 +194,41 @@ namespace Fido2NetLib
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public AuthenticatorAttachment? AuthenticatorAttachment { get; set; }
 
+        private ResidentKeyRequirement _residentKey;
+        /// <summary>
+        /// Specifies the extent to which the Relying Party desires to create a client-side discoverable credential. For historical reasons the naming retains the deprecated “resident” terminology. The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, treating an unknown value as if the member does not exist. If no value is given then the effective value is required if requireResidentKey is true or discouraged if it is false or absent.
+        /// </summary>
+        [JsonPropertyName("residentKey")]
+        public ResidentKeyRequirement ResidentKey
+        {
+            get => _residentKey;
+            set
+            {
+                _residentKey = value;
+                _requireResidentKey = value switch
+                {
+                    ResidentKeyRequirement.Required => true,
+                    ResidentKeyRequirement.Preferred or ResidentKeyRequirement.Discouraged => false,
+                    _ => throw new NotImplementedException(),
+                };
+            }
+        }
+
+        private bool _requireResidentKey;
         /// <summary>
         /// This member describes the Relying Parties' requirements regarding resident credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident public key credential source when creating a public key credential.
         /// </summary>
+        [Obsolete("Use property ResidentKey.")]
         [JsonPropertyName("requireResidentKey")]
-        public bool RequireResidentKey { get; set; }
+        public bool RequireResidentKey 
+        {
+            get => _requireResidentKey;
+            set
+            {
+                _requireResidentKey = value;
+                _residentKey = value ? ResidentKeyRequirement.Required : ResidentKeyRequirement.Discouraged;
+            }
+        }
 
         /// <summary>
         /// This member describes the Relying Party's requirements regarding user verification for the create() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement.
@@ -207,7 +239,7 @@ namespace Fido2NetLib
         public static AuthenticatorSelection Default => new AuthenticatorSelection
         {
             AuthenticatorAttachment = null,
-            RequireResidentKey = false,
+            ResidentKey = ResidentKeyRequirement.Discouraged,
             UserVerification = UserVerificationRequirement.Preferred
         };
     }
