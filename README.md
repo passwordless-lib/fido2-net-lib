@@ -13,7 +13,7 @@ The quickest way to get started with FIDO2 and WebAuthn is with the [Passwordles
 
 ### Purpose
 
-<img align="right" width="100px" src="https://dotnetfoundation.org/img/logo_big.svg" />
+<img align="right" width="100px" src="https://user-images.githubusercontent.com/357283/188737052-4735ba0a-08b5-47e8-9b2c-02c8829d2413.png" />
 Our purpose is to enable passwordless sign in for all .NET apps (asp, core, native).
 
 To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.com/) [FIDO2 Server](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html) / [WebAuthn relying party](https://www.w3.org/TR/webauthn/#relying-party) library for the easy validation of [registration](https://www.w3.org/TR/webauthn/#usecase-registration) ([attestation](https://www.w3.org/TR/webauthn/#attestation)) and [authentication](https://www.w3.org/TR/webauthn/#usecase-authentication) ([assertion](https://www.w3.org/TR/webauthn/#authentication-assertion)) of [FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) credentials, in order to increase the adoption of the technology, ultimately defeating phishing attacks.
@@ -56,7 +56,7 @@ Read more:
 - ✅ [Windows Hello](https://docs.microsoft.com/en-us/microsoft-edge/dev-guide/windows-integration/web-authentication) 
 - ✅ [Face ID and Touch ID for the Web](https://webkit.org/blog/11312/meet-face-id-and-touch-id-for-the-web/) (aka "Apple Hello") 
 - ✅ All currently referenced cryptographic algorithms for FIDO2 Server ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other))
-- ✅ All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", "apple", and "none" ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html))
+- ✅ All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", "apple", "apple-appattest", and "none" ([spec](https://www.iana.org/assignments/webauthn/webauthn.xhtml))
 - ✅ FIDO2 Server attestation validation via FIDO Metadata Service V3 ([spec](https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html))
 - ✅ WebAuthn extensions ([spec](https://www.w3.org/TR/webauthn/#extensions))
 - ✅ Examples & demos
@@ -210,6 +210,8 @@ See [Contributing](CONTRIBUTING.md) for information about contributing to the pr
 
 This project has adopted the code of conduct defined by the Contributor Covenant to clarify expected behavior in our community.
 For more information see the [.NET Foundation Code of Conduct](https://dotnetfoundation.org/code-of-conduct). 
+
+For security and penetration testing, please see our [Vulnerability Disclosure Program](./VDP.md)
 
 ## Contributors
 

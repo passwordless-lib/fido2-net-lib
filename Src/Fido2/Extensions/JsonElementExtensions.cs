@@ -1,23 +1,22 @@
 ﻿using System.Text.Json;
 
-namespace Fido2NetLib
+namespace Fido2NetLib;
+
+internal static class JsonElementExtensions
 {
-    internal static class JsonElementExtensions
+    public static string[] ToStringArray(this in JsonElement el)
     {
-        public static string[] ToStringArray(this in JsonElement el)
+        var result = new string[el.GetArrayLength()];
+
+        int i = 0;
+
+        foreach (var item in el.EnumerateArray())
         {
-            var result = new string[el.GetArrayLength()];
+            result[i] = item.GetString()!;
 
-            int i = 0;
-
-            foreach (var item in el.EnumerateArray())
-            {
-                result[i] = item.GetString()!;
-
-                i++;
-            }
-
-            return result;
+            i++;
         }
+
+        return result;
     }
 }

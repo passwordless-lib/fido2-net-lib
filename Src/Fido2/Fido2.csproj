@@ -3,6 +3,8 @@
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
     <Nullable>enable</Nullable>
     <RootNamespace>Fido2NetLib</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+    <NoWarn>IDE0057</NoWarn>
   </PropertyGroup>
    
   <ItemGroup>
@@ -19,7 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="22.4.0" />
     <PackageReference Include="System.Formats.Cbor" Version="6.0.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.17.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.23.1" />
   </ItemGroup>
 
   <ItemGroup>

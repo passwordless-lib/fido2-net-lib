@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib
@@ -78,5 +79,14 @@ namespace Fido2NetLib
         /// </remarks>
         [JsonPropertyName("rogueListHash")]
         public string RogueListHash { get; set; }
+
+        /// <summary>
+        /// Gets the latest, most current status report for the authenticator.
+        /// </summary>
+        /// <returns>Latest status report, or null if there are no reports.</returns>
+        public StatusReport GetLatestStatusReport()
+        {
+            return StatusReports.LastOrDefault();
+        }
     }
 }

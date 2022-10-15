@@ -134,7 +134,10 @@ namespace Fido2NetLib
                 buffer[encodedLength - 2] = (byte)'=';
             }
 
-            Base64.DecodeFromUtf8InPlace(buffer.AsSpan(0, encodedLength), out int decodedLength);
+            if (OperationStatus.Done != Base64.DecodeFromUtf8InPlace(buffer.AsSpan(0, encodedLength), out int decodedLength))
+            {
+                throw new FormatException("The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.");
+            }
 
             var result = buffer.AsSpan(0, decodedLength).ToArray();
 

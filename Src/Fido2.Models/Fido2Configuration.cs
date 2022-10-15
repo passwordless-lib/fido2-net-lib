@@ -6,6 +6,16 @@ namespace Fido2NetLib
 {
     public class Fido2Configuration
     {
+        private HashSet<string> _origins;
+        private HashSet<string> _fullyQualifiedOrigins;
+
+        /// <summary>
+        /// Create the configuration for Fido2.
+        /// </summary>
+        public Fido2Configuration()
+        {
+        }
+
         /// <summary>
         /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. 
         /// This is treated as a hint, and MAY be overridden by the client.
@@ -28,12 +38,12 @@ namespace Fido2NetLib
         public string ServerDomain { get; set; }
 
         /// <summary>
-        ///  A human friendly name of the RP
+        /// A human-friendly name of the RP.
         /// </summary>
         public string ServerName { get; set; }
 
         /// <summary>
-        /// A serialized URL which resolves to an image associated with the entity.For example, this could be a user’s avatar or a Relying Party's logo. This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of needing more storage.
+        /// A serialized URL which resolves to an image associated with the entity. For example, this could be a user’s avatar or a Relying Party's logo. This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of needing more storage.
         /// </summary>
         public string ServerIcon { get; set; }
 
@@ -48,12 +58,24 @@ namespace Fido2NetLib
         /// </summary>
         public HashSet<string> Origins
         {
-            get => _origins ?? new HashSet<string>
+            get
             {
-#pragma warning disable CS0618
-                Origin
-#pragma warning restore CS0618
-            };
+                if (_origins == null)
+                {
+                    _origins = new HashSet<string>();
+
+                    // Since we're depricating Origin we ease the transition to move the value automatically, unless its null
+#pragma warning disable CS0618 // Type or member is obsolete
+                    if (Origin != null)
+                    {
+                        _origins.Add(Origin);
+                    }
+#pragma warning restore CS0618 // Type or member is obsolete
+                }
+
+                return _origins;
+            }
+
             set
             {
                 _origins = value;
@@ -76,18 +98,20 @@ namespace Fido2NetLib
         }
 
         /// <summary>
-        /// MDSCacheDirPath
+        /// Metadata service cache directory path.
         /// </summary>
         public string MDSCacheDirPath { get; set; }
 
         /// <summary>
-        /// Create the configuration for Fido2
+        /// List of metadata statuses for an authenticator that should cause attestations to be rejected.
         /// </summary>
-        public Fido2Configuration()
+        public AuthenticatorStatus[] UndesiredAuthenticatorMetadataStatuses { get; set; } = new AuthenticatorStatus[]
         {
-        }
-
-        private HashSet<string> _origins;
-        private HashSet<string> _fullyQualifiedOrigins;
+            AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE,
+            AuthenticatorStatus.USER_VERIFICATION_BYPASS,
+            AuthenticatorStatus.USER_KEY_REMOTE_COMPROMISE,
+            AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
+            AuthenticatorStatus.REVOKED
+        };
     }
 }

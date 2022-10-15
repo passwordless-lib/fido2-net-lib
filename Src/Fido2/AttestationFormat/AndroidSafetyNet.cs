@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 using Microsoft.IdentityModel.Tokens;
@@ -126,7 +128,7 @@ namespace Fido2NetLib
                 }
                 if (claim is { Type: "timestampMs", ValueType: "http://www.w3.org/2001/XMLSchema#integer64" })
                 {
-                    timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(double.Parse(claim.Value));
+                    timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(double.Parse(claim.Value, CultureInfo.InvariantCulture));
                 }
             }
 
@@ -139,12 +141,12 @@ namespace Fido2NetLib
             var notBefore = DateTimeOffset.UtcNow.AddMinutes(-1).AddMilliseconds(-(_driftTolerance));
             if ((notAfter < timestamp) || ((notBefore) > timestamp.Value))
             {
-                throw new Fido2VerificationException($"SafetyNet timestampMs must be between one minute ago and now, got: {timestamp:o}");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"SafetyNet timestampMs must be between one minute ago and now, got: {timestamp:o}");
             }
 
             // 3. Verify that the nonce in the response is identical to the SHA-256 hash of the concatenation of authenticatorData and clientDataHash
             if (string.IsNullOrEmpty(nonce))
-                throw new Fido2VerificationException("Nonce value not found in SafetyNet attestation");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Nonce value not found in SafetyNet attestation");
 
             byte[] nonceHash;
             try
@@ -153,7 +155,7 @@ namespace Fido2NetLib
             }
             catch (Exception ex)
             {
-                throw new Fido2VerificationException("Nonce value not base64string in SafetyNet attestation", ex);
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Nonce value not base64string in SafetyNet attestation", ex);
             }
 
             Span<byte> dataHash = stackalloc byte[32];
@@ -161,7 +163,7 @@ namespace Fido2NetLib
 
             if (!dataHash.SequenceEqual(nonceHash))
             {
-                throw new Fido2VerificationException($"SafetyNet response nonce / hash value mismatch, nonce {Convert.ToHexString(nonceHash)}, hash {Convert.ToHexString(dataHash)}");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"SafetyNet response nonce / hash value mismatch, nonce {Convert.ToHexString(nonceHash)}, hash {Convert.ToHexString(dataHash)}");
             }
 
             // 4. Let attestationCert be the attestation certificate
@@ -170,14 +172,14 @@ namespace Fido2NetLib
 
             // 5. Verify that the attestation certificate is issued to the hostname "attest.android.com"
             if (subject is not "attest.android.com")
-                throw new Fido2VerificationException(string.Format("SafetyNet attestation cert DnsName invalid, want {0}, got {1}", "attest.android.com", subject));
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"Invalid SafetyNet attestation cert DnsName. Expected 'attest.android.com'. Was '{subject}'");
 
             // 6. Verify that the ctsProfileMatch attribute in the payload of response is true
             if (ctsProfileMatch is null)
-                throw new Fido2VerificationException("SafetyNet response ctsProfileMatch missing");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response ctsProfileMatch missing");
                         
             if (true != ctsProfileMatch)
-                throw new Fido2VerificationException("SafetyNet response ctsProfileMatch false");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response ctsProfileMatch false");
 
             return (AttestationType.Basic, new X509Certificate2[] { attestationCert });
         }
