@@ -30,10 +30,14 @@ namespace Fido2NetLib
                 dictSubject[lhs] = rhs;
             }
 
-            return dictSubject["C"].Length != 0 
-                && dictSubject["O"].Length != 0 
-                && dictSubject["OU"].Length != 0 
-                && dictSubject["CN"].Length != 0 
+            return dictSubject.ContainsKey("C") 
+                && dictSubject["C"].Length != 0
+                && dictSubject.ContainsKey("O") 
+                && dictSubject["O"].Length != 0
+                && dictSubject.ContainsKey("OU") 
+                && dictSubject["OU"].Length != 0
+                && dictSubject.ContainsKey("CN") 
+                && dictSubject["CN"].Length != 0
                 && dictSubject["OU"].ToString() is "Authenticator Attestation";
         }
 
