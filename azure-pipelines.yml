@@ -49,9 +49,9 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Install .NET 6.0 Runtime'
+    displayName: 'Install .NET 6.0 SDK'
     inputs:
-      packageType: 'runtime'
+      packageType: 'sdk'
       version: '6.0.x'
   - task: UseDotNet@2
     displayName: 'Install .NET 7.0 SDK'
@@ -107,9 +107,9 @@ jobs:
     vmImage: $(imageName)
   steps:
   - task: UseDotNet@2
-    displayName: 'Install .NET 6.0 Runtime'
+    displayName: 'Install .NET 6.0 SDK'
     inputs:
-      packageType: 'runtime'
+      packageType: 'sdk'
       version: '6.0.x'
   - task: UseDotNet@2
     displayName: 'Install .NET 7.0 SDK'
