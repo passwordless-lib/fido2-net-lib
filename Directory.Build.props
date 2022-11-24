@@ -19,7 +19,7 @@
   </PropertyGroup>
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
-    <LangVersion>10</LangVersion>
+    <LangVersion>11</LangVersion>
   </PropertyGroup>
   <!--MISC-->
   <PropertyGroup>
