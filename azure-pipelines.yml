@@ -3,7 +3,7 @@ name: $(Rev:r)
 
 variables:
   BuildConfiguration: Release
-  TargetWindowsVMImage: windows-latest
+  TargetWindowsVMImage: windows-2022
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
 
 jobs:
@@ -14,11 +14,10 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 6.0 SDK'
+    displayName: 'Use .NET 7.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '6.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-demo
+      version: '7.0.x'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
@@ -49,11 +48,14 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 6.0 SDK'
+    displayName: 'Use .NET 7.0 SDK'
     inputs:
-      packageType: 'sdk'
+      version: '7.0.x'
+  - task: UseDotNet@2
+    displayName: 'Use .NET 6.0 Runtime'
+    inputs:
+      packageType: runtime
       version: '6.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
@@ -96,18 +98,21 @@ jobs:
   strategy:
     matrix:
       linux:
-        imageName: 'ubuntu-latest'
+        imageName: 'ubuntu-22.04'
       mac:
-        imageName: 'macOS-latest'
+        imageName: 'macOS-12'
   pool:
     vmImage: $(imageName)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 6.0 SDK'
+    displayName: 'Use .NET 7.0 SDK'
     inputs:
-      packageType: 'sdk'
+      version: '7.0.x'
+  - task: UseDotNet@2
+    displayName: 'Use .NET 6.0 Runtime'
+    inputs:
+      packageType: runtime
       version: '6.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
