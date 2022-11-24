@@ -51,11 +51,13 @@ jobs:
     displayName: 'Use .NET 7.0 SDK'
     inputs:
       version: '7.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
   - task: UseDotNet@2
     displayName: 'Use .NET 6.0 Runtime'
     inputs:
       packageType: runtime
       version: '6.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
@@ -108,11 +110,13 @@ jobs:
     displayName: 'Use .NET 7.0 SDK'
     inputs:
       version: '7.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
   - task: UseDotNet@2
     displayName: 'Use .NET 6.0 Runtime'
     inputs:
       packageType: runtime
       version: '6.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
