@@ -3,194 +3,193 @@ using System.Collections.Generic;
 using System.Formats.Asn1;
 using System.Numerics;
 
-namespace Fido2NetLib
+namespace Fido2NetLib;
+
+internal readonly struct Asn1Element
 {
-    internal readonly struct Asn1Element
+    private readonly Asn1Tag _tag;
+    private readonly ReadOnlyMemory<byte> _encodedValue;
+    private readonly List<Asn1Element>? _elements; // set | sequence
+
+    public Asn1Element(
+        Asn1Tag tag, 
+        ReadOnlyMemory<byte> encodedValue, 
+        List<Asn1Element>? elements = null)
     {
-        private readonly Asn1Tag _tag;
-        private readonly ReadOnlyMemory<byte> _encodedValue;
-        private readonly List<Asn1Element>? _elements; // set | sequence
+        _tag = tag;
+        _encodedValue = encodedValue;
+        _elements = elements;
+    }
 
-        public Asn1Element(
-            Asn1Tag tag, 
-            ReadOnlyMemory<byte> encodedValue, 
-            List<Asn1Element>? elements = null)
+    public IReadOnlyList<Asn1Element> Sequence
+    {
+        get => _elements ?? (IReadOnlyList<Asn1Element>)Array.Empty<Asn1Element>();
+    }
+
+    public Asn1Element this[int index] => Sequence[index];
+
+    public Asn1Tag Tag => _tag;
+
+    public int TagValue => _tag.TagValue;
+
+    public TagClass TagClass => _tag.TagClass;
+
+    public bool IsSequence => _tag == Asn1Tag.Sequence;
+
+    public bool IsInteger => _tag == Asn1Tag.Integer;
+
+    public bool IsOctetString => _tag == Asn1Tag.PrimitiveOctetString;
+
+    public bool IsConstructed => _tag.IsConstructed;
+
+    internal static Asn1Element CreateSequence(List<Asn1Element> elements)
+    {
+        return new Asn1Element(Asn1Tag.Sequence, Array.Empty<byte>(), elements);
+    }
+
+    internal static Asn1Element CreateSetOf(List<Asn1Element> elements)
+    {
+        return new Asn1Element(Asn1Tag.SetOf, Array.Empty<byte>(), elements);
+    }
+
+    internal void CheckExactSequenceLength(int length)
+    {
+        if (Sequence.Count != length)
         {
-            _tag = tag;
-            _encodedValue = encodedValue;
-            _elements = elements;
+            string s = length != 1 ? "s" : "";
+            throw new AsnContentException($"Must have exactly {length} element{s}. Found {Sequence.Count} elements.");
         }
+    }
 
-        public IReadOnlyList<Asn1Element> Sequence
+    internal void CheckMinimumSequenceLength(int minimumLength)
+    {
+        if (Sequence.Count < minimumLength)
         {
-            get => _elements ?? (IReadOnlyList<Asn1Element>)Array.Empty<Asn1Element>();
+            string s = minimumLength != 1 ? "s" : "";
+
+            throw new AsnContentException($"Must have at least {minimumLength} element{s}. Found {Sequence.Count} elements.");
         }
+    }
 
-        public Asn1Element this[int index] => Sequence[index];
+    public void CheckTag(Asn1Tag tag)
+    {
+        if (Tag != tag)
+            throw new AsnContentException($"Tag must be {tag}. Was {Tag}");
+    }
 
-        public Asn1Tag Tag => _tag;
+    internal void CheckConstructed()
+    {
+        if (!IsConstructed)
+            throw new AsnContentException("Must be constructed");
+    }
 
-        public int TagValue => _tag.TagValue;
+    internal void CheckPrimitive()
+    {
+        if (IsConstructed)
+            throw new AsnContentException("Must be a primitive");
+    }
 
-        public TagClass TagClass => _tag.TagClass;
+    internal string GetOID()
+    {
+        return AsnDecoder.ReadObjectIdentifier(_encodedValue.Span, AsnEncodingRules.DER, out int _);            
+    }
 
-        public bool IsSequence => _tag == Asn1Tag.Sequence;
-
-        public bool IsInteger => _tag == Asn1Tag.Integer;
-
-        public bool IsOctetString => _tag == Asn1Tag.PrimitiveOctetString;
-
-        public bool IsConstructed => _tag.IsConstructed;
-
-        internal static Asn1Element CreateSequence(List<Asn1Element> elements)
+    internal string GetString()
+    {
+        if (TagValue == (int)UniversalTagNumber.UTF8String)
         {
-            return new Asn1Element(Asn1Tag.Sequence, Array.Empty<byte>(), elements);
+            return AsnDecoder.ReadCharacterString(_encodedValue.Span, AsnEncodingRules.BER, UniversalTagNumber.UTF8String, out _);
         }
-
-        internal static Asn1Element CreateSetOf(List<Asn1Element> elements)
+        else
         {
-            return new Asn1Element(Asn1Tag.SetOf, Array.Empty<byte>(), elements);
+            throw new Exception("Unknown tag: " + Tag);
         }
+    }
 
-        internal void CheckExactSequenceLength(int length)
+    public BigInteger GetBigInteger()
+    {
+        return AsnDecoder.ReadInteger(_encodedValue.Span, AsnEncodingRules.DER, out _);
+    }
+
+    public ReadOnlySpan<byte> GetIntegerBytes()
+    {
+        return AsnDecoder.ReadIntegerBytes(_encodedValue.Span, AsnEncodingRules.DER, out _);
+    }
+
+    public byte[] GetOctetString()
+    {
+        return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _);
+    }
+
+    public byte[] GetOctetString(Asn1Tag expectedTag)
+    {
+        return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _, expectedTag);
+    }
+
+    public int GetInt32()
+    {
+        return AsnDecoder.TryReadInt32(_encodedValue.Span, AsnEncodingRules.BER, out int value, out int _) ? value : throw new Exception("Not an integer");
+    }
+
+    public byte[] GetBitString()
+    {
+        return AsnDecoder.ReadBitString(_encodedValue.Span, AsnEncodingRules.BER, out int _, out int _);
+    }
+
+    public static Asn1Element Decode(ReadOnlyMemory<byte> data)
+    {
+        var reader = new AsnReader(data, AsnEncodingRules.BER);
+
+        Asn1Tag tag = reader.PeekTag();
+
+        if (tag == Asn1Tag.Sequence)
         {
-            if (Sequence.Count != length)
-            {
-                string s = length != 1 ? "s" : "";
-                throw new AsnContentException($"Must have exactly {length} element{s}. Found {Sequence.Count} elements.");
-            }
+            return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSequence()));
         }
-
-        internal void CheckMinimumSequenceLength(int minimumLength)
+        else if (tag == Asn1Tag.SetOf)
         {
-            if (Sequence.Count < minimumLength)
-            {
-                string s = minimumLength != 1 ? "s" : "";
-
-                throw new AsnContentException($"Must have at least {minimumLength} element{s}. Found {Sequence.Count} elements.");
-            }
+            return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf()));
         }
-
-        public void CheckTag(Asn1Tag tag)
+        else if (tag.IsConstructed && tag.TagClass is TagClass.ContextSpecific)
         {
-            if (Tag != tag)
-                throw new AsnContentException($"Tag must be {tag}. Was {Tag}");
+            return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf(tag)));
         }
-
-        internal void CheckConstructed()
+        else
         {
-            if (!IsConstructed)
-                throw new AsnContentException("Must be constructed");
+            return new Asn1Element(tag, reader.ReadEncodedValue());
         }
+    }
 
-        internal void CheckPrimitive()
+    private static List<Asn1Element> ReadElements(AsnReader reader)
+    {
+        var elements = new List<Asn1Element>();
+
+        while (reader.HasData)
         {
-            if (IsConstructed)
-                throw new AsnContentException("Must be a primitive");
-        }
-
-        internal string GetOID()
-        {
-            return AsnDecoder.ReadObjectIdentifier(_encodedValue.Span, AsnEncodingRules.DER, out int _);            
-        }
-
-        internal string GetString()
-        {
-            if (TagValue == (int)UniversalTagNumber.UTF8String)
-            {
-                return AsnDecoder.ReadCharacterString(_encodedValue.Span, AsnEncodingRules.BER, UniversalTagNumber.UTF8String, out _);
-            }
-            else
-            {
-                throw new Exception("Unknown tag: " + Tag);
-            }
-        }
-
-        public BigInteger GetBigInteger()
-        {
-            return AsnDecoder.ReadInteger(_encodedValue.Span, AsnEncodingRules.DER, out _);
-        }
-
-        public ReadOnlySpan<byte> GetIntegerBytes()
-        {
-            return AsnDecoder.ReadIntegerBytes(_encodedValue.Span, AsnEncodingRules.DER, out _);
-        }
-
-        public byte[] GetOctetString()
-        {
-            return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _);
-        }
-
-        public byte[] GetOctetString(Asn1Tag expectedTag)
-        {
-            return AsnDecoder.ReadOctetString(_encodedValue.Span, AsnEncodingRules.DER, out _, expectedTag);
-        }
-
-        public int GetInt32()
-        {
-            return AsnDecoder.TryReadInt32(_encodedValue.Span, AsnEncodingRules.BER, out int value, out int _) ? value : throw new Exception("Not an integer");
-        }
-
-        public byte[] GetBitString()
-        {
-            return AsnDecoder.ReadBitString(_encodedValue.Span, AsnEncodingRules.BER, out int _, out int _);
-        }
-
-        public static Asn1Element Decode(ReadOnlyMemory<byte> data)
-        {
-            var reader = new AsnReader(data, AsnEncodingRules.BER);
-
             Asn1Tag tag = reader.PeekTag();
 
+            Asn1Element el;
+           
             if (tag == Asn1Tag.Sequence)
             {
-                return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSequence()));
+                el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSequence()));
             }
             else if (tag == Asn1Tag.SetOf)
             {
-                return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf()));
+                el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf()));
             }
             else if (tag.IsConstructed && tag.TagClass is TagClass.ContextSpecific)
             {
-                return new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf(tag)));
+                el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf(tag)));
             }
             else
             {
-                return new Asn1Element(tag, reader.ReadEncodedValue());
-            }
-        }
-
-        private static List<Asn1Element> ReadElements(AsnReader reader)
-        {
-            var elements = new List<Asn1Element>();
-
-            while (reader.HasData)
-            {
-                Asn1Tag tag = reader.PeekTag();
-
-                Asn1Element el;
-               
-                if (tag == Asn1Tag.Sequence)
-                {
-                    el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSequence()));
-                }
-                else if (tag == Asn1Tag.SetOf)
-                {
-                    el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf()));
-                }
-                else if (tag.IsConstructed && tag.TagClass is TagClass.ContextSpecific)
-                {
-                    el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSetOf(tag)));
-                }
-                else
-                {
-                    el = new Asn1Element(tag, reader.ReadEncodedValue());
-                }
-
-                elements.Add(el);
+                el = new Asn1Element(tag, reader.ReadEncodedValue());
             }
 
-            return elements;
+            elements.Add(el);
         }
+
+        return elements;
     }
 }
