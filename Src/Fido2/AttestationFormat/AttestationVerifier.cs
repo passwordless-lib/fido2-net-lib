@@ -75,7 +75,7 @@ public abstract class AttestationVerifier
     internal static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
     {
         byte[] aaguid = null;
-        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
+        var ext = exts.FirstOrDefault(static e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
         if (ext != null)
         {
             var decodedAaguid = Asn1Element.Decode(ext.RawData);
@@ -92,7 +92,7 @@ public abstract class AttestationVerifier
 
     internal static bool IsAttnCertCACert(X509ExtensionCollection exts)
     {
-        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid?.Value is "2.5.29.19");
+        var ext = exts.FirstOrDefault(static e => e.Oid?.Value is "2.5.29.19");
         if (ext is X509BasicConstraintsExtension baseExt)
         {
             return baseExt.CertificateAuthority;
@@ -103,8 +103,8 @@ public abstract class AttestationVerifier
 
     internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
     {
-        var u2ftransports = new byte();
-        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1");
+        byte u2ftransports = 0;
+        var ext = exts.FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1");
         if (ext != null)
         {
             var decodedU2Ftransports = Asn1Element.Decode(ext.RawData);
