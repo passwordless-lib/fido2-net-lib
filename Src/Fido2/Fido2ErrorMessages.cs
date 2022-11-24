@@ -31,7 +31,21 @@ internal static class Fido2ErrorMessages
     public static readonly string UnimplementedAlgorithm_Ecdaa_Packed    = "ECDAA support for packed attestation is not yet implemented";
     public static readonly string UnimplementedAlgorithm_Ecdaa_Tpm       = "ECDAA support for TPM attestation is not yet implemented";
 
-    public static readonly string MalformedX5c_AndroidKeyAttestation     = "Malformed x5c in android-key attestation";
     public static readonly string MalformedX5c_AppleAttestation          = "Malformed x5c in Apple attestation";
+    public static readonly string MalformedX5c_AndroidKeyAttestation     = "Malformed x5c in android-key attestation";
+    public static readonly string MalformedX5c_FidoU2fAttestation        = "Malformed x5c in fido-u2f attestation";
+    public static readonly string MalformedX5c_PackedAttestation         = "Malformed x5c in packed attestation";
     public static readonly string MalformedX5c_TpmAttestation            = "Malformed x5c in TPM attestation";
+
+    public static readonly string InvalidAndroidKeyAttestationAlgorithm  = "Invalid android-key attestation algorithm";
+    public static readonly string InvalidPackedAttestationAlgorithm      = "Invalid packed attestation algorithm";
+    public static readonly string InvalidTpmAttestationAlgorithm         = "Invalid TPM attestation algorithm";
+
+    public static readonly string MissingPackedAttestationStatement      = "Attestation format packed must have attestation statement";
+    public static readonly string MissingAndroidKeyAttestationStatement  = "Attestation format android-key must have attestation statement";
+
+    public static readonly string InvalidAndroidKeyAttestationSignature  = "Invalid android-key attestation signature";
+    public static readonly string InvalidFidoU2fAttestationSignature     = "Invalid fido-u2f attestation signature";
+    public static readonly string InvalidPackedAttestationSignature      = "Invalid packed attestation signature";
+    public static readonly string InvalidTpmAttestationSignature         = "Invalid TPM attestation signature";
 }

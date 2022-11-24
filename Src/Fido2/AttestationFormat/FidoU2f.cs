@@ -24,7 +24,7 @@ namespace Fido2NetLib
             // 2a. Check that x5c has exactly one element and let attCert be that element.
             if (!(X5c is CborArray { Length: 1 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
             {
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c in fido-u2f attestation");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_FidoU2fAttestation);
             }
 
             var attCert = new X509Certificate2((byte[])X5c[0]);
@@ -64,19 +64,19 @@ namespace Fido2NetLib
             byte[] verificationData = DataHelper.Concat(
                 stackalloc byte[1] { 0x00 },
                 AuthData.RpIdHash,
-                clientDataHash,
+                _clientDataHash,
                 AuthData.AttestedCredentialData.CredentialID,
                 publicKeyU2F
             );
 
             // 6. Verify the sig using verificationData and certificate public key
-            if (!(Sig is CborByteString { Length: > 0 }))
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid fido-u2f attestation signature");
+            if (!TryGetSig(out byte[]? sig))
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidFidoU2fAttestationSignature);
 
             byte[] ecsig;
             try
             {
-                ecsig = CryptoUtils.SigFromEcDsaSig((byte[])Sig, pubKey.KeySize);
+                ecsig = CryptoUtils.SigFromEcDsaSig(sig, pubKey.KeySize);
             }
             catch (Exception ex)
             {

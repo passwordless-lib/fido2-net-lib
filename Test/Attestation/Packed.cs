@@ -386,7 +386,7 @@ public class Packed : Fido2Tests.Attestation
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
+        Assert.Same(Fido2ErrorMessages.MalformedX5c_PackedAttestation, ex.Result.Message);
     }
 
     [Fact]
@@ -433,7 +433,7 @@ public class Packed : Fido2Tests.Attestation
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Malformed x5c array in packed attestation statement", ex.Result.Message);
+        Assert.Same(Fido2ErrorMessages.MalformedX5c_PackedAttestation, ex.Result.Message);
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 ﻿#nullable disable
 
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -11,22 +12,70 @@ namespace Fido2NetLib;
 
 public abstract class AttestationVerifier
 {
-    public CborMap attStmt;
-    public byte[] authenticatorData;
-    public byte[] clientDataHash;
+    private protected CborMap _attStmt;
+    private protected byte[] _authenticatorData;
+    private protected byte[] _clientDataHash;
 
-    internal CborObject Sig => attStmt["sig"];
-    internal CborObject X5c => attStmt["x5c"];
-    internal CborObject Alg => attStmt["alg"];
-    internal CborObject EcdaaKeyId => attStmt["ecdaaKeyId"];
-    internal AuthenticatorData AuthData => new AuthenticatorData(authenticatorData);
+#nullable enable
+
+    internal CborObject? X5c => _attStmt["x5c"];
+
+    internal CborObject? EcdaaKeyId => _attStmt["ecdaaKeyId"];
+
+    internal AuthenticatorData AuthData => new (_authenticatorData);
+
     internal CborMap CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCborObject();
-    internal byte[] Data => DataHelper.Concat(authenticatorData, clientDataHash);
+
+    internal byte[] Data => DataHelper.Concat(_authenticatorData, _clientDataHash);
+
+    internal bool TryGetVer([NotNullWhen(true)] out string? ver)
+    {
+        if (_attStmt["ver"] is CborTextString { Length: > 0, Value: string verString })
+        {
+            ver = verString;
+
+            return true;
+        }
+
+        ver = null;
+
+        return false;
+    }
+
+    internal bool TryGetAlg(out COSE.Algorithm alg)
+    {
+        if (_attStmt["alg"] is CborInteger algInt)
+        {
+            alg = (COSE.Algorithm)algInt.Value;
+
+            return true;
+        }
+
+        alg = default;
+
+        return false;
+    }
+
+    internal bool TryGetSig([NotNullWhen(true)] out byte[]? sig)
+    {
+        if (_attStmt["sig"] is CborByteString { Length: > 0 } sigBytes)
+        {
+            sig = sigBytes.Value;
+
+            return true;
+        }
+
+        sig = null;
+
+        return false;
+    }
+
+#nullable disable
 
     internal static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
     {
         byte[] aaguid = null;
-        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
+        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
         if (ext != null)
         {
             var decodedAaguid = Asn1Element.Decode(ext.RawData);
@@ -43,7 +92,7 @@ public abstract class AttestationVerifier
 
     internal static bool IsAttnCertCACert(X509ExtensionCollection exts)
     {
-        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "2.5.29.19");
+        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid?.Value is "2.5.29.19");
         if (ext is X509BasicConstraintsExtension baseExt)
         {
             return baseExt.CertificateAuthority;
@@ -55,7 +104,7 @@ public abstract class AttestationVerifier
     internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
     {
         var u2ftransports = new byte();
-        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid.Value is "1.3.6.1.4.1.45724.2.1.1");
+        var ext = exts.Cast<X509Extension>().FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1");
         if (ext != null)
         {
             var decodedU2Ftransports = Asn1Element.Decode(ext.RawData);
@@ -79,9 +128,9 @@ public abstract class AttestationVerifier
 
     public virtual (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, byte[] authenticatorData, byte[] clientDataHash)
     {
-        this.attStmt = attStmt;
-        this.authenticatorData = authenticatorData;
-        this.clientDataHash = clientDataHash;
+        _attStmt = attStmt;
+        _authenticatorData = authenticatorData;
+        _clientDataHash = clientDataHash;
         return Verify();
     }
 

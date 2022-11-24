@@ -29,7 +29,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         }
         catch (Exception ex)
         {
-            throw new ArgumentException("Could not parse X509 certificate.", ex);
+            throw new ArgumentException("Could not parse X509 certificate", ex);
         }
     }
 
@@ -38,18 +38,17 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
         // CBOR decoding on it to extract the contained fields
         // (handled in base class)
-        if (!(attStmt["ver"] is CborTextString { Length: > 0 }))
+
+        // 2. Verify that response is a valid SafetyNet response of version ver
+        if (!TryGetVer(out string? ver))
         {
             throw new Fido2VerificationException("Invalid version in SafetyNet data");
         }
 
-        // 2. Verify that response is a valid SafetyNet response of version ver
-        var ver = (string)attStmt["ver"]!;
-
-        if (!(attStmt["response"] is CborByteString { Length: > 0}))
+        if (!(_attStmt["response"] is CborByteString { Length: > 0}))
             throw new Fido2VerificationException("Invalid response in SafetyNet data");
 
-        var response = (byte[])attStmt["response"]!;
+        var response = (byte[])_attStmt["response"]!;
         var responseJWT = Encoding.UTF8.GetString(response);
 
         if (string.IsNullOrWhiteSpace(responseJWT))
