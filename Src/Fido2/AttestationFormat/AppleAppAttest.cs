@@ -72,7 +72,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
 
         if (!chain.Build(credCert))
         {
-            throw new Fido2VerificationException("Failed to build chain in Apple AppAttest attestation: " + chain.ChainStatus.FirstOrDefault().StatusInformation.ToString());
+            throw new Fido2VerificationException($"Failed to build chain in Apple AppAttest attestation: {chain.ChainStatus.FirstOrDefault().StatusInformation}");
         }
 
         // 2. Create clientDataHash as the SHA256 hash of the one-time challenge your server sends to your app before performing the attestation, and append that hash to the end of the authenticator data (authData from the decoded object).
