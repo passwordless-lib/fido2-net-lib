@@ -97,7 +97,7 @@ async function verifyAssertionWithServer(assertedCredential) {
         extensions: assertedCredential.getClientExtensionResults(),
         response: {
             authenticatorData: coerceToBase64Url(authData),
-            clientDataJson: coerceToBase64Url(clientDataJSON),
+            clientDataJSON: coerceToBase64Url(clientDataJSON),
             signature: coerceToBase64Url(sig)
         }
     };
