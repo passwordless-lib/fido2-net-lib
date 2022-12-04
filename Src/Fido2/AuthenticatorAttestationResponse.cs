@@ -136,25 +136,13 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.MissingAttestationType, Fido2ErrorMessages.MissingAttestationType);
         }
 
-        // 13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. 
-        //     An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA registry of the same name
-        // https://www.w3.org/TR/webauthn/#defined-attestation-formats
-        AttestationVerifier verifier = AttestationObject.Fmt switch
-        {
-            // TODO: Better way to build these mappings?
-            "none" => new None(),                           // https://www.w3.org/TR/webauthn/#none-attestation
-            "tpm" => new Tpm(),                             // https://www.w3.org/TR/webauthn/#tpm-attestation
-            "android-key" => new AndroidKey(),              // https://www.w3.org/TR/webauthn/#android-key-attestation
-            "android-safetynet" => new AndroidSafetyNet(),  // https://www.w3.org/TR/webauthn/#android-safetynet-attestation
-            "fido-u2f" => new FidoU2f(),                    // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
-            "packed" => new Packed(),                       // https://www.w3.org/TR/webauthn/#packed-attestation
-            "apple" => new Apple(),                         // https://www.w3.org/TR/webauthn/#apple-anonymous-attestation
-            "apple-appattest" => new AppleAppAttest(),      // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server  
-            _ => throw new Fido2VerificationException(Fido2ErrorCode.UnknownAttestationType, $"Unknown attestation type. Was '{AttestationObject.Fmt}'")
-        };
+        // 13. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
+        //     against the set of supported WebAuthn Attestation Statement Format Identifier values. 
+        var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
 
         // 14. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
-        //     by using the attestation statement format fmt’s verification procedure given attStmt, authData and the hash of the serialized client data computed in step 7
+        //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
+        //     and the hash of the serialized client data computed in step 7
         (var attType, var trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
 
         // 15. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)

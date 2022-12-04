@@ -12,7 +12,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
 {
     public static byte[] GetAppleAppIdFromCredCertExtValue(X509ExtensionCollection exts)
     {
-        var appleExtension = exts.Cast<X509Extension>().FirstOrDefault(static e => e.Oid!.Value is "1.2.840.113635.100.8.5");
+        var appleExtension = exts.FirstOrDefault(static e => e.Oid!.Value is "1.2.840.113635.100.8.5");
 
         if (appleExtension is null || appleExtension.RawData is null)
             throw new Fido2VerificationException("Extension with OID 1.2.840.113635.100.8.5 not found on Apple AppAttest credCert");
@@ -80,7 +80,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER - encoded ASN.1 sequence.Decode the sequence and extract the single octet string that it contains. Verify that the string equals nonce.
         // Steps 2 - 4 done in the "apple" format verifier
         Apple apple = new();
-        (var attType, var trustPath) = apple.Verify(attStmt, authenticatorData, clientDataHash);
+        (var attType, var trustPath) = apple.Verify(_attStmt, _authenticatorData, _clientDataHash);
 
         // 5. Create the SHA256 hash of the public key in credCert, and verify that it matches the key identifier from your app.
         Span<byte> credCertPKHash = stackalloc byte[32];

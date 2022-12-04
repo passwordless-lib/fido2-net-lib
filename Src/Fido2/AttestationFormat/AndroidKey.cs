@@ -134,21 +134,20 @@ internal sealed class AndroidKey : AttestationVerifier
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
         // (handled in base class)
-        if (attStmt.Count is 0)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation format android-key must have attestation statement");
+        if (_attStmt.Count is 0)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MissingAndroidKeyAttestationStatement);
 
-        if (!(Sig is CborByteString { Length: > 0 }))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid android-key attestation signature");
+        if (!TryGetSig(out byte[]? sig))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationSignature);
 
         // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
         // using the attestation public key in attestnCert with the algorithm specified in alg
         if (!(X5c is CborArray { Length: > 0 } x5cArray))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation);
 
-        if (Alg is not CborInteger)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid android-key attestation algorithm");
+        if (!TryGetAlg(out var alg))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationAlgorithm);
 
-        var alg = (COSE.Algorithm)(int)Alg;
         var trustPath = new X509Certificate2[x5cArray.Length];
 
         for (int i = 0; i < x5cArray.Length; i++)
@@ -176,7 +175,7 @@ internal sealed class AndroidKey : AttestationVerifier
         byte[] ecsig;
         try
         {
-            ecsig = CryptoUtils.SigFromEcDsaSig((byte[])Sig, androidKeyPubKey.KeySize);
+            ecsig = CryptoUtils.SigFromEcDsaSig(sig, androidKeyPubKey.KeySize);
         }
         catch (Exception ex)
         {
@@ -187,7 +186,7 @@ internal sealed class AndroidKey : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid android key attestation signature");
 
         // 3. Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
-        if (!AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, (byte[])Sig))
+        if (!AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Incorrect credentialPublicKey in android key attestation");
 
         // 4. Verify that the attestationChallenge field in the attestation certificate extension data is identical to clientDataHash
@@ -198,7 +197,7 @@ internal sealed class AndroidKey : AttestationVerifier
         try
         {
             var attestationChallenge = GetAttestationChallenge(attExtBytes);
-            if (!clientDataHash.AsSpan().SequenceEqual(attestationChallenge))
+            if (!_clientDataHash.AsSpan().SequenceEqual(attestationChallenge))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Mismatch between attestationChallenge and hashedClientDataJson verifying android key attestation certificate extension");
         }
         catch (Exception)

@@ -13,50 +13,47 @@ internal sealed class Packed : AttestationVerifier
     public static bool IsValidPackedAttnCertSubject(string attnCertSubj)
     {
         // parse the DN string using standard rules
-        var dictSubjectObj = new X500DistinguishedName(attnCertSubj);
+        var subjectObj = new X500DistinguishedName(attnCertSubj);
 
         // form the string for splitting using new lines to avoid issues with commas
-        string dictSubjectString = dictSubjectObj.Decode(X500DistinguishedNameFlags.UseNewLines);
+        string subjectString = subjectObj.Decode(X500DistinguishedNameFlags.UseNewLines);
 
-        var dictSubject = new Dictionary<string, string>();
+        var subjectMap = new Dictionary<string, string>(4);
 
-        foreach (var line in dictSubjectString.AsSpan().EnumerateLines())
+        foreach (var line in subjectString.AsSpan().EnumerateLines())
         {
             int equalIndex = line.IndexOf('=');
 
             var lhs = line.Slice(0, equalIndex).ToString();
             var rhs = line.Slice(equalIndex + 1).ToString();
 
-            dictSubject[lhs] = rhs;
+            subjectMap[lhs] = rhs;
         }
 
-        return dictSubject["C"].Length != 0 
-            && dictSubject["O"].Length != 0 
-            && dictSubject["OU"].Length != 0 
-            && dictSubject["CN"].Length != 0 
-            && dictSubject["OU"].ToString() is "Authenticator Attestation";
+        return subjectMap.TryGetValue("C", out var c) && c.Length > 0
+            && subjectMap.TryGetValue("O", out var o) && o.Length > 0
+            && subjectMap.TryGetValue("OU", out var ou) && ou is "Authenticator Attestation"
+            && subjectMap.TryGetValue("CN", out var cn) && cn.Length > 0;
     }
 
     public override (AttestationType, X509Certificate2[]?) Verify()
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and 
         // perform CBOR decoding on it to extract the contained fields.
-        if (attStmt.Count is 0)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation format packed must have attestation statement");
+        if (_attStmt.Count is 0)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MissingPackedAttestationStatement);
 
-        if (!(Sig is CborByteString { Length: > 0 }))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid packed attestation signature");
+        if (!TryGetSig(out byte[]? sig))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidPackedAttestationSignature);
 
-        if (Alg is not CborInteger)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid packed attestation algorithm");
-
-        var alg = (COSE.Algorithm)(int)Alg;
+        if (!TryGetAlg(out var alg))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidPackedAttestationAlgorithm);
 
         // 2. If x5c is present, this indicates that the attestation type is not ECDAA
-        if (X5c != null)
+        if (X5c is CborObject x5c)
         {
-            if (!(X5c is CborArray { Length: > 0 } x5cArray) || EcdaaKeyId != null)
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c array in packed attestation statement");
+            if (!(x5c is CborArray { Length: > 0 } x5cArray) || EcdaaKeyId != null)
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_PackedAttestation);
 
             var trustPath = new X509Certificate2[x5cArray.Length];
 
@@ -86,7 +83,7 @@ internal sealed class Packed : AttestationVerifier
             // using the attestation public key in attestnCert with the algorithm specified in alg
             var cpk = new CredentialPublicKey(attestnCert, alg);
 
-            if (!cpk.Verify(Data, (byte[])Sig))
+            if (!cpk.Verify(Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid full packed signature");
 
             // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
@@ -145,7 +142,7 @@ internal sealed class Packed : AttestationVerifier
 
             // 4b. Verify that sig is a valid signature over the concatenation of authenticatorData and 
             // clientDataHash using the credential public key with alg
-            if (!AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, (byte[])Sig))
+            if (!AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Failed to validate signature");
 
             return (AttestationType.Self, null);

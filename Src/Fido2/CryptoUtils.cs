@@ -113,7 +113,6 @@ internal static class CryptoUtils
                 {
                     // skip the first element, as that is the attestation cert
                     if (chain.ChainElements
-                        .Cast<X509ChainElement>()
                         .Skip(1)
                         .Any(x => x.Certificate.Thumbprint.Equals(attestationRootCertificate.Thumbprint, StringComparison.Ordinal)))
                         return true;

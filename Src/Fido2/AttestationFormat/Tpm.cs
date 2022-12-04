@@ -47,16 +47,16 @@ internal sealed class Tpm : AttestationVerifier
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
         // (handled in base class)
-        if (!(Sig is CborByteString { Length: > 0 }))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM attestation signature");
+        if (!TryGetSig(out byte[]? sig))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidTpmAttestationSignature);
 
-        if ((string)attStmt["ver"]! is not "2.0")
+        if (!(TryGetVer(out var ver) && ver is "2.0"))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "FIDO2 only supports TPM 2.0");
 
         // 2. Verify that the public key specified by the parameters and unique fields of pubArea
         // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
         PubArea? pubArea = null;
-        if (attStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
+        if (_attStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
         {
             pubArea = new PubArea(pubAreaObject.Value);
         }            
@@ -96,7 +96,7 @@ internal sealed class Tpm : AttestationVerifier
         // See Data field of base class
 
         // 4. Validate that certInfo is valid
-        var certInfo = attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject
+        var certInfo = _attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject
             ? new CertInfo(certInfoObject.Value)
             : throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "CertInfo invalid parsing TPM format attStmt");
 
@@ -107,10 +107,8 @@ internal sealed class Tpm : AttestationVerifier
         // Handled in CertInfo constructor, see CertInfo.Type
 
         // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-        if (Alg is not CborInteger)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM attestation algorithm");
-
-        var alg = (COSE.Algorithm)(int)Alg;
+        if (!TryGetAlg(out var alg))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidTpmAttestationAlgorithm);
 
         ReadOnlySpan<byte> dataHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg(alg), Data);
 
@@ -147,7 +145,7 @@ internal sealed class Tpm : AttestationVerifier
 
             var cpk = new CredentialPublicKey(aikCert, alg);
 
-            if (!cpk.Verify(certInfo.Raw, (byte[])Sig))
+            if (!cpk.Verify(certInfo.Raw, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Bad signature in TPM with aikCert");
 
             // 5b. Verify that aikCert meets the TPM attestation statement certificate requirements
