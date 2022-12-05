@@ -20,19 +20,6 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 {
     private const int _driftTolerance = 0;
 
-    private static X509Certificate2 GetX509Certificate(string certString)
-    {
-        try
-        {
-            var certBytes = Convert.FromBase64String(certString);
-            return new X509Certificate2(certBytes);
-        }
-        catch (Exception ex)
-        {
-            throw new ArgumentException("Could not parse X509 certificate", ex);
-        }
-    }
-
     public override (AttestationType, X509Certificate2[]) Verify()
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
@@ -45,7 +32,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
             throw new Fido2VerificationException("Invalid version in SafetyNet data");
         }
 
-        if (!(_attStmt["response"] is CborByteString { Length: > 0}))
+        if (!(_attStmt["response"] is CborByteString { Length: > 0 }))
             throw new Fido2VerificationException("Invalid response in SafetyNet data");
 
         var response = (byte[])_attStmt["response"]!;
@@ -64,19 +51,27 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         using var jwtHeaderJsonDoc = JsonDocument.Parse(Base64Url.Decode(jwtHeaderString));
         var jwtHeaderJson = jwtHeaderJsonDoc.RootElement;
 
-        string[] x5cStrings = jwtHeaderJson.TryGetProperty("x5c", out var x5cEl) && x5cEl.ValueKind is JsonValueKind.Array
-            ? x5cEl.ToStringArray()
-            : throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
+        if (!jwtHeaderJson.TryGetProperty("x5c", out var x5cEl))
+        {
+            throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
+        }
 
-        if (x5cStrings.Length is 0)
+        if (!x5cEl.TryDecodeArrayOfBase64EncodedBytes(out var x5cRawKeys))
+        {        
+            throw new Fido2VerificationException("SafetyNet response JWT header has a malformed x5c value");
+        }
+
+        if (x5cRawKeys.Length is 0)
+        {
             throw new Fido2VerificationException("No keys were present in the TOC header in SafetyNet response JWT");
+        }
 
-        var certs = new X509Certificate2[x5cStrings.Length];
+        var certs = new X509Certificate2[x5cRawKeys.Length];
         var keys = new List<SecurityKey>(certs.Length);
 
         for (int i = 0; i < certs.Length; i++)
         {
-            var cert = GetX509Certificate(x5cStrings[i]);
+            var cert = X509CertificateHelper.CreateFromRawData(x5cRawKeys[i]);
             certs[i] = cert;
 
             if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)

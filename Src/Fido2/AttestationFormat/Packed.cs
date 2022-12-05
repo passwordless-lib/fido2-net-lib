@@ -59,7 +59,7 @@ internal sealed class Packed : AttestationVerifier
 
             for (int i = 0; i < trustPath.Length; i++)
             {
-                if (X5c[i] is CborByteString { Length: > 0 } x5cObject)
+                if (x5cArray[i] is CborByteString { Length: > 0 } x5cObject)
                 {
                     var x5cCert = new X509Certificate2(x5cObject.Value);
 
