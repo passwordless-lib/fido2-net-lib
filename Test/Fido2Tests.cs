@@ -1,4 +1,4 @@
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
 using System.Formats.Asn1;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -467,17 +467,23 @@ public class Fido2Tests
 
         var AttestationObject = new ParsedAttestationObject
         (
-            fmt: (string)json["fmt"],
-            attStmt: (CborMap)json["attStmt"],
-            authData: (byte[])json["authData"]
+            fmt      : (string)json["fmt"],
+            attStmt  : (CborMap)json["attStmt"],
+            authData : (byte[])json["authData"]
         );
 
         var clientDataJson = SHA256.HashData(Encoding.UTF8.GetBytes("1234567890abcdefgh"));
 
         var verifier = new AppleAppAttest();
-        var ex = Assert.Throws<Fido2VerificationException>(
-            () => { (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataJson); });
-        Assert.Equal("Failed to build chain in Apple AppAttest attestation: A required certificate is not within its validity period when verifying against the current system clock or the timestamp in the signed file.", ex.Message);
+        var ex = Assert.Throws<Fido2VerificationException>(() => { 
+            (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataJson); 
+        });
+
+        const string windowsErrorMessage = "Failed to build chain in Apple AppAttest attestation: A required certificate is not within its validity period when verifying against the current system clock or the timestamp in the signed file.";
+        const string cryptoKitErrorMessage = "Failed to build chain in Apple AppAttest attestation: An expired certificate was detected.";
+        const string linuxErrorMessage     = "Failed to build chain in Apple AppAttest attestation: certificate has expired";
+
+        Assert.True(ex.Message is windowsErrorMessage or cryptoKitErrorMessage or linuxErrorMessage);
     }
 
     [Fact]
@@ -631,7 +637,7 @@ public class Fido2Tests
     }
 
     [Fact]
-    public async Task TestInvalidU2FAttestationASync()
+    public async Task TestInvalidU2FAttestationAsync()
     {
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsATKey.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsATKey.json"));
