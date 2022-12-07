@@ -1,7 +1,7 @@
 ﻿#nullable disable
 
 using System;
-using System.IO;
+using System.Buffers;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -14,7 +14,7 @@ public sealed class AuthenticatorData
     /// Minimum length of the authenticator data structure.
     /// <see cref="https://www.w3.org/TR/webauthn/#sec-authenticator-data"/>
     /// </summary>
-    internal const int MinLength = SHA256HashLenBytes + sizeof(AuthenticatorFlags) + sizeof(UInt32);
+    internal const int MinLength = SHA256HashLenBytes + sizeof(AuthenticatorFlags) + sizeof(uint);
 
     private const int SHA256HashLenBytes = 32; // 256 bits, 8 bits per byte
 
@@ -124,27 +124,24 @@ public sealed class AuthenticatorData
 
     public byte[] ToByteArray()
     {
-        using var ms = new MemoryStream();
+        var writer = new ArrayBufferWriter<byte>(512);
 
-        using (var writer = new BinaryWriter(ms))
+        writer.Write(RpIdHash);
+
+        writer.Write(stackalloc byte[1] { (byte)_flags });
+
+        writer.WriteUInt32BigEndian(SignCount);
+
+        if (HasAttestedCredentialData)
         {
-            writer.Write(RpIdHash);
-
-            writer.Write((byte)_flags);
-
-            writer.WriteUInt32BigEndian(SignCount);
-
-            if (HasAttestedCredentialData)
-            {
-                writer.Write(AttestedCredentialData.ToByteArray());
-            }
-
-            if (HasExtensionsData)
-            {
-                writer.Write(Extensions.GetBytes());
-            }
+            AttestedCredentialData.WriteTo(writer);
         }
 
-        return ms.ToArray();
+        if (HasExtensionsData)
+        {
+            writer.Write(Extensions.GetBytes());
+        }
+
+        return writer.WrittenSpan.ToArray();
     }
 }

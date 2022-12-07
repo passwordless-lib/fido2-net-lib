@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib.Objects;
+﻿using System;
+
+namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// <see cref="https://www.w3.org/TR/webauthn/#extensions"/>
@@ -6,8 +8,11 @@
 public sealed class Extensions
 {
     private readonly byte[] _extensionBytes;
+
     public Extensions(byte[] extensions)
     {
+        ArgumentNullException.ThrowIfNull(extensions);
+
         _extensionBytes = extensions;
     }
 
@@ -18,4 +23,3 @@ public sealed class Extensions
         return _extensionBytes;
     }
 }
-
