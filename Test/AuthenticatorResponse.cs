@@ -40,7 +40,7 @@ public class AuthenticatorResponse
     [InlineData("http://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]:80")]
     [InlineData("https://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]")]
     [InlineData("https://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]:443")]
-    public async Task TestAuthenticatorOrigins(string origin, string expectedOrigin)
+    public async Task TestAuthenticatorOriginsAsync(string origin, string expectedOrigin)
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = origin;
@@ -503,7 +503,7 @@ public class AuthenticatorResponse
 
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
-            Type = null,
+            Type = PublicKeyCredentialType.Invalid,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
             Response = new AuthenticatorAttestationRawResponse.ResponseData()
@@ -638,7 +638,7 @@ public class AuthenticatorResponse
     }
 
     [Fact]
-    public async Task TestAuthenticatorAttestationResponseNotUserPresent()
+    public async Task TestAuthenticatorAttestationResponseNotUserPresentAsync()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";

@@ -18,7 +18,7 @@ namespace Fido2Demo;
 public class TestController : Controller
 {
     /* CONFORMANCE TESTING ENDPOINTS */
-    private static readonly DevelopmentInMemoryStore DemoStorage = new ();
+    private static readonly DevelopmentInMemoryStore _demoStorage = new ();
 
     private readonly IFido2 _fido2;
     private readonly string _origin;
@@ -56,7 +56,7 @@ public class TestController : Controller
         }
 
         // 1. Get user from DB by username (in our example, auto create missing users)
-        var user = DemoStorage.GetOrAddUser(opts.Username, () => new Fido2User
+        var user = _demoStorage.GetOrAddUser(opts.Username, () => new Fido2User
         {
             DisplayName = opts.DisplayName,
             Name = opts.Username,
@@ -64,7 +64,7 @@ public class TestController : Controller
         });
 
         // 2. Get user existing keys by username
-        var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+        var existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
         //var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
         var exts = new AuthenticationExtensionsClientInputs() { };
@@ -83,7 +83,7 @@ public class TestController : Controller
 
     [HttpPost]
     [Route("/attestation/result")]
-    public async Task<JsonResult> MakeCredentialResultTest([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
+    public async Task<JsonResult> MakeCredentialResultTestAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
     {
 
         // 1. get the options we sent the client
@@ -93,7 +93,7 @@ public class TestController : Controller
         // 2. Create callback so that lib can verify credential id is unique to this user
         IsCredentialIdUniqueToUserAsyncDelegate callback = static async (args, cancellationToken) =>
         {
-            var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId, cancellationToken);
+            var users = await _demoStorage.GetUsersByCredentialIdAsync(args.CredentialId, cancellationToken);
             return users.Count <= 0;
         };
 
@@ -101,12 +101,12 @@ public class TestController : Controller
         var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
 
         // 3. Store the credentials in db
-        DemoStorage.AddCredentialToUser(options.User, new StoredCredential
+        _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
             Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
             PublicKey = success.Result.PublicKey,
             UserHandle = success.Result.User.Id,
-            SignatureCounter = success.Result.Counter
+            SignCount = success.Result.Counter
         });
 
         // 4. return "ok" to the client
@@ -119,12 +119,12 @@ public class TestController : Controller
     {
         var username = assertionClientParams.Username;
         // 1. Get user from DB
-        var user = DemoStorage.GetUser(username);
+        var user = _demoStorage.GetUser(username);
         if (user == null)
             return NotFound("username was not registered");
 
         // 2. Get registered credentials from database
-        var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+        var existingCredentials = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
         var uv = assertionClientParams.UserVerification;
         if (null != assertionClientParams.authenticatorSelection)
@@ -154,14 +154,14 @@ public class TestController : Controller
 
     [HttpPost]
     [Route("/assertion/result")]
-    public async Task<JsonResult> MakeAssertionTest([FromBody] AuthenticatorAssertionRawResponse clientResponse, CancellationToken cancellationToken)
+    public async Task<JsonResult> MakeAssertionTestAsync([FromBody] AuthenticatorAssertionRawResponse clientResponse, CancellationToken cancellationToken)
     {
         // 1. Get the assertion options we sent the client
         var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions");
         var options = AssertionOptions.FromJson(jsonOptions);
 
         // 2. Get registered credential from database
-        var creds = DemoStorage.GetCredentialById(clientResponse.Id);
+        var creds = _demoStorage.GetCredentialById(clientResponse.Id);
 
         // 3. Get credential counter from database
         var storedCounter = creds.SignatureCounter;
@@ -169,15 +169,18 @@ public class TestController : Controller
         // 4. Create callback to check if userhandle owns the credentialId
         IsUserHandleOwnerOfCredentialIdAsync callback = static async (args, cancellationToken) =>
         {
-            var storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle, cancellationToken);
+            var storedCreds = await _demoStorage.GetCredentialsByUserHandleAsync(args.UserHandle, cancellationToken);
             return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
         };
 
         // 5. Make the assertion
-        var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback, cancellationToken: cancellationToken);
+        var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
 
         // 6. Store the updated counter
-        DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
+        _demoStorage.UpdateCounter(res.CredentialId, res.Counter);
+
+        if (res.DevicePublicKey is not null)
+            creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
         var testRes = new
         {

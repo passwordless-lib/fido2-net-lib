@@ -63,8 +63,6 @@ public class AuthenticatorResponse
     [JsonPropertyName("origin")]
     public string Origin { get; set; }
 
-    // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
-
     protected void BaseVerify(HashSet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
     {
         if (Type is not "webauthn.create" && Type is not "webauthn.get")

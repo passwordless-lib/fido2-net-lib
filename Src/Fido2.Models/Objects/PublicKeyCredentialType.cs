@@ -11,5 +11,7 @@ namespace Fido2NetLib.Objects;
 public enum PublicKeyCredentialType
 {
     [EnumMember(Value = "public-key")]
-    PublicKey
+    PublicKey,
+    [EnumMember(Value = "invalid")]
+    Invalid
 }

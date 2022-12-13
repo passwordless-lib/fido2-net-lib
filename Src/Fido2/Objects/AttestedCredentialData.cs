@@ -16,6 +16,7 @@ public sealed class AttestedCredentialData
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
     private readonly int _minLength = Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
+    private readonly int _maxCredentialIdLength = 1023;
 
     /// <summary>
     /// Instantiates an AttestedCredentialData object from an aaguid, credentialID, and CredentialPublicKey
@@ -62,6 +63,8 @@ public sealed class AttestedCredentialData
 
         // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
         var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(data.Slice(position, 2).Span);
+        if (credentialIDLen > _maxCredentialIdLength)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_CredentialIdTooLong);
 
         position += 2;
 

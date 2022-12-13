@@ -42,6 +42,22 @@ public sealed class AuthenticatorData
     public bool UserVerified => _flags.HasFlag(AuthenticatorFlags.UV);
 
     /// <summary>
+    /// A Public Key Credential Source's generating authenticator determines at creation time whether the public key credential source is allowed to be backed up. 
+    /// Backup eligibility is signaled in authenticator data's flags along with the current backup state. 
+    /// Backup eligibility is a credential property and is permanent for a given public key credential source. 
+    /// A backup eligible public key credential source is referred to as a multi-device credential whereas one that is not backup eligible is referred to as a single-device credential.
+    /// <see cref="https://w3c.github.io/webauthn/#backup-eligibility"/>
+    /// </summary>
+    public bool BackupEligibility => _flags.HasFlag(AuthenticatorFlags.BE);
+
+    /// <summary>
+    /// The current backup state of a multi-device credential as determined by the current managing authenticator. 
+    /// Backup state is signaled in authenticator data's flags and can change over time.
+    /// <see cref="https://w3c.github.io/webauthn/#backup-state"/>
+    /// </summary>
+    public bool BackupState => _flags.HasFlag(AuthenticatorFlags.BS);
+
+    /// <summary>
     /// HasAttestedCredentialData indicates that the authenticator added attested credential data to the authenticator data.
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
