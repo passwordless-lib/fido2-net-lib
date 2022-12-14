@@ -13,7 +13,7 @@ public class MetadataServiceTests
     [Fact]
     public async Task ConformanceTestClient()
     {
-        var client = new ConformanceMetadataRepository(null, "http://localhost");
+        var client = new ConformanceMetadataRepository(null, "http://localhost:80");
 
         var cancellationToken = CancellationToken.None;
         
