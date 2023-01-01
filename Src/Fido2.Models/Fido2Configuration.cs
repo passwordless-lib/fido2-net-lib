@@ -6,8 +6,8 @@ namespace Fido2NetLib;
 
 public class Fido2Configuration
 {
-    private HashSet<string> _origins;
-    private HashSet<string> _fullyQualifiedOrigins;
+    private ISet<string> _origins;
+    private ISet<string> _fullyQualifiedOrigins;
 
     /// <summary>
     /// Create the configuration for Fido2.
@@ -56,7 +56,7 @@ public class Fido2Configuration
     /// <summary>
     /// Server origins, including protocol host and port.
     /// </summary>
-    public HashSet<string> Origins
+    public ISet<string> Origins
     {
         get
         {
@@ -86,7 +86,7 @@ public class Fido2Configuration
     /// <summary>
     /// Fully Qualified Server origins, generated automatically from Origins.
     /// </summary>
-    public HashSet<string> FullyQualifiedOrigins
+    public ISet<string> FullyQualifiedOrigins
     {
         get => _fullyQualifiedOrigins ?? new HashSet<string>
         {

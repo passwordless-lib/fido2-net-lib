@@ -65,7 +65,7 @@ public class AuthenticatorResponse
 
     // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
 
-    protected void BaseVerify(HashSet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
+    protected void BaseVerify(ISet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
     {
         if (Type is not "webauthn.create" && Type is not "webauthn.get")
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
