@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text.Json.Serialization;
 
@@ -24,7 +25,7 @@ public sealed class MetadataBLOBPayloadEntry
     /// <para>The Authenticator Attestation GUID.</para>
     /// </summary>
     [JsonPropertyName("aaguid")]
-    public string AaGuid { get; set; }
+    public Guid? AaGuid { get; set; }
 
     /// <summary>
     /// Gets or sets a list of the attestation certificate public key identifiers encoded as hex string.

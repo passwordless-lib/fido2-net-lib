@@ -62,10 +62,10 @@ public class MetadataServiceTests
                 Number = _number,
                 Entries = new MetadataBLOBPayloadEntry[]
             {
-                new MetadataBLOBPayloadEntry()
+                new MetadataBLOBPayloadEntry
                 {
-                    AaGuid = "6d44ba9b-f6ec-2e49-b930-0c8fe920cb73",
-                    MetadataStatement = new MetadataStatement()
+                    AaGuid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"),
+                    MetadataStatement = new MetadataStatement
                     {
                         Description = "Security Key by Yubico with NFC"
                     }
@@ -137,13 +137,13 @@ public class MetadataServiceTests
             currentTimeClock
         );
 
-        var entryIdString = "6d44ba9b-f6ec-2e49-b930-0c8fe920cb73";
+        var entryIdGuid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
 
-        var entry = await serviceInstance1.GetEntryAsync(Guid.Parse(entryIdString));
+        var entry = await serviceInstance1.GetEntryAsync(entryIdGuid);
 
         for (int x = 0; x < 10; x++)
         {
-            await serviceInstance1.GetEntryAsync(Guid.Parse(entryIdString));
+            await serviceInstance1.GetEntryAsync(entryIdGuid);
         }
 
         Assert.Equal(1, staticClient.GetBLOBAsyncCount);
@@ -152,22 +152,22 @@ public class MetadataServiceTests
 
         var blobEntry = await distributedCache.GetStringAsync("DistributedCacheMetadataService:V2:" + staticClient.GetType().Name + ":TOC");
 
-        var itemEntry = memCache.Get<MetadataBLOBPayloadEntry>("DistributedCacheMetadataService:V2:" + entryIdString);
+        var itemEntry = memCache.Get<MetadataBLOBPayloadEntry>($"DistributedCacheMetadataService:V2:{entryIdGuid}");
 
         Assert.NotNull(blobEntry);
 
-        Assert.Equal(itemEntry.AaGuid, entryIdString);
+        Assert.Equal(itemEntry.AaGuid, entryIdGuid);
 
         currentTimeClock.UtcNow = DateTimeOffset.Parse("2021-11-30 23:59:59.999Z"); //Before next update
 
-        await serviceInstance1.GetEntryAsync(Guid.Parse(entryIdString));
+        await serviceInstance1.GetEntryAsync(entryIdGuid);
 
         Assert.Equal(1, staticClient.GetBLOBAsyncCount);
 
         currentTimeClock.UtcNow = DateTimeOffset.Parse("2021-12-02 00:59:59.999Z"); //Before buffer period (25 hours)
 
-        await serviceInstance1.GetEntryAsync(Guid.Parse(entryIdString));
-        await serviceInstance1.GetEntryAsync(Guid.Parse(entryIdString));
+        await serviceInstance1.GetEntryAsync(entryIdGuid);
+        await serviceInstance1.GetEntryAsync(entryIdGuid);
 
         Assert.Equal(1, staticClient.GetBLOBAsyncCount);
 
@@ -175,13 +175,13 @@ public class MetadataServiceTests
 
         staticClient.NextUpdate = "2021-12-30";
 
-        await serviceInstance1.GetEntryAsync(Guid.Parse(entryIdString));
+        await serviceInstance1.GetEntryAsync(entryIdGuid);
 
         Assert.Equal(2, staticClient.GetBLOBAsyncCount);
 
         currentTimeClock.UtcNow = DateTimeOffset.Parse("2021-12-29 01:00:00.001Z");
 
-        await serviceInstance1.GetEntryAsync(Guid.Parse(entryIdString));
+        await serviceInstance1.GetEntryAsync(entryIdGuid);
 
         Assert.Equal(2, staticClient.GetBLOBAsyncCount);
     }

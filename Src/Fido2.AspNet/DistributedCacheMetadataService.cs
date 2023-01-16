@@ -182,10 +182,8 @@ public class DistributedCacheMetadataService : IMetadataService
 
     public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
     {
-        var aaguidComparisonString = aaguid.ToString("D");
-
         var memCacheEntry = await _memoryCache.GetOrCreateAsync<MetadataBLOBPayloadEntry>(
-            $"{CACHE_PREFIX}:{aaguidComparisonString}",
+            $"{CACHE_PREFIX}:{aaguid}",
             async entry =>
             {
                 foreach (var repo in _repositories)
@@ -193,7 +191,7 @@ public class DistributedCacheMetadataService : IMetadataService
                     var cachedPayload = await GetMemoryCachedPayload(repo, cancellationToken);
                     if (cachedPayload != null)
                     {
-                        var matchingEntry = cachedPayload.Entries?.FirstOrDefault(o => o.AaGuid == aaguidComparisonString);
+                        var matchingEntry = cachedPayload.Entries?.FirstOrDefault(o => o.AaGuid == aaguid);
                         if (matchingEntry != null)
                         {
                             entry.AbsoluteExpiration = GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(cachedPayload));
