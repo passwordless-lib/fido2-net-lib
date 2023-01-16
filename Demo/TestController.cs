@@ -1,14 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
@@ -127,8 +122,8 @@ public class TestController : Controller
         var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
         var uv = assertionClientParams.UserVerification;
-        if (null != assertionClientParams.authenticatorSelection)
-            uv = assertionClientParams.authenticatorSelection.UserVerification;
+        if (null != assertionClientParams.AuthenticatorSelection)
+            uv = assertionClientParams.AuthenticatorSelection.UserVerification;
 
         var exts = new AuthenticationExtensionsClientInputs
         { 
@@ -196,7 +191,7 @@ public class TestController : Controller
     {
         public string Username { get; set; }
         public UserVerificationRequirement? UserVerification { get; set; }
-        public AuthenticatorSelection authenticatorSelection { get; set; }
+        public AuthenticatorSelection AuthenticatorSelection { get; set; }
         public AuthenticationExtensionsClientOutputs Extensions { get; set; }
     }
 

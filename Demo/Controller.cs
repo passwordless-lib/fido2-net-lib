@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using static Fido2NetLib.Fido2;
@@ -19,7 +13,7 @@ namespace Fido2Demo;
 [Route("api/[controller]")]
 public class MyController : Controller
 {
-    private IFido2 _fido2;
+    private readonly IFido2 _fido2;
     public static IMetadataService _mds;
     public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
 
