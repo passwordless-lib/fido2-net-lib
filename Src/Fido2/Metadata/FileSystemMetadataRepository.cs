@@ -27,10 +27,9 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
         if (_blob is null)
             await GetBLOBAsync(cancellationToken);
 
-        if (!string.IsNullOrEmpty(entry.AaGuid) && Guid.TryParse(entry.AaGuid, out Guid parsedAaGuid))
+        if (entry.AaGuid is Guid aaGuid && _entries.TryGetValue(aaGuid, out var found))
         {
-            if (_entries.ContainsKey(parsedAaGuid))
-                return _entries[parsedAaGuid].MetadataStatement;
+            return found.MetadataStatement;
         }
 
         return null;
@@ -56,7 +55,7 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
                         } 
                     }
                 };
-                if (null != conformanceEntry.AaGuid) _entries.Add(new Guid(conformanceEntry.AaGuid), conformanceEntry);
+                if (null != conformanceEntry.AaGuid) _entries.Add(conformanceEntry.AaGuid.Value, conformanceEntry);
             }
         }
 

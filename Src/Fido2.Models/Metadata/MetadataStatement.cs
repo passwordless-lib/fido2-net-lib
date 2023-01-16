@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
@@ -34,7 +35,7 @@ public class MetadataStatement
     /// <para>Note: FIDO 2 Authenticators support AAGUID, but they don't support AAID.</para>
     /// </remarks>
     [JsonPropertyName("aaguid")]
-    public string AaGuid { get; set; }
+    public Guid? AaGuid { get; set; }
 
     /// <summary>
     /// Gets or sets a list of the attestation certificate public key identifiers encoded as hex string.

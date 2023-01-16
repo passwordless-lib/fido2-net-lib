@@ -48,13 +48,13 @@ public class ConformanceMetadataService : IMetadataService
 
     protected virtual async Task LoadEntryStatementAsync(IMetadataRepository repository, MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken)
     {
-        if (entry.AaGuid != null)
+        if (entry.AaGuid.HasValue)
         {
             var statement = await repository.GetMetadataStatementAsync(blob, entry, cancellationToken);
 
-            if (!string.IsNullOrWhiteSpace(statement?.AaGuid))
+            if (statement?.AaGuid is Guid aaGuid)
             {
-                _metadataStatements.TryAdd(Guid.Parse(statement.AaGuid), statement);
+                _metadataStatements.TryAdd(aaGuid, statement);
             }
         }
     }
@@ -65,9 +65,9 @@ public class ConformanceMetadataService : IMetadataService
 
         foreach (var entry in blob.Entries)
         {
-            if (!string.IsNullOrEmpty(entry.AaGuid))
+            if (entry.AaGuid is Guid aaGuid)
             {
-                if (_entries.TryAdd(Guid.Parse(entry.AaGuid), entry))
+                if (_entries.TryAdd(aaGuid, entry))
                 {
                     //Load if it doesn't already exist
                     await LoadEntryStatementAsync(repository, blob, entry, cancellationToken);

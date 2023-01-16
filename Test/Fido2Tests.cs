@@ -503,13 +503,13 @@ public class Fido2Tests
     {
         var input = new MetadataBLOBPayloadEntry()
         {
-            AaGuid = Guid.NewGuid().ToString(),
+            AaGuid = Guid.NewGuid(),
             MetadataStatement = new MetadataStatement(),
             StatusReports = Array.Empty<StatusReport>(),
             TimeOfLastStatusChange = DateTime.UtcNow.ToString("o")
         };
 
-        input.MetadataStatement.AaGuid = Guid.NewGuid().ToString();
+        input.MetadataStatement.AaGuid = Guid.NewGuid();
         input.MetadataStatement.Description = "Test entry";
         input.MetadataStatement.AuthenticatorVersion = 1;
         input.MetadataStatement.Upv = new UafVersion[] { new UafVersion
