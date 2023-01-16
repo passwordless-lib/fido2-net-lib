@@ -18,7 +18,6 @@ jobs:
     inputs:
       packageType: 'sdk'
       version: '7.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-demo
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
@@ -54,9 +53,9 @@ jobs:
       packageType: 'sdk'
       version: '7.0.x'
   - task: UseDotNet@2
-    displayName: 'Install .NET 6.0 runtime'
+    displayName: 'Install .NET 6.0 SDK'
     inputs:
-      packageType: 'runtime'
+      packageType: 'sdk'
       version: '6.0.x'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
@@ -112,9 +111,9 @@ jobs:
       packageType: 'sdk'
       version: '7.0.x'
   - task: UseDotNet@2
-    displayName: 'Install .NET 6.0 runtime'
+    displayName: 'Install .NET 6.0 SDK
     inputs:
-      packageType: 'runtime'
+      packageType: 'sdk'
       version: '6.0.x'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
