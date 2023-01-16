@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Fido2NetLib</RootNamespace>
   </PropertyGroup>
 
