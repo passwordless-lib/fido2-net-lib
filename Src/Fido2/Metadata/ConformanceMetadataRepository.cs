@@ -59,6 +59,12 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         };
 
         using var response = await _httpClient.PostAsync(_getEndpointsUrl, content, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception($"{_getEndpointsUrl} returned {response.StatusCode} error");
+        }
+
         await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
         MDSGetEndpointResponse? result = await JsonSerializer.DeserializeAsync(responseStream, FidoSerializerContext.Default.MDSGetEndpointResponse, cancellationToken: cancellationToken);
         var conformanceEndpoints = result!.Result;
@@ -71,7 +77,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
         var entries = new List<MetadataBLOBPayloadEntry>();
 
-        foreach(var blobUrl in conformanceEndpoints)
+        foreach (var blobUrl in conformanceEndpoints)
         {
             var rawBlob = await DownloadStringAsync(blobUrl, cancellationToken);
 
@@ -86,15 +92,14 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
                 continue;
             }
             
-            if(string.Compare(blob.NextUpdate, combinedBlob.NextUpdate, StringComparison.InvariantCulture) < 0)
+            if (string.Compare(blob.NextUpdate, combinedBlob.NextUpdate, StringComparison.InvariantCulture) < 0)
                 combinedBlob.NextUpdate = blob.NextUpdate;
+
             if (combinedBlob.Number < blob.Number)
                 combinedBlob.Number = blob.Number;
 
-            foreach (var entry in blob.Entries)
-            {
-                entries.Add(entry);
-            }
+            entries.AddRange(blob.Entries);
+            
             combinedBlob.JwtAlg = blob.JwtAlg;
         }
 
