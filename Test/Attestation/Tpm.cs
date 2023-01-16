@@ -303,7 +303,7 @@ public class Tpm : Fido2Tests.Attestation
 
             Assert.Equal(string.Empty, res.ErrorMessage);
             Assert.Equal("ok", res.Status);
-            Assert.Equal(_aaguid, res.Result.Aaguid);
+            Assert.Equal(_aaguid, res.Result.AaGuid);
             Assert.Equal(_signCount, res.Result.Counter);
             Assert.Equal("tpm", res.Result.CredType);
             Assert.Equal(_credentialID, res.Result.CredentialId);
@@ -425,7 +425,7 @@ public class Tpm : Fido2Tests.Attestation
 
         Assert.Equal(string.Empty, res.ErrorMessage);
         Assert.Equal("ok", res.Status);
-        Assert.Equal(_aaguid, res.Result.Aaguid);
+        Assert.Equal(_aaguid, res.Result.AaGuid);
         Assert.Equal(_signCount, res.Result.Counter);
         Assert.Equal("tpm", res.Result.CredType);
         Assert.Equal(_credentialID, res.Result.CredentialId);
@@ -5258,7 +5258,7 @@ public class Tpm : Fido2Tests.Attestation
 
         Assert.Equal(string.Empty, res.ErrorMessage);
         Assert.Equal("ok", res.Status);
-        Assert.Equal(_aaguid, res.Result.Aaguid);
+        Assert.Equal(_aaguid, res.Result.AaGuid);
         Assert.Equal(_signCount, res.Result.Counter);
         Assert.Equal("tpm", res.Result.CredType);
         Assert.Equal(_credentialID, res.Result.CredentialId);

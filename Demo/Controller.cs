@@ -123,7 +123,7 @@ public class MyController : Controller
                 SignatureCounter = success.Result.Counter,
                 CredType = success.Result.CredType,
                 RegDate = DateTime.Now,
-                AaGuid = success.Result.Aaguid
+                AaGuid = success.Result.AaGuid
             });
 
             // Remove Certificates from success because System.Text.Json cannot serialize them properly. See https://github.com/passwordless-lib/fido2-net-lib/issues/328
