@@ -53,13 +53,11 @@ jobs:
     inputs:
       packageType: 'sdk'
       version: '7.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: UseDotNet@2
     displayName: 'Install .NET 6.0 runtime'
     inputs:
       packageType: 'runtime'
       version: '6.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
@@ -113,13 +111,11 @@ jobs:
     inputs:
       packageType: 'sdk'
       version: '7.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: UseDotNet@2
     displayName: 'Install .NET 6.0 runtime'
     inputs:
       packageType: 'runtime'
       version: '6.0.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
