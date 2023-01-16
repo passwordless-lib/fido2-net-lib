@@ -241,7 +241,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             User = originalOptions.User,
             Counter = authData.SignCount,
             CredType = AttestationObject.Fmt,
-            Aaguid = authData.AttestedCredentialData.AaGuid,
+            AaGuid = authData.AttestedCredentialData.AaGuid,
             AttestationCertificate = trustPath?.FirstOrDefault(),
             AttestationCertificateChain = trustPath ?? Array.Empty<X509Certificate2>(),
         };
