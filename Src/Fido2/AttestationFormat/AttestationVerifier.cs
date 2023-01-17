@@ -71,11 +71,9 @@ public abstract class AttestationVerifier
         return false;
     }
 
-#nullable disable
-
-    internal static byte[] AaguidFromAttnCertExts(X509ExtensionCollection exts)
+    internal static byte[]? AaguidFromAttnCertExts(X509ExtensionCollection exts)
     {
-        byte[] aaguid = null;
+        byte[]? aaguid = null;
         var ext = exts.FirstOrDefault(static e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
         if (ext != null)
         {
@@ -126,6 +124,8 @@ public abstract class AttestationVerifier
 
         return u2ftransports;
     }
+
+#nullable disable
 
     public virtual (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, byte[] authenticatorData, byte[] clientDataHash)
     {
