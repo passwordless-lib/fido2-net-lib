@@ -36,7 +36,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
     private readonly string _origin;
 
-    private readonly string _getEndpointsUrl = "https://mds3.certinfra.fidoalliance.org/getEndpoints";
+    private readonly string _getEndpointsUrl = "https://mds3.fido.tools/getEndpoints";
 
     public ConformanceMetadataRepository(HttpClient? client, string origin)
     {
@@ -66,7 +66,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         }
 
         await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        MDSGetEndpointResponse? result = await JsonSerializer.DeserializeAsync(responseStream, FidoSerializerContext.Default.MDSGetEndpointResponse, cancellationToken: cancellationToken);
+        MDSGetEndpointResponse? result = await JsonSerializer.DeserializeAsync(responseStream, FidoSerializerContext.Default.MDSGetEndpointResponse, cancellationToken);
         var conformanceEndpoints = result!.Result;
 
         var combinedBlob = new MetadataBLOBPayload
