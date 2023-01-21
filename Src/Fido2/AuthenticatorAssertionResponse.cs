@@ -277,7 +277,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             if (matches.Count > 1)
             {
                 // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                throw new Fido2VerificationException(Fido2ErrorCode.MissingStoredPublicKey, Fido2ErrorMessages.MissingStoredPublicKey);
+                throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.NonUniqueDevicePublicKey);
             }
             // exactly one match
             else if (matches.Count is 1)
@@ -307,10 +307,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                         // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
                         _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.AuthData, devicePublicKeyAuthenticatorOutput.Hash);
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                        throw;
+                        throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.InvalidDevicePublicKeyAttestation, ex);
                     }
                 }
             }
@@ -341,10 +341,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                             _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.AuthData, devicePublicKeyAuthenticatorOutput.Hash);
                             return devicePublicKeyAuthenticatorOutput.GetBytes();
                         }
-                        catch
+                        catch (Exception ex)
                         {
                             // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                            throw;
+                            throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.InvalidDevicePublicKeyAttestation, ex);
                         }
                     }
                 }
@@ -353,7 +353,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     // Otherwise there is some form of error: we recieved a known dpk value, but one or more of the
                     // accompanying aaguid, scope, or fmt values did not match what the Relying Party has stored
                     // along with that dpk value. Terminate these verification steps.
-                    throw new Fido2VerificationException(Fido2ErrorCode.MissingStoredPublicKey, Fido2ErrorMessages.MissingStoredPublicKey);
+                    throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.MissingStoredPublicKey);
                 }
             }
         }
@@ -381,7 +381,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 catch
                 {
                     // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                    throw;
+                    throw new Fido2VerificationException(Fido2ErrorCode.MissingStoredPublicKey, Fido2ErrorMessages.MissingStoredPublicKey);
                 }
             }
         }

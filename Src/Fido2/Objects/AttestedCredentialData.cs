@@ -16,7 +16,7 @@ public sealed class AttestedCredentialData
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
     private readonly int _minLength = Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
-    private readonly int _maxCredentialIdLength = 1023;
+    private const int _maxCredentialIdLength = 1023;
 
     /// <summary>
     /// Instantiates an AttestedCredentialData object from an aaguid, credentialID, and CredentialPublicKey

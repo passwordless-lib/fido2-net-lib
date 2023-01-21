@@ -31,6 +31,8 @@ internal static class Fido2ErrorMessages
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
     public static readonly string MissingAttestationType                 = "Missing attestation type";
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
+    public static readonly string InvalidDevicePublicKeyAttestation      = "Invalid devicePublicKey attestation";
+    public static readonly string NonUniqueDevicePublicKey               = "More than one devicePublicKey match";
 
     public static readonly string UnimplementedAlgorithm_Ecdaa_Packed    = "ECDAA support for packed attestation is not yet implemented";
     public static readonly string UnimplementedAlgorithm_Ecdaa_Tpm       = "ECDAA support for TPM attestation is not yet implemented";

@@ -12,6 +12,7 @@ public enum PublicKeyCredentialType
 {
     [EnumMember(Value = "public-key")]
     PublicKey,
+
     [EnumMember(Value = "invalid")]
     Invalid
 }
