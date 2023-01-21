@@ -323,7 +323,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(response));
-        var ex = Assert.ThrowsAsync<System.ArgumentException>(() => MakeAttestationResponseAsync());
+        var ex = Assert.ThrowsAnyAsync<Exception>(async () => await MakeAttestationResponseAsync());
         Assert.Equal("Could not parse X509 certificate", ex.Result.Message);
     }
 

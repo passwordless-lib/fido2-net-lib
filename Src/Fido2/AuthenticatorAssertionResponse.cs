@@ -63,7 +63,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="cancellationToken"></param>
     public async Task<AssertionVerificationResult> VerifyAsync(
         AssertionOptions options,
-        HashSet<string> fullyQualifiedExpectedOrigins,
+        ISet<string> fullyQualifiedExpectedOrigins,
         byte[] storedPublicKey,
         List<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,

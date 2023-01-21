@@ -27,7 +27,7 @@ namespace Fido2NetLib
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_FidoU2fAttestation);
             }
 
-            var attCert = new X509Certificate2((byte[])X5c[0]);
+            var attCert = new X509Certificate2((byte[])x5cArray[0]);
 
             // TODO : Check why this variable isn't used. Remove it or use it.
             var u2ftransports = U2FTransportsFromAttnCert(attCert.Extensions);

@@ -1,8 +1,6 @@
-﻿#nullable disable
-
-using System;
+﻿using System;
+using System.Buffers;
 using System.Buffers.Binary;
-using System.IO;
 using System.Runtime.InteropServices;
 
 using Fido2NetLib.Exceptions;
@@ -16,6 +14,7 @@ public sealed class AttestedCredentialData
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
     private readonly int _minLength = Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
+    
     private const int _maxCredentialIdLength = 1023;
 
     /// <summary>
@@ -105,7 +104,7 @@ public sealed class AttestedCredentialData
     /// </summary>
     public CredentialPublicKey CredentialPublicKey { get; private set; }
 
-    internal static void SwapBytes(byte[] bytes, int index1, int index2)
+    private static void SwapBytes(byte[] bytes, int index1, int index2)
     {
         var temp = bytes[index1];
         bytes[index1] = bytes[index2];
@@ -115,22 +114,22 @@ public sealed class AttestedCredentialData
     /// <summary>
     /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
     /// </summary>
-    public static Guid FromBigEndian(byte[] Aaguid)
+    public static Guid FromBigEndian(byte[] aaGuid)
     {
-        SwapBytes(Aaguid, 0, 3);
-        SwapBytes(Aaguid, 1, 2);
-        SwapBytes(Aaguid, 4, 5);
-        SwapBytes(Aaguid, 6, 7);
+        SwapBytes(aaGuid, 0, 3);
+        SwapBytes(aaGuid, 1, 2);
+        SwapBytes(aaGuid, 4, 5);
+        SwapBytes(aaGuid, 6, 7);
 
-        return new Guid(Aaguid);
+        return new Guid(aaGuid);
     }
 
     /// <summary>
     /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
     /// </summary>
-    public static byte[] AaGuidToBigEndian(Guid AaGuid)
+    public static byte[] AaGuidToBigEndian(Guid aaGuid)
     {
-        var aaguid = AaGuid.ToByteArray();
+        var aaguid = aaGuid.ToByteArray();
 
         SwapBytes(aaguid, 0, 3);
         SwapBytes(aaguid, 1, 2);
@@ -147,28 +146,33 @@ public sealed class AttestedCredentialData
 
     public byte[] ToByteArray()
     {
-        using var ms = new MemoryStream();
-        using (var writer = new BinaryWriter(ms))
+        var writer = new ArrayBufferWriter<byte>(16 + 2 + CredentialID.Length + 512);
+
+        WriteTo(writer);
+
+        return writer.WrittenSpan.ToArray();
+    }
+
+    public void WriteTo(IBufferWriter<byte> writer)
+    {
+        // Write the aaguid as big endian bytes
+        if (BitConverter.IsLittleEndian)
         {
-            // Write the aaguid bytes out, reverse if we're on a little endian system
-            if (BitConverter.IsLittleEndian)
-            {
-                writer.Write(AaGuidToBigEndian(AaGuid));
-            }
-            else
-            {
-                writer.Write(AaGuid.ToByteArray());
-            }
-
-            // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
-            writer.WriteUInt16BigEndian((ushort)CredentialID.Length);
-
-            // Write CredentialID bytes
-            writer.Write(CredentialID);
-
-            // Write credential public key bytes
-            writer.Write(CredentialPublicKey.GetBytes());
+            writer.Write(AaGuidToBigEndian(AaGuid));
         }
-        return ms.ToArray();
+        else
+        {
+            _ = AaGuid.TryWriteBytes(writer.GetSpan(16));
+            writer.Advance(16);
+        }
+
+        // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
+        writer.WriteUInt16BigEndian((ushort)CredentialID.Length);
+
+        // Write CredentialID bytes
+        writer.Write(CredentialID);
+
+        // Write credential public key bytes
+        writer.Write(CredentialPublicKey.GetBytes());
     }
 }
