@@ -5,7 +5,7 @@ namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// PublicKeyCredentialType.
-/// https://w3c.github.io/webauthn/#enumdef-publickeycredentialtype
+/// https://www.w3.org/TR/webauthn-2/#enum-credentialType
 /// </summary>
 [JsonConverter(typeof(FidoEnumConverter<PublicKeyCredentialType>))]
 public enum PublicKeyCredentialType

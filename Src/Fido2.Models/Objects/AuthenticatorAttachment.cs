@@ -10,7 +10,7 @@ namespace Fido2NetLib.Objects;
 /// </summary>
 /// <remarks>
 /// Note: An authenticator attachment modality selection option is available only in the [[Create]](origin, options, sameOriginWithAncestors) operation. The Relying Party may use it to, for example, ensure the user has a roaming credential for authenticating on another client device; or to specifically register a platform credential for easier reauthentication using a particular client device. The [[DiscoverFromExternalSource]](origin, options, sameOriginWithAncestors) operation has no authenticator attachment modality selection option, so the Relying Party SHOULD accept any of the user’s registered credentials. The client and user will then use whichever is available and convenient at the time.
-/// https://w3c.github.io/webauthn/#attachment
+/// https://www.w3.org/TR/webauthn-2/#enum-attachment
 /// </remarks>
 [JsonConverter(typeof(FidoEnumConverter<AuthenticatorAttachment>))]
 public enum AuthenticatorAttachment

@@ -4,8 +4,8 @@ using System.Text.Json.Serialization;
 namespace Fido2NetLib.Objects;
 
 /// <summary>
-/// AttestationConveyancePreference.
-/// https://w3c.github.io/webauthn/#attestation-convey
+/// AttestationConveyancePreference
+/// https://www.w3.org/TR/webauthn-2/#enum-attestation-convey
 /// </summary>
 [JsonConverter(typeof(FidoEnumConverter<AttestationConveyancePreference>))]
 public enum AttestationConveyancePreference
