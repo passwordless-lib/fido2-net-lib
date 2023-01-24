@@ -9,8 +9,8 @@ namespace Fido2NetLib;
 public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>
     where TEnum: struct, Enum
 {
-    private static readonly Dictionary<TEnum, string> valueToNames = GetIdToNameMap();
-    private static readonly Dictionary<string, TEnum> namesToValues = Invert(valueToNames);
+    private static readonly Dictionary<TEnum, string> s_valueToNames = GetIdToNameMap();
+    private static readonly Dictionary<string, TEnum> s_namesToValues = Invert(s_valueToNames);
 
     private static Dictionary<string, TEnum> Invert(Dictionary<TEnum, string> map)
     {
@@ -24,42 +24,19 @@ public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccess
         return result;
     }
 
-    public static bool TryGetValue(string name, bool ignoreCase, out TEnum value)
-    {
-        if (namesToValues.TryGetValue(name, out value))
-        {
-            if (!ignoreCase && !valueToNames[value].Equals(name, StringComparison.Ordinal))
-            {
-                value = default;
-
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        else
-        {
-            value = default;
-
-            return false;
-        }
-    }
-
     public static bool TryGetValue(string name, out TEnum value)
     {
-        return namesToValues.TryGetValue(name, out value);
+        return s_namesToValues.TryGetValue(name, out value);
     }
 
     public static string GetName(TEnum value)
     {
-        return valueToNames[value];
+        return s_valueToNames[value];
     }
 
     public static IEnumerable<string> GetNames()
     {
-        return namesToValues.Keys;
+        return s_namesToValues.Keys;
     }
 
     private static Dictionary<TEnum, string> GetIdToNameMap()
