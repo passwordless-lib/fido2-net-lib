@@ -217,7 +217,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AttestationClientDataJSON = Raw.Response.ClientDataJson,
             User = originalOptions.User,
             CredType = AttestationObject.Fmt,
-            Aaguid = authData.AttestedCredentialData.AaGuid,
+            AaGuid = authData.AttestedCredentialData.AaGuid,
             DevicePublicKey = devicePublicKeyResult
         };
     }

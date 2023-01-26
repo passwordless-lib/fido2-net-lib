@@ -127,7 +127,7 @@ public class MyController : Controller
                 SignCount = success.Result.Counter,
                 CredType = success.Result.CredType,
                 RegDate = DateTime.Now,
-                AaGuid = success.Result.Aaguid,
+                AaGuid = success.Result.AaGuid,
                 Transports = success.Result.Transports,
                 BE = success.Result.BE,
                 BS = success.Result.BS,

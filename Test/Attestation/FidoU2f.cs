@@ -58,7 +58,7 @@ public class FidoU2f : Fido2Tests.Attestation
         var res = await MakeAttestationResponseAsync();
         Assert.Equal(string.Empty, res.ErrorMessage);
         Assert.Equal("ok", res.Status);
-        Assert.Equal(_aaguid, res.Result.Aaguid);
+        Assert.Equal(_aaguid, res.Result.AaGuid);
         Assert.Equal(_signCount, res.Result.SignCount);
         Assert.Equal("fido-u2f", res.Result.CredType);
         Assert.Equal(_credentialID, res.Result.Id);

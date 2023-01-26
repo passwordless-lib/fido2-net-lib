@@ -12,7 +12,8 @@ public class AttestationVerificationSuccess : AssertionVerificationResult
     public Fido2User User { get; set; }
 
     public string CredType { get; set; }
-    public System.Guid Aaguid { get; set; }
+    
+    public Guid AaGuid { get; set; }
     /// <summary>
     /// The type of the public key credential source.
     /// </summary>
