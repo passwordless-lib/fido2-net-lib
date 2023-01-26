@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects;
@@ -9,6 +10,7 @@ namespace Fido2NetLib.Objects;
 public class AttestationVerificationSuccess : AssertionVerificationResult
 {
     public Fido2User User { get; set; }
+
     public string CredType { get; set; }
     public System.Guid Aaguid { get; set; }
     /// <summary>
