@@ -127,7 +127,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
 
         // 15. If the Relying Party uses the credential's backup eligibility to inform its user experience flows and/or policies, evaluate the BE bit of the flags in authData.
-        if (authData.IsBackupEligibile)
+        if (authData.IsBackupEligible)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
 
         if (!authData.HasAttestedCredentialData)
@@ -211,7 +211,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
             //Transports = result of response.getTransports();
-            BE = authData.IsBackupEligibile,
+            BE = authData.IsBackupEligible,
             BS = authData.BackupState,
             AttestationObject = Raw.Response.AttestationObject,
             AttestationClientDataJSON = Raw.Response.ClientDataJson,

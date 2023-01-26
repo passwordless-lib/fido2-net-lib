@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using System.Buffers.Binary;
-using System.Runtime.InteropServices;
 
 using Fido2NetLib.Exceptions;
 
@@ -13,8 +12,8 @@ public sealed class AttestedCredentialData
     /// Minimum length of the attested credential data structure.  AAGUID + credentialID length + credential ID + credential public key.
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
-    private readonly int _minLength = Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte);
-    
+    private const int _minLength = 20; // Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte)
+
     private const int _maxCredentialIdLength = 1023;
 
     /// <summary>

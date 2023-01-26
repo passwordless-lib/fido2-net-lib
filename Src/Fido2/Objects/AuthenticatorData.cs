@@ -48,7 +48,7 @@ public sealed class AuthenticatorData
     /// A backup eligible public key credential source is referred to as a multi-device credential whereas one that is not backup eligible is referred to as a single-device credential.
     /// <see cref="https://w3c.github.io/webauthn/#backup-eligibility"/>
     /// </summary>
-    public bool IsBackupEligibile => _flags.HasFlag(AuthenticatorFlags.BE);
+    public bool IsBackupEligible => _flags.HasFlag(AuthenticatorFlags.BE);
 
     /// <summary>
     /// The current backup state of a multi-device credential as determined by the current managing authenticator. 

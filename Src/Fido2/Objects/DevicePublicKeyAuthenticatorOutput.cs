@@ -3,12 +3,16 @@ namespace Fido2NetLib.Objects;
 
 using System;
 using Fido2NetLib.Cbor;
+using NSec.Cryptography;
 
 
 public sealed class DevicePublicKeyAuthenticatorOutput
 {
     // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-    internal readonly byte[] _dpkAuthDataPrefix = Convert.FromHexString("64657669636520626f756e64206b6579206174746573746174696f6e2073696700ffffffff");
+    internal static ReadOnlySpan<byte> _dpkAuthDataPrefix => new byte[] {
+        0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x20, 0x62, 0x6f, 0x75, 0x6e, 0x64, 0x20,
+        0x6b, 0x65, 0x79, 0x20, 0x61, 0x74, 0x74, 0x65, 0x73, 0x74, 0x61, 0x74, 0x69,
+        0x6f, 0x6e, 0x20, 0x73, 0x69, 0x67, 0x00, 0xff, 0xff, 0xff, 0xff };
 
     internal CborMap _attObj;
 
@@ -20,12 +24,14 @@ public sealed class DevicePublicKeyAuthenticatorOutput
 
     public byte[] AuthenticationMatcher => DataHelper.Concat(AaGuid.ToByteArray(), DevicePublicKey.GetBytes());
 
+    public ReadOnlySpan<byte> Nonce => _nonce;
+
     public DevicePublicKeyAuthenticatorOutput(CborMap attObjForDevicePublicKey)
     {
         AaGuid = new Guid((byte[])attObjForDevicePublicKey["aaguid"]);
         DevicePublicKey = new CredentialPublicKey((byte[])attObjForDevicePublicKey["dpk"]);
         Scope = (uint)attObjForDevicePublicKey["scope"];
-        Nonce = (byte[])attObjForDevicePublicKey["nonce"];
+        _nonce = (byte[])attObjForDevicePublicKey["nonce"];
         Fmt = (string)attObjForDevicePublicKey["fmt"];
         AttStmt = (CborMap)attObjForDevicePublicKey["attStmt"];
         EpAtt = false;
@@ -40,14 +46,14 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
     /// <see cref="https://www.w3.org/TR/webauthn/#aaguid"/>
     /// </summary>
-    public Guid AaGuid { get; private set; }
+    public Guid AaGuid { get; }
 
     /// <summary>
     /// The credential public key encoded in COSE_Key format, as defined in 
     /// Section 7 of RFC8152, using the CTAP2 canonical CBOR encoding form.
     /// <see cref="https://www.w3.org/TR/webauthn/#credential-public-key"/>
     /// </summary>
-    public CredentialPublicKey DevicePublicKey { get; private set; }
+    public CredentialPublicKey DevicePublicKey { get; }
 
     /// <summary>
     /// Whether this key is scoped to the entire device, or a loosely-defined, narrower scope called "app". 
@@ -57,14 +63,14 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     /// A value of 0x00 means "entire device" ("all apps") scope. 
     /// 0x01 means "per-app" scope. Values other than 0x00 or 0x01 are reserved for future use.
     /// </summary>
-    public uint Scope { get; private set; }
+    public uint Scope { get; }
 
     /// <summary>
     /// An authenticator-generated random nonce for inclusion in the attestation signature.
     /// If the authenticator chooses to not generate a nonce, it sets this to a zero-length byte string. 
     /// See the note below about "randomNonce" for a discussion on the nonce's purpose.
     /// </summary>
-    public byte[] Nonce { get; private set; }
+    public byte[] _nonce { get; }
 
     /// <summary>
     /// Attestation statement formats are identified by a string, called an attestation statement format identifier, chosen by the author of the attestation statement format.
@@ -81,5 +87,5 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     /// An optional boolean that indicates whether the attestation statement contains uniquely identifying information.
     /// This can only be true when the `attestation` field of the extension input is "enterprise" and either the user-agent or the authenticator permits uniquely identifying attestation for the requested RP ID.
     /// </summary>
-    public bool? EpAtt { get; private set; }
+    public bool? EpAtt { get; }
 }
