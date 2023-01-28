@@ -11,7 +11,6 @@ namespace Fido2NetLib;
 public sealed class CredentialCreateOptions : Fido2ResponseBase
 {
     /// <summary>
-    /// 
     /// This member contains data about the Relying Party responsible for the request.
     /// Its value’s name member is required.
     /// Its value’s id member specifies the relying party identifier with which the credential should be associated.If omitted, its value will be the CredentialsContainer object’s relevant settings object's origin's effective domain.
@@ -146,36 +145,6 @@ public sealed class PubKeyCredParam
     public static readonly PubKeyCredParam PS384   = new(COSE.Algorithm.PS384);
     public static readonly PubKeyCredParam PS512   = new(COSE.Algorithm.PS512);
     public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
-}
-
-#nullable enable
-/// <summary>
-/// PublicKeyCredentialRpEntity 
-/// </summary>
-public sealed class PublicKeyCredentialRpEntity
-{
-    public PublicKeyCredentialRpEntity(string id, string name, string? icon = null)
-    {
-        Name = name;
-        Id = id;
-        Icon = icon;
-    }
-
-    /// <summary>
-    /// A unique identifier for the Relying Party entity, which sets the RP ID.
-    /// </summary>
-    [JsonPropertyName("id")]
-    public string Id { get; set; }
-
-    /// <summary>
-    /// A human-readable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
-    /// </summary>
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("icon")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Icon { get; set; }
 }
 #nullable disable
 
