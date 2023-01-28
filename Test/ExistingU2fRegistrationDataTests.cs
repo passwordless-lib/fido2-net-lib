@@ -25,11 +25,7 @@ public class ExistingU2fRegistrationDataTests
             RpId = "localhost",
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                      Id = keyHandleData,
-                      Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(PublicKeyCredentialType.PublicKey, keyHandleData)
             },
             Extensions = new AuthenticationExtensionsClientInputs
             {
