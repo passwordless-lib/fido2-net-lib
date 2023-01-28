@@ -8,15 +8,14 @@ public class AuthenticatorMakeCredentialCommandTests
     public void GetPayload()
     {
         var request = new AuthenticatorMakeCredentialCommand(
-            clientDataHash: Convert.FromHexString("687134968222ec17202e42505f8ed2b16ae22f16bb05b88c25db9e602645f141"),
-            rpEntity: new PublicKeyCredentialRpEntity(id: "example.com", name: "Acme", null),
-            user: new PublicKeyCredentialUserEntity {
-                    Id          = Convert.FromHexString("3082019330820138a0030201023082019330820138a003020102308201933082"),
-                    Icon        = "https://pics.example.com/00/p/aBjjjpqPb.png",
-                    Name        = "johnpsmith@example.com",
-                    DisplayName = "John P. Smith"
-                            
-            },
+            clientDataHash : Convert.FromHexString("687134968222ec17202e42505f8ed2b16ae22f16bb05b88c25db9e602645f141"),
+            rpEntity       : new PublicKeyCredentialRpEntity(id: "example.com", name: "Acme", null),
+            user           : new PublicKeyCredentialUserEntity(
+                                id          : Convert.FromHexString("3082019330820138a0030201023082019330820138a003020102308201933082"),
+                                icon        : "https://pics.example.com/00/p/aBjjjpqPb.png",
+                                name        : "johnpsmith@example.com",
+                                displayName : "John P. Smith"
+                            ),            
             pubKeyCredParams: new[] { 
                 new PubKeyCredParam(COSE.Algorithm.ES256), 
                 new PubKeyCredParam(COSE.Algorithm.RS256)

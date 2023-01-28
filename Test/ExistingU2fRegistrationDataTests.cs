@@ -23,9 +23,9 @@ public class ExistingU2fRegistrationDataTests
         {
             Challenge = Base64Url.Decode("mNxQVDWI8+ahBXeQJ8iS4jk5pDUd5KetZGVOwSkw2X0"),
             RpId = "localhost",
-            AllowCredentials = new[]
+            AllowCredentials = new PublicKeyCredentialDescriptor[]
             {
-                new PublicKeyCredentialDescriptor(PublicKeyCredentialType.PublicKey, keyHandleData)
+                new(keyHandleData)
             },
             Extensions = new AuthenticationExtensionsClientInputs
             {

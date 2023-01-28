@@ -12,6 +12,12 @@ namespace Fido2NetLib.Objects;
 /// </summary>
 public sealed class PublicKeyCredentialDescriptor
 {
+    public PublicKeyCredentialDescriptor(byte[] id)
+    {
+        Type = PublicKeyCredentialType.PublicKey;
+        Id = id;
+    }
+
     [JsonConstructor]
     public PublicKeyCredentialDescriptor(PublicKeyCredentialType type, byte[] id, AuthenticatorTransport[]? transports = null)
     {
