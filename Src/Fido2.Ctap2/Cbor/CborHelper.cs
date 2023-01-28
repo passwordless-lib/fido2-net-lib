@@ -7,48 +7,52 @@ internal sealed class CborHelper
 {
     public static PublicKeyCredentialDescriptor DecodePublicKeyCredentialDescriptor(CborMap map)
     {
-        var result = new PublicKeyCredentialDescriptor();
+        byte[] id = null!;
+        PublicKeyCredentialType type = default;
 
         foreach (var (key, value) in map)
         {
             switch ((string)key)
             {
                 case "id":
-                    result.Id = (byte[])value;
+                    id = (byte[])value;
                     break;
                 case "type" when (value is CborTextString { Value: "public-key" }):
-                    result.Type = PublicKeyCredentialType.PublicKey;
+                    type = PublicKeyCredentialType.PublicKey;
                     break;
             }
         }
 
-        return result;
+        return new PublicKeyCredentialDescriptor(type, id);
     }
 
     public static PublicKeyCredentialUserEntity DecodePublicKeyCredentialUserEntity(CborMap map)
     {
-        var result = new PublicKeyCredentialUserEntity();
+        byte[] id = null!;
+        string name = null!;
+        string displayName = null!;
+        string? icon = null;
 
         foreach (var (key, value) in map)
         {
             switch ((string)key)
             {
                 case "id":
-                    result.Id = (byte[])value;
+                    id = (byte[])value;
                     break;
                 case "name":
-                    result.Name = (string)value;
+                    name = (string)value;
                     break;
                 case "displayName":
-                    result.DisplayName = (string)value;
+                    displayName = (string)value;
                     break;
                 case "icon":
-                    result.Icon = (string)value;
+                    icon = (string)value;
                     break;
             }
         }
 
-        return result;
+        return new PublicKeyCredentialUserEntity(id, name, displayName, icon);
     }
 
     public static string[] ToStringArray(CborObject cborObject)
