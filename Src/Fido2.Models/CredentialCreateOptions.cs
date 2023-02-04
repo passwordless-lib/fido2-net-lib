@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -118,6 +119,7 @@ public sealed class PubKeyCredParam
     /// Constructs a PubKeyCredParam instance
     /// </summary>
     [JsonConstructor]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(PubKeyCredParam))]
     public PubKeyCredParam(COSE.Algorithm alg, PublicKeyCredentialType type = PublicKeyCredentialType.PublicKey)
     {
         Type = type;
@@ -154,6 +156,8 @@ public sealed class PubKeyCredParam
 /// </summary>
 public sealed class PublicKeyCredentialRpEntity
 {
+    [JsonConstructor]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.PublicConstructors, typeof(PublicKeyCredentialRpEntity))]
     public PublicKeyCredentialRpEntity(string id, string name, string? icon = null)
     {
         Name = name;
