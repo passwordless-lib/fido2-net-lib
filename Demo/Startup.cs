@@ -52,13 +52,6 @@ public class Startup
             options.Origins = Configuration.GetSection("fido2:origins").Get<HashSet<string>>();
             options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
             options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
-        })
-        .AddCachedMetadataService(config =>
-        {
-            config.AddFidoMetadataRepository(httpClientBuilder =>
-            {
-                //TODO: any specific config you want for accessing the MDS
-            });
         });
     }
 
