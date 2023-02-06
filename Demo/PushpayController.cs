@@ -34,17 +34,11 @@ public class PushpayController: Controller
     }
 
     [HttpPost]
-    [Route("/makeCredentialOptions")]
-    public JsonResult MakeCredentialOptions([FromForm] string username,
-                                            [FromForm] string displayName,
-                                            [FromForm] string attType,
-                                            [FromForm] string authType,
-                                            [FromForm] string residentKey,
-                                            [FromForm] string userVerification)
+    [Route("/makeCredentialOptions2")]
+    public JsonResult MakeCredentialOptions([FromForm] string username, [FromForm] string displayName)
     {
         try
         {
-
             if (string.IsNullOrEmpty(username))
             {
                 username = $"{displayName} (Usernameless user created at {DateTime.UtcNow})";
@@ -64,12 +58,13 @@ public class PushpayController: Controller
             // 3. Create options
             var authenticatorSelection = new AuthenticatorSelection
             {
-                ResidentKey = residentKey.ToEnum<ResidentKeyRequirement>(),
-                UserVerification = userVerification.ToEnum<UserVerificationRequirement>()
+                ResidentKey = ResidentKeyRequirement.Discouraged,
+                UserVerification = UserVerificationRequirement.Required,
             };
 
-            if (!string.IsNullOrEmpty(authType))
-                authenticatorSelection.AuthenticatorAttachment = authType.ToEnum<AuthenticatorAttachment>();
+            // this can be uncommented
+            //if (!string.IsNullOrEmpty(authType))
+            //    authenticatorSelection.AuthenticatorAttachment = authType.ToEnum<AuthenticatorAttachment>();
 
             var exts = new AuthenticationExtensionsClientInputs()
             {
@@ -77,7 +72,7 @@ public class PushpayController: Controller
                 UserVerificationMethod = true,
             };
 
-            var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
+            var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, AttestationConveyancePreference.None, exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
