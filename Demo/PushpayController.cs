@@ -87,8 +87,7 @@ public class PushpayController: Controller
     }
 
     [HttpPost]
-    [Route("/makeCredential")]
-    public async Task<JsonResult> MakeCredential([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
+    [Route("/makeCredential2")]
     {
         try
         {
