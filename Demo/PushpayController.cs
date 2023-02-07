@@ -75,7 +75,7 @@ public class PushpayController: Controller
             var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, AttestationConveyancePreference.None, exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
-            HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
+            // HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
 
             // 5. return options to client
             return Json(options);
@@ -87,14 +87,13 @@ public class PushpayController: Controller
     }
 
     [HttpPost]
-    [Route("/makeCredential")]
-    public async Task<JsonResult> MakeCredential([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
+    [Route("/makeCredential2")]
+    public async Task<JsonResult> MakeCredential([FromBody] AuthenticatorAttestationRawResponse attestationResponse, [FromHeader] string attestationOptions,  CancellationToken cancellationToken)
     {
         try
         {
             // 1. get the options we sent the client
-            var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
-            var options = CredentialCreateOptions.FromJson(jsonOptions);
+            var options = CredentialCreateOptions.FromJson(attestationOptions);
 
             // 2. Create callback so that lib can verify credential id is unique to this user
             IsCredentialIdUniqueToUserAsyncDelegate callback = static async (args, cancellationToken) =>
