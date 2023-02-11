@@ -267,32 +267,32 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // account and credential.id pair and each set MUST be checked.
         if (storedDevicePublicKeys.Count > 0)
         {
-            List<DevicePublicKeyAuthenticatorOutput> matches = new();
+            List<DevicePublicKeyAuthenticatorOutput> matchedDpkRecords = new();
             storedDevicePublicKeys.ForEach(storedDevicePublicKey =>
             {
-                DevicePublicKeyAuthenticatorOutput candidate = new(storedDevicePublicKey);
-                if (candidate.AuthenticationMatcher.SequenceEqual(devicePublicKeyAuthenticatorOutput.AuthenticationMatcher)
-                    && candidate.Scope.Equals(devicePublicKeyAuthenticatorOutput.Scope))
+                DevicePublicKeyAuthenticatorOutput dpkRecord = new(storedDevicePublicKey);
+                if (dpkRecord.AuthenticationMatcher.SequenceEqual(devicePublicKeyAuthenticatorOutput.AuthenticationMatcher)
+                    && dpkRecord.Scope.Equals(devicePublicKeyAuthenticatorOutput.Scope))
                 {
-                    matches.Add(candidate);
+                    matchedDpkRecords.Add(dpkRecord);
                 }
             });
 
             // more than one match
-            if (matches.Count > 1)
+            if (matchedDpkRecords.Count > 1)
             {
                 // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
                 throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.NonUniqueDevicePublicKey);
             }
             // exactly one match
-            else if (matches.Count is 1)
+            else if (matchedDpkRecords.Count is 1)
             {
                 // This is likely a known device.
                 // If fmt's value is "none" then there is no attestation signature to verify and this is a known device public key with a valid signature and thus a known device. Terminate these verification steps.
                 if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
                     return null;
                 // Otherwise, check attObjForDevicePublicKey's attStmt by performing a binary equality check between the corresponding stored and extracted attStmt values.
-                else if (devicePublicKeyAuthenticatorOutput.AttStmt.Encode().SequenceEqual(matches.FirstOrDefault().AttStmt.Encode()))
+                else if (devicePublicKeyAuthenticatorOutput.AttStmt.Encode().SequenceEqual(matchedDpkRecords.FirstOrDefault().AttStmt.Encode()))
                 {
                     // Note: This authenticator is not generating a fresh per-response random nonce.
                     return null;
@@ -319,25 +319,39 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     }
                 }
             }
-            else if (matches.Count == 0)
+            // This is possibly a new device public key signifying a new device.
+            else if (matchedDpkRecords.Count == 0)
             {
-                List<DevicePublicKeyAuthenticatorOutput> dpkMatches = new();
+                // Let matchedDpkKeys be a new empty set
+                List<DevicePublicKeyAuthenticatorOutput> matchedDpkKeys = new();
+
+                // For each dpkRecord in credentialRecord.devicePubKeys
                 storedDevicePublicKeys.ForEach(storedDevicePublicKey =>
                 {
-                    DevicePublicKeyAuthenticatorOutput candidate = new(storedDevicePublicKey);
-                    if (candidate.DevicePublicKey.GetBytes().SequenceEqual(devicePublicKeyAuthenticatorOutput.DevicePublicKey.GetBytes()))
+                    DevicePublicKeyAuthenticatorOutput dpkRecord = new(storedDevicePublicKey);
+
+                    // If dpkRecord.dpk equals dpk
+                    if (dpkRecord.DevicePublicKey.GetBytes().SequenceEqual(devicePublicKeyAuthenticatorOutput.DevicePublicKey.GetBytes()))
                     {
-                        dpkMatches.Add(candidate);
+                        // Append dpkRecord to matchedDpkKeys.
+                        matchedDpkKeys.Add(dpkRecord);
                     }
                 });
 
-                if (dpkMatches.Count == 0)
+                // If matchedDpkKeys is empty
+                if (matchedDpkKeys.Count == 0)
                 {
+                    // If fmt’s value is "none"
                     if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
+                        // There is no attestation signature to verify and this is a new device.
+                        // Unless Relying Party policy specifies that this attestation is unacceptable, Create a new device-bound key record and then terminate these verification steps.
                         return devicePublicKeyAuthenticatorOutput.GetBytes();
 
+                    // Otherwise
                     else
                     {
+                        // Optionally, if attestation was requested and the RP wishes to verify it, verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2 Attestation calculations.
+                        // Relying Party policy may specifiy which attestations are acceptable.
                         var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
                         // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
                         try
