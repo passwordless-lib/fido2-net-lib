@@ -52,6 +52,8 @@ public class Startup
             options.Origins = Configuration.GetSection("fido2:origins").Get<HashSet<string>>();
             options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
             options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
+            options.AllowBackupEligibleCredential = Configuration.GetValue<bool>("fido2:allowBackupEligibleCredential");
+            options.AllowBackedUpCredential = Configuration.GetValue<bool>("fido2:allowBackedUpCredential");
         })
         .AddCachedMetadataService(config =>
         {

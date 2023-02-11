@@ -63,7 +63,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="cancellationToken"></param>
     public async Task<AssertionVerificationResult> VerifyAsync(
         AssertionOptions options,
-        ISet<string> fullyQualifiedExpectedOrigins,
+        Fido2Configuration config,
         byte[] storedPublicKey,
         List<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
@@ -71,7 +71,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         byte[] requestTokenBindingId,
         CancellationToken cancellationToken = default)
     {
-        BaseVerify(fullyQualifiedExpectedOrigins, options.Challenge, requestTokenBindingId);
+        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, "AssertionResponse type must be public-key");
@@ -159,6 +159,11 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         // 16. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs be the values of the BE and BS bits, respectively, of the flags in authData.
         // Compare currentBe and currentBs with credentialRecord.BE and credentialRecord.BS and apply Relying Party policy, if any.
+        if (authData.IsBackupEligible && !config.AllowBackupEligibleCredential)
+            throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
+
+        if (authData.BackupState && !config.AllowBackedUpCredential)
+            throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
         // 14. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, considering the client extension input values that were given as the extensions option in the get() call.In particular, any extension identifier values in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
         // todo: Verify this (and implement extensions on options)

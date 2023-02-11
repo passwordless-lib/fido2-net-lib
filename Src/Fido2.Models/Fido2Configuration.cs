@@ -113,4 +113,14 @@ public class Fido2Configuration
         AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
         AuthenticatorStatus.REVOKED
     };
+
+    /// <summary>
+    /// Whether or not to accept a backup eligible credential
+    /// </summary>
+    public bool AllowBackupEligibleCredential { get; set; }
+
+    /// <summary>
+    /// Whether or not to accept a backed up credential
+    /// </summary>
+    public bool AllowBackedUpCredential { get; set; }
 }
