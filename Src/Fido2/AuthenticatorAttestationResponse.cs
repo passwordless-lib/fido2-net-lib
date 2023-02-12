@@ -78,7 +78,6 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         Fido2Configuration config,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         IMetadataService metadataService,
-        byte[] requestTokenBindingId,
         CancellationToken cancellationToken = default)
     {
         _metadataService = metadataService;
@@ -96,7 +95,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
         // 9. Verify that the value of C.origin matches the Relying Party's origin.
-        BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId);
+        BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge);
 
         if (Raw.Id is null || Raw.Id.Length == 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, "AttestationResponse is missing Id");

@@ -59,7 +59,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="storedPublicKey">The stored public key for this CredentialId</param>
     /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
     /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID</param>
-    /// <param name="requestTokenBindingId"></param>
     /// <param name="cancellationToken"></param>
     public async Task<AssertionVerificationResult> VerifyAsync(
         AssertionOptions options,
@@ -68,10 +67,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         List<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
-        byte[] requestTokenBindingId,
         CancellationToken cancellationToken = default)
     {
-        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId);
+        BaseVerify(config.FullyQualifiedOrigins, options.Challenge);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, "AssertionResponse type must be public-key");
@@ -120,10 +118,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the PublicKeyCredentialRequestOptions passed to the get() call.
         // 9. Verify that the value of C.origin matches the Relying Party's origin.
         // done in base class
-
-        // 10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-        // Validated in BaseVerify.
-        // todo: Needs testing
 
         // 11. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
 

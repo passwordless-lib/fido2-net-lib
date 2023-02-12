@@ -19,14 +19,12 @@ public interface IFido2
         List<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default);
 
     Task<Fido2.CredentialMakeResult> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
         CredentialCreateOptions origChallenge,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default);
 
     CredentialCreateOptions RequestNewCredential(

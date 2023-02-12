@@ -63,7 +63,7 @@ public class AuthenticatorResponse
     [JsonPropertyName("origin")]
     public string Origin { get; set; }
 
-    protected void BaseVerify(ISet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
+    protected void BaseVerify(ISet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge)
     {
         if (Type is not "webauthn.create" && Type is not "webauthn.get")
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
