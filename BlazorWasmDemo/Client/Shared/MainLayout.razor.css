@@ -1,7 +1,8 @@
-.page {
-    position: relative;
+.top-row {
+    justify-content: flex-end;
+    height: 3.5rem;
     display: flex;
-    flex-direction: column;
+    align-items: center;
 }
 
 section.header {
@@ -31,15 +32,10 @@ main {
     flex: 1;
 }
 
-.sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-}
-
-.top-row {
-    justify-content: flex-end;
-    height: 3.5rem;
-    display: flex;
-    align-items: center;
+footer {
+    background-color: #fafafa;
+    padding: 3rem 1.5rem 6rem;
+    text-align: center;
 }
 
 @media (min-width: 641px) {

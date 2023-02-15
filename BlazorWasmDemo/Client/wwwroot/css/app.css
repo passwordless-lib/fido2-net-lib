@@ -49,6 +49,10 @@ a {
     color: red;
 }
 
+.fa-check-square {
+    color: #23d160;
+}
+
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;
