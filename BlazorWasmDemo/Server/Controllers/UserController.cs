@@ -1,5 +1,6 @@
 ﻿namespace BlazorWasmDemo.Server.Controllers;
 
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -47,19 +48,23 @@ public class UserController : ControllerBase
     {
         try
         {
+            var key = username;
             if (string.IsNullOrEmpty(username))
             {
                 var created = DateTime.UtcNow;
                 if (string.IsNullOrEmpty(displayName))
                 {
-                    displayName = $"(Usernameless user created at {created} for {Request.Host})";
-                    username = $"(Usernameless user created at {created.ToLongTimeString()} for {Request.Host})"; // more precise internal name for less collisions in _pendingCredentials
+                    // More precise generated name for less collisions in _pendingCredentials
+                    username = $"(Usernameless user created {created})";
                 }
                 else
                 {
-                    username = $"{displayName} (Usernameless user created at {created} for {Request.Host})"; // Less precise if there's a displayName set anyway
+                    // Less precise but nicer for user if there's a displayName set anyway
+                    username = $"{displayName} (Usernameless user created {created.ToShortDateString()})";
                 }
+                key = Convert.ToBase64String(Encoding.UTF8.GetBytes(username));
             }
+            Debug.Assert(key != null); // If it was null before, it was set to the base64 value. Analyzer doesn't understand this though.
 
             // 1. Get user from DB by username (in our example, auto create missing users)
             var user = _demoStorage.GetOrAddUser(username, () => new Fido2User
@@ -76,7 +81,7 @@ public class UserController : ControllerBase
             var options = _fido2.RequestNewCredential(user, existingKeys, AuthenticatorSelection.Default, AttestationConveyancePreference.None);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
-            _pendingCredentials[username] = options;
+            _pendingCredentials[key] = options;
 
             // 5. return options to client
             return options;
@@ -90,7 +95,7 @@ public class UserController : ControllerBase
     /// <summary>
     /// Creates a new credential for a user.
     /// </summary>
-    /// <param name="username">Use options.User.Name from the create options object received by a call to "/credential-options", even when called usernameless.</param>
+    /// <param name="username">Username of registering user. If usernameless, use base64 encoded options.User.Name from the credential-options used to create the credential.</param>
     /// <param name="attestationResponse"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>a string containing either "OK" or an error message.</returns>

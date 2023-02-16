@@ -1,6 +1,8 @@
 ﻿namespace BlazorWasmDemo.Client.Shared;
 
 using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using Fido2.BlazorWebAssembly;
 using Fido2NetLib;
 
@@ -12,6 +14,7 @@ public class UserService
     private const string _routeAssertionOpts = "assertion-options";
     private const string _routeLogin = "assertion";
 
+    private readonly JsonSerializerOptions _jsonOptions = new FidoBlazorSerializerContext().Options;
     private readonly HttpClient _httpClient;
     private readonly WebAuthn _webAuthn;
 
@@ -35,25 +38,43 @@ public class UserService
         var query = string.IsNullOrEmpty(displayName) ? string.Empty : $"?displayName={displayName}";
 
         // Now the magic happens so stuff can go wrong
+        CredentialCreateOptions? options;
         try
         {
             // Get options from server
-            var options = await _httpClient.GetFromJsonAsync<CredentialCreateOptions>(routeOpts + query);
-            if(options == null)
-            {
-                return "No options received";
-            }
-
-            // Present options to user and get response
-            var credential = await _webAuthn.CreateCredsAsync(options);
-
-            // Send response to server
-            return await (await _httpClient.PutAsJsonAsync($"{_routeUser}/{options.User.Name}/{_routeRegister}", credential)).Content.ReadAsStringAsync();
+            options = await _httpClient.GetFromJsonAsync<CredentialCreateOptions>(routeOpts + query, _jsonOptions);
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             return e.Message;
+        }
+
+        if (options == null)
+        {
+            return "No options received";
+        }
+
+        // Build the route to register the credentials
+        var routeCreds = $"{_routeUser}/{username ?? Convert.ToBase64String(Encoding.UTF8.GetBytes(options.User.Name))}/{_routeRegister}";
+
+        try
+        {
+            // Present options to user and get response
+            var credential = await _webAuthn.CreateCredsAsync(options);
+
+            // Send response to server
+            return await (await _httpClient.PutAsJsonAsync(routeCreds, credential, _jsonOptions)).Content.ReadAsStringAsync();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            var errorMessage = e.Message;
+            if(options.ExcludeCredentials?.Count > 0)
+            {
+                errorMessage += " (You may have already registered this device)";
+            }
+            return errorMessage;
         }
     }
 
@@ -71,7 +92,7 @@ public class UserService
         try
         {
             // Get options from server
-            var options = await _httpClient.GetFromJsonAsync<AssertionOptions>(route);
+            var options = await _httpClient.GetFromJsonAsync<AssertionOptions>(route, _jsonOptions);
             if (options == null)
             {
                 return "No options received";
@@ -86,7 +107,7 @@ public class UserService
             var assertion = await _webAuthn.VerifyAsync(options);
 
             // Send response to server
-            return await (await _httpClient.PostAsJsonAsync($"{_routeUser}/{_routeLogin}", assertion)).Content.ReadAsStringAsync();
+            return await (await _httpClient.PostAsJsonAsync($"{_routeUser}/{_routeLogin}", assertion, _jsonOptions)).Content.ReadAsStringAsync();
         }
         catch (Exception e)
         {
