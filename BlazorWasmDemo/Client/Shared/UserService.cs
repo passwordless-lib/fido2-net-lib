@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Fido2.BlazorWebAssembly;
 using Fido2NetLib;
+using Fido2NetLib.Objects;
 
 public class UserService
 {
@@ -13,7 +14,7 @@ public class UserService
     private const string _routeRegister = "credential";
     private const string _routeAssertionOpts = "assertion-options";
     private const string _routeLogin = "assertion";
-
+    
     private readonly JsonSerializerOptions _jsonOptions = new FidoBlazorSerializerContext().Options;
     private readonly HttpClient _httpClient;
     private readonly WebAuthn _webAuthn;
@@ -24,7 +25,9 @@ public class UserService
         _webAuthn = webAuthn;
     }
 
-    public async Task<string> RegisterAsync(string? username, string? displayName)
+    public async Task<string> RegisterAsync(string? username, string? displayName = null,
+        AttestationConveyancePreference? attestationType = null, AuthenticatorAttachment? authenticator = null,
+        UserVerificationRequirement? userVerification = null, ResidentKeyRequirement? residentKey = null)
     {
         // Make sure the WebAuthn API is initialized (although that should happen almost immediately after startup)
         await _webAuthn.Init();
@@ -34,8 +37,38 @@ public class UserService
                     + (string.IsNullOrEmpty(username) ? string.Empty : $"/{username}") // Query specific user unless we go usernameless
                     + $"/{_routeCredOptions}";
 
-        // Add display name if set
-        var query = string.IsNullOrEmpty(displayName) ? string.Empty : $"?displayName={displayName}";
+        // Add optional parameters if set
+        var optionalParams = new List<string>();
+        if (!string.IsNullOrEmpty(displayName))
+        {
+            optionalParams.Add($"{nameof(displayName)}={displayName}");
+        }
+
+        if (attestationType.HasValue)
+        {
+            optionalParams.Add($"{nameof(attestationType)}={attestationType}");
+        }
+
+        if (authenticator.HasValue)
+        {
+            optionalParams.Add($"{nameof(authenticator)}={authenticator}");
+        }
+
+        if (userVerification.HasValue)
+        {
+            optionalParams.Add($"{nameof(userVerification)}={userVerification}");
+        }
+
+        if (residentKey.HasValue)
+        {
+            optionalParams.Add($"{nameof(residentKey)}={residentKey}");
+        }
+
+        var query = "";
+        if (optionalParams.Any())
+        {
+            query = "?" + string.Join("&", optionalParams);
+        }
 
         // Now the magic happens so stuff can go wrong
         CredentialCreateOptions? options;

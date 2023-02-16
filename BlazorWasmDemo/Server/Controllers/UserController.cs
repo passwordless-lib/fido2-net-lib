@@ -39,12 +39,20 @@ public class UserController : ControllerBase
     /// Creates options to create a new credential for a user.
     /// </summary>
     /// <param name="username">(optional) The user's internal identifier. Omit for usernameless account.</param>
-    /// <param name="displayName">(optional) Name for display purposes. Pass as query.</param>
+    /// <param name="displayName">(optional as query) Name for display purposes.</param>
+    /// <param name="attestationType">(optional as query)</param>
+    /// <param name="authenticator">(optional as query)</param>
+    /// <param name="userVerification">(optional as query)</param>
+    /// <param name="residentKey">(optional as query)</param>
     /// <returns>A new <see cref="CredentialCreateOptions"/>. Contains an error message if .Status is "error".</returns>
     [HttpGet("{username}/credential-options")]
     [HttpGet("credential-options")]
     public CredentialCreateOptions GetCredentialOptions([FromRoute] string? username,
-                                            [FromQuery] string? displayName)
+                                            [FromQuery] string? displayName,
+        [FromQuery] AttestationConveyancePreference? attestationType,
+        [FromQuery] AuthenticatorAttachment? authenticator,
+        [FromQuery] UserVerificationRequirement? userVerification,
+        [FromQuery] ResidentKeyRequirement? residentKey)
     {
         try
         {
@@ -77,13 +85,35 @@ public class UserController : ControllerBase
             // 2. Get user existing keys by username
             var existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
-            // 3. Create options
-            var options = _fido2.RequestNewCredential(user, existingKeys, AuthenticatorSelection.Default, AttestationConveyancePreference.None);
+            // 3. Build authenticator selection
+            var authenticatorSelection = AuthenticatorSelection.Default;
+            if (authenticator != null)
+            {
+                authenticatorSelection.AuthenticatorAttachment = authenticator;
+            }
 
-            // 4. Temporarily store options, session/in-memory cache/redis/db
+            if (userVerification != null)
+            {
+                authenticatorSelection.UserVerification = userVerification.Value;
+            }
+
+            if (residentKey != null)
+            {
+                authenticatorSelection.ResidentKey = residentKey.Value;
+            }
+
+            // 4. Create options
+            var options = _fido2.RequestNewCredential(
+                user, 
+                existingKeys,
+                authenticatorSelection, 
+                attestationType ?? AttestationConveyancePreference.None
+                );
+
+            // 5. Temporarily store options, session/in-memory cache/redis/db
             _pendingCredentials[key] = options;
 
-            // 5. return options to client
+            // 6. return options to client
             return options;
         }
         catch (Exception e)
