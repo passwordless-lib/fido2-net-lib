@@ -35,12 +35,37 @@ jobs:
     inputs:
       command: publish
       arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net6.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net6.0'
+      publishWebProjects: false
       projects: 'Demo/Demo.csproj'
   - task: PublishBuildArtifacts@1
     displayName: Copy website to artifacts [net6.0]
     inputs:
       pathToPublish: $(build.ArtifactStagingDirectory)/net6.0
       artifactName: Demo .Net 6.0
+
+# Build the Blazor WebAssembly demo
+- job: blazorWasmDemo
+  displayName: BlazorWasmDemo build
+  pool:
+    vmImage: $(TargetWindowsVMImage)
+  steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET 6.0 SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '6.0.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet-demo
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet restore'
+    inputs:
+      command: restore
+      projects: 'BlazorWasmDemo/Server/BlazorWasmDemo.Server.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet build $(buildConfiguration)'
+    inputs:
+      command: build
+      arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
+      projects: 'BlazorWasmDemo/Server/BlazorWasmDemo.Server.csproj'
 
 # Run unit tests for windows-latest and publish coverage
 - job: test_windows
