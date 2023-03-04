@@ -117,10 +117,10 @@ public class Fido2Configuration
     /// <summary>
     /// Whether or not to accept a backup eligible credential
     /// </summary>
-    public bool AllowBackupEligibleCredential { get; set; }
+    public bool AllowBackupEligibleCredential { get; set; } = true;
 
     /// <summary>
     /// Whether or not to accept a backed up credential
     /// </summary>
-    public bool AllowBackedUpCredential { get; set; }
+    public bool AllowBackedUpCredential { get; set; } = true;
 }
