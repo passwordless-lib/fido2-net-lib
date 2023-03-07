@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace Fido2NetLib;
 
@@ -117,10 +118,31 @@ public class Fido2Configuration
     /// <summary>
     /// Whether or not to accept a backup eligible credential
     /// </summary>
-    public bool AllowBackupEligibleCredential { get; set; } = true;
+    public CredentialBackupPolicy BackupEligibleCredentialPolicy { get; set; } = CredentialBackupPolicy.Allowed;
 
     /// <summary>
     /// Whether or not to accept a backed up credential
     /// </summary>
-    public bool AllowBackedUpCredential { get; set; } = true;
+    public CredentialBackupPolicy BackedUpCredentialPolicy { get; set; } = CredentialBackupPolicy.Allowed;
+
+    public enum CredentialBackupPolicy
+    {
+        /// <summary>
+        /// This value indicates that the Relying Party requires backup eligible or backed up credentials.
+        /// </summary>
+        [EnumMember(Value = "required")]
+        Required,
+
+        /// <summary>
+        /// This value indicates that the Relying Party allows backup eligible or backed up credentials.
+        /// </summary>
+        [EnumMember(Value = "allowed")]
+        Allowed,
+
+        /// <summary>
+        /// This value indicates that the Relying Party does not allow backup eligible or backed up credentials.
+        /// </summary>
+        [EnumMember(Value = "disallowed")]
+        Disallowed
+    }
 }

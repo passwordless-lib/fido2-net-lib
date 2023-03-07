@@ -113,6 +113,7 @@ namespace Fido2NetLib
                                                           storedDevicePublicKeys,
                                                           storedSignatureCounter,
                                                           isUserHandleOwnerOfCredentialIdCallback,
+                                                          _metadataService,
                                                           cancellationToken);
 
             return result;

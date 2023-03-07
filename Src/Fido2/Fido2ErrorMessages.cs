@@ -33,6 +33,12 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
     public static readonly string InvalidDevicePublicKeyAttestation      = "Invalid devicePublicKey attestation";
     public static readonly string NonUniqueDevicePublicKey               = "More than one devicePublicKey match";
+    public static readonly string AssertionResponseNotPublicKey          = "AssertionResponse type must be public-key";
+    public static readonly string AssertionResponseIdMissing             = "AssertionResponse Id is missing";
+    public static readonly string AssertionResponseRawIdMissing          = "AssertionResponse RawId is missing";
+    public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";
+    public static readonly string UserHandleNotOwnerOfPublicKey          = "User is not owner of the public key identified by the credential id";
+    public static readonly string AssertionTypeNotWebAuthnGet            = "AssertionResponse type must be webauthn.get";
 
     public static readonly string UnimplementedAlgorithm_Ecdaa_Packed    = "ECDAA support for packed attestation is not yet implemented";
     public static readonly string UnimplementedAlgorithm_Ecdaa_Tpm       = "ECDAA support for TPM attestation is not yet implemented";

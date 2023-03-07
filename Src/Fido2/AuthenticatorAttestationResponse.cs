@@ -126,7 +126,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
 
         // 15. If the Relying Party uses the credential's backup eligibility to inform its user experience flows and/or policies, evaluate the BE bit of the flags in authData.
-        if (authData.IsBackupEligible && !config.AllowBackupEligibleCredential)
+        if (authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
+            !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
 
         if (!authData.HasAttestedCredentialData)
@@ -279,7 +280,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         return devicePublicKeyAuthenticatorOutput.GetBytes();
     }
 
-    private static void VerifyTrustAnchor(MetadataBLOBPayloadEntry metadataEntry, X509Certificate2[] trustPath)
+    public static void VerifyTrustAnchor(MetadataBLOBPayloadEntry metadataEntry, X509Certificate2[] trustPath)
     {
         if (trustPath != null && metadataEntry?.MetadataStatement?.AttestationTypes is not null)
         {

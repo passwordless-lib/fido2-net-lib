@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using Fido2NetLib;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -52,8 +52,8 @@ public class Startup
             options.Origins = Configuration.GetSection("fido2:origins").Get<HashSet<string>>();
             options.TimestampDriftTolerance = Configuration.GetValue<int>("fido2:timestampDriftTolerance");
             options.MDSCacheDirPath = Configuration["fido2:MDSCacheDirPath"];
-            options.AllowBackupEligibleCredential = Configuration.GetValue<bool>("fido2:allowBackupEligibleCredential");
-            options.AllowBackedUpCredential = Configuration.GetValue<bool>("fido2:allowBackedUpCredential");
+            options.BackupEligibleCredentialPolicy = Configuration.GetValue<Fido2Configuration.CredentialBackupPolicy>("fido2:backupEligibleCredentialPolicy");
+            options.BackedUpCredentialPolicy = Configuration.GetValue<Fido2Configuration.CredentialBackupPolicy>("fido2:backedUpCredentialPolicy");
         })
         .AddCachedMetadataService(config =>
         {

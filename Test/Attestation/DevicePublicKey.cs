@@ -1,9 +1,6 @@
 ﻿using System.Text.Json;
 using fido2_net_lib.Test;
 
-using Fido2NetLib;
-using Fido2NetLib.Cbor;
-using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test.Attestation;
