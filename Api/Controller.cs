@@ -16,7 +16,7 @@ using Microsoft.Extensions.Hosting;
 
 using static Fido2NetLib.Fido2;
 
-namespace Fido2Demo;
+namespace Fido2Api;
 
 [Route("api/[controller]")]
 public class MyController : Controller

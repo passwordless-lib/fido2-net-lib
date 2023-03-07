@@ -21,7 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.AspNet", "Src\Fido2.A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Ctap2", "Src\Fido2.Ctap2\Fido2.Ctap2.csproj", "{5B998DB8-6E96-4012-B524-32E113815059}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fido2.Ctap2.Tests", "Tests\Fido2.Ctap2.Tests\Fido2.Ctap2.Tests.csproj", "{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Ctap2.Tests", "Tests\Fido2.Ctap2.Tests\Fido2.Ctap2.Tests.csproj", "{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Api", "Api\Api.csproj", "{F72D486F-5751-46EA-89AC-4ABE8A99BF10}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F72D486F-5751-46EA-89AC-4ABE8A99BF10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F72D486F-5751-46EA-89AC-4ABE8A99BF10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F72D486F-5751-46EA-89AC-4ABE8A99BF10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F72D486F-5751-46EA-89AC-4ABE8A99BF10}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
