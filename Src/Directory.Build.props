@@ -1,3 +1,4 @@
+<!-- Build props for the libraries (anything under Src/) -->
 <Project>
   <Import Project="..\Directory.Build.props"/>
 
