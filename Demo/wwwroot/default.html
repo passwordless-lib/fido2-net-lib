@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>FIDO2 &amp; Webauthn for .NET</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+
+    <link href="https://fonts.googleapis.com/css?family=Work+Sans" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>-->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.1/sweetalert2.min.css" />
+    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">-->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css" rel="stylesheet" type="text/css" />
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+        }
+
+        .hero {
+            background-color: #861657;
+            background-image: linear-gradient(326deg, #861657 0%, #ffa69e 74%);
+        }
+    </style>
+    <!--<link href="/stylesheets/styles.css" rel="stylesheet" type="text/css" />-->
+    <script src="/js/helpers.js"></script>
+</head>
+
+<body>
+    
+<div class="section">
+    <div class="container">
+        <h1 class="title is-1">Custom</h1>
+        <div class="content">
+            <p>In this scenario we have removed the need for passwords. We will use the settings set by you when registering your credentials. This is useful if you want to try differences or browser support etc.</p>
+            <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics might be used by the authenticator on the client</p>
+        </div>
+        <div class="notification is-danger" style="display:none">
+            Please note: Your browser does not seem to support WebAuthn yet. <a href="https://caniuse.com/#search=webauthn" target="_blank">Supported browsers</a>
+        </div>
+
+        <div class="columns">
+            <div class="column is-4">
+
+                <h3 class="title is-3">Register user</h3>
+                <form action="/mfa" method="post" id="register">
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="abergs" name="username" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Display name</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Anders Åberg" name="displayName">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Register user</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="column is-2"></div>
+            <div class="column is-4">
+
+                <h3 class="title is-3">Sign in</h3>
+                <form action="/mfa" method="post" id="signin">
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="abergs" name="username" id="login-username" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Sign in</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <partial name="_options.cshtml" />
+        
+<div class="columns">
+    <div class="column is-8">
+        <div class="content">
+            <h2 class="is-size-6">Advanced settings</h2>
+            <p>These settings are typically administred by the RP but for demo purposes we expose them to you for testing behaviours and browser support</p>
+            <form id="options">
+                <div class="field">
+                    <label class="label">Attestation type</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-attestation">
+                                <option selected value="none">None</option>
+                                <option value="indirect">Indirect</option>
+                                <option value="direct">Direct</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Authenticator</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-authenticator">
+                                <option selected value="">Not specified</option>
+                                <option value="cross-platform">Cross Platform (Token)</option>
+                                <option value="platform">Platform (TPM)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">User verification</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-userverification">
+                                <option value="required">Required</option>
+                                <option selected value="preferred">Preferred</option>
+                                <option value="discouraged">Discouraged</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="help">UserVerification can be changed for both register & login</p>
+
+                </div>
+                <div class="field">
+                    <label class="label">Resident Key</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-residentkey">
+                                <option value="required">Required</option>
+                                <option selected value="preferred">Preferred</option>
+                                <option value="discouraged">Discouraged</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="help">For register the client will guide the user through setting up user verification if needed to create a discoverable credential. This takes precedence over the setting of userVerification.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+    </div>
+</div>
+
+<script src="/js/custom.register.js"></script>
+<script src="/js/custom.login.js"></script>
+<script src="/js/instant.js"></script>
+</body>
+</html>
