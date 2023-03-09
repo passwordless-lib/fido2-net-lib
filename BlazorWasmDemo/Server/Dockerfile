@@ -6,9 +6,13 @@ EXPOSE 80
 EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+ENV IS_DOCKER "true"
 WORKDIR /src
+RUN apt-get update && apt-get install -y nodejs
 COPY ["nuget.config", "."]
+COPY ["Directory.Build.props", "."]
 COPY ["BlazorWasmDemo/Server/BlazorWasmDemo.Server.csproj", "BlazorWasmDemo/Server/"]
+COPY ["Src/Directory.Build.props", "Src/"]
 COPY ["Src/Fido2.AspNet/Fido2.AspNet.csproj", "Src/Fido2.AspNet/"]
 COPY ["Src/Fido2/Fido2.csproj", "Src/Fido2/"]
 COPY ["Src/Fido2.Models/Fido2.Models.csproj", "Src/Fido2.Models/"]
