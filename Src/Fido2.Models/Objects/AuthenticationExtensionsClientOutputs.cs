@@ -57,4 +57,9 @@ public class AuthenticationExtensionsClientOutputs
     [JsonPropertyName("credProps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? CredProps { get; set; }
+    /// 
+    /// </summary>
+    [JsonPropertyName("prf")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AuthenticationExtensionsPRFOutputs? PRF { get; set; }
 }

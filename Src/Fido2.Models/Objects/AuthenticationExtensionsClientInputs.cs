@@ -61,5 +61,11 @@ public sealed class AuthenticationExtensionsClientInputs
     [JsonPropertyName("credProps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? CredProps { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    [JsonPropertyName("prf")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AuthenticationExtensionsPRFInputs PRF { get; set; }
 }
 
