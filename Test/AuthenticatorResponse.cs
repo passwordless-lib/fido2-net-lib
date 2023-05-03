@@ -276,9 +276,9 @@ public class AuthenticatorResponse
         Assert.True(rawResponse.Extensions.AppID);
         Assert.True(rawResponse.Extensions.AuthenticatorSelection);
         Assert.Equal(rawResponse.Extensions.Extensions, new string[] { "foo", "bar" });
-        Assert.True(rawResponse.Extensions.PRF.Enabled);
         Assert.Equal("test", rawResponse.Extensions.Example);
         Assert.Equal((ulong)4, rawResponse.Extensions.UserVerificationMethod[0][0]);
+        Assert.True(rawResponse.Extensions.PRF.Enabled);
         Assert.True(rawResponse.Extensions.PRF.Results.First.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
         Assert.True(rawResponse.Extensions.PRF.Results.Second.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
     }
@@ -1261,6 +1261,7 @@ public class AuthenticatorResponse
         Assert.Equal(assertionResponse.Extensions.Extensions, new string[] { "foo", "bar" });
         Assert.Equal("test", assertionResponse.Extensions.Example);
         Assert.Equal((ulong)4, assertionResponse.Extensions.UserVerificationMethod[0][0]);
+        Assert.True(assertionResponse.Extensions.PRF.Enabled);
         Assert.True(assertionResponse.Extensions.PRF.Results.First.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
         Assert.True(assertionResponse.Extensions.PRF.Results.Second.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
     }
