@@ -7,8 +7,8 @@ namespace Fido2NetLib;
 
 public class Fido2Configuration
 {
-    private ISet<string> _origins;
-    private ISet<string> _fullyQualifiedOrigins;
+    private IReadOnlySet<string> _origins;
+    private IReadOnlySet<string> _fullyQualifiedOrigins;
 
     /// <summary>
     /// Create the configuration for Fido2.
@@ -34,7 +34,7 @@ public class Fido2Configuration
     public int ChallengeSize { get; set; } = 16;
 
     /// <summary>
-    /// The effetive domain of the RP. Should be unique and will be used as the identity for the RP.
+    /// The effective domain of the RP. Should be unique and will be used as the identity for the RP.
     /// </summary>
     public string ServerDomain { get; set; }
 
@@ -49,29 +49,15 @@ public class Fido2Configuration
     public string ServerIcon { get; set; }
 
     /// <summary>
-    /// Server origin, including protocol host and port.
-    /// </summary>
-    [Obsolete("This property is obsolete. Use Origins instead.")]
-    public string Origin { get; set; }
-
-    /// <summary>
     /// Server origins, including protocol host and port.
     /// </summary>
-    public ISet<string> Origins
+    public IReadOnlySet<string> Origins
     {
         get
         {
             if (_origins == null)
             {
-                _origins = new HashSet<string>();
-
-                // Since we're depricating Origin we ease the transition to move the value automatically, unless its null
-#pragma warning disable CS0618 // Type or member is obsolete
-                if (Origin != null)
-                {
-                    _origins.Add(Origin);
-                }
-#pragma warning restore CS0618 // Type or member is obsolete
+                _origins = new HashSet<string>(0);
             }
 
             return _origins;
@@ -87,15 +73,17 @@ public class Fido2Configuration
     /// <summary>
     /// Fully Qualified Server origins, generated automatically from Origins.
     /// </summary>
-    public ISet<string> FullyQualifiedOrigins
+    public IReadOnlySet<string> FullyQualifiedOrigins
     {
-        get => _fullyQualifiedOrigins ?? new HashSet<string>
+        get
         {
-#pragma warning disable CS0618
-            Origin?.ToFullyQualifiedOrigin()
-#pragma warning restore CS0618
-        };
-        private set => _fullyQualifiedOrigins = value;
+            if (_fullyQualifiedOrigins == null)
+            {
+                Origins = new HashSet<string>(0);
+            }
+
+            return _fullyQualifiedOrigins;
+        }
     }
 
     /// <summary>
