@@ -2,9 +2,8 @@
 <Project>
   <!-- Package Metadata -->
   <PropertyGroup>
-    <VersionPrefix>3.0.0</VersionPrefix>
-    <VersionSuffix>
-    </VersionSuffix>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <VersionSuffix>beta1</VersionSuffix>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/passwordless-lib/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
