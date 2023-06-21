@@ -71,10 +71,12 @@ public class MyController : Controller
             if (!string.IsNullOrEmpty(authType))
                 authenticatorSelection.AuthenticatorAttachment = authType.ToEnum<AuthenticatorAttachment>();
 
-            var exts = new AuthenticationExtensionsClientInputs() 
-            { 
-                Extensions = true, 
-                UserVerificationMethod = true, 
+            var exts = new AuthenticationExtensionsClientInputs()
+            {
+                Extensions = true,
+                UserVerificationMethod = true,
+                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs() { Attestation = attType },
+                CredProps = true
             };
 
             var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
@@ -117,18 +119,22 @@ public class MyController : Controller
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
+                Type = success.Result.Type,
+                Id = success.Result.Id,
                 Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
                 PublicKey = success.Result.PublicKey,
                 UserHandle = success.Result.User.Id,
-                SignatureCounter = success.Result.Counter,
+                SignCount = success.Result.Counter,
                 CredType = success.Result.CredType,
                 RegDate = DateTime.Now,
-                AaGuid = success.Result.AaGuid
+                AaGuid = success.Result.AaGuid,
+                Transports = success.Result.Transports,
+                BE = success.Result.BE,
+                BS = success.Result.BS,
+                AttestationObject = success.Result.AttestationObject,
+                AttestationClientDataJSON = success.Result.AttestationClientDataJSON,
+                DevicePublicKeys = new List<byte[]>() { success.Result.DevicePublicKey }
             });
-
-            // Remove Certificates from success because System.Text.Json cannot serialize them properly. See https://github.com/passwordless-lib/fido2-net-lib/issues/328
-            success.Result.AttestationCertificate = null;
-            success.Result.AttestationCertificateChain = null;
 
             // 4. return "ok" to the client
             return Json(success);
@@ -157,8 +163,10 @@ public class MyController : Controller
             }
 
             var exts = new AuthenticationExtensionsClientInputs()
-            { 
-                UserVerificationMethod = true 
+            {
+                Extensions = true,
+                UserVerificationMethod = true,
+                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
             };
 
             // 3. Create options
@@ -206,10 +214,13 @@ public class MyController : Controller
             };
 
             // 5. Make the assertion
-            var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback, cancellationToken: cancellationToken);
+            var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
 
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
+
+            if (res.DevicePublicKey is not null)
+                creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
             // 7. return OK to client
             return Json(res);

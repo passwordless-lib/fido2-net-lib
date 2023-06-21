@@ -27,14 +27,20 @@ public enum AuthenticatorFlags : byte
     UV = 0x4,
 
     /// <summary>
-    /// Reserved for future use (RFU2)
+    /// A Public Key Credential Source's generating authenticator determines at creation time whether the public key credential source is allowed to be backed up. 
+    /// Backup eligibility is signaled in authenticator data's flags along with the current backup state. 
+    /// Backup eligibility is a credential property and is permanent for a given public key credential source. 
+    /// A backup eligible public key credential source is referred to as a multi-device credential whereas one that is not backup eligible is referred to as a single-device credential.
+    /// <see cref="https://w3c.github.io/webauthn/#backup-eligibility"/>
     /// </summary>
-    RFU2 = 0x8,
+    BE = 0x8,
 
     /// <summary>
-    /// Reserved for future use (RFU3)
+    /// The current backup state of a multi-device credential as determined by the current managing authenticator. 
+    /// Backup state is signaled in authenticator data's flags and can change over time.
+    /// <see cref="https://w3c.github.io/webauthn/#backup-state"/>
     /// </summary>
-    RFU3 = 0x10,
+    BS = 0x10,
 
     /// <summary>
     /// Reserved for future use (RFU4)
