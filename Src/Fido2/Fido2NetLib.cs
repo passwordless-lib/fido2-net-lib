@@ -59,18 +59,16 @@ namespace Fido2NetLib
         /// <param name="attestationResponse"></param>
         /// <param name="origChallenge"></param>
         /// <param name="isCredentialIdUniqueToUser"></param>
-        /// <param name="requestTokenBindingId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task<CredentialMakeResult> MakeNewCredentialAsync(
             AuthenticatorAttestationRawResponse attestationResponse,
             CredentialCreateOptions origChallenge,
             IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-            var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
+            var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
 
             // todo: Set Errormessage etc.
             return new CredentialMakeResult(
@@ -102,19 +100,20 @@ namespace Fido2NetLib
             AuthenticatorAssertionRawResponse assertionResponse,
             AssertionOptions originalOptions,
             byte[] storedPublicKey,
+            List<byte[]> storedDevicePublicKeys,
             uint storedSignatureCounter,
             IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-            byte[]? requestTokenBindingId = null,
             CancellationToken cancellationToken = default)
         {
             var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
 
             var result = await parsedResponse.VerifyAsync(originalOptions,
-                                                          _config.FullyQualifiedOrigins,
+                                                          _config,
                                                           storedPublicKey,
+                                                          storedDevicePublicKeys,
                                                           storedSignatureCounter,
                                                           isUserHandleOwnerOfCredentialIdCallback,
-                                                          requestTokenBindingId,
+                                                          _metadataService,
                                                           cancellationToken);
 
             return result;
