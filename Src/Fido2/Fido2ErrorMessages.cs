@@ -18,15 +18,27 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidCertificateChain                = "Invalid certificate chain";
     public static readonly string UserHandleIsEmpty                      = "UserHandle was empty DOMString. It should either be null or have a value.";
     public static readonly string InvalidAttestedCredentialData_TooShort = "Not enough bytes to be a valid AttestedCredentialData";
+    public static readonly string InvalidAttestedCredentialData_CredentialIdTooLong = "CredentialId too many bytes";
     public static readonly string MissingAuthenticatorResponseChallange  = "Authenticator response challenge may not be null";
     public static readonly string InvalidAuthenticatorResponseChallenge  = "Authenticator response challenge does not match original challenge";
     public static readonly string AttestedCredentialDataFlagNotSet       = "Attestation flag not set on attestation data";
     public static readonly string MissingAuthenticatorData               = "Authenticator data may not be null";
     public static readonly string InvalidAuthenticatorData_TooShort      = $"Authenticator data is less than the minimum structure length of {AuthenticatorData.MinLength}";
     public static readonly string InvalidCoseAlgorithmValue              = "Unrecognized COSE algorithm value";
+    public static readonly string BackupEligibilityRequirementNotMet     = "Backup eligibility does not match policy requirement";
+    public static readonly string BackupStateRequirementNotMet           = "Backup state does not match policy requirement";
+    public static readonly string CredentialAlgorithmRequirementNotMet   = "Credential algorithm does not match policy requirement";
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
     public static readonly string MissingAttestationType                 = "Missing attestation type";
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
+    public static readonly string InvalidDevicePublicKeyAttestation      = "Invalid devicePublicKey attestation";
+    public static readonly string NonUniqueDevicePublicKey               = "More than one devicePublicKey match";
+    public static readonly string AssertionResponseNotPublicKey          = "AssertionResponse type must be public-key";
+    public static readonly string AssertionResponseIdMissing             = "AssertionResponse Id is missing";
+    public static readonly string AssertionResponseRawIdMissing          = "AssertionResponse RawId is missing";
+    public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";
+    public static readonly string UserHandleNotOwnerOfPublicKey          = "User is not owner of the public key identified by the credential id";
+    public static readonly string AssertionTypeNotWebAuthnGet            = "AssertionResponse type must be webauthn.get";
 
     public static readonly string UnimplementedAlgorithm_Ecdaa_Packed    = "ECDAA support for packed attestation is not yet implemented";
     public static readonly string UnimplementedAlgorithm_Ecdaa_Tpm       = "ECDAA support for TPM attestation is not yet implemented";

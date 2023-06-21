@@ -63,9 +63,7 @@ public class AuthenticatorResponse
     [JsonPropertyName("origin")]
     public string Origin { get; set; }
 
-    // todo: add TokenBinding https://www.w3.org/TR/webauthn/#dictdef-tokenbinding
-
-    protected void BaseVerify(ISet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, ReadOnlySpan<byte> requestTokenBindingId)
+    protected void BaseVerify(ISet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge)
     {
         if (Type is not "webauthn.create" && Type is not "webauthn.get")
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
@@ -73,13 +71,13 @@ public class AuthenticatorResponse
         if (Challenge is null)
             throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallange);
 
-        // 4. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
+        // 11. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, Fido2ErrorMessages.InvalidAuthenticatorResponseChallenge);
 
         var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
 
-        // 5. Verify that the value of C.origin matches the Relying Party's origin.
+        // 12. Verify that the value of C.origin matches the Relying Party's origin.
         if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
             throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
 

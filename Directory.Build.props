@@ -1,3 +1,4 @@
+<!-- Root build props for the whole solution -->
 <Project>
   <!-- Package Metadata -->
   <PropertyGroup>
