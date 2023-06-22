@@ -112,6 +112,8 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     }
 }
 
+#nullable enable
+
 public sealed class PubKeyCredParam
 {
     /// <summary>
@@ -148,7 +150,6 @@ public sealed class PubKeyCredParam
     public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
 }
 
-#nullable enable
 /// <summary>
 /// PublicKeyCredentialRpEntity 
 /// </summary>
@@ -181,20 +182,25 @@ public sealed class PublicKeyCredentialRpEntity
 
 /// <summary>
 /// WebAuthn Relying Parties may use the AuthenticatorSelectionCriteria dictionary to specify their requirements regarding authenticator attributes.
-/// https://w3c.github.io/webauthn/#dictionary-authenticatorSelection
+/// https://www.w3.org/TR/webauthn-2/#dictionary-authenticatorSelection
 /// </summary>
 public class AuthenticatorSelection
 {
     /// <summary>
-    /// If this member is present, eligible authenticators are filtered to only authenticators attached with the specified §5.4.5 Authenticator Attachment enumeration (enum AuthenticatorAttachment).
+    /// If this member is present, eligible authenticators are filtered to only authenticators attached with the specified § 5.4.5 Authenticator Attachment Enumeration (enum AuthenticatorAttachment).
     /// </summary>
     [JsonPropertyName("authenticatorAttachment")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticatorAttachment? AuthenticatorAttachment { get; set; }
 
     private ResidentKeyRequirement _residentKey;
+
     /// <summary>
-    /// Specifies the extent to which the Relying Party desires to create a client-side discoverable credential. For historical reasons the naming retains the deprecated “resident” terminology. The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, treating an unknown value as if the member does not exist. If no value is given then the effective value is required if requireResidentKey is true or discouraged if it is false or absent.
+    /// Specifies the extent to which the Relying Party desires to create a client-side discoverable credential.
+    /// For historical reasons the naming retains the deprecated “resident” terminology. 
+    /// The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, 
+    /// treating an unknown value as if the member does not exist. 
+    /// If no value is given then the effective value is required if requireResidentKey is true or discouraged if it is false or absent.
     /// </summary>
     [JsonPropertyName("residentKey")]
     public ResidentKeyRequirement ResidentKey
@@ -207,12 +213,13 @@ public class AuthenticatorSelection
             {
                 ResidentKeyRequirement.Required => true,
                 ResidentKeyRequirement.Preferred or ResidentKeyRequirement.Discouraged => false,
-                _ => throw new NotImplementedException(),
+                _ => throw new NotImplementedException()
             };
         }
     }
 
     private bool _requireResidentKey;
+
     /// <summary>
     /// This member describes the Relying Parties' requirements regarding resident credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident public key credential source when creating a public key credential.
     /// </summary>
@@ -245,20 +252,25 @@ public class AuthenticatorSelection
 public class Fido2User
 {
     /// <summary>
-    /// Required. A human-friendly identifier for a user account. It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames. For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity
+    /// Required. A human-friendly identifier for a user account. 
+    /// It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames. 
+    /// For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity
     /// </summary>
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
     /// <summary>
-    /// The user handle of the user account entity. To ensure secure operation, authentication and authorization decisions MUST be made on the basis of this id member, not the displayName nor name members
+    /// The user handle of the user account entity.
+    /// To ensure secure operation, authentication and authorization decisions MUST be made on the basis of this id member, not the displayName nor name members
     /// </summary>
     [JsonPropertyName("id")]
     [JsonConverter(typeof(Base64UrlConverter))]
     public byte[] Id { get; set; }
 
     /// <summary>
-    /// A human-friendly name for the user account, intended only for display. For example, "Alex P. Müller" or "田中 倫". The Relying Party SHOULD let the user choose this, and SHOULD NOT restrict the choice more than necessary.
+    /// A human-friendly name for the user account, intended only for display.
+    /// For example, "Alex P. Müller" or "田中 倫".
+    /// The Relying Party SHOULD let the user choose this, and SHOULD NOT restrict the choice more than necessary.
     /// </summary>
     [JsonPropertyName("displayName")]
     public string DisplayName { get; set; }

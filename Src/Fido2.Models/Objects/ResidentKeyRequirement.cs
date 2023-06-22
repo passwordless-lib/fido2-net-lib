@@ -5,7 +5,7 @@ namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// This enumeration’s values describe the Relying Party's requirements for client-side discoverable credentials (formerly known as resident credentials or resident keys).
-/// https://w3c.github.io/webauthn/#enum-residentKeyRequirement
+/// https://www.w3.org/TR/webauthn-2/#enum-residentKeyRequirement
 /// </summary>
 [JsonConverter(typeof(FidoEnumConverter<ResidentKeyRequirement>))]
 public enum ResidentKeyRequirement

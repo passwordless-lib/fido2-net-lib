@@ -1,39 +1,29 @@
-﻿using Fido2NetLib;
-using Fido2NetLib.Objects;
+﻿using Fido2NetLib.Objects;
 
-namespace fido2_net_lib.Test;
+namespace Fido2NetLib.Test;
 
 public class EnumExtensionTest
 {
     [Fact]
     public void TestToEnum()
     {
-        var enumNames = Enum.GetNames(typeof(AttestationConveyancePreference));
-        foreach (var enumName in enumNames)
+        foreach (var enumName in Enum.GetNames(typeof(AttestationConveyancePreference)))
         {
             enumName.ToEnum<AttestationConveyancePreference>();
         }
     }
 
     [Theory]
-    // ignoreCase true, valid
-    [InlineData("INDIRECT", true, false)]
-    [InlineData("indIrEcT", true, false)]
-    [InlineData("indirect", true, false)]
-
+    // valid
+    [InlineData("INDIRECT", false)]
+    [InlineData("indIrEcT", false)]
+    [InlineData("indirect", false)]
+    [InlineData(nameof(AttestationConveyancePreference.Indirect), false)]
     // invalid
-    [InlineData("Indirect_Invalid", true, true)]
-
-    // ignoreCase false, valid
-    [InlineData(nameof(AttestationConveyancePreference.Indirect), false, false)]
-
-    // invalid
-    [InlineData("Indirect_Invalid", false, true)]
-    [InlineData("INDIRECT", false, true)]
-    [InlineData("indIrEcT", false, true)]
-    public void TestToEnumWithIgnoringCase(string value, bool ignoreCase, bool shouldThrow)
+    [InlineData("Indirect_Invalid", true)]
+    public void TestToEnumWithIgnoringCase(string value, bool shouldThrow)
     {
-        var exception = Record.Exception(() => value.ToEnum<AttestationConveyancePreference>(ignoreCase));
+        var exception = Record.Exception(() => value.ToEnum<AttestationConveyancePreference>());
 
         if (shouldThrow)
         {
@@ -46,17 +36,17 @@ public class EnumExtensionTest
     }
 
     [Theory]
-    [InlineData("CROSS-PLATFORM", true, false)] // valid
-    [InlineData("cRoss-PlatfoRm", true, false)] // valid
-    [InlineData("cross-platform", true, false)] // valid
-    [InlineData("cross_platform", true, true)]  // invalid
-    [InlineData("cross-platforms", true, true)] // invalid
-    [InlineData("CROSS_PLATFORM", true, true)]  // invalid
-    [InlineData("CROSS-PLATFORM", false, true)] // invalid
-    [InlineData("cRoss-PlatfoRm", false, true)] // invalid
-    public void TestToEnumWithDashes(string value, bool ignoreCase, bool shouldThrow)
+    // valid
+    [InlineData("CROSS-PLATFORM", false)]
+    [InlineData("cRoss-PlatfoRm", false)]
+    [InlineData("cross-platform", false)]
+    // invalid
+    [InlineData("cross_platform", true)]
+    [InlineData("cross-platforms", true)]
+    [InlineData("CROSS_PLATFORM",  true)]
+    public void TestToEnumWithDashes(string value, bool shouldThrow)
     {
-        var exception = Record.Exception(() => value.ToEnum<AuthenticatorAttachment>(ignoreCase));
+        var exception = Record.Exception(() => value.ToEnum<AuthenticatorAttachment>());
 
         if (shouldThrow)
         {
