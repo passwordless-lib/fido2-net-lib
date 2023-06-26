@@ -1,0 +1,29 @@
+﻿@inherits LayoutComponentBase
+@using BlazorWasmDemo.Client.Shared.Header
+@using BlazorWasmDemo.Client.Shared.Toasts
+
+<PageTitle>FIDO2 & WebAuthn for .NET</PageTitle>
+
+<section class="header">
+    <div class="top-row">
+        <InfoNav />
+    </div>
+    <div class="title">
+        <h2>
+            Passwordless - FIDO2 for .NET
+        </h2>
+        <h5>
+            Enabling smoooth sign in using FIDO2 / WebAuthn
+        </h5>
+    </div>
+    <div class="footer">
+        <NavMenu/>
+    </div>
+</section>
+
+<main class="justify-content-center d-flex p-4">
+    <Toast />
+    <article class="content p-4 w-75">
+        @Body
+    </article>
+</main>

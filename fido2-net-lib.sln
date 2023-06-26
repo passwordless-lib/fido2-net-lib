@@ -26,6 +26,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Ctap2.Tests", "Tests\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.BlazorWebAssembly", "Src\Fido2.BlazorWebAssembly\Fido2.BlazorWebAssembly.csproj", "{F314C16B-3E3D-40E6-9B4F-36142B739478}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorWasmDemo.Server", "BlazorWasmDemo\Server\BlazorWasmDemo.Server.csproj", "{0EC19932-290A-4D92-9603-B0533DD022D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorWasmDemo.Client", "BlazorWasmDemo\Client\BlazorWasmDemo.Client.csproj", "{EAFF4332-145B-4719-B261-827CEB447A62}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +63,15 @@ Global
 		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EC19932-290A-4D92-9603-B0533DD022D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EC19932-290A-4D92-9603-B0533DD022D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EC19932-290A-4D92-9603-B0533DD022D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EC19932-290A-4D92-9603-B0533DD022D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAFF4332-145B-4719-B261-827CEB447A62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAFF4332-145B-4719-B261-827CEB447A62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAFF4332-145B-4719-B261-827CEB447A62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAFF4332-145B-4719-B261-827CEB447A62}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F314C16B-3E3D-40E6-9B4F-36142B739478}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F314C16B-3E3D-40E6-9B4F-36142B739478}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F314C16B-3E3D-40E6-9B4F-36142B739478}.Release|Any CPU.ActiveCfg = Release|Any CPU
