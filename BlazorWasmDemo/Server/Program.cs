@@ -4,11 +4,12 @@
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+var origin = new Uri(builder.Configuration["Origin"]);
 builder.Services.AddFido2(options =>
 {
-    options.ServerDomain = "localhost";
+    options.ServerDomain = origin.Host;
     options.ServerName = "FIDO2 Server";
-    options.Origins = builder.Configuration["origins"].Split(';').ToHashSet();
+    options.Origins = new HashSet<string> { origin.AbsoluteUri };
     options.TimestampDriftTolerance = 1000;
 });
 builder.Services.AddSwaggerGen(opts =>
@@ -26,7 +27,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    //app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
