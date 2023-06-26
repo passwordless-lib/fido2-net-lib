@@ -24,6 +24,8 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+/Src/Fido2.BlazorWebAssembly/wwwroot/js/WebAuthn.js
+/Src/Fido2.BlazorWebAssembly/wwwroot/js/WebAuthn.js.map
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
