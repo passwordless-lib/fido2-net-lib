@@ -32,7 +32,8 @@ export async function createCreds(options: PublicKeyCredentialCreationOptions) {
         extensions: newCreds.getClientExtensionResults(),
         response: {
             attestationObject: toBase64Url(response.attestationObject),
-            clientDataJSON: toBase64Url(response.clientDataJSON)
+            clientDataJSON: toBase64Url(response.clientDataJSON),
+            transports: response.getTransports ? response.getTransports() : [],
         }
     };
     return retval;
