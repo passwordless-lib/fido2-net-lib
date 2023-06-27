@@ -104,11 +104,21 @@ public class UserController : ControllerBase
 
             // 4. Create options
             var options = _fido2.RequestNewCredential(
-                user, 
+                user,
                 existingKeys,
-                authenticatorSelection, 
-                attestationType ?? AttestationConveyancePreference.None
-                );
+                authenticatorSelection,
+                attestationType ?? AttestationConveyancePreference.None,
+                new AuthenticationExtensionsClientInputs()
+                {
+                    Extensions = true,
+                    UserVerificationMethod = true,
+                    CredProps = true,
+                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                    {
+                        Attestation = attestationType?.ToString() ?? AttestationConveyancePreference.None.ToString()
+                    },
+                }
+            );
 
             // 5. Temporarily store options, session/in-memory cache/redis/db
             _pendingCredentials[key] = options;
@@ -150,13 +160,21 @@ public class UserController : ControllerBase
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                Descriptor = new PublicKeyCredentialDescriptor(result.Result.CredentialId),
+                Type = result.Result.Type,
+                CredType = result.Result.CredType,
+                Id = result.Result.Id,
+                Descriptor = new PublicKeyCredentialDescriptor(result.Result.Id),
                 PublicKey = result.Result.PublicKey,
                 UserHandle = result.Result.User.Id,
-                SignatureCounter = result.Result.Counter,
-                CredType = result.Result.CredType,
+                SignCount = result.Result.Counter,
                 RegDate = DateTime.Now,
-                AaGuid = result.Result.AaGuid
+                AaGuid = result.Result.AaGuid,
+                DevicePublicKeys = new List<byte[]> { result.Result.DevicePublicKey },
+                Transports = result.Result.Transports,
+                BE = result.Result.BE,
+                BS = result.Result.BS,
+                AttestationObject = result.Result.AttestationObject,
+                AttestationClientDataJSON = result.Result.AttestationClientDataJSON,
             });
 
             // 5. Now we need to remove the options from the pending dictionary
@@ -193,8 +211,18 @@ public class UserController : ControllerBase
                     existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
             }
 
-            // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
-            var options = _fido2.GetAssertionOptions(existingKeys, userVerification ?? UserVerificationRequirement.Discouraged);
+            var exts = new AuthenticationExtensionsClientInputs()
+            {
+                    UserVerificationMethod = true,
+                    Extensions = true,
+                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+            };
+
+        // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
+        var options = _fido2.GetAssertionOptions(
+            existingKeys,
+            userVerification ?? UserVerificationRequirement.Discouraged, 
+            exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             _pendingAssertions[new string(options.Challenge.Select(b => (char)b).ToArray())] = options;
@@ -248,6 +276,7 @@ public class UserController : ControllerBase
                 clientResponse,
                 options,
                 creds.PublicKey,
+                creds.DevicePublicKeys,
                 creds.SignatureCounter,
                 UserHandleOwnerOfCredentialIdAsync,
                 cancellationToken: cancellationToken);
@@ -256,6 +285,10 @@ public class UserController : ControllerBase
             if (res.Status == "ok")
             {
                 _demoStorage.UpdateCounter(res.CredentialId, res.Counter);
+                if (res.DevicePublicKey is not null)
+                {
+                    creds.DevicePublicKeys.Add(res.DevicePublicKey);
+                }
             }
             else
             {
