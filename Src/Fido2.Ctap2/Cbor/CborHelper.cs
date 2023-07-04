@@ -7,22 +7,23 @@ internal sealed class CborHelper
 {
     public static PublicKeyCredentialDescriptor DecodePublicKeyCredentialDescriptor(CborMap map)
     {
-        var result = new PublicKeyCredentialDescriptor();
+        byte[]? id = null;
+        PublicKeyCredentialType type = default;
 
         foreach (var (key, value) in map)
         {
             switch ((string)key)
             {
                 case "id":
-                    result.Id = (byte[])value;
+                    id = (byte[])value;
                     break;
                 case "type" when (value is CborTextString { Value: "public-key" }):
-                    result.Type = PublicKeyCredentialType.PublicKey;
+                    type = PublicKeyCredentialType.PublicKey;
                     break;
             }
         }
 
-        return result;
+        return new PublicKeyCredentialDescriptor(type, id!, null);
     }
 
     public static PublicKeyCredentialUserEntity DecodePublicKeyCredentialUserEntity(CborMap map)

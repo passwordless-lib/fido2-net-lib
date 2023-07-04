@@ -436,11 +436,7 @@ public class Fido2Tests
 
         var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
         var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
-            new PublicKeyCredentialDescriptor()
-            {
-                Id = Convert.FromHexString(credId.Replace("-", "")),
-                Type = PublicKeyCredentialType.PublicKey
-            }
+            new PublicKeyCredentialDescriptor(Convert.FromHexString(credId.Replace("-", "")))
         };
 
         // assertion
@@ -1041,11 +1037,7 @@ public class Fido2Tests
             Origins = new HashSet<string> { rp },
         });
         var existingCredentials = new List<PublicKeyCredentialDescriptor>();
-        var cred = new PublicKeyCredentialDescriptor
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 }
-        };
+        var cred = new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 });
         existingCredentials.Add(cred);
 
         var options = lib.GetAssertionOptions(existingCredentials, null, null);

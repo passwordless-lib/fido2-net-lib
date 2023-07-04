@@ -12,14 +12,8 @@ public class AuthenticatorGetAssertionCommandTests
             clientDataHash: Convert.FromHexString("687134968222ec17202e42505f8ed2b16ae22f16bb05b88c25db9e602645f141"),
             allowList: new []
             {
-                new  PublicKeyCredentialDescriptor {
-                    Id = Convert.FromHexString("f22006de4f905af68a43942f024f2a5ece603d9c6d4b3df8be08ed01fc442646d034858ac75bed3fd580bf9808d94fcbee82b9b2ef6677af0adcc35852ea6b9e"),
-                    Type = PublicKeyCredentialType.PublicKey
-                },
-                new  PublicKeyCredentialDescriptor {
-                    Id = Convert.FromHexString("0303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303"),
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new  PublicKeyCredentialDescriptor(Convert.FromHexString("f22006de4f905af68a43942f024f2a5ece603d9c6d4b3df8be08ed01fc442646d034858ac75bed3fd580bf9808d94fcbee82b9b2ef6677af0adcc35852ea6b9e")),
+                new  PublicKeyCredentialDescriptor(Convert.FromHexString("0303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303"))
             },
             options: new AuthenticatorGetAssertionOptions { UserVerification = true }
                      
