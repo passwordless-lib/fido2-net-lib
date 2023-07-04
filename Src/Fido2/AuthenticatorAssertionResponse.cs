@@ -50,7 +50,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Implements alghoritm from https://www.w3.org/TR/webauthn/#verifying-assertion
+    /// Implements algorithm from https://www.w3.org/TR/webauthn/#verifying-assertion
     /// </summary>
     /// <param name="options">The assertionoptions that was sent to the client</param>
     /// <param name="fullyQualifiedExpectedOrigins">
