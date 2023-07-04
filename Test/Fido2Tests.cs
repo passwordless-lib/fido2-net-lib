@@ -703,7 +703,7 @@ public class Fido2Tests
         mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
 
         var o = AuthenticatorAttestationResponse.Parse(response);
-        await Assert.ThrowsAsync<UndesiredMetdatataStatusFido2VerificationException>(() =>
+        await Assert.ThrowsAsync<UndesiredMetadataStatusFido2VerificationException>(() =>
             o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), mockMetadataService.Object, CancellationToken.None));
     }
 

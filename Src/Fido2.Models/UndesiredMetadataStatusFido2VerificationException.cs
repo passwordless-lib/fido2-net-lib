@@ -7,14 +7,14 @@ namespace Fido2NetLib;
 /// Exception thrown when a new attestation comes from an authenticator with a current reported security issue.
 /// </summary>
 [Serializable]
-public class UndesiredMetdatataStatusFido2VerificationException : Fido2VerificationException
+public class UndesiredMetadataStatusFido2VerificationException : Fido2VerificationException
 {
-    public UndesiredMetdatataStatusFido2VerificationException(StatusReport statusReport) : base($"Authenticator found with undesirable status. Was {statusReport.Status}")
+    public UndesiredMetadataStatusFido2VerificationException(StatusReport statusReport) : base($"Authenticator found with undesirable status. Was {statusReport.Status}")
     {
         StatusReport = statusReport;
     }
 
-    protected UndesiredMetdatataStatusFido2VerificationException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+    protected UndesiredMetadataStatusFido2VerificationException(SerializationInfo info, StreamingContext context) : base(info, context) { }
 
     /// <summary>
     /// Status report from the authenticator that caused the attestation to be rejected.
