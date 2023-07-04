@@ -9,6 +9,7 @@ using System.Text.Json;
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -523,12 +524,7 @@ public class Fido2Tests
         input.MetadataStatement.AaGuid = Guid.NewGuid();
         input.MetadataStatement.Description = "Test entry";
         input.MetadataStatement.AuthenticatorVersion = 1;
-        input.MetadataStatement.Upv = new UafVersion[] { new UafVersion
-            {
-                Major = 1,
-                Minor = 0,
-            } 
-        };
+        input.MetadataStatement.Upv = new[] { new UafVersion(1, 0) };
         input.MetadataStatement.ProtocolFamily = "foo";
         input.MetadataStatement.AttestationTypes = new string[] { "bar" };
         input.MetadataStatement.AuthenticationAlgorithms = new string[] { "alg0", "alg1" };
@@ -544,7 +540,6 @@ public class Fido2Tests
         var output = JsonSerializer.Deserialize<MetadataBLOBPayloadEntry>(json);
 
         Assert.Equal(input.AaGuid, output.AaGuid);
-
     }
 
     [Fact]
