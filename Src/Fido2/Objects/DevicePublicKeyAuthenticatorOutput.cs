@@ -2,8 +2,8 @@
 namespace Fido2NetLib.Objects;
 
 using System;
+
 using Fido2NetLib.Cbor;
-using NSec.Cryptography;
 
 
 public sealed class DevicePublicKeyAuthenticatorOutput
