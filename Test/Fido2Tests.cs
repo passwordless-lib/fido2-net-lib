@@ -163,7 +163,7 @@ public class Fido2Tests
 
             _attestationObject = new CborMap();
 
-            _asnEncodedAaguid = AsnHelper.GetBlob(AttestedCredentialData.AaGuidToBigEndian(_aaguid));
+            _asnEncodedAaguid = AsnHelper.GetAaguidBlob(_aaguid);
 
             idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
         }
