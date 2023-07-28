@@ -365,7 +365,7 @@ public class AuthenticatorResponse
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseInvalidType()
+    public async Task TestAuthenticatorAttestationResponseInvalidType()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -386,7 +386,7 @@ public class AuthenticatorResponse
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
                     { "attStmt", new CborMap() },
-                    { "authData", Array.Empty<byte>() }
+                    { "authData", new AuthenticatorData(new byte[32], default, 0, null, null).ToByteArray() }
                 }.Encode(),
                 ClientDataJson = clientDataJson
             },
@@ -430,8 +430,8 @@ public class AuthenticatorResponse
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse type must be webauthn.create", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal("AttestationResponse type must be webauthn.create", ex.Message);
     }
 
     [Theory]
@@ -458,7 +458,7 @@ public class AuthenticatorResponse
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
                     { "attStmt", new CborMap() },
-                    { "authData", Array.Empty<byte>() }
+                    { "authData", new AuthenticatorData(new byte[32], default, 0, null, null).ToByteArray() }
                 }.Encode(),
                 ClientDataJson = clientDataJson
             },
@@ -507,7 +507,7 @@ public class AuthenticatorResponse
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseInvalidRawType()
+    public async Task TestAuthenticatorAttestationResponseInvalidRawType()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -528,7 +528,7 @@ public class AuthenticatorResponse
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
                     { "attStmt", new CborMap() },
-                    { "authData", Array.Empty<byte>() }
+                    { "authData", new AuthenticatorData(new byte[32], default, 0, null, null).ToByteArray() }
                 }.Encode(),
                 ClientDataJson = clientDataJson
             },
@@ -572,8 +572,8 @@ public class AuthenticatorResponse
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse type must be 'public-key'", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal("AttestationResponse type must be 'public-key'", ex.Message);
     }
 
     [Fact]

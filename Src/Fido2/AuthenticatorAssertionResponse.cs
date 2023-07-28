@@ -26,7 +26,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
     public AuthenticatorAssertionRawResponse Raw { get; init; }
 
-    public byte[] AuthenticatorData { get; init; }
+    public AuthenticatorData AuthenticatorData { get; init; }
 
     public byte[] Signature { get; init; }
 
@@ -40,7 +40,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         var response = new AuthenticatorAssertionResponse(rawResponse.Response.ClientDataJson)
         {
             Raw = rawResponse, // accessed in Verify()
-            AuthenticatorData = rawResponse.Response.AuthenticatorData,
+            AuthenticatorData = AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData),
             Signature = rawResponse.Response.Signature,
             UserHandle = rawResponse.Response.UserHandle,
             AttestationObject = rawResponse.Response.AttestationObject
@@ -103,7 +103,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         // 7. Let cData, authData and sig denote the value of credential’s response's clientDataJSON, authenticatorData, and signature respectively.
         //var cData = Raw.Response.ClientDataJson;
-        var authData = new AuthenticatorData(AuthenticatorData);
+        var authData = AuthenticatorData;
         //var sig = Raw.Response.Signature;
 
         // 8. Let JSONtext be the result of running UTF-8 decode on the value of cData.
@@ -245,7 +245,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     private static byte[] DevicePublicKeyAuthentication(
         List<byte[]> storedDevicePublicKeys,
         AuthenticationExtensionsClientOutputs clientExtensionResults,
-        byte[] authData,
+        AuthenticatorData authData,
         byte[] hash
         )
     {
@@ -257,7 +257,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         DevicePublicKeyAuthenticatorOutput devicePublicKeyAuthenticatorOutput = new(attObjForDevicePublicKey.AuthenticatorOutput);
 
         // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
-        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData, hash), attObjForDevicePublicKey.Signature))
+        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData.ToByteArray(), hash), attObjForDevicePublicKey.Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
         // 4. If the Relying Party's user account mapped to the credential.id in play (i.e., for the user being
@@ -310,7 +310,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     try
                     {
                         // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                        _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.AuthData, devicePublicKeyAuthenticatorOutput.Hash);
+                        _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
                     }
                     catch (Exception ex)
                     {
@@ -357,7 +357,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                         try
                         {
                             // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                            _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.AuthData, devicePublicKeyAuthenticatorOutput.Hash);
+                            _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
                             return devicePublicKeyAuthenticatorOutput.GetBytes();
                         }
                         catch (Exception ex)
@@ -394,7 +394,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 try
                 {
                     // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                    _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.AuthData, devicePublicKeyAuthenticatorOutput.Hash);
+                    _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
                     return devicePublicKeyAuthenticatorOutput.GetBytes();
                 }
                 catch

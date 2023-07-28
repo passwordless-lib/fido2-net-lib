@@ -260,7 +260,7 @@ public class Tpm : Fido2Tests.Attestation
                             unique // Unique
                         );
 
-                        byte[] data = Concat(_authData, _clientDataHash);
+                        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
                         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
 
@@ -385,7 +385,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
 
@@ -496,7 +496,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -594,7 +594,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
 
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -692,7 +692,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -797,7 +797,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -896,7 +896,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
 
@@ -995,7 +995,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1093,7 +1093,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1189,7 +1189,7 @@ public class Tpm : Fido2Tests.Attestation
             .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)))
             .ToArray();
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1287,7 +1287,7 @@ public class Tpm : Fido2Tests.Attestation
             Array.Empty<byte>() // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1387,7 +1387,7 @@ public class Tpm : Fido2Tests.Attestation
             unique.Reverse().ToArray() // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1485,7 +1485,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1600,7 +1600,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1714,7 +1714,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1829,7 +1829,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -1927,7 +1927,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2025,7 +2025,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2130,7 +2130,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2228,7 +2228,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2326,7 +2326,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2424,7 +2424,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2522,7 +2522,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2620,7 +2620,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2718,7 +2718,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2821,7 +2821,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -2919,7 +2919,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3017,7 +3017,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3115,7 +3115,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3213,7 +3213,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3311,7 +3311,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3412,7 +3412,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3510,7 +3510,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3608,7 +3608,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3706,7 +3706,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3804,7 +3804,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -3903,7 +3903,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4001,7 +4001,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4099,7 +4099,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4202,7 +4202,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4311,7 +4311,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4409,7 +4409,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4515,7 +4515,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4617,7 +4617,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4719,7 +4719,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4821,7 +4821,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -4924,7 +4924,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -5023,7 +5023,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -5121,7 +5121,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -5219,7 +5219,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -5333,7 +5333,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
@@ -5431,7 +5431,7 @@ public class Tpm : Fido2Tests.Attestation
             unique // Unique
         );
 
-        byte[] data = Concat(_authData, _clientDataHash);
+        byte[] data = Concat(_authData.ToByteArray(), _clientDataHash);
 
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
