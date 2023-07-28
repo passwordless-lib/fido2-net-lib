@@ -9,6 +9,7 @@ using System.Text.Json;
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
+
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -162,7 +163,7 @@ public class Fido2Tests
 
             _attestationObject = new CborMap();
 
-            _asnEncodedAaguid = AsnHelper.GetBlob(AttestedCredentialData.AaGuidToBigEndian(_aaguid));
+            _asnEncodedAaguid = AsnHelper.GetAaguidBlob(_aaguid);
 
             idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
         }
@@ -435,11 +436,7 @@ public class Fido2Tests
 
         var credId = "F1-3C-7F-08-3C-A2-29-E0-B4-03-E8-87-34-6E-FC-7F-98-53-10-3A-30-91-75-67-39-7A-D1-D8-AF-87-04-61-87-EF-95-31-85-60-F3-5A-1A-2A-CF-7D-B0-1D-06-B9-69-F9-AB-F4-EC-F3-07-3E-CF-0F-71-E8-84-E8-41-20";
         var allowedCreds = new List<PublicKeyCredentialDescriptor>() {
-            new PublicKeyCredentialDescriptor()
-            {
-                Id = Convert.FromHexString(credId.Replace("-", "")),
-                Type = PublicKeyCredentialType.PublicKey
-            }
+            new PublicKeyCredentialDescriptor(Convert.FromHexString(credId.Replace("-", "")))
         };
 
         // assertion
@@ -523,12 +520,7 @@ public class Fido2Tests
         input.MetadataStatement.AaGuid = Guid.NewGuid();
         input.MetadataStatement.Description = "Test entry";
         input.MetadataStatement.AuthenticatorVersion = 1;
-        input.MetadataStatement.Upv = new UafVersion[] { new UafVersion
-            {
-                Major = 1,
-                Minor = 0,
-            } 
-        };
+        input.MetadataStatement.Upv = new[] { new UafVersion(1, 0) };
         input.MetadataStatement.ProtocolFamily = "foo";
         input.MetadataStatement.AttestationTypes = new string[] { "bar" };
         input.MetadataStatement.AuthenticationAlgorithms = new string[] { "alg0", "alg1" };
@@ -544,7 +536,6 @@ public class Fido2Tests
         var output = JsonSerializer.Deserialize<MetadataBLOBPayloadEntry>(json);
 
         Assert.Equal(input.AaGuid, output.AaGuid);
-
     }
 
     [Fact]
@@ -708,7 +699,7 @@ public class Fido2Tests
         mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
 
         var o = AuthenticatorAttestationResponse.Parse(response);
-        await Assert.ThrowsAsync<UndesiredMetdatataStatusFido2VerificationException>(() =>
+        await Assert.ThrowsAsync<UndesiredMetadataStatusFido2VerificationException>(() =>
             o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), mockMetadataService.Object, CancellationToken.None));
     }
 
@@ -1046,11 +1037,7 @@ public class Fido2Tests
             Origins = new HashSet<string> { rp },
         });
         var existingCredentials = new List<PublicKeyCredentialDescriptor>();
-        var cred = new PublicKeyCredentialDescriptor
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 }
-        };
+        var cred = new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 });
         existingCredentials.Add(cred);
 
         var options = lib.GetAssertionOptions(existingCredentials, null, null);

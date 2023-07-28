@@ -1287,11 +1287,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1363,11 +1359,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1438,11 +1430,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1513,11 +1501,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1589,11 +1573,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1665,11 +1645,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1742,11 +1718,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1818,11 +1790,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1895,11 +1863,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -1971,11 +1935,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey,
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -2046,11 +2006,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -2122,11 +2078,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -2198,11 +2150,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -2274,11 +2222,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -2351,11 +2295,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -2427,11 +2367,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 
@@ -2503,11 +2439,7 @@ public class AuthenticatorResponse
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor
-                {
-                    Id = new byte[] { 0xf1, 0xd0 },
-                    Type = PublicKeyCredentialType.PublicKey
-                }
+                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
             }
         };
 

@@ -1,4 +1,7 @@
-﻿using System.Text.Json.Serialization;
+﻿#nullable enable
+
+using System;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects;
 
@@ -7,37 +10,38 @@ namespace Fido2NetLib.Objects;
 /// Lazy implementation of https://www.w3.org/TR/webauthn/#dictdef-publickeycredentialdescriptor
 /// todo: Should add validation of values as specified in spec
 /// </summary>
-public class PublicKeyCredentialDescriptor
+public sealed class PublicKeyCredentialDescriptor
 {
-    public PublicKeyCredentialDescriptor(byte[] credentialId)
-    {
-        Id = credentialId;
-    }
+    public PublicKeyCredentialDescriptor(byte[] id)
+        : this(PublicKeyCredentialType.PublicKey, id, null) { }
 
-    public PublicKeyCredentialDescriptor()
+    [JsonConstructor]
+    public PublicKeyCredentialDescriptor(PublicKeyCredentialType type, byte[] id, AuthenticatorTransport[]? transports = null)
     {
+        ArgumentNullException.ThrowIfNull(id);
 
+        Type = type;
+        Id = id;
+        Transports = transports;
     }
 
     /// <summary>
     /// This member contains the type of the public key credential the caller is referring to.
     /// </summary>
     [JsonPropertyName("type")]
-    public PublicKeyCredentialType? Type { get; set; } = PublicKeyCredentialType.PublicKey;
+    public PublicKeyCredentialType Type { get; }
 
     /// <summary>
     /// This member contains the credential ID of the public key credential the caller is referring to.
     /// </summary>
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonPropertyName("id")]
-    public byte[] Id { get; set; }
-
-#nullable enable
+    public byte[] Id { get; }
 
     /// <summary>
     /// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator of the public key credential the caller is referring to.
     /// </summary>
     [JsonPropertyName("transports")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public AuthenticatorTransport[]? Transports { get; set; }
+    public AuthenticatorTransport[]? Transports { get; }
 };

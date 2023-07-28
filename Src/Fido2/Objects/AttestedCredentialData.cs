@@ -123,21 +123,6 @@ public sealed class AttestedCredentialData
         return new Guid(aaGuid);
     }
 
-    /// <summary>
-    /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
-    /// </summary>
-    public static byte[] AaGuidToBigEndian(Guid aaGuid)
-    {
-        var aaguid = aaGuid.ToByteArray();
-
-        SwapBytes(aaguid, 0, 3);
-        SwapBytes(aaguid, 1, 2);
-        SwapBytes(aaguid, 4, 5);
-        SwapBytes(aaguid, 6, 7);
-
-        return aaguid;
-    }
-
     public override string ToString()
     {
         return $"AAGUID: {AaGuid}, CredentialID: {Convert.ToHexString(CredentialID)}, CredentialPublicKey: {CredentialPublicKey}";
@@ -154,16 +139,7 @@ public sealed class AttestedCredentialData
 
     public void WriteTo(IBufferWriter<byte> writer)
     {
-        // Write the aaguid as big endian bytes
-        if (BitConverter.IsLittleEndian)
-        {
-            writer.Write(AaGuidToBigEndian(AaGuid));
-        }
-        else
-        {
-            _ = AaGuid.TryWriteBytes(writer.GetSpan(16));
-            writer.Advance(16);
-        }
+        writer.WriteGuidBigEndian(AaGuid);
 
         // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
         writer.WriteUInt16BigEndian((ushort)CredentialID.Length);

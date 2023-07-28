@@ -176,11 +176,11 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 15.
         //     Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.
 
-        // Check status resports for authenticator with undesirable status
+        // Check status reports for authenticator with undesirable status
         var latestStatusReport = metadataEntry?.GetLatestStatusReport();
         if (latestStatusReport != null && config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
         {
-            throw new UndesiredMetdatataStatusFido2VerificationException(latestStatusReport);
+            throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
         }
 
         // 23. Verify that the credentialId is ≤ 1023 bytes.
@@ -274,7 +274,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         var latestStatusReport = metadataEntry?.GetLatestStatusReport();
         if (latestStatusReport != null && _config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
         {
-            throw new UndesiredMetdatataStatusFido2VerificationException(latestStatusReport);
+            throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
         }
 
         return devicePublicKeyAuthenticatorOutput.GetBytes();
