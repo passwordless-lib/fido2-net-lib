@@ -56,7 +56,7 @@ public class AuthenticationExtensionsClientOutputs
     /// </summary>
     [JsonPropertyName("credProps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? CredProps { get; set; }
+    public CredentialPropertiesOutput? CredProps { get; set; }
     
     /// <summary>
     /// This extension allows a Relying Party to evaluate outputs from a pseudo-random function (PRF) associated with a credential.
