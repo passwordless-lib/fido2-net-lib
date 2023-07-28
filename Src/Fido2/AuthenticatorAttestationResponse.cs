@@ -53,22 +53,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationObject, Fido2ErrorMessages.InvalidAttestationObject, ex);
         }
 
-        if (!(
-            cborAttestation["fmt"]      is { Type: CborType.TextString } && 
-            cborAttestation["attStmt"]  is { Type: CborType.Map } &&
-            cborAttestation["authData"] is { Type: CborType.ByteString }))
-        {
-            throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject);
-        }
+        var attestationObject = ParsedAttestationObject.FromCbor(cborAttestation);
 
         return new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
         {
             Raw = rawResponse,
-            AttestationObject = new ParsedAttestationObject(
-                fmt      : (string)cborAttestation["fmt"],
-                attStmt  : (CborMap)cborAttestation["attStmt"],
-                authData : AuthenticatorData.Parse((byte[])cborAttestation["authData"])
-            )
+            AttestationObject = attestationObject
         };
     }
 
@@ -346,5 +336,22 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         public CborMap AttStmt { get; }
 
         public AuthenticatorData AuthData { get; }
+
+        internal static ParsedAttestationObject FromCbor(CborObject cbor)
+        {
+            if (!(
+                cbor["fmt"] is { Type: CborType.TextString } fmt &&
+                cbor["attStmt"] is { Type: CborType.Map } attStmt &&
+                cbor["authData"] is { Type: CborType.ByteString } authData))
+            {
+                throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject);
+            }
+
+            return new ParsedAttestationObject(
+                fmt      : (string)fmt,
+                attStmt  : (CborMap)attStmt,
+                authData : AuthenticatorData.Parse((byte[])authData)
+            );
+        }
     }
 }
