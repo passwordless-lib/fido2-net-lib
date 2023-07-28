@@ -20,7 +20,7 @@ public class AuthenticatorResponse
     [InlineData("https://www.passwordless.dev:443", "https://www.passwordless.dev:443")]
     [InlineData("https://www.passwordless.dev", "https://www.passwordless.dev:443")]
     [InlineData("https://www.passwordless.dev:443", "https://www.passwordless.dev")]
-    [InlineData("https://www.passwordless.dev:443/foo/bar.html","https://www.passwordless.dev:443/foo/bar.html")]
+    [InlineData("https://www.passwordless.dev:443/foo/bar.html", "https://www.passwordless.dev:443/foo/bar.html")]
     [InlineData("https://www.passwordless.dev:443/foo/bar.html", "https://www.passwordless.dev:443/bar/foo.html")]
     [InlineData("https://www.passwordless.dev:443/foo/bar.html", "https://www.passwordless.dev/bar/foo.html")]
     [InlineData("https://www.passwordless.dev:443/foo/bar.html", "https://www.passwordless.dev")]
@@ -38,7 +38,7 @@ public class AuthenticatorResponse
     [InlineData("lorem://ipsum:1234", "lorem://ipsum:1234")]
     [InlineData("lorem://ipsum:9876/sit", "lorem://ipsum:9876/sit")]
     [InlineData("foo://bar:321/path/", "foo://bar:321/path/")]
-    [InlineData("foo://bar:321/path","foo://bar:321/path")]
+    [InlineData("foo://bar:321/path", "foo://bar:321/path")]
     [InlineData("http://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]")]
     [InlineData("http://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]:80")]
     [InlineData("https://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]")]
@@ -55,7 +55,7 @@ public class AuthenticatorResponse
             acd
         ).ToByteArray();
 
-        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new 
+        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
         {
             type = "webauthn.create",
             challenge = challenge,
@@ -257,6 +257,15 @@ public class AuthenticatorResponse
                         4 // USER_VERIFY_PASSCODE_INTERNAL
                     },
                 },
+                PRF = new AuthenticationExtensionsPRFOutputs
+                {
+                    Enabled = true,
+                    Results = new AuthenticationExtensionsPRFValues
+                    {
+                        First = new byte[] { 0xf1, 0xd0 },
+                        Second = new byte[] { 0xf1, 0xd0 }
+                    }
+                }
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, rawResponse.Type);
@@ -269,6 +278,9 @@ public class AuthenticatorResponse
         Assert.Equal(rawResponse.Extensions.Extensions, new string[] { "foo", "bar" });
         Assert.Equal("test", rawResponse.Extensions.Example);
         Assert.Equal((ulong)4, rawResponse.Extensions.UserVerificationMethod[0][0]);
+        Assert.True(rawResponse.Extensions.PRF.Enabled);
+        Assert.True(rawResponse.Extensions.PRF.Results.First.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
+        Assert.True(rawResponse.Extensions.PRF.Results.Second.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
     }
 
     [Fact]
@@ -357,7 +369,7 @@ public class AuthenticatorResponse
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new 
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
         {
             Type = "webauthn.get",
             Challenge = challenge,
@@ -429,7 +441,8 @@ public class AuthenticatorResponse
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new {
+        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        {
             type = "webauthn.create",
             challenge = challenge,
             origin = rp,
@@ -498,7 +511,8 @@ public class AuthenticatorResponse
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new {
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        {
             type = "webauthn.create",
             challenge = challenge,
             origin = rp,
@@ -652,7 +666,7 @@ public class AuthenticatorResponse
             null
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new 
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
         {
             type = "webauthn.create",
             challenge = challenge,
@@ -972,7 +986,7 @@ public class AuthenticatorResponse
             challenge = challenge,
             origin = rp,
         });
-               
+
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
@@ -1224,6 +1238,15 @@ public class AuthenticatorResponse
                         4 // USER_VERIFY_PASSCODE_INTERNAL
                     },
                 },
+                PRF = new AuthenticationExtensionsPRFOutputs
+                {
+                    Enabled = true,
+                    Results = new AuthenticationExtensionsPRFValues
+                    {
+                        First = new byte[] { 0xf1, 0xd0 },
+                        Second = new byte[] { 0xf1, 0xd0 }
+                    }
+                }
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, assertionResponse.Type);
@@ -1238,6 +1261,9 @@ public class AuthenticatorResponse
         Assert.Equal(assertionResponse.Extensions.Extensions, new string[] { "foo", "bar" });
         Assert.Equal("test", assertionResponse.Extensions.Example);
         Assert.Equal((ulong)4, assertionResponse.Extensions.UserVerificationMethod[0][0]);
+        Assert.True(assertionResponse.Extensions.PRF.Enabled);
+        Assert.True(assertionResponse.Extensions.PRF.Results.First.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
+        Assert.True(assertionResponse.Extensions.PRF.Results.Second.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
     }
 
     [Fact]
