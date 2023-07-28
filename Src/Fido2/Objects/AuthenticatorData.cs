@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -84,12 +85,14 @@ public sealed class AuthenticatorData
     /// HasAttestedCredentialData indicates that the authenticator added attested credential data to the authenticator data.
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
+    [MemberNotNullWhen(true, nameof(AttestedCredentialData))]
     public bool HasAttestedCredentialData => _flags.HasFlag(AuthenticatorFlags.AT);
 
     /// <summary>
     /// HasExtensionsData indicates that the authenticator added extension data to the authenticator data.
     /// <see cref="https://www.w3.org/TR/webauthn/#authdataextensions"/>
     /// </summary>
+    [MemberNotNullWhen(true, nameof(Extensions))]
     public bool HasExtensionsData => _flags.HasFlag(AuthenticatorFlags.ED);
 
     private byte[]? _data = null;
