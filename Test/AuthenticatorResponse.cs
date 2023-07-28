@@ -1272,12 +1272,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new (
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1344,12 +1343,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1415,12 +1413,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1486,12 +1483,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1558,12 +1554,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1630,12 +1625,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.create",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.create",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1702,12 +1696,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1775,12 +1768,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1847,12 +1839,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1919,12 +1910,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -1991,12 +1981,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
         
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -2063,12 +2052,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -2135,12 +2123,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -2207,12 +2194,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -2279,18 +2265,15 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
-        var options = new AssertionOptions
-        {
+        var options = new AssertionOptions {
             Challenge = challenge,
             RpId = rp,
             AllowCredentials = new[]
@@ -2351,13 +2334,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 
@@ -2423,13 +2404,11 @@ public class AuthenticatorResponse
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new()
-        {
-
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = rp,
-        };
+        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+            type      : "webauthn.get",
+            challenge : challenge,
+            origin    : rp
+        );
 
         byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
 

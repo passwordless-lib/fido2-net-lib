@@ -25,7 +25,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     private IMetadataService _metadataService;
     private CancellationToken _cancellationToken;
     private Fido2Configuration _config;
-    private AuthenticatorAttestationResponse(byte[] clientDataJson) 
+
+    private AuthenticatorAttestationResponse(byte[] clientDataJson)
         : base(clientDataJson)
     {
     }
