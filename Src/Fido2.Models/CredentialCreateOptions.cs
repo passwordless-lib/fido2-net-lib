@@ -83,6 +83,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
             PubKeyCredParams = new List<PubKeyCredParam>(10)
             {
                 // Add additional as appropriate
+                PubKeyCredParam.Ed25519,
                 PubKeyCredParam.ES256,
                 PubKeyCredParam.RS256,
                 PubKeyCredParam.PS256,
@@ -92,7 +93,6 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
                 PubKeyCredParam.ES512,
                 PubKeyCredParam.RS512,
                 PubKeyCredParam.PS512,
-                PubKeyCredParam.Ed25519,
             },
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
