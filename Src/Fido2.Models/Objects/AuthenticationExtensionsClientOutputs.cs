@@ -53,10 +53,11 @@ public class AuthenticationExtensionsClientOutputs
 
     /// <summary>
     /// This client registration extension facilitates reporting certain credential properties known by the client to the requesting WebAuthn Relying Party upon creation of a public key credential source as a result of a registration ceremony.
+    /// https://www.w3.org/TR/webauthn/#sctn-authenticator-credential-properties-extension
     /// </summary>
     [JsonPropertyName("credProps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? CredProps { get; set; }
+    public AuthenticationExtensionsCredentialPropertiesOutputs? CredProps { get; set; }
     
     /// <summary>
     /// This extension allows a Relying Party to evaluate outputs from a pseudo-random function (PRF) associated with a credential.
