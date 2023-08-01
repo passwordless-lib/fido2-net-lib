@@ -229,7 +229,7 @@ internal sealed class Tpm : AttestationVerifier
         { 3, TpmEccCurve.TPM_ECC_NIST_P521}
     };
 
-    private static (string?, string?, string?) SANFromAttnCertExts(X509ExtensionCollection extensions)
+    private static (string?, string?, string?) SANFromAttnCertExts(X509ExtensionCollection exts)
     {
         string? tpmManufacturer = null;
         string? tpmModel = null;
@@ -237,7 +237,7 @@ internal sealed class Tpm : AttestationVerifier
 
         var foundSAN = false;
 
-        foreach (var extension in extensions)
+        foreach (var extension in exts)
         {
             if (extension.Oid!.Value is "2.5.29.17") // subject alternative name
             {

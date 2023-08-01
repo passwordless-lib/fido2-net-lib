@@ -147,14 +147,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
             }
 
-            var rsaparams = rsaAtt.ExportParameters(true);
+            var rsaParams = rsaAtt.ExportParameters(true);
 
             var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                    { COSE.KeyTypeParameter.E, rsaparams.Exponent }
+                    { COSE.KeyTypeParameter.N, rsaParams.Modulus },
+                    { COSE.KeyTypeParameter.E, rsaParams.Exponent }
                 };
 
             _credentialPublicKey = new CredentialPublicKey(cpk);

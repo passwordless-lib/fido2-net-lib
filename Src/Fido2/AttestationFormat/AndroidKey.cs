@@ -35,7 +35,7 @@ internal sealed class AndroidKey : AttestationVerifier
     public static bool FindAllApplicationsField(byte[] attExtBytes)
     {
         // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
-        // check both software and tee enforced AuthorizationList objects for presense of "allApplications" tag, number 600
+        // check both software and tee enforced AuthorizationList objects for presence of "allApplications" tag, number 600
 
         var keyDescription = Asn1Element.Decode(attExtBytes);
 

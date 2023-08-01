@@ -113,7 +113,7 @@ internal sealed class Packed : AttestationVerifier
             }
 
             // id-fido-u2f-ce-transports 
-            byte u2ftransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
+            byte u2fTransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
 
             // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
             

@@ -304,8 +304,8 @@ public class Fido2Tests
                                 throw new ArgumentOutOfRangeException(nameof(alg), $"Missing or unknown alg {alg}");
                         }
 
-                        var rsaparams = rsa.ExportParameters(true);
-                        _credentialPublicKey = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
+                        var rsaParams = rsa.ExportParameters(true);
+                        _credentialPublicKey = MakeCredentialPublicKey(kty, alg, rsaParams.Modulus, rsaParams.Exponent);
                         return rsa.SignData(_attToBeSigned, CryptoUtils.HashAlgFromCOSEAlg(alg), padding);
                     }
                 case COSE.KeyType.OKP:
@@ -744,8 +744,8 @@ public class Fido2Tests
         var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
         var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         var rsa = RSA.Create();
-        var rsaparams = rsa.ExportParameters(true);
-        var cpk = MakeCredentialPublicKey(COSE.KeyType.RSA, COSE.Algorithm.RS256, rsaparams.Modulus, rsaparams.Exponent);
+        var rsaParams = rsa.ExportParameters(true);
+        var cpk = MakeCredentialPublicKey(COSE.KeyType.RSA, COSE.Algorithm.RS256, rsaParams.Modulus, rsaParams.Exponent);
 
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
@@ -900,7 +900,7 @@ public class Fido2Tests
         return raw.ToArray();
     }
 
-    internal static byte[] CreateCertInfo(byte[] magic, byte[] type, byte[] qualifiedSigner,
+    internal static byte[] CreateCertInfo(byte[] magic, byte[] type, byte[] QualifiedSigner,
         byte[] extraData, byte[] clock, byte[] resetCount, byte[] restartCount,
         byte[] safe, byte[] firmwareRevision, byte[] tPM2BName, byte[] attestedQualifiedNameBuffer)
     {
@@ -908,7 +908,7 @@ public class Fido2Tests
 
         raw.Write(magic);
         raw.Write(type);
-        raw.Write(qualifiedSigner);
+        raw.Write(QualifiedSigner);
         raw.Write(extraData);
         raw.Write(clock);
         raw.Write(resetCount);
@@ -953,8 +953,8 @@ public class Fido2Tests
                     {
                         rsa ??= RSA.Create();
                         
-                        var rsaparams = rsa.ExportParameters(true);
-                        cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
+                        var rsaParams = rsa.ExportParameters(true);
+                        cpk = MakeCredentialPublicKey(kty, alg, rsaParams.Modulus, rsaParams.Exponent);
                         break;
                     }
                 case COSE.KeyType.OKP:
@@ -1150,8 +1150,8 @@ public class Fido2Tests
             case COSE.KeyType.RSA:
                 {
                     var rsa = RSA.Create();
-                    var rsaparams = rsa.ExportParameters(true);
-                    cpk = MakeCredentialPublicKey(kty, alg, rsaparams.Modulus, rsaparams.Exponent);
+                    var rsaParams = rsa.ExportParameters(true);
+                    cpk = MakeCredentialPublicKey(kty, alg, rsaParams.Modulus, rsaParams.Exponent);
                     break;
                 }
             case COSE.KeyType.OKP:

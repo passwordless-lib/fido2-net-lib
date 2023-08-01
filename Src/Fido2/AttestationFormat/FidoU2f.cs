@@ -15,7 +15,7 @@ internal sealed class FidoU2f : AttestationVerifier
     {
         // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
         if (AuthData.AttestedCredentialData!.AaGuid.CompareTo(Guid.Empty) != 0)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Aaguid was not empty parsing fido-u2f atttestation statement");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Aaguid was not empty parsing fido-u2f attestation statement");
 
         // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
@@ -30,7 +30,7 @@ internal sealed class FidoU2f : AttestationVerifier
         var attCert = new X509Certificate2((byte[])x5cArray[0]);
 
         // TODO : Check why this variable isn't used. Remove it or use it.
-        var u2ftransports = U2FTransportsFromAttnCert(attCert.Extensions);
+        var u2fTransports = U2FTransportsFromAttnCert(attCert.Extensions);
 
         // 2b. If certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve, terminate this algorithm and return an appropriate error
         var pubKey = attCert.GetECDsaPublicKey()!;

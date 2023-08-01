@@ -2,12 +2,13 @@
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
 
 /// <summary>
-/// Public API for parsing and veriyfing FIDO2 attestation & assertion responses.
+/// Public API for parsing and verifying FIDO2 attestation & assertion responses.
 /// </summary>
 public partial class Fido2 : IFido2
 {
@@ -143,8 +144,9 @@ public partial class Fido2 : IFido2
 /// <param name="credentialIdUserParams"></param>
 /// <returns></returns>
 public delegate Task<bool> IsCredentialIdUniqueToUserAsyncDelegate(IsCredentialIdUniqueToUserParams credentialIdUserParams, CancellationToken cancellationToken);
+
 /// <summary>
-/// Callback function used to validate that the Userhandle is indeed owned of the CrendetialId
+/// Callback function used to validate that the user handle is indeed owned of the CredentialId
 /// </summary>
 /// <param name="credentialIdUserHandleParams"></param>
 /// <returns></returns>

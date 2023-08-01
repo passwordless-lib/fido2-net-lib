@@ -290,7 +290,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 // This is likely a known device.
                 // If fmt's value is "none" then there is no attestation signature to verify and this is a known device public key with a valid signature and thus a known device. Terminate these verification steps.
                 if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
+                {
                     return null;
+                }
                 // Otherwise, check attObjForDevicePublicKey's attStmt by performing a binary equality check between the corresponding stored and extracted attStmt values.
                 else if (devicePublicKeyAuthenticatorOutput.AttStmt.Encode().SequenceEqual(matchedDpkRecords.FirstOrDefault().AttStmt.Encode()))
                 {
@@ -302,7 +304,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     // Optionally, if attestation was requested and the RP wishes to verify it, verify that attStmt
                     // is a correct attestation statement, conveying a valid attestation signature, by using the
                     // attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2
-                    // Attestation calculations. Relying Party policy may specifiy which attestations are acceptable.
+                    // Attestation calculations. Relying Party policy may specify which attestations are acceptable.
                     // https://www.w3.org/TR/webauthn/#defined-attestation-formats
                     var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
 
@@ -351,7 +353,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     else
                     {
                         // Optionally, if attestation was requested and the RP wishes to verify it, verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2 Attestation calculations.
-                        // Relying Party policy may specifiy which attestations are acceptable.
+                        // Relying Party policy may specify which attestations are acceptable.
                         var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
                         // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
                         try
@@ -369,7 +371,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 }
                 else
                 {
-                    // Otherwise there is some form of error: we recieved a known dpk value, but one or more of the
+                    // Otherwise there is some form of error: we received a known dpk value, but one or more of the
                     // accompanying aaguid, scope, or fmt values did not match what the Relying Party has stored
                     // along with that dpk value. Terminate these verification steps.
                     throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.MissingStoredPublicKey);
@@ -386,7 +388,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
                 return devicePublicKeyAuthenticatorOutput.GetBytes();
             // Otherwise, verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2 Attestation calculations.
-            // Relying Party policy may specifiy which attestations are acceptable.
+            // Relying Party policy may specify which attestations are acceptable.
             else
             {
                 var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);

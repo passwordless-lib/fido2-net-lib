@@ -24,7 +24,6 @@ public sealed class CredentialPublicKey
         _alg = (COSE.Algorithm)(int)cpk[COSE.KeyCommonParameter.Alg];
     }
 
-
     public CredentialPublicKey(ECDsa ecdsaPublicKey, COSE.Algorithm alg)
     {
         _type = COSE.KeyType.EC2;
