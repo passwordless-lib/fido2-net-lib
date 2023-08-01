@@ -24,7 +24,6 @@ using static Fido2NetLib.AuthenticatorAttestationResponse;
 
 namespace fido2_net_lib.Test;
 
-
 // todo: Create tests and name Facts and json files better.
 public class Fido2Tests
 {
@@ -91,13 +90,13 @@ public class Fido2Tests
         public CredentialPublicKey _credentialPublicKey;
         public const string rp = "https://www.passwordless.dev";
         public byte[] _challenge;
-        public X500DistinguishedName rootDN = new X500DistinguishedName("CN=Testing, O=FIDO2-NET-LIB, C=US");
-        public Oid oidIdFidoGenCeAaguid = new Oid("1.3.6.1.4.1.45724.1.1.4");
+        public X500DistinguishedName rootDN = new("CN=Testing, O=FIDO2-NET-LIB, C=US");
+        public Oid oidIdFidoGenCeAaguid = new("1.3.6.1.4.1.45724.1.1.4");
         //private byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         //public byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         public byte[] _asnEncodedAaguid;
-        public X509BasicConstraintsExtension caExt = new X509BasicConstraintsExtension(true, true, 2, false);
-        public X509BasicConstraintsExtension notCAExt = new X509BasicConstraintsExtension(false, false, 0, false);
+        protected X509BasicConstraintsExtension caExt = new(true, true, 2, false);
+        protected X509BasicConstraintsExtension notCAExt = new(false, false, 0, false);
         public X509Extension idFidoGenCeAaguidExt;
 
         public byte[] _rpIdHash => SHA256.HashData(Encoding.UTF8.GetBytes(rp));
@@ -127,7 +126,7 @@ public class Fido2Tests
         public byte[] _credentialID;
         public const AuthenticatorFlags _flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
         public ushort _signCount;
-        public Guid _aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
+        protected Guid _aaguid = new("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
         public Extensions _exts
         {
             get
@@ -136,9 +135,10 @@ public class Fido2Tests
                 return new Extensions(extBytes);
             }
         }
-        public AuthenticatorData _authData => new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, _exts);
+
+        public AuthenticatorData _authData => new(_rpIdHash, _flags, _signCount, _acd, _exts);
         
-        public AttestedCredentialData _acd => new AttestedCredentialData(_aaguid, _credentialID, _credentialPublicKey);
+        public AttestedCredentialData _acd => new(_aaguid, _credentialID, _credentialPublicKey);
            
         public Attestation()
         {
@@ -199,18 +199,18 @@ public class Fido2Tests
                 ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
-                    new PubKeyCredParam(COSE.Algorithm.ES256),
-                    new PubKeyCredParam(COSE.Algorithm.ES384),
-                    new PubKeyCredParam(COSE.Algorithm.ES512),
-                    new PubKeyCredParam(COSE.Algorithm.RS1),
-                    new PubKeyCredParam(COSE.Algorithm.RS256),
-                    new PubKeyCredParam(COSE.Algorithm.RS384),
-                    new PubKeyCredParam(COSE.Algorithm.RS512),
-                    new PubKeyCredParam(COSE.Algorithm.PS256),
-                    new PubKeyCredParam(COSE.Algorithm.PS384),
-                    new PubKeyCredParam(COSE.Algorithm.PS512),
-                    new PubKeyCredParam(COSE.Algorithm.EdDSA),
-                    new PubKeyCredParam(COSE.Algorithm.ES256K),
+                    new(COSE.Algorithm.ES256),
+                    new(COSE.Algorithm.ES384),
+                    new(COSE.Algorithm.ES512),
+                    new(COSE.Algorithm.RS1),
+                    new(COSE.Algorithm.RS256),
+                    new(COSE.Algorithm.RS384),
+                    new(COSE.Algorithm.RS512),
+                    new(COSE.Algorithm.PS256),
+                    new(COSE.Algorithm.PS384),
+                    new(COSE.Algorithm.PS512),
+                    new(COSE.Algorithm.EdDSA),
+                    new(COSE.Algorithm.ES256K),
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
                 Status = "ok",

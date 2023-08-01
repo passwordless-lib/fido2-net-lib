@@ -1,9 +1,7 @@
 ﻿using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib;
-using Fido2NetLib.Objects;
 
 namespace Test;
 
@@ -53,6 +51,7 @@ public class CryptoUtilsTests
         Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, attestationRootCertificates));
         Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, trustPath));
     }
+
     [Fact]
     public void TestValidateTrustChainSubAnchor()
     {
@@ -72,6 +71,7 @@ public class CryptoUtilsTests
         Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, attestationRootCertificates));
         Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, trustPath));
     }
+
     [Fact]
     public void TestValidateTrustChainSelf()
     {

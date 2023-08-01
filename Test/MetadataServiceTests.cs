@@ -85,17 +85,12 @@ public class MetadataServiceTests
 
     public class MockClock : ISystemClock
     {
-
         public MockClock(DateTimeOffset time)
         {
             UtcNow = time;
         }
 
-        public DateTimeOffset UtcNow
-        {
-            get;
-            set;
-        }
+        public DateTimeOffset UtcNow { get; set; }
     }
 
     [Fact]

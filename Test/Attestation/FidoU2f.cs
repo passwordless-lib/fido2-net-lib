@@ -27,9 +27,9 @@ public class FidoU2f : Fido2Tests.Attestation
             attestnCert.RawData
         };
 
-        var ecparams = ecdsaAtt.ExportParameters(true);
+        var ecParams = ecdsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecparams.Q.X, ecparams.Q.Y);
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecParams.Q.X, ecParams.Q.Y);
 
         var x = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.X];
         var y = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.Y];
@@ -77,7 +77,7 @@ public class FidoU2f : Fido2Tests.Attestation
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
 
         Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
-        Assert.Equal("Aaguid was not empty parsing fido-u2f atttestation statement", ex.Message);
+        Assert.Equal("Aaguid was not empty parsing fido-u2f attestation statement", ex.Message);
     }
 
     [Fact]

@@ -23,7 +23,6 @@ public class AuthenticatorResponseTests
         Assert.Equal("webauthn.get", response.Type);
         Assert.Equal(Base64Url.Decode("J4fjxBV-BNywGRJRm8JZ7znvdiZo9NINObNBpnKnJQEOtplTMF0ERuIrzrkeoO-dNMoeMZjhzqfar7eWRANvPeNFPrB5Q6zlS1ZFPf37F3suIwpXi9NCpFA_RlBSiygLmvcIOa57_QHubZQD3cv0UWtRTLslJjmgumphMc7EFN8"), response.Challenge);
         Assert.Equal("https://www.passwordless.dev", response.Origin);
-
     }
 
     [Theory]
@@ -99,7 +98,7 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
+            PubKeyCredParams = new List<PubKeyCredParam>
             {
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             },
