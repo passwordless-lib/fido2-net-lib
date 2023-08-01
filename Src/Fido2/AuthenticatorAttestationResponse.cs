@@ -2,7 +2,6 @@
 
 using System;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -26,7 +25,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     private IMetadataService _metadataService;
     private CancellationToken _cancellationToken;
     private Fido2Configuration _config;
-    private AuthenticatorAttestationResponse(byte[] clientDataJson) 
+
+    private AuthenticatorAttestationResponse(byte[] clientDataJson)
         : base(clientDataJson)
     {
     }
@@ -54,22 +54,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationObject, Fido2ErrorMessages.InvalidAttestationObject, ex);
         }
 
-        if (!(
-            cborAttestation["fmt"]      is { Type: CborType.TextString } && 
-            cborAttestation["attStmt"]  is { Type: CborType.Map } &&
-            cborAttestation["authData"] is { Type: CborType.ByteString }))
-        {
-            throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject);
-        }
+        var attestationObject = ParsedAttestationObject.FromCbor(cborAttestation);
 
         return new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
         {
             Raw = rawResponse,
-            AttestationObject = new ParsedAttestationObject(
-                fmt      : (string)cborAttestation["fmt"],
-                attStmt  : (CborMap)cborAttestation["attStmt"],
-                authData : (byte[])cborAttestation["authData"]
-            )
+            AttestationObject = attestationObject
         };
     }
 
@@ -103,7 +93,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, "AttestationResponse type must be 'public-key'");
 
-        var authData = new AuthenticatorData(AttestationObject.AuthData);
+        var authData = AttestationObject.AuthData;
 
         // 10. Let hash be the result of computing a hash over response.clientDataJSON using SHA-256.
         byte[] clientDataHash = SHA256.HashData(Raw.Response.ClientDataJson);
@@ -235,7 +225,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     /// <see cref="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-create"/> 
     private async Task<byte[]> DevicePublicKeyRegistrationAsync(
         AuthenticationExtensionsClientOutputs clientExtensionResults,
-        byte[] authData,
+        AuthenticatorData authData,
         byte[] hash
         )
     {
@@ -247,7 +237,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         DevicePublicKeyAuthenticatorOutput devicePublicKeyAuthenticatorOutput = new(attObjForDevicePublicKey.AuthenticatorOutput);
 
         // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
-        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData, hash), attObjForDevicePublicKey.Signature))
+        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData.ToByteArray(), hash), attObjForDevicePublicKey.Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
         // 4. Optionally, if attestation was requested and the Relying Party wishes to verify it, verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
@@ -256,7 +246,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
 
         // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-        (var attType, var trustPath) = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.AuthData, devicePublicKeyAuthenticatorOutput.Hash);
+        (var attType, var trustPath) = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
 
         // 5. Complete the steps from § 7.1 Registering a New Credential and, if those steps are successful,
         // store the aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
@@ -335,7 +325,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     /// </summary>
     public sealed class ParsedAttestationObject
     {
-        public ParsedAttestationObject(string fmt, CborMap attStmt, byte[] authData)
+        public ParsedAttestationObject(string fmt, CborMap attStmt, AuthenticatorData authData)
         {
             Fmt = fmt;
             AttStmt = attStmt;
@@ -346,6 +336,23 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         
         public CborMap AttStmt { get; }
 
-        public byte[] AuthData { get; }
+        public AuthenticatorData AuthData { get; }
+
+        internal static ParsedAttestationObject FromCbor(CborObject cbor)
+        {
+            if (!(
+                cbor["fmt"] is { Type: CborType.TextString } fmt &&
+                cbor["attStmt"] is { Type: CborType.Map } attStmt &&
+                cbor["authData"] is { Type: CborType.ByteString } authData))
+            {
+                throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject);
+            }
+
+            return new ParsedAttestationObject(
+                fmt      : (string)fmt,
+                attStmt  : (CborMap)attStmt,
+                authData : AuthenticatorData.Parse((byte[])authData)
+            );
+        }
     }
 }

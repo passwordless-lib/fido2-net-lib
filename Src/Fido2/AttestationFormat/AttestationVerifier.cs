@@ -14,7 +14,7 @@ namespace Fido2NetLib;
 public abstract class AttestationVerifier
 {
     private protected CborMap _attStmt;
-    private protected byte[] _authenticatorData;
+    private protected AuthenticatorData _authenticatorData;
     private protected byte[] _clientDataHash;
 
 #nullable enable
@@ -23,11 +23,11 @@ public abstract class AttestationVerifier
 
     internal CborObject? EcdaaKeyId => _attStmt["ecdaaKeyId"];
 
-    internal AuthenticatorData AuthData => new (_authenticatorData);
+    internal AuthenticatorData AuthData => _authenticatorData;
 
-    internal CborMap CredentialPublicKey => AuthData.AttestedCredentialData.CredentialPublicKey.GetCborObject();
+    internal CborMap CredentialPublicKey => AuthData.AttestedCredentialData!.CredentialPublicKey.GetCborObject();
 
-    internal byte[] Data => DataHelper.Concat(_authenticatorData, _clientDataHash);
+    internal byte[] Data => DataHelper.Concat(_authenticatorData.ToByteArray(), _clientDataHash);
 
     internal bool TryGetVer([NotNullWhen(true)] out string? ver)
     {
@@ -127,7 +127,7 @@ public abstract class AttestationVerifier
 
 #nullable disable
 
-    public virtual (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, byte[] authenticatorData, byte[] clientDataHash)
+    public virtual (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, AuthenticatorData authenticatorData, byte[] clientDataHash)
     {
         _attStmt = attStmt;
         _authenticatorData = authenticatorData;

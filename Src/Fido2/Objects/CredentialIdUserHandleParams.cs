@@ -1,7 +1,7 @@
 ﻿namespace Fido2NetLib.Objects;
 
 /// <summary>
-/// Paramters used for callback function
+/// Parameters used for callback function
 /// </summary>
 public sealed class IsUserHandleOwnerOfCredentialIdParams
 {   
