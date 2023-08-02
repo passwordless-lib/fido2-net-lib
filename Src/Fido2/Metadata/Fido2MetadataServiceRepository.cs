@@ -184,10 +184,8 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
             if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
                 // and that the number of elements in the chain accounts for what was in x5c plus the root we added
                 certChain.ChainElements.Count == (x5cRawKeys.Length + 1) &&
-                // and that the root cert has exactly one status listed against it
-                certChain.ChainElements[^1].ChainElementStatus.Length == 1 &&
-                // and that that status is a status of exactly UntrustedRoot
-                certChain.ChainElements[^1].ChainElementStatus[0].Status == X509ChainStatusFlags.UntrustedRoot)
+                // and that the root cert has exactly one status with the value of UntrustedRoot
+                certChain.ChainElements[^1].ChainElementStatus is [ { Status: X509ChainStatusFlags.UntrustedRoot } ])
             {
                 // if we are good so far, that is a good sign
                 certChainIsValid = true;
