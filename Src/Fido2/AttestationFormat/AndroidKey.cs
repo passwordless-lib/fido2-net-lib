@@ -186,7 +186,7 @@ internal sealed class AndroidKey : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid android key attestation signature");
 
         // 3. Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
-        if (!AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, sig))
+        if (!AuthData.AttestedCredentialData!.CredentialPublicKey.Verify(Data, sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Incorrect credentialPublicKey in android key attestation");
 
         // 4. Verify that the attestationChallenge field in the attestation certificate extension data is identical to clientDataHash

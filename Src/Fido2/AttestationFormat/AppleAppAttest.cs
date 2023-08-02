@@ -64,7 +64,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         chain.ChainPolicy.ExtraStore.Add(intermediateCert);
 
         X509Certificate2 credCert = new((byte[])x5cArray[0]);
-        if (AuthData.AttestedCredentialData.AaGuid.Equals(devAaguid))
+        if (AuthData.AttestedCredentialData!.AaGuid.Equals(devAaguid))
         {
             // Allow expired leaf cert in development environment
             chain.ChainPolicy.VerificationTime = credCert.NotBefore.AddSeconds(1);

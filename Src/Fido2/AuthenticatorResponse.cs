@@ -1,6 +1,4 @@
-﻿#pragma warning disable IDE0060 // Remove unused parameter
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -16,6 +14,14 @@ namespace Fido2NetLib;
 /// </summary>
 public class AuthenticatorResponse
 {
+    [JsonConstructor]
+    public AuthenticatorResponse(string type, byte[] challenge, string origin) // for deserialization
+    {
+        Type = type;
+        Challenge = challenge;
+        Origin = origin;
+    }
+
     protected AuthenticatorResponse(ReadOnlySpan<byte> utf8EncodedJson)
     {
         if (utf8EncodedJson.Length is 0)
@@ -26,10 +32,10 @@ public class AuthenticatorResponse
         // 2. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext
         // Note: C may be any implementation-specific data structure representation, as long as C’s components are referenceable, as required by this algorithm.
         // We call this AuthenticatorResponse
-        AuthenticatorResponse response;
+        AuthenticatorResponse? response;
         try
         {
-            response = JsonSerializer.Deserialize(utf8EncodedJson, FidoSerializerContext.Default.AuthenticatorResponse)!;
+            response = JsonSerializer.Deserialize(utf8EncodedJson, FidoSerializerContext.Default.AuthenticatorResponse);
         }
         catch (Exception e) when (e is JsonException)
         {
@@ -44,24 +50,17 @@ public class AuthenticatorResponse
         Origin = response.Origin;
     }
 
-#nullable disable
-    public AuthenticatorResponse() // for deserialization
-    {
-
-    }
-#nullable enable
-
     public const int MAX_ORIGINS_TO_PRINT = 5;
 
     [JsonPropertyName("type")]
-    public string Type { get; set; }
+    public string Type { get; }
 
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonPropertyName("challenge")]
-    public byte[] Challenge { get; set; }
+    public byte[] Challenge { get; }
 
     [JsonPropertyName("origin")]
-    public string Origin { get; set; }
+    public string Origin { get; }
 
     protected void BaseVerify(IReadOnlySet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge)
     {
@@ -80,7 +79,6 @@ public class AuthenticatorResponse
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
         if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
             throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
-
     }
 
     /*
