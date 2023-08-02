@@ -14,10 +14,10 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 6.0 SDK'
+    displayName: 'Use .NET 7.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '6.0.x'
+      version: '7.0.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet-demo
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
@@ -50,10 +50,10 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 6.0 SDK'
+    displayName: 'Use .NET 7.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '6.0.x'
+      version: '7.0.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet-demo
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
@@ -74,10 +74,10 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 6.0 SDK'
+    displayName: 'Use .NET 7.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '6.0.x'
+      version: '7.0.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
@@ -128,10 +128,10 @@ jobs:
     vmImage: $(imageName)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 6.0 SDK'
+    displayName: 'Use .NET 7.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '6.0.x'
+      version: '7.0.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet-unit-tests
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
