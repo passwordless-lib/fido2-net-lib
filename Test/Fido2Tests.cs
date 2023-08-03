@@ -228,7 +228,7 @@ public class Fido2Tests
                 return Task.FromResult(true);
             };
 
-            IFido2 lib = new Fido2(new Fido2Configuration()
+            var lib = new Fido2(new Fido2Configuration
             {
                 ServerDomain = rp,
                 ServerName = rp,
@@ -1007,7 +1007,7 @@ public class Fido2Tests
             UserHandle = userHandle,
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
