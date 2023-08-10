@@ -7,7 +7,7 @@ public class AuthenticationExtensionsClientOutputs
     /// <summary>
     /// This extension allows for passing of conformance tests
     /// </summary>
-    [JsonPropertyName("example.extension")]
+    [JsonPropertyName("example.extension.bool")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object Example { get; set; }
 
