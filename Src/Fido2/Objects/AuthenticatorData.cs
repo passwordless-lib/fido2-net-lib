@@ -1,7 +1,6 @@
-﻿#nullable disable
-
-using System;
+﻿using System;
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -18,10 +17,35 @@ public sealed class AuthenticatorData
 
     private const int SHA256HashLenBytes = 32; // 256 bits, 8 bits per byte
 
+    public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData? acd, Extensions? exts = null)
+    {
+        RpIdHash = rpIdHash;
+        _flags = flags;
+        SignCount = signCount;
+        AttestedCredentialData = acd;
+        Extensions = exts;
+    }
+
     /// <summary>
     /// SHA-256 hash of the RP ID the credential is scoped to.
     /// </summary>
-    public byte[] RpIdHash;
+    public byte[] RpIdHash { get; }
+
+    /// <summary>
+    /// Signature counter, 32-bit unsigned big-endian integer. 
+    /// </summary>
+    public uint SignCount { get; }
+
+    /// <summary>
+    /// Attested credential data is a variable-length byte array added to the 
+    /// authenticator data when generating an attestation object for a given credential.
+    /// </summary>
+    public AttestedCredentialData? AttestedCredentialData { get; }
+
+    /// <summary>
+    /// Optional extensions to suit particular use cases.
+    /// </summary>
+    public Extensions? Extensions { get; }
 
     /// <summary>
     /// Flags contains information from the authenticator about the authentication 
@@ -61,85 +85,23 @@ public sealed class AuthenticatorData
     /// HasAttestedCredentialData indicates that the authenticator added attested credential data to the authenticator data.
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
+    [MemberNotNullWhen(true, nameof(AttestedCredentialData))]
     public bool HasAttestedCredentialData => _flags.HasFlag(AuthenticatorFlags.AT);
 
     /// <summary>
     /// HasExtensionsData indicates that the authenticator added extension data to the authenticator data.
     /// <see cref="https://www.w3.org/TR/webauthn/#authdataextensions"/>
     /// </summary>
+    [MemberNotNullWhen(true, nameof(Extensions))]
     public bool HasExtensionsData => _flags.HasFlag(AuthenticatorFlags.ED);
 
-    /// <summary>
-    /// Signature counter, 32-bit unsigned big-endian integer. 
-    /// </summary>
-    public uint SignCount;
-
-    /// <summary>
-    /// Attested credential data is a variable-length byte array added to the 
-    /// authenticator data when generating an attestation object for a given credential.
-    /// </summary>
-    public AttestedCredentialData AttestedCredentialData;
-
-    /// <summary>
-    /// Optional extensions to suit particular use cases.
-    /// </summary>
-    public Extensions Extensions;
-
-    public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData acd, Extensions exts = null)
-    {
-        RpIdHash = rpIdHash;
-        _flags = flags;
-        SignCount = signCount;
-        AttestedCredentialData = acd;
-        Extensions = exts;
-    }
-
-    public AuthenticatorData(byte[] authData)
-    {
-        // Input validation
-        if (authData is null)
-            throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorData, Fido2ErrorMessages.MissingAuthenticatorData);
-
-        if (authData.Length < MinLength)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, Fido2ErrorMessages.InvalidAuthenticatorData_TooShort);
-
-        // Input parsing
-        var reader = new MemoryReader(authData);
-
-        RpIdHash = reader.ReadBytes(SHA256HashLenBytes);
-
-        _flags = (AuthenticatorFlags)reader.ReadByte();
-
-        SignCount = reader.ReadUInt32BigEndian();
-
-        // Attested credential data is only present if the AT flag is set
-        if (HasAttestedCredentialData)
-        {
-            // Decode attested credential data, which starts at the next byte past the minimum length of the structure
-            AttestedCredentialData = new AttestedCredentialData(authData.AsMemory(reader.Position), out int bytesRead);
-
-            reader.Advance(bytesRead);
-        }
-
-        // Extensions data is only present if the ED flag is set
-        if (HasExtensionsData)
-        {
-            // Read the CBOR object
-            var ext = CborObject.Decode(authData.AsMemory(reader.Position), out int bytesRead);
-
-            reader.Advance(bytesRead);
-
-            // Encode the CBOR object back to a byte array
-            Extensions = new Extensions(ext.Encode());
-        }
-
-        // Ensure there are no remaining bytes left over after decoding the structure
-        if (reader.RemainingBytes != 0)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, "Leftover bytes decoding AuthenticatorData");            
-    }
+    private byte[]? _data = null;
 
     public byte[] ToByteArray()
     {
+        if (_data != null)
+            return _data;
+
         var writer = new ArrayBufferWriter<byte>(512);
 
         writer.Write(RpIdHash);
@@ -148,16 +110,65 @@ public sealed class AuthenticatorData
 
         writer.WriteUInt32BigEndian(SignCount);
 
-        if (HasAttestedCredentialData)
+        if (HasAttestedCredentialData && AttestedCredentialData != null)
         {
             AttestedCredentialData.WriteTo(writer);
         }
 
-        if (HasExtensionsData)
+        if (HasExtensionsData && Extensions != null)
         {
             writer.Write(Extensions.GetBytes());
         }
 
         return writer.WrittenSpan.ToArray();
+    }
+
+    public static AuthenticatorData Parse(byte[] data)
+    {
+        if (data is null)
+            throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorData, Fido2ErrorMessages.MissingAuthenticatorData);
+
+        if (data.Length < MinLength)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, Fido2ErrorMessages.InvalidAuthenticatorData_TooShort);
+
+        // Input parsing
+        var reader = new MemoryReader(data);
+
+        byte[] rpIdHash = reader.ReadBytes(SHA256HashLenBytes);
+
+        var flags = (AuthenticatorFlags)reader.ReadByte();
+
+        var signCount = reader.ReadUInt32BigEndian();
+
+        AttestedCredentialData? attestedCredentialData = null;
+
+        // Attested credential data is only present if the AT flag is set
+        if (flags.HasFlag(AuthenticatorFlags.AT))
+        {
+            // Decode attested credential data, which starts at the next byte past the minimum length of the structure
+            attestedCredentialData = new AttestedCredentialData(data.AsMemory(reader.Position), out int bytesRead);
+
+            reader.Advance(bytesRead);
+        }
+
+        Extensions? extensions = null;
+
+        // Extensions data is only present if the ED flag is set
+        if (flags.HasFlag(AuthenticatorFlags.ED))
+        {
+            // Read the CBOR object
+            var ext = CborObject.Decode(data.AsMemory(reader.Position), out int bytesRead);
+
+            reader.Advance(bytesRead);
+
+            // Encode the CBOR object back to a byte array
+            extensions = new Extensions(ext.Encode());
+        }
+
+        // Ensure there are no remaining bytes left over after decoding the structure
+        if (reader.RemainingBytes != 0)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, "Leftover bytes decoding AuthenticatorData");
+
+        return new AuthenticatorData(rpIdHash, flags, signCount, attestedCredentialData, extensions) { _data = data };
     }
 }

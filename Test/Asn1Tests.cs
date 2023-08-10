@@ -143,7 +143,7 @@ public class Asn1Tests
         Assert.True(element6_1.IsConstructed);
         Assert.Equal(TagClass.ContextSpecific, element6_1.TagClass);
         Assert.Equal(1, element6_1.TagValue);
-        Assert.Equal(1, element6_1.Sequence.Count);
+        Assert.Single(element6_1.Sequence);
 
         Assert.Equal(Asn1Tag.SetOf, element6_1_0.Tag);
 

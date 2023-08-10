@@ -14,7 +14,7 @@ namespace Fido2NetLib
         public override (AttestationType, X509Certificate2[]) Verify()
         {
             // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
-            if (AuthData.AttestedCredentialData.AaGuid.CompareTo(Guid.Empty) != 0)
+            if (AuthData.AttestedCredentialData!.AaGuid.CompareTo(Guid.Empty) != 0)
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Aaguid was not empty parsing fido-u2f atttestation statement");
 
             // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
