@@ -1,16 +1,12 @@
-﻿#nullable disable
-
-using System;
+﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
-using Fido2NetLib.Internal;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
@@ -23,10 +19,6 @@ namespace Fido2NetLib;
 /// </summary>
 public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 {
-    private IMetadataService _metadataService;
-    private CancellationToken _cancellationToken;
-    private Fido2Configuration _config;
-
     private AuthenticatorAttestationResponse(AuthenticatorAttestationRawResponse raw, ParsedAttestationObject attestationObject)
         : base(raw.Response.ClientDataJson)
     {
@@ -67,12 +59,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         CredentialCreateOptions originalOptions,
         Fido2Configuration config,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-        IMetadataService metadataService,
+        IMetadataService? metadataService,
         CancellationToken cancellationToken = default)
     {
-        _metadataService = metadataService;
-        _cancellationToken = cancellationToken;
-        _config = config;
         // https://www.w3.org/TR/webauthn/#registering-a-new-credential
         // 5. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
         // 6. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.
@@ -132,10 +121,11 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., 
         //     no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
         // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
-        byte[] devicePublicKeyResult = null;
+        byte[]? devicePublicKeyResult = null;
+
         if (Raw.Extensions?.DevicePubKey is not null)
         {
-            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(Raw.Extensions, AttestationObject.AuthData, clientDataHash);
+            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(config, metadataService, Raw.Extensions, AttestationObject.AuthData, clientDataHash, cancellationToken).ConfigureAwait(false);
         }
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
@@ -151,7 +141,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
         //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
-        MetadataBLOBPayloadEntry metadataEntry = null;
+        MetadataBLOBPayloadEntry? metadataEntry = null;
         if(metadataService != null)
             metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, cancellationToken);
         
@@ -224,12 +214,15 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     /// <param name="hash"></param>
     /// <see cref="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-create"/> 
     private async Task<byte[]> DevicePublicKeyRegistrationAsync(
+        Fido2Configuration config,
+        IMetadataService? metadataService,
         AuthenticationExtensionsClientOutputs clientExtensionResults,
         AuthenticatorData authData,
-        byte[] hash)
+        byte[] hash,
+        CancellationToken cancellationToken)
     {
         // 1. Let attObjForDevicePublicKey be the value of the devicePubKey member of clientExtensionResults.
-        var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey;
+        var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey!;
 
         // 2. Verify that attObjForDevicePublicKey is valid CBOR conforming to the syntax defined above and
         // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
@@ -249,19 +242,19 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 5. Complete the steps from § 7.1 Registering a New Credential and, if those steps are successful,
         // store the aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
-        MetadataBLOBPayloadEntry metadataEntry = null;
-        if (_metadataService != null)
-            metadataEntry = await _metadataService.GetEntryAsync(devicePublicKeyAuthenticatorOutput.AaGuid, _cancellationToken);
+        MetadataBLOBPayloadEntry? metadataEntry = null;
+        if (metadataService != null)
+            metadataEntry = await metadataService.GetEntryAsync(devicePublicKeyAuthenticatorOutput.AaGuid, cancellationToken);
 
         // while conformance testing, we must reject any authenticator that we cannot get metadata for
-        if (_metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && devicePublicKeyAuthenticatorOutput.Fmt is not "fido-u2f")
+        if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && devicePublicKeyAuthenticatorOutput.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
         TrustAnchor.Verify(metadataEntry, trustPath);
 
         // Check status reports for authenticator with undesirable status
         var latestStatusReport = metadataEntry?.GetLatestStatusReport();
-        if (latestStatusReport != null && _config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
+        if (latestStatusReport != null && config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
         {
             throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
         }
