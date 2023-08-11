@@ -225,15 +225,14 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     private async Task<byte[]> DevicePublicKeyRegistrationAsync(
         AuthenticationExtensionsClientOutputs clientExtensionResults,
         AuthenticatorData authData,
-        byte[] hash
-        )
+        byte[] hash)
     {
         // 1. Let attObjForDevicePublicKey be the value of the devicePubKey member of clientExtensionResults.
         var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey;
 
         // 2. Verify that attObjForDevicePublicKey is valid CBOR conforming to the syntax defined above and
         // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
-        DevicePublicKeyAuthenticatorOutput devicePublicKeyAuthenticatorOutput = new(attObjForDevicePublicKey.AuthenticatorOutput);
+        var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
 
         // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
         if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData.ToByteArray(), hash), attObjForDevicePublicKey.Signature))
@@ -245,7 +244,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
 
         // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-        (var attType, var trustPath) = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
+        (var attType, var trustPath) = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
 
         // 5. Complete the steps from § 7.1 Registering a New Credential and, if those steps are successful,
         // store the aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
@@ -266,7 +265,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
         }
 
-        return devicePublicKeyAuthenticatorOutput.GetBytes();
+        return devicePublicKeyAuthenticatorOutput.Encode();
     }
 
     public static void VerifyTrustAnchor(MetadataBLOBPayloadEntry metadataEntry, X509Certificate2[] trustPath)

@@ -253,7 +253,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         // 2. Verify that attObjForDevicePublicKey is valid CBOR conforming to the syntax defined above and
         // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
-        DevicePublicKeyAuthenticatorOutput devicePublicKeyAuthenticatorOutput = new(attObjForDevicePublicKey.AuthenticatorOutput);
+        var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
 
         // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
         if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData.ToByteArray(), hash), attObjForDevicePublicKey.Signature))
@@ -269,8 +269,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             var matchedDpkRecords = new List<DevicePublicKeyAuthenticatorOutput>();
             storedDevicePublicKeys.ForEach(storedDevicePublicKey =>
             {
-                DevicePublicKeyAuthenticatorOutput dpkRecord = new(storedDevicePublicKey);
-                if (dpkRecord.AuthenticationMatcher.SequenceEqual(devicePublicKeyAuthenticatorOutput.AuthenticationMatcher)
+                var dpkRecord = DevicePublicKeyAuthenticatorOutput.Parse(storedDevicePublicKey);
+                if (dpkRecord.GetAuthenticationMatcher().SequenceEqual(devicePublicKeyAuthenticatorOutput.GetAuthenticationMatcher())
                     && dpkRecord.Scope.Equals(devicePublicKeyAuthenticatorOutput.Scope))
                 {
                     matchedDpkRecords.Add(dpkRecord);
@@ -311,7 +311,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     try
                     {
                         // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                        _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
+                        _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
                     }
                     catch (Exception ex)
                     {
@@ -329,7 +329,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 // For each dpkRecord in credentialRecord.devicePubKeys
                 storedDevicePublicKeys.ForEach(storedDevicePublicKey =>
                 {
-                    DevicePublicKeyAuthenticatorOutput dpkRecord = new(storedDevicePublicKey);
+                    var dpkRecord = DevicePublicKeyAuthenticatorOutput.Parse(storedDevicePublicKey);
 
                     // If dpkRecord.dpk equals dpk
                     if (dpkRecord.DevicePublicKey.GetBytes().SequenceEqual(devicePublicKeyAuthenticatorOutput.DevicePublicKey.GetBytes()))
@@ -346,7 +346,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
                         // There is no attestation signature to verify and this is a new device.
                         // Unless Relying Party policy specifies that this attestation is unacceptable, Create a new device-bound key record and then terminate these verification steps.
-                        return devicePublicKeyAuthenticatorOutput.GetBytes();
+                        return devicePublicKeyAuthenticatorOutput.Encode();
 
                     // Otherwise
                     else
@@ -358,8 +358,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                         try
                         {
                             // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                            _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
-                            return devicePublicKeyAuthenticatorOutput.GetBytes();
+                            _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
+                            return devicePublicKeyAuthenticatorOutput.Encode();
                         }
                         catch (Exception ex)
                         {
@@ -385,7 +385,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             // Complete the steps in § 7.2 Verifying an Authentication Assertion and, if those steps are successful, store the extracted aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
             // Terminate these verification steps.
             if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
-                return devicePublicKeyAuthenticatorOutput.GetBytes();
+                return devicePublicKeyAuthenticatorOutput.Encode();
             // Otherwise, verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2 Attestation calculations.
             // Relying Party policy may specify which attestations are acceptable.
             else
@@ -395,8 +395,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 try
                 {
                     // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                    _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, AuthenticatorData.Parse(devicePublicKeyAuthenticatorOutput.AuthData), devicePublicKeyAuthenticatorOutput.Hash);
-                    return devicePublicKeyAuthenticatorOutput.GetBytes();
+                    _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
+                    return devicePublicKeyAuthenticatorOutput.Encode();
                 }
                 catch
                 {
