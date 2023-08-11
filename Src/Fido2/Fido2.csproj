@@ -5,6 +5,7 @@
     <RootNamespace>Fido2NetLib</RootNamespace>
     <IsTrimmable>true</IsTrimmable>
     <NoWarn>IDE0057</NoWarn>
+    <LangVersion>11</LangVersion>
   </PropertyGroup>
    
   <ItemGroup>

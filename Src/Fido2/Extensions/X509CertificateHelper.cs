@@ -1,27 +1,34 @@
 ﻿using System;
+using System.Buffers;
+using System.Buffers.Text;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Fido2NetLib;
 
 internal static class X509CertificateHelper
 {
-    public static X509Certificate2 CreateFromBase64String(string base64String)
+    public static X509Certificate2 CreateFromBase64String(ReadOnlySpan<byte> base64String)
     {
-        byte[] rawData;
+        var rentedBuffer = ArrayPool<byte>.Shared.Rent(Base64.GetMaxDecodedFromUtf8Length(base64String.Length));
 
-        try
+        if (Base64.DecodeFromUtf8(base64String, rentedBuffer, out _, out int bytesWritten) != OperationStatus.Done)
         {
-            rawData = Convert.FromBase64String(base64String);
-        }
-        catch 
-        {
+            ArrayPool<byte>.Shared.Return(rentedBuffer, true);
+
             throw new Exception("Invalid base64 data found parsing X509 certificate");
         }
 
-        return CreateFromRawData(rawData);
+        try
+        {
+            return CreateFromRawData(rentedBuffer.AsSpan(0, bytesWritten));
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rentedBuffer, true);
+        }
     }
 
-    public static X509Certificate2 CreateFromRawData(byte[] rawData)
+    public static X509Certificate2 CreateFromRawData(ReadOnlySpan<byte> rawData)
     {
         try
         {
