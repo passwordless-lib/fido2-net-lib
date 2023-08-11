@@ -69,25 +69,25 @@ public sealed class CredentialPublicKey
         }
     }
 
-    public bool Verify(ReadOnlySpan<byte> data, byte[] sig)
+    public bool Verify(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
     {
         switch (_type)
         {
             case COSE.KeyType.EC2:
                 using(ECDsa ecdsa = CreateECDsa())
                 {
-                    var ecsig = CryptoUtils.SigFromEcDsaSig(sig, ecdsa.KeySize);
+                    var ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), ecdsa.KeySize);
                     return ecdsa.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(_alg));
                 }
 
             case COSE.KeyType.RSA:
                 using (RSA rsa = CreateRsa())
                 {
-                    return rsa.VerifyData(data, sig, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
+                    return rsa.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
                 }
 
             case COSE.KeyType.OKP:
-                return SignatureAlgorithm.Ed25519.Verify(EdDSAPublicKey, data, sig);
+                return SignatureAlgorithm.Ed25519.Verify(EdDSAPublicKey, data, signature);
         }
         throw new InvalidOperationException($"Missing or unknown kty {_type}");
     }

@@ -31,7 +31,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
     public AuthenticatorData AuthenticatorData { get; init; }
 
-    public byte[] Signature => _raw.Response.Signature;
+    public ReadOnlySpan<byte> Signature => _raw.Response.Signature;
 
     public byte[]? UserHandle => _raw.Response.UserHandle;
 
