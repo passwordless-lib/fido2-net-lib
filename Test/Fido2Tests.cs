@@ -991,9 +991,7 @@ public class Fido2Tests
         var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
 
         var hashedClientDataJson = SHA256.HashData(clientDataJson);
-        byte[] data = new byte[authData.Length + hashedClientDataJson.Length];
-        Buffer.BlockCopy(authData, 0, data, 0, authData.Length);
-        Buffer.BlockCopy(hashedClientDataJson, 0, data, authData.Length, hashedClientDataJson.Length);
+        byte[] data = DataHelper.Concat(authData, hashedClientDataJson);       
         byte[] signature = SignData(kty, alg, data, ecdsa, rsa, expandedPrivateKey);
 
         var userHandle = new byte[16];
