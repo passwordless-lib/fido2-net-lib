@@ -73,7 +73,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestSelfBadSig()
+    public async Task TestSelfBadSig()
     {
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         var signature = SignData(type, alg, crv);
@@ -81,8 +81,8 @@ public class Packed : Fido2Tests.Attestation
             { "alg", alg },
             { "sig", new byte[] { 0x30, 0x45, 0x02, 0x20, 0x11, 0x9b, 0x6f, 0xa8, 0x1c, 0xe1, 0x75, 0x9e, 0xbe, 0xf1, 0x52, 0xa6, 0x99, 0x40, 0x5e, 0xd6, 0x6a, 0xcc, 0x01, 0x33, 0x65, 0x18, 0x05, 0x00, 0x96, 0x28, 0x29, 0xbe, 0x85, 0x57, 0xb7, 0x1d, 0x02, 0x21, 0x00, 0x94, 0x50, 0x1d, 0xf1, 0x90, 0x03, 0xa4, 0x4d, 0xa4, 0xdf, 0x9f, 0xbb, 0xb5, 0xe4, 0xce, 0x91, 0x6b, 0xc3, 0x90, 0xe8, 0x38, 0x99, 0x66, 0x4f, 0xa5, 0xc4, 0x0c, 0xf3, 0xed, 0xe3, 0xda, 0x83 } }
         });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Failed to validate signature", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        Assert.Equal("Failed to validate signature", ex.Message);
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestSigByteStringZeroLen()
+    public async Task TestSigByteStringZeroLen()
     {
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         var signature = SignData(type, alg, crv);
@@ -182,8 +182,8 @@ public class Packed : Fido2Tests.Attestation
             { "alg", alg },
             { "sig", Array.Empty<byte>() }
         });
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid packed attestation signature", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        Assert.Equal("Invalid packed attestation signature", ex.Message);
     }
 
     [Fact]
@@ -295,11 +295,7 @@ public class Packed : Fido2Tests.Attestation
 
                         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                        using (X509Certificate2 publicOnly = attRequest.Create(
-                            root,
-                            notBefore,
-                            notAfter,
-                            serial))
+                        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                         {
                             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
                         }
@@ -366,11 +362,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -460,11 +452,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -505,11 +493,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -550,11 +534,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -691,11 +671,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -738,11 +714,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -900,11 +872,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -953,11 +921,7 @@ public class Packed : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            root,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }

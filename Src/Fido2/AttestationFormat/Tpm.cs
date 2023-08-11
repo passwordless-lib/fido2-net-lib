@@ -229,7 +229,7 @@ internal sealed class Tpm : AttestationVerifier
         { 3, TpmEccCurve.TPM_ECC_NIST_P521}
     };
 
-    private static (string?, string?, string?) SANFromAttnCertExts(X509ExtensionCollection extensions)
+    private static (string?, string?, string?) SANFromAttnCertExts(X509ExtensionCollection exts)
     {
         string? tpmManufacturer = null;
         string? tpmModel = null;
@@ -237,7 +237,7 @@ internal sealed class Tpm : AttestationVerifier
 
         var foundSAN = false;
 
-        foreach (var extension in extensions)
+        foreach (var extension in exts)
         {
             if (extension.Oid!.Value is "2.5.29.17") // subject alternative name
             {
@@ -433,7 +433,7 @@ public enum TpmAlg : ushort
 // TPMS_ATTEST, TPMv2-Part2, section 10.12.8
 public class CertInfo
 {
-    private static readonly Dictionary<TpmAlg, ushort> tpmAlgToDigestSizeMap = new()
+    private static readonly Dictionary<TpmAlg, ushort> s_tpmAlgToDigestSizeMap = new()
     {
         { TpmAlg.TPM_ALG_SHA1,   (160/8) },
         { TpmAlg.TPM_ALG_SHA256, (256/8) },
@@ -472,7 +472,7 @@ public class CertInfo
         if (Enum.IsDefined(typeof(TpmAlg), size))
         {
             var tpmalg = (TpmAlg)size;
-            if (tpmAlgToDigestSizeMap.TryGetValue(tpmalg, out ushort tplAlgDigestSize))
+            if (s_tpmAlgToDigestSizeMap.TryGetValue(tpmalg, out ushort tplAlgDigestSize))
             {
                 name = AuthDataHelper.GetSizedByteArray(ab, ref offset, tplAlgDigestSize);
             }
@@ -529,19 +529,19 @@ public class CertInfo
         if (certInfo.Length != offset)
             throw new Fido2VerificationException("Leftover bits decoding certInfo");
     }
-    public byte[] Raw { get; private set; }
-    public byte[] Magic { get; private set; }
-    public byte[] Type { get; private set; }
-    public byte[] QualifiedSigner { get; private set; }
-    public byte[] ExtraData { get; private set; }
-    public byte[] Clock { get; private set; }
-    public byte[] ResetCount { get; private set; }
-    public byte[] RestartCount { get; private set; }
-    public byte[] Safe { get; private set; }
-    public byte[] FirmwareVersion { get; private set; }
-    public ushort Alg { get; private set; }
-    public byte[] AttestedName { get; private set; }
-    public byte[] AttestedQualifiedNameBuffer { get; private set; }
+    public byte[] Raw { get; }
+    public byte[] Magic { get; }
+    public byte[] Type { get; }
+    public byte[] QualifiedSigner { get; }
+    public byte[] ExtraData { get; }
+    public byte[] Clock { get; }
+    public byte[] ResetCount { get; }
+    public byte[] RestartCount { get;  }
+    public byte[] Safe { get; }
+    public byte[] FirmwareVersion { get;  }
+    public ushort Alg { get; }
+    public byte[] AttestedName { get; }
+    public byte[] AttestedQualifiedNameBuffer { get; }
 }
 
 // TPMT_PUBLIC, TPMv2-Part2, section 12.2.4
@@ -635,18 +635,18 @@ public sealed class PubArea
             throw new Fido2VerificationException("Leftover bytes decoding pubArea");
     }
 
-    public byte[] Raw { get; private set; }
-    public byte[] Type { get; private set; }
-    public byte[] Alg { get; private set; }
-    public byte[] Attributes { get; private set; }
-    public byte[] Policy { get; private set; }
-    public byte[]? Symmetric { get; private set; }
-    public byte[]? Scheme { get; private set; }
-    public byte[]? KeyBits { get; private set; }
-    public uint Exponent { get; private set; }
-    public byte[]? CurveID { get; private set; }
-    public byte[]? KDF { get; private set; }
-    public byte[]? Unique { get; private set; }
+    public byte[] Raw { get; }
+    public byte[] Type { get; }
+    public byte[] Alg { get; }
+    public byte[] Attributes { get; }
+    public byte[] Policy { get;  }
+    public byte[]? Symmetric { get; }
+    public byte[]? Scheme { get; }
+    public byte[]? KeyBits { get; }
+    public uint Exponent { get; }
+    public byte[]? CurveID { get; }
+    public byte[]? KDF { get;}
+    public byte[]? Unique { get; }
     public TpmEccCurve EccCurve => (TpmEccCurve)Enum.ToObject(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID));
-    public ECPoint ECPoint { get; private set; }
+    public ECPoint ECPoint { get; }
 }

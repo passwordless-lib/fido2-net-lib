@@ -5,7 +5,7 @@ namespace Fido2NetLib.Objects.Tests;
 public class AttestationTypeTests
 {
     [Fact]
-    public void ImplicitlyConvertableToString()
+    public void ImplicitlyConvertibleToString()
     {
         Assert.Equal("none", AttestationType.None);
     }
@@ -18,7 +18,7 @@ public class AttestationTypeTests
     }
 
     [Fact]
-    public void CanDeseriaalize()
+    public void CanDeserialize()
     {
         Assert.Same(AttestationType.None,  JsonSerializer.Deserialize<AttestationType>("\"none\""));
         Assert.Same(AttestationType.ECDAA, JsonSerializer.Deserialize<AttestationType>("\"ecdaa\""));

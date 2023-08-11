@@ -132,15 +132,15 @@ public class Tpm : Fido2Tests.Attestation
                             rootCert.RawData
                         };
 
-                        var ecparams = ecdsaAtt.ExportParameters(true);
+                        var ecParams = ecdsaAtt.ExportParameters(true);
 
                         var cpk = new CborMap {
-                                { COSE.KeyCommonParameter.KeyType, type },
-                                { COSE.KeyCommonParameter.Alg, alg},
-                                { COSE.KeyTypeParameter.X, ecparams.Q.X},
-                                { COSE.KeyTypeParameter.Y, ecparams.Q.Y},
-                                { COSE.KeyTypeParameter.Crv, curve},
-                            };
+                            { COSE.KeyCommonParameter.KeyType, type },
+                            { COSE.KeyCommonParameter.Alg, alg},
+                            { COSE.KeyTypeParameter.X, ecParams.Q.X},
+                            { COSE.KeyTypeParameter.Y, ecParams.Q.Y},
+                            { COSE.KeyTypeParameter.Crv, curve},
+                        };
 
                         var x = (byte[])cpk[COSE.KeyTypeParameter.X];
                         var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
@@ -183,7 +183,7 @@ public class Tpm : Fido2Tests.Attestation
                         var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
                             extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -239,12 +239,12 @@ public class Tpm : Fido2Tests.Attestation
                                 rootCert.RawData
                             };
 
-                        var rsaparams = rsaAtt.ExportParameters(true);
+                        var rsaParams = rsaAtt.ExportParameters(true);
 
-                        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+                        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-                        unique = rsaparams.Modulus;
-                        exponent = rsaparams.Exponent;
+                        unique = rsaParams.Modulus;
+                        exponent = rsaParams.Exponent;
 
                         var pubArea = CreatePubArea(
                             TpmAlg.TPM_ALG_RSA, // Type
@@ -274,7 +274,7 @@ public class Tpm : Fido2Tests.Attestation
                         var certInfo = CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+                            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
                             extraData, // ExtraData
                             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -364,12 +364,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -399,7 +399,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -475,12 +475,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -509,7 +509,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -573,12 +573,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -607,7 +607,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -671,12 +671,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -705,7 +705,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -776,12 +776,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -810,7 +810,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -875,12 +875,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -910,7 +910,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -974,12 +974,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -1008,7 +1008,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1072,12 +1072,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -1106,7 +1106,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1170,12 +1170,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
         var policy = new byte[] { 0x00 };
         var pubArea
              = TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes()
@@ -1202,7 +1202,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1266,12 +1266,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -1302,7 +1302,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1361,17 +1361,17 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -1400,7 +1400,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1416,7 +1416,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1464,12 +1464,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -1498,7 +1498,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1612,7 +1612,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1727,7 +1727,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1842,7 +1842,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -1906,12 +1906,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -1940,7 +1940,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2004,12 +2004,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2038,7 +2038,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2109,12 +2109,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2143,7 +2143,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2207,12 +2207,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2241,7 +2241,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }, // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2305,12 +2305,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2339,7 +2339,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }, // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2403,12 +2403,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2437,7 +2437,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             Array.Empty<byte>(), // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2501,12 +2501,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2535,7 +2535,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2599,12 +2599,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2633,7 +2633,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2697,12 +2697,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2736,7 +2736,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2800,12 +2800,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2834,7 +2834,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2898,12 +2898,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -2932,7 +2932,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -2996,12 +2996,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3030,7 +3030,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3094,12 +3094,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3128,7 +3128,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3192,12 +3192,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3226,7 +3226,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3290,12 +3290,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3327,7 +3327,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3391,12 +3391,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3425,7 +3425,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3489,12 +3489,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3523,7 +3523,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3587,12 +3587,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3621,7 +3621,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3685,12 +3685,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3719,7 +3719,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3778,17 +3778,17 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3817,7 +3817,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3882,12 +3882,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -3916,7 +3916,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -3980,12 +3980,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4014,7 +4014,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4078,12 +4078,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4112,7 +4112,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4181,12 +4181,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4215,7 +4215,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4290,12 +4290,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4324,7 +4324,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4388,12 +4388,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4427,7 +4427,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4494,12 +4494,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4528,7 +4528,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4596,12 +4596,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4630,7 +4630,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4698,12 +4698,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4732,7 +4732,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4800,12 +4800,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4834,7 +4834,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -4903,12 +4903,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -4937,7 +4937,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -5002,12 +5002,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -5036,7 +5036,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -5100,12 +5100,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -5134,7 +5134,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -5198,12 +5198,12 @@ public class Tpm : Fido2Tests.Attestation
                     rootCert.RawData
                 };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -5232,7 +5232,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -5312,12 +5312,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -5346,7 +5346,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -5410,12 +5410,12 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaparams);
+        _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
@@ -5444,7 +5444,7 @@ public class Tpm : Fido2Tests.Attestation
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
-            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSIgner
+            new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
             extraData, // ExtraData
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, // Clock
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // ResetCount
@@ -5489,10 +5489,10 @@ public class Tpm : Fido2Tests.Attestation
     public void TestPubAreaAltKeyedHash()
     {
         using var rsaAtt = RSA.Create();
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
             TpmAlg.TPM_ALG_KEYEDHASH, // Type
@@ -5516,10 +5516,10 @@ public class Tpm : Fido2Tests.Attestation
     public void TestPubAreaAltSymCipher()
     {
         using var rsaAtt = RSA.Create();
-        var rsaparams = rsaAtt.ExportParameters(true);
+        var rsaParams = rsaAtt.ExportParameters(true);
 
-        unique = rsaparams.Modulus;
-        exponent = rsaparams.Exponent;
+        unique = rsaParams.Modulus;
+        exponent = rsaParams.Exponent;
 
         var pubArea = CreatePubArea(
         TpmAlg.TPM_ALG_SYMCIPHER, // Type
@@ -5596,7 +5596,7 @@ public class Tpm : Fido2Tests.Attestation
     internal static byte[] CreateCertInfo(
         ReadOnlySpan<byte> magic,
         ReadOnlySpan<byte> type,
-        ReadOnlySpan<byte> qualifiedSigner,
+        ReadOnlySpan<byte> QualifiedSigner,
         ReadOnlySpan<byte> extraData,
         ReadOnlySpan<byte> clock,
         ReadOnlySpan<byte> resetCount,
@@ -5610,7 +5610,7 @@ public class Tpm : Fido2Tests.Attestation
 
         stream.Write(magic);
         stream.Write(type);
-        stream.Write(qualifiedSigner);
+        stream.Write(QualifiedSigner);
         stream.Write(extraData);
         stream.Write(clock);
         stream.Write(resetCount);
@@ -5638,13 +5638,13 @@ public class Tpm : Fido2Tests.Attestation
     }
 
 
-    internal static CredentialPublicKey GetRSACredentialPublicKey(COSE.KeyType type, COSE.Algorithm alg, RSAParameters rsaparams)
+    internal static CredentialPublicKey GetRSACredentialPublicKey(COSE.KeyType type, COSE.Algorithm alg, RSAParameters rsaParams)
     {
         var cpk = new CborMap {
             { COSE.KeyCommonParameter.KeyType, type },
             { COSE.KeyCommonParameter.Alg, alg },
-            { COSE.KeyTypeParameter.N, rsaparams.Modulus },
-            { COSE.KeyTypeParameter.E, rsaparams.Exponent }
+            { COSE.KeyTypeParameter.N, rsaParams.Modulus },
+            { COSE.KeyTypeParameter.E, rsaParams.Exponent }
         };
 
         return new CredentialPublicKey(cpk);

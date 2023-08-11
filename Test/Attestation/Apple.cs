@@ -264,7 +264,7 @@ public class Apple : Fido2Tests.Attestation
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = "6cc3c9e7967a.ngrok.io",
             ServerName = "6cc3c9e7967a.ngrok.io",

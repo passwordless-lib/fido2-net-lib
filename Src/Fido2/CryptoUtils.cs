@@ -170,7 +170,7 @@ internal static class CryptoUtils
     }
 
     /// <summary>
-    /// Convert PEM formated string into byte array.
+    /// Convert PEM formatted string into byte array.
     /// </summary>
     /// <param name="pemStr">source string.</param>
     /// <returns>output byte array.</returns>

@@ -68,7 +68,7 @@ public class AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
 
         if (Challenge is null)
-            throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallange);
+            throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallenge);
 
         // 11. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))

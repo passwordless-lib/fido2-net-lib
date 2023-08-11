@@ -41,22 +41,18 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
             var serial = RandomNumberGenerator.GetBytes(12);
 
-            using (X509Certificate2 publicOnly = attRequest.Create(
-                root,
-                notBefore,
-                notAfter,
-                serial))
+            using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
             {
                 attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
             }
 
-            var ecparams = ecdsaAtt.ExportParameters(true);
+            var ecParams = ecdsaAtt.ExportParameters(true);
 
             var cpk = new CborMap {
                 { COSE.KeyCommonParameter.KeyType, type },
                 { COSE.KeyCommonParameter.Alg, alg },
-                { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                 { COSE.KeyTypeParameter.Crv, curve }
             };
 
@@ -138,24 +134,20 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
             byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-            using (X509Certificate2 publicOnly = attRequest.Create(
-                root,
-                notBefore,
-                notAfter,
-                serial))
+            using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
             {
                 attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
             }
 
-            var rsaparams = rsaAtt.ExportParameters(true);
+            var rsaParams = rsaAtt.ExportParameters(true);
 
             var cpk = new CborMap
-                {
-                    { COSE.KeyCommonParameter.KeyType, type },
-                    { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.N, rsaparams.Modulus },
-                    { COSE.KeyTypeParameter.E, rsaparams.Exponent }
-                };
+            {
+                { COSE.KeyCommonParameter.KeyType, type },
+                { COSE.KeyCommonParameter.Alg, alg },
+                { COSE.KeyTypeParameter.N, rsaParams.Modulus },
+                { COSE.KeyTypeParameter.E, rsaParams.Exponent }
+            };
 
             _credentialPublicKey = new CredentialPublicKey(cpk);
 
@@ -328,7 +320,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAndroidSafetyNetJwtInvalid()
+    public async Task TestAndroidSafetyNetJwtInvalid()
     {
         var response = (byte[])_attestationObject["attStmt"]["response"];
         var jwtParts = Encoding.UTF8.GetString(response).Split('.');
@@ -352,8 +344,8 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(response));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.StartsWith("SafetyNet response security token validation failed", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        Assert.StartsWith("SafetyNet response security token validation failed", ex.Message);
     }
 
     [Fact]
@@ -371,9 +363,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             rootRequest.CertificateExtensions.Add(caExt);
 
             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-            using (root = rootRequest.CreateSelfSigned(
-                notBefore,
-                notAfter))
+            using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
 
             using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
@@ -456,21 +446,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             rootRequest.CertificateExtensions.Add(caExt);
 
             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-            using (root = rootRequest.CreateSelfSigned(
-                notBefore,
-                notAfter))
-
+            using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
             using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
                 var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create( root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -542,9 +525,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             rootRequest.CertificateExtensions.Add(caExt);
 
             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-            using (root = rootRequest.CreateSelfSigned(
-                notBefore,
-                notAfter))
+            using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
 
             using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
@@ -552,11 +533,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -627,9 +604,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             rootRequest.CertificateExtensions.Add(caExt);
 
             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-            using (root = rootRequest.CreateSelfSigned(
-                notBefore,
-                notAfter))
+            using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
 
             using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
@@ -637,11 +612,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -895,11 +866,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -1058,21 +1025,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             rootRequest.CertificateExtensions.Add(caExt);
 
             ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
-            using (root = rootRequest.CreateSelfSigned(
-                notBefore,
-                notAfter))
-
+            using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
             using (var ecdsaAtt = ECDsa.Create(eCCurve))
             {
                 var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }

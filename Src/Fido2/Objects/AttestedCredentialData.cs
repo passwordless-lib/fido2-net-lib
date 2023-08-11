@@ -88,20 +88,20 @@ public sealed class AttestedCredentialData
     /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
     /// <see cref="https://www.w3.org/TR/webauthn/#aaguid"/>
     /// </summary>
-    public Guid AaGuid { get; private set; }
+    public Guid AaGuid { get; }
 
     /// <summary>
     /// A probabilistically-unique byte sequence identifying a public key credential source and its authentication assertions.
     /// <see cref="https://www.w3.org/TR/webauthn/#credential-id"/>
     /// </summary>
-    public byte[] CredentialID { get; private set; }
+    public byte[] CredentialID { get;  }
 
     /// <summary>
     /// The credential public key encoded in COSE_Key format, as defined in 
     /// Section 7 of RFC8152, using the CTAP2 canonical CBOR encoding form.
     /// <see cref="https://www.w3.org/TR/webauthn/#credential-public-key"/>
     /// </summary>
-    public CredentialPublicKey CredentialPublicKey { get; private set; }
+    public CredentialPublicKey CredentialPublicKey { get; }
 
     private static void SwapBytes(byte[] bytes, int index1, int index2)
     {

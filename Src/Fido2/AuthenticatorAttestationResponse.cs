@@ -260,7 +260,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         VerifyTrustAnchor(metadataEntry, trustPath);
 
-        // Check status resports for authenticator with undesirable status
+        // Check status reports for authenticator with undesirable status
         var latestStatusReport = metadataEntry?.GetLatestStatusReport();
         if (latestStatusReport != null && _config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
         {

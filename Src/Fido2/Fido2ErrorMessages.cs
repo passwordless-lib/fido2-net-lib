@@ -19,7 +19,7 @@ internal static class Fido2ErrorMessages
     public static readonly string UserHandleIsEmpty                      = "UserHandle was empty DOMString. It should either be null or have a value.";
     public static readonly string InvalidAttestedCredentialData_TooShort = "Not enough bytes to be a valid AttestedCredentialData";
     public static readonly string InvalidAttestedCredentialData_CredentialIdTooLong = "CredentialId too many bytes";
-    public static readonly string MissingAuthenticatorResponseChallange  = "Authenticator response challenge may not be null";
+    public static readonly string MissingAuthenticatorResponseChallenge  = "Authenticator response challenge may not be null";
     public static readonly string InvalidAuthenticatorResponseChallenge  = "Authenticator response challenge does not match original challenge";
     public static readonly string AttestedCredentialDataFlagNotSet       = "Attestation flag not set on attestation data";
     public static readonly string MissingAuthenticatorData               = "Authenticator data may not be null";

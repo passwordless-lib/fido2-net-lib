@@ -24,7 +24,7 @@ public class FidoEnumConverterTests
         Assert.Equal("\"A\"", JsonSerializer.Serialize(ABC.A));
         Assert.Equal(ABC.A, JsonSerializer.Deserialize<ABC>("\"A\""));
 
-        // Case insenstive
+        // Case insensitive
         Assert.Equal("\"A\"", JsonSerializer.Serialize(ABC.A));
         Assert.Equal(ABC.A, JsonSerializer.Deserialize<ABC>("\"a\""));
     }

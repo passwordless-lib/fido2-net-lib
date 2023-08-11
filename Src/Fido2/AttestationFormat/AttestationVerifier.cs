@@ -102,27 +102,27 @@ public abstract class AttestationVerifier
 
     internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
     {
-        byte u2ftransports = 0;
+        byte u2fTransports = 0;
         var ext = exts.FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1");
         if (ext != null)
         {
-            var decodedU2Ftransports = Asn1Element.Decode(ext.RawData);
-            decodedU2Ftransports.CheckPrimitive();
+            var decodedU2fTransports = Asn1Element.Decode(ext.RawData);
+            decodedU2fTransports.CheckPrimitive();
 
             // some certificates seem to have this encoded as an octet string
             // instead of a bit string, attempt to correct
-            if (decodedU2Ftransports.Tag == Asn1Tag.PrimitiveOctetString)
+            if (decodedU2fTransports.Tag == Asn1Tag.PrimitiveOctetString)
             {
                 ext.RawData[0] = (byte)UniversalTagNumber.BitString;
-                decodedU2Ftransports = Asn1Element.Decode(ext.RawData);
+                decodedU2fTransports = Asn1Element.Decode(ext.RawData);
             }
 
-            decodedU2Ftransports.CheckTag(Asn1Tag.PrimitiveBitString);
+            decodedU2fTransports.CheckTag(Asn1Tag.PrimitiveBitString);
 
-            u2ftransports = decodedU2Ftransports.GetBitString()[0];
+            u2fTransports = decodedU2fTransports.GetBitString()[0];
         }
 
-        return u2ftransports;
+        return u2fTransports;
     }
 
 #nullable disable

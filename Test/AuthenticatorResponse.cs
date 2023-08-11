@@ -23,7 +23,6 @@ public class AuthenticatorResponseTests
         Assert.Equal("webauthn.get", response.Type);
         Assert.Equal(Base64Url.Decode("J4fjxBV-BNywGRJRm8JZ7znvdiZo9NINObNBpnKnJQEOtplTMF0ERuIrzrkeoO-dNMoeMZjhzqfar7eWRANvPeNFPrB5Q6zlS1ZFPf37F3suIwpXi9NCpFA_RlBSiygLmvcIOa57_QHubZQD3cv0UWtRTLslJjmgumphMc7EFN8"), response.Challenge);
         Assert.Equal("https://www.passwordless.dev", response.Origin);
-
     }
 
     [Theory]
@@ -58,7 +57,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = origin;
-        var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(origin)),
             AuthenticatorFlags.UP | AuthenticatorFlags.AT,
@@ -99,9 +98,9 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
+            PubKeyCredParams = new List<PubKeyCredParam>
             {
-                new PubKeyCredParam(COSE.Algorithm.ES256)
+                PubKeyCredParam.ES256
             },
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
@@ -161,7 +160,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = origin;
-        var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(origin)),
             AuthenticatorFlags.UP | AuthenticatorFlags.AT,
@@ -180,7 +179,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.ResponseData
             {
                 AttestationObject = new CborMap {
                     { "fmt", "none" },
@@ -222,7 +221,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -249,12 +248,12 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.ResponseData
             {
                 AttestationObject = new CborMap().Encode(),
                 ClientDataJson = clientDataJson
             },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
                 AuthenticatorSelection = true,
@@ -297,6 +296,7 @@ public class AuthenticatorResponseTests
     public void TestAuthenticatorAttestationRawResponseNull()
     {
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(null));
+
         Assert.Equal("Expected rawResponse, got null", ex.Message);
     }
 
@@ -310,6 +310,7 @@ public class AuthenticatorResponseTests
             RawId = new byte[] { 0xf1, 0xd0 },
             Response = null,
         };
+
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
         Assert.Equal("Expected rawResponse, got null", ex.Message);
     }
@@ -317,7 +318,7 @@ public class AuthenticatorResponseTests
     [Theory]
     [InlineData(null)]
     [InlineData(new byte[0])]
-    public void TestAuthenticatorAttestationReponseAttestationObjectNull(byte[] value)
+    public void TestAuthenticatorAttestationResponseAttestationObjectNull(byte[] value)
     {
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
@@ -433,7 +434,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -505,7 +506,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -575,7 +576,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -652,7 +653,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -731,7 +732,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -800,7 +801,7 @@ public class AuthenticatorResponseTests
             {
                 Name = "testuser",
                 Id = "testuser"u8.ToArray(),
-                DisplayName = "Test User",
+                DisplayName = "Test User"
             },
             Timeout = 60000,
         };
@@ -810,7 +811,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -888,7 +889,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -924,7 +925,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.ResponseData
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -966,7 +967,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -982,7 +983,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
             AuthenticatorFlags.AT | AuthenticatorFlags.UP | AuthenticatorFlags.UV,
@@ -1044,7 +1045,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -1061,7 +1062,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
             AuthenticatorFlags.AT | AuthenticatorFlags.UP | AuthenticatorFlags.UV,
@@ -1080,7 +1081,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.ResponseData
             {
                 AttestationObject = new CborMap {
                     { "fmt", "none" },
@@ -1122,7 +1123,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(false);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -1138,7 +1139,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var acd = new AttestedCredentialData(("00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-40-FE-6A-32-63-BE-37-D1-01-B1-2E-57-CA-96-6C-00-22-93-E4-19-C8-CD-01-06-23-0B-C6-92-E8-CC-77-12-21-F1-DB-11-5D-41-0F-82-6B-DB-98-AC-64-2E-B1-AE-B5-A8-03-D1-DB-C1-47-EF-37-1C-FD-B1-CE-B0-48-CB-2C-A5-01-02-03-26-20-01-21-58-20-A6-D1-09-38-5A-C7-8E-5B-F0-3D-1C-2E-08-74-BE-6D-BB-A4-0B-4F-2A-5F-2F-11-82-45-65-65-53-4F-67-28-22-58-20-43-E1-08-2A-F3-13-5B-40-60-93-79-AC-47-42-58-AA-B3-97-B8-86-1D-E4-41-B4-4E-83-08-5D-1C-6B-E0-D0").Split('-').Select(c => Convert.ToByte(c, 16)).ToArray());
+        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
             AuthenticatorFlags.AT | AuthenticatorFlags.UP,
@@ -1199,7 +1200,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -1221,7 +1222,7 @@ public class AuthenticatorResponseTests
             Origin = "https://www.passwordless.dev",
         });
 
-        var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
+        var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
             AuthenticatorData = new byte[] { 0xf1, 0xd0 },
             Signature = new byte[] { 0xf1, 0xd0 },
@@ -1229,13 +1230,13 @@ public class AuthenticatorResponseTests
             UserHandle = new byte[] { 0xf1, 0xd0 },
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
                 AuthenticatorSelection = true,
@@ -1246,7 +1247,7 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
                 PRF = new AuthenticationExtensionsPRFOutputs
                 {
@@ -1281,7 +1282,6 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
@@ -1305,16 +1305,16 @@ public class AuthenticatorResponseTests
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
             Signature = new byte[] { 0xf1, 0xd0 },
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = new byte[] { 0xf1, 0xd0 }
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.Invalid,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -1325,12 +1325,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
-                },
+                    }
+                }
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1352,7 +1352,6 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
@@ -1371,7 +1370,7 @@ public class AuthenticatorResponseTests
             }
         };
 
-        var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
+        var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
             Signature = new byte[] { 0xf1, 0xd0 },
@@ -1379,12 +1378,12 @@ public class AuthenticatorResponseTests
             UserHandle = new byte[] { 0xf1, 0xd0 },
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -1395,12 +1394,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1465,12 +1464,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1492,7 +1491,6 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
@@ -1516,7 +1514,7 @@ public class AuthenticatorResponseTests
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
             Signature = new byte[] { 0xf1, 0xd0 },
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { },
+            UserHandle = Array.Empty<byte>(),
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
@@ -1536,12 +1534,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1563,7 +1561,6 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
@@ -1607,12 +1604,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1634,7 +1631,6 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.create",
             challenge : challenge,
@@ -1661,13 +1657,13 @@ public class AuthenticatorResponseTests
             UserHandle = new byte[] { 0xf1, 0xd0 },
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -1678,12 +1674,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1730,7 +1726,7 @@ public class AuthenticatorResponseTests
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
             Signature = new byte[] { 0xf1, 0xd0 },
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = new byte[] { 0xf1, 0xd0 }
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
@@ -1755,7 +1751,7 @@ public class AuthenticatorResponseTests
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1826,7 +1822,7 @@ public class AuthenticatorResponseTests
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -1876,13 +1872,13 @@ public class AuthenticatorResponseTests
             UserHandle = new byte[] { 0xf1, 0xd0 },
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -1893,12 +1889,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
-                },
+                    }
+                }
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -1920,7 +1916,7 @@ public class AuthenticatorResponseTests
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+        var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -1947,13 +1943,13 @@ public class AuthenticatorResponseTests
             UserHandle = new byte[] { 0xf1, 0xd0 },
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -1965,11 +1961,11 @@ public class AuthenticatorResponseTests
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
                     },
-                },
+                }
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -1990,8 +1986,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+        var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -2034,12 +2029,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -2061,8 +2056,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+        var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -2094,7 +2088,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -2110,7 +2104,7 @@ public class AuthenticatorResponseTests
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
             ServerDomain = rp,
@@ -2132,8 +2126,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+        var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -2165,7 +2158,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -2181,7 +2174,7 @@ public class AuthenticatorResponseTests
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackedUpCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
             ServerDomain = rp,
@@ -2203,8 +2196,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+        var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -2230,13 +2222,13 @@ public class AuthenticatorResponseTests
             UserHandle = new byte[] { 0xf1, 0xd0 },
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            Extensions = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 AuthenticatorSelection = true,
@@ -2248,11 +2240,11 @@ public class AuthenticatorResponseTests
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
                     },
-                },
+                }
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             BackedUpCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
             ServerDomain = rp,
@@ -2275,7 +2267,7 @@ public class AuthenticatorResponseTests
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -2317,12 +2309,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
@@ -2344,7 +2336,7 @@ public class AuthenticatorResponseTests
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -2387,22 +2379,23 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
-                },
+                    }
+                }
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
-            Origins = new HashSet<string> { rp },
+            Origins = new HashSet<string> { rp }
         });
 
         IsUserHandleOwnerOfCredentialIdAsync callback = static (args, cancellationToken) =>
         {
             return Task.FromResult(true);
         };
+
         fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out var privateKey);
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes(), null, 0, callback));
         Assert.Equal(Fido2ErrorMessages.InvalidSignature, ex.Result.Message);
@@ -2414,7 +2407,7 @@ public class AuthenticatorResponseTests
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
 
-        Fido2NetLib.AuthenticatorResponse authenticatorResponse = new(
+         var authenticatorResponse = new AuthenticatorResponse(
             type      : "webauthn.get",
             challenge : challenge,
             origin    : rp
@@ -2438,8 +2431,7 @@ public class AuthenticatorResponseTests
         Key privateKey = Key.Import(SignatureAlgorithm.Ed25519, expandedPrivateKey, KeyBlobFormat.RawPrivateKey);
         var cpk = fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey);
         
-
-        var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
+        var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
             AuthenticatorData = authData,
             Signature = SignatureAlgorithm.Ed25519.Sign(privateKey, DataHelper.Concat(authData, SHA256.HashData(clientDataJson))),
@@ -2447,7 +2439,7 @@ public class AuthenticatorResponseTests
             UserHandle = new byte[] { 0xf1, 0xd0 },
         };
 
-        var assertionResponse = new AuthenticatorAssertionRawResponse()
+        var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
@@ -2464,12 +2456,12 @@ public class AuthenticatorResponseTests
                     new ulong[]
                     {
                         4 // USER_VERIFY_PASSCODE_INTERNAL
-                    },
+                    }
                 },
             }
         };
 
-        IFido2 lib = new Fido2(new Fido2Configuration()
+        var lib = new Fido2(new Fido2Configuration
         {
             ServerDomain = rp,
             ServerName = rp,
