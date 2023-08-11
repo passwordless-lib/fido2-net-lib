@@ -7,11 +7,11 @@ namespace Fido2NetLib;
 
 public sealed class None : AttestationVerifier
 {
-    public override (AttestationType, X509Certificate2[]?) Verify()
+    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
-        if (_attStmt.Count != 0)
+        if (request.AttStmt.Count != 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation format none should have no attestation statement");
 
-        return (AttestationType.None, null);
+        return (AttestationType.None, null!);
     }
 }

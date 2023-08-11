@@ -43,20 +43,20 @@ internal sealed class Tpm : AttestationVerifier
         "id:474F4F47", // 'GOOG' Google
     };
     
-    public override (AttestationType, X509Certificate2[]) Verify()
+    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
         // (handled in base class)
-        if (!TryGetSig(out byte[]? sig))
+        if (!request.TryGetSig(out byte[]? sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidTpmAttestationSignature);
 
-        if (!(TryGetVer(out var ver) && ver is "2.0"))
+        if (!(request.TryGetVer(out var ver) && ver is "2.0"))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "FIDO2 only supports TPM 2.0");
 
         // 2. Verify that the public key specified by the parameters and unique fields of pubArea
         // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
         PubArea? pubArea = null;
-        if (_attStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
+        if (request.AttStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
         {
             pubArea = new PubArea(pubAreaObject.Value);
         }            
@@ -64,11 +64,11 @@ internal sealed class Tpm : AttestationVerifier
         if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Missing or malformed pubArea");
 
-        int coseKty = (int)CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
+        int coseKty = (int)request.CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
         if (coseKty is 3) // RSA
         {
-            ReadOnlySpan<byte> coseMod = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
-            ReadOnlySpan<byte> coseExp = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
+            ReadOnlySpan<byte> coseMod = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
+            ReadOnlySpan<byte> coseExp = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
             if (!coseMod.SequenceEqual(pubArea.Unique))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Public key mismatch between pubArea and credentialPublicKey");
@@ -78,9 +78,9 @@ internal sealed class Tpm : AttestationVerifier
         }
         else if (coseKty is 2) // ECC
         {
-            var curve = (int)CredentialPublicKey[COSE.KeyTypeParameter.Crv];
-            var x = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.X];
-            var y = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.Y];
+            var curve = (int)request.CredentialPublicKey[COSE.KeyTypeParameter.Crv];
+            var x = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.X];
+            var y = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.Y];
 
             if (pubArea.EccCurve != CoseCurveToTpm[curve])
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Curve mismatch between pubArea and credentialPublicKey");
@@ -96,7 +96,7 @@ internal sealed class Tpm : AttestationVerifier
         // See Data field of base class
 
         // 4. Validate that certInfo is valid
-        var certInfo = _attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject
+        var certInfo = request.AttStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject
             ? new CertInfo(certInfoObject.Value)
             : throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "CertInfo invalid parsing TPM format attStmt");
 
@@ -107,10 +107,10 @@ internal sealed class Tpm : AttestationVerifier
         // Handled in CertInfo constructor, see CertInfo.Type
 
         // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-        if (!TryGetAlg(out var alg))
+        if (!request.TryGetAlg(out var alg))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidTpmAttestationAlgorithm);
 
-        ReadOnlySpan<byte> dataHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg(alg), Data);
+        ReadOnlySpan<byte> dataHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg(alg), request.Data);
 
         if (!dataHash.SequenceEqual(certInfo.ExtraData))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch extraData and attToBeSigned");
@@ -124,7 +124,7 @@ internal sealed class Tpm : AttestationVerifier
         // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
         // 5. If x5c is present, this indicates that the attestation type is not ECDAA
-        if (X5c is CborArray { Length: > 0 } x5cArray)
+        if (request.X5c is CborArray { Length: > 0 } x5cArray)
         {
             var trustPath = new X509Certificate2[x5cArray.Length];
 
@@ -197,15 +197,15 @@ internal sealed class Tpm : AttestationVerifier
             // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
             if (AaguidFromAttnCertExts(aikCert.Extensions) is byte[] aaguid &&
                 (!aaguid.AsSpan().SequenceEqual(Guid.Empty.ToByteArray())) &&
-                (GuidHelper.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData!.AaGuid) != 0))
+                (GuidHelper.FromBigEndian(aaguid).CompareTo(request.AuthData.AttestedCredentialData!.AaGuid) != 0))
             {
-                throw new Fido2VerificationException($"aaguid malformed, expected {AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
+                throw new Fido2VerificationException($"aaguid malformed, expected {request.AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
             }
 
             return (AttestationType.AttCa, trustPath);
         }
         // If ecdaaKeyId is present, then the attestation type is ECDAA
-        else if (EcdaaKeyId != null)
+        else if (request.EcdaaKeyId != null)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, Fido2ErrorMessages.UnimplementedAlgorithm_Ecdaa_Tpm);
 

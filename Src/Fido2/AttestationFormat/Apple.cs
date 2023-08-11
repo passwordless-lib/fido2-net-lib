@@ -3,6 +3,7 @@ using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
@@ -39,10 +40,10 @@ internal sealed class Apple : AttestationVerifier
         }
     }
 
-    public override (AttestationType, X509Certificate2[]) Verify()
+    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
-        if (!(X5c is CborArray { Length: >= 2 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
+        if (!(request.X5c is CborArray { Length: >= 2 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
         {
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_AppleAttestation);
         }
@@ -61,7 +62,7 @@ internal sealed class Apple : AttestationVerifier
         var credCert = trustPath[0];
 
         // 3. Concatenate authenticatorData and clientDataHash to form nonceToHash.
-        ReadOnlySpan<byte> nonceToHash = Data;
+        ReadOnlySpan<byte> nonceToHash = request.Data;
 
         // 4. Perform SHA-256 hash of nonceToHash to produce nonce.
         Span<byte> nonce = stackalloc byte[32];
@@ -75,13 +76,13 @@ internal sealed class Apple : AttestationVerifier
 
         // 6. Verify credential public key matches the Subject Public Key of credCert.
         // First, obtain COSE algorithm being used from credential public key
-        var coseAlg = (COSE.Algorithm)(int)CredentialPublicKey[COSE.KeyCommonParameter.Alg];
+        var coseAlg = (COSE.Algorithm)(int)request.CredentialPublicKey[COSE.KeyCommonParameter.Alg];
 
         // Next, build temporary CredentialPublicKey for comparison from credCert and COSE algorithm
         var cpk = new CredentialPublicKey(credCert, coseAlg);
 
         // Finally, compare byte sequence of CredentialPublicKey built from credCert with byte sequence of CredentialPublicKey from AttestedCredentialData from authData
-        if (!cpk.GetBytes().AsSpan().SequenceEqual(AuthData.AttestedCredentialData!.CredentialPublicKey.GetBytes()))
+        if (!cpk.GetBytes().AsSpan().SequenceEqual(request.AuthData.AttestedCredentialData!.CredentialPublicKey.GetBytes()))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Credential public key in Apple attestation does not match subject public key of credCert");
 
         // 7. If successful, return implementation-specific values representing attestation type Anonymous CA and attestation trust path x5c.
