@@ -231,14 +231,14 @@ public class AndroidKey : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAndroidKeyBadSig()
+    public async Task TestAndroidKeyBadSig()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         var sig = (byte[])attStmt["sig"];
         sig[^1] ^= 0xff;
         attStmt.Set("sig", new CborByteString(sig));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid android key attestation signature", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        Assert.Same(Fido2ErrorMessages.InvalidAndroidKeyAttestationSignature, ex.Message);
     }
 
     [Fact]
