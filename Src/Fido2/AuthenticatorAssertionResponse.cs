@@ -10,8 +10,6 @@ using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
-#nullable disable
-
 namespace Fido2NetLib;
 
 /// <summary>
@@ -20,33 +18,31 @@ namespace Fido2NetLib;
 /// </summary>
 public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 {
-    private AuthenticatorAssertionResponse(byte[] clientDataJson) : base(clientDataJson)
+    private readonly AuthenticatorAssertionRawResponse _raw;
+
+    private AuthenticatorAssertionResponse(AuthenticatorAssertionRawResponse raw, AuthenticatorData authenticatorData) 
+        : base(raw.Response.ClientDataJson)
     {
+        _raw = raw;
+        AuthenticatorData = authenticatorData;
     }
 
-    public AuthenticatorAssertionRawResponse Raw { get; init; }
+    internal AuthenticatorAssertionRawResponse Raw => _raw; // accessed in Verify()
 
     public AuthenticatorData AuthenticatorData { get; init; }
 
-    public byte[] Signature { get; init; }
+    public byte[] Signature => _raw.Response.Signature;
 
-#nullable enable
-    public byte[]? UserHandle { get; init; }
-    public byte[]? AttestationObject { get; init; }
-#nullable disable
+    public byte[]? UserHandle => _raw.Response.UserHandle;
+
+    public byte[]? AttestationObject => _raw.Response.AttestationObject;
 
     public static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
     {
-        var response = new AuthenticatorAssertionResponse(rawResponse.Response.ClientDataJson)
-        {
-            Raw = rawResponse, // accessed in Verify()
-            AuthenticatorData = AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData),
-            Signature = rawResponse.Response.Signature,
-            UserHandle = rawResponse.Response.UserHandle,
-            AttestationObject = rawResponse.Response.AttestationObject
-        };
-
-        return response;
+        return new AuthenticatorAssertionResponse(
+            raw               : rawResponse,
+            authenticatorData : AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData)
+        );
     }
 
     /// <summary>
@@ -67,7 +63,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         List<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
-        IMetadataService metadataService,
+        IMetadataService? metadataService,
         CancellationToken cancellationToken = default)
     {
         BaseVerify(config.FullyQualifiedOrigins, options.Challenge);
@@ -150,7 +146,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // 17. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
         // considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions,
         // i.e., those that were not specified as part of options.extensions. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
-        byte[] devicePublicKeyResult = null;
+        byte[]? devicePublicKeyResult = null;
         if (Raw.Extensions?.DevicePubKey is not null)
         {
             devicePublicKeyResult = DevicePublicKeyAuthentication(storedDevicePublicKeys, Raw.Extensions, AuthenticatorData, hash);
@@ -186,8 +182,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         {
             // ... perform CBOR decoding on attestationObject to obtain the attestation statement format fmt, and the attestation statement attStmt.
             var cborAttestation = (CborMap)CborObject.Decode(AttestationObject);
-            string fmt = (string)cborAttestation["fmt"];
-            var attStmt = (CborMap)cborAttestation["attStmt"];
+            string fmt = (string)cborAttestation["fmt"]!;
+            var attStmt = (CborMap)cborAttestation["attStmt"]!;
 
             // 1. Verify that the AT bit in the flags field of authData is set, indicating that attested credential data is included.
             if (!authData.HasAttestedCredentialData)
@@ -210,7 +206,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             //     for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
             //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
-            MetadataBLOBPayloadEntry metadataEntry = null;
+            MetadataBLOBPayloadEntry? metadataEntry = null;
             if (metadataService != null)
                 metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, cancellationToken);
 
@@ -242,14 +238,14 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="authData"></param>
     /// <param name="hash"></param>
     /// </summary>
-    private static byte[] DevicePublicKeyAuthentication(
+    private static byte[]? DevicePublicKeyAuthentication(
         List<byte[]> storedDevicePublicKeys,
         AuthenticationExtensionsClientOutputs clientExtensionResults,
         AuthenticatorData authData,
         byte[] hash)
     {
         // 1. Let attObjForDevicePublicKey be the value of the devicePubKey member of clientExtensionResults.
-        var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey;
+        var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey!;
 
         // 2. Verify that attObjForDevicePublicKey is valid CBOR conforming to the syntax defined above and
         // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
@@ -267,7 +263,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (storedDevicePublicKeys.Count > 0)
         {
             var matchedDpkRecords = new List<DevicePublicKeyAuthenticatorOutput>();
-            storedDevicePublicKeys.ForEach(storedDevicePublicKey =>
+            
+            foreach (var storedDevicePublicKey in storedDevicePublicKeys)
             {
                 var dpkRecord = DevicePublicKeyAuthenticatorOutput.Parse(storedDevicePublicKey);
                 if (dpkRecord.GetAuthenticationMatcher().SequenceEqual(devicePublicKeyAuthenticatorOutput.GetAuthenticationMatcher())
@@ -275,7 +272,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 {
                     matchedDpkRecords.Add(dpkRecord);
                 }
-            });
+            }
 
             // more than one match
             if (matchedDpkRecords.Count > 1)
@@ -288,12 +285,12 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             {
                 // This is likely a known device.
                 // If fmt's value is "none" then there is no attestation signature to verify and this is a known device public key with a valid signature and thus a known device. Terminate these verification steps.
-                if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
+                if (devicePublicKeyAuthenticatorOutput.Fmt is "none")
                 {
                     return null;
                 }
                 // Otherwise, check attObjForDevicePublicKey's attStmt by performing a binary equality check between the corresponding stored and extracted attStmt values.
-                else if (devicePublicKeyAuthenticatorOutput.AttStmt.Encode().SequenceEqual(matchedDpkRecords.FirstOrDefault().AttStmt.Encode()))
+                else if (devicePublicKeyAuthenticatorOutput.AttStmt.Encode().SequenceEqual(matchedDpkRecords.First().AttStmt.Encode()))
                 {
                     // Note: This authenticator is not generating a fresh per-response random nonce.
                     return null;
