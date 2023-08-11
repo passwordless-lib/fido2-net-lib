@@ -431,8 +431,62 @@ public enum TpmAlg : ushort
 };
 
 // TPMS_ATTEST, TPMv2-Part2, section 10.12.8
-public class CertInfo
+public sealed class CertInfo
 {
+    private readonly byte[] _data;
+
+    public CertInfo(byte[] data)
+    {
+        if (data is null || data.Length is 0)
+            throw new Fido2VerificationException("Malformed certInfo bytes");
+
+        int offset = 0;
+
+        _data = data;
+
+        Magic = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
+        if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
+            throw new Fido2VerificationException("Bad magic number " + Convert.ToHexString(Magic));
+
+        Type = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+        if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
+            throw new Fido2VerificationException("Bad structure tag " + Convert.ToHexString(Type));
+
+        QualifiedSigner = AuthDataHelper.GetSizedByteArray(data, ref offset);
+
+        ExtraData = AuthDataHelper.GetSizedByteArray(data, ref offset);
+        if (ExtraData is null || ExtraData.Length is 0)
+            throw new Fido2VerificationException("Bad extraData in certInfo");
+
+        Clock = AuthDataHelper.GetSizedByteArray(data, ref offset, 8);
+        ResetCount = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
+        RestartCount = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
+        Safe = AuthDataHelper.GetSizedByteArray(data, ref offset, 1);
+        FirmwareVersion = AuthDataHelper.GetSizedByteArray(data, ref offset, 8);
+
+        var (size, name) = NameFromTPM2BName(data, ref offset);
+        Alg = size; // TPM_ALG_ID
+        AttestedName = name;
+        AttestedQualifiedNameBuffer = AuthDataHelper.GetSizedByteArray(data, ref offset);
+
+        if (data.Length != offset)
+            throw new Fido2VerificationException("Leftover bits decoding certInfo");
+    }
+    public ReadOnlySpan<byte> Raw => _data;
+
+    public byte[] Magic { get; }
+    public byte[] Type { get; }
+    public byte[] QualifiedSigner { get; }
+    public byte[] ExtraData { get; }
+    public byte[] Clock { get; }
+    public byte[] ResetCount { get; }
+    public byte[] RestartCount { get;  }
+    public byte[] Safe { get; }
+    public byte[] FirmwareVersion { get;  }
+    public ushort Alg { get; }
+    public byte[] AttestedName { get; }
+    public byte[] AttestedQualifiedNameBuffer { get; }
+
     private static readonly Dictionary<TpmAlg, ushort> s_tpmAlgToDigestSizeMap = new()
     {
         { TpmAlg.TPM_ALG_SHA1,   (160/8) },
@@ -462,7 +516,7 @@ public class CertInfo
         // If size is 4, then the Name is a handle. 
         if (size is 4)
             throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
-        
+
         // If size is 0, then no Name is present. 
         if (size is 0)
             throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
@@ -491,98 +545,49 @@ public class CertInfo
 
         return (size, name);
     }
-
-    public CertInfo(byte[] certInfo)
-    {
-        if (certInfo is null || certInfo.Length is 0)
-            throw new Fido2VerificationException("Malformed certInfo bytes");
-
-        int offset = 0;
-
-        Raw = certInfo;
-
-        Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-        if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
-            throw new Fido2VerificationException("Bad magic number " + Convert.ToHexString(Magic));
-
-        Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
-        if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
-            throw new Fido2VerificationException("Bad structure tag " + Convert.ToHexString(Type));
-
-        QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-
-        ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-        if (ExtraData is null || ExtraData.Length is 0)
-            throw new Fido2VerificationException("Bad extraData in certInfo");
-
-        Clock = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
-        ResetCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-        RestartCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-        Safe = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 1);
-        FirmwareVersion = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
-
-        var (size, name) = NameFromTPM2BName(certInfo, ref offset);
-        Alg = size; // TPM_ALG_ID
-        AttestedName = name;
-        AttestedQualifiedNameBuffer = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-
-        if (certInfo.Length != offset)
-            throw new Fido2VerificationException("Leftover bits decoding certInfo");
-    }
-    public byte[] Raw { get; }
-    public byte[] Magic { get; }
-    public byte[] Type { get; }
-    public byte[] QualifiedSigner { get; }
-    public byte[] ExtraData { get; }
-    public byte[] Clock { get; }
-    public byte[] ResetCount { get; }
-    public byte[] RestartCount { get;  }
-    public byte[] Safe { get; }
-    public byte[] FirmwareVersion { get;  }
-    public ushort Alg { get; }
-    public byte[] AttestedName { get; }
-    public byte[] AttestedQualifiedNameBuffer { get; }
 }
 
 // TPMT_PUBLIC, TPMv2-Part2, section 12.2.4
 public sealed class PubArea
 {
-    public PubArea(byte[] pubArea)
+    private readonly byte[] _data;
+
+    public PubArea(byte[] data)
     {
-        Raw = pubArea;
+        _data = data;
         var offset = 0;
 
         // TPMI_ALG_PUBLIC
-        Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-        var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
+        Type = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+        var tpmAlg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
 
         // TPMI_ALG_HASH 
-        Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+        Alg = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
         // TPMA_OBJECT, attributes that, along with type, determine the manipulations of this object 
-        Attributes = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 4);
+        Attributes = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
 
         // TPM2B_DIGEST, optional policy for using this key, computed using the alg of the object
-        Policy = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
+        Policy = AuthDataHelper.GetSizedByteArray(data, ref offset);
 
         // TPMU_PUBLIC_PARMS
         Symmetric = null;
         Scheme = null;
 
-        if (tpmalg is TpmAlg.TPM_ALG_KEYEDHASH)
+        if (tpmAlg is TpmAlg.TPM_ALG_KEYEDHASH)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "TPM_ALG_KEYEDHASH not yet supported");
         }
-        if (tpmalg is TpmAlg.TPM_ALG_SYMCIPHER)
+        if (tpmAlg is TpmAlg.TPM_ALG_SYMCIPHER)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "TPM_ALG_SYMCIPHER not yet supported");
         }
 
         // TPMS_ASYM_PARMS, for TPM_ALG_RSA and TPM_ALG_ECC
-        if (tpmalg  is TpmAlg.TPM_ALG_RSA or TpmAlg.TPM_ALG_ECC)
+        if (tpmAlg  is TpmAlg.TPM_ALG_RSA or TpmAlg.TPM_ALG_ECC)
         {
-            Symmetric = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            Scheme = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+            Symmetric = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+            Scheme = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
         }
 
         // TPMI_RSA_KEY_BITS, number of bits in the public modulus 
@@ -591,11 +596,11 @@ public sealed class PubArea
         // The public exponent, a prime number greater than 2.
         Exponent = 0;
 
-        if (tpmalg is TpmAlg.TPM_ALG_RSA)
+        if (tpmAlg is TpmAlg.TPM_ALG_RSA)
         {
-            KeyBits = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+            KeyBits = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
-            if (AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 4) is byte[] tmp)
+            if (AuthDataHelper.GetSizedByteArray(data, ref offset, 4) is byte[] tmp)
             {
                 Exponent = BitConverter.ToUInt32(tmp, 0);
 
@@ -606,7 +611,7 @@ public sealed class PubArea
                 }
             }
             // TPM2B_PUBLIC_KEY_RSA
-            Unique = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
+            Unique = AuthDataHelper.GetSizedByteArray(data, ref offset);
         }
 
         // TPMI_ECC_CURVE
@@ -617,25 +622,26 @@ public sealed class PubArea
         // NOTE There are currently no commands where this parameter has effect and, in the reference code, this field needs to be set to TPM_ALG_NULL. 
         KDF = null;
 
-        if (tpmalg is TpmAlg.TPM_ALG_ECC)
+        if (tpmAlg is TpmAlg.TPM_ALG_ECC)
         {
-            CurveID = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            KDF = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+            CurveID = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+            KDF = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
             // TPMS_ECC_POINT
             ECPoint = new()
             {
-                X = AuthDataHelper.GetSizedByteArray(pubArea, ref offset),
-                Y = AuthDataHelper.GetSizedByteArray(pubArea, ref offset),
+                X = AuthDataHelper.GetSizedByteArray(data, ref offset),
+                Y = AuthDataHelper.GetSizedByteArray(data, ref offset),
             };
             Unique = DataHelper.Concat(ECPoint.X, ECPoint.Y);
         }
 
-        if (pubArea.Length != offset)
+        if (data.Length != offset)
             throw new Fido2VerificationException("Leftover bytes decoding pubArea");
     }
 
-    public byte[] Raw { get; }
+    public ReadOnlySpan<byte> Raw => _data;
+
     public byte[] Type { get; }
     public byte[] Alg { get; }
     public byte[] Attributes { get; }
