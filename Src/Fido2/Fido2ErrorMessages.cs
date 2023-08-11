@@ -4,6 +4,15 @@ namespace Fido2NetLib.Exceptions;
 
 internal static class Fido2ErrorMessages
 {
+    public static readonly string AssertionResponseTypeNotWebAuthnGet    = "AssertionResponse type must be 'webauthn.get'";
+    public static readonly string AssertionResponseNotPublicKey          = "AssertionResponse type must be 'public-key'";
+    public static readonly string AssertionResponseIdMissing             = "AssertionResponse Id is missing";
+    public static readonly string AssertionResponseRawIdMissing          = "AssertionResponse RawId is missing";
+
+    public static readonly string AttestationResponseIdMissing           = "AttestationResponse Id is missing";
+    public static readonly string AttestationResponseNotPublicKey        = "AttestationResponse type must be 'public-key'";
+    public static readonly string AttestationResponseTypeNotWebAuthnGet  = "AttestationResponse type must be 'webauthn.create'";
+
     public static readonly string InvalidSignature                       = "Signature does not match";
     public static readonly string InvalidRpidHash                        = "RPID hash does not match";
     public static readonly string UnexpectedExtensionsDetected           = "Extensions flag not present, but extensions detected";
@@ -33,12 +42,8 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
     public static readonly string InvalidDevicePublicKeyAttestation      = "Invalid devicePublicKey attestation";
     public static readonly string NonUniqueDevicePublicKey               = "More than one devicePublicKey match";
-    public static readonly string AssertionResponseNotPublicKey          = "AssertionResponse type must be public-key";
-    public static readonly string AssertionResponseIdMissing             = "AssertionResponse Id is missing";
-    public static readonly string AssertionResponseRawIdMissing          = "AssertionResponse RawId is missing";
     public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";
     public static readonly string UserHandleNotOwnerOfPublicKey          = "User is not owner of the public key identified by the credential id";
-    public static readonly string AssertionTypeNotWebAuthnGet            = "AssertionResponse type must be webauthn.get";
 
     public static readonly string UnimplementedAlgorithm_Ecdaa_Packed    = "ECDAA support for packed attestation is not yet implemented";
     public static readonly string UnimplementedAlgorithm_Ecdaa_Tpm       = "ECDAA support for TPM attestation is not yet implemented";

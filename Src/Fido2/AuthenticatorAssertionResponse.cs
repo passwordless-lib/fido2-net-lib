@@ -111,7 +111,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         // 10. Verify that the value of C.type is the string webauthn.get.
         if (Type is not "webauthn.get")
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionTypeNotWebAuthnGet);
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseTypeNotWebAuthnGet);
 
         // 11. Verify that the value of C.challenge equals the base64url encoding of options.challenge.
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
@@ -246,8 +246,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         List<byte[]> storedDevicePublicKeys,
         AuthenticationExtensionsClientOutputs clientExtensionResults,
         AuthenticatorData authData,
-        byte[] hash
-        )
+        byte[] hash)
     {
         // 1. Let attObjForDevicePublicKey be the value of the devicePubKey member of clientExtensionResults.
         var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey;
@@ -267,7 +266,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // account and credential.id pair and each set MUST be checked.
         if (storedDevicePublicKeys.Count > 0)
         {
-            List<DevicePublicKeyAuthenticatorOutput> matchedDpkRecords = new();
+            var matchedDpkRecords = new List<DevicePublicKeyAuthenticatorOutput>();
             storedDevicePublicKeys.ForEach(storedDevicePublicKey =>
             {
                 DevicePublicKeyAuthenticatorOutput dpkRecord = new(storedDevicePublicKey);

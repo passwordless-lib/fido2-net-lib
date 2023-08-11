@@ -26,14 +26,16 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     private CancellationToken _cancellationToken;
     private Fido2Configuration _config;
 
-    private AuthenticatorAttestationResponse(byte[] clientDataJson)
-        : base(clientDataJson)
+    private AuthenticatorAttestationResponse(AuthenticatorAttestationRawResponse raw, ParsedAttestationObject attestationObject)
+        : base(raw.Response.ClientDataJson)
     {
+        Raw = raw;
+        AttestationObject = attestationObject;
     }
 
-    public ParsedAttestationObject AttestationObject { get; init; }
+    public ParsedAttestationObject AttestationObject { get; }
 
-    public AuthenticatorAttestationRawResponse Raw { get; private set; }
+    public AuthenticatorAttestationRawResponse Raw { get; }
 
     public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
     {
@@ -43,7 +45,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (rawResponse.Response.AttestationObject is null || rawResponse.Response.AttestationObject.Length is 0)
             throw new Fido2VerificationException(Fido2ErrorMessages.MissingAttestationObject);
 
-        // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
+        // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure
+        // to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
         CborMap cborAttestation;
         try
         {
@@ -56,11 +59,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         var attestationObject = ParsedAttestationObject.FromCbor(cborAttestation);
 
-        return new AuthenticatorAttestationResponse(rawResponse.Response.ClientDataJson)
-        {
-            Raw = rawResponse,
-            AttestationObject = attestationObject
-        };
+        return new AuthenticatorAttestationResponse(rawResponse, attestationObject);
     }
 
     public async Task<AttestationVerificationSuccess> VerifyAsync(
@@ -81,17 +80,17 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 7. Verify that the value of C.type is webauthn.create
         if (Type is not "webauthn.create")
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, "AttestationResponse type must be webauthn.create");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseTypeNotWebAuthnGet);
 
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
         // 9. Verify that the value of C.origin matches the Relying Party's origin.
         BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge);
 
         if (Raw.Id is null || Raw.Id.Length == 0)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, "AttestationResponse is missing Id");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdMissing);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, "AttestationResponse type must be 'public-key'");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseNotPublicKey);
 
         var authData = AttestationObject.AuthData;
 

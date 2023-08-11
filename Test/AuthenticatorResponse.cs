@@ -434,15 +434,14 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var lib = new Fido2(new Fido2Configuration
-        {
+        var lib = new Fido2(new Fido2Configuration {
             ServerDomain = rp,
             ServerName = rp,
             Origins = new HashSet<string> { rp },
         });
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse type must be webauthn.create", ex.Message);
+        Assert.Same(Fido2ErrorMessages.AttestationResponseTypeNotWebAuthnGet, ex.Message);
     }
 
     [Theory]
@@ -464,8 +463,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = value,
             RawId = value,
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
-            {
+            Response = new AuthenticatorAttestationRawResponse.ResponseData {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
                     { "attStmt", new CborMap() },
@@ -514,7 +512,7 @@ public class AuthenticatorResponseTests
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse is missing Id", ex.Result.Message);
+        Assert.Same(Fido2ErrorMessages.AttestationResponseIdMissing, ex.Result.Message);
     }
 
     [Fact]
@@ -1693,7 +1691,7 @@ public class AuthenticatorResponseTests
         };
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.AssertionTypeNotWebAuthnGet, ex.Result.Message);
+        Assert.Equal(Fido2ErrorMessages.AssertionResponseTypeNotWebAuthnGet, ex.Result.Message);
     }
 
     [Fact]
