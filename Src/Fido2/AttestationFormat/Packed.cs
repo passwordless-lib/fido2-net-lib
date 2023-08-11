@@ -108,7 +108,7 @@ internal sealed class Packed : AttestationVerifier
             // 2c. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
             if (aaguid != null)
             {
-                if (AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData!.AaGuid) != 0)
+                if (GuidHelper.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData!.AaGuid) != 0)
                     throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aaguid present in packed attestation cert exts but does not match aaguid from authData");
             }
 

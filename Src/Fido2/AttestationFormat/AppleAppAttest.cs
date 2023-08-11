@@ -85,7 +85,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // 5. Create the SHA256 hash of the public key in credCert, and verify that it matches the key identifier from your app.
         Span<byte> credCertPKHash = stackalloc byte[32];
         SHA256.HashData(credCert.GetPublicKey(), credCertPKHash);
-        var keyIdentifier = Convert.FromHexString(credCert.GetNameInfo(X509NameType.SimpleName, false));
+        ReadOnlySpan<byte> keyIdentifier = Convert.FromHexString(credCert.GetNameInfo(X509NameType.SimpleName, false));
         if (!credCertPKHash.SequenceEqual(keyIdentifier))
         {
             throw new Fido2VerificationException("Public key hash does not match key identifier in Apple AppAttest attestation");

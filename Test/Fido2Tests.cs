@@ -555,7 +555,7 @@ public class Fido2Tests
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
         var authData = o.AttestationObject.AuthData;
         var acdBytes = authData.AttestedCredentialData.ToByteArray();
-        var acd = new AttestedCredentialData(acdBytes);
+        var acd = AttestedCredentialData.Parse(acdBytes);
         Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
     }
 
@@ -615,7 +615,7 @@ public class Fido2Tests
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
         var authData = o.AttestationObject.AuthData;
         var acdBytes = authData.AttestedCredentialData.ToByteArray();
-        var acd = new AttestedCredentialData(acdBytes);
+        var acd = AttestedCredentialData.Parse(acdBytes);
         Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
     }
 
@@ -632,7 +632,7 @@ public class Fido2Tests
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, CancellationToken.None);
         var authData = o.AttestationObject.AuthData;
         var acdBytes = authData.AttestedCredentialData.ToByteArray();
-        var acd = new AttestedCredentialData(acdBytes);
+        var acd = AttestedCredentialData.Parse(acdBytes);
         Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
     }
 
@@ -734,7 +734,7 @@ public class Fido2Tests
 
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
-        var acdFromBytes = new AttestedCredentialData(acdBytes);
+        var acdFromBytes = AttestedCredentialData.Parse(acdBytes);
         Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
     }
 
@@ -749,7 +749,7 @@ public class Fido2Tests
 
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
-        var acdFromBytes = new AttestedCredentialData(acdBytes);
+        var acdFromBytes = AttestedCredentialData.Parse(acdBytes);
         Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
 
         var sig = SignData(COSE.KeyType.RSA, COSE.Algorithm.RS256, acdBytes, null, rsa, null);
@@ -769,7 +769,7 @@ public class Fido2Tests
 
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
-        var acdFromBytes = new AttestedCredentialData(acdBytes);
+        var acdFromBytes = AttestedCredentialData.Parse(acdBytes);
         Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
 
         var sig = SignData(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, acdBytes, null, null, privateKey);
