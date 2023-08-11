@@ -103,7 +103,7 @@ public abstract class AttestationVerifier
     internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
     {
         byte u2fTransports = 0;
-        var ext = exts.FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1");
+        var ext = exts.FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1"); // id-fido-u2f-ce-transports 
         if (ext != null)
         {
             var decodedU2fTransports = Asn1Element.Decode(ext.RawData);
