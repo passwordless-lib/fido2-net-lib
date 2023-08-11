@@ -214,7 +214,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && fmt is not "fido-u2f")
                 throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-            AuthenticatorAttestationResponse.VerifyTrustAnchor(metadataEntry, trustPath);
+            TrustAnchor.Verify(metadataEntry, trustPath);
         }
 
         return new AssertionVerificationResult

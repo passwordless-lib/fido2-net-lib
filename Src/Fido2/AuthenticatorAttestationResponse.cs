@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
+using Fido2NetLib.Internal;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
@@ -158,7 +159,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        VerifyTrustAnchor(metadataEntry, trustPath);
+        TrustAnchor.Verify(metadataEntry, trustPath);
 
         // 22. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
         //     If self attestation was used, check if self attestation is acceptable under Relying Party policy.
@@ -256,7 +257,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (_metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && devicePublicKeyAuthenticatorOutput.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        VerifyTrustAnchor(metadataEntry, trustPath);
+        TrustAnchor.Verify(metadataEntry, trustPath);
 
         // Check status reports for authenticator with undesirable status
         var latestStatusReport = metadataEntry?.GetLatestStatusReport();
@@ -266,56 +267,6 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         }
 
         return devicePublicKeyAuthenticatorOutput.Encode();
-    }
-
-    public static void VerifyTrustAnchor(MetadataBLOBPayloadEntry metadataEntry, X509Certificate2[] trustPath)
-    {
-        if (trustPath != null && metadataEntry?.MetadataStatement?.AttestationTypes is not null)
-        {
-            static bool ContainsAttestationType(MetadataBLOBPayloadEntry entry, MetadataAttestationType type)
-            {
-                return entry.MetadataStatement.AttestationTypes.Contains(type.ToEnumMemberValue());
-            }
-
-            // If the authenticator's metadata requires basic full attestation, build and verify the chain
-            if (ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_BASIC_FULL) ||
-                ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_PRIVACY_CA))
-            {
-                string[] certStrings = metadataEntry.MetadataStatement.AttestationRootCertificates;
-                var attestationRootCertificates = new X509Certificate2[certStrings.Length];
-
-                for (int i = 0; i < attestationRootCertificates.Length; i++)
-                {
-                    attestationRootCertificates[i] = new X509Certificate2(Convert.FromBase64String(certStrings[i]));
-                }
-
-                if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates))
-                {
-                    throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCertificateChain);
-                }
-            }
-
-            else if (ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_ANONCA))
-            {
-                // skip verification for Anonymization CA (AnonCA)
-            }
-            else // otherwise, ensure the certificate is self signed
-            {
-                X509Certificate2 trustPath0 = trustPath[0];
-
-                if (!string.Equals(trustPath0.Subject, trustPath0.Issuer, StringComparison.Ordinal))
-                {
-                    // TODO: Improve this error message
-                    throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
-                }
-            }
-
-            // TODO: Verify all MetadataAttestationTypes are correctly handled
-
-            // [ ] ATTESTATION_ECDAA "ecdaa"    | currently handled as self signed  w/ no test coverage
-            // [ ] ATTESTATION_ANONCA "anonca"  | currently not verified            w/ no test coverage
-            // [ ] ATTESTATION_NONE "none"      | currently handled as self signed  w/ no test coverage               
-        }
     }
 
     /// <summary>
