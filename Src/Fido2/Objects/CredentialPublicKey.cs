@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 using Fido2NetLib.Cbor;
+
 using NSec.Cryptography;
 
 namespace Fido2NetLib.Objects;
@@ -44,7 +45,7 @@ public sealed class CredentialPublicKey
     public CredentialPublicKey(X509Certificate2 cert, COSE.Algorithm alg)
     {
         var keyAlg = cert.GetKeyAlgorithm();
-        _type = CoseKeyTypeFromOid[keyAlg];
+        _type = COSE.GetKeyTypeFromOid(oid: keyAlg);
         _alg = alg;
         _cpk = new CborMap
         {
@@ -210,12 +211,6 @@ public sealed class CredentialPublicKey
             }
         }
     }
-
-    internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new ()
-    {
-        { "1.2.840.10045.2.1", COSE.KeyType.EC2 },
-        { "1.2.840.113549.1.1.1", COSE.KeyType.RSA}
-    };
 
     public static CredentialPublicKey Decode(ReadOnlyMemory<byte> cpk, out int bytesRead)
     {
