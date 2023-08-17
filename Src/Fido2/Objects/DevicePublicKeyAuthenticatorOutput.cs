@@ -1,10 +1,8 @@
-﻿#nullable disable
-namespace Fido2NetLib.Objects;
+﻿namespace Fido2NetLib.Objects;
 
 using System;
 
 using Fido2NetLib.Cbor;
-
 
 public sealed class DevicePublicKeyAuthenticatorOutput
 {
@@ -14,33 +12,23 @@ public sealed class DevicePublicKeyAuthenticatorOutput
         0x6b, 0x65, 0x79, 0x20, 0x61, 0x74, 0x74, 0x65, 0x73, 0x74, 0x61, 0x74, 0x69,
         0x6f, 0x6e, 0x20, 0x73, 0x69, 0x67, 0x00, 0xff, 0xff, 0xff, 0xff };
 
-    internal CborMap _attObj;
+    private readonly byte[] _nonce;
 
-    public byte[] AuthData => DataHelper.Concat(_dpkAuthDataPrefix, AaGuid.ToByteArray());
+    internal CborMap _map;
 
-    public byte[] Hash => DataHelper.Concat(DevicePublicKey.GetBytes(), Nonce);
-
-    public byte[] GetBytes() => _attObj.Encode();
-
-    public byte[] AuthenticationMatcher => DataHelper.Concat(AaGuid.ToByteArray(), DevicePublicKey.GetBytes());
-
-    public ReadOnlySpan<byte> Nonce => _nonce;
-
-    public DevicePublicKeyAuthenticatorOutput(CborMap attObjForDevicePublicKey)
+    internal DevicePublicKeyAuthenticatorOutput(CborMap map)
     {
-        AaGuid = new Guid((byte[])attObjForDevicePublicKey["aaguid"]);
-        DevicePublicKey = new CredentialPublicKey((byte[])attObjForDevicePublicKey["dpk"]);
-        Scope = (uint)attObjForDevicePublicKey["scope"];
-        _nonce = (byte[])attObjForDevicePublicKey["nonce"];
-        Fmt = (string)attObjForDevicePublicKey["fmt"];
-        AttStmt = (CborMap)attObjForDevicePublicKey["attStmt"];
+        AaGuid = new Guid((byte[])map["aaguid"]!);
+        DevicePublicKey = new CredentialPublicKey((byte[])map["dpk"]!);
+        Scope = (uint)map["scope"]!;
+        _nonce = (byte[])map["nonce"]!;
+        Fmt = (string)map["fmt"]!;
+        AttStmt = (CborMap)map["attStmt"]!;
         EpAtt = false;
-        if ((Fmt == "enterprise") && attObjForDevicePublicKey["epAtt"] is not null)
-            EpAtt = (bool)attObjForDevicePublicKey["epAtt"];
-        _attObj = attObjForDevicePublicKey;
+        if ((Fmt is "enterprise") && map["epAtt"] is not null)
+            EpAtt = (bool)map["epAtt"]!;
+        _map = map;
     }
-
-    public DevicePublicKeyAuthenticatorOutput(byte[] attObjForDevicePublicKey) : this((CborMap)CborObject.Decode(attObjForDevicePublicKey)) { }
 
     /// <summary>
     /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
@@ -70,7 +58,7 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     /// If the authenticator chooses to not generate a nonce, it sets this to a zero-length byte string. 
     /// See the note below about "randomNonce" for a discussion on the nonce's purpose.
     /// </summary>
-    public byte[] _nonce { get; }
+    public ReadOnlySpan<byte> Nonce => _nonce;
 
     /// <summary>
     /// Attestation statement formats are identified by a string, called an attestation statement format identifier, chosen by the author of the attestation statement format.
@@ -88,4 +76,19 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     /// This can only be true when the `attestation` field of the extension input is "enterprise" and either the user-agent or the authenticator permits uniquely identifying attestation for the requested RP ID.
     /// </summary>
     public bool? EpAtt { get; }
+
+    public AuthenticatorData GetAuthenticatorData() => AuthenticatorData.Parse(DataHelper.Concat(_dpkAuthDataPrefix, AaGuid.ToByteArray()));
+
+    public byte[] GetHash() => DataHelper.Concat(DevicePublicKey.GetBytes(), Nonce);
+
+    public ReadOnlySpan<byte> GetAuthenticationMatcher() => DataHelper.Concat(AaGuid.ToByteArray(), DevicePublicKey.GetBytes());
+
+    public byte[] Encode() => _map.Encode();
+
+    public static DevicePublicKeyAuthenticatorOutput Parse(byte[] attObjForDevicePublicKey)
+    {
+        var cbor = (CborMap)CborObject.Decode(attObjForDevicePublicKey);
+
+        return new DevicePublicKeyAuthenticatorOutput(cbor);
+    }
 }

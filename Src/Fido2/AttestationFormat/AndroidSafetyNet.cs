@@ -20,22 +20,22 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 {
     private const int _driftTolerance = 0;
 
-    public override (AttestationType, X509Certificate2[]) Verify()
+    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
         // CBOR decoding on it to extract the contained fields
         // (handled in base class)
 
         // 2. Verify that response is a valid SafetyNet response of version ver
-        if (!TryGetVer(out string? ver))
+        if (!request.TryGetVer(out string? ver))
         {
             throw new Fido2VerificationException("Invalid version in SafetyNet data");
         }
 
-        if (!(_attStmt["response"] is CborByteString { Length: > 0 }))
+        if (!(request.AttStmt["response"] is CborByteString { Length: > 0 }))
             throw new Fido2VerificationException("Invalid response in SafetyNet data");
 
-        var response = (byte[])_attStmt["response"]!;
+        var response = (byte[])request.AttStmt["response"]!;
         var responseJWT = Encoding.UTF8.GetString(response);
 
         if (string.IsNullOrWhiteSpace(responseJWT))
@@ -153,7 +153,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         }
 
         Span<byte> dataHash = stackalloc byte[32];
-        SHA256.HashData(Data, dataHash);
+        SHA256.HashData(request.Data, dataHash);
 
         if (!dataHash.SequenceEqual(nonceHash))
         {

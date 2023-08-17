@@ -43,20 +43,20 @@ internal sealed class Tpm : AttestationVerifier
         "id:474F4F47", // 'GOOG' Google
     };
     
-    public override (AttestationType, X509Certificate2[]) Verify()
+    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
         // (handled in base class)
-        if (!TryGetSig(out byte[]? sig))
+        if (!request.TryGetSig(out byte[]? sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidTpmAttestationSignature);
 
-        if (!(TryGetVer(out var ver) && ver is "2.0"))
+        if (!(request.TryGetVer(out var ver) && ver is "2.0"))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "FIDO2 only supports TPM 2.0");
 
         // 2. Verify that the public key specified by the parameters and unique fields of pubArea
         // is identical to the credentialPublicKey in the attestedCredentialData in authenticatorData
         PubArea? pubArea = null;
-        if (_attStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
+        if (request.AttStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
         {
             pubArea = new PubArea(pubAreaObject.Value);
         }            
@@ -64,11 +64,11 @@ internal sealed class Tpm : AttestationVerifier
         if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Missing or malformed pubArea");
 
-        int coseKty = (int)CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
+        int coseKty = (int)request.CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
         if (coseKty is 3) // RSA
         {
-            ReadOnlySpan<byte> coseMod = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
-            ReadOnlySpan<byte> coseExp = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
+            ReadOnlySpan<byte> coseMod = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
+            ReadOnlySpan<byte> coseExp = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
             if (!coseMod.SequenceEqual(pubArea.Unique))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Public key mismatch between pubArea and credentialPublicKey");
@@ -78,9 +78,9 @@ internal sealed class Tpm : AttestationVerifier
         }
         else if (coseKty is 2) // ECC
         {
-            var curve = (int)CredentialPublicKey[COSE.KeyTypeParameter.Crv];
-            var x = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.X];
-            var y = (byte[])CredentialPublicKey[COSE.KeyTypeParameter.Y];
+            var curve = (int)request.CredentialPublicKey[COSE.KeyTypeParameter.Crv];
+            var x = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.X];
+            var y = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.Y];
 
             if (pubArea.EccCurve != CoseCurveToTpm[curve])
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Curve mismatch between pubArea and credentialPublicKey");
@@ -96,7 +96,7 @@ internal sealed class Tpm : AttestationVerifier
         // See Data field of base class
 
         // 4. Validate that certInfo is valid
-        var certInfo = _attStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject
+        var certInfo = request.AttStmt["certInfo"] is CborByteString { Length: > 0 } certInfoObject
             ? new CertInfo(certInfoObject.Value)
             : throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "CertInfo invalid parsing TPM format attStmt");
 
@@ -107,10 +107,10 @@ internal sealed class Tpm : AttestationVerifier
         // Handled in CertInfo constructor, see CertInfo.Type
 
         // 4c. Verify that extraData is set to the hash of attToBeSigned using the hash algorithm employed in "alg"
-        if (!TryGetAlg(out var alg))
+        if (!request.TryGetAlg(out var alg))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidTpmAttestationAlgorithm);
 
-        ReadOnlySpan<byte> dataHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg(alg), Data);
+        ReadOnlySpan<byte> dataHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg(alg), request.Data);
 
         if (!dataHash.SequenceEqual(certInfo.ExtraData))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch extraData and attToBeSigned");
@@ -124,7 +124,7 @@ internal sealed class Tpm : AttestationVerifier
         // 4e. Note that the remaining fields in the "Standard Attestation Structure" [TPMv2-Part1] section 31.2, i.e., qualifiedSigner, clockInfo and firmwareVersion are ignored. These fields MAY be used as an input to risk engines.
 
         // 5. If x5c is present, this indicates that the attestation type is not ECDAA
-        if (X5c is CborArray { Length: > 0 } x5cArray)
+        if (request.X5c is CborArray { Length: > 0 } x5cArray)
         {
             var trustPath = new X509Certificate2[x5cArray.Length];
 
@@ -197,15 +197,15 @@ internal sealed class Tpm : AttestationVerifier
             // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
             if (AaguidFromAttnCertExts(aikCert.Extensions) is byte[] aaguid &&
                 (!aaguid.AsSpan().SequenceEqual(Guid.Empty.ToByteArray())) &&
-                (AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData!.AaGuid) != 0))
+                (GuidHelper.FromBigEndian(aaguid).CompareTo(request.AuthData.AttestedCredentialData!.AaGuid) != 0))
             {
-                throw new Fido2VerificationException($"aaguid malformed, expected {AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
+                throw new Fido2VerificationException($"aaguid malformed, expected {request.AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
             }
 
             return (AttestationType.AttCa, trustPath);
         }
         // If ecdaaKeyId is present, then the attestation type is ECDAA
-        else if (EcdaaKeyId != null)
+        else if (request.EcdaaKeyId != null)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, Fido2ErrorMessages.UnimplementedAlgorithm_Ecdaa_Tpm);
 
@@ -431,8 +431,62 @@ public enum TpmAlg : ushort
 };
 
 // TPMS_ATTEST, TPMv2-Part2, section 10.12.8
-public class CertInfo
+public sealed class CertInfo
 {
+    private readonly byte[] _data;
+
+    public CertInfo(byte[] data)
+    {
+        if (data is null || data.Length is 0)
+            throw new Fido2VerificationException("Malformed certInfo bytes");
+
+        int offset = 0;
+
+        _data = data;
+
+        Magic = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
+        if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
+            throw new Fido2VerificationException("Bad magic number " + Convert.ToHexString(Magic));
+
+        Type = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+        if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
+            throw new Fido2VerificationException("Bad structure tag " + Convert.ToHexString(Type));
+
+        QualifiedSigner = AuthDataHelper.GetSizedByteArray(data, ref offset);
+
+        ExtraData = AuthDataHelper.GetSizedByteArray(data, ref offset);
+        if (ExtraData is null || ExtraData.Length is 0)
+            throw new Fido2VerificationException("Bad extraData in certInfo");
+
+        Clock = AuthDataHelper.GetSizedByteArray(data, ref offset, 8);
+        ResetCount = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
+        RestartCount = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
+        Safe = AuthDataHelper.GetSizedByteArray(data, ref offset, 1);
+        FirmwareVersion = AuthDataHelper.GetSizedByteArray(data, ref offset, 8);
+
+        var (size, name) = NameFromTPM2BName(data, ref offset);
+        Alg = size; // TPM_ALG_ID
+        AttestedName = name;
+        AttestedQualifiedNameBuffer = AuthDataHelper.GetSizedByteArray(data, ref offset);
+
+        if (data.Length != offset)
+            throw new Fido2VerificationException("Leftover bits decoding certInfo");
+    }
+    public ReadOnlySpan<byte> Raw => _data;
+
+    public byte[] Magic { get; }
+    public byte[] Type { get; }
+    public byte[] QualifiedSigner { get; }
+    public byte[] ExtraData { get; }
+    public byte[] Clock { get; }
+    public byte[] ResetCount { get; }
+    public byte[] RestartCount { get;  }
+    public byte[] Safe { get; }
+    public byte[] FirmwareVersion { get;  }
+    public ushort Alg { get; }
+    public byte[] AttestedName { get; }
+    public byte[] AttestedQualifiedNameBuffer { get; }
+
     private static readonly Dictionary<TpmAlg, ushort> s_tpmAlgToDigestSizeMap = new()
     {
         { TpmAlg.TPM_ALG_SHA1,   (160/8) },
@@ -462,7 +516,7 @@ public class CertInfo
         // If size is 4, then the Name is a handle. 
         if (size is 4)
             throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
-        
+
         // If size is 0, then no Name is present. 
         if (size is 0)
             throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
@@ -491,98 +545,49 @@ public class CertInfo
 
         return (size, name);
     }
-
-    public CertInfo(byte[] certInfo)
-    {
-        if (certInfo is null || certInfo.Length is 0)
-            throw new Fido2VerificationException("Malformed certInfo bytes");
-
-        int offset = 0;
-
-        Raw = certInfo;
-
-        Magic = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-        if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
-            throw new Fido2VerificationException("Bad magic number " + Convert.ToHexString(Magic));
-
-        Type = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 2);
-        if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
-            throw new Fido2VerificationException("Bad structure tag " + Convert.ToHexString(Type));
-
-        QualifiedSigner = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-
-        ExtraData = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-        if (ExtraData is null || ExtraData.Length is 0)
-            throw new Fido2VerificationException("Bad extraData in certInfo");
-
-        Clock = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
-        ResetCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-        RestartCount = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 4);
-        Safe = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 1);
-        FirmwareVersion = AuthDataHelper.GetSizedByteArray(certInfo, ref offset, 8);
-
-        var (size, name) = NameFromTPM2BName(certInfo, ref offset);
-        Alg = size; // TPM_ALG_ID
-        AttestedName = name;
-        AttestedQualifiedNameBuffer = AuthDataHelper.GetSizedByteArray(certInfo, ref offset);
-
-        if (certInfo.Length != offset)
-            throw new Fido2VerificationException("Leftover bits decoding certInfo");
-    }
-    public byte[] Raw { get; }
-    public byte[] Magic { get; }
-    public byte[] Type { get; }
-    public byte[] QualifiedSigner { get; }
-    public byte[] ExtraData { get; }
-    public byte[] Clock { get; }
-    public byte[] ResetCount { get; }
-    public byte[] RestartCount { get;  }
-    public byte[] Safe { get; }
-    public byte[] FirmwareVersion { get;  }
-    public ushort Alg { get; }
-    public byte[] AttestedName { get; }
-    public byte[] AttestedQualifiedNameBuffer { get; }
 }
 
 // TPMT_PUBLIC, TPMv2-Part2, section 12.2.4
 public sealed class PubArea
 {
-    public PubArea(byte[] pubArea)
+    private readonly byte[] _data;
+
+    public PubArea(byte[] data)
     {
-        Raw = pubArea;
+        _data = data;
         var offset = 0;
 
         // TPMI_ALG_PUBLIC
-        Type = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-        var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
+        Type = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+        var tpmAlg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
 
         // TPMI_ALG_HASH 
-        Alg = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+        Alg = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
         // TPMA_OBJECT, attributes that, along with type, determine the manipulations of this object 
-        Attributes = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 4);
+        Attributes = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
 
         // TPM2B_DIGEST, optional policy for using this key, computed using the alg of the object
-        Policy = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
+        Policy = AuthDataHelper.GetSizedByteArray(data, ref offset);
 
         // TPMU_PUBLIC_PARMS
         Symmetric = null;
         Scheme = null;
 
-        if (tpmalg is TpmAlg.TPM_ALG_KEYEDHASH)
+        if (tpmAlg is TpmAlg.TPM_ALG_KEYEDHASH)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "TPM_ALG_KEYEDHASH not yet supported");
         }
-        if (tpmalg is TpmAlg.TPM_ALG_SYMCIPHER)
+        if (tpmAlg is TpmAlg.TPM_ALG_SYMCIPHER)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "TPM_ALG_SYMCIPHER not yet supported");
         }
 
         // TPMS_ASYM_PARMS, for TPM_ALG_RSA and TPM_ALG_ECC
-        if (tpmalg  is TpmAlg.TPM_ALG_RSA or TpmAlg.TPM_ALG_ECC)
+        if (tpmAlg  is TpmAlg.TPM_ALG_RSA or TpmAlg.TPM_ALG_ECC)
         {
-            Symmetric = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            Scheme = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+            Symmetric = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+            Scheme = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
         }
 
         // TPMI_RSA_KEY_BITS, number of bits in the public modulus 
@@ -591,11 +596,11 @@ public sealed class PubArea
         // The public exponent, a prime number greater than 2.
         Exponent = 0;
 
-        if (tpmalg is TpmAlg.TPM_ALG_RSA)
+        if (tpmAlg is TpmAlg.TPM_ALG_RSA)
         {
-            KeyBits = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+            KeyBits = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
-            if (AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 4) is byte[] tmp)
+            if (AuthDataHelper.GetSizedByteArray(data, ref offset, 4) is byte[] tmp)
             {
                 Exponent = BitConverter.ToUInt32(tmp, 0);
 
@@ -606,7 +611,7 @@ public sealed class PubArea
                 }
             }
             // TPM2B_PUBLIC_KEY_RSA
-            Unique = AuthDataHelper.GetSizedByteArray(pubArea, ref offset);
+            Unique = AuthDataHelper.GetSizedByteArray(data, ref offset);
         }
 
         // TPMI_ECC_CURVE
@@ -617,25 +622,26 @@ public sealed class PubArea
         // NOTE There are currently no commands where this parameter has effect and, in the reference code, this field needs to be set to TPM_ALG_NULL. 
         KDF = null;
 
-        if (tpmalg is TpmAlg.TPM_ALG_ECC)
+        if (tpmAlg is TpmAlg.TPM_ALG_ECC)
         {
-            CurveID = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
-            KDF = AuthDataHelper.GetSizedByteArray(pubArea, ref offset, 2);
+            CurveID = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+            KDF = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
             // TPMS_ECC_POINT
             ECPoint = new()
             {
-                X = AuthDataHelper.GetSizedByteArray(pubArea, ref offset),
-                Y = AuthDataHelper.GetSizedByteArray(pubArea, ref offset),
+                X = AuthDataHelper.GetSizedByteArray(data, ref offset),
+                Y = AuthDataHelper.GetSizedByteArray(data, ref offset),
             };
             Unique = DataHelper.Concat(ECPoint.X, ECPoint.Y);
         }
 
-        if (pubArea.Length != offset)
+        if (data.Length != offset)
             throw new Fido2VerificationException("Leftover bytes decoding pubArea");
     }
 
-    public byte[] Raw { get; }
+    public ReadOnlySpan<byte> Raw => _data;
+
     public byte[] Type { get; }
     public byte[] Alg { get; }
     public byte[] Attributes { get; }

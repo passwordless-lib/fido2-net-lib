@@ -146,7 +146,7 @@ public sealed class AuthenticatorData
         if (flags.HasFlag(AuthenticatorFlags.AT))
         {
             // Decode attested credential data, which starts at the next byte past the minimum length of the structure
-            attestedCredentialData = new AttestedCredentialData(data.AsMemory(reader.Position), out int bytesRead);
+            attestedCredentialData = AttestedCredentialData.Parse(data.AsMemory(reader.Position), out int bytesRead);
 
             reader.Advance(bytesRead);
         }

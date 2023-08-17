@@ -57,7 +57,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = origin;
-        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(origin)),
             AuthenticatorFlags.UP | AuthenticatorFlags.AT,
@@ -160,7 +160,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = origin;
-        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(origin)),
             AuthenticatorFlags.UP | AuthenticatorFlags.AT,
@@ -434,15 +434,14 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var lib = new Fido2(new Fido2Configuration
-        {
+        var lib = new Fido2(new Fido2Configuration {
             ServerDomain = rp,
             ServerName = rp,
             Origins = new HashSet<string> { rp },
         });
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse type must be webauthn.create", ex.Message);
+        Assert.Same(Fido2ErrorMessages.AttestationResponseTypeNotWebAuthnGet, ex.Message);
     }
 
     [Theory]
@@ -464,8 +463,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = value,
             RawId = value,
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
-            {
+            Response = new AuthenticatorAttestationRawResponse.ResponseData {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
                     { "attStmt", new CborMap() },
@@ -514,7 +512,7 @@ public class AuthenticatorResponseTests
         });
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("AttestationResponse is missing Id", ex.Result.Message);
+        Assert.Same(Fido2ErrorMessages.AttestationResponseIdMissing, ex.Result.Message);
     }
 
     [Fact]
@@ -983,7 +981,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
             AuthenticatorFlags.AT | AuthenticatorFlags.UP | AuthenticatorFlags.UV,
@@ -1062,7 +1060,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
             AuthenticatorFlags.AT | AuthenticatorFlags.UP | AuthenticatorFlags.UV,
@@ -1139,7 +1137,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var acd = new AttestedCredentialData(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
         var authData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
             AuthenticatorFlags.AT | AuthenticatorFlags.UP,
@@ -1693,7 +1691,7 @@ public class AuthenticatorResponseTests
         };
 
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.AssertionTypeNotWebAuthnGet, ex.Result.Message);
+        Assert.Equal(Fido2ErrorMessages.AssertionResponseTypeNotWebAuthnGet, ex.Result.Message);
     }
 
     [Fact]

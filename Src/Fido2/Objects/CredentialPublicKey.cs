@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 using Fido2NetLib.Cbor;
+
 using NSec.Cryptography;
 
 namespace Fido2NetLib.Objects;
@@ -44,7 +45,7 @@ public sealed class CredentialPublicKey
     public CredentialPublicKey(X509Certificate2 cert, COSE.Algorithm alg)
     {
         var keyAlg = cert.GetKeyAlgorithm();
-        _type = CoseKeyTypeFromOid[keyAlg];
+        _type = COSE.GetKeyTypeFromOid(oid: keyAlg);
         _alg = alg;
         _cpk = new CborMap
         {
@@ -69,25 +70,25 @@ public sealed class CredentialPublicKey
         }
     }
 
-    public bool Verify(ReadOnlySpan<byte> data, byte[] sig)
+    public bool Verify(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
     {
         switch (_type)
         {
             case COSE.KeyType.EC2:
                 using(ECDsa ecdsa = CreateECDsa())
                 {
-                    var ecsig = CryptoUtils.SigFromEcDsaSig(sig, ecdsa.KeySize);
+                    var ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), ecdsa.KeySize);
                     return ecdsa.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(_alg));
                 }
 
             case COSE.KeyType.RSA:
                 using (RSA rsa = CreateRsa())
                 {
-                    return rsa.VerifyData(data, sig, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
+                    return rsa.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
                 }
 
             case COSE.KeyType.OKP:
-                return SignatureAlgorithm.Ed25519.Verify(EdDSAPublicKey, data, sig);
+                return SignatureAlgorithm.Ed25519.Verify(EdDSAPublicKey, data, signature);
         }
         throw new InvalidOperationException($"Missing or unknown kty {_type}");
     }
@@ -210,12 +211,6 @@ public sealed class CredentialPublicKey
             }
         }
     }
-
-    internal static readonly Dictionary<string, COSE.KeyType> CoseKeyTypeFromOid = new ()
-    {
-        { "1.2.840.10045.2.1", COSE.KeyType.EC2 },
-        { "1.2.840.113549.1.1.1", COSE.KeyType.RSA}
-    };
 
     public static CredentialPublicKey Decode(ReadOnlyMemory<byte> cpk, out int bytesRead)
     {

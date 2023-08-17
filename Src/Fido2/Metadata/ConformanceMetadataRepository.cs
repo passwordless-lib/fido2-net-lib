@@ -86,7 +86,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
             try
             {
-                blob = await DeserializeAndValidateBlob(rawBlob, cancellationToken);
+                blob = await DeserializeAndValidateBlobAsync(rawBlob, cancellationToken);
             }
             catch
             {
@@ -118,7 +118,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         return _httpClient.GetByteArrayAsync(url, cancellationToken);
     }
 
-    public async Task<MetadataBLOBPayload> DeserializeAndValidateBlob(string rawBLOBJwt, CancellationToken cancellationToken = default)
+    public async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(rawBLOBJwt))
             throw new ArgumentNullException(nameof(rawBLOBJwt));

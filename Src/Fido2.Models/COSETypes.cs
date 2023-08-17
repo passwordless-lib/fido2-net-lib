@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib.Objects;
+﻿using System;
+
+namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// CBOR Object Signing and Encryption RFC8152 https://tools.ietf.org/html/rfc8152
@@ -187,5 +189,15 @@ public static class COSE
         /// secp256k1 (pending IANA - requested assignment 8)
         /// </summary>
         P256K = 8
+    }
+
+    public static KeyType GetKeyTypeFromOid(string oid)
+    {
+        return oid switch
+        {
+            "1.2.840.10045.2.1" => KeyType.EC2, // ecPublicKey
+            "1.2.840.113549.1.1.1" => KeyType.RSA,
+            _ => throw new Exception($"Unknown oid. Was {oid}")
+        };
     }
 }

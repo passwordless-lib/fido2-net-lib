@@ -14,74 +14,22 @@ public sealed class AttestedCredentialData
     /// </summary>
     private const int _minLength = 20; // Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte)
 
-    private const int _maxCredentialIdLength = 1023;
+    private const int _maxCredentialIdLength = 1_023;
 
     /// <summary>
     /// Instantiates an AttestedCredentialData object from an aaguid, credentialID, and CredentialPublicKey
     /// </summary>
-    /// <param name="aaguid"></param>
+    /// <param name="aaGuid"></param>
     /// <param name="credentialID"></param>
-    /// <param name="cpk"></param>
-    public AttestedCredentialData(Guid aaguid, byte[] credentialID, CredentialPublicKey cpk)
+    /// <param name="credentialPublicKey"></param>
+    public AttestedCredentialData(Guid aaGuid, byte[] credentialID, CredentialPublicKey credentialPublicKey)
     {
-        AaGuid = aaguid;
+        ArgumentNullException.ThrowIfNull(credentialID);
+        ArgumentNullException.ThrowIfNull(credentialPublicKey);
+
+        AaGuid = aaGuid;
         CredentialID = credentialID;
-        CredentialPublicKey = cpk;
-    }
-
-    /// <summary>
-    /// Decodes attested credential data.
-    /// </summary>
-    public AttestedCredentialData(byte[] data)
-        : this(data, out _)
-    {
-    }
-
-    internal AttestedCredentialData(ReadOnlyMemory<byte> data, out int bytesRead)
-    {
-        if (data.Length < _minLength)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_TooShort);
-
-        int position = 0;
-
-        // First 16 bytes is AAGUID
-        var aaguidBytes = data[..16];
-
-        position += 16;
-
-        if (BitConverter.IsLittleEndian)
-        {
-            // GUID from authenticator is big endian. If we are on a little endian system, convert.
-            AaGuid = FromBigEndian(aaguidBytes.ToArray());
-        }
-        else
-        {
-            AaGuid = new Guid(aaguidBytes.Span);
-        }
-
-        // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
-        var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(data.Slice(position, 2).Span);
-        if (credentialIDLen > _maxCredentialIdLength)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_CredentialIdTooLong);
-
-        position += 2;
-
-        // Read the credential ID bytes
-        CredentialID = data.Slice(position, credentialIDLen).ToArray();
-
-        position += credentialIDLen;
-
-        // "Determining attested credential data's length, which is variable, involves determining 
-        // credentialPublicKey's beginning location given the preceding credentialId's length, and 
-        // then determining the credentialPublicKey's length"
-
-
-        // Read the CBOR object from the stream
-        CredentialPublicKey = CredentialPublicKey.Decode(data[position..], out int read);
-
-        position += read;
-
-        bytesRead = position;
+        CredentialPublicKey = credentialPublicKey;
     }
 
     /// <summary>
@@ -94,7 +42,7 @@ public sealed class AttestedCredentialData
     /// A probabilistically-unique byte sequence identifying a public key credential source and its authentication assertions.
     /// <see cref="https://www.w3.org/TR/webauthn/#credential-id"/>
     /// </summary>
-    public byte[] CredentialID { get;  }
+    public byte[] CredentialID { get; }
 
     /// <summary>
     /// The credential public key encoded in COSE_Key format, as defined in 
@@ -103,29 +51,9 @@ public sealed class AttestedCredentialData
     /// </summary>
     public CredentialPublicKey CredentialPublicKey { get; }
 
-    private static void SwapBytes(byte[] bytes, int index1, int index2)
-    {
-        var temp = bytes[index1];
-        bytes[index1] = bytes[index2];
-        bytes[index2] = temp;
-    }
-
-    /// <summary>
-    /// AAGUID is sent as big endian byte array, this converter is for little endian systems.
-    /// </summary>
-    public static Guid FromBigEndian(byte[] aaGuid)
-    {
-        SwapBytes(aaGuid, 0, 3);
-        SwapBytes(aaGuid, 1, 2);
-        SwapBytes(aaGuid, 4, 5);
-        SwapBytes(aaGuid, 6, 7);
-
-        return new Guid(aaGuid);
-    }
-
     public override string ToString()
     {
-        return $"AAGUID: {AaGuid}, CredentialID: {Convert.ToHexString(CredentialID)}, CredentialPublicKey: {CredentialPublicKey}";
+        return $"AttestedCredentialData(AAGUID:{AaGuid}, CredentialID: {Convert.ToHexString(CredentialID)}, CredentialPublicKey: {CredentialPublicKey})";
     }
 
     public byte[] ToByteArray()
@@ -149,5 +77,57 @@ public sealed class AttestedCredentialData
 
         // Write credential public key bytes
         writer.Write(CredentialPublicKey.GetBytes());
+    }
+
+    /// <summary>
+    /// Decodes attested credential data
+    /// </summary>
+    public static AttestedCredentialData Parse(byte[] data)
+    {
+        return Parse(data, out _);
+    }
+
+    internal static AttestedCredentialData Parse(ReadOnlyMemory<byte> data, out int bytesRead)
+    {
+        if (data.Length < _minLength)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_TooShort);
+
+        int position = 0;
+
+        // First 16 bytes is AAGUID
+        var aaGuidBytes = data[..16];
+
+        position += 16;
+
+#if NET8_0_OR_GREATER
+        Guid aaGuid = new Guid(aaGuidBytes, isBigEndian: true);
+#else
+        Guid aaGuid = GuidHelper.FromBigEndian(aaGuidBytes.ToArray());
+#endif
+        // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
+        var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(data.Slice(position, 2).Span);
+        if (credentialIDLen > _maxCredentialIdLength)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_CredentialIdTooLong);
+
+        position += 2;
+
+        // Read the credential ID bytes
+        var credentialID = data.Slice(position, credentialIDLen).ToArray();
+
+        position += credentialIDLen;
+
+        // "Determining attested credential data's length, which is variable, involves determining 
+        // credentialPublicKey's beginning location given the preceding credentialId's length, and 
+        // then determining the credentialPublicKey's length"
+
+
+        // Read the CBOR object from the stream
+        var credentialPublicKey = CredentialPublicKey.Decode(data[position..], out int read);
+
+        position += read;
+
+        bytesRead = position;
+
+        return new AttestedCredentialData(aaGuid, credentialID, credentialPublicKey);
     }
 }

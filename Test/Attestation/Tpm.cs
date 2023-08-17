@@ -4419,10 +4419,7 @@ public class Tpm : Fido2Tests.Attestation
 
         var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
-        IEnumerable<byte> tpm2bName = new byte[] { }
-            .Concat(tpm2bNameLen)
-            .Concat(tpmAlg)
-            .Concat(hashedPubArea);
+        byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
         var certInfo = CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic

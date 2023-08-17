@@ -130,22 +130,22 @@ internal sealed class AndroidKey : AttestationVerifier
         return (softwareEnforcedPurposeValue is 2 && teeEnforcedPurposeValue is 2);
     }
 
-    public override (AttestationType, X509Certificate2[]) Verify()
+    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
         // (handled in base class)
-        if (_attStmt.Count is 0)
+        if (request.AttStmt.Count is 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MissingAndroidKeyAttestationStatement);
 
-        if (!TryGetSig(out byte[]? sig))
+        if (!request.TryGetSig(out byte[]? sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationSignature);
 
         // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
         // using the attestation public key in attestnCert with the algorithm specified in alg
-        if (!(X5c is CborArray { Length: > 0 } x5cArray))
+        if (!(request.X5c is CborArray { Length: > 0 } x5cArray))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation);
 
-        if (!TryGetAlg(out var alg))
+        if (!request.TryGetAlg(out var alg))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationAlgorithm);
 
         var trustPath = new X509Certificate2[x5cArray.Length];
@@ -172,21 +172,21 @@ internal sealed class AndroidKey : AttestationVerifier
         X509Certificate2 androidKeyCert = trustPath[0];
         ECDsa androidKeyPubKey = androidKeyCert.GetECDsaPublicKey()!; // attestation public key
       
-        byte[] ecsig;
+        byte[] ecSignature;
         try
         {
-            ecsig = CryptoUtils.SigFromEcDsaSig(sig, androidKeyPubKey.KeySize);
+            ecSignature = CryptoUtils.SigFromEcDsaSig(sig, androidKeyPubKey.KeySize);
         }
         catch (Exception ex)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Failed to decode android key attestation signature from ASN.1 encoded form", ex);
         }
 
-        if (!androidKeyPubKey.VerifyData(Data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(alg)))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid android key attestation signature");
+        if (!androidKeyPubKey.VerifyData(request.Data, ecSignature, CryptoUtils.HashAlgFromCOSEAlg(alg)))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationSignature);
 
         // 3. Verify that the public key in the first certificate in x5c matches the credentialPublicKey in the attestedCredentialData in authenticatorData.
-        if (!AuthData.AttestedCredentialData!.CredentialPublicKey.Verify(Data, sig))
+        if (!request.AuthData.AttestedCredentialData!.CredentialPublicKey.Verify(request.Data, sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Incorrect credentialPublicKey in android key attestation");
 
         // 4. Verify that the attestationChallenge field in the attestation certificate extension data is identical to clientDataHash
@@ -197,7 +197,7 @@ internal sealed class AndroidKey : AttestationVerifier
         try
         {
             var attestationChallenge = GetAttestationChallenge(attExtBytes);
-            if (!_clientDataHash.AsSpan().SequenceEqual(attestationChallenge))
+            if (!request.ClientDataHash.SequenceEqual(attestationChallenge))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Mismatch between attestationChallenge and hashedClientDataJson verifying android key attestation certificate extension");
         }
         catch (Exception)

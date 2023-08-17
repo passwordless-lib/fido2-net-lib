@@ -36,23 +36,23 @@ internal sealed class Packed : AttestationVerifier
             && subjectMap.TryGetValue("CN", out var cn) && cn.Length > 0;
     }
 
-    public override (AttestationType, X509Certificate2[]?) Verify()
+    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and 
         // perform CBOR decoding on it to extract the contained fields.
-        if (_attStmt.Count is 0)
+        if (request.AttStmt.Count is 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MissingPackedAttestationStatement);
 
-        if (!TryGetSig(out byte[]? sig))
+        if (!request.TryGetSig(out byte[]? sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidPackedAttestationSignature);
 
-        if (!TryGetAlg(out var alg))
+        if (!request.TryGetAlg(out var alg))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidPackedAttestationAlgorithm);
 
         // 2. If x5c is present, this indicates that the attestation type is not ECDAA
-        if (X5c is CborObject x5c)
+        if (request.X5c is CborObject x5c)
         {
-            if (!(x5c is CborArray { Length: > 0 } x5cArray) || EcdaaKeyId != null)
+            if (!(x5c is CborArray { Length: > 0 } x5cArray) || request.EcdaaKeyId != null)
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_PackedAttestation);
 
             var trustPath = new X509Certificate2[x5cArray.Length];
@@ -83,7 +83,7 @@ internal sealed class Packed : AttestationVerifier
             // using the attestation public key in attestnCert with the algorithm specified in alg
             var cpk = new CredentialPublicKey(attestnCert, alg);
 
-            if (!cpk.Verify(Data, sig))
+            if (!cpk.Verify(request.Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid full packed signature");
 
             // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
@@ -108,7 +108,7 @@ internal sealed class Packed : AttestationVerifier
             // 2c. If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
             if (aaguid != null)
             {
-                if (AttestedCredentialData.FromBigEndian(aaguid).CompareTo(AuthData.AttestedCredentialData!.AaGuid) != 0)
+                if (GuidHelper.FromBigEndian(aaguid).CompareTo(request.AuthData.AttestedCredentialData!.AaGuid) != 0)
                     throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aaguid present in packed attestation cert exts but does not match aaguid from authData");
             }
 
@@ -121,7 +121,7 @@ internal sealed class Packed : AttestationVerifier
         }
 
         // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
-        else if (EcdaaKeyId != null)
+        else if (request.EcdaaKeyId != null)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, Fido2ErrorMessages.UnimplementedAlgorithm_Ecdaa_Packed);
 
@@ -137,15 +137,15 @@ internal sealed class Packed : AttestationVerifier
         else
         {
             // 4a. Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData
-            if (!AuthData.AttestedCredentialData!.CredentialPublicKey.IsSameAlg(alg))
+            if (!request.AuthData.AttestedCredentialData!.CredentialPublicKey.IsSameAlg(alg))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Algorithm mismatch between credential public key and authenticator data in self attestation statement");
 
             // 4b. Verify that sig is a valid signature over the concatenation of authenticatorData and 
             // clientDataHash using the credential public key with alg
-            if (!AuthData.AttestedCredentialData.CredentialPublicKey.Verify(Data, sig))
+            if (!request.AuthData.AttestedCredentialData.CredentialPublicKey.Verify(request.Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Failed to validate signature");
 
-            return (AttestationType.Self, null);
+            return (AttestationType.Self, null!);
         }
     }
 }
