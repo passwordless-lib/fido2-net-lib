@@ -1,58 +1,70 @@
-﻿using Fido2NetLib;
+﻿using System.Buffers.Binary;
 
-using System.Buffers.Binary;
+using Fido2NetLib;
+
+using Test;
 
 namespace fido2_net_lib;
 
 internal static class PubAreaHelper
 {
-    public static byte[] Create(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
-        byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
+    internal static byte[] CreatePubArea(
+        TpmAlg type,
+        ReadOnlySpan<byte> alg,
+        ReadOnlySpan<byte> attributes,
+        ReadOnlySpan<byte> policy,
+        ReadOnlySpan<byte> symmetric,
+        ReadOnlySpan<byte> scheme,
+        ReadOnlySpan<byte> keyBits,
+        ReadOnlySpan<byte> exponent,
+        ReadOnlySpan<byte> curveID,
+        ReadOnlySpan<byte> kdf,
+        ReadOnlySpan<byte> unique = default)
     {
-        var tpmAlg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
+        var raw = new MemoryStream();
 
-        IEnumerable<byte> raw = null;
-        var uniqueLen = new byte[2];
-        BinaryPrimitives.WriteUInt16BigEndian(uniqueLen, (UInt16)unique.Length);
-
-        if (TpmAlg.TPM_ALG_RSA == tpmAlg)
+        if (type is TpmAlg.TPM_ALG_ECC)
         {
-            raw
-                 = type
-                .Concat(alg)
-                .Concat(attributes)
-                .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(policy)
-                .Concat(symmetric)
-                .Concat(scheme)
-                .Concat(keyBits)
-                .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)))
-                .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(unique);
+            raw.Write(type.ToUInt16BigEndianBytes());
+            raw.Write(alg);
+            raw.Write(attributes);
+            raw.Write(GetUInt16BigEndianBytes(policy.Length));
+            raw.Write(policy);
+            raw.Write(symmetric);
+            raw.Write(scheme);
+            raw.Write(curveID);
+            raw.Write(kdf);
+            raw.Write(unique);
         }
-        if (TpmAlg.TPM_ALG_ECC == tpmAlg)
+        else
         {
-            raw = type
-                .Concat(alg)
-                .Concat(attributes)
-                .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(policy)
-                .Concat(symmetric)
-                .Concat(scheme)
-                .Concat(curveID)
-                .Concat(kdf)
-                .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(unique);
+            raw.Write(type.ToUInt16BigEndianBytes());
+            raw.Write(alg);
+            raw.Write(attributes);
+            raw.Write(GetUInt16BigEndianBytes(policy.Length));
+            raw.Write(policy);
+            raw.Write(symmetric);
+            raw.Write(scheme);
+            raw.Write(keyBits);
+            raw.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
+            raw.Write(GetUInt16BigEndianBytes(unique.Length));
+            raw.Write(unique);
         }
 
         return raw.ToArray();
+    }
+
+    private static byte[] GetUInt16BigEndianBytes(int value)
+    {
+        return GetUInt16BigEndianBytes((UInt16)value);
+    }
+
+    private static byte[] GetUInt16BigEndianBytes(UInt16 value)
+    {
+        var buffer = new byte[2];
+
+        BinaryPrimitives.WriteUInt16BigEndian(buffer, value);
+
+        return buffer;
     }
 }
