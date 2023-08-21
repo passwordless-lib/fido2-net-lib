@@ -117,11 +117,7 @@ public class Tpm : Fido2Tests.Attestation
 
                         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                        using (X509Certificate2 publicOnly = attRequest.Create(
-                            rootCert,
-                            notBefore,
-                            notAfter,
-                            serial))
+                        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
                         {
                             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                         }
@@ -224,19 +220,15 @@ public class Tpm : Fido2Tests.Attestation
 
                         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                        using (X509Certificate2 publicOnly = attRequest.Create(
-                            rootCert,
-                            notBefore,
-                            notAfter,
-                            serial))
+                        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
                         {
                             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
                         }
 
-                        var X5c = new CborArray {
-                                attestnCert.RawData,
-                                rootCert.RawData
-                            };
+                        var x5c = new CborArray {
+                            attestnCert.RawData,
+                            rootCert.RawData
+                        };
 
                         var rsaParams = rsaAtt.ExportParameters(true);
 
@@ -289,7 +281,7 @@ public class Tpm : Fido2Tests.Attestation
                         _attestationObject.Set("attStmt", new CborMap {
                             { "ver", "2.0" },
                             { "alg", alg },
-                            { "x5c", X5c },
+                            { "x5c", x5c },
                             { "sig", signature },
                             { "certInfo", certInfo },
                             { "pubArea", pubArea }
@@ -349,16 +341,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -414,7 +402,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -460,16 +448,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -524,7 +508,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", CborNull.Instance },
             { "certInfo", certInfo },
             { "pubArea", pubArea },
@@ -563,7 +547,7 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -618,7 +602,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", "strawberries" },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -652,16 +636,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -716,7 +696,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", Array.Empty<byte>() },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -762,7 +742,7 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -817,7 +797,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "3.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -852,16 +832,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -917,7 +893,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo},
             { "pubArea", CborNull.Instance },
@@ -951,16 +927,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1015,7 +987,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", "banana" }
@@ -1049,16 +1021,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1113,7 +1081,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", Array.Empty<byte>() }
@@ -1152,7 +1120,7 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1205,7 +1173,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1239,16 +1207,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1305,7 +1269,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1438,7 +1402,7 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1493,7 +1457,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1527,16 +1491,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1607,7 +1567,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo},
             { "pubArea", pubArea }
@@ -1641,11 +1601,7 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -1756,16 +1712,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1837,7 +1789,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1871,16 +1823,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1935,7 +1883,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", CborNull.Instance },
             { "pubArea", pubArea },
@@ -1974,7 +1922,7 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2029,7 +1977,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", "tomato" },
             { "pubArea", pubArea }
@@ -2070,16 +2018,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2134,7 +2078,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", Array.Empty<byte>() },
             { "pubArea", pubArea }
@@ -2168,16 +2112,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2232,7 +2172,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2266,16 +2206,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2330,7 +2266,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2364,16 +2300,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2428,7 +2360,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea },
@@ -2462,16 +2394,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2526,7 +2454,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2560,16 +2488,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2624,7 +2548,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2658,16 +2582,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2727,7 +2647,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2761,16 +2681,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2825,7 +2741,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2859,16 +2775,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2923,7 +2835,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2957,16 +2869,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3021,7 +2929,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", CborNull.Instance },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3055,16 +2963,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3119,7 +3023,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", "kiwi" },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3153,16 +3057,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3217,7 +3117,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", COSE.Algorithm.RS1 },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3251,16 +3151,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3318,7 +3214,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3352,16 +3248,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3450,11 +3342,7 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
@@ -3548,16 +3436,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3646,16 +3530,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3744,11 +3624,7 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
@@ -3843,16 +3719,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3941,16 +3813,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4039,16 +3907,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4104,7 +3968,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4139,11 +4003,7 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
@@ -4151,7 +4011,7 @@ public class Tpm : Fido2Tests.Attestation
         var rawAttestnCert = attestnCert.RawData;
         rawAttestnCert[12] = 0x41;
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             rawAttestnCert,
             rootCert.RawData
         };
@@ -4206,7 +4066,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea },
@@ -4251,16 +4111,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4315,7 +4171,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4349,16 +4205,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4415,7 +4267,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4452,16 +4304,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4516,7 +4364,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4554,16 +4402,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4618,7 +4462,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4656,16 +4500,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4720,7 +4560,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4758,16 +4598,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4822,7 +4658,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo},
             { "pubArea", pubArea }
@@ -4861,16 +4697,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4925,7 +4757,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo},
             { "pubArea", pubArea},
@@ -4960,16 +4792,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -5024,7 +4852,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5058,16 +4886,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -5122,7 +4946,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5156,19 +4980,15 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
-                    attestnCert.RawData,
-                    rootCert.RawData
-                };
+        var x5c = new CborArray {
+            attestnCert.RawData,
+            rootCert.RawData
+        };
 
         var rsaParams = rsaAtt.ExportParameters(true);
 
@@ -5220,7 +5040,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5270,16 +5090,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -5334,7 +5150,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5373,7 +5189,7 @@ public class Tpm : Fido2Tests.Attestation
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
