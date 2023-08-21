@@ -36,15 +36,9 @@ internal sealed class FidoU2f : AttestationVerifier
         var pubKey = attCert.GetECDsaPublicKey()!;
         var keyParams = pubKey.ExportParameters(false);
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (!keyParams.Curve.Oid.Value!.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
         {
-            if (!keyParams.Curve.Oid.FriendlyName!.Equals(ECCurve.NamedCurves.nistP256.Oid.FriendlyName, StringComparison.Ordinal))
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
-        }
-        else
-        {
-            if (!keyParams.Curve.Oid.Value!.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
         }
 
         // 3. Extract the claimed rpIdHash from authenticatorData, and the claimed credentialId and credentialPublicKey from authenticatorData
