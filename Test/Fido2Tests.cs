@@ -89,13 +89,13 @@ public class Fido2Tests
         public const string rp = "https://www.passwordless.dev";
         public byte[] _challenge;
         public X500DistinguishedName rootDN = new("CN=Testing, O=FIDO2-NET-LIB, C=US");
-        public Oid oidIdFidoGenCeAaguid = new("1.3.6.1.4.1.45724.1.1.4");
-        //private byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-        //public byte[] asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+        public Oid oidIdFidoGenCeAaGuid = new("1.3.6.1.4.1.45724.1.1.4");
+        //private byte[] asnEncodedAaGuid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+        //public byte[] asnEncodedAaGuid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         public byte[] _asnEncodedAaguid;
         protected X509BasicConstraintsExtension caExt = new(true, true, 2, false);
         protected X509BasicConstraintsExtension notCAExt = new(false, false, 0, false);
-        public X509Extension idFidoGenCeAaguidExt;
+        public X509Extension idFidoGenCeAaGuidExt;
 
         public byte[] _rpIdHash => SHA256.HashData(Encoding.UTF8.GetBytes(rp));
 
@@ -148,7 +148,7 @@ public class Fido2Tests
 
             _asnEncodedAaguid = AsnHelper.GetAaguidBlob(_aaguid);
 
-            idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
+            idFidoGenCeAaGuidExt = new X509Extension(oidIdFidoGenCeAaGuid, _asnEncodedAaguid, false);
         }
 
         public async Task<Fido2.CredentialMakeResult> MakeAttestationResponseAsync()
@@ -273,8 +273,8 @@ public class Fido2Tests
             {
                 case COSE.KeyType.EC2:
                     {
-                        var ecparams = ecdsa.ExportParameters(true);
-                        _credentialPublicKey = MakeCredentialPublicKey(kty, alg, curve, ecparams.Q.X, ecparams.Q.Y);
+                        var ecParams = ecdsa.ExportParameters(true);
+                        _credentialPublicKey = MakeCredentialPublicKey(kty, alg, curve, ecParams.Q.X, ecParams.Q.Y);
                         var signature = ecdsa.SignData(_attToBeSigned, CryptoUtils.HashAlgFromCOSEAlg(alg));
                         return SignatureHelper.EcDsaSigFromSig(signature, ecdsa.KeySize);
                     }
@@ -378,7 +378,7 @@ public class Fido2Tests
         Assert.False(UserVerificationRequirement.Required == UserVerificationRequirement.Discouraged);
         Assert.True(UserVerificationRequirement.Required != UserVerificationRequirement.Discouraged);
 
-        // testing where string and membername mismatch
+        // testing where string and member name mismatch
 
         var y1 = AuthenticatorAttachment.CrossPlatform;
         var yjson = JsonSerializer.Serialize(y1);
@@ -388,7 +388,7 @@ public class Fido2Tests
 
         Assert.Equal(AuthenticatorAttachment.CrossPlatform, y2);
 
-        // test list of typedstrings
+        // test list of typed strings
         var z1 = new[] { 
             AuthenticatorTransport.Ble, 
             AuthenticatorTransport.Usb, 
@@ -724,8 +724,8 @@ public class Fido2Tests
         var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
         var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         var ecdsa = MakeECDsa(COSE.Algorithm.ES256, COSE.EllipticCurve.P256);
-        var ecparams = ecdsa.ExportParameters(true);
-        var cpk = MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecparams.Q.X, ecparams.Q.Y);
+        var ecParams = ecdsa.ExportParameters(true);
+        var cpk = MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecParams.Q.X, ecParams.Q.Y);
 
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
@@ -757,12 +757,12 @@ public class Fido2Tests
     [Fact]
     public void TestAttestedCredentialDataOKP()
     {
-        var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
+        var aaGuid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
         var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         MakeEdDSA(out _, out var publicKey, out var privateKey);
         var cpk = MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey);
 
-        var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
+        var acdFromConst = new AttestedCredentialData(aaGuid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
         var acdFromBytes = AttestedCredentialData.Parse(acdBytes);
         Assert.Equal(acdFromBytes.ToByteArray(), acdFromConst.ToByteArray());
@@ -781,13 +781,13 @@ public class Fido2Tests
         var rpIdHash = SHA256.HashData(rpId);
         var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
         const ushort signCount = 0xf1d0;
-        var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
+        var aaGuid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
         var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         var ecdsa = MakeECDsa(COSE.Algorithm.ES256, COSE.EllipticCurve.P256);
-        var ecparams = ecdsa.ExportParameters(true);
-        var cpk = MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecparams.Q.X, ecparams.Q.Y);
+        var ecParams = ecdsa.ExportParameters(true);
+        var cpk = MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecParams.Q.X, ecParams.Q.Y);
 
-        var acd = new AttestedCredentialData(aaguid, credentialID, cpk);
+        var acd = new AttestedCredentialData(aaGuid, credentialID, cpk);
         var extBytes = new CborMap { { "testing", true } }.Encode();
         var exts = new Extensions(extBytes);
 
@@ -824,56 +824,6 @@ public class Fido2Tests
             Assert.Equal("1", avr.Counter.ToString("X"));
         }
     }
-
-    internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
-        byte[] scheme, byte[] keyBits, byte[] exponent, byte[] curveID, byte[] kdf, byte[] unique)
-    {
-        var tpmalg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(type));
-
-        IEnumerable<byte> raw = null;
-        var uniqueLen = new byte[2];
-        BinaryPrimitives.WriteUInt16BigEndian(uniqueLen, (UInt16)unique.Length);
-
-        if (TpmAlg.TPM_ALG_RSA == tpmalg)
-        {
-            raw
-                 = type
-                .Concat(alg)
-                .Concat(attributes)
-                .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(policy)
-                .Concat(symmetric)
-                .Concat(scheme)
-                .Concat(keyBits)
-                .Concat(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)))
-                .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(unique);
-        }
-        if (TpmAlg.TPM_ALG_ECC == tpmalg)
-        {
-            raw = type
-                .Concat(alg)
-                .Concat(attributes)
-                .Concat(BitConverter.GetBytes((UInt16)policy.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(policy)
-                .Concat(symmetric)
-                .Concat(scheme)
-                .Concat(curveID)
-                .Concat(kdf)
-                .Concat(BitConverter.GetBytes((UInt16)unique.Length)
-                    .Reverse()
-                    .ToArray())
-                .Concat(unique);
-        }
-        
-        return raw.ToArray();
-    }
     
     internal static async Task<AssertionVerificationResult> MakeAssertionResponseAsync(
         COSE.KeyType kty,
@@ -889,8 +839,8 @@ public class Fido2Tests
         byte[] rpId = Encoding.UTF8.GetBytes(rp);
         var rpIdHash = SHA256.HashData(rpId);
         var flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
-        var aaguid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
-        var credentialID = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
+        var aaGuid = new Guid("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
+        var credentialId = new byte[] { 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         if (cpk == null)
         {
             switch (kty)
@@ -899,8 +849,8 @@ public class Fido2Tests
                     {
                         ecdsa ??= MakeECDsa(alg, crv);
                         
-                        var ecparams = ecdsa.ExportParameters(true);
-                        cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
+                        var ecParams = ecdsa.ExportParameters(true);
+                        cpk = MakeCredentialPublicKey(kty, alg, crv, ecParams.Q.X, ecParams.Q.Y);
                         break;
                     }
                 case COSE.KeyType.RSA:
@@ -926,7 +876,7 @@ public class Fido2Tests
                     throw new ArgumentOutOfRangeException(nameof(kty), $"Missing or unknown kty {kty}");
             }
         }
-        var acd = new AttestedCredentialData(aaguid, credentialID, cpk);
+        var acd = new AttestedCredentialData(aaGuid, credentialId, cpk);
         var extBytes = new CborMap { { "testing", true } }.Encode();
         var exts = new Extensions(extBytes);
 
@@ -1095,8 +1045,8 @@ public class Fido2Tests
             case COSE.KeyType.EC2:
                 {
                     var ecdsa = MakeECDsa(alg, crv);
-                    var ecparams = ecdsa.ExportParameters(true);
-                    cpk = MakeCredentialPublicKey(kty, alg, crv, ecparams.Q.X, ecparams.Q.Y);
+                    var ecParams = ecdsa.ExportParameters(true);
+                    cpk = MakeCredentialPublicKey(kty, alg, crv, ecParams.Q.X, ecParams.Q.Y);
                     break;
                 }
             case COSE.KeyType.RSA:

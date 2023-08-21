@@ -381,13 +381,13 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -459,14 +459,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -618,14 +618,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -703,14 +703,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -871,14 +871,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -959,14 +959,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 

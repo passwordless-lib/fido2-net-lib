@@ -112,7 +112,7 @@ public class Tpm : Fido2Tests.Attestation
                         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                         attRequest.CertificateExtensions.Add(notCAExt);
-                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
                         attRequest.CertificateExtensions.Add(aikCertSanExt);
                         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -219,7 +219,7 @@ public class Tpm : Fido2Tests.Attestation
                         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                         attRequest.CertificateExtensions.Add(notCAExt);
-                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
                         attRequest.CertificateExtensions.Add(aikCertSanExt);
                         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -335,7 +335,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] asnEncodedSAN = TpmSanEncoder.Encode(
             manufacturer: "id:FFFFF1D0",
@@ -455,7 +455,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -553,7 +553,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -651,7 +651,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -756,7 +756,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -855,7 +855,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -954,7 +954,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1052,7 +1052,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1150,7 +1150,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1246,7 +1246,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1346,7 +1346,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1444,7 +1444,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1542,7 +1542,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1562,13 +1562,13 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var ecparams = ecdsaAtt.ExportParameters(true);
+        var ecParams = ecdsaAtt.ExportParameters(true);
 
         var cpk = new CborMap {
             { COSE.KeyCommonParameter.KeyType, type },
             { COSE.KeyCommonParameter.Alg, alg },
-            { COSE.KeyTypeParameter.X, ecparams.Q.X },
-            { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+            { COSE.KeyTypeParameter.X, ecParams.Q.X },
+            { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
             { COSE.KeyTypeParameter.Crv, curve }
         };
 
@@ -1656,7 +1656,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1676,13 +1676,13 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var ecparams = ecdsaAtt.ExportParameters(true);
+        var ecParams = ecdsaAtt.ExportParameters(true);
 
         var cpk = new CborMap {
             { COSE.KeyCommonParameter.KeyType, type },
             { COSE.KeyCommonParameter.Alg, alg },
-            { COSE.KeyTypeParameter.X, ecparams.Q.X },
-            { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+            { COSE.KeyTypeParameter.X, ecParams.Q.X },
+            { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
             { COSE.KeyTypeParameter.Crv, curve }
         };
 
@@ -1771,7 +1771,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1791,13 +1791,13 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var ecparams = ecdsaAtt.ExportParameters(true);
+        var ecParams = ecdsaAtt.ExportParameters(true);
 
         var cpk = new CborMap {
             { COSE.KeyCommonParameter.KeyType, type },
             { COSE.KeyCommonParameter.Alg, alg },
-            { COSE.KeyTypeParameter.X, ecparams.Q.X },
-            { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+            { COSE.KeyTypeParameter.X, ecParams.Q.X },
+            { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
             { COSE.KeyTypeParameter.Crv, curve }
         };
 
@@ -1886,7 +1886,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -1984,7 +1984,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2089,7 +2089,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2187,7 +2187,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2285,7 +2285,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2383,7 +2383,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2481,7 +2481,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2579,7 +2579,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2677,7 +2677,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2780,7 +2780,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2878,7 +2878,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -2976,7 +2976,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3074,7 +3074,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3172,7 +3172,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3270,7 +3270,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3371,7 +3371,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3469,7 +3469,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3567,7 +3567,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3665,7 +3665,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3763,7 +3763,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3862,7 +3862,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -3960,7 +3960,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -4058,7 +4058,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -4158,7 +4158,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -4270,7 +4270,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -4368,7 +4368,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         // attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -4468,7 +4468,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var aikCertSanExt = new X509Extension("2.5.29.17", Array.Empty<byte>(), false);
 
@@ -4569,7 +4569,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x04, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x02, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4671,7 +4671,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x05, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4773,7 +4773,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x06, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4875,7 +4875,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x32, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x02, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4978,7 +4978,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
 
         //attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
@@ -5077,7 +5077,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(caExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
@@ -5287,7 +5287,7 @@ public class Tpm : Fido2Tests.Attestation
         attRequest.CertificateExtensions.Add(notCAExt);
 
         var asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-        var idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, asnEncodedAaguid, false);
+        var idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaGuid, asnEncodedAaguid, false);
 
         attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
@@ -5387,7 +5387,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 

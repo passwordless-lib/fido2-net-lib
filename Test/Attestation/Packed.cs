@@ -235,7 +235,7 @@ public class Packed : Fido2Tests.Attestation
                         using var ecdsaAtt = ECDsa.Create(eCCurve);
                         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
                         attRequest.CertificateExtensions.Add(notCAExt);
-                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
                         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -286,7 +286,7 @@ public class Packed : Fido2Tests.Attestation
                         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                         attRequest.CertificateExtensions.Add(notCAExt);
-                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
                         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -353,7 +353,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -396,7 +396,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -443,7 +443,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -484,7 +484,7 @@ public class Packed : Fido2Tests.Attestation
         using var ecdsaAtt = ECDsa.Create(eCCurve);
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -525,7 +525,7 @@ public class Packed : Fido2Tests.Attestation
         using var ecdsaAtt = ECDsa.Create(eCCurve);
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -567,7 +567,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -613,7 +613,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -662,7 +662,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -705,7 +705,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -751,7 +751,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -810,7 +810,7 @@ public class Packed : Fido2Tests.Attestation
         using var ecdsaAtt = ECDsa.Create(eCCurve);
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -863,7 +863,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(notCAExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
@@ -911,7 +911,7 @@ public class Packed : Fido2Tests.Attestation
 
         var notAsnEncodedAaguid = _asnEncodedAaguid;
         notAsnEncodedAaguid[3] = 0x42;
-        var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, _asnEncodedAaguid, false);
+        var notIdFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaGuid, _asnEncodedAaguid, false);
         attRequest.CertificateExtensions.Add(notIdFidoGenCeAaguidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
@@ -961,7 +961,7 @@ public class Packed : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
         attRequest.CertificateExtensions.Add(caExt);
 
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
