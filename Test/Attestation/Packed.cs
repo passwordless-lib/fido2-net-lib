@@ -24,7 +24,7 @@ public class Packed : Fido2Tests.Attestation
         {
             // No support for P256K on OSX
             if (OperatingSystem.IsMacOS() && crv is COSE.EllipticCurve.P256K)
-                return;
+                continue;
 
             var signature = SignData(type, alg, crv);
 

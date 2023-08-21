@@ -21,7 +21,7 @@ public class None : Fido2Tests.Attestation
         {
             // P256K is not supported on macOS
             if (OperatingSystem.IsMacOS() && crv is COSE.EllipticCurve.P256K)
-                return;
+                continue;
 
             _attestationObject.Add("attStmt", new CborMap());
             _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey((keyType, alg, crv));
