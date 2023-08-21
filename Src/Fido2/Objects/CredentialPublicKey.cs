@@ -129,9 +129,9 @@ public sealed class CredentialPublicKey
         switch ((_alg, crv))
         {
             case (COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K):
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) // see https://github.com/dotnet/runtime/issues/47770
+                if (OperatingSystem.IsMacOS()) // see https://github.com/dotnet/runtime/issues/47770
                 {
-                    throw new PlatformNotSupportedException($"The secP256k1 curve is not supported on macOS");
+                    throw new PlatformNotSupportedException("The secP256k1 curve is not supported on macOS");
                 }
 
                 curve = ECCurve.CreateFromFriendlyName("secP256k1");

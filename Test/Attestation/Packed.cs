@@ -7,7 +7,6 @@ using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
-using System.Runtime.InteropServices;
 
 namespace Test.Attestation;
 
@@ -19,14 +18,12 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestSelf()
+    public async Task TestSelf()
     {
-        Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
+        foreach (var (type, alg, crv) in Fido2Tests._validCOSEParameters)
         {
-            var (type, alg, crv) = param;
-
             // No support for P256K on OSX
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && crv == COSE.EllipticCurve.P256K)
+            if (OperatingSystem.IsMacOS() && crv is COSE.EllipticCurve.P256K)
                 return;
 
             var signature = SignData(type, alg, crv);
@@ -51,7 +48,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
             _attestationObject = new CborMap { { "fmt", "packed" } };
-        });
+        }
     }
 
     [Fact]
@@ -187,19 +184,17 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestFull()
+    public async Task TestFull()
     {
-        Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
+        foreach (var (type, alg, curve) in Fido2Tests._validCOSEParameters)
         {
-            var (type, alg, curve) = param;
-
             if (type is COSE.KeyType.OKP)
             {
                 return;
             }
 
             // No support for P256K on OSX
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && curve == COSE.EllipticCurve.P256K)
+            if (OperatingSystem.IsMacOS() && curve == COSE.EllipticCurve.P256K)
                 return;
 
             X509Certificate2 attestnCert;
@@ -336,7 +331,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
             _attestationObject = new CborMap { { "fmt", "packed" } };
-        });
+        }
     }
 
     [Fact]

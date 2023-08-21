@@ -28,7 +28,7 @@ public class CredentialPublicKeyTests
         var decodedEcDsaParams = decodedPublicKey.ExportParameters(false);
 
         // NOTES
-        // - the oid is not set for secP256k1
+        // - the oid.value is not set for secP256k1
         // - macOS does not support the secP256k1 curve
 
         if (decodedEcDsaParams.Curve.Oid?.Value != null)
@@ -36,7 +36,7 @@ public class CredentialPublicKeyTests
             Assert.Equal(oid, decodedEcDsaParams.Curve.Oid.Value);
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && alg is COSE.Algorithm.ES256K)
+        if (OperatingSystem.IsMacOS() && alg is COSE.Algorithm.ES256K)
         {
             return;
         }

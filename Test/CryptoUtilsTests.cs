@@ -55,8 +55,8 @@ public class CryptoUtilsTests
     [Fact]
     public void TestValidateTrustChainSubAnchor()
     {
-        // TODO: Figure out why this test fails on Mac/Linux
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        // TODO: Figure out why this test fails on macOS and Linux
+        if (!OperatingSystem.IsWindows())
             return;
 
         byte[] attRootCertBytes = Convert.FromBase64String("MIIDCDCCAq+gAwIBAgIQQAFqUNTHZ8kBN8u/bCk+xDAKBggqhkjOPQQDAjBrMQswCQYDVQQGEwJVUzETMBEGA1UEChMKSElEIEdsb2JhbDEiMCAGA1UECxMZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEjMCEGA1UEAxMaRklETyBBdHRlc3RhdGlvbiBSb290IENBIDEwHhcNMTkwNDI0MTkzMTIzWhcNNDQwNDI3MTkzMTIzWjBmMQswCQYDVQQGEwJVUzETMBEGA1UEChMKSElEIEdsb2JhbDEiMCAGA1UECxMZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEeMBwGA1UEAxMVRklETyBBdHRlc3RhdGlvbiBDQSAyMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE4nK9ctzk6GEGFNQBcrnBBmWU+dCnuHQAARrB2Eyc8MbsljkSFhZtfz/Rw6SuVIDk5VakDzrKBAOJ9v0Rvg/406OCATgwggE0MBIGA1UdEwEB/wQIMAYBAf8CAQAwDgYDVR0PAQH/BAQDAgGGMIGEBggrBgEFBQcBAQR4MHYwLgYIKwYBBQUHMAGGImh0dHA6Ly9oaWQuZmlkby5vY3NwLmlkZW50cnVzdC5jb20wRAYIKwYBBQUHMAKGOGh0dHA6Ly92YWxpZGF0aW9uLmlkZW50cnVzdC5jb20vcm9vdHMvSElERklET1Jvb3RjYTEucDdjMB8GA1UdIwQYMBaAFB2m3iwWSYHvWTHbJiHAyKDp+CSjMEcGA1UdHwRAMD4wPKA6oDiGNmh0dHA6Ly92YWxpZGF0aW9uLmlkZW50cnVzdC5jb20vY3JsL0hJREZJRE9Sb290Y2ExLmNybDAdBgNVHQ4EFgQUDLCbuLslcclrOZIz57Fu0imSMQ8wCgYIKoZIzj0EAwIDRwAwRAIgDCW5IrbjEI/y35lPjx9a+/sF4lPSoZdBHgFgTWC+8VICIEqs2SPzUHgHVh65Ajl1oIUmhh0C2lyR/Zdk7O3u1TIK");

@@ -4,7 +4,6 @@ using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
-using System.Runtime.InteropServices;
 
 namespace Test.Attestation;
 
@@ -16,17 +15,17 @@ public class None : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestNone()
+    public async Task TestNone()
     {
-        Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
+        foreach (var (keyType, alg, crv) in Fido2Tests._validCOSEParameters)
         {
-            // No support for P256K on OSX
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && param.Item3 == COSE.EllipticCurve.P256K)
+            // P256K is not supported on macOS
+            if (OperatingSystem.IsMacOS() && crv is COSE.EllipticCurve.P256K)
                 return;
 
             _attestationObject.Add("attStmt", new CborMap());
-            _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(param);
-            Fido2.CredentialMakeResult res = null;
+            _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey((keyType, alg, crv));
+            Fido2.CredentialMakeResult res;
 
             res = await MakeAttestationResponseAsync();
 
@@ -43,7 +42,7 @@ public class None : Fido2Tests.Attestation
             Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
             _attestationObject = new CborMap { { "fmt", "none" } };
-        });
+        }
     }
 
     [Fact]
