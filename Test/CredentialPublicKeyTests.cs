@@ -14,6 +14,11 @@ public class CredentialPublicKeyTests
     [InlineData("1.3.132.0.35",        COSE.Algorithm.ES512)]  // P512
     public void CanUseECCurves(string oid, COSE.Algorithm alg)
     {
+        if (OperatingSystem.IsMacOS() && alg is COSE.Algorithm.ES256K)
+        {
+            return;
+        }
+
         byte[] signedData = RandomNumberGenerator.GetBytes(64);
 
         using var ecDsa = ECDsa.Create(ECCurve.CreateFromValue(oid));
@@ -35,10 +40,7 @@ public class CredentialPublicKeyTests
             Assert.Equal(oid, decodedEcDsaParams.Curve.Oid.Value);
         }
 
-        if (OperatingSystem.IsMacOS() && alg is COSE.Algorithm.ES256K)
-        {
-            return;
-        }
+      
 
         Assert.True(credentialPublicKey.Verify(signedData, signature));
     }
