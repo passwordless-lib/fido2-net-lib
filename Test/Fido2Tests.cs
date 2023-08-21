@@ -1,6 +1,4 @@
 ﻿using System.Buffers.Binary;
-using System.Formats.Asn1;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -622,8 +620,8 @@ public class Fido2Tests
     [Fact]
     public async Task TestInvalidU2FAttestationAsync()
     {
-        // TODO: Figure out why this test fails on Mac/Linux
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        // TODO: Figure out why this test fails on macOS and Linux
+        if (!OperatingSystem.IsWindows())
             return;
 
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsATKey.json"));
@@ -805,15 +803,13 @@ public class Fido2Tests
     }
 
     [Fact]
-    public void TestAssertionResponse()
+    public async Task TestAssertionResponse()
     {
         AssertionVerificationResult avr;
-        _validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
+        foreach (var (type, alg, curve) in _validCOSEParameters)
         {
-            var (type, alg, curve) = param;
-
             // No support for P256K on OSX
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && curve == COSE.EllipticCurve.P256K)
+            if (OperatingSystem.IsMacOS() && curve is COSE.EllipticCurve.P256K)
                 return;
 
             if (curve != default)
@@ -824,11 +820,12 @@ public class Fido2Tests
             {
                 avr = await MakeAssertionResponseAsync(type, alg);
             }
+
             Assert.Equal("", avr.ErrorMessage);
             Assert.Equal("ok", avr.Status);
             Assert.Equal(new byte[] { 0xf1, 0xd0 }, avr.CredentialId);
             Assert.Equal("1", avr.Counter.ToString("X"));
-        });
+        }
     }
 
     internal static byte[] CreatePubArea(byte[] type, byte[] alg, byte[] attributes, byte[] policy, byte[] symmetric,
@@ -878,27 +875,6 @@ public class Fido2Tests
                 .Concat(unique);
         }
         
-        return raw.ToArray();
-    }
-
-    internal static byte[] CreateCertInfo(byte[] magic, byte[] type, byte[] QualifiedSigner,
-        byte[] extraData, byte[] clock, byte[] resetCount, byte[] restartCount,
-        byte[] safe, byte[] firmwareRevision, byte[] tPM2BName, byte[] attestedQualifiedNameBuffer)
-    {
-        var raw = new MemoryStream();
-
-        raw.Write(magic);
-        raw.Write(type);
-        raw.Write(QualifiedSigner);
-        raw.Write(extraData);
-        raw.Write(clock);
-        raw.Write(resetCount);
-        raw.Write(restartCount);
-        raw.Write(safe);
-        raw.Write(firmwareRevision);
-        raw.Write(tPM2BName);
-        raw.Write(attestedQualifiedNameBuffer);
-
         return raw.ToArray();
     }
     
@@ -1033,7 +1009,7 @@ public class Fido2Tests
                         if (OperatingSystem.IsMacOS())
                         {
                             // see https://github.com/dotnet/runtime/issues/47770
-                            throw new PlatformNotSupportedException($"No support currently for secP256k1 on MacOS");
+                            throw new PlatformNotSupportedException($"No support currently for secP256k1 on macOS");
                         }
                         curve = ECCurve.CreateFromFriendlyName("secP256k1");
                         break;
