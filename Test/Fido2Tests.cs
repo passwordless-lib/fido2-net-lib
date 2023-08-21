@@ -281,7 +281,7 @@ public class Fido2Tests
                         var ecparams = ecdsa.ExportParameters(true);
                         _credentialPublicKey = MakeCredentialPublicKey(kty, alg, curve, ecparams.Q.X, ecparams.Q.Y);
                         var signature = ecdsa.SignData(_attToBeSigned, CryptoUtils.HashAlgFromCOSEAlg(alg));
-                        return EcDsaSigFromSig(signature, ecdsa.KeySize);
+                        return SignatureHelper.EcDsaSigFromSig(signature, ecdsa.KeySize);
                     }
                 case COSE.KeyType.RSA:
                     {
@@ -327,7 +327,7 @@ public class Fido2Tests
             case COSE.KeyType.EC2:
                 {
                     var signature = ecdsa.SignData(data, CryptoUtils.HashAlgFromCOSEAlg(alg));
-                    return EcDsaSigFromSig(signature, ecdsa.KeySize);
+                    return SignatureHelper.EcDsaSigFromSig(signature, ecdsa.KeySize);
                 }
             case COSE.KeyType.RSA:
                 {
@@ -802,25 +802,6 @@ public class Fido2Tests
         Assert.True(ad.SignCount == signCount);
         Assert.True(ad.AttestedCredentialData.ToByteArray().SequenceEqual(acd.ToByteArray()));
         Assert.True(ad.Extensions.GetBytes().SequenceEqual(extBytes));
-    }
-
-    internal static byte[] EcDsaSigFromSig(ReadOnlySpan<byte> sig, int keySize)
-    {
-        var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
-        var r = sig.Slice(0, coefficientSize);
-        var s = sig.Slice(sig.Length - coefficientSize);
-
-        var writer = new AsnWriter(AsnEncodingRules.BER);
-
-        ReadOnlySpan<byte> zero = new byte[1] { 0 };
-
-        using (writer.PushSequence())
-        {
-            writer.WriteIntegerUnsigned(r.TrimStart(zero));
-            writer.WriteIntegerUnsigned(s.TrimStart(zero));
-        }
-
-        return writer.Encode();
     }
 
     [Fact]

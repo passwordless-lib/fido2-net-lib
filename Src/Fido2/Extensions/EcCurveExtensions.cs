@@ -9,7 +9,7 @@ internal static class EcCurveExtensions
 {
     public static COSE.EllipticCurve ToCoseCurve(this ECCurve curve)
     {
-        if (curve.Oid.FriendlyName is "secP256k1")
+        if (curve.Oid.FriendlyName is "secP256k1") // OID = 1.3.132.0.10
             return COSE.EllipticCurve.P256K;
 
         if (curve.Oid.Value!.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))

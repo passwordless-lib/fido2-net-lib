@@ -82,7 +82,7 @@ public sealed class CredentialPublicKey
                 }
 
             case COSE.KeyType.RSA:
-                using (RSA rsa = CreateRsa())
+                using (RSA rsa = CreateRSA())
                 {
                     return rsa.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
                 }
@@ -93,7 +93,7 @@ public sealed class CredentialPublicKey
         throw new InvalidOperationException($"Missing or unknown kty {_type}");
     }
 
-    internal RSA CreateRsa()
+    internal RSA CreateRSA()
     {
         if (_type != COSE.KeyType.RSA)
         {
