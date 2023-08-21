@@ -125,16 +125,13 @@ public class Fido2Tests
         public const AuthenticatorFlags _flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
         public ushort _signCount;
         protected Guid _aaguid = new("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
-        public Extensions _exts
-        {
-            get
-            {
-                var extBytes = new CborMap { { "testing", true } }.Encode();
-                return new Extensions(extBytes);
-            }
+        public Extensions GetExtensions()
+        {           
+            var extBytes = new CborMap { { "testing", true } }.Encode();
+            return new Extensions(extBytes);   
         }
 
-        public AuthenticatorData _authData => new(_rpIdHash, _flags, _signCount, _acd, _exts);
+        public AuthenticatorData _authData => new(_rpIdHash, _flags, _signCount, _acd, GetExtensions());
         
         public AttestedCredentialData _acd => new(_aaguid, _credentialID, _credentialPublicKey);
            
@@ -403,7 +400,7 @@ public class Fido2Tests
         var z2 = JsonSerializer.Deserialize<AuthenticatorTransport[]>(zjson);
 
         Assert.All(z2, (x) => z1.Contains(x));
-        Assert.True(z1.SequenceEqual(z2));
+        Assert.Equal(z1, z2);
     }
 
     [Fact]
@@ -554,7 +551,7 @@ public class Fido2Tests
         var authData = o.AttestationObject.AuthData;
         var acdBytes = authData.AttestedCredentialData.ToByteArray();
         var acd = AttestedCredentialData.Parse(acdBytes);
-        Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
+        Assert.Equal(acd.ToByteArray(), acdBytes);
     }
 
     [Fact]
@@ -614,7 +611,7 @@ public class Fido2Tests
         var authData = o.AttestationObject.AuthData;
         var acdBytes = authData.AttestedCredentialData.ToByteArray();
         var acd = AttestedCredentialData.Parse(acdBytes);
-        Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
+        Assert.Equal(acd.ToByteArray(), acdBytes);
     }
 
     [Fact]
@@ -631,7 +628,7 @@ public class Fido2Tests
         var authData = o.AttestationObject.AuthData;
         var acdBytes = authData.AttestedCredentialData.ToByteArray();
         var acd = AttestedCredentialData.Parse(acdBytes);
-        Assert.True(acd.ToByteArray().SequenceEqual(acdBytes));
+        Assert.Equal(acd.ToByteArray(), acdBytes);
     }
 
     [Fact]
@@ -733,7 +730,7 @@ public class Fido2Tests
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
         var acdFromBytes = AttestedCredentialData.Parse(acdBytes);
-        Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
+        Assert.Equal(acdFromBytes.ToByteArray(), acdFromConst.ToByteArray());
     }
 
     [Fact]
@@ -748,7 +745,7 @@ public class Fido2Tests
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
         var acdFromBytes = AttestedCredentialData.Parse(acdBytes);
-        Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
+        Assert.Equal(acdFromBytes.ToByteArray(), acdFromConst.ToByteArray());
 
         var sig = SignData(COSE.KeyType.RSA, COSE.Algorithm.RS256, acdBytes, null, rsa, null);
 
@@ -768,7 +765,7 @@ public class Fido2Tests
         var acdFromConst = new AttestedCredentialData(aaguid, credentialID, cpk);
         var acdBytes = acdFromConst.ToByteArray();
         var acdFromBytes = AttestedCredentialData.Parse(acdBytes);
-        Assert.True(acdFromBytes.ToByteArray().SequenceEqual(acdFromConst.ToByteArray()));
+        Assert.Equal(acdFromBytes.ToByteArray(), acdFromConst.ToByteArray());
 
         var sig = SignData(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, acdBytes, null, null, privateKey);
 
@@ -795,11 +792,11 @@ public class Fido2Tests
         var exts = new Extensions(extBytes);
 
         var ad = new AuthenticatorData(rpIdHash, flags, signCount, acd, exts);
-        Assert.True(ad.RpIdHash.SequenceEqual(rpIdHash));
+        Assert.Equal(rpIdHash, ad.RpIdHash);
         Assert.True(ad.HasAttestedCredentialData | ad.UserPresent | ad.UserVerified | ad.HasExtensionsData);
-        Assert.True(ad.SignCount == signCount);
-        Assert.True(ad.AttestedCredentialData.ToByteArray().SequenceEqual(acd.ToByteArray()));
-        Assert.True(ad.Extensions.GetBytes().SequenceEqual(extBytes));
+        Assert.Equal(signCount, ad.SignCount);
+        Assert.Equal(ad.AttestedCredentialData.ToByteArray(), acd.ToByteArray());
+        Assert.Equal(extBytes, ad.Extensions.GetBytes());
     }
 
     [Fact]

@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 using Fido2NetLib;
 using Fido2NetLib.Objects;

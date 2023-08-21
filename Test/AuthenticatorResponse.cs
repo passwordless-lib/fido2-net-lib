@@ -278,18 +278,18 @@ public class AuthenticatorResponseTests
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, rawResponse.Type);
-        Assert.True(rawResponse.Id.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(rawResponse.RawId.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(rawResponse.Response.AttestationObject.SequenceEqual(new byte[] { 0xa0 }));
-        Assert.True(rawResponse.Response.ClientDataJson.SequenceEqual(clientDataJson));
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.Id);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.RawId);
+        Assert.Equal(new byte[] { 0xa0 }, rawResponse.Response.AttestationObject);
+        Assert.Equal(clientDataJson, rawResponse.Response.ClientDataJson);
         Assert.True(rawResponse.Extensions.AppID);
         Assert.True(rawResponse.Extensions.AuthenticatorSelection);
-        Assert.Equal(rawResponse.Extensions.Extensions, new string[] { "foo", "bar" });
+        Assert.Equal(new string[] { "foo", "bar" }, rawResponse.Extensions.Extensions);
         Assert.Equal("test", rawResponse.Extensions.Example);
         Assert.Equal((ulong)4, rawResponse.Extensions.UserVerificationMethod[0][0]);
         Assert.True(rawResponse.Extensions.PRF.Enabled);
-        Assert.True(rawResponse.Extensions.PRF.Results.First.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(rawResponse.Extensions.PRF.Results.Second.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
+        Assert.Equal(rawResponse.Extensions.PRF.Results.First, new byte[] { 0xf1, 0xd0 });
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.Extensions.PRF.Results.Second);
     }
 
     [Fact]
@@ -308,7 +308,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = null,
+            Response = null
         };
 
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
@@ -1259,20 +1259,20 @@ public class AuthenticatorResponseTests
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, assertionResponse.Type);
-        Assert.True(assertionResponse.Id.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(assertionResponse.RawId.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(assertionResponse.Response.AuthenticatorData.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(assertionResponse.Response.Signature.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(assertionResponse.Response.ClientDataJson.SequenceEqual(clientDataJson));
-        Assert.True(assertionResponse.Response.UserHandle.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Id);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.RawId);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.AuthenticatorData);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.Signature);
+        Assert.Equal(clientDataJson, assertionResponse.Response.ClientDataJson);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.UserHandle);
         Assert.True(assertionResponse.Extensions.AppID);
         Assert.True(assertionResponse.Extensions.AuthenticatorSelection);
-        Assert.Equal(assertionResponse.Extensions.Extensions, new string[] { "foo", "bar" });
+        Assert.Equal(new string[] { "foo", "bar" }, assertionResponse.Extensions.Extensions);
         Assert.Equal("test", assertionResponse.Extensions.Example);
         Assert.Equal((ulong)4, assertionResponse.Extensions.UserVerificationMethod[0][0]);
         Assert.True(assertionResponse.Extensions.PRF.Enabled);
-        Assert.True(assertionResponse.Extensions.PRF.Results.First.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
-        Assert.True(assertionResponse.Extensions.PRF.Results.Second.SequenceEqual(new byte[] { 0xf1, 0xd0 }));
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Extensions.PRF.Results.First);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Extensions.PRF.Results.Second);
     }
 
     [Fact]
