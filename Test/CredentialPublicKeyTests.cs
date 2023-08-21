@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 using Fido2NetLib;
 using Fido2NetLib.Objects;
@@ -26,12 +27,18 @@ public class CredentialPublicKeyTests
 
         var decodedEcDsaParams = decodedPublicKey.ExportParameters(false);
 
-        // NOTE
-        // secP256k1 only sets friendly name
+        // NOTES
+        // - the oid is not set for secP256k1
+        // - macOS does not support the secP256k1 curve
 
         if (decodedEcDsaParams.Curve.Oid?.Value != null)
         {
             Assert.Equal(oid, decodedEcDsaParams.Curve.Oid.Value);
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && alg is COSE.Algorithm.ES256K)
+        {
+            return;
         }
 
         Assert.True(credentialPublicKey.Verify(signedData, signature));
