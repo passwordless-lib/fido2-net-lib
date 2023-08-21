@@ -15,11 +15,12 @@ internal sealed class AndroidKey : AttestationVerifier
     {
         foreach (var ext in exts)
         {
-            if (ext.Oid!.Value is "1.3.6.1.4.1.11129.2.1.17") // AttestationRecordOid
+            if (ext.Oid?.Value is "1.3.6.1.4.1.11129.2.1.17") // AttestationRecordOid
             {
                 return ext.RawData;
             }
         }
+
         return null;
     }
 
