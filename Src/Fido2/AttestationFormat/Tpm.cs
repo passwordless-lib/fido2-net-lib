@@ -239,7 +239,7 @@ internal sealed class Tpm : AttestationVerifier
 
         foreach (var extension in exts)
         {
-            if (extension.Oid!.Value is "2.5.29.17") // subject alternative name
+            if (extension.Oid?.Value is "2.5.29.17") // subject alternative name
             {
                 if (extension.RawData.Length is 0)
                     throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SAN missing from TPM attestation certificate");
@@ -362,7 +362,7 @@ internal sealed class Tpm : AttestationVerifier
     {
         foreach (var ext in exts)
         {
-            if (ext.Oid!.Value is "2.5.29.37" && ext is X509EnhancedKeyUsageExtension enhancedKeyUsageExtension)
+            if (ext.Oid?.Value is "2.5.29.37" && ext is X509EnhancedKeyUsageExtension enhancedKeyUsageExtension)
             {
                 foreach (var oid in enhancedKeyUsageExtension.EnhancedKeyUsages)
                 {

@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
+using fido2_net_lib;
 using fido2_net_lib.Test;
 
 using Fido2NetLib;
@@ -69,20 +70,18 @@ public class Tpm : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestTPM()
+    public async Task TestTPM()
     {
-        Fido2Tests._validCOSEParameters.ForEach(async ((COSE.KeyType, COSE.Algorithm, COSE.EllipticCurve) param) =>
+        foreach (var (type, alg, curve) in Fido2Tests._validCOSEParameters)
         {
-            var (type, alg, curve) = param;
-
             if (type is COSE.KeyType.OKP)
             {
-                return; // no OKP support in TPM
+                continue; // no OKP support in TPM
             }
 
             if (type is COSE.KeyType.EC2 && alg is COSE.Algorithm.ES256K)
             {
-                return; // no secp256k1 support in TPM
+                continue; // no secp256k1 support in TPM
             }
 
             tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
@@ -112,17 +111,13 @@ public class Tpm : Fido2Tests.Attestation
                         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
                         attRequest.CertificateExtensions.Add(notCAExt);
-                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
                         attRequest.CertificateExtensions.Add(aikCertSanExt);
                         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                        using (X509Certificate2 publicOnly = attRequest.Create(
-                            rootCert,
-                            notBefore,
-                            notAfter,
-                            serial))
+                        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
                         {
                             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                         }
@@ -156,7 +151,7 @@ public class Tpm : Fido2Tests.Attestation
                         curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]).Reverse().ToArray();
                         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL); // should this be big endian?
 
-                        var pubArea = CreatePubArea(
+                        var pubArea = PubAreaHelper.CreatePubArea(
                             TpmAlg.TPM_ALG_ECC, // Type
                             tpmAlg, // Alg
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -180,7 +175,7 @@ public class Tpm : Fido2Tests.Attestation
 
                         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-                        var certInfo = CreateCertInfo(
+                        var certInfo = CertInfoHelper.CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -219,25 +214,21 @@ public class Tpm : Fido2Tests.Attestation
                         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
                         attRequest.CertificateExtensions.Add(notCAExt);
-                        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+                        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
                         attRequest.CertificateExtensions.Add(aikCertSanExt);
                         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
                         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                        using (X509Certificate2 publicOnly = attRequest.Create(
-                            rootCert,
-                            notBefore,
-                            notAfter,
-                            serial))
+                        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
                         {
                             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
                         }
 
-                        var X5c = new CborArray {
-                                attestnCert.RawData,
-                                rootCert.RawData
-                            };
+                        var x5c = new CborArray {
+                            attestnCert.RawData,
+                            rootCert.RawData
+                        };
 
                         var rsaParams = rsaAtt.ExportParameters(true);
 
@@ -246,7 +237,7 @@ public class Tpm : Fido2Tests.Attestation
                         unique = rsaParams.Modulus;
                         exponent = rsaParams.Exponent;
 
-                        var pubArea = CreatePubArea(
+                        var pubArea = PubAreaHelper.CreatePubArea(
                             TpmAlg.TPM_ALG_RSA, // Type
                             tpmAlg, // Alg
                             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -271,7 +262,7 @@ public class Tpm : Fido2Tests.Attestation
                         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-                        var certInfo = CreateCertInfo(
+                        var certInfo = CertInfoHelper.CreateCertInfo(
                             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
                             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
                             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -290,7 +281,7 @@ public class Tpm : Fido2Tests.Attestation
                         _attestationObject.Set("attStmt", new CborMap {
                             { "ver", "2.0" },
                             { "alg", alg },
-                            { "x5c", X5c },
+                            { "x5c", x5c },
                             { "sig", signature },
                             { "certInfo", certInfo },
                             { "pubArea", pubArea }
@@ -314,7 +305,7 @@ public class Tpm : Fido2Tests.Attestation
             Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
             _attestationObject = new CborMap { { "fmt", "tpm" } };
-        });
+        }
     }
 
     [Fact]
@@ -335,7 +326,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] asnEncodedSAN = TpmSanEncoder.Encode(
             manufacturer: "id:FFFFF1D0",
@@ -350,16 +341,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -371,7 +358,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -396,7 +383,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm1bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm1bName = Concat(tpm1bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -415,7 +402,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -455,22 +442,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -482,7 +465,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -506,7 +489,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -525,7 +508,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", CborNull.Instance },
             { "certInfo", certInfo },
             { "pubArea", pubArea },
@@ -553,22 +536,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -580,7 +559,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -604,7 +583,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -623,7 +602,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", "strawberries" },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -651,22 +630,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -678,7 +653,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -702,7 +677,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -721,7 +696,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", Array.Empty<byte>() },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -756,22 +731,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -783,7 +754,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -807,7 +778,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -826,7 +797,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "3.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -855,22 +826,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -882,7 +849,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -907,7 +874,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -926,7 +893,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo},
             { "pubArea", CborNull.Instance },
@@ -954,22 +921,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -981,7 +944,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1005,7 +968,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1024,7 +987,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", "banana" }
@@ -1052,22 +1015,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1079,7 +1038,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1103,7 +1062,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1122,7 +1081,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", Array.Empty<byte>() }
@@ -1150,22 +1109,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1199,7 +1154,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1218,7 +1173,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1246,22 +1201,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1273,7 +1224,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1299,7 +1250,7 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1318,7 +1269,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1346,17 +1297,13 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
@@ -1373,7 +1320,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1397,7 +1344,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1444,22 +1391,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1471,7 +1414,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1495,7 +1438,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1514,7 +1457,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1542,33 +1485,29 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
 
-        var ecparams = ecdsaAtt.ExportParameters(true);
+        var ecParams = ecdsaAtt.ExportParameters(true);
 
         var cpk = new CborMap {
             { COSE.KeyCommonParameter.KeyType, type },
             { COSE.KeyCommonParameter.Alg, alg },
-            { COSE.KeyTypeParameter.X, ecparams.Q.X },
-            { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+            { COSE.KeyTypeParameter.X, ecParams.Q.X },
+            { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
             { COSE.KeyTypeParameter.Crv, curve }
         };
 
@@ -1586,7 +1525,7 @@ public class Tpm : Fido2Tests.Attestation
         curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]).Reverse().ToArray();
         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_ECC, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1609,7 +1548,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1628,7 +1567,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo},
             { "pubArea", pubArea }
@@ -1656,17 +1595,13 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
@@ -1676,13 +1611,13 @@ public class Tpm : Fido2Tests.Attestation
             rootCert.RawData
         };
 
-        var ecparams = ecdsaAtt.ExportParameters(true);
+        var ecParams = ecdsaAtt.ExportParameters(true);
 
         var cpk = new CborMap {
             { COSE.KeyCommonParameter.KeyType, type },
             { COSE.KeyCommonParameter.Alg, alg },
-            { COSE.KeyTypeParameter.X, ecparams.Q.X },
-            { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+            { COSE.KeyTypeParameter.X, ecParams.Q.X },
+            { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
             { COSE.KeyTypeParameter.Crv, curve }
         };
 
@@ -1700,7 +1635,7 @@ public class Tpm : Fido2Tests.Attestation
         curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]).Reverse().ToArray();
         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_ECC, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1724,7 +1659,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1771,33 +1706,29 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
 
-        var ecparams = ecdsaAtt.ExportParameters(true);
+        var ecParams = ecdsaAtt.ExportParameters(true);
 
         var cpk = new CborMap {
             { COSE.KeyCommonParameter.KeyType, type },
             { COSE.KeyCommonParameter.Alg, alg },
-            { COSE.KeyTypeParameter.X, ecparams.Q.X },
-            { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+            { COSE.KeyTypeParameter.X, ecParams.Q.X },
+            { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
             { COSE.KeyTypeParameter.Crv, curve }
         };
 
@@ -1815,7 +1746,7 @@ public class Tpm : Fido2Tests.Attestation
         curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[2]).Reverse().ToArray();
         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_ECC, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1839,7 +1770,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1858,7 +1789,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -1886,22 +1817,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -1913,7 +1840,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -1937,7 +1864,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -1956,7 +1883,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", CborNull.Instance },
             { "pubArea", pubArea },
@@ -1984,22 +1911,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2011,7 +1934,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2035,7 +1958,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2054,7 +1977,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", "tomato" },
             { "pubArea", pubArea }
@@ -2089,22 +2012,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2116,7 +2035,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2140,7 +2059,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2159,7 +2078,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", Array.Empty<byte>() },
             { "pubArea", pubArea }
@@ -2187,22 +2106,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2214,7 +2129,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2238,7 +2153,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }, // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2257,7 +2172,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2285,22 +2200,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2312,7 +2223,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2336,7 +2247,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }, // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2355,7 +2266,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2383,22 +2294,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2410,7 +2317,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2434,7 +2341,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2453,7 +2360,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea },
@@ -2481,22 +2388,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2508,7 +2411,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2532,7 +2435,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0x00, 0x04 }, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2551,7 +2454,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2579,22 +2482,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2606,7 +2505,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2630,7 +2529,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0x00, 0x00 }, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2649,7 +2548,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2677,22 +2576,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2704,7 +2599,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2733,7 +2628,7 @@ public class Tpm : Fido2Tests.Attestation
             .Concat(hashedPubArea)
             .Concat(new byte[] { 0x00 });
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2752,7 +2647,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2780,22 +2675,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2807,7 +2698,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2831,7 +2722,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0x00, 0x10 }, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2850,7 +2741,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2878,22 +2769,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -2905,7 +2792,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -2929,7 +2816,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, new byte[] { 0xff, 0xff }, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -2948,7 +2835,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -2976,22 +2863,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3003,7 +2886,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3027,7 +2910,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3046,7 +2929,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", CborNull.Instance },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3074,22 +2957,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3101,7 +2980,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3125,7 +3004,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3144,7 +3023,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", "kiwi" },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3172,22 +3051,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3199,7 +3074,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3223,7 +3098,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3242,7 +3117,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", COSE.Algorithm.RS1 },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3270,22 +3145,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3297,7 +3168,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3324,7 +3195,7 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3343,7 +3214,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -3371,22 +3242,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3398,7 +3265,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3422,7 +3289,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3469,17 +3336,13 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
@@ -3496,7 +3359,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3520,7 +3383,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3567,22 +3430,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3594,7 +3453,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3618,7 +3477,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3665,22 +3524,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3692,7 +3547,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3716,7 +3571,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3763,17 +3618,13 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
@@ -3790,7 +3641,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3814,7 +3665,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3862,22 +3713,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3889,7 +3736,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -3913,7 +3760,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -3960,22 +3807,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -3987,7 +3830,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4011,7 +3854,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4058,22 +3901,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4085,7 +3924,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4109,7 +3948,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4129,7 +3968,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4158,17 +3997,13 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
@@ -4176,7 +4011,7 @@ public class Tpm : Fido2Tests.Attestation
         var rawAttestnCert = attestnCert.RawData;
         rawAttestnCert[12] = 0x41;
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             rawAttestnCert,
             rootCert.RawData
         };
@@ -4188,7 +4023,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4212,7 +4047,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4231,7 +4066,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea },
@@ -4270,22 +4105,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4297,7 +4128,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4321,7 +4152,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4340,7 +4171,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4368,22 +4199,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         // attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4395,7 +4222,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4421,7 +4248,7 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4440,7 +4267,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4468,7 +4295,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var aikCertSanExt = new X509Extension("2.5.29.17", Array.Empty<byte>(), false);
 
@@ -4477,16 +4304,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4498,7 +4321,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4522,7 +4345,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4541,7 +4364,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4569,7 +4392,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x04, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x02, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4579,16 +4402,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4600,7 +4419,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4624,7 +4443,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4643,7 +4462,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4671,7 +4490,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x05, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4681,16 +4500,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4702,7 +4517,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4726,7 +4541,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4745,7 +4560,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -4773,7 +4588,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x30, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x06, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4783,16 +4598,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4804,7 +4615,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4828,7 +4639,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4847,7 +4658,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo},
             { "pubArea", pubArea }
@@ -4875,7 +4686,7 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         var asnEncodedSAN = new byte[] { 0x30, 0x53, 0xA4, 0x51, 0x30, 0x4F, 0x31, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x01, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x46, 0x46, 0x46, 0x46, 0x31, 0x44, 0x32, 0x30, 0x1F, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x02, 0x0C, 0x16, 0x46, 0x49, 0x44, 0x4F, 0x32, 0x2D, 0x4E, 0x45, 0x54, 0x2D, 0x4C, 0x49, 0x42, 0x2D, 0x54, 0x45, 0x53, 0x54, 0x2D, 0x54, 0x50, 0x4D, 0x30, 0x14, 0x06, 0x05, 0x67, 0x81, 0x05, 0x02, 0x03, 0x0C, 0x0B, 0x69, 0x64, 0x3A, 0x46, 0x31, 0x44, 0x30, 0x30, 0x30, 0x30, 0x32 };
         var aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -4886,16 +4697,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -4907,7 +4714,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -4931,7 +4738,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -4950,7 +4757,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature},
             { "certInfo", certInfo},
             { "pubArea", pubArea},
@@ -4978,23 +4785,19 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
 
         //attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -5006,7 +4809,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -5030,7 +4833,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -5049,7 +4852,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5077,22 +4880,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(caExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -5104,7 +4903,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -5128,7 +4927,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -5147,7 +4946,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5181,19 +4980,15 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
-                    attestnCert.RawData,
-                    rootCert.RawData
-                };
+        var x5c = new CborArray {
+            attestnCert.RawData,
+            rootCert.RawData
+        };
 
         var rsaParams = rsaAtt.ExportParameters(true);
 
@@ -5202,7 +4997,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -5226,7 +5021,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -5245,7 +5040,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5287,7 +5082,7 @@ public class Tpm : Fido2Tests.Attestation
         attRequest.CertificateExtensions.Add(notCAExt);
 
         var asnEncodedAaguid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
-        var idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaguid, asnEncodedAaguid, false);
+        var idFidoGenCeAaguidExt = new X509Extension(oidIdFidoGenCeAaGuid, asnEncodedAaguid, false);
 
         attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
@@ -5295,16 +5090,12 @@ public class Tpm : Fido2Tests.Attestation
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -5316,7 +5107,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -5340,7 +5131,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -5359,7 +5150,7 @@ public class Tpm : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap {
             { "ver", "2.0" },
             { "alg", (int)alg },
-            { "x5c", X5c },
+            { "x5c", x5c },
             { "sig", signature },
             { "certInfo", certInfo },
             { "pubArea", pubArea }
@@ -5387,22 +5178,18 @@ public class Tpm : Fido2Tests.Attestation
         var attRequest = new CertificateRequest(attDN, rsaAtt, HashAlgorithmName.SHA256, padding);
 
         attRequest.CertificateExtensions.Add(notCAExt);
-        attRequest.CertificateExtensions.Add(idFidoGenCeAaguidExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
         attRequest.CertificateExtensions.Add(aikCertSanExt);
         attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
 
         byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-        using (X509Certificate2 publicOnly = attRequest.Create(
-            rootCert,
-            notBefore,
-            notAfter,
-            serial))
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
         {
             attestnCert = publicOnly.CopyWithPrivateKey(rsaAtt);
         }
 
-        var X5c = new CborArray {
+        var x5c = new CborArray {
             attestnCert.RawData,
             rootCert.RawData
         };
@@ -5414,7 +5201,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_RSA, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -5438,7 +5225,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = Concat(tpm2bNameLen, tpmAlg, hashedPubArea);
 
-        var certInfo = CreateCertInfo(
+        var certInfo = CertInfoHelper.CreateCertInfo(
             new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
             new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
             new byte[] { 0x00, 0x01, 0x00 }, // QualifiedSigner
@@ -5491,7 +5278,7 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
+        var pubArea = PubAreaHelper.CreatePubArea(
             TpmAlg.TPM_ALG_KEYEDHASH, // Type
             tpmAlg, // Alg
             new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
@@ -5518,18 +5305,18 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
 
-        var pubArea = CreatePubArea(
-        TpmAlg.TPM_ALG_SYMCIPHER, // Type
-        tpmAlg, // Alg
-        new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
-        new byte[] { 0x00 }, // Policy
-        new byte[] { 0x00, 0x10 }, // Symmetric
-        new byte[] { 0x00, 0x10 }, // Scheme
-        new byte[] { 0x80, 0x00 }, // KeyBits
-        exponent, // Exponent
-        curveId, // CurveID
-        kdf, // KDF
-        unique // Unique
+        var pubArea = PubAreaHelper.CreatePubArea(
+            TpmAlg.TPM_ALG_SYMCIPHER, // Type
+            tpmAlg, // Alg
+            new byte[] { 0x00, 0x00, 0x00, 0x00 }, // Attributes
+            new byte[] { 0x00 }, // Policy
+            new byte[] { 0x00, 0x10 }, // Symmetric
+            new byte[] { 0x00, 0x10 }, // Scheme
+            new byte[] { 0x80, 0x00 }, // KeyBits
+            exponent, // Exponent
+            curveId, // CurveID
+            kdf, // KDF
+            unique // Unique
         );
 
         var ex = Assert.Throws<Fido2VerificationException>(() => new PubArea(pubArea));
@@ -5542,82 +5329,6 @@ public class Tpm : Fido2Tests.Attestation
         var pubArea = Convert.FromHexString("0001000000000000000100001000108000010001000100b181b7dac685f3df1b0a24042b6e03f55a1483499701e5d6906dc5d4bdcce496e76268ec77eeef950e4638e53c61af0230cbcaa2ea6c5d1ed640f72854765e7fbab7206242ca8ced985b4fa19be29f69abd6f73248ee0fe9c8ee427799a1b745e32211099a8a087fb636da59fb3b5e34c0d610b6342c6086c06dad0bb71439c257b99c09593ff4ab8a4046e634920f04e2297b9aa9c6ae759035af5840e497112c3949077ec7879c2108d751e9220eff6cd974db209c91489d337208775018a1a402301137f724f21ec5a239f708fd4514582bae96047c0544c7da48cb1c876cf37c1dcc6509fa22976e176a68d6f2afe67efe18e9fe8a4d891cd167eba2da0542");
         var ex = Assert.Throws<Fido2VerificationException>(() => new PubArea(pubArea));
         Assert.Equal("Leftover bytes decoding pubArea", ex.Message);
-    }
-
-    internal static byte[] CreatePubArea(
-        TpmAlg type, 
-        ReadOnlySpan<byte> alg, 
-        ReadOnlySpan<byte> attributes, 
-        ReadOnlySpan<byte> policy,
-        ReadOnlySpan<byte> symmetric,
-        ReadOnlySpan<byte> scheme,
-        ReadOnlySpan<byte> keyBits, 
-        ReadOnlySpan<byte> exponent,
-        ReadOnlySpan<byte> curveID,
-        ReadOnlySpan<byte> kdf, 
-        ReadOnlySpan<byte> unique = default)
-    {
-        var raw = new MemoryStream();
-
-        if (type is TpmAlg.TPM_ALG_ECC)
-        {
-            raw.Write(type.ToUInt16BigEndianBytes());
-            raw.Write(alg);
-            raw.Write(attributes);
-            raw.Write(GetUInt16BigEndianBytes(policy.Length));
-            raw.Write(policy);
-            raw.Write(symmetric);
-            raw.Write(scheme);
-            raw.Write(curveID);
-            raw.Write(kdf);
-            raw.Write(unique);
-        }
-        else
-        {
-            raw.Write(type.ToUInt16BigEndianBytes());
-            raw.Write(alg);
-            raw.Write(attributes);
-            raw.Write(GetUInt16BigEndianBytes(policy.Length));
-            raw.Write(policy);
-            raw.Write(symmetric);
-            raw.Write(scheme);
-            raw.Write(keyBits);
-            raw.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
-            raw.Write(GetUInt16BigEndianBytes(unique.Length));
-            raw.Write(unique);
-        }
-
-        return raw.ToArray();
-    }
-
-    internal static byte[] CreateCertInfo(
-        ReadOnlySpan<byte> magic,
-        ReadOnlySpan<byte> type,
-        ReadOnlySpan<byte> QualifiedSigner,
-        ReadOnlySpan<byte> extraData,
-        ReadOnlySpan<byte> clock,
-        ReadOnlySpan<byte> resetCount,
-        ReadOnlySpan<byte> restartCount,
-        ReadOnlySpan<byte> safe,
-        ReadOnlySpan<byte> firmwareRevision,
-        ReadOnlySpan<byte> tPM2BName, 
-        ReadOnlySpan<byte> attestedQualifiedNameBuffer)
-    {
-        var stream = new MemoryStream();
-
-        stream.Write(magic);
-        stream.Write(type);
-        stream.Write(QualifiedSigner);
-        stream.Write(extraData);
-        stream.Write(clock);
-        stream.Write(resetCount);
-        stream.Write(restartCount);
-        stream.Write(safe);
-        stream.Write(firmwareRevision);
-        stream.Write(tPM2BName);
-        stream.Write(attestedQualifiedNameBuffer);
-
-        return stream.ToArray();
     }
 
     internal static byte[] GetUInt16BigEndianBytes(int value)

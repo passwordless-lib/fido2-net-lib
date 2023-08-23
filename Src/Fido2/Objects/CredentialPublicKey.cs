@@ -82,7 +82,7 @@ public sealed class CredentialPublicKey
                 }
 
             case COSE.KeyType.RSA:
-                using (RSA rsa = CreateRsa())
+                using (RSA rsa = CreateRSA())
                 {
                     return rsa.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
                 }
@@ -93,7 +93,7 @@ public sealed class CredentialPublicKey
         throw new InvalidOperationException($"Missing or unknown kty {_type}");
     }
 
-    internal RSA CreateRsa()
+    internal RSA CreateRSA()
     {
         if (_type != COSE.KeyType.RSA)
         {
@@ -129,9 +129,9 @@ public sealed class CredentialPublicKey
         switch ((_alg, crv))
         {
             case (COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K):
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) // see https://github.com/dotnet/runtime/issues/47770
+                if (OperatingSystem.IsMacOS()) // see https://github.com/dotnet/runtime/issues/47770
                 {
-                    throw new PlatformNotSupportedException($"No support currently for secP256k1 on macOS");
+                    throw new PlatformNotSupportedException("The secP256k1 curve is not supported on macOS");
                 }
 
                 curve = ECCurve.CreateFromFriendlyName("secP256k1");

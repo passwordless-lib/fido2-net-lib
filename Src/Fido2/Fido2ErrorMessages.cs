@@ -65,4 +65,9 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidFidoU2fAttestationSignature     = "Invalid fido-u2f attestation signature";
     public static readonly string InvalidPackedAttestationSignature      = "Invalid packed attestation signature";
     public static readonly string InvalidTpmAttestationSignature         = "Invalid TPM attestation signature";
+
+
+    public static readonly string InvalidSafetyNetVersion  = "Invalid version in SafetyNet data";
+    public static readonly string InvalidSafetyNetResponse = "Invalid response in SafetyNet data";
+    public static readonly string MalformedSafetyNetJwt    = "SafetyNet response JWT is malformed";
 }

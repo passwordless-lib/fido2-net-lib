@@ -18,7 +18,7 @@ public class CborTests
         Assert.Equal(1,   ((CborArray)attStmt["x5c"]).Length);
         Assert.Equal(70,  ((CborByteString)attStmt["sig"]).Value.Length);
 
-        Assert.True(data.AsSpan().SequenceEqual(@object.Encode()));
+        Assert.Equal(data, @object.Encode());
     }
 
     [Fact]

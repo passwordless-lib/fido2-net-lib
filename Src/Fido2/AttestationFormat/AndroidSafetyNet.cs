@@ -29,26 +29,31 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         // 2. Verify that response is a valid SafetyNet response of version ver
         if (!request.TryGetVer(out string? ver))
         {
-            throw new Fido2VerificationException("Invalid version in SafetyNet data");
+            throw new Fido2VerificationException(Fido2ErrorMessages.InvalidSafetyNetVersion);
         }
 
-        if (!(request.AttStmt["response"] is CborByteString { Length: > 0 }))
-            throw new Fido2VerificationException("Invalid response in SafetyNet data");
+        if (!(request.AttStmt["response"] is CborByteString { Length: > 0 } responseByteString))
+            throw new Fido2VerificationException(Fido2ErrorMessages.InvalidSafetyNetResponse);
 
-        var response = (byte[])request.AttStmt["response"]!;
-        var responseJWT = Encoding.UTF8.GetString(response);
+        var responseJwt = Encoding.UTF8.GetString(responseByteString);
 
-        if (string.IsNullOrWhiteSpace(responseJWT))
-            throw new Fido2VerificationException("SafetyNet response null or whitespace");
+        var jwtComponents = responseJwt.Split('.');
 
-        var jwtParts = responseJWT.Split('.');
+        if (jwtComponents.Length != 3)
+            throw new Fido2VerificationException(Fido2ErrorMessages.MalformedSafetyNetJwt);
 
-        if (jwtParts.Length != 3)
-            throw new Fido2VerificationException("SafetyNet response JWT does not have the 3 expected components");
+        byte[] jwtHeaderBytes;
 
-        string jwtHeaderString = jwtParts[0];
+        try
+        {
+            jwtHeaderBytes = Base64Url.Decode(jwtComponents[0]);
+        }
+        catch (FormatException)
+        {
+            throw new Fido2VerificationException(Fido2ErrorMessages.MalformedSafetyNetJwt);
+        }
 
-        using var jwtHeaderJsonDoc = JsonDocument.Parse(Base64Url.Decode(jwtHeaderString));
+        using var jwtHeaderJsonDoc = JsonDocument.Parse(jwtHeaderBytes);
         var jwtHeaderJson = jwtHeaderJsonDoc.RootElement;
 
         if (!jwtHeaderJson.TryGetProperty("x5c", out var x5cEl))
@@ -97,7 +102,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         SecurityToken validatedToken;
         try
         { 
-            tokenHandler.ValidateToken(responseJWT, validationParameters, out validatedToken);
+            tokenHandler.ValidateToken(responseJwt, validationParameters, out validatedToken);
         }
         catch (SecurityTokenException ex)
         {

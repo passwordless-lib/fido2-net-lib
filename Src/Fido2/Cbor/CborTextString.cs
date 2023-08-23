@@ -15,6 +15,8 @@ public sealed class CborTextString : CborObject
 
     public string Value { get; }
 
+    public static implicit operator string(CborTextString value) => value.Value;
+
     public override bool Equals(object? obj)
     {
         return obj is CborTextString other && other.Value.Equals(Value, StringComparison.Ordinal);

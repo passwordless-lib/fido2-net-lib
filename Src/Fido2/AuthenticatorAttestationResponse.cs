@@ -280,20 +280,20 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         public AuthenticatorData AuthData { get; }
 
-        internal static ParsedAttestationObject FromCbor(CborObject cbor)
+        internal static ParsedAttestationObject FromCbor(CborMap cbor)
         {
             if (!(
-                cbor["fmt"] is { Type: CborType.TextString } fmt &&
-                cbor["attStmt"] is { Type: CborType.Map } attStmt &&
-                cbor["authData"] is { Type: CborType.ByteString } authData))
+                cbor["fmt"] is CborTextString fmt &&
+                cbor["attStmt"] is CborMap attStmt &&
+                cbor["authData"] is CborByteString authData))
             {
                 throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject);
             }
 
             return new ParsedAttestationObject(
-                fmt      : (string)fmt,
-                attStmt  : (CborMap)attStmt,
-                authData : AuthenticatorData.Parse((byte[])authData)
+                fmt      : fmt,
+                attStmt  : attStmt,
+                authData : AuthenticatorData.Parse(authData)
             );
         }
     }

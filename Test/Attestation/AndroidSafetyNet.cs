@@ -258,19 +258,22 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(" "u8.ToArray()));
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SafetyNet response null or whitespace", ex.Result.Message);
+        Assert.Same(Fido2ErrorMessages.MalformedSafetyNetJwt, ex.Result.Message);
     }
 
-    [Fact]
-    public void TestAndroidSafetyNetMalformedResponseJWT()
+    [Theory]
+    [InlineData(".")]
+    [InlineData("x.x")]
+    [InlineData("x.x.")]
+    public void TestAndroidSafetyNetMalformedResponseJWT(string text)
     {
         var response = (byte[])_attestationObject["attStmt"]["response"];
         var responseJWT = Encoding.UTF8.GetString(response);
-        var jwtParts = responseJWT.Split('.');
+
         var attStmt = (CborMap)_attestationObject["attStmt"];
-        attStmt.Set("response", new CborByteString(Encoding.UTF8.GetBytes(jwtParts.First())));
+        attStmt.Set("response", new CborByteString(Encoding.UTF8.GetBytes(text)));
         var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SafetyNet response JWT does not have the 3 expected components", ex.Result.Message);
+        Assert.Same(Fido2ErrorMessages.MalformedSafetyNetJwt, ex.Result.Message);
     }
 
     [Fact]
@@ -381,13 +384,13 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -459,14 +462,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -618,14 +621,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -703,14 +706,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -871,14 +874,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 
@@ -959,14 +962,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
 
-                var ecparams = ecdsaAtt.ExportParameters(true);
+                var ecParams = ecdsaAtt.ExportParameters(true);
 
                 var cpk = new CborMap
                 {
                     { COSE.KeyCommonParameter.KeyType, type },
                     { COSE.KeyCommonParameter.Alg, alg },
-                    { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                    { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                    { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                    { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                     { COSE.KeyTypeParameter.Crv, curve }
                 };
 

@@ -186,7 +186,7 @@ public static class COSE
         /// </summary>
         Ed448 = 7,
         /// <summary> 
-        /// secp256k1 (pending IANA - requested assignment 8)
+        /// secp256k1
         /// </summary>
         P256K = 8
     }

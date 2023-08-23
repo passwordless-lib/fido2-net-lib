@@ -51,13 +51,13 @@ public class Apple : Fido2Tests.Attestation
                 attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
             }
 
-            var ecparams = ecdsaAtt.ExportParameters(true);
+            var ecParams = ecdsaAtt.ExportParameters(true);
 
             var cpk = new CborMap {
                 { COSE.KeyCommonParameter.KeyType, type },
                 { COSE.KeyCommonParameter.Alg, alg },
-                { COSE.KeyTypeParameter.X, ecparams.Q.X },
-                { COSE.KeyTypeParameter.Y, ecparams.Q.Y },
+                { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
                 { COSE.KeyTypeParameter.Crv, crv }
             };
 
@@ -198,7 +198,7 @@ public class Apple : Fido2Tests.Attestation
         var cpkBytes = new byte[] { 0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21, 0x58, 0x20, 0x79, 0xfe, 0x59, 0x08, 0xbb, 0x51, 0x29, 0xc8, 0x09, 0x38, 0xb7, 0x54, 0xc0, 0x4d, 0x2b, 0x34, 0x0e, 0xfa, 0x66, 0x15, 0xb9, 0x87, 0x69, 0x8b, 0xf5, 0x9d, 0xa4, 0xe5, 0x3e, 0xa3, 0xe6, 0xfe, 0x22, 0x58, 0x20, 0xfb, 0x03, 0xda, 0xa1, 0x27, 0x0d, 0x58, 0x04, 0xe8, 0xab, 0x61, 0xc1, 0x5a, 0xac, 0xa2, 0x43, 0x5c, 0x7d, 0xbf, 0x36, 0x9d, 0x71, 0xca, 0x15, 0xc5, 0x23, 0xb0, 0x00, 0x4a, 0x1b, 0x75, 0xb7 };
         _credentialPublicKey = new CredentialPublicKey(cpkBytes);
 
-        var authData = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, _exts).ToByteArray();
+        var authData = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, GetExtensions()).ToByteArray();
         _attestationObject.Set("authData", new CborByteString(authData));
         var clientData = new
         {
@@ -246,7 +246,7 @@ public class Apple : Fido2Tests.Attestation
             ErrorMessage = "",
             PubKeyCredParams = new List<PubKeyCredParam>()
             {
-                new PubKeyCredParam(COSE.Algorithm.ES256)
+                PubKeyCredParam.ES256
             },
             Rp = new PublicKeyCredentialRpEntity("https://www.passwordless.dev", "6cc3c9e7967a.ngrok.io", ""),
             Status = "ok",

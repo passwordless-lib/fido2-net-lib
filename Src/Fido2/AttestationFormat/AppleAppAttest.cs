@@ -13,7 +13,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
 {
     public static byte[] GetAppleAppIdFromCredCertExtValue(X509ExtensionCollection exts)
     {
-        var appleExtension = exts.FirstOrDefault(static e => e.Oid!.Value is "1.2.840.113635.100.8.5");
+        var appleExtension = exts.FirstOrDefault(static e => e.Oid?.Value is "1.2.840.113635.100.8.5");
 
         if (appleExtension is null || appleExtension.RawData is null)
             throw new Fido2VerificationException("Extension with OID 1.2.840.113635.100.8.5 not found on Apple AppAttest credCert");
