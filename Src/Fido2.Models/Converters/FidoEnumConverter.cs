@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 namespace Fido2NetLib;
 
 public sealed class FidoEnumConverter<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] T> : JsonConverter<T>
-    where T: struct, Enum
+    where T : struct, Enum
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

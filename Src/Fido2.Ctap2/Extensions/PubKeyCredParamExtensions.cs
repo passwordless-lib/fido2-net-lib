@@ -21,11 +21,11 @@ public static class AuthenticatorTransportExtensions
     {
         return value switch
         {
-            AuthenticatorTransport.Usb      => "usb",
-            AuthenticatorTransport.Nfc      => "nfc",
-            AuthenticatorTransport.Ble      => "ble",
+            AuthenticatorTransport.Usb => "usb",
+            AuthenticatorTransport.Nfc => "nfc",
+            AuthenticatorTransport.Ble => "ble",
             AuthenticatorTransport.Internal => "internal",
-            _                               => value.ToString()
+            _ => value.ToString()
         };
     }
 }

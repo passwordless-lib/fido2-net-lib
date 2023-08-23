@@ -8,11 +8,11 @@ namespace Fido2NetLib.Objects;
 [JsonConverter(typeof(AttestationTypeConverter))]
 public sealed class AttestationType : IEquatable<AttestationType>
 {
-    public static readonly AttestationType None  = new ("none");
-    public static readonly AttestationType Basic = new ("basic");
-    public static readonly AttestationType Self  = new ("self");
-    public static readonly AttestationType AttCa = new ("attca");
-    public static readonly AttestationType ECDAA = new ("ecdaa");
+    public static readonly AttestationType None = new("none");
+    public static readonly AttestationType Basic = new("basic");
+    public static readonly AttestationType Self = new("self");
+    public static readonly AttestationType AttCa = new("attca");
+    public static readonly AttestationType ECDAA = new("ecdaa");
 
     private readonly string _value;
 
@@ -49,7 +49,7 @@ public sealed class AttestationType : IEquatable<AttestationType>
             return true;
 
         if (other is null)
-            return false;    
+            return false;
 
         return string.Equals(Value, other.Value, StringComparison.Ordinal);
     }
@@ -62,12 +62,12 @@ public sealed class AttestationType : IEquatable<AttestationType>
     {
         return value switch
         {
-            "none"  => None,
+            "none" => None,
             "basic" => Basic,
-            "self"  => Self,
+            "self" => Self,
             "attca" => AttCa,
             "ecdaa" => ECDAA,
-            _       => new AttestationType(value)
+            _ => new AttestationType(value)
         };
     }
 }

@@ -50,7 +50,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// </summary>
     [JsonPropertyName("attestation")]
     public AttestationConveyancePreference Attestation { get; set; } = AttestationConveyancePreference.None;
-    
+
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the create() operation.
     /// </summary>
@@ -138,15 +138,15 @@ public sealed class PubKeyCredParam
     [JsonPropertyName("alg")]
     public COSE.Algorithm Alg { get; }
 
-    public static readonly PubKeyCredParam ES256   = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
-    public static readonly PubKeyCredParam ES384   = new(COSE.Algorithm.ES384);
-    public static readonly PubKeyCredParam ES512   = new(COSE.Algorithm.ES512);
-    public static readonly PubKeyCredParam RS256   = new(COSE.Algorithm.RS256); // Supported by windows hello
-    public static readonly PubKeyCredParam RS384   = new(COSE.Algorithm.RS384);
-    public static readonly PubKeyCredParam RS512   = new(COSE.Algorithm.RS512);
-    public static readonly PubKeyCredParam PS256   = new(COSE.Algorithm.PS256);
-    public static readonly PubKeyCredParam PS384   = new(COSE.Algorithm.PS384);
-    public static readonly PubKeyCredParam PS512   = new(COSE.Algorithm.PS512);
+    public static readonly PubKeyCredParam ES256 = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
+    public static readonly PubKeyCredParam ES384 = new(COSE.Algorithm.ES384);
+    public static readonly PubKeyCredParam ES512 = new(COSE.Algorithm.ES512);
+    public static readonly PubKeyCredParam RS256 = new(COSE.Algorithm.RS256); // Supported by windows hello
+    public static readonly PubKeyCredParam RS384 = new(COSE.Algorithm.RS384);
+    public static readonly PubKeyCredParam RS512 = new(COSE.Algorithm.RS512);
+    public static readonly PubKeyCredParam PS256 = new(COSE.Algorithm.PS256);
+    public static readonly PubKeyCredParam PS384 = new(COSE.Algorithm.PS384);
+    public static readonly PubKeyCredParam PS512 = new(COSE.Algorithm.PS512);
     public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
 }
 
@@ -225,7 +225,7 @@ public class AuthenticatorSelection
     /// </summary>
     [Obsolete("Use property ResidentKey.")]
     [JsonPropertyName("requireResidentKey")]
-    public bool RequireResidentKey 
+    public bool RequireResidentKey
     {
         get => _requireResidentKey;
         set

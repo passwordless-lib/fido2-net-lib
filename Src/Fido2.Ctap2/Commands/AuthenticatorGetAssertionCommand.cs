@@ -6,7 +6,7 @@ namespace Fido2NetLib.Ctap2;
 public sealed class AuthenticatorGetAssertionCommand : CtapCommand
 {
     public AuthenticatorGetAssertionCommand(
-        string rpId, 
+        string rpId,
         byte[] clientDataHash,
         PublicKeyCredentialDescriptor[] allowList,
         CborMap? extensions = null,

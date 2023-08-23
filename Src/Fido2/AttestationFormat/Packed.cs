@@ -73,7 +73,7 @@ internal sealed class Packed : AttestationVerifier
                 else
                 {
                     throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c cert found in packed attestation statement");
-                }                   
+                }
             }
 
             // The attestation certificate attestnCert MUST be the first element in the array.
@@ -116,7 +116,7 @@ internal sealed class Packed : AttestationVerifier
             byte u2fTransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
 
             // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
-            
+
             return (AttestationType.AttCa, trustPath);
         }
 

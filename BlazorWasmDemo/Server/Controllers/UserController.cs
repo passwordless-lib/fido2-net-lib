@@ -5,9 +5,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -213,16 +215,16 @@ public class UserController : ControllerBase
 
             var exts = new AuthenticationExtensionsClientInputs()
             {
-                    UserVerificationMethod = true,
-                    Extensions = true,
-                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                UserVerificationMethod = true,
+                Extensions = true,
+                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
             };
 
-        // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
-        var options = _fido2.GetAssertionOptions(
-            existingKeys,
-            userVerification ?? UserVerificationRequirement.Discouraged, 
-            exts);
+            // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
+            var options = _fido2.GetAssertionOptions(
+                existingKeys,
+                userVerification ?? UserVerificationRequirement.Discouraged,
+                exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             _pendingAssertions[new string(options.Challenge.Select(b => (char)b).ToArray())] = options;
@@ -300,7 +302,7 @@ public class UserController : ControllerBase
             var token = handler.CreateEncodedJwt(
                 HttpContext.Request.Host.Host,
                 HttpContext.Request.Headers.Referer,
-                new ClaimsIdentity(new Claim[]{new(ClaimTypes.Actor, Encoding.UTF8.GetString(creds.UserHandle))}),
+                new ClaimsIdentity(new Claim[] { new(ClaimTypes.Actor, Encoding.UTF8.GetString(creds.UserHandle)) }),
                 DateTime.Now.Subtract(TimeSpan.FromMinutes(1)),
                 DateTime.Now.AddDays(1),
                 DateTime.Now,

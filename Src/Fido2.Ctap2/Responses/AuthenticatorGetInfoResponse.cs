@@ -24,7 +24,7 @@ public sealed class AuthenticatorGetInfoResponse
     /// </summary>
     [CborMember(0x03)]
     public byte[] Aaguid { get; set; }
-    
+
     /// <summary>
     /// List of supported options.
     /// </summary>

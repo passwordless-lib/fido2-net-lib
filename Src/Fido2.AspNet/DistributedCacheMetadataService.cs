@@ -76,7 +76,8 @@ public class DistributedCacheMetadataService : IMetadataService
         var expiryTime = _systemClock.UtcNow.GetNextIncrement(_defaultMemoryCacheInterval);
 
         //Ensure that memory cache expiry time never exceeds the next update time from the service
-        if(nextUpdateTime.HasValue && expiryTime > nextUpdateTime.Value) expiryTime = nextUpdateTime.Value;
+        if (nextUpdateTime.HasValue && expiryTime > nextUpdateTime.Value)
+            expiryTime = nextUpdateTime.Value;
 
         return expiryTime;
     }
@@ -98,7 +99,7 @@ public class DistributedCacheMetadataService : IMetadataService
         {
             return await repository.GetBLOBAsync(cancellationToken);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Could not fetch metadata from {0}", repository.GetType().Name);
             return null;
@@ -113,7 +114,7 @@ public class DistributedCacheMetadataService : IMetadataService
             new DistributedCacheEntryOptions()
             {
                 AbsoluteExpiration = GetDistributedCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(payload))
-            }, 
+            },
             cancellationToken);
     }
 
@@ -165,7 +166,7 @@ public class DistributedCacheMetadataService : IMetadataService
         {
             var distributedCacheBlob = await GetDistributedCachedBlob(repository, cancellationToken);
 
-            if(distributedCacheBlob != null)
+            if (distributedCacheBlob != null)
             {
                 var nextUpdateTime = GetNextUpdateTimeFromPayload(distributedCacheBlob);
 

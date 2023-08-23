@@ -62,7 +62,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         }
 
         if (!x5cEl.TryDecodeArrayOfBase64EncodedBytes(out var x5cRawKeys))
-        {        
+        {
             throw new Fido2VerificationException("SafetyNet response JWT header has a malformed x5c value");
         }
 
@@ -101,7 +101,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         var tokenHandler = new JwtSecurityTokenHandler();
         SecurityToken validatedToken;
         try
-        { 
+        {
             tokenHandler.ValidateToken(responseJwt, validationParameters, out validatedToken);
         }
         catch (SecurityTokenException ex)
@@ -176,7 +176,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         // 6. Verify that the ctsProfileMatch attribute in the payload of response is true
         if (ctsProfileMatch is null)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response ctsProfileMatch missing");
-                    
+
         if (true != ctsProfileMatch)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response ctsProfileMatch false");
 

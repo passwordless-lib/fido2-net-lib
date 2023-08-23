@@ -43,7 +43,7 @@ internal enum MetadataAttestationType
     /// </summary>
     [EnumMember(Value = "anonca")]
     ATTESTATION_ANONCA = 0x3e0c,
-    
+
     [EnumMember(Value = "none")]
     ATTESTATION_NONE = 0x3e0b
 }

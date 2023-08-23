@@ -1,7 +1,9 @@
 ﻿using BlazorWasmDemo.Client;
 using BlazorWasmDemo.Client.Shared;
 using BlazorWasmDemo.Client.Shared.Toasts;
+
 using Fido2.BlazorWebAssembly;
+
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 

@@ -20,7 +20,7 @@ internal static class EcCurveExtensions
 
         else if (curve.Oid.Value.Equals(ECCurve.NamedCurves.nistP521.Oid.Value, StringComparison.Ordinal))
             return COSE.EllipticCurve.P521;
-        
+
         throw new Exception($"Invalid ECCurve. Was {curve.Oid}");
     }
 }

@@ -13,12 +13,12 @@ public sealed class AuthenticatorClientPinCommand : CtapCommand
         byte[]? newPinEnc = null,
         byte[]? pinHashEnc = null)
     {
-        
+
         PinProtocol = pinProtocol;
         SubCommand = subCommand;
         KeyAgreement = keyAgreement;
         PinAuth = pinAuth;
-        NewPinEnc = newPinEnc; 
+        NewPinEnc = newPinEnc;
         PinHashEnc = pinHashEnc;
     }
 
@@ -96,9 +96,9 @@ public sealed class AuthenticatorClientPinCommand : CtapCommand
 
 public enum AuthenticatorClientPinSubCommand
 {
-    GetRetries      = 0x01,
+    GetRetries = 0x01,
     GetKeyAgreement = 0x02,
-    SetPin          = 0x03,
-    ChangePin       = 0x04,
-    GetPinToken     = 0x05,
+    SetPin = 0x03,
+    ChangePin = 0x04,
+    GetPinToken = 0x05,
 }

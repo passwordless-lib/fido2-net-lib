@@ -3,7 +3,9 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+
 using Fido2.BlazorWebAssembly;
+
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 
@@ -14,7 +16,7 @@ public class UserService
     private const string _routeRegister = "credential";
     private const string _routeAssertionOpts = "assertion-options";
     private const string _routeLogin = "assertion";
-    
+
     private readonly JsonSerializerOptions _jsonOptions = new FidoBlazorSerializerContext().Options;
     private readonly HttpClient _httpClient;
     private readonly WebAuthn _webAuthn;
@@ -103,7 +105,7 @@ public class UserService
         {
             Console.WriteLine(e);
             var errorMessage = e.Message;
-            if(options.ExcludeCredentials?.Count > 0)
+            if (options.ExcludeCredentials?.Count > 0)
             {
                 errorMessage += " (You may have already registered this device)";
             }
