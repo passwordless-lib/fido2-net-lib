@@ -139,7 +139,7 @@ internal static class CryptoUtils
 
         // Create buffer to copy R into 
         Span<byte> p1363R = coefficientSize <= 64
-            ? (stackalloc byte[64]).Slice(0, coefficientSize)
+            ? stackalloc byte[coefficientSize]
             : new byte[coefficientSize];
 
         if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
