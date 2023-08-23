@@ -13,7 +13,7 @@ public class Base64UrlTest
         // Act
         var encodedString = Base64Url.Encode(data);
         var decodedBytes = Base64Url.Decode(encodedString);
-        
+
         // Assert
         Assert.Equal(data, decodedBytes);
 

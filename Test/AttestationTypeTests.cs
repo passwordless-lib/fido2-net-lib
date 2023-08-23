@@ -20,7 +20,7 @@ public class AttestationTypeTests
     [Fact]
     public void CanDeserialize()
     {
-        Assert.Same(AttestationType.None,  JsonSerializer.Deserialize<AttestationType>("\"none\""));
+        Assert.Same(AttestationType.None, JsonSerializer.Deserialize<AttestationType>("\"none\""));
         Assert.Same(AttestationType.ECDAA, JsonSerializer.Deserialize<AttestationType>("\"ecdaa\""));
     }
 }

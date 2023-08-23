@@ -310,7 +310,8 @@ public class Packed : Fido2Tests.Attestation
                     break;
                 case COSE.KeyType.OKP:
                     {
-                        var avr = new AssertionVerificationResult {
+                        var avr = new AssertionVerificationResult
+                        {
                             CredentialId = new byte[] { 0xf1, 0xd0 },
                             ErrorMessage = string.Empty,
                             Status = "ok",

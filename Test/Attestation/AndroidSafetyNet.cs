@@ -63,7 +63,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
             var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-            var claims = new List<Claim> 
+            var claims = new List<Claim>
             {
                 new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                 new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
@@ -93,7 +93,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             });
         }
     }
-    
+
     [Fact]
     public async void TestAndroidSafetyNet()
     {
@@ -298,7 +298,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         var jwtParts = Encoding.UTF8.GetString(response).Split('.');
         var jwtHeaderJSON = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(jwtParts.First())));
         jwtHeaderJSON.Remove("x5c");
-        jwtHeaderJSON.Add("x5c", JToken.FromObject(new List<string> {  }));
+        jwtHeaderJSON.Add("x5c", JToken.FromObject(new List<string> { }));
         jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwtHeaderJSON)));
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
@@ -314,7 +314,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         var jwtParts = Encoding.UTF8.GetString(response).Split('.');
         var jwtHeaderJSON = JObject.Parse(Encoding.UTF8.GetString(Base64Url.Decode(jwtParts.First())));
         jwtHeaderJSON.Remove("x5c");
-        jwtHeaderJSON.Add("x5c", JToken.FromObject(new List<string> { "RjFEMA=="}));
+        jwtHeaderJSON.Add("x5c", JToken.FromObject(new List<string> { "RjFEMA==" }));
         jwtParts[0] = Base64Url.Encode(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwtHeaderJSON)));
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
@@ -457,7 +457,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create( root, notBefore, notAfter, serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -474,7 +474,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 var x = (byte[])cpk[COSE.KeyTypeParameter.X];
-                var y =  (byte[])cpk[COSE.KeyTypeParameter.Y];
+                var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
 
                 _credentialPublicKey = new CredentialPublicKey(cpk);
 
@@ -1052,7 +1052,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 var x = (byte[])cpk[COSE.KeyTypeParameter.X];
-                var y =  (byte[])cpk[COSE.KeyTypeParameter.Y];
+                var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
 
                 _credentialPublicKey = new CredentialPublicKey(cpk);
 

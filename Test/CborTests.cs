@@ -10,13 +10,13 @@ public class CborTests
         var @object = (CborMap)CborObject.Decode(data);
 
         Assert.Equal("android-key", ((CborTextString)@object["fmt"]).Value);
-        Assert.Equal(158,           ((CborByteString)@object["authData"]).Value.Length);
+        Assert.Equal(158, ((CborByteString)@object["authData"]).Value.Length);
 
         var attStmt = (CborMap)@object["attStmt"];
 
-        Assert.Equal(-7,  ((CborInteger)attStmt["alg"]).Value);
-        Assert.Equal(1,   ((CborArray)attStmt["x5c"]).Length);
-        Assert.Equal(70,  ((CborByteString)attStmt["sig"]).Value.Length);
+        Assert.Equal(-7, ((CborInteger)attStmt["alg"]).Value);
+        Assert.Equal(1, ((CborArray)attStmt["x5c"]).Length);
+        Assert.Equal(70, ((CborByteString)attStmt["sig"]).Value.Length);
 
         Assert.Equal(data, @object.Encode());
     }
@@ -33,11 +33,11 @@ public class CborTests
 
         var keys = map.Keys.Select(k => ((CborInteger)k).Value);
 
-        Assert.Equal(2,    ((CborInteger)map[new CborInteger(1)]).Value);
-        Assert.Equal(-47,  ((CborInteger)map[new CborInteger(3)]).Value);
+        Assert.Equal(2, ((CborInteger)map[new CborInteger(1)]).Value);
+        Assert.Equal(-47, ((CborInteger)map[new CborInteger(3)]).Value);
         Assert.Equal("y6rAanAqDpv7VJqZVJWgUVG6jIQvURLOH9Ylf/+nyes=", Convert.ToBase64String(((CborByteString)map[new CborInteger(-2)]).Value));
         Assert.Equal("2++Vd74HG5uz9DNaSOeXHOhJKKQ8VVe0VykH5v8TZTc=", Convert.ToBase64String(((CborByteString)map[new CborInteger(-3)]).Value));
-        Assert.Equal(8,    ((CborInteger)map[new CborInteger(-1)]).Value);
+        Assert.Equal(8, ((CborInteger)map[new CborInteger(-1)]).Value);
 
         // Ensure we ignored the remaining data
 
