@@ -15,7 +15,7 @@ internal static class CertInfoHelper
         ReadOnlySpan<byte> tPM2BName,
         ReadOnlySpan<byte> attestedQualifiedNameBuffer)
     {
-        var stream = new MemoryStream();
+        using var stream = new MemoryStream();
 
         stream.Write(magic);
         stream.Write(type);

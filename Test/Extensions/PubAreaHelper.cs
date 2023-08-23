@@ -21,37 +21,37 @@ internal static class PubAreaHelper
         ReadOnlySpan<byte> kdf,
         ReadOnlySpan<byte> unique = default)
     {
-        var raw = new MemoryStream();
+        using var stream = new MemoryStream();
 
         if (type is TpmAlg.TPM_ALG_ECC)
         {
-            raw.Write(type.ToUInt16BigEndianBytes());
-            raw.Write(alg);
-            raw.Write(attributes);
-            raw.Write(GetUInt16BigEndianBytes(policy.Length));
-            raw.Write(policy);
-            raw.Write(symmetric);
-            raw.Write(scheme);
-            raw.Write(curveID);
-            raw.Write(kdf);
-            raw.Write(unique);
+            stream.Write(type.ToUInt16BigEndianBytes());
+            stream.Write(alg);
+            stream.Write(attributes);
+            stream.Write(GetUInt16BigEndianBytes(policy.Length));
+            stream.Write(policy);
+            stream.Write(symmetric);
+            stream.Write(scheme);
+            stream.Write(curveID);
+            stream.Write(kdf);
+            stream.Write(unique);
         }
         else
         {
-            raw.Write(type.ToUInt16BigEndianBytes());
-            raw.Write(alg);
-            raw.Write(attributes);
-            raw.Write(GetUInt16BigEndianBytes(policy.Length));
-            raw.Write(policy);
-            raw.Write(symmetric);
-            raw.Write(scheme);
-            raw.Write(keyBits);
-            raw.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
-            raw.Write(GetUInt16BigEndianBytes(unique.Length));
-            raw.Write(unique);
+            stream.Write(type.ToUInt16BigEndianBytes());
+            stream.Write(alg);
+            stream.Write(attributes);
+            stream.Write(GetUInt16BigEndianBytes(policy.Length));
+            stream.Write(policy);
+            stream.Write(symmetric);
+            stream.Write(scheme);
+            stream.Write(keyBits);
+            stream.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
+            stream.Write(GetUInt16BigEndianBytes(unique.Length));
+            stream.Write(unique);
         }
 
-        return raw.ToArray();
+        return stream.ToArray();
     }
 
     private static byte[] GetUInt16BigEndianBytes(int value)
