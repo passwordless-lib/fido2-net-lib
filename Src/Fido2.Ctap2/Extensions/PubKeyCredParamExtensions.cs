@@ -19,6 +19,7 @@ public static class AuthenticatorTransportExtensions
 {
     public static string Canonicalize(this AuthenticatorTransport value)
     {
+        #pragma warning disable format
         return value switch
         {
             AuthenticatorTransport.Usb      => "usb",
@@ -27,5 +28,6 @@ public static class AuthenticatorTransportExtensions
             AuthenticatorTransport.Internal => "internal",
             _                               => value.ToString()
         };
+        #pragma warning restore format
     }
 }

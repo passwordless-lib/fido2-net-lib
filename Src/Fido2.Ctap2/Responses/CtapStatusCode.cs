@@ -1,5 +1,6 @@
 ﻿namespace Fido2NetLib.Ctap2;
 
+#pragma warning disable format
 public enum CtapStatusCode
 {
     OK                              = 0x00, // Indicates successful response

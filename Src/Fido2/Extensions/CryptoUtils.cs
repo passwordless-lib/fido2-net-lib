@@ -13,6 +13,7 @@ internal static class CryptoUtils
 {
     public static byte[] HashData(HashAlgorithmName hashName, ReadOnlySpan<byte> data)
     {
+        #pragma warning disable format
         return hashName.Name switch
         {
             "SHA1"                                               => SHA1.HashData(data),
@@ -21,6 +22,7 @@ internal static class CryptoUtils
             "SHA512" or "HS512" or "RS512" or "ES512" or "PS512" => SHA512.HashData(data),
             _ => throw new ArgumentOutOfRangeException(nameof(hashName)),
         };
+        #pragma warning restore format
     }
 
     public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
