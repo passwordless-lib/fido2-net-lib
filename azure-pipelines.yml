@@ -90,7 +90,7 @@ jobs:
   - task: DotNetCoreCLI@2
     displayName: 'dotnet format'
     inputs:
-      command: custom'
+      command: custom
       custom: 'format'
       arguments: '--verify-no-changes --no-restore'
   - task: DotNetCoreCLI@2
@@ -151,6 +151,12 @@ jobs:
     inputs:
       command: restore
       projects: 'Test/Test.csproj'
+  - task: DotNetCoreCLI@2
+    displayName: 'dotnet format'
+    inputs:
+      command: custom
+      custom: 'format'
+      arguments: '--verify-no-changes --no-restore'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet build $(buildConfiguration)'
     inputs:
