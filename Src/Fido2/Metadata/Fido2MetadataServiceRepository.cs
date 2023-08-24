@@ -160,11 +160,11 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
             validationParameters,
             out var validatedToken);
 
-        if(blobCerts.Length > 1)
+        if (blobCerts.Length > 1)
         {
             certChain.ChainPolicy.ExtraStore.AddRange(blobCerts.Skip(1).ToArray());
         }
-        
+
         var certChainIsValid = certChain.Build(blobCerts[0]);
         // if the root is trusted in the context we are running in, valid should be true here
         if (!certChainIsValid)
@@ -185,7 +185,7 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
                 // and that the number of elements in the chain accounts for what was in x5c plus the root we added
                 certChain.ChainElements.Count == (x5cRawKeys.Length + 1) &&
                 // and that the root cert has exactly one status with the value of UntrustedRoot
-                certChain.ChainElements[^1].ChainElementStatus is [ { Status: X509ChainStatusFlags.UntrustedRoot } ])
+                certChain.ChainElements[^1].ChainElementStatus is [{ Status: X509ChainStatusFlags.UntrustedRoot }])
             {
                 // if we are good so far, that is a good sign
                 certChainIsValid = true;

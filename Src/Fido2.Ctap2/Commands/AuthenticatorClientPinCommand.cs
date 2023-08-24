@@ -13,12 +13,12 @@ public sealed class AuthenticatorClientPinCommand : CtapCommand
         byte[]? newPinEnc = null,
         byte[]? pinHashEnc = null)
     {
-        
+
         PinProtocol = pinProtocol;
         SubCommand = subCommand;
         KeyAgreement = keyAgreement;
         PinAuth = pinAuth;
-        NewPinEnc = newPinEnc; 
+        NewPinEnc = newPinEnc;
         PinHashEnc = pinHashEnc;
     }
 

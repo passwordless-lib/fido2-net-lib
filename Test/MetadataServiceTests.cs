@@ -16,7 +16,7 @@ public class MetadataServiceTests
         var client = new ConformanceMetadataRepository(null, "http://localhost:80");
 
         var cancellationToken = CancellationToken.None;
-        
+
         var blob = await client.GetBLOBAsync(cancellationToken);
 
         Assert.NotEmpty(blob.Entries);

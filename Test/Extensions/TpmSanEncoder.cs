@@ -7,9 +7,9 @@ internal static class TpmSanEncoder
 {
     internal static class Oids
     {
-        public static readonly Oid Manufacturer = new ("2.23.133.2.1");
-        public static readonly Oid Model        = new ("2.23.133.2.2");
-        public static readonly Oid Version      = new ("2.23.133.2.3");
+        public static readonly Oid Manufacturer = new("2.23.133.2.1");
+        public static readonly Oid Model = new("2.23.133.2.2");
+        public static readonly Oid Version = new("2.23.133.2.3");
     }
 
     public static byte[] Encode(string manufacturer, string model, string version)

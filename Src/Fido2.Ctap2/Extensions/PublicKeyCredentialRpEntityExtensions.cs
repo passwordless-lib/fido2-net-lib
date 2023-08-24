@@ -14,7 +14,7 @@ internal static class PublicKeyCredentialRpEntityExtensions
         if (rp.Icon is string icon)
         {
             result.Add("icon", icon);
-        }      
+        }
 
         return result;
     }

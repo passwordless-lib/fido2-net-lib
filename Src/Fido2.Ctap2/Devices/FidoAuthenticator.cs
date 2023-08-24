@@ -32,7 +32,7 @@ public abstract class FidoAuthenticator
 
         return AuthenticatorGetInfoResponse.FromCborObject(result.GetCborObject());
     }
-     
+
 
     public async ValueTask<AuthenticatorClientPinResponse> ExecuteClientPinCommandAsync(AuthenticatorClientPinCommand command)
     {
@@ -87,14 +87,14 @@ public abstract class FidoAuthenticator
         byte[] newPinEnc = CryptoHelper.AesCbcDefaultIvNoPadding(sharedSecret, CryptoHelper.ZeroPadRight(newPin, 64));
 
         // LEFT(HMAC-SHA-256(sharedSecret, newPinEnc), 16)
-        var pinAuth = HMACSHA256.HashData(sharedSecret, newPinEnc).AsSpan(0, 16).ToArray(); 
+        var pinAuth = HMACSHA256.HashData(sharedSecret, newPinEnc).AsSpan(0, 16).ToArray();
 
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol  : 0x01, 
-            subCommand   : AuthenticatorClientPinSubCommand.SetPin,
-            keyAgreement : platformKey,
-            pinAuth      : pinAuth,
-            newPinEnc    : newPinEnc
+            pinProtocol: 0x01,
+            subCommand: AuthenticatorClientPinSubCommand.SetPin,
+            keyAgreement: platformKey,
+            pinAuth: pinAuth,
+            newPinEnc: newPinEnc
         );
 
         _ = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
@@ -122,15 +122,15 @@ public abstract class FidoAuthenticator
         byte[] pinAuth = HMACSHA256.HashData(sharedSecret, newPinEnc).AsSpan(0, 16).ToArray();
 
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol  : 0x01,
-            subCommand   : AuthenticatorClientPinSubCommand.ChangePin,
-            keyAgreement : platformKey,
-            pinAuth      : pinAuth,
-            newPinEnc    : newPinEnc,
-            pinHashEnc   : pinHashEnc
+            pinProtocol: 0x01,
+            subCommand: AuthenticatorClientPinSubCommand.ChangePin,
+            keyAgreement: platformKey,
+            pinAuth: pinAuth,
+            newPinEnc: newPinEnc,
+            pinHashEnc: pinHashEnc
         );
 
-        _= await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
+        _ = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
     }
 
     public async ValueTask<byte[]> GetPinTokenAsync(string pin, CredentialPublicKey platformKey, byte[] sharedSecret)
@@ -143,10 +143,10 @@ public abstract class FidoAuthenticator
         byte[] pinHashEnc = CryptoHelper.AesCbcDefaultIvNoPadding(sharedSecret, SHA256.HashData(curPin).AsSpan(0, 16));
 
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol  : 0x01,
-            subCommand   : AuthenticatorClientPinSubCommand.GetPinToken,
-            keyAgreement : platformKey,
-            pinHashEnc   : pinHashEnc
+            pinProtocol: 0x01,
+            subCommand: AuthenticatorClientPinSubCommand.GetPinToken,
+            keyAgreement: platformKey,
+            pinHashEnc: pinHashEnc
         );
 
         var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);

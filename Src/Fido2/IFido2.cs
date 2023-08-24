@@ -8,8 +8,8 @@ namespace Fido2NetLib;
 public interface IFido2
 {
     AssertionOptions GetAssertionOptions(
-        IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials, 
-        UserVerificationRequirement? userVerification, 
+        IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials,
+        UserVerificationRequirement? userVerification,
         AuthenticationExtensionsClientInputs? extensions = null);
 
     Task<AssertionVerificationResult> MakeAssertionAsync(

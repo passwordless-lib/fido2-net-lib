@@ -18,7 +18,7 @@ namespace Fido2NetLib;
 
 public sealed class ConformanceMetadataRepository : IMetadataRepository
 {
-    private static ReadOnlySpan<byte> ROOT_CERT => 
+    private static ReadOnlySpan<byte> ROOT_CERT =>
         "MIICaDCCAe6gAwIBAgIPBCqih0DiJLW7+UHXx/o1MAoGCCqGSM49BAMDMGcxCzAJ"u8 +
         "BgNVBAYTAlVTMRYwFAYDVQQKDA1GSURPIEFsbGlhbmNlMScwJQYDVQQLDB5GQUtF"u8 +
         "IE1ldGFkYXRhIDMgQkxPQiBST09UIEZBS0UxFzAVBgNVBAMMDkZBS0UgUm9vdCBG"u8 +
@@ -92,7 +92,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
             {
                 continue;
             }
-            
+
             if (string.Compare(blob.NextUpdate, combinedBlob.NextUpdate, StringComparison.InvariantCulture) < 0)
                 combinedBlob.NextUpdate = blob.NextUpdate;
 
@@ -100,7 +100,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
                 combinedBlob.Number = blob.Number;
 
             entries.AddRange(blob.Entries);
-            
+
             combinedBlob.JwtAlg = blob.JwtAlg;
         }
 
@@ -147,7 +147,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         }
 
         var rootCert = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
-        var blobCertificates = new X509Certificate2[x5cRawKeys.Length]; 
+        var blobCertificates = new X509Certificate2[x5cRawKeys.Length];
         var blobPublicKeys = new List<SecurityKey>(x5cRawKeys.Length);
 
         for (int i = 0; i < x5cRawKeys.Length; i++)
@@ -157,7 +157,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
             if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
                 blobPublicKeys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
-            
+
             else if (cert.GetRSAPublicKey() is RSA rsa)
                 blobPublicKeys.Add(new RsaSecurityKey(rsa));
 
@@ -176,7 +176,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
             IssuerSigningKeys = blobPublicKeys,
         };
 
-        var tokenHandler = new JwtSecurityTokenHandler() 
+        var tokenHandler = new JwtSecurityTokenHandler()
         {
             // 250k isn't enough bytes for conformance test tool
             // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1097
@@ -188,13 +188,13 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
             validationParameters,
             out var validatedToken);
 
-        if(blobCertificates.Length > 1)
+        if (blobCertificates.Length > 1)
         {
             certChain.ChainPolicy.ExtraStore.AddRange(blobCertificates.Skip(1).ToArray());
         }
-        
+
         var certChainIsValid = certChain.Build(blobCertificates[0]);
-        
+
         // if the root is trusted in the context we are running in, valid should be true here
         if (!certChainIsValid)
         {
@@ -214,7 +214,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
                 // and that the number of elements in the chain accounts for what was in x5c plus the root we added
                 certChain.ChainElements.Count == (x5cRawKeys.Length + 1) &&
                 // and that the root cert has exactly one status with the value of UntrustedRoot
-                certChain.ChainElements[^1].ChainElementStatus is [ { Status: X509ChainStatusFlags.UntrustedRoot } ])
+                certChain.ChainElements[^1].ChainElementStatus is [{ Status: X509ChainStatusFlags.UntrustedRoot }])
             {
                 // if we are good so far, that is a good sign
                 certChainIsValid = true;

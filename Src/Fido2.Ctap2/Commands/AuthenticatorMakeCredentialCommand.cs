@@ -83,7 +83,7 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
         };
 
         var pubKeyCredParams = new CborArray();
-        
+
         foreach (PubKeyCredParam pubKeyCredParam in PubKeyCredParams)
         {
             pubKeyCredParams.Add(pubKeyCredParam.ToCborObject());

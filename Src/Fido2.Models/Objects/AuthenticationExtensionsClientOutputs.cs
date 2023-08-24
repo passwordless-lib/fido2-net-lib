@@ -19,7 +19,7 @@ public class AuthenticationExtensionsClientOutputs
     /// </summary>
     [JsonPropertyName("appid")]
     public bool AppID { get; set; }
-    
+
     /// <summary>
     /// This extension allows a WebAuthn Relying Party to guide the selection of the authenticator that will be leveraged when creating the credential. It is intended primarily for Relying Parties that wish to tightly control the experience around credential creation.
     /// https://www.w3.org/TR/webauthn/#sctn-authenticator-selection-extension
@@ -57,7 +57,7 @@ public class AuthenticationExtensionsClientOutputs
     [JsonPropertyName("credProps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CredentialPropertiesOutput? CredProps { get; set; }
-    
+
     /// <summary>
     /// This extension allows a Relying Party to evaluate outputs from a pseudo-random function (PRF) associated with a credential.
     /// https://w3c.github.io/webauthn/#prf-extension

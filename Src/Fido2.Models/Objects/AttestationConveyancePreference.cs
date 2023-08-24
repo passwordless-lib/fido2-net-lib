@@ -28,10 +28,10 @@ public enum AttestationConveyancePreference
     /// </summary>
     [EnumMember(Value = "direct")]
     Direct,
-    
+
     /// <summary>
     /// This value indicates that the Relying Party wants to receive an attestation statement that may include uniquely identifying information.
     /// </summary>
-    [EnumMember(Value ="enterprise")]
+    [EnumMember(Value = "enterprise")]
     Enterprise
 }

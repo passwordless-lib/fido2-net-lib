@@ -20,7 +20,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 {
     private readonly AuthenticatorAssertionRawResponse _raw;
 
-    private AuthenticatorAssertionResponse(AuthenticatorAssertionRawResponse raw, AuthenticatorData authenticatorData) 
+    private AuthenticatorAssertionResponse(AuthenticatorAssertionRawResponse raw, AuthenticatorData authenticatorData)
         : base(raw.Response.ClientDataJson)
     {
         _raw = raw;
@@ -40,8 +40,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     public static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
     {
         return new AuthenticatorAssertionResponse(
-            raw               : rawResponse,
-            authenticatorData : AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData)
+            raw: rawResponse,
+            authenticatorData: AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData)
         );
     }
 
@@ -153,10 +153,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         }
 
         // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation        
-        if (authData.HasExtensionsData && (authData.Extensions is null || authData.Extensions.Length is 0)) 
+        if (authData.HasExtensionsData && (authData.Extensions is null || authData.Extensions.Length is 0))
             throw new Fido2VerificationException(Fido2ErrorCode.MalformedExtensionsDetected, Fido2ErrorMessages.MalformedExtensionsDetected);
 
-        if (!authData.HasExtensionsData && authData.Extensions != null) 
+        if (!authData.HasExtensionsData && authData.Extensions != null)
             throw new Fido2VerificationException(Fido2ErrorCode.UnexpectedExtensionsDetected, Fido2ErrorMessages.UnexpectedExtensionsDetected);
 
         // 18. Let hash be the result of computing a hash over the cData using SHA-256.
@@ -164,13 +164,13 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         // 19. Using credentialRecord.publicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.
         byte[] data = DataHelper.Concat(Raw.Response.AuthenticatorData, hash);
-     
-        if (storedPublicKey is null || storedPublicKey.Length is 0) 
+
+        if (storedPublicKey is null || storedPublicKey.Length is 0)
             throw new Fido2VerificationException(Fido2ErrorCode.MissingStoredPublicKey, Fido2ErrorMessages.MissingStoredPublicKey);
 
         var cpk = new CredentialPublicKey(storedPublicKey);
 
-        if (!cpk.Verify(data, Signature)) 
+        if (!cpk.Verify(data, Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
         // 20. If authData.signCount is nonzero or credentialRecord.signCount is nonzero
@@ -263,7 +263,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (storedDevicePublicKeys.Count > 0)
         {
             var matchedDpkRecords = new List<DevicePublicKeyAuthenticatorOutput>();
-            
+
             foreach (var storedDevicePublicKey in storedDevicePublicKeys)
             {
                 var dpkRecord = DevicePublicKeyAuthenticatorOutput.Parse(storedDevicePublicKey);

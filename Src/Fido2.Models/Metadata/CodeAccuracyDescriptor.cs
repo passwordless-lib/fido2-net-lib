@@ -16,13 +16,13 @@ public sealed class CodeAccuracyDescriptor
     /// </summary>
     [JsonPropertyName("base"), Required]
     public ushort Base { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the minimum number of digits of the given base required for that code, e.g. 4 in the case of 4 digits.
     /// </summary>
     [JsonPropertyName("minLength"), Required]
     public ushort MinLength { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the maximum number of false attempts before the authenticator will block this method (at least for some time).
     /// <para>Zero (0) means it will never block.</para>

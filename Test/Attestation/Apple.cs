@@ -182,7 +182,7 @@ public class Apple : Fido2Tests.Attestation
             .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
             .ToArray();
 
-        var x5c = new CborArray { 
+        var x5c = new CborArray {
             trustPath[0].RawData,
             trustPath[1].RawData
         };

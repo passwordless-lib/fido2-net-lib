@@ -16,7 +16,7 @@ public abstract class CtapCommand
         {
             return new byte[] { (byte)Type };
         }
-    
+
         var encodedObject = parameters.Encode();
 
         var result = new byte[encodedObject.Length + 1];
@@ -25,6 +25,6 @@ public abstract class CtapCommand
 
         encodedObject.AsSpan().CopyTo(result.AsSpan(1));
 
-        return result;      
+        return result;
     }
 }

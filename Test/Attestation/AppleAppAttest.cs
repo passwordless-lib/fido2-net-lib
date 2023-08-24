@@ -92,8 +92,8 @@ public class AppleAppAttest : Fido2Tests.Attestation
         attStmt.Set("x5c", CborNull.Instance);
         var verifier = new Fido2NetLib.AppleAppAttest();
         var ex = Assert.Throws<Fido2VerificationException>(
-        () => {(AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(attStmt, _authData, _clientDataJson);});
-        
+        () => { (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(attStmt, _authData, _clientDataJson); });
+
         Assert.Equal("Malformed x5c in Apple AppAttest attestation", ex.Message);
     }
 

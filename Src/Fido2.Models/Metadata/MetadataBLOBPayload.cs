@@ -34,7 +34,7 @@ public sealed class MetadataBLOBPayload
     /// </summary>
     [JsonPropertyName("nextUpdate"), Required]
     public string NextUpdate { get; set; }
-    
+
     /// <summary>
     /// Gets or sets a list of zero or more entries of <see cref="MetadataBLOBPayloadEntry"/>.
     /// </summary>

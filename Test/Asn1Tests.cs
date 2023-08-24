@@ -12,9 +12,9 @@ public class Asn1Tests
     public void EncodeTpmSan()
     {
         Assert.Equal("MG2kazBpMRYwFAYFZ4EFAgEMC2lkOkZGRkZGMUQwMTcwNQYFZ4EFAgIMLEZJRE8yLU5FVC1MSUItVGVzdFRQTUFpa0NlcnRTQU5UQ0dDb25mb3JtYW50MRYwFAYFZ4EFAgMMC2lkOkYxRDAwMDAy", Convert.ToBase64String(TpmSanEncoder.Encode(
-            ( new Oid("2.23.133.2.1"), "id:FFFFF1D0" ),
-            ( new Oid("2.23.133.2.2"), "FIDO2-NET-LIB-TestTPMAikCertSANTCGConformant" ),
-            ( new Oid("2.23.133.2.3"), "id:F1D00002")
+            (new Oid("2.23.133.2.1"), "id:FFFFF1D0"),
+            (new Oid("2.23.133.2.2"), "FIDO2-NET-LIB-TestTPMAikCertSANTCGConformant"),
+            (new Oid("2.23.133.2.3"), "id:F1D00002")
         )));
     }
 
@@ -25,7 +25,7 @@ public class Asn1Tests
 
         var decoded = Asn1Element.Decode(data);
 
-        Assert.Equal(new Asn1Tag(TagClass.ContextSpecific, (int) UniversalTagNumber.ObjectIdentifier), decoded[0][0][0][0].Tag);
+        Assert.Equal(new Asn1Tag(TagClass.ContextSpecific, (int)UniversalTagNumber.ObjectIdentifier), decoded[0][0][0][0].Tag);
 
         var cdp = Encoding.ASCII.GetString(decoded[0][0][0][0].GetOctetString(decoded[0][0][0][0].Tag));
 
@@ -101,14 +101,14 @@ public class Asn1Tests
         Assert.Equal(8, element.Sequence.Count);
         Assert.Equal(new[] { 2, 10, 2, 10, 4, 4, 16, 16 }, element.Sequence.Select(element => element.TagValue).ToArray());
 
-        Assert.Equal(Asn1Tag.Integer,                element[0].Tag);
-        Assert.Equal(Asn1Tag.Enumerated,             element[1].Tag);
-        Assert.Equal(Asn1Tag.Integer,                element[2].Tag);
-        Assert.Equal(Asn1Tag.Enumerated,             element[3].Tag);
-        Assert.Equal(Asn1Tag.PrimitiveOctetString,   element[4].Tag);
-        Assert.Equal(Asn1Tag.PrimitiveOctetString,   element[5].Tag);
-        Assert.Equal(Asn1Tag.Sequence,               element[6].Tag);
-        Assert.Equal(Asn1Tag.Sequence,               element[7].Tag);
+        Assert.Equal(Asn1Tag.Integer, element[0].Tag);
+        Assert.Equal(Asn1Tag.Enumerated, element[1].Tag);
+        Assert.Equal(Asn1Tag.Integer, element[2].Tag);
+        Assert.Equal(Asn1Tag.Enumerated, element[3].Tag);
+        Assert.Equal(Asn1Tag.PrimitiveOctetString, element[4].Tag);
+        Assert.Equal(Asn1Tag.PrimitiveOctetString, element[5].Tag);
+        Assert.Equal(Asn1Tag.Sequence, element[6].Tag);
+        Assert.Equal(Asn1Tag.Sequence, element[7].Tag);
 
         Assert.True(element[0].IsInteger);
         Assert.Equal(2, element[0].GetInt32());
@@ -131,9 +131,9 @@ public class Asn1Tests
         Assert.Equal(8, element.Sequence.Count);
         Assert.Equal(new[] { 2, 0, 2, 0, 4, 4, 16, 16 }, element.Sequence.Select(element => element.TagValue).ToArray());
 
-        var element6       = element[6];
-        var element6_1     = element[6][1];
-        var element6_1_0   = element[6][1][0];
+        var element6 = element[6];
+        var element6_1 = element[6][1];
+        var element6_1_0 = element[6][1][0];
         var element6_1_0_0 = element[6][1][0][0];
 
         Assert.True(element6.IsSequence);
@@ -147,7 +147,7 @@ public class Asn1Tests
 
         Assert.Equal(Asn1Tag.SetOf, element6_1_0.Tag);
 
-        Assert.Equal(2, element6_1_0_0.TagValue);  
-        Assert.Equal(1, element6_1_0_0.GetInt32());           
+        Assert.Equal(2, element6_1_0_0.TagValue);
+        Assert.Equal(1, element6_1_0_0.GetInt32());
     }
 }

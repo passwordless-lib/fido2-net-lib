@@ -32,7 +32,7 @@ internal static class DataHelper
         var position = 0;
         a.CopyTo(result);
         position += a.Length;
-        
+
         b.CopyTo(result.AsSpan(position));
         position += b.Length;
 

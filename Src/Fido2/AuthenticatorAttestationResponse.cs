@@ -86,7 +86,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 10. Let hash be the result of computing a hash over response.clientDataJSON using SHA-256.
         byte[] clientDataHash = SHA256.HashData(Raw.Response.ClientDataJson);
-        byte[] rpIdHash = SHA256.HashData(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));           
+        byte[] rpIdHash = SHA256.HashData(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
 
         // 11. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt,
         //    the authenticator data authData, and the attestation statement attStmt.
@@ -142,9 +142,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
         MetadataBLOBPayloadEntry? metadataEntry = null;
-        if(metadataService != null)
+        if (metadataService != null)
             metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, cancellationToken);
-        
+
         // while conformance testing, we must reject any authenticator that we cannot get metadata for
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
@@ -275,7 +275,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         }
 
         public string Fmt { get; }
-        
+
         public CborMap AttStmt { get; }
 
         public AuthenticatorData AuthData { get; }
@@ -291,9 +291,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             }
 
             return new ParsedAttestationObject(
-                fmt      : fmt,
-                attStmt  : attStmt,
-                authData : AuthenticatorData.Parse(authData)
+                fmt: fmt,
+                attStmt: attStmt,
+                authData: AuthenticatorData.Parse(authData)
             );
         }
     }

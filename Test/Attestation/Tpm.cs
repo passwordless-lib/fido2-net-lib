@@ -16,7 +16,7 @@ namespace Test.Attestation;
 
 public class Tpm : Fido2Tests.Attestation
 {
-    private readonly X500DistinguishedName attDN = new ("");
+    private readonly X500DistinguishedName attDN = new("");
     private X509Certificate2 attestnCert;
     private readonly DateTimeOffset notBefore, notAfter;
     private readonly X509EnhancedKeyUsageExtension tcgKpAIKCertExt;
@@ -24,7 +24,7 @@ public class Tpm : Fido2Tests.Attestation
     private byte[] unique, exponent, curveId, kdf;
     private byte[] tpmAlg;
 
-    private static readonly Dictionary<TpmAlg, ushort> TpmAlgToDigestSizeMap = new ()
+    private static readonly Dictionary<TpmAlg, ushort> TpmAlgToDigestSizeMap = new()
     {
         { TpmAlg.TPM_ALG_SHA1,   (160/8) },
         { TpmAlg.TPM_ALG_SHA256, (256/8) },
@@ -32,7 +32,7 @@ public class Tpm : Fido2Tests.Attestation
         { TpmAlg.TPM_ALG_SHA512, (512/8) }
     };
 
-    private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new ()
+    private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new()
     {
         { 1, TpmEccCurve.TPM_ECC_NIST_P256},
         { 2, TpmEccCurve.TPM_ECC_NIST_P384},
@@ -61,9 +61,9 @@ public class Tpm : Fido2Tests.Attestation
             false);
 
         byte[] asnEncodedSAN = TpmSanEncoder.Encode(
-            manufacturer : "id:FFFFF1D0", 
-            model        : "FIDO2-NET-LIB-TEST-TPM",
-            version      : "id:F1D00002"
+            manufacturer: "id:FFFFF1D0",
+            model: "FIDO2-NET-LIB-TEST-TPM",
+            version: "id:F1D00002"
         );
 
         aikCertSanExt = new X509Extension("2.5.29.17", asnEncodedSAN, false);
@@ -718,7 +718,7 @@ public class Tpm : Fido2Tests.Attestation
         if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
             tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
         if (alg is COSE.Algorithm.RS1)
-            tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
+            tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
         using RSA rsaRoot = RSA.Create();
         RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
@@ -1999,7 +1999,7 @@ public class Tpm : Fido2Tests.Attestation
         if (alg is COSE.Algorithm.ES512 or COSE.Algorithm.PS512 or COSE.Algorithm.RS512)
             tpmAlg = TpmAlg.TPM_ALG_SHA512.ToUInt16BigEndianBytes();
         if (alg is COSE.Algorithm.RS1)
-            tpmAlg =  TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
+            tpmAlg = TpmAlg.TPM_ALG_SHA1.ToUInt16BigEndianBytes();
 
         using RSA rsaRoot = RSA.Create();
         RSASignaturePadding padding = GetRSASignaturePaddingForCoseAlgorithm(alg);
@@ -3978,7 +3978,7 @@ public class Tpm : Fido2Tests.Attestation
         Assert.Equal("Bad signature in TPM with aikCert", ex.Result.Message);
     }
 
-    [Fact]        
+    [Fact]
     public void TestTPMAikCertNotV3()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];

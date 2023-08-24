@@ -18,18 +18,18 @@ internal sealed class AppleAppAttest : AttestationVerifier
         if (appleExtension is null || appleExtension.RawData is null)
             throw new Fido2VerificationException("Extension with OID 1.2.840.113635.100.8.5 not found on Apple AppAttest credCert");
 
-            var appleAttestationASN = Asn1Element.Decode(appleExtension.RawData);
-            appleAttestationASN.CheckTag(Asn1Tag.Sequence);
-            foreach (Asn1Element s in appleAttestationASN.Sequence)
+        var appleAttestationASN = Asn1Element.Decode(appleExtension.RawData);
+        appleAttestationASN.CheckTag(Asn1Tag.Sequence);
+        foreach (Asn1Element s in appleAttestationASN.Sequence)
+        {
+            if (s.TagValue is 1204)
             {
-                if (s.TagValue is 1204)
-                {
-                    // App ID is the concatenation of your 10-digit team identifier, a period, and your app's CFBundleIdentifier value 
-                    s.CheckExactSequenceLength(1);
-                    s[0].CheckTag(Asn1Tag.PrimitiveOctetString);
-                    return s[0].GetOctetString();
-                }
+                // App ID is the concatenation of your 10-digit team identifier, a period, and your app's CFBundleIdentifier value 
+                s.CheckExactSequenceLength(1);
+                s[0].CheckTag(Asn1Tag.PrimitiveOctetString);
+                return s[0].GetOctetString();
             }
+        }
         throw new Fido2VerificationException("Apple AppAttest attestation extension 1.2.840.113635.100.8.5 has invalid data");
     }
 

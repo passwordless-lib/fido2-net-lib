@@ -16,7 +16,7 @@ internal static class AuthDataHelper
             offset += 2;
         }
         byte[] result = null!;
-        if ((0 < len) && ((offset + len) <= ab.Length)) 
+        if ((0 < len) && ((offset + len) <= ab.Length))
         {
             result = ab.Slice(offset, len).ToArray();
             offset += len;

@@ -17,7 +17,7 @@ namespace Fido2Demo;
 public class TestController : Controller
 {
     /* CONFORMANCE TESTING ENDPOINTS */
-    private static readonly DevelopmentInMemoryStore _demoStorage = new ();
+    private static readonly DevelopmentInMemoryStore _demoStorage = new();
 
     private readonly IFido2 _fido2;
     private readonly string _origin;
@@ -31,7 +31,7 @@ public class TestController : Controller
             ServerDomain = fido2Configuration.Value.ServerDomain,
             ServerName = fido2Configuration.Value.ServerName,
             Origins = fido2Configuration.Value.FullyQualifiedOrigins,
-        }, 
+        },
         ConformanceTesting.MetadataServiceInstance(
             System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance"), _origin)
         );
@@ -130,7 +130,7 @@ public class TestController : Controller
             uv = assertionClientParams.authenticatorSelection.UserVerification;
 
         var exts = new AuthenticationExtensionsClientInputs
-        { 
+        {
             AppID = _origin,
             UserVerificationMethod = true
         };

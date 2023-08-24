@@ -28,8 +28,12 @@ public static class Base64Url
 
             switch (c)
             {
-                case '+': c = '-'; break;
-                case '/': c = '_'; break;
+                case '+':
+                    c = '-';
+                    break;
+                case '/':
+                    c = '_';
+                    break;
             }
         }
 
@@ -71,8 +75,12 @@ public static class Base64Url
 
             switch (c)
             {
-                case '-': c = '+'; break;
-                case '_': c = '/'; break;
+                case '-':
+                    c = '+';
+                    break;
+                case '_':
+                    c = '/';
+                    break;
             }
         }
 
@@ -118,8 +126,12 @@ public static class Base64Url
 
             switch ((char)c)
             {
-                case '-': c = (byte)'+'; break;
-                case '_': c = (byte)'/'; break;
+                case '-':
+                    c = (byte)'+';
+                    break;
+                case '_':
+                    c = (byte)'/';
+                    break;
             }
         }
 
