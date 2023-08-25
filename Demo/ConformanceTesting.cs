@@ -6,7 +6,7 @@ namespace Fido2Demo;
 
 public static class ConformanceTesting
 {
-    private static readonly object _syncRoot = new ();
+    private static readonly object _syncRoot = new();
 
     private static IMetadataService _instance;
 

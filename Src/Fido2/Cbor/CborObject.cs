@@ -61,15 +61,15 @@ public abstract class CborObject
 
         return s switch
         {
-            CborReaderState.StartMap        => ReadMap(reader),
-            CborReaderState.StartArray      => ReadArray(reader),
-            CborReaderState.TextString      => new CborTextString(reader.ReadTextString()),
-            CborReaderState.Boolean         => (CborBoolean)reader.ReadBoolean(),
-            CborReaderState.ByteString      => new CborByteString(reader.ReadByteString()),
+            CborReaderState.StartMap => ReadMap(reader),
+            CborReaderState.StartArray => ReadArray(reader),
+            CborReaderState.TextString => new CborTextString(reader.ReadTextString()),
+            CborReaderState.Boolean => (CborBoolean)reader.ReadBoolean(),
+            CborReaderState.ByteString => new CborByteString(reader.ReadByteString()),
             CborReaderState.UnsignedInteger => new CborInteger(reader.ReadInt64()),
             CborReaderState.NegativeInteger => new CborInteger(reader.ReadInt64()),
-            CborReaderState.Null            => ReadNull(reader),
-            _                               => throw new Exception($"Unhandled state. Was {s}")
+            CborReaderState.Null => ReadNull(reader),
+            _ => throw new Exception($"Unhandled state. Was {s}")
         };
     }
 

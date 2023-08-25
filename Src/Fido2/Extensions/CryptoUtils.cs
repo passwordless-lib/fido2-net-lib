@@ -13,6 +13,7 @@ internal static class CryptoUtils
 {
     public static byte[] HashData(HashAlgorithmName hashName, ReadOnlySpan<byte> data)
     {
+        #pragma warning disable format
         return hashName.Name switch
         {
             "SHA1"                                               => SHA1.HashData(data),
@@ -21,28 +22,29 @@ internal static class CryptoUtils
             "SHA512" or "HS512" or "RS512" or "ES512" or "PS512" => SHA512.HashData(data),
             _ => throw new ArgumentOutOfRangeException(nameof(hashName)),
         };
+        #pragma warning restore format
     }
 
     public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
     {
         return alg switch
         {
-            COSE.Algorithm.RS1    => HashAlgorithmName.SHA1,
-            COSE.Algorithm.ES256  => HashAlgorithmName.SHA256,
-            COSE.Algorithm.ES384  => HashAlgorithmName.SHA384,
-            COSE.Algorithm.ES512  => HashAlgorithmName.SHA512,
-            COSE.Algorithm.PS256  => HashAlgorithmName.SHA256,
-            COSE.Algorithm.PS384  => HashAlgorithmName.SHA384,
-            COSE.Algorithm.PS512  => HashAlgorithmName.SHA512,
-            COSE.Algorithm.RS256  => HashAlgorithmName.SHA256,
-            COSE.Algorithm.RS384  => HashAlgorithmName.SHA384,
-            COSE.Algorithm.RS512  => HashAlgorithmName.SHA512,
+            COSE.Algorithm.RS1 => HashAlgorithmName.SHA1,
+            COSE.Algorithm.ES256 => HashAlgorithmName.SHA256,
+            COSE.Algorithm.ES384 => HashAlgorithmName.SHA384,
+            COSE.Algorithm.ES512 => HashAlgorithmName.SHA512,
+            COSE.Algorithm.PS256 => HashAlgorithmName.SHA256,
+            COSE.Algorithm.PS384 => HashAlgorithmName.SHA384,
+            COSE.Algorithm.PS512 => HashAlgorithmName.SHA512,
+            COSE.Algorithm.RS256 => HashAlgorithmName.SHA256,
+            COSE.Algorithm.RS384 => HashAlgorithmName.SHA384,
+            COSE.Algorithm.RS512 => HashAlgorithmName.SHA512,
             COSE.Algorithm.ES256K => HashAlgorithmName.SHA256,
-            (COSE.Algorithm)4     => HashAlgorithmName.SHA1,
-            (COSE.Algorithm)11    => HashAlgorithmName.SHA256,
-            (COSE.Algorithm)12    => HashAlgorithmName.SHA384,
-            (COSE.Algorithm)13    => HashAlgorithmName.SHA512,
-            COSE.Algorithm.EdDSA  => HashAlgorithmName.SHA512,
+            (COSE.Algorithm)4 => HashAlgorithmName.SHA1,
+            (COSE.Algorithm)11 => HashAlgorithmName.SHA256,
+            (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
+            (COSE.Algorithm)13 => HashAlgorithmName.SHA512,
+            COSE.Algorithm.EdDSA => HashAlgorithmName.SHA512,
             _ => throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCoseAlgorithmValue),
         };
     }
@@ -216,7 +218,7 @@ internal static class CryptoUtils
         Array.Reverse(certificateSerialNumber); // convert to big-endian order
 
         var revokedAsnSequence = asnData[0][5].Sequence;
-        
+
         for (int i = 0; i < revokedAsnSequence.Count; i++)
         {
             ReadOnlySpan<byte> revokedSerialNumber = revokedAsnSequence[i][0].GetIntegerBytes();
@@ -226,7 +228,7 @@ internal static class CryptoUtils
                 return true;
             }
         }
-        
+
         return false;
     }
 }

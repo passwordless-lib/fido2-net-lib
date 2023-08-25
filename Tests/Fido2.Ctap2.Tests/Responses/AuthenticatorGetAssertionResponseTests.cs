@@ -72,10 +72,10 @@ public class AuthenticatorGetAssertionResponseTests
         Assert.Equal(37, response.AuthData.Length);
         Assert.Equal(71, response.Signature.Length);
 
-        Assert.Equal(32,                                            response.User!.Id.Length);
+        Assert.Equal(32, response.User!.Id.Length);
         Assert.Equal("https://pics.example.com/00/p/aBjjjpqPb.png", response.User!.Icon);
-        Assert.Equal("johnpsmith@example.com",                      response.User!.Name);
-        Assert.Equal("John P. Smith",                               response.User!.DisplayName);
+        Assert.Equal("johnpsmith@example.com", response.User!.Name);
+        Assert.Equal("John P. Smith", response.User!.DisplayName);
 
         Assert.Equal(1, response.NumberOfCredentials!.Value);
 

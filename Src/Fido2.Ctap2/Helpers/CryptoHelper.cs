@@ -17,7 +17,7 @@ public static class CryptoHelper
         // AES256-CBC(sharedSecret, IV = 0, data).
         return aes.EncryptCbc(data, iv: DefaultIV, PaddingMode.None);
     }
-     
+
     public static byte[] GenerateSharedSecret(CredentialPublicKey authenticatorKeyAgreementKey, out CredentialPublicKey platformKeyAgreementKey)
     {
         using var authenticatorKey = authenticatorKeyAgreementKey.CreateECDsa(); // public key

@@ -16,7 +16,7 @@ public sealed class DisplayPNGCharacteristicsDescriptor
     /// </summary>
     [JsonPropertyName("width"), Required]
     public ulong Width { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the image height.
     /// </summary>

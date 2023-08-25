@@ -7,7 +7,7 @@ using System.Runtime.Serialization;
 namespace Fido2NetLib;
 
 public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>
-    where TEnum: struct, Enum
+    where TEnum : struct, Enum
 {
     private static readonly Dictionary<TEnum, string> s_valueToNames = GetIdToNameMap();
     private static readonly Dictionary<string, TEnum> s_namesToValues = Invert(s_valueToNames);

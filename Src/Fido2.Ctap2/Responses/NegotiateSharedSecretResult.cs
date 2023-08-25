@@ -5,8 +5,8 @@ namespace Fido2NetLib.Ctap2;
 public sealed class NegotiateSharedSecretResult
 {
     public NegotiateSharedSecretResult(
-        CredentialPublicKey authenticatorKey, 
-        CredentialPublicKey platformKey, 
+        CredentialPublicKey authenticatorKey,
+        CredentialPublicKey platformKey,
         byte[] sharedShared)
     {
         ArgumentNullException.ThrowIfNull(authenticatorKey);

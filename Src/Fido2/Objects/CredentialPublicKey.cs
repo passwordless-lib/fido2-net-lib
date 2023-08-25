@@ -15,7 +15,7 @@ public sealed class CredentialPublicKey
     internal readonly COSE.Algorithm _alg;
     internal readonly CborMap _cpk;
 
-    public CredentialPublicKey(byte[] cpk) 
+    public CredentialPublicKey(byte[] cpk)
         : this((CborMap)CborObject.Decode(cpk)) { }
 
     public CredentialPublicKey(CborMap cpk)
@@ -75,7 +75,7 @@ public sealed class CredentialPublicKey
         switch (_type)
         {
             case COSE.KeyType.EC2:
-                using(ECDsa ecdsa = CreateECDsa())
+                using (ECDsa ecdsa = CreateECDsa())
                 {
                     var ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), ecdsa.KeySize);
                     return ecdsa.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(_alg));
@@ -104,7 +104,7 @@ public sealed class CredentialPublicKey
         {
             Modulus = (byte[])_cpk[COSE.KeyTypeParameter.N],
             Exponent = (byte[])_cpk[COSE.KeyTypeParameter.E]
-        });            
+        });
     }
 
     public ECDsa CreateECDsa()
@@ -113,7 +113,7 @@ public sealed class CredentialPublicKey
         {
             throw new InvalidOperationException($"Must be a EC2 key. Was {_type}");
         }
-                   
+
         var point = new ECPoint
         {
             X = (byte[])_cpk[COSE.KeyTypeParameter.X],
@@ -137,11 +137,11 @@ public sealed class CredentialPublicKey
                 curve = ECCurve.CreateFromFriendlyName("secP256k1");
                 break;
             case (COSE.Algorithm.ES256, COSE.EllipticCurve.P256):
-                curve = ECCurve.NamedCurves.nistP256;             
+                curve = ECCurve.NamedCurves.nistP256;
                 break;
             case (COSE.Algorithm.ES384, COSE.EllipticCurve.P384):
                 curve = ECCurve.NamedCurves.nistP384;
-                break;                   
+                break;
             case (COSE.Algorithm.ES512, COSE.EllipticCurve.P521):
                 curve = ECCurve.NamedCurves.nistP521;
                 break;
@@ -191,7 +191,7 @@ public sealed class CredentialPublicKey
             {
                 throw new InvalidOperationException($"Must be a OKP key. Was {_type}");
             }
-          
+
             switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
             {
                 case COSE.Algorithm.EdDSA:

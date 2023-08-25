@@ -14,7 +14,7 @@ namespace Fido2NetLib;
 
 internal sealed class Tpm : AttestationVerifier
 {
-    public static readonly HashSet<string> TPMManufacturers = new ()
+    public static readonly HashSet<string> TPMManufacturers = new()
     {
         "id:FFFFF1D0", // FIDO testing TPM
         // From https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Version-1.02-Revision-1.00.pdf
@@ -42,7 +42,7 @@ internal sealed class Tpm : AttestationVerifier
         "id:524F4343", // 'ROCC' Fuzhou Rockchip
         "id:474F4F47", // 'GOOG' Google
     };
-    
+
     public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
@@ -59,7 +59,7 @@ internal sealed class Tpm : AttestationVerifier
         if (request.AttStmt["pubArea"] is CborByteString { Length: > 0 } pubAreaObject)
         {
             pubArea = new PubArea(pubAreaObject.Value);
-        }            
+        }
 
         if (pubArea is null || pubArea.Unique is null || pubArea.Unique.Length is 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Missing or malformed pubArea");
@@ -222,7 +222,7 @@ internal sealed class Tpm : AttestationVerifier
         }
     }
 
-    private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new ()
+    private static readonly Dictionary<int, TpmEccCurve> CoseCurveToTpm = new()
     {
         { 1, TpmEccCurve.TPM_ECC_NIST_P256},
         { 2, TpmEccCurve.TPM_ECC_NIST_P384},
@@ -308,8 +308,8 @@ internal sealed class Tpm : AttestationVerifier
 
                         foreach (Asn1Element o in deviceAttributes[0].Sequence)
                         {
-                            wrappedElements.Add(Asn1Element.CreateSetOf(new List<Asn1Element>(1) { 
-                                Asn1Element.CreateSequence((List<Asn1Element>)o.Sequence) 
+                            wrappedElements.Add(Asn1Element.CreateSetOf(new List<Asn1Element>(1) {
+                                Asn1Element.CreateSequence((List<Asn1Element>)o.Sequence)
                             }));
                         }
 
@@ -480,9 +480,9 @@ public sealed class CertInfo
     public byte[] ExtraData { get; }
     public byte[] Clock { get; }
     public byte[] ResetCount { get; }
-    public byte[] RestartCount { get;  }
+    public byte[] RestartCount { get; }
     public byte[] Safe { get; }
-    public byte[] FirmwareVersion { get;  }
+    public byte[] FirmwareVersion { get; }
     public ushort Alg { get; }
     public byte[] AttestedName { get; }
     public byte[] AttestedQualifiedNameBuffer { get; }
@@ -584,7 +584,7 @@ public sealed class PubArea
         }
 
         // TPMS_ASYM_PARMS, for TPM_ALG_RSA and TPM_ALG_ECC
-        if (tpmAlg  is TpmAlg.TPM_ALG_RSA or TpmAlg.TPM_ALG_ECC)
+        if (tpmAlg is TpmAlg.TPM_ALG_RSA or TpmAlg.TPM_ALG_ECC)
         {
             Symmetric = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
             Scheme = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
@@ -645,13 +645,13 @@ public sealed class PubArea
     public byte[] Type { get; }
     public byte[] Alg { get; }
     public byte[] Attributes { get; }
-    public byte[] Policy { get;  }
+    public byte[] Policy { get; }
     public byte[]? Symmetric { get; }
     public byte[]? Scheme { get; }
     public byte[]? KeyBits { get; }
     public uint Exponent { get; }
     public byte[]? CurveID { get; }
-    public byte[]? KDF { get;}
+    public byte[]? KDF { get; }
     public byte[]? Unique { get; }
     public TpmEccCurve EccCurve => (TpmEccCurve)Enum.ToObject(typeof(TpmEccCurve), BinaryPrimitives.ReadUInt16BigEndian(CurveID));
     public ECPoint ECPoint { get; }

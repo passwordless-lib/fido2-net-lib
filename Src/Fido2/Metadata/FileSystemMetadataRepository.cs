@@ -42,20 +42,21 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
             foreach (var filename in Directory.GetFiles(_path))
             {
                 await using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
-                MetadataStatement statement = await JsonSerializer.DeserializeAsync(fileStream, FidoModelSerializerContext.Default.MetadataStatement, cancellationToken:cancellationToken) ?? throw new NullReferenceException(nameof(statement));
+                MetadataStatement statement = await JsonSerializer.DeserializeAsync(fileStream, FidoModelSerializerContext.Default.MetadataStatement, cancellationToken: cancellationToken) ?? throw new NullReferenceException(nameof(statement));
                 var conformanceEntry = new MetadataBLOBPayloadEntry
                 {
                     AaGuid = statement.AaGuid,
                     MetadataStatement = statement,
-                    StatusReports = new StatusReport[] 
-                    { 
-                        new StatusReport 
-                        { 
-                            Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED 
-                        } 
+                    StatusReports = new StatusReport[]
+                    {
+                        new StatusReport
+                        {
+                            Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
+                        }
                     }
                 };
-                if (null != conformanceEntry.AaGuid) _entries.Add(conformanceEntry.AaGuid.Value, conformanceEntry);
+                if (null != conformanceEntry.AaGuid)
+                    _entries.Add(conformanceEntry.AaGuid.Value, conformanceEntry);
             }
         }
 

@@ -8,10 +8,10 @@ namespace fido2_net_lib.Test;
 public class CredentialPublicKeyTests
 {
     [Theory]
-    [InlineData("1.3.132.0.10",        COSE.Algorithm.ES256K)] // secP256k1
+    [InlineData("1.3.132.0.10", COSE.Algorithm.ES256K)] // secP256k1
     [InlineData("1.2.840.10045.3.1.7", COSE.Algorithm.ES256)]  // P256
-    [InlineData("1.3.132.0.34",        COSE.Algorithm.ES384)]  // P384
-    [InlineData("1.3.132.0.35",        COSE.Algorithm.ES512)]  // P512
+    [InlineData("1.3.132.0.34", COSE.Algorithm.ES384)]  // P384
+    [InlineData("1.3.132.0.35", COSE.Algorithm.ES512)]  // P512
     public void CanUseECCurves(string oid, COSE.Algorithm alg)
     {
         if (OperatingSystem.IsMacOS() && alg is COSE.Algorithm.ES256K)
@@ -40,7 +40,7 @@ public class CredentialPublicKeyTests
             Assert.Equal(oid, decodedEcDsaParams.Curve.Oid.Value);
         }
 
-      
+
 
         Assert.True(credentialPublicKey.Verify(signedData, signature));
     }

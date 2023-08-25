@@ -43,7 +43,7 @@ public class EnumExtensionTest
     // invalid
     [InlineData("cross_platform", true)]
     [InlineData("cross-platforms", true)]
-    [InlineData("CROSS_PLATFORM",  true)]
+    [InlineData("CROSS_PLATFORM", true)]
     public void TestToEnumWithDashes(string value, bool shouldThrow)
     {
         var exception = Record.Exception(() => value.ToEnum<AuthenticatorAttachment>());

@@ -4,7 +4,7 @@
 /// Parameters used for callback function
 /// </summary>
 public sealed class IsUserHandleOwnerOfCredentialIdParams
-{   
+{
     public IsUserHandleOwnerOfCredentialIdParams(byte[] credentialId, byte[] userHandle)
     {
         CredentialId = credentialId;

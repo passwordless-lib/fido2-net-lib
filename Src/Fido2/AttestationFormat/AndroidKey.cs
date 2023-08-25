@@ -77,7 +77,7 @@ internal sealed class AndroidKey : AttestationVerifier
                     break;
             }
         }
-        
+
         var teeEnforced = keyDescription[7].Sequence;
         foreach (Asn1Element s in teeEnforced)
         {
@@ -90,7 +90,7 @@ internal sealed class AndroidKey : AttestationVerifier
                     break;
             }
         }
-        
+
         return (softwareEnforcedOriginValue is 0 && teeEnforcedOriginValue is 0);
     }
 
@@ -172,7 +172,7 @@ internal sealed class AndroidKey : AttestationVerifier
 
         X509Certificate2 androidKeyCert = trustPath[0];
         ECDsa androidKeyPubKey = androidKeyCert.GetECDsaPublicKey()!; // attestation public key
-      
+
         byte[] ecSignature;
         try
         {

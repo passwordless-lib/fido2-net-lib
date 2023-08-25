@@ -19,6 +19,7 @@ public abstract class AttestationVerifier
 
     public static AttestationVerifier Create(string formatIdentifier)
     {
+        #pragma warning disable format
         return formatIdentifier switch
         {
             "none"              => new None(),             // https://www.w3.org/TR/webauthn-2/#sctn-none-attestation
@@ -31,6 +32,7 @@ public abstract class AttestationVerifier
             "apple-appattest"   => new AppleAppAttest(),   // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server  
             _                   => throw new Fido2VerificationException(Fido2ErrorCode.UnknownAttestationType, $"Unknown attestation type. Was '{formatIdentifier}'")
         };
+        #pragma warning restore format
     }
 
     internal static bool IsAttnCertCACert(X509ExtensionCollection exts)

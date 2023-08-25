@@ -12,8 +12,8 @@ internal readonly struct Asn1Element
     private readonly List<Asn1Element>? _elements; // set | sequence
 
     public Asn1Element(
-        Asn1Tag tag, 
-        ReadOnlyMemory<byte> encodedValue, 
+        Asn1Tag tag,
+        ReadOnlyMemory<byte> encodedValue,
         List<Asn1Element>? elements = null)
     {
         _tag = tag;
@@ -91,7 +91,7 @@ internal readonly struct Asn1Element
 
     internal string GetOID()
     {
-        return AsnDecoder.ReadObjectIdentifier(_encodedValue.Span, AsnEncodingRules.DER, out int _);            
+        return AsnDecoder.ReadObjectIdentifier(_encodedValue.Span, AsnEncodingRules.DER, out int _);
     }
 
     internal string GetString()
@@ -169,7 +169,7 @@ internal readonly struct Asn1Element
             Asn1Tag tag = reader.PeekTag();
 
             Asn1Element el;
-           
+
             if (tag == Asn1Tag.Sequence)
             {
                 el = new Asn1Element(tag, Array.Empty<byte>(), ReadElements(reader.ReadSequence()));

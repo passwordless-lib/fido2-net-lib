@@ -45,11 +45,11 @@ public sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborOb
                 yield return item.Value;
             }
         }
-    }       
+    }
 
     public void Add(string key, CborObject value)
     {
-        _items.Add(new (new CborTextString(key), value));
+        _items.Add(new(new CborTextString(key), value));
     }
 
     public void Add(string key, bool value)
@@ -59,7 +59,7 @@ public sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborOb
 
     public void Add(long key, CborObject value)
     {
-        _items.Add(new (new CborInteger(key), value));
+        _items.Add(new(new CborInteger(key), value));
     }
 
     public void Add(long key, byte[] value)
@@ -94,7 +94,7 @@ public sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborOb
 
     internal void Add(CborObject key, CborObject value)
     {
-        _items.Add(new (key, value));
+        _items.Add(new(key, value));
     }
 
     internal void Add(string key, COSE.Algorithm value)

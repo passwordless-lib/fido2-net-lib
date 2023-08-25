@@ -73,9 +73,9 @@ public partial class Fido2 : IFido2
 
         // todo: Set Errormessage etc.
         return new CredentialMakeResult(
-            status       : "ok",
-            errorMessage : string.Empty,
-            result       : success
+            status: "ok",
+            errorMessage: string.Empty,
+            result: success
         );
     }
 

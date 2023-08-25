@@ -62,7 +62,7 @@ public static class Fido2NetLibBuilderExtensions
 
     public static IFido2MetadataServiceBuilder AddConformanceMetadataRepository(
         this IFido2MetadataServiceBuilder builder,
-        HttpClient client = null, 
+        HttpClient client = null,
         string origin = "")
     {
         builder.Services.AddTransient<IMetadataRepository>(provider =>
@@ -77,7 +77,8 @@ public static class Fido2NetLibBuilderExtensions
     {
         var httpClientBuilder = builder.Services.AddHttpClient(nameof(Fido2MetadataServiceRepository));
 
-        if(clientBuilder != null) clientBuilder(httpClientBuilder);
+        if (clientBuilder != null)
+            clientBuilder(httpClientBuilder);
 
         builder.Services.AddTransient<IMetadataRepository, Fido2MetadataServiceRepository>();
 

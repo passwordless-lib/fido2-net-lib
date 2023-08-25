@@ -4,7 +4,7 @@ namespace Fido2NetLib.Cbor;
 
 public sealed class CborBoolean : CborObject
 {
-    public static readonly CborBoolean True  = new(true);
+    public static readonly CborBoolean True = new(true);
     public static readonly CborBoolean False = new(false);
 
     public CborBoolean(bool value)
