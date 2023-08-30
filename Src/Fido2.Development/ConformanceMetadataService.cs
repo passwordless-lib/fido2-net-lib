@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 
 namespace Fido2NetLib;
 
@@ -69,7 +64,7 @@ public class ConformanceMetadataService : IMetadataService
             {
                 if (_entries.TryAdd(aaGuid, entry))
                 {
-                    //Load if it doesn't already exist
+                    // Load if it doesn't already exist
                     await LoadEntryStatementAsync(repository, blob, entry, cancellationToken);
                 }
             }
@@ -90,8 +85,8 @@ public class ConformanceMetadataService : IMetadataService
         return _initialized;
     }
 
-    public virtual Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
+    public virtual Task<MetadataBLOBPayloadEntry?> GetEntryAsync(Guid aaGuid, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(GetEntry(aaguid));
+        return Task.FromResult(GetEntry(aaGuid));
     }
 }

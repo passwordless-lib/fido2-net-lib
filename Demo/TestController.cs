@@ -163,7 +163,7 @@ public class TestController : Controller
         var creds = _demoStorage.GetCredentialById(clientResponse.Id);
 
         // 3. Get credential counter from database
-        var storedCounter = creds.SignatureCounter;
+        var storedCounter = creds.SignCount;
 
         // 4. Create callback to check if userhandle owns the credentialId
         IsUserHandleOwnerOfCredentialIdAsync callback = static async (args, cancellationToken) =>

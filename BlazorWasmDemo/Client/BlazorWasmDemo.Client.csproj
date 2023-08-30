@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>11</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Src\Fido2.BlazorWebAssembly\Fido2.BlazorWebAssembly.csproj" />
+    <ProjectReference Include="..\..\Src\Fido2.Development\Fido2.Development.csproj" />
     <ProjectReference Include="..\..\Src\Fido2.Models\Fido2.Models.csproj" />
   </ItemGroup>
 

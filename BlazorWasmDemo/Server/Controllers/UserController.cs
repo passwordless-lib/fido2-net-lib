@@ -16,19 +16,16 @@ using Microsoft.IdentityModel.Tokens;
 public class UserController : ControllerBase
 {
     private static readonly SigningCredentials _signingCredentials = new(
-        new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes("This is my very long and totally secret key for signing tokens, which clients may never learn or I'd have to replace it.")),
-        SecurityAlgorithms.HmacSha256);
+        new SymmetricSecurityKey("This is my very long and totally secret key for signing tokens, which clients may never learn or I'd have to replace it."u8.ToArray()),
+        SecurityAlgorithms.HmacSha256
+    );
 
     private static readonly DevelopmentInMemoryStore _demoStorage = new();
     private static readonly Dictionary<string, CredentialCreateOptions> _pendingCredentials = new();
     private static readonly Dictionary<string, AssertionOptions> _pendingAssertions = new();
     private readonly IFido2 _fido2;
 
-    private string FormatException(Exception e)
-    {
-        return $"{e.Message}{e.InnerException?.Message ?? string.Empty}";
-    }
+    private static string FormatException(Exception e) => $"{e.Message}{e.InnerException?.Message ?? string.Empty}";
 
     public UserController(IFido2 fido2)
     {
@@ -113,7 +110,7 @@ public class UserController : ControllerBase
                     Extensions = true,
                     UserVerificationMethod = true,
                     CredProps = true,
-                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs
                     {
                         Attestation = attestationType?.ToString() ?? AttestationConveyancePreference.None.ToString()
                     },
@@ -152,7 +149,7 @@ public class UserController : ControllerBase
             // 3. Verify and make the credentials
             var result = await _fido2.MakeNewCredentialAsync(attestationResponse, options, CredentialIdUniqueToUserAsync, cancellationToken: cancellationToken);
 
-            if (result.Status == "error" || result.Result == null)
+            if (result.Status is "error" || result.Result is null)
             {
                 return result.ErrorMessage;
             }
@@ -160,7 +157,6 @@ public class UserController : ControllerBase
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                Type = result.Result.Type,
                 CredType = result.Result.CredType,
                 Id = result.Result.Id,
                 Descriptor = new PublicKeyCredentialDescriptor(result.Result.Id),
@@ -171,8 +167,8 @@ public class UserController : ControllerBase
                 AaGuid = result.Result.AaGuid,
                 DevicePublicKeys = new List<byte[]> { result.Result.DevicePublicKey },
                 Transports = result.Result.Transports,
-                BE = result.Result.BE,
-                BS = result.Result.BS,
+                IsBackupEligible = result.Result.BE,
+                IsBackedUp = result.Result.BS,
                 AttestationObject = result.Result.AttestationObject,
                 AttestationClientDataJSON = result.Result.AttestationClientDataJSON,
             });
@@ -277,7 +273,7 @@ public class UserController : ControllerBase
                 options,
                 creds.PublicKey,
                 creds.DevicePublicKeys,
-                creds.SignatureCounter,
+                creds.SignCount,
                 UserHandleOwnerOfCredentialIdAsync,
                 cancellationToken: cancellationToken);
 
