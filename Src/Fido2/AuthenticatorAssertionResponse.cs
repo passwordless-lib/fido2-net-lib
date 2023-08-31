@@ -190,7 +190,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 throw new Fido2VerificationException(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, Fido2ErrorMessages.AttestedCredentialDataFlagNotSet);
 
             // 2. Verify that the credentialPublicKey and credentialId fields of the attested credential data in authData match credentialRecord.publicKey and credentialRecord.id, respectively.
-            if (!Raw.Id.SequenceEqual(authData.AttestedCredentialData.CredentialID))
+            if (!Raw.Id.SequenceEqual(authData.AttestedCredentialData.CredentialId))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, "Stored credential id does not match id in attested credential data");
 
             if (!storedPublicKey.SequenceEqual(authData.AttestedCredentialData.CredentialPublicKey.GetBytes()))

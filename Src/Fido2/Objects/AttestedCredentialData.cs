@@ -17,18 +17,18 @@ public sealed class AttestedCredentialData
     private const int _maxCredentialIdLength = 1_023;
 
     /// <summary>
-    /// Instantiates an AttestedCredentialData object from an aaguid, credentialID, and CredentialPublicKey
+    /// Instantiates an AttestedCredentialData object from an aaguid, credentialId, and credentialPublicKey
     /// </summary>
     /// <param name="aaGuid"></param>
-    /// <param name="credentialID"></param>
+    /// <param name="credentialId"></param>
     /// <param name="credentialPublicKey"></param>
-    public AttestedCredentialData(Guid aaGuid, byte[] credentialID, CredentialPublicKey credentialPublicKey)
+    public AttestedCredentialData(Guid aaGuid, byte[] credentialId, CredentialPublicKey credentialPublicKey)
     {
-        ArgumentNullException.ThrowIfNull(credentialID);
+        ArgumentNullException.ThrowIfNull(credentialId);
         ArgumentNullException.ThrowIfNull(credentialPublicKey);
 
         AaGuid = aaGuid;
-        CredentialID = credentialID;
+        CredentialId = credentialId;
         CredentialPublicKey = credentialPublicKey;
     }
 
@@ -42,7 +42,7 @@ public sealed class AttestedCredentialData
     /// A probabilistically-unique byte sequence identifying a public key credential source and its authentication assertions.
     /// <see cref="https://www.w3.org/TR/webauthn/#credential-id"/>
     /// </summary>
-    public byte[] CredentialID { get; }
+    public byte[] CredentialId { get; }
 
     /// <summary>
     /// The credential public key encoded in COSE_Key format, as defined in 
@@ -53,12 +53,12 @@ public sealed class AttestedCredentialData
 
     public override string ToString()
     {
-        return $"AttestedCredentialData(AAGUID:{AaGuid}, CredentialID: {Convert.ToHexString(CredentialID)}, CredentialPublicKey: {CredentialPublicKey})";
+        return $"AttestedCredentialData(AAGUID:{AaGuid}, CredentialId: {Convert.ToHexString(CredentialId)}, CredentialPublicKey: {CredentialPublicKey})";
     }
 
     public byte[] ToByteArray()
     {
-        var writer = new ArrayBufferWriter<byte>(16 + 2 + CredentialID.Length + 512);
+        var writer = new ArrayBufferWriter<byte>(16 + 2 + CredentialId.Length + 512);
 
         WriteTo(writer);
 
@@ -70,10 +70,10 @@ public sealed class AttestedCredentialData
         writer.WriteGuidBigEndian(AaGuid);
 
         // Write the length of credential ID, as big endian bytes of a 16-bit unsigned integer
-        writer.WriteUInt16BigEndian((ushort)CredentialID.Length);
+        writer.WriteUInt16BigEndian((ushort)CredentialId.Length);
 
-        // Write CredentialID bytes
-        writer.Write(CredentialID);
+        // Write CredentialId bytes
+        writer.Write(CredentialId);
 
         // Write credential public key bytes
         writer.Write(CredentialPublicKey.GetBytes());
