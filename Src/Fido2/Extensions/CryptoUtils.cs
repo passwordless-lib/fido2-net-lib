@@ -171,22 +171,6 @@ internal static class CryptoUtils
         return DataHelper.Concat(p1363R, p1363S);
     }
 
-    /// <summary>
-    /// Convert PEM formatted string into byte array.
-    /// </summary>
-    /// <param name="pemStr">source string.</param>
-    /// <returns>output byte array.</returns>
-    public static byte[] PemToBytes(ReadOnlySpan<char> pemStr)
-    {
-        var range = PemEncoding.Find(pemStr);
-
-        byte[] data = new byte[range.DecodedDataLength];
-
-        Convert.TryFromBase64Chars(pemStr[range.Base64Data], data, out _);
-
-        return data;
-    }
-
     public static string CDPFromCertificateExts(X509ExtensionCollection exts)
     {
         var cdp = "";
