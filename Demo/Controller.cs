@@ -226,7 +226,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new AssertionVerificationResult { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new VerifyAssertionResult { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 }

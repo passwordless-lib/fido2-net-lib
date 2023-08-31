@@ -12,7 +12,7 @@ public interface IFido2
         UserVerificationRequirement? userVerification,
         AuthenticationExtensionsClientInputs? extensions = null);
 
-    Task<AssertionVerificationResult> MakeAssertionAsync(
+    Task<VerifyAssertionResult> MakeAssertionAsync(
         AuthenticatorAssertionRawResponse assertionResponse,
         AssertionOptions originalOptions,
         byte[] storedPublicKey,

@@ -803,7 +803,7 @@ public class Fido2Tests
     [Fact]
     public async Task TestAssertionResponse()
     {
-        AssertionVerificationResult avr;
+        VerifyAssertionResult avr;
         foreach (var (type, alg, curve) in _validCOSEParameters)
         {
             // No support for P256K on OSX
@@ -826,7 +826,7 @@ public class Fido2Tests
         }
     }
 
-    internal static async Task<AssertionVerificationResult> MakeAssertionResponseAsync(
+    internal static async Task<VerifyAssertionResult> MakeAssertionResponseAsync(
         COSE.KeyType kty,
         COSE.Algorithm alg,
         COSE.EllipticCurve crv = COSE.EllipticCurve.P256,

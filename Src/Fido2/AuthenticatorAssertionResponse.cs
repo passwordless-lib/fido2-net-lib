@@ -56,7 +56,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
     /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID</param>
     /// <param name="cancellationToken"></param>
-    public async Task<AssertionVerificationResult> VerifyAsync(
+    public async Task<VerifyAssertionResult> VerifyAsync(
         AssertionOptions options,
         Fido2Configuration config,
         byte[] storedPublicKey,
@@ -217,13 +217,13 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             TrustAnchor.Verify(metadataEntry, trustPath);
         }
 
-        return new AssertionVerificationResult
+        return new VerifyAssertionResult
         {
             Status = "ok",
             ErrorMessage = string.Empty,
             CredentialId = Raw.Id,
-            Counter = authData.SignCount,
-            BS = authData.IsBackedUp,
+            SignCount = authData.SignCount,
+            IsBackedUp = authData.IsBackedUp,
             DevicePublicKey = devicePublicKeyResult,
         };
     }

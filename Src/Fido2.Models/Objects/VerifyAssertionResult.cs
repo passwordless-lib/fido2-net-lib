@@ -3,24 +3,22 @@
 /// <summary>
 /// Result of the MakeAssertion verification
 /// </summary>
-public class AssertionVerificationResult : Fido2ResponseBase
+public class VerifyAssertionResult : Fido2ResponseBase
 {
-    public byte[] CredentialId { get; set; }
-
-    public uint Counter { get; set; }
+    public byte[] CredentialId { get; init; }
 
     /// <summary>
     /// The latest value of the signature counter in the authenticator data from any ceremony using the public key credential source.
     /// </summary>
-    public uint SignCount { get; set; }
+    public uint SignCount { get; init; }
 
     /// <summary>
     /// The latest value of the BS flag in the authenticator data from any ceremony using the public key credential source.
     /// </summary>
-    public bool BS { get; set; }
+    public bool IsBackedUp { get; init; }
 
     /// <summary>
     /// The public key portion of a hardware-bound device key pair
     /// </summary>
-    public byte[] DevicePublicKey { get; set; }
+    public byte[] DevicePublicKey { get; init; }
 }

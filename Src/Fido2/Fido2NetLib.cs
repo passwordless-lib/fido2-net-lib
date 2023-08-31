@@ -97,7 +97,7 @@ public partial class Fido2 : IFido2
     /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
     /// </summary>
     /// <returns></returns>
-    public async Task<AssertionVerificationResult> MakeAssertionAsync(
+    public async Task<VerifyAssertionResult> MakeAssertionAsync(
         AuthenticatorAssertionRawResponse assertionResponse,
         AssertionOptions originalOptions,
         byte[] storedPublicKey,
