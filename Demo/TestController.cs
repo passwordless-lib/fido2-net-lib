@@ -181,7 +181,7 @@ public class TestController : Controller
             creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
         // 7. return OK to client
-        return Json(new 
+        return Json(new
         {
             status = "ok"
         });
