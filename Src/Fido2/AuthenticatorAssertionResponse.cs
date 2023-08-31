@@ -220,7 +220,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         return new VerifyAssertionResult
         {
             Status = "ok",
-            ErrorMessage = string.Empty,
             CredentialId = Raw.Id,
             SignCount = authData.SignCount,
             IsBackedUp = authData.IsBackedUp,

@@ -819,10 +819,10 @@ public class Fido2Tests
                 avr = await MakeAssertionResponseAsync(type, alg);
             }
 
-            Assert.Equal("", avr.ErrorMessage);
+            Assert.Null(avr.ErrorMessage);
             Assert.Equal("ok", avr.Status);
             Assert.Equal(new byte[] { 0xf1, 0xd0 }, avr.CredentialId);
-            Assert.Equal("1", avr.Counter.ToString("X"));
+            Assert.Equal("1", avr.SignCount.ToString("X"));
         }
     }
 
