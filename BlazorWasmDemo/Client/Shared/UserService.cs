@@ -126,14 +126,15 @@ public class UserService
         {
             // Get options from server
             var options = await _httpClient.GetFromJsonAsync<AssertionOptions>(route, _jsonOptions);
-            if (options == null)
+
+            if (options is null)
             {
                 return "No options received";
             }
 
             if (options.Status != "ok")
             {
-                return options.ErrorMessage;
+                return options.ErrorMessage ?? string.Empty;
             }
 
             // Present options to user and get response (usernameless users will be asked by their authenticator, which credential they want to use to sign the challenge)

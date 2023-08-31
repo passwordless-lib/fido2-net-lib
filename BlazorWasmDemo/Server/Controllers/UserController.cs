@@ -44,8 +44,9 @@ public class UserController : ControllerBase
     /// <returns>A new <see cref="CredentialCreateOptions"/>. Contains an error message if .Status is "error".</returns>
     [HttpGet("{username}/credential-options")]
     [HttpGet("credential-options")]
-    public CredentialCreateOptions GetCredentialOptions([FromRoute] string? username,
-                                            [FromQuery] string? displayName,
+    public CredentialCreateOptions GetCredentialOptions(
+        [FromRoute] string? username,
+        [FromQuery] string? displayName,
         [FromQuery] AttestationConveyancePreference? attestationType,
         [FromQuery] AuthenticatorAttachment? authenticator,
         [FromQuery] UserVerificationRequirement? userVerification,
@@ -105,7 +106,7 @@ public class UserController : ControllerBase
                 existingKeys,
                 authenticatorSelection,
                 attestationType ?? AttestationConveyancePreference.None,
-                new AuthenticationExtensionsClientInputs()
+                new AuthenticationExtensionsClientInputs
                 {
                     Extensions = true,
                     UserVerificationMethod = true,
@@ -151,7 +152,7 @@ public class UserController : ControllerBase
 
             if (result.Status is "error" || result.Result is null)
             {
-                return result.ErrorMessage;
+                return result.ErrorMessage ?? string.Empty;
             }
 
             // 4. Store the credentials in db
@@ -207,7 +208,7 @@ public class UserController : ControllerBase
                     existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
             }
 
-            var exts = new AuthenticationExtensionsClientInputs()
+            var exts = new AuthenticationExtensionsClientInputs
             {
                 UserVerificationMethod = true,
                 Extensions = true,
@@ -252,7 +253,7 @@ public class UserController : ControllerBase
         {
             // 1. Get the assertion options we sent the client remove them from memory so they can't be used again
             var response = JsonSerializer.Deserialize<AuthenticatorResponse>(clientResponse.Response.ClientDataJson);
-            if (response == null)
+            if (response is null)
             {
                 return "Error: Could not deserialize client data";
             }
@@ -278,9 +279,9 @@ public class UserController : ControllerBase
                 cancellationToken: cancellationToken);
 
             // 4. Store the updated counter
-            if (res.Status == "ok")
+            if (res.Status is "ok")
             {
-                _demoStorage.UpdateCounter(res.CredentialId, res.Counter);
+                _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
                 if (res.DevicePublicKey is not null)
                 {
                     creds.DevicePublicKeys.Add(res.DevicePublicKey);
@@ -302,6 +303,7 @@ public class UserController : ControllerBase
                 DateTime.Now,
                 _signingCredentials,
                 null);
+
             if (token is null)
             {
                 return "Error: Token couldn't be created";

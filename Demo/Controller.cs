@@ -216,7 +216,7 @@ public class MyController : Controller
             var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
 
             // 6. Store the updated counter
-            DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
+            DemoStorage.UpdateCounter(res.CredentialId, res.SignCount);
 
             if (res.DevicePublicKey is not null)
                 creds.DevicePublicKeys.Add(res.DevicePublicKey);
