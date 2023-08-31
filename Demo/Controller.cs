@@ -124,7 +124,7 @@ public class MyController : Controller
                 PublicKey = success.Result.PublicKey,
                 UserHandle = success.Result.User.Id,
                 SignCount = success.Result.Counter,
-                CredType = success.Result.CredType,
+                AttestationFormat = success.Result.AttestationFormat,
                 RegDate = DateTime.Now,
                 AaGuid = success.Result.AaGuid,
                 Transports = success.Result.Transports,

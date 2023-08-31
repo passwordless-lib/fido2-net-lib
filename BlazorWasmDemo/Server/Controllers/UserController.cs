@@ -157,7 +157,7 @@ public class UserController : ControllerBase
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                CredType = result.Result.CredType,
+                AttestationFormat = result.Result.AttestationFormat,
                 Id = result.Result.Id,
                 Descriptor = new PublicKeyCredentialDescriptor(result.Result.Id),
                 PublicKey = result.Result.PublicKey,

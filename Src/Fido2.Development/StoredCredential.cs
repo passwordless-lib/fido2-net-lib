@@ -56,7 +56,7 @@ public class StoredCredential
 
     public byte[] UserHandle { get; set; }
 
-    public string CredType { get; set; }
+    public string AttestationFormat { get; set; }
 
     public DateTime RegDate { get; set; }
 
