@@ -162,15 +162,15 @@ public class UserController : ControllerBase
                 Descriptor = new PublicKeyCredentialDescriptor(result.Result.Id),
                 PublicKey = result.Result.PublicKey,
                 UserHandle = result.Result.User.Id,
-                SignCount = result.Result.Counter,
+                SignCount = result.Result.SignCount,
                 RegDate = DateTime.Now,
                 AaGuid = result.Result.AaGuid,
                 DevicePublicKeys = new List<byte[]> { result.Result.DevicePublicKey },
                 Transports = result.Result.Transports,
-                IsBackupEligible = result.Result.BE,
-                IsBackedUp = result.Result.BS,
+                IsBackupEligible = result.Result.IsBackupEligible,
+                IsBackedUp = result.Result.IsBackedUp,
                 AttestationObject = result.Result.AttestationObject,
-                AttestationClientDataJSON = result.Result.AttestationClientDataJSON,
+                AttestationClientDataJSON = result.Result.AttestationClientDataJson,
             });
 
             // 5. Now we need to remove the options from the pending dictionary

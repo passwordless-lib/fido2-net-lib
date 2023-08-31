@@ -139,8 +139,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
 
-        if (authData.BackupState && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
-            !authData.BackupState && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
+        if (authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
+            !authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
         // 17. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
@@ -223,7 +223,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             ErrorMessage = string.Empty,
             CredentialId = Raw.Id,
             Counter = authData.SignCount,
-            BS = authData.BackupState,
+            BS = authData.IsBackedUp,
             DevicePublicKey = devicePublicKeyResult,
         };
     }

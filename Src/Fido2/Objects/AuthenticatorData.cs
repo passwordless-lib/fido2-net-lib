@@ -79,7 +79,7 @@ public sealed class AuthenticatorData
     /// Backup state is signaled in authenticator data's flags and can change over time.
     /// <see cref="https://w3c.github.io/webauthn/#backup-state"/>
     /// </summary>
-    public bool BackupState => _flags.HasFlag(AuthenticatorFlags.BS);
+    public bool IsBackedUp => _flags.HasFlag(AuthenticatorFlags.BS);
 
     /// <summary>
     /// HasAttestedCredentialData indicates that the authenticator added attested credential data to the authenticator data.

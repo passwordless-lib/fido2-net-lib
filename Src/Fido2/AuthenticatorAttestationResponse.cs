@@ -190,11 +190,11 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             Id = authData.AttestedCredentialData.CredentialId,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
-            //Transports = result of response.getTransports();
-            BE = authData.IsBackupEligible,
-            BS = authData.BackupState,
+            // Transports = result of response.getTransports();
+            IsBackupEligible = authData.IsBackupEligible,
+            IsBackedUp = authData.IsBackedUp,
             AttestationObject = Raw.Response.AttestationObject,
-            AttestationClientDataJSON = Raw.Response.ClientDataJson,
+            AttestationClientDataJson = Raw.Response.ClientDataJson,
             User = originalOptions.User,
             AttestationFormat = AttestationObject.Fmt,
             AaGuid = authData.AttestedCredentialData.AaGuid,

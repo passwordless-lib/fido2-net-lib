@@ -123,15 +123,15 @@ public class MyController : Controller
                 Descriptor = new PublicKeyCredentialDescriptor(success.Result.Id),
                 PublicKey = success.Result.PublicKey,
                 UserHandle = success.Result.User.Id,
-                SignCount = success.Result.Counter,
+                SignCount = success.Result.SignCount,
                 AttestationFormat = success.Result.AttestationFormat,
                 RegDate = DateTime.Now,
                 AaGuid = success.Result.AaGuid,
                 Transports = success.Result.Transports,
-                IsBackupEligible = success.Result.BE,
-                IsBackedUp = success.Result.BS,
+                IsBackupEligible = success.Result.IsBackupEligible,
+                IsBackedUp = success.Result.IsBackedUp,
                 AttestationObject = success.Result.AttestationObject,
-                AttestationClientDataJSON = success.Result.AttestationClientDataJSON,
+                AttestationClientDataJSON = success.Result.AttestationClientDataJson,
                 DevicePublicKeys = new List<byte[]>() { success.Result.DevicePublicKey }
             });
 
