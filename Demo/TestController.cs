@@ -84,7 +84,6 @@ public class TestController : Controller
     [Route("/attestation/result")]
     public async Task<JsonResult> MakeCredentialResultTestAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
     {
-
         // 1. get the options we sent the client
         var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
         var options = CredentialCreateOptions.FromJson(jsonOptions);
@@ -182,7 +181,7 @@ public class TestController : Controller
             creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
         // 7. return OK to client
-        return Json(new
+        return Json(new 
         {
             status = "ok"
         });
