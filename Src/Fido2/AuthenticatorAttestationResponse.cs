@@ -188,6 +188,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         {
             Type = Raw.Type,
             Id = authData.AttestedCredentialData.CredentialID,
+            CredentialId = authData.AttestedCredentialData.CredentialID,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
             //Transports = result of response.getTransports();
