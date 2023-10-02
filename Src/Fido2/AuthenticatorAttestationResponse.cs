@@ -55,7 +55,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         return new AuthenticatorAttestationResponse(rawResponse, attestationObject);
     }
 
-    public async Task<AttestationVerificationSuccess> VerifyAsync(
+    public async Task<RegisteredPublicKeyCredential> VerifyAsync(
         CredentialCreateOptions originalOptions,
         Fido2Configuration config,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
@@ -184,7 +184,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     the Relying Party SHOULD fail the registration ceremony.
         //     This implementation throws if the outputs are not trustworthy for a particular attestation type.
 
-        return new AttestationVerificationSuccess
+        return new RegisteredPublicKeyCredential
         {
             Type = Raw.Type,
             Id = authData.AttestedCredentialData.CredentialId,

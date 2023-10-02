@@ -6,7 +6,7 @@ namespace Fido2NetLib.Objects;
 /// <summary>
 /// Holds parsed credential data
 /// </summary>
-public class AttestationVerificationSuccess : Fido2ResponseBase
+public class RegisteredPublicKeyCredential : Fido2ResponseBase
 {
     /// <summary>
     /// The type of the public key credential source.

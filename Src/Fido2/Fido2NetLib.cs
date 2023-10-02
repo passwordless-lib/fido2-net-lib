@@ -125,14 +125,14 @@ public partial class Fido2 : IFido2
     /// </summary>
     public sealed class CredentialMakeResult : Fido2ResponseBase
     {
-        public CredentialMakeResult(string status, string errorMessage, AttestationVerificationSuccess? result)
+        public CredentialMakeResult(string status, string errorMessage, RegisteredPublicKeyCredential? result)
         {
             Status = status;
             ErrorMessage = errorMessage;
             Result = result;
         }
 
-        public AttestationVerificationSuccess? Result { get; }
+        public RegisteredPublicKeyCredential? Result { get; }
 
         // todo: add debuginfo?
     }
