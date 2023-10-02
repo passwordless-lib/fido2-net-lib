@@ -33,6 +33,19 @@ public enum AuthenticatorTransport
     Ble,
 
     /// <summary>
+    /// Indicates the respective authenticator can be contacted over over ISO/IEC 7816 smart card with contacts.
+    /// </summary>
+    [EnumMember(Value = "smart-card")]
+    SmartCard,
+
+    /// <summary>
+    /// Indicates the respective authenticator can be contacted using a combination of (often separate) data-transport
+    /// and proximity mechanisms. This supports, for example, authentication on a desktop computer using a smartphone.
+    /// </summary>
+    [EnumMember(Value = "hybrid")]
+    Hybrid,
+
+    /// <summary>
     /// Indicates the respective authenticator is contacted using a client device-specific transport, i.e., it is a platform authenticator. 
     /// These authenticators are not removable from the client device.
     /// </summary>
