@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -59,7 +58,7 @@ internal sealed class FidoU2f : AttestationVerifier
             stackalloc byte[1] { 0x00 },
             request.AuthData.RpIdHash,
             request.ClientDataHash,
-            request.AuthData.AttestedCredentialData.CredentialID,
+            request.AuthData.AttestedCredentialData.CredentialId,
             publicKeyU2F
         );
 

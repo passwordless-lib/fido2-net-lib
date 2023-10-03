@@ -1,6 +1,7 @@
 ﻿namespace Fido2.BlazorWebAssembly;
 
 using System.Text.Json.Serialization;
+
 using Fido2NetLib;
 
 [JsonSerializable(typeof(AssertionOptions))]

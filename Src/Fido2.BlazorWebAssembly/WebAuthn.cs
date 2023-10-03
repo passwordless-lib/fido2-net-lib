@@ -1,6 +1,6 @@
 ﻿namespace Fido2.BlazorWebAssembly;
-using System.Diagnostics.CodeAnalysis;
 using Fido2NetLib;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 

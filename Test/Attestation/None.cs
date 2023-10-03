@@ -33,7 +33,7 @@ public class None : Fido2Tests.Attestation
             Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.AaGuid);
             Assert.Equal(_signCount, res.Result.SignCount);
-            Assert.Equal("none", res.Result.CredType);
+            Assert.Equal("none", res.Result.AttestationFormat);
             Assert.Equal(_credentialID, res.Result.Id);
             Assert.Null(res.Result.ErrorMessage);
             Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);

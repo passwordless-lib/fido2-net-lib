@@ -55,7 +55,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         return new AuthenticatorAttestationResponse(rawResponse, attestationObject);
     }
 
-    public async Task<AttestationVerificationSuccess> VerifyAsync(
+    public async Task<RegisteredPublicKeyCredential> VerifyAsync(
         CredentialCreateOptions originalOptions,
         Fido2Configuration config,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
@@ -170,7 +170,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     If registration is requested for a credential that is already registered to a different user,
         //     the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration
 
-        if (await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialID, originalOptions.User), cancellationToken) is false)
+        if (await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialId, originalOptions.User), cancellationToken) is false)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.NonUniqueCredentialId, Fido2ErrorMessages.NonUniqueCredentialId);
         }
@@ -184,19 +184,19 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     the Relying Party SHOULD fail the registration ceremony.
         //     This implementation throws if the outputs are not trustworthy for a particular attestation type.
 
-        return new AttestationVerificationSuccess
+        return new RegisteredPublicKeyCredential
         {
             Type = Raw.Type,
-            Id = authData.AttestedCredentialData.CredentialID,
+            Id = authData.AttestedCredentialData.CredentialId,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
-            //Transports = result of response.getTransports();
-            BE = authData.IsBackupEligible,
-            BS = authData.BackupState,
+            // Transports = result of response.getTransports();
+            IsBackupEligible = authData.IsBackupEligible,
+            IsBackedUp = authData.IsBackedUp,
             AttestationObject = Raw.Response.AttestationObject,
-            AttestationClientDataJSON = Raw.Response.ClientDataJson,
+            AttestationClientDataJson = Raw.Response.ClientDataJson,
             User = originalOptions.User,
-            CredType = AttestationObject.Fmt,
+            AttestationFormat = AttestationObject.Fmt,
             AaGuid = authData.AttestedCredentialData.AaGuid,
             DevicePublicKey = devicePublicKeyResult
         };

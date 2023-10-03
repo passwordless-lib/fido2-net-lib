@@ -114,7 +114,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         }
 
         // 9. Verify that the authenticator data's credentialId field is the same as the key identifier.
-        if (!keyIdentifier.SequenceEqual(request.AuthData.AttestedCredentialData.CredentialID))
+        if (!keyIdentifier.SequenceEqual(request.AuthData.AttestedCredentialData.CredentialId))
         {
             throw new Fido2VerificationException("Mismatch between credentialId and keyIdentifier in Apple AppAttest attestation");
         }

@@ -97,7 +97,7 @@ public partial class Fido2 : IFido2
     /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
     /// </summary>
     /// <returns></returns>
-    public async Task<AssertionVerificationResult> MakeAssertionAsync(
+    public async Task<VerifyAssertionResult> MakeAssertionAsync(
         AuthenticatorAssertionRawResponse assertionResponse,
         AssertionOptions originalOptions,
         byte[] storedPublicKey,
@@ -125,14 +125,14 @@ public partial class Fido2 : IFido2
     /// </summary>
     public sealed class CredentialMakeResult : Fido2ResponseBase
     {
-        public CredentialMakeResult(string status, string errorMessage, AttestationVerificationSuccess? result)
+        public CredentialMakeResult(string status, string errorMessage, RegisteredPublicKeyCredential? result)
         {
             Status = status;
             ErrorMessage = errorMessage;
             Result = result;
         }
 
-        public AttestationVerificationSuccess? Result { get; }
+        public RegisteredPublicKeyCredential? Result { get; }
 
         // todo: add debuginfo?
     }

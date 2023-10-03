@@ -1,5 +1,4 @@
-﻿using System.Buffers.Binary;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -803,7 +802,7 @@ public class Fido2Tests
     [Fact]
     public async Task TestAssertionResponse()
     {
-        AssertionVerificationResult avr;
+        VerifyAssertionResult avr;
         foreach (var (type, alg, curve) in _validCOSEParameters)
         {
             // No support for P256K on OSX
@@ -819,14 +818,14 @@ public class Fido2Tests
                 avr = await MakeAssertionResponseAsync(type, alg);
             }
 
-            Assert.Equal("", avr.ErrorMessage);
+            Assert.Null(avr.ErrorMessage);
             Assert.Equal("ok", avr.Status);
             Assert.Equal(new byte[] { 0xf1, 0xd0 }, avr.CredentialId);
-            Assert.Equal("1", avr.Counter.ToString("X"));
+            Assert.Equal("1", avr.SignCount.ToString("X"));
         }
     }
 
-    internal static async Task<AssertionVerificationResult> MakeAssertionResponseAsync(
+    internal static async Task<VerifyAssertionResult> MakeAssertionResponseAsync(
         COSE.KeyType kty,
         COSE.Algorithm alg,
         COSE.EllipticCurve crv = COSE.EllipticCurve.P256,

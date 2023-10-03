@@ -84,7 +84,6 @@ public class TestController : Controller
     [Route("/attestation/result")]
     public async Task<JsonResult> MakeCredentialResultTestAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
     {
-
         // 1. get the options we sent the client
         var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
         var options = CredentialCreateOptions.FromJson(jsonOptions);
@@ -102,10 +101,10 @@ public class TestController : Controller
         // 3. Store the credentials in db
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
-            Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
+            Descriptor = new PublicKeyCredentialDescriptor(success.Result.Id),
             PublicKey = success.Result.PublicKey,
             UserHandle = success.Result.User.Id,
-            SignCount = success.Result.Counter
+            SignCount = success.Result.SignCount
         });
 
         // 4. return "ok" to the client
@@ -163,9 +162,9 @@ public class TestController : Controller
         var creds = _demoStorage.GetCredentialById(clientResponse.Id);
 
         // 3. Get credential counter from database
-        var storedCounter = creds.SignatureCounter;
+        var storedCounter = creds.SignCount;
 
-        // 4. Create callback to check if userhandle owns the credentialId
+        // 4. Create callback to check if user handle owns the credentialId
         IsUserHandleOwnerOfCredentialIdAsync callback = static async (args, cancellationToken) =>
         {
             var storedCreds = await _demoStorage.GetCredentialsByUserHandleAsync(args.UserHandle, cancellationToken);
@@ -176,19 +175,16 @@ public class TestController : Controller
         var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
 
         // 6. Store the updated counter
-        _demoStorage.UpdateCounter(res.CredentialId, res.Counter);
+        _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
 
         if (res.DevicePublicKey is not null)
             creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
-        var testRes = new
-        {
-            status = "ok",
-            errorMessage = ""
-        };
-
         // 7. return OK to client
-        return Json(testRes);
+        return Json(new
+        {
+            status = "ok"
+        });
     }
 
     /// <summary>

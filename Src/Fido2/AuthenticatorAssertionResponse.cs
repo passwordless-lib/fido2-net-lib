@@ -56,7 +56,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
     /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID</param>
     /// <param name="cancellationToken"></param>
-    public async Task<AssertionVerificationResult> VerifyAsync(
+    public async Task<VerifyAssertionResult> VerifyAsync(
         AssertionOptions options,
         Fido2Configuration config,
         byte[] storedPublicKey,
@@ -139,8 +139,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
 
-        if (authData.BackupState && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
-            !authData.BackupState && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
+        if (authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
+            !authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
         // 17. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
@@ -190,7 +190,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 throw new Fido2VerificationException(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, Fido2ErrorMessages.AttestedCredentialDataFlagNotSet);
 
             // 2. Verify that the credentialPublicKey and credentialId fields of the attested credential data in authData match credentialRecord.publicKey and credentialRecord.id, respectively.
-            if (!Raw.Id.SequenceEqual(authData.AttestedCredentialData.CredentialID))
+            if (!Raw.Id.SequenceEqual(authData.AttestedCredentialData.CredentialId))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, "Stored credential id does not match id in attested credential data");
 
             if (!storedPublicKey.SequenceEqual(authData.AttestedCredentialData.CredentialPublicKey.GetBytes()))
@@ -217,13 +217,12 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             TrustAnchor.Verify(metadataEntry, trustPath);
         }
 
-        return new AssertionVerificationResult
+        return new VerifyAssertionResult
         {
             Status = "ok",
-            ErrorMessage = string.Empty,
             CredentialId = Raw.Id,
-            Counter = authData.SignCount,
-            BS = authData.BackupState,
+            SignCount = authData.SignCount,
+            IsBackedUp = authData.IsBackedUp,
             DevicePublicKey = devicePublicKeyResult,
         };
     }

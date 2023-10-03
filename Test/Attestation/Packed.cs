@@ -39,7 +39,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.AaGuid);
             Assert.Equal(_signCount, res.Result.SignCount);
-            Assert.Equal("packed", res.Result.CredType);
+            Assert.Equal("packed", res.Result.AttestationFormat);
             Assert.Equal(_credentialID, res.Result.Id);
             Assert.Null(res.Result.ErrorMessage);
             Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
@@ -310,7 +310,7 @@ public class Packed : Fido2Tests.Attestation
                     break;
                 case COSE.KeyType.OKP:
                     {
-                        var avr = new AssertionVerificationResult
+                        var avr = new VerifyAssertionResult
                         {
                             CredentialId = new byte[] { 0xf1, 0xd0 },
                             ErrorMessage = string.Empty,
@@ -323,7 +323,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.AaGuid);
             Assert.Equal(_signCount, res.Result.SignCount);
-            Assert.Equal("packed", res.Result.CredType);
+            Assert.Equal("packed", res.Result.AttestationFormat);
             Assert.Equal(_credentialID, res.Result.Id);
             Assert.Null(res.Result.ErrorMessage);
             Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);

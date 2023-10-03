@@ -21,7 +21,7 @@ public class MyController : Controller
 {
     private IFido2 _fido2;
     public static IMetadataService _mds;
-    public static readonly DevelopmentInMemoryStore DemoStorage = new DevelopmentInMemoryStore();
+    public static readonly DevelopmentInMemoryStore DemoStorage = new();
 
     public MyController(IFido2 fido2)
     {
@@ -119,20 +119,19 @@ public class MyController : Controller
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                Type = success.Result.Type,
                 Id = success.Result.Id,
                 Descriptor = new PublicKeyCredentialDescriptor(success.Result.Id),
                 PublicKey = success.Result.PublicKey,
                 UserHandle = success.Result.User.Id,
-                SignCount = success.Result.Counter,
-                CredType = success.Result.CredType,
+                SignCount = success.Result.SignCount,
+                AttestationFormat = success.Result.AttestationFormat,
                 RegDate = DateTime.Now,
                 AaGuid = success.Result.AaGuid,
                 Transports = success.Result.Transports,
-                BE = success.Result.BE,
-                BS = success.Result.BS,
+                IsBackupEligible = success.Result.IsBackupEligible,
+                IsBackedUp = success.Result.IsBackedUp,
                 AttestationObject = success.Result.AttestationObject,
-                AttestationClientDataJSON = success.Result.AttestationClientDataJSON,
+                AttestationClientDataJSON = success.Result.AttestationClientDataJson,
                 DevicePublicKeys = new List<byte[]>() { success.Result.DevicePublicKey }
             });
 
@@ -204,9 +203,9 @@ public class MyController : Controller
             var creds = DemoStorage.GetCredentialById(clientResponse.Id) ?? throw new Exception("Unknown credentials");
 
             // 3. Get credential counter from database
-            var storedCounter = creds.SignatureCounter;
+            var storedCounter = creds.SignCount;
 
-            // 4. Create callback to check if userhandle owns the credentialId
+            // 4. Create callback to check if the user handle owns the credentialId
             IsUserHandleOwnerOfCredentialIdAsync callback = static async (args, cancellationToken) =>
             {
                 var storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle, cancellationToken);
@@ -217,7 +216,7 @@ public class MyController : Controller
             var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
 
             // 6. Store the updated counter
-            DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
+            DemoStorage.UpdateCounter(res.CredentialId, res.SignCount);
 
             if (res.DevicePublicKey is not null)
                 creds.DevicePublicKeys.Add(res.DevicePublicKey);
@@ -227,7 +226,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new AssertionVerificationResult { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new VerifyAssertionResult { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 }

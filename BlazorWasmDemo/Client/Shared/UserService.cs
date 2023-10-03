@@ -3,7 +3,9 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+
 using Fido2.BlazorWebAssembly;
+
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 
@@ -126,14 +128,15 @@ public class UserService
         {
             // Get options from server
             var options = await _httpClient.GetFromJsonAsync<AssertionOptions>(route, _jsonOptions);
-            if (options == null)
+
+            if (options is null)
             {
                 return "No options received";
             }
 
             if (options.Status != "ok")
             {
-                return options.ErrorMessage;
+                return options.ErrorMessage ?? string.Empty;
             }
 
             // Present options to user and get response (usernameless users will be asked by their authenticator, which credential they want to use to sign the challenge)

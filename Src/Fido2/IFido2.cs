@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
@@ -12,7 +13,7 @@ public interface IFido2
         UserVerificationRequirement? userVerification,
         AuthenticationExtensionsClientInputs? extensions = null);
 
-    Task<AssertionVerificationResult> MakeAssertionAsync(
+    Task<VerifyAssertionResult> MakeAssertionAsync(
         AuthenticatorAssertionRawResponse assertionResponse,
         AssertionOptions originalOptions,
         byte[] storedPublicKey,
