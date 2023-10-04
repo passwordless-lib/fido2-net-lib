@@ -174,7 +174,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
             securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
                 Convert.ToBase64String(attestnCert.RawData),
-                Convert.ToBase64String(root.RawData) 
+                Convert.ToBase64String(root.RawData)
             });
 
             string strToken = "";
@@ -1089,9 +1089,9 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { 
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
                     Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData) 
+                    Convert.ToBase64String(root.RawData)
                 });
 
                 string strToken = "";

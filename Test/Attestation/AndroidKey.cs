@@ -61,7 +61,7 @@ public class AndroidKey : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestAndroidKey()
+    public async Task TestAndroidKey()
     {
         var res = await MakeAttestationResponseAsync();
         Assert.Equal(string.Empty, res.ErrorMessage);
