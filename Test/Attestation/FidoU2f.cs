@@ -53,7 +53,7 @@ public class FidoU2f : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestU2f()
+    public async Task TestU2f()
     {
         var res = await MakeAttestationResponseAsync();
         Assert.Equal(string.Empty, res.ErrorMessage);

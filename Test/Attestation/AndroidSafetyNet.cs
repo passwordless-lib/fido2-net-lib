@@ -98,7 +98,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestAndroidSafetyNet()
+    public async Task TestAndroidSafetyNet()
     {
         var res = await MakeAttestationResponseAsync();
         Assert.Equal(string.Empty, res.ErrorMessage);
@@ -773,7 +773,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestAndroidSafetyNetResponseClaimNonceNotBase64String()
+    public async Task TestAndroidSafetyNetResponseClaimNonceNotBase64String()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;

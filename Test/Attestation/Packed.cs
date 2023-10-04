@@ -836,7 +836,7 @@ public class Packed : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestAttCertSubjectCommaAsync()
+    public async Task TestAttCertSubjectCommaAsync()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 attestnCert;

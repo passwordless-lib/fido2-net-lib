@@ -4957,7 +4957,7 @@ public class Tpm : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestTPMAikCertMisingAAGUID()
+    public async Task TestTPMAikCertMisingAAGUID()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
