@@ -202,7 +202,7 @@ public class Packed : Fido2Tests.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            CredentialMakeResult res = null;
+            MakeNewCredentialResult res = null;
 
             switch (type)
             {

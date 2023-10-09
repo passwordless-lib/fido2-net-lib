@@ -140,7 +140,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new CredentialMakeResult(status: "error", errorMessage: FormatException(e), result: null));
+            return Json(new MakeNewCredentialResult(status: "error", errorMessage: FormatException(e), result: null));
         }
     }
 

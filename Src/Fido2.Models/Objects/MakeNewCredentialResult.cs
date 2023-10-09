@@ -11,9 +11,9 @@ namespace Fido2NetLib.Objects;
 /// <summary>
 /// Result of parsing and verifying attestation. Used to transport Public Key back to RP
 /// </summary>
-public sealed class CredentialMakeResult : Fido2ResponseBase
+public sealed class MakeNewCredentialResult : Fido2ResponseBase
 {
-    public CredentialMakeResult(string status, string errorMessage, RegisteredPublicKeyCredential? result)
+    public MakeNewCredentialResult(string status, string errorMessage, RegisteredPublicKeyCredential? result)
     {
         Status = status;
         ErrorMessage = errorMessage;
