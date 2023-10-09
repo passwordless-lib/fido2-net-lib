@@ -1,21 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <UserSecretsId>39589262-6aa1-4bde-aaa9-403a7542cf63</UserSecretsId>
+    <TargetFramework>$(SupportedTargetFrameworks)</TargetFramework>
     <RootNamespace>Fido2Demo</RootNamespace>
+    <UserSecretsId>39589262-6aa1-4bde-aaa9-403a7542cf63</UserSecretsId>
   </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
     <ProjectReference Include="..\Src\Fido2.Development\Fido2.Development.csproj" />
     <ProjectReference Include="..\Src\Fido2.Models\Fido2.Models.csproj" />
     <ProjectReference Include="..\Src\Fido2\Fido2.csproj" />
   </ItemGroup>
+
   <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.0" />
   </ItemGroup>
+
   <ItemGroup>
     <Folder Include="wwwroot\bulma\" />
   </ItemGroup>
+
   <ItemGroup>
     <Content Update="Pages\custom.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
@@ -30,4 +35,5 @@
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
   </ItemGroup>
+
 </Project>
