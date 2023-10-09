@@ -167,7 +167,6 @@ public class Fido2Tests
                 Extensions = new AuthenticationExtensionsClientOutputs()
                 {
                     AppID = true,
-                    AuthenticatorSelection = true,
                     Extensions = new string[] { "foo", "bar" },
                     Example = "test",
                     UserVerificationMethod = new ulong[][]
