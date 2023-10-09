@@ -166,7 +166,7 @@ public class UserController : ControllerBase
                 PublicKey = result.Result.PublicKey,
                 UserHandle = result.Result.User.Id,
                 SignCount = result.Result.SignCount,
-                RegDate = DateTime.Now,
+                RegDate = DateTimeOffset.UtcNow,
                 AaGuid = result.Result.AaGuid,
                 DevicePublicKeys = new List<byte[]> { result.Result.DevicePublicKey },
                 Transports = result.Result.Transports,
