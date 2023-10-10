@@ -27,13 +27,13 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
     }
 
     /// <summary>
-    /// Relying party identifier
+    /// Relying party identifier.
     /// </summary>
     [CborMember(0x01)]
     public string RpId { get; }
 
     /// <summary>
-    /// Hash of the serialized client data collected by the host
+    /// Hash of the serialized client data collected by the host.
     /// </summary>
     [CborMember(0x02)]
     public byte[] ClientDataHash { get; }
@@ -46,13 +46,13 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
     public PublicKeyCredentialDescriptor[] AllowList { get; }
 
     /// <summary>
-    /// CBOR map of extension identifier → authenticator extension input values
+    /// CBOR map of extension identifier → authenticator extension input values.
     /// </summary>
     [CborMember(0x04)]
     public CborMap? Extensions { get; }
 
     /// <summary>
-    /// Map of authenticator options
+    /// Map of authenticator options.
     /// </summary>
     [CborMember(0x05)]
     public AuthenticatorGetAssertionOptions? Options { get; }
