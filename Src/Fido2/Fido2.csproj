@@ -4,6 +4,7 @@
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
     <RootNamespace>Fido2NetLib</RootNamespace>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
     <IsTrimmable>true</IsTrimmable>
     <NoWarn>$(NoWarn);IDE0057</NoWarn>
   </PropertyGroup>
