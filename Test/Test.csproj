@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
     <IsPackable>false</IsPackable>
-    <NoWarn>CA1822,IDE0007,IDE0037,IDE0039,IDE0057,CA1825</NoWarn>
+    <NoWarn>$(NoWarm);CA1822;IDE0007;IDE0037;IDE0039;IDE0057;CA1825</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
