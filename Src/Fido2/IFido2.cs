@@ -30,12 +30,12 @@ public interface IFido2
 
     CredentialCreateOptions RequestNewCredential(
         Fido2User user,
-        List<PublicKeyCredentialDescriptor> excludeCredentials,
+        IEnumerable<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticationExtensionsClientInputs? extensions = null);
 
     CredentialCreateOptions RequestNewCredential(
         Fido2User user,
-        List<PublicKeyCredentialDescriptor> excludeCredentials,
+        IEnumerable<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticatorSelection authenticatorSelection,
         AttestationConveyancePreference attestationPreference,
         AuthenticationExtensionsClientInputs? extensions = null);
