@@ -69,5 +69,27 @@ public sealed class AuthenticationExtensionsClientInputs
     [JsonPropertyName("prf")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticationExtensionsPRFInputs? PRF { get; set; }
+
+    /// <summary>
+    /// This registration extension allows relying parties to specify a credential protection policy when creating a credential.
+    /// Additionally, authenticators MAY choose to establish a default credential protection policy greater than <c>UserVerificationOptional</c> (the lowest level)
+    /// and unilaterally enforce such policy. Authenticators not supporting some form of user verification MUST NOT support this extension.
+    /// Authenticators supporting some form of user verification MUST process this extension and persist the credProtect value with the credential,
+    /// even if the authenticator is not protected by some form of user verification at the time.
+    /// https://fidoalliance.org/specs/fido-v2.2-rd-20230321/fido-client-to-authenticator-protocol-v2.2-rd-20230321.html#sctn-credProtect-extension
+    /// </summary>
+    [JsonPropertyName("credentialProtectionPolicy")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CredentialProtectionPolicy? CredentialProtectionPolicy { get; set; }
+
+    /// <summary>
+    ///  This controls whether it is better to fail to create a credential rather than ignore the protection policy.
+    ///  When true, and <c>CredentialProtectionPolicy</c>'s value is
+    ///  either <c>UserVerificationOptionalWithCredentialIdList</c> or <c>UserVerificationRequired</c>, the platform
+    ///  SHOULD NOT create the credential in a way that does not implement the requested protection policy.
+    /// </summary>
+    [JsonPropertyName("enforceCredentialProtectionPolicy")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? EnforceCredentialProtectionPolicy { get; set; }
 }
 

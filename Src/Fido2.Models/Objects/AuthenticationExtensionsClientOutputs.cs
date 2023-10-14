@@ -65,4 +65,13 @@ public class AuthenticationExtensionsClientOutputs
     [JsonPropertyName("prf")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticationExtensionsPRFOutputs? PRF { get; set; }
+
+
+    /// <summary>
+    /// The <c>CredentialProtectionPolicy</c> stored alongside the created credential
+    /// https://fidoalliance.org/specs/fido-v2.2-rd-20230321/fido-client-to-authenticator-protocol-v2.2-rd-20230321.html#sctn-credProtect-extension
+    /// </summary>
+    [JsonPropertyName("credProtect")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CredentialProtectionPolicy? CredProtect { get; set; }
 }

@@ -30,6 +30,14 @@ public class FidoEnumConverterTests
     }
 
     [Fact]
+    public void CorrectlyDeserializesNumericEnumValue()
+    {
+        Assert.Equal(CredentialProtectionPolicy.UserVerificationRequired, JsonSerializer.Deserialize<CredentialProtectionPolicy>($"{CredentialProtectionPolicy.UserVerificationRequired:d}"));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CredentialProtectionPolicy>($"99"));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CredentialProtectionPolicy>($"99.7"));
+    }
+
+    [Fact]
     public void DeserializationIsCaseInsensitive()
     {
         Assert.Equal("\"A\"", JsonSerializer.Serialize(ABC.A));
