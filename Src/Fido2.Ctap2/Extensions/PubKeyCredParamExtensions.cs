@@ -22,11 +22,13 @@ public static class AuthenticatorTransportExtensions
         #pragma warning disable format
         return value switch
         {
-            AuthenticatorTransport.Usb      => "usb",
-            AuthenticatorTransport.Nfc      => "nfc",
-            AuthenticatorTransport.Ble      => "ble",
-            AuthenticatorTransport.Internal => "internal",
-            _                               => value.ToString()
+            AuthenticatorTransport.Usb       => "usb",
+            AuthenticatorTransport.Nfc       => "nfc",
+            AuthenticatorTransport.Ble       => "ble",
+            AuthenticatorTransport.SmartCard => "smart-card",
+            AuthenticatorTransport.Hybrid    => "hybrid",
+            AuthenticatorTransport.Internal  => "internal",
+            _                                => value.ToString()
         };
         #pragma warning restore format
     }
