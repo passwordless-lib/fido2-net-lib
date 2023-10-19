@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -61,7 +62,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
     /// </summary>
     [JsonPropertyName("excludeCredentials")]
-    public IEnumerable<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; }
+    public IEnumerable<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; } = Enumerable.Empty<PublicKeyCredentialDescriptor>();
 
     /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
@@ -96,7 +97,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
             },
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
-            ExcludeCredentials = excludeCredentials ?? new List<PublicKeyCredentialDescriptor>(),
+            ExcludeCredentials = excludeCredentials ?? Enumerable.Empty<PublicKeyCredentialDescriptor>(),
             Extensions = extensions
         };
     }

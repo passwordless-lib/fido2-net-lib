@@ -105,7 +105,7 @@ public class UserService
         {
             Console.WriteLine(e);
             var errorMessage = e.Message;
-            if (options.ExcludeCredentials?.Count() > 0)
+            if (options.ExcludeCredentials?.Any() ?? false)
             {
                 errorMessage += " (You may have already registered this device)";
             }
