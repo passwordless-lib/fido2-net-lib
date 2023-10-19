@@ -63,7 +63,7 @@ public class TestController : Controller
         });
 
         // 2. Get user existing keys by username
-        var existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+        var existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor);
 
         //var exts = new AuthenticationExtensionsClientInputs() { Extensions = true, UserVerificationIndex = true, Location = true, UserVerificationMethod = true, BiometricAuthenticatorPerformanceBounds = new AuthenticatorBiometricPerfBounds { FAR = float.MaxValue, FRR = float.MaxValue } };
         var exts = new AuthenticationExtensionsClientInputs() { };
@@ -122,7 +122,7 @@ public class TestController : Controller
             return NotFound("username was not registered");
 
         // 2. Get registered credentials from database
-        var existingCredentials = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+        var existingCredentials = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor);
 
         var uv = assertionClientParams.UserVerification;
         if (null != assertionClientParams.authenticatorSelection)
