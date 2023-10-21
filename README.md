@@ -93,7 +93,7 @@ var user = DemoStorage.GetOrAddUser(username, () => new User
 });
 
 // 2. Get user existing keys by username
-List<PublicKeyCredentialDescriptor> existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor);
+var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor);
 
 // 3. Create options
 var options = _lib.RequestNewCredential(user, existingKeys, AuthenticatorSelection.Default, AttestationConveyancePreference.Parse(attType));
@@ -153,7 +153,7 @@ var user = DemoStorage.GetUser(username);
 if (user == null) return NotFound("username was not registered");
 
 // 2. Get registered credentials from database
-List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor);
+var existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor);
 
 // 3. Create options
 var options = _lib.GetAssertionOptions(
