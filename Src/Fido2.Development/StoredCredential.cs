@@ -58,7 +58,7 @@ public class StoredCredential
 
     public string AttestationFormat { get; set; }
 
-    public DateTime RegDate { get; set; }
+    public DateTimeOffset RegDate { get; set; }
 
     public Guid AaGuid { get; set; }
 }
