@@ -233,7 +233,7 @@ public class Apple : Fido2Tests.Attestation
             }
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -271,7 +271,7 @@ public class Apple : Fido2Tests.Attestation
             Origins = new HashSet<string> { "https://www.passwordless.dev" },
         });
 
-        var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
+        var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, originalOptions, callback);
     }
 
     private string[] StackAllocSha256(byte[] authData, byte[] clientDataJson)

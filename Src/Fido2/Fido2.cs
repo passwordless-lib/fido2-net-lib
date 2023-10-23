@@ -58,18 +58,18 @@ public class Fido2 : IFido2
     /// Verifies the response from the browser/authenticator after creating new credentials.
     /// </summary>
     /// <param name="attestationResponse">The attestation response from the authenticator.</param>
-    /// <param name="origChallenge">The original options that was sent to the client.</param>
+    /// <param name="originalOptions">The original options that was sent to the client.</param>
     /// <param name="isCredentialIdUniqueToUser">The delegate used to validate that the CredentialID is unique to this user.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<MakeNewCredentialResult> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
-        CredentialCreateOptions origChallenge,
+        CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         CancellationToken cancellationToken = default)
     {
         var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-        var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
+        var success = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
 
         // todo: Set Errormessage etc.
         return new MakeNewCredentialResult(
