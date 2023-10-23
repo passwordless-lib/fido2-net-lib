@@ -37,7 +37,7 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH"u8 +
         "WD9f"u8;
 
-    private readonly string _blobUrl = "https://mds.fidoalliance.org/";
+    private readonly string _blobUrl = "https://mds3.fidoalliance.org/";
     private readonly IHttpClientFactory _httpClientFactory;
 
     public Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory)
