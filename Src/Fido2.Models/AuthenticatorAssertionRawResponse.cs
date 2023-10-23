@@ -29,7 +29,7 @@ public class AuthenticatorAssertionRawResponse
     [JsonPropertyName("extensions")]
     public AuthenticationExtensionsClientOutputs Extensions { get; set; }
 
-    public class AssertionResponse
+    public sealed class AssertionResponse
     {
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("authenticatorData")]

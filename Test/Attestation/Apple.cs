@@ -226,7 +226,7 @@ public class Apple : Fido2Tests.Attestation
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = _attestationObject.Encode(),
                 ClientDataJson = clientDataJson,
