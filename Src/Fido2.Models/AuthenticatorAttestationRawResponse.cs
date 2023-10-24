@@ -15,7 +15,7 @@ public sealed class AuthenticatorAttestationRawResponse
     public byte[] RawId { get; set; }
 
     [JsonPropertyName("type")]
-    public PublicKeyCredentialType Type { get; set; } = PublicKeyCredentialType.PublicKey;
+    public PublicKeyCredentialType? Type { get; set; }
 
     [JsonPropertyName("response")]
     public ResponseData Response { get; set; }

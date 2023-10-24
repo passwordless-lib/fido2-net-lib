@@ -93,6 +93,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
                 PubKeyCredParam.ES512,
                 PubKeyCredParam.RS512,
                 PubKeyCredParam.PS512,
+                PubKeyCredParam.RS1,
             },
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
@@ -148,6 +149,7 @@ public sealed class PubKeyCredParam
     public static readonly PubKeyCredParam PS384 = new(COSE.Algorithm.PS384);
     public static readonly PubKeyCredParam PS512 = new(COSE.Algorithm.PS512);
     public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
+    public static readonly PubKeyCredParam RS1 = new(COSE.Algorithm.RS1);
 }
 
 /// <summary>
@@ -205,7 +207,7 @@ public class AuthenticatorSelection
     [JsonPropertyName("residentKey")]
     public ResidentKeyRequirement ResidentKey
     {
-        get => _residentKey;
+        private get => _residentKey;
         set
         {
             _residentKey = value;
