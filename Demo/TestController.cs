@@ -1,6 +1,5 @@
 ﻿using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
@@ -70,7 +69,7 @@ public class TestController : Controller
         var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
 
         // 4. Temporarily store options, session/in-memory cache/redis/db
-        HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
+        HttpContext.Session.SetString("fido2.attestationOptions", JsonSerializer.Serialize(options));
 
         // 5. return options to client
 
@@ -147,7 +146,7 @@ public class TestController : Controller
         );
 
         // 4. Temporarily store options, session/in-memory cache/redis/db
-        HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
+        HttpContext.Session.SetString("fido2.assertionOptions", JsonSerializer.Serialize(options));
 
         // 5. Return options to client
         var jsonResponse = JsonSerializer.SerializeToNode(options);

@@ -20,7 +20,12 @@ public sealed class AuthenticationExtensionsClientInputs
     /// </summary>
     [JsonPropertyName("appid")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string AppID { get; set; }
+    public string AppID { private get; set; }
+
+    public string GetAppID()
+    {
+        return AppID;
+    }
 
     /// <summary>
     /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator supports.
@@ -36,7 +41,7 @@ public sealed class AuthenticationExtensionsClientInputs
     /// </summary>
     [JsonPropertyName("uvm")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? UserVerificationMethod { get; set; }
+    public bool? UserVerificationMethod { private get; set; }
 
 #nullable enable
     /// <summary>
