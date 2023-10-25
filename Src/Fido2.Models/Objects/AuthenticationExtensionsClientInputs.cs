@@ -12,7 +12,7 @@ public sealed class AuthenticationExtensionsClientInputs
     /// </summary>
     [JsonPropertyName("example.extension.bool")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public object Example { get; set; }
+    public bool? Example { get; set; }
 
     /// <summary>
     /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs to request an assertion.

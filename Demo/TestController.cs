@@ -75,7 +75,7 @@ public class TestController : Controller
         var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
 
         // 4. Temporarily store options, session/in-memory cache/redis/db
-        HttpContext.Session.SetString("fido2.attestationOptions", JsonSerializer.Serialize(options));
+        HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
 
         // 5. return options to client
         return Json(options);
@@ -145,7 +145,7 @@ public class TestController : Controller
         );
 
         // 4. Temporarily store options, session/in-memory cache/redis/db
-        HttpContext.Session.SetString("fido2.assertionOptions", JsonSerializer.Serialize(options));
+        HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
 
         // 5. Return options to client
         return Json(options);

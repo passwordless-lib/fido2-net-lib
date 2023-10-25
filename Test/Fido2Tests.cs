@@ -168,7 +168,7 @@ public class Fido2Tests
                 {
                     AppID = true,
                     Extensions = new string[] { "foo", "bar" },
-                    Example = "test",
+                    Example = true,
                     UserVerificationMethod = new ulong[][]
                     {
                         new ulong[]
