@@ -9,7 +9,7 @@ public class AuthenticationExtensionsClientOutputs
     /// </summary>
     [JsonPropertyName("example.extension.bool")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public object Example { get; set; }
+    public bool? Example { get; set; }
 
 #nullable enable
 
