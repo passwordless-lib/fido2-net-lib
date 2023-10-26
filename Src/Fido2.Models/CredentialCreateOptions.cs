@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -62,7 +61,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
     /// </summary>
     [JsonPropertyName("excludeCredentials")]
-    public IEnumerable<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; } = Enumerable.Empty<PublicKeyCredentialDescriptor>();
+    public IReadOnlyList<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; } = new List<PublicKeyCredentialDescriptor>();
 
     /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
@@ -71,7 +70,14 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticationExtensionsClientInputs Extensions { get; set; }
 
-    public static CredentialCreateOptions Create(Fido2Configuration config, byte[] challenge, Fido2User user, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationConveyancePreference, IEnumerable<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions)
+    public static CredentialCreateOptions Create(
+        Fido2Configuration config,
+        byte[] challenge,
+        Fido2User user,
+        AuthenticatorSelection authenticatorSelection,
+        AttestationConveyancePreference attestationConveyancePreference,
+        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
+        AuthenticationExtensionsClientInputs extensions)
     {
         return new CredentialCreateOptions
         {
@@ -97,7 +103,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
             },
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
-            ExcludeCredentials = excludeCredentials ?? Enumerable.Empty<PublicKeyCredentialDescriptor>(),
+            ExcludeCredentials = excludeCredentials ?? Array.Empty<PublicKeyCredentialDescriptor>(),
             Extensions = extensions
         };
     }

@@ -59,7 +59,7 @@ public class MyController : Controller
             });
 
             // 2. Get user existing keys by username
-            var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor);
+            var existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
 
             // 3. Create options
             var authenticatorSelection = new AuthenticatorSelection
