@@ -125,7 +125,7 @@ public class MyController : Controller
                 UserHandle = success.Result.User.Id,
                 SignCount = success.Result.SignCount,
                 AttestationFormat = success.Result.AttestationFormat,
-                RegDate = DateTime.Now,
+                RegDate = DateTimeOffset.UtcNow,
                 AaGuid = success.Result.AaGuid,
                 Transports = success.Result.Transports,
                 IsBackupEligible = success.Result.IsBackupEligible,

@@ -10,7 +10,7 @@ namespace Fido2NetLib;
 /// <summary>
 /// Public API for parsing and verifying FIDO2 attestation & assertion responses.
 /// </summary>
-public partial class Fido2 : IFido2
+public class Fido2 : IFido2
 {
     private readonly Fido2Configuration _config;
     private readonly IMetadataService? _metadataService;

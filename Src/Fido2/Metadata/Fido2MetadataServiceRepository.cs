@@ -37,7 +37,7 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH"u8 +
         "WD9f"u8;
 
-    private readonly string _blobUrl = "https://mds.fidoalliance.org/";
+    private readonly string _blobUrl = "https://mds3.fidoalliance.org/";
     private readonly IHttpClientFactory _httpClientFactory;
 
     public Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory)
@@ -180,6 +180,7 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
                 }
             }
 
+            #pragma warning disable format
             // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
             if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
                 // and that the number of elements in the chain accounts for what was in x5c plus the root we added
@@ -189,13 +190,14 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
             {
                 // if we are good so far, that is a good sign
                 certChainIsValid = true;
-                for (var i = 0; i < certChain.ChainElements.Count - 1; i++)
+                for (int i = 0; i < certChain.ChainElements.Count - 1; i++)
                 {
                     // check each non-root cert to verify zero status listed against it, otherwise, invalidate chain
-                    if (0 != certChain.ChainElements[i].ChainElementStatus.Length)
+                    if (certChain.ChainElements[i].ChainElementStatus.Length != 0)
                         certChainIsValid = false;
                 }
             }
+            #pragma warning restore format
         }
 
         if (!certChainIsValid)
