@@ -309,7 +309,7 @@ public class Tpm : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestTPMAikCertSANTCGConformant()
+    public async Task TestTPMAikCertSANTCGConformant()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -408,7 +408,7 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var res = MakeAttestationResponseAsync().Result;
+        var res = await MakeAttestationResponseAsync();
 
         Assert.Equal(string.Empty, res.ErrorMessage);
         Assert.Equal("ok", res.Status);
@@ -425,7 +425,7 @@ public class Tpm : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestTPMSigNull()
+    public async Task TestTPMSigNull()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -514,12 +514,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM attestation signature", ex.Message);
     }
 
     [Fact]
-    public void TestTPMSigNotByteString()
+    public async Task TestTPMSigNotByteString()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -608,12 +608,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM attestation signature", ex.Message);
     }
 
     [Fact]
-    public void TestTPMSigByteStringZeroLen()
+    public async Task TestTPMSigByteStringZeroLen()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -702,12 +702,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid TPM attestation signature", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM attestation signature", ex.Message);
     }
 
     [Fact]
-    public void TestTPMVersionNot2()
+    public async Task TestTPMVersionNot2()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -803,13 +803,13 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
 
-        Assert.Equal("FIDO2 only supports TPM 2.0", ex.Result.Message);
+        Assert.Equal("FIDO2 only supports TPM 2.0", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaNull()
+    public async Task TestTPMPubAreaNull()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -899,12 +899,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", CborNull.Instance },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Missing or malformed pubArea", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaNotByteString()
+    public async Task TestTPMPubAreaNotByteString()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[3];
 
@@ -993,12 +993,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", "banana" }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Missing or malformed pubArea", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaByteStringZeroLen()
+    public async Task TestTPMPubAreaByteStringZeroLen()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -1087,12 +1087,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", Array.Empty<byte>() }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Missing or malformed pubArea", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaUniqueNull()
+    public async Task TestTPMPubAreaUniqueNull()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -1179,12 +1179,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Missing or malformed pubArea", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaUniqueByteStringZeroLen()
+    public async Task TestTPMPubAreaUniqueByteStringZeroLen()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -1275,12 +1275,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Missing or malformed pubArea", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Missing or malformed pubArea", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaUniquePublicKeyMismatch()
+    public async Task TestTPMPubAreaUniquePublicKeyMismatch()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -1369,12 +1369,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Public key mismatch between pubArea and credentialPublicKey", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Public key mismatch between pubArea and credentialPublicKey", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaUniqueExponentMismatch()
+    public async Task TestTPMPubAreaUniqueExponentMismatch()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -1463,12 +1463,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Public key exponent mismatch between pubArea and credentialPublicKey", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Public key exponent mismatch between pubArea and credentialPublicKey", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaUniqueXValueMismatch()
+    public async Task TestTPMPubAreaUniqueXValueMismatch()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
 
@@ -1573,12 +1573,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("X-coordinate mismatch between pubArea and credentialPublicKey", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("X-coordinate mismatch between pubArea and credentialPublicKey", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaUniqueYValueMismatch()
+    public async Task TestTPMPubAreaUniqueYValueMismatch()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
 
@@ -1684,12 +1684,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Y-coordinate mismatch between pubArea and credentialPublicKey", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Y-coordinate mismatch between pubArea and credentialPublicKey", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaUniqueCurveMismatch()
+    public async Task TestTPMPubAreaUniqueCurveMismatch()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
 
@@ -1795,12 +1795,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Curve mismatch between pubArea and credentialPublicKey", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Curve mismatch between pubArea and credentialPublicKey", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoNull()
+    public async Task TestTPMCertInfoNull()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -1889,12 +1889,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoNotByteString()
+    public async Task TestTPMCertInfoNotByteString()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -1983,12 +1983,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoByteStringZeroLen()
+    public async Task TestTPMCertInfoByteStringZeroLen()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2084,12 +2084,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("CertInfo invalid parsing TPM format attStmt", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoBadMagic()
+    public async Task TestTPMCertInfoBadMagic()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2178,12 +2178,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Bad magic number 474354FF", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Bad magic number 474354FF", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoBadType()
+    public async Task TestTPMCertInfoBadType()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2272,12 +2272,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Bad structure tag 1780", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Bad structure tag 1780", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoExtraDataZeroLen()
+    public async Task TestTPMCertInfoExtraDataZeroLen()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2366,12 +2366,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Bad extraData in certInfo", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Bad extraData in certInfo", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoTPM2BNameIsHandle()
+    public async Task TestTPMCertInfoTPM2BNameIsHandle()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2460,12 +2460,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Unexpected handle in TPM2B_NAME", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Unexpected handle in TPM2B_NAME", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoTPM2BNoName()
+    public async Task TestTPMCertInfoTPM2BNoName()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2554,12 +2554,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Unexpected no name found in TPM2B_NAME", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Unexpected no name found in TPM2B_NAME", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoTPM2BExtraBytes()
+    public async Task TestTPMCertInfoTPM2BExtraBytes()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2653,12 +2653,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Unexpected extra bytes found in TPM2B_NAME", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Unexpected extra bytes found in TPM2B_NAME", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoTPM2BInvalidHashAlg()
+    public async Task TestTPMCertInfoTPM2BInvalidHashAlg()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2747,12 +2747,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm", ex.Message);
     }
 
     [Fact]
-    public void TestTPMCertInfoTPM2BInvalidTPMALGID()
+    public async Task TestTPMCertInfoTPM2BInvalidTPMALGID()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2841,12 +2841,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid TPM_ALG_ID found in TPM2B_NAME", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM_ALG_ID found in TPM2B_NAME", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAlgNull()
+    public async Task TestTPMAlgNull()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -2935,12 +2935,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM attestation algorithm", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAlgNotNumber()
+    public async Task TestTPMAlgNotNumber()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3029,12 +3029,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid TPM attestation algorithm", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM attestation algorithm", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAlgMismatch()
+    public async Task TestTPMAlgMismatch()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3123,12 +3123,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Hash value mismatch extraData and attToBeSigned", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Hash value mismatch extraData and attToBeSigned", ex.Message);
     }
 
     [Fact]
-    public void TestTPMPubAreaAttestedDataMismatch()
+    public async Task TestTPMPubAreaAttestedDataMismatch()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3220,12 +3220,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Hash value mismatch attested and pubArea", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Hash value mismatch attested and pubArea", ex.Message);
     }
 
     [Fact]
-    public void TestTPMMissingX5c()
+    public async Task TestTPMMissingX5c()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3314,12 +3314,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Message);
     }
 
     [Fact]
-    public void TestX5cNotArray()
+    public async Task TestX5cNotArray()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3408,12 +3408,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Message);
     }
 
     [Fact]
-    public void TestTPMX5cCountZero()
+    public async Task TestTPMX5cCountZero()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3502,8 +3502,8 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Neither x5c nor ECDAA were found in the TPM attestation statement", ex.Message);
     }
 
     [Fact]
@@ -3596,12 +3596,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestTPMX5cValuesCountZero()
+    public async Task TestTPMX5cValuesCountZero()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3691,12 +3691,12 @@ public class Tpm : Fido2Tests.Attestation
         });
 
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestTPMFirstX5cValueNotByteString()
+    public async Task TestTPMFirstX5cValueNotByteString()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3785,12 +3785,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestTPMFirstX5cValueByteStringZeroLen()
+    public async Task TestTPMFirstX5cValueByteStringZeroLen()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3879,12 +3879,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_TpmAttestation, ex.Message);
     }
 
     [Fact]
-    public void TestTPMBadSignature()
+    public async Task TestTPMBadSignature()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -3974,12 +3974,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Bad signature in TPM with aikCert", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Bad signature in TPM with aikCert", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertNotV3()
+    public async Task TestTPMAikCertNotV3()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4075,19 +4075,19 @@ public class Tpm : Fido2Tests.Attestation
         if (OperatingSystem.IsMacOS())
         {
             // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
-            var ex = Assert.ThrowsAnyAsync<CryptographicException>(() => MakeAttestationResponseAsync());
-            Assert.Equal("Unknown format in import.", ex.Result.Message);
+            var ex = await Assert.ThrowsAnyAsync<CryptographicException>(MakeAttestationResponseAsync);
+            Assert.Equal("Unknown format in import.", ex.Message);
         }
 
         else
         {
-            var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-            Assert.Equal("aikCert must be V3", ex.Result.Message);
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+            Assert.Equal("aikCert must be V3", ex.Message);
         }
     }
 
     [Fact]
-    public void TestTPMAikCertSubjectNotEmpty()
+    public async Task TestTPMAikCertSubjectNotEmpty()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4177,12 +4177,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("aikCert subject must be empty", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("aikCert subject must be empty", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertSANMissing()
+    public async Task TestTPMAikCertSANMissing()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4273,12 +4273,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SAN missing from TPM attestation certificate", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SAN missing from TPM attestation certificate", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertSANZeroLen()
+    public async Task TestTPMAikCertSANZeroLen()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4370,12 +4370,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SAN missing from TPM attestation certificate", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SAN missing from TPM attestation certificate", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertSANNoManufacturer()
+    public async Task TestTPMAikCertSANNoManufacturer()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4468,12 +4468,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertSANNoModel()
+    public async Task TestTPMAikCertSANNoModel()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4566,12 +4566,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertSANNoVersion()
+    public async Task TestTPMAikCertSANNoVersion()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4664,12 +4664,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertSANInvalidManufacturer()
+    public async Task TestTPMAikCertSANInvalidManufacturer()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4763,12 +4763,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea},
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertEKUMissingTCGKP()
+    public async Task TestTPMAikCertEKUMissingTCGKP()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4858,12 +4858,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("aikCert EKU missing tcg-kp-AIKCertificate OID", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("aikCert EKU missing tcg-kp-AIKCertificate OID", ex.Message);
     }
 
     [Fact]
-    public void TestTPMAikCertCATrue()
+    public async Task TestTPMAikCertCATrue()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -4952,12 +4952,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("aikCert Basic Constraints extension CA component must be false", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("aikCert Basic Constraints extension CA component must be false", ex.Message);
     }
 
     [Fact]
-    public async void TestTPMAikCertMisingAAGUID()
+    public async Task TestTPMAikCertMisingAAGUID()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -5063,7 +5063,7 @@ public class Tpm : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestTPMAikCertAAGUIDNotMatchAuthData()
+    public async Task TestTPMAikCertAAGUIDNotMatchAuthData()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -5156,12 +5156,12 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("aaguid malformed, expected f1d0f1d0-f1d0-f1d0-f1d0-f1d0f1d0f1d0, got d0f1d0f1-d0f1-d0f1-f1d0-f1d0f1d0f1d0", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("aaguid malformed, expected f1d0f1d0-f1d0-f1d0-f1d0-f1d0f1d0f1d0, got d0f1d0f1-d0f1-d0f1-f1d0-f1d0f1d0f1d0", ex.Message);
     }
 
     [Fact]
-    public void TestTPMECDAANotSupported()
+    public async Task TestTPMECDAANotSupported()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
 
@@ -5250,8 +5250,8 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("ECDAA support for TPM attestation is not yet implemented", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("ECDAA support for TPM attestation is not yet implemented", ex.Message);
     }
 
     [Fact]

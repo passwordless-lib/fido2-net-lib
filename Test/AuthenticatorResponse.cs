@@ -156,7 +156,7 @@ public class AuthenticatorResponseTests
     [InlineData("https://[0:0:0:0:0:0:0:1]", "http://[0:0:0:0:0:0:0:1]:80")]
     [InlineData("http://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]")]
     [InlineData("http://[0:0:0:0:0:0:0:1]", "https://[0:0:0:0:0:0:0:1]:443")]
-    public void TestAuthenticatorOriginsFail(string origin, string expectedOrigin)
+    public async Task TestAuthenticatorOriginsFail(string origin, string expectedOrigin)
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = origin;
@@ -228,8 +228,8 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { expectedOrigin },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.StartsWith("Fully qualified origin", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.StartsWith("Fully qualified origin", ex.Message);
     }
 
     [Fact]
@@ -446,7 +446,7 @@ public class AuthenticatorResponseTests
     [Theory]
     [InlineData(null)]
     [InlineData(new byte[0])]
-    public void TestAuthenticatorAttestationResponseInvalidRawId(byte[] value)
+    public async Task TestAuthenticatorAttestationResponseInvalidRawId(byte[] value)
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -511,8 +511,8 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Same(Fido2ErrorMessages.AttestationResponseIdMissing, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Same(Fido2ErrorMessages.AttestationResponseIdMissing, ex.Message);
     }
 
     [Fact]
@@ -586,7 +586,7 @@ public class AuthenticatorResponseTests
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseRpidMismatch()
+    public async Task TestAuthenticatorAttestationResponseRpidMismatch()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -658,9 +658,9 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal(Fido2ErrorCode.InvalidRpidHash, ex.Result.Code);
-        Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal(Fido2ErrorCode.InvalidRpidHash, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Message);
     }
 
     [Fact]
@@ -744,7 +744,7 @@ public class AuthenticatorResponseTests
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseBackupEligiblePolicyRequired()
+    public async Task TestAuthenticatorAttestationResponseBackupEligiblePolicyRequired()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -817,12 +817,12 @@ public class AuthenticatorResponseTests
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseBackupEligiblePolicyDisallowed()
+    public async Task TestAuthenticatorAttestationResponseBackupEligiblePolicyDisallowed()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -895,12 +895,12 @@ public class AuthenticatorResponseTests
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseNoAttestedCredentialData()
+    public async Task TestAuthenticatorAttestationResponseNoAttestedCredentialData()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -972,12 +972,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("Attestation flag not set on attestation data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal("Attestation flag not set on attestation data", ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseUnknownAttestationType()
+    public async Task TestAuthenticatorAttestationResponseUnknownAttestationType()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1050,13 +1050,13 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("Unknown attestation type. Was 'testing'", ex.Result.Message);
-        Assert.Equal(Fido2ErrorCode.UnknownAttestationType, ex.Result.Code);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal("Unknown attestation type. Was 'testing'", ex.Message);
+        Assert.Equal(Fido2ErrorCode.UnknownAttestationType, ex.Code);
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseNotUniqueCredId()
+    public async Task TestAuthenticatorAttestationResponseNotUniqueCredId()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1128,12 +1128,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("CredentialId is not unique to this user", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal("CredentialId is not unique to this user", ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAttestationResponseUVRequired()
+    public async Task TestAuthenticatorAttestationResponseUVRequired()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1205,8 +1205,8 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
-        Assert.Equal("User Verified flag not set in authenticator data and user verification was required", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        Assert.Equal("User Verified flag not set in authenticator data and user verification was required", ex.Message);
     }
 
     [Fact]
@@ -1274,7 +1274,7 @@ public class AuthenticatorResponseTests
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionTypeNotPublicKey()
+    public async Task TestAuthenticatorAssertionTypeNotPublicKey()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1338,12 +1338,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.AssertionResponseNotPublicKey, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.AssertionResponseNotPublicKey, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionIdMissing()
+    public async Task TestAuthenticatorAssertionIdMissing()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1406,12 +1406,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.AssertionResponseIdMissing, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.AssertionResponseIdMissing, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionRawIdMissing()
+    public async Task TestAuthenticatorAssertionRawIdMissing()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1475,12 +1475,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.AssertionResponseRawIdMissing, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.AssertionResponseRawIdMissing, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionUserHandleEmpty()
+    public async Task TestAuthenticatorAssertionUserHandleEmpty()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1544,12 +1544,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.UserHandleIsEmpty, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.UserHandleIsEmpty, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionUserHandleNotOwnerOfPublicKey()
+    public async Task TestAuthenticatorAssertionUserHandleNotOwnerOfPublicKey()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1613,12 +1613,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(false);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.UserHandleNotOwnerOfPublicKey, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.UserHandleNotOwnerOfPublicKey, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionTypeNotWebAuthnGet()
+    public async Task TestAuthenticatorAssertionTypeNotWebAuthnGet()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1682,12 +1682,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.AssertionResponseTypeNotWebAuthnGet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.AssertionResponseTypeNotWebAuthnGet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionAppId()
+    public async Task TestAuthenticatorAssertionAppId()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1753,12 +1753,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionInvalidRpIdHash()
+    public async Task TestAuthenticatorAssertionInvalidRpIdHash()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1823,12 +1823,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionUPRequirementNotMet()
+    public async Task TestAuthenticatorAssertionUPRequirementNotMet()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1893,12 +1893,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.UserPresentFlagNotSet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.UserPresentFlagNotSet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionUVPolicyNotMet()
+    public async Task TestAuthenticatorAssertionUVPolicyNotMet()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -1963,12 +1963,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.UserVerificationRequirementNotMet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.UserVerificationRequirementNotMet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionBEPolicyRequired()
+    public async Task TestAuthenticatorAssertionBEPolicyRequired()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2032,12 +2032,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionBEPolicyDisallow()
+    public async Task TestAuthenticatorAssertionBEPolicyDisallow()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2101,12 +2101,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionBSPolicyRequired()
+    public async Task TestAuthenticatorAssertionBSPolicyRequired()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2170,12 +2170,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionBSPolicyDisallow()
+    public async Task TestAuthenticatorAssertionBSPolicyDisallow()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2239,12 +2239,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionStoredPublicKeyMissing()
+    public async Task TestAuthenticatorAssertionStoredPublicKeyMissing()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2308,12 +2308,12 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.MissingStoredPublicKey, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.MissingStoredPublicKey, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionInvalidSignature()
+    public async Task TestAuthenticatorAssertionInvalidSignature()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2378,12 +2378,12 @@ public class AuthenticatorResponseTests
         };
 
         fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out var privateKey);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes(), null, 0, callback));
-        Assert.Equal(Fido2ErrorMessages.InvalidSignature, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes(), null, 0, callback));
+        Assert.Equal(Fido2ErrorMessages.InvalidSignature, ex.Message);
     }
 
     [Fact]
-    public void TestAuthenticatorAssertionSignCountSignature()
+    public async Task TestAuthenticatorAssertionSignCountSignature()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2453,7 +2453,7 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, cpk.GetBytes(), null, 2, callback));
-        Assert.Equal(Fido2ErrorMessages.SignCountIsLessThanSignatureCounter, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, cpk.GetBytes(), null, 2, callback));
+        Assert.Equal(Fido2ErrorMessages.SignCountIsLessThanSignatureCounter, ex.Message);
     }
 }
