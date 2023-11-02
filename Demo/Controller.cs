@@ -131,7 +131,7 @@ public class MyController : Controller
                 IsBackupEligible = success.Result.IsBackupEligible,
                 IsBackedUp = success.Result.IsBackedUp,
                 AttestationObject = success.Result.AttestationObject,
-                AttestationClientDataJSON = success.Result.AttestationClientDataJson,
+                AttestationClientDataJson = success.Result.AttestationClientDataJson,
                 DevicePublicKeys = new List<byte[]>() { success.Result.DevicePublicKey }
             });
 

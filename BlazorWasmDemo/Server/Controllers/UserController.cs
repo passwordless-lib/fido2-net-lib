@@ -173,7 +173,7 @@ public class UserController : ControllerBase
                 IsBackupEligible = result.Result.IsBackupEligible,
                 IsBackedUp = result.Result.IsBackedUp,
                 AttestationObject = result.Result.AttestationObject,
-                AttestationClientDataJSON = result.Result.AttestationClientDataJson,
+                AttestationClientDataJson = result.Result.AttestationClientDataJson,
             });
 
             // 5. Now we need to remove the options from the pending dictionary
