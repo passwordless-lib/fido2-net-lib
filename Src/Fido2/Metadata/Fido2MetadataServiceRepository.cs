@@ -37,7 +37,6 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH"u8 +
         "WD9f"u8;
 
-    private readonly string _blobUrl = "https://mds3.fidoalliance.org/";
     private readonly IHttpClientFactory _httpClientFactory;
 
     public Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory)
@@ -58,22 +57,9 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
 
     private async Task<string> GetRawBlobAsync(CancellationToken cancellationToken)
     {
-        var url = _blobUrl;
-        return await DownloadStringAsync(url, cancellationToken);
-    }
-
-    private async Task<string> DownloadStringAsync(string url, CancellationToken cancellationToken)
-    {
         return await _httpClientFactory
             .CreateClient(nameof(Fido2MetadataServiceRepository))
-            .GetStringAsync(url, cancellationToken);
-    }
-
-    private async Task<byte[]> DownloadDataAsync(string url, CancellationToken cancellationToken)
-    {
-        return await _httpClientFactory
-            .CreateClient(nameof(Fido2MetadataServiceRepository))
-            .GetByteArrayAsync(url, cancellationToken);
+            .GetStringAsync("/", cancellationToken);
     }
 
     private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, CancellationToken cancellationToken)
@@ -174,7 +160,8 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
                 if (element.Certificate.Issuer != element.Certificate.Subject)
                 {
                     var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
-                    var crlFile = await DownloadDataAsync(cdp, cancellationToken);
+                    using var client = _httpClientFactory.CreateClient();
+                    var crlFile = await client.GetByteArrayAsync(cdp, cancellationToken);
                     if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
                         throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");
                 }
