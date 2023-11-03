@@ -62,7 +62,7 @@ public class Fido2 : IFido2
     /// <param name="isCredentialIdUniqueToUser"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<CredentialMakeResult> MakeNewCredentialAsync(
+    public async Task<MakeNewCredentialResult> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
         CredentialCreateOptions origChallenge,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
@@ -72,7 +72,7 @@ public class Fido2 : IFido2
         var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
 
         // todo: Set Errormessage etc.
-        return new CredentialMakeResult(
+        return new MakeNewCredentialResult(
             status: "ok",
             errorMessage: string.Empty,
             result: success
@@ -118,23 +118,6 @@ public class Fido2 : IFido2
                                                       cancellationToken);
 
         return result;
-    }
-
-    /// <summary>
-    /// Result of parsing and verifying attestation. Used to transport Public Key back to RP
-    /// </summary>
-    public sealed class CredentialMakeResult : Fido2ResponseBase
-    {
-        public CredentialMakeResult(string status, string errorMessage, RegisteredPublicKeyCredential? result)
-        {
-            Status = status;
-            ErrorMessage = errorMessage;
-            Result = result;
-        }
-
-        public RegisteredPublicKeyCredential? Result { get; }
-
-        // todo: add debuginfo?
     }
 }
 
