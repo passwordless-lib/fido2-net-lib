@@ -9,7 +9,7 @@ namespace Fido2NetLib.Objects;
 public sealed class AttestedCredentialData
 {
     /// <summary>
-    /// Minimum length of the attested credential data structure.  AAGUID + credentialID length + credential ID + credential public key.
+    /// Minimum length of the attested credential data structure. AAGUID + credentialID length + credential ID + credential public key.
     /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
     private const int _minLength = 20; // Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte)
