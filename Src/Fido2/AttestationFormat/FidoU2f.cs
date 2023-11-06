@@ -87,6 +87,6 @@ internal sealed class FidoU2f : AttestationVerifier
 
         var trustPath = new X509Certificate2[1] { attCert };
 
-        return new (new VerifyAttestationResult(AttestationType.AttCa, trustPath));
+        return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
     }
 }

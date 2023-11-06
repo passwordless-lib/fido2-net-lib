@@ -81,7 +81,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER - encoded ASN.1 sequence.Decode the sequence and extract the single octet string that it contains. Verify that the string equals nonce.
         // Steps 2 - 4 done in the "apple" format verifier
         var apple = new Apple();
-        (var attType, var trustPath) = await apple.VerifyAsync(request);
+        (var attType, var trustPath) = await apple.VerifyAsync(request).ConfigureAwait(false);
 
         // 5. Create the SHA256 hash of the public key in credCert, and verify that it matches the key identifier from your app.
         byte[] credCertPKHash = SHA256.HashData(credCert.GetPublicKey());

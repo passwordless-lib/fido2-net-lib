@@ -118,7 +118,7 @@ internal sealed class Packed : AttestationVerifier
 
             // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
 
-            return new (new VerifyAttestationResult(AttestationType.AttCa, trustPath));
+            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
         }
 
         // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -146,7 +146,7 @@ internal sealed class Packed : AttestationVerifier
             if (!request.AuthData.AttestedCredentialData.CredentialPublicKey.Verify(request.Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Failed to validate signature");
 
-            return new (new VerifyAttestationResult(AttestationType.Self, null!));
+            return new(new VerifyAttestationResult(AttestationType.Self, null!));
         }
     }
 }
