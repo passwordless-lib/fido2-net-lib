@@ -149,7 +149,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         byte[]? devicePublicKeyResult = null;
         if (Raw.Extensions?.DevicePubKey is not null)
         {
-            devicePublicKeyResult = DevicePublicKeyAuthentication(storedDevicePublicKeys, Raw.Extensions, AuthenticatorData, hash);
+            devicePublicKeyResult = await DevicePublicKeyAuthenticationAsync(storedDevicePublicKeys, Raw.Extensions, AuthenticatorData, hash).ConfigureAwait(false);
         }
 
         // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation        
@@ -200,7 +200,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             var verifier = AttestationVerifier.Create(fmt);
 
             // 4. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and hash.
-            (var attType, var trustPath) = verifier.Verify(attStmt, AuthenticatorData, hash);
+            (var attType, var trustPath) = await verifier.VerifyAsync(attStmt, AuthenticatorData, hash);
 
             // 5. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
             //     for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
@@ -237,7 +237,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="authData"></param>
     /// <param name="hash"></param>
     /// </summary>
-    private static byte[]? DevicePublicKeyAuthentication(
+    private static async ValueTask<byte[]?> DevicePublicKeyAuthenticationAsync(
         List<byte[]> storedDevicePublicKeys,
         AuthenticationExtensionsClientOutputs clientExtensionResults,
         AuthenticatorData authData,
@@ -307,7 +307,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                     try
                     {
                         // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                        _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
+                        _ = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
                     }
                     catch (Exception ex)
                     {
@@ -354,7 +354,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                         try
                         {
                             // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                            _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
+                            _ = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
                             return devicePublicKeyAuthenticatorOutput.Encode();
                         }
                         catch (Exception ex)
@@ -391,7 +391,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 try
                 {
                     // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                    _ = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
+                    _ = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
                     return devicePublicKeyAuthenticatorOutput.Encode();
                 }
                 catch

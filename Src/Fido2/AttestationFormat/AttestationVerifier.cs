@@ -1,6 +1,7 @@
 ﻿using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -10,12 +11,12 @@ namespace Fido2NetLib;
 
 public abstract class AttestationVerifier
 {
-    public (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, AuthenticatorData authenticatorData, byte[] clientDataHash)
+    public ValueTask<VerifyAttestationResult> VerifyAsync(CborMap attStmt, AuthenticatorData authenticatorData, byte[] clientDataHash)
     {
-        return Verify(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash));
+        return VerifyAsync(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash));
     }
 
-    public abstract (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request);
+    public abstract ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request);
 
     public static AttestationVerifier Create(string formatIdentifier)
     {

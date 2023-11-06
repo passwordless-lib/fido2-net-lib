@@ -3,9 +3,9 @@ using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
-using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
 
@@ -47,7 +47,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
     // 61707061-7474-6573-7400-000000000000
     public static readonly Guid prodAaguid = new("61707061-7474-6573-7400-000000000000");
 
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override async ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that the x5c array contains the intermediate and leaf certificates for App Attest, starting from the credential certificate in the first data buffer in the array (credcert).
         if (!(request.X5c is CborArray { Length: 2 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 } && x5cArray[1] is CborByteString { Length: > 0 }))
@@ -81,22 +81,20 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER - encoded ASN.1 sequence.Decode the sequence and extract the single octet string that it contains. Verify that the string equals nonce.
         // Steps 2 - 4 done in the "apple" format verifier
         var apple = new Apple();
-        (var attType, var trustPath) = apple.Verify(request);
+        (var attType, var trustPath) = await apple.VerifyAsync(request);
 
         // 5. Create the SHA256 hash of the public key in credCert, and verify that it matches the key identifier from your app.
-        Span<byte> credCertPKHash = stackalloc byte[32];
-        SHA256.HashData(credCert.GetPublicKey(), credCertPKHash);
-        ReadOnlySpan<byte> keyIdentifier = Convert.FromHexString(credCert.GetNameInfo(X509NameType.SimpleName, false));
-        if (!credCertPKHash.SequenceEqual(keyIdentifier))
+        byte[] credCertPKHash = SHA256.HashData(credCert.GetPublicKey());
+        byte[] keyIdentifier = Convert.FromHexString(credCert.GetNameInfo(X509NameType.SimpleName, false));
+        if (!credCertPKHash.AsSpan().SequenceEqual(keyIdentifier))
         {
             throw new Fido2VerificationException("Public key hash does not match key identifier in Apple AppAttest attestation");
         }
 
         // 6. Compute the SHA256 hash of your app's App ID, and verify that it’s the same as the authenticator data's RP ID hash.
         var appId = GetAppleAppIdFromCredCertExtValue(credCert.Extensions);
-        Span<byte> appIdHash = stackalloc byte[32];
-        SHA256.HashData(appId, appIdHash);
-        if (!appIdHash.SequenceEqual(request.AuthData.RpIdHash))
+        byte[] appIdHash = SHA256.HashData(appId);
+        if (!appIdHash.AsSpan().SequenceEqual(request.AuthData.RpIdHash))
         {
             throw new Fido2VerificationException("App ID hash does not match RP ID hash in Apple AppAttest attestation");
         }
@@ -119,6 +117,6 @@ internal sealed class AppleAppAttest : AttestationVerifier
             throw new Fido2VerificationException("Mismatch between credentialId and keyIdentifier in Apple AppAttest attestation");
         }
 
-        return (attType, trustPath);
+        return new VerifyAttestationResult(attType, trustPath);
     }
 }
