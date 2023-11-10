@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>Fido2NetLib</RootNamespace>
     <Nullable>enable</Nullable>
     <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
@@ -10,4 +10,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Fido2\Fido2.csproj" />
   </ItemGroup>
+
 </Project>
