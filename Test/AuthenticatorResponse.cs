@@ -76,7 +76,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "none" },
@@ -179,7 +179,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "none" },
@@ -248,7 +248,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap().Encode(),
                 ClientDataJson = clientDataJson
@@ -320,7 +320,7 @@ public class AuthenticatorResponseTests
     {
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = value,
             }
@@ -335,7 +335,7 @@ public class AuthenticatorResponseTests
     {
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = value,
             }
@@ -361,7 +361,7 @@ public class AuthenticatorResponseTests
     {
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = value
             }
@@ -390,7 +390,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -462,7 +462,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = value,
             RawId = value,
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -532,7 +532,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.Invalid,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -609,7 +609,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -687,7 +687,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -767,7 +767,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -845,7 +845,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -923,7 +923,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -1001,7 +1001,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "testing" },
@@ -1079,7 +1079,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "none" },
@@ -1156,7 +1156,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Response = new AuthenticatorAttestationRawResponse.ResponseData()
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
                     { "fmt", "none" },
