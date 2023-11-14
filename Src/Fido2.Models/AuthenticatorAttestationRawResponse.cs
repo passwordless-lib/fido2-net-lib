@@ -18,12 +18,12 @@ public sealed class AuthenticatorAttestationRawResponse
     public PublicKeyCredentialType Type { get; set; } = PublicKeyCredentialType.PublicKey;
 
     [JsonPropertyName("response")]
-    public ResponseData Response { get; set; }
+    public AttestationResponse Response { get; set; }
 
     [JsonPropertyName("extensions")]
     public AuthenticationExtensionsClientOutputs Extensions { get; set; }
 
-    public sealed class ResponseData
+    public sealed class AttestationResponse
     {
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("attestationObject")]
