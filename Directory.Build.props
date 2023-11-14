@@ -3,8 +3,7 @@
   <!-- Package Metadata -->
   <PropertyGroup>
     <VersionPrefix>4.0.0-beta3</VersionPrefix>
-    <VersionSuffix>
-    </VersionSuffix>
+    <VersionSuffix></VersionSuffix>
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/passwordless-lib/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -15,12 +14,12 @@
   </PropertyGroup>
   <!-- Global Variables -->
   <PropertyGroup>
-    <SupportedTargetFrameworks>net6.0</SupportedTargetFrameworks>
+    <SupportedTargetFrameworks>net6.0;net8.0</SupportedTargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
-    <LangVersion>10</LangVersion>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
   <!--MISC-->
   <PropertyGroup>
