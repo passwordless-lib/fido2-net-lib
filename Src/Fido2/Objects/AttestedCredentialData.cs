@@ -95,12 +95,12 @@ public sealed class AttestedCredentialData
         int position = 0;
 
         // First 16 bytes is AAGUID
-        var aaGuidBytes = data[..16];
+        var aaGuidBytes = data.Span[..16];
 
         position += 16;
 
 #if NET8_0_OR_GREATER
-        Guid aaGuid = new Guid(aaGuidBytes, isBigEndian: true);
+        Guid aaGuid = new Guid(aaGuidBytes, bigEndian: true);
 #else
         Guid aaGuid = GuidHelper.FromBigEndian(aaGuidBytes.ToArray());
 #endif
