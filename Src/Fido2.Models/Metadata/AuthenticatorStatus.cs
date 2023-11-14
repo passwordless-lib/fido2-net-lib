@@ -8,7 +8,11 @@ namespace Fido2NetLib;
 /// <remarks>
 /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#authenticatorstatus-enum"/>
 /// </remarks>
+#if NET8_0_OR_GREATER
+[JsonConverter(typeof(JsonStringEnumConverter<AuthenticatorStatus>))]
+#else
 [JsonConverter(typeof(JsonStringEnumConverter))]
+#endif
 public enum AuthenticatorStatus
 {
     /// <summary>
