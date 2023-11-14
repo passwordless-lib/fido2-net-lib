@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 using Fido2NetLib.Exceptions;
 
@@ -27,10 +26,6 @@ public class Fido2VerificationException : Exception
     }
 
     public Fido2VerificationException(string message, Exception innerException) : base(message, innerException)
-    {
-    }
-
-    protected Fido2VerificationException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
     }
 
