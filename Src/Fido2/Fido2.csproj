@@ -1,28 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
-    <Nullable>enable</Nullable>
     <RootNamespace>Fido2NetLib</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
     <IsTrimmable>true</IsTrimmable>
-    <NoWarn>IDE0057</NoWarn>
-    <LangVersion>11</LangVersion>
+    <NoWarn>$(NoWarn);IDE0057</NoWarn>
   </PropertyGroup>
-   
-  <ItemGroup>
-    <None Remove="Fido2MetadataServiceRepository.cs" />
-    <None Remove="FileSystemMetadataRepository.cs" />
-    <None Remove="IMetadataRepository.cs" />
-    <None Remove="Metadata\ConformanceMetadataRepository.cs" />
-    <None Remove="StaticMetadataRepository.cs" />
-  </ItemGroup>
 
-  <!-- References -->
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
     <PackageReference Include="NSec.Cryptography" Version="22.4.0" />
     <PackageReference Include="System.Formats.Cbor" Version="6.0.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.32.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,4 +24,5 @@
     -->
     <Content Include="build/fido2.targets" PackagePath="build/" />
   </ItemGroup>
+
 </Project>

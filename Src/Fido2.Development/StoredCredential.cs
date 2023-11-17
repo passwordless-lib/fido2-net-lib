@@ -46,7 +46,7 @@ public class StoredCredential
     /// The value of the clientDataJSON attribute when the public key credential source was registered. 
     /// Storing this in combination with the above attestationObject item enables the Relying Party to re-verify the attestation signature at a later time.
     /// </summary>
-    public byte[] AttestationClientDataJSON { get; set; }
+    public byte[] AttestationClientDataJson { get; set; }
 
     public List<byte[]> DevicePublicKeys { get; set; }
 
@@ -58,7 +58,7 @@ public class StoredCredential
 
     public string AttestationFormat { get; set; }
 
-    public DateTime RegDate { get; set; }
+    public DateTimeOffset RegDate { get; set; }
 
     public Guid AaGuid { get; set; }
 }

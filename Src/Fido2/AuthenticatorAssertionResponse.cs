@@ -46,16 +46,13 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Implements algorithm from https://www.w3.org/TR/webauthn/#verifying-assertion
+    /// Implements algorithm from https://www.w3.org/TR/webauthn/#verifying-assertion.
     /// </summary>
-    /// <param name="options">The assertionoptions that was sent to the client</param>
-    /// <param name="fullyQualifiedExpectedOrigins">
-    /// The expected fully qualified server origins, used to verify that the signature is sent to the expected server
-    /// </param>
-    /// <param name="storedPublicKey">The stored public key for this CredentialId</param>
+    /// <param name="options">The original assertion options that was sent to the client.</param>
+    /// <param name="storedPublicKey">The stored public key for this CredentialId.</param>
     /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
-    /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     public async Task<VerifyAssertionResult> VerifyAsync(
         AssertionOptions options,
         Fido2Configuration config,

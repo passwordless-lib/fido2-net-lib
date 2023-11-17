@@ -75,7 +75,10 @@ public static class Fido2NetLibBuilderExtensions
 
     public static IFido2MetadataServiceBuilder AddFidoMetadataRepository(this IFido2MetadataServiceBuilder builder, Action<IHttpClientBuilder> clientBuilder = null)
     {
-        var httpClientBuilder = builder.Services.AddHttpClient(nameof(Fido2MetadataServiceRepository));
+        var httpClientBuilder = builder.Services.AddHttpClient(nameof(Fido2MetadataServiceRepository), client =>
+        {
+            client.BaseAddress = new Uri("https://mds3.fidoalliance.org/");
+        });
 
         if (clientBuilder != null)
             clientBuilder(httpClientBuilder);
