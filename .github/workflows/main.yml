@@ -138,7 +138,8 @@ jobs:
           --no-restore
           --configuration Release
           -p:ContinuousIntegrationBuild=true
-
+          -p:Version=${{ needs.version.outputs.version }}
+          
       - name: Run pack
         run: >
           dotnet pack
