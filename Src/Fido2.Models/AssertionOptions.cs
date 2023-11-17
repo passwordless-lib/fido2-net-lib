@@ -24,7 +24,7 @@ public class AssertionOptions : Fido2ResponseBase
     /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint, and MAY be overridden by the client.
     /// </summary>
     [JsonPropertyName("timeout")]
-    public uint Timeout { get; set; }
+    public ulong Timeout { get; set; }
 
     /// <summary>
     /// This OPTIONAL member specifies the relying party identifier claimed by the caller.If omitted, its value will be the CredentialsContainer object’s relevant settings object's origin's effective domain
