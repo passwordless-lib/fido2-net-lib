@@ -1,6 +1,13 @@
 name: master
 
 on:
+  workflow_dispatch:
+    inputs:
+      force_version:
+        description: "The version to use"
+        required: true
+        default: "0.0.0-test"
+        type: string
   push:
     branches:
       - master
@@ -47,7 +54,7 @@ jobs:
           echo "version=0.0.0-ci-${hash:0:7}" >> $GITHUB_OUTPUT
 
     outputs:
-      version: ${{ steps.stable-version.outputs.version || steps.pre-version.outputs.version }}
+      version: ${{ github.event.inputs.force_version || steps.stable-version.outputs.version || steps.pre-version.outputs.version }}
 
   # Check formatting
 #   format:
