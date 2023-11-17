@@ -87,7 +87,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -125,7 +125,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { expectedOrigin },
         });
 
-        var result = await lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback);
+        var result = await lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback);
     }
 
     [Theory]
@@ -190,7 +190,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -228,7 +228,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { expectedOrigin },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.StartsWith("Fully qualified origin", ex.Message);
     }
 
@@ -401,7 +401,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -439,7 +439,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Same(Fido2ErrorMessages.AttestationResponseTypeNotWebAuthnGet, ex.Message);
     }
 
@@ -473,7 +473,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -511,7 +511,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Same(Fido2ErrorMessages.AttestationResponseIdMissing, ex.Message);
     }
 
@@ -543,7 +543,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -581,7 +581,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal("AttestationResponse type must be 'public-key'", ex.Message);
     }
 
@@ -620,7 +620,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -658,7 +658,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal(Fido2ErrorCode.InvalidRpidHash, ex.Code);
         Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Message);
     }
@@ -699,7 +699,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -737,7 +737,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
 
         Assert.Equal(Fido2ErrorCode.UserPresentFlagNotSet, ex.Code);
         Assert.Equal(Fido2ErrorMessages.UserPresentFlagNotSet, ex.Message);
@@ -778,7 +778,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -817,7 +817,7 @@ public class AuthenticatorResponseTests
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
@@ -856,7 +856,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -895,7 +895,7 @@ public class AuthenticatorResponseTests
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
@@ -934,7 +934,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -972,7 +972,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal("Attestation flag not set on attestation data", ex.Message);
     }
 
@@ -1012,7 +1012,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -1050,7 +1050,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal("Unknown attestation type. Was 'testing'", ex.Message);
         Assert.Equal(Fido2ErrorCode.UnknownAttestationType, ex.Code);
     }
@@ -1090,7 +1090,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -1128,7 +1128,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal("CredentialId is not unique to this user", ex.Message);
     }
 
@@ -1167,7 +1167,7 @@ public class AuthenticatorResponseTests
             },
         };
 
-        var origChallenge = new CredentialCreateOptions
+        var originalOptions = new CredentialCreateOptions
         {
             Attestation = AttestationConveyancePreference.Direct,
             AuthenticatorSelection = new AuthenticatorSelection
@@ -1205,7 +1205,7 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, origChallenge, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
         Assert.Equal("User Verified flag not set in authenticator data and user verification was required", ex.Message);
     }
 

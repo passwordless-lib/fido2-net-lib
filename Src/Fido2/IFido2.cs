@@ -24,7 +24,7 @@ public interface IFido2
 
     Task<MakeNewCredentialResult> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
-        CredentialCreateOptions origChallenge,
+        CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         CancellationToken cancellationToken = default);
 
