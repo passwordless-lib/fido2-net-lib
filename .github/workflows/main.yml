@@ -110,7 +110,7 @@ jobs:
           --no-build
           --configuration Release
           ${{ runner.os == 'Windows' && '-p:IncludeNetCoreAppTargets=false' || '' }}
-          --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true"
+          --logger "trx;LogFileName=pw-test-results.trx
           --
           RunConfiguration.CollectSourceInformation=true
 
