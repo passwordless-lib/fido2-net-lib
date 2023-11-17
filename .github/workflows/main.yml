@@ -110,7 +110,7 @@ jobs:
           --no-build
           --configuration Release
           ${{ runner.os == 'Windows' && '-p:IncludeNetCoreAppTargets=false' || '' }}
-          --logger "trx;LogFileName=pw-test-results.trx
+          --logger "trx;LogFileName=pw-test-results.trx"
           --
           RunConfiguration.CollectSourceInformation=true
 
