@@ -1,0 +1,187 @@
+name: main
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+    types:
+      - published
+
+env:
+  # Setting these variables allows .NET CLI to use rich color codes in console output
+  TERM: xterm
+  DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: true
+  # Skip boilerplate output
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  
+jobs:
+  # Determine version
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Determine stable version
+        id: stable-version
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          if ! [[ "${{ github.event.release.tag_name }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z].*)?$ ]]; then
+              echo "Invalid version: ${{ github.event.release.tag_name }}"
+              exit 1
+          fi
+          
+          echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+
+      - name: Determine prerelease version
+        id: pre-version
+        if: ${{ github.event_name != 'release' }}
+        run: |
+          hash="${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "version=0.0.0-ci-${hash:0:7}" >> $GITHUB_OUTPUT
+
+    outputs:
+      version: ${{ steps.stable-version.outputs.version || steps.pre-version.outputs.version }}
+
+  # Check formatting
+#   format:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: read
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+
+#       - name: Install .NET
+#         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+
+#       - name: Validate format
+#         run: dotnet format --verify-no-changes
+
+  # Run tests
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          # Windows runners don't support Linux Docker containers (needed for tests),
+          # so we currently cannot run tests on Windows.
+          # - windows-latest
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+
+      - name: Run restore
+        run: dotnet restore
+
+      - name: Run build
+        run: >
+          dotnet build
+          --no-restore
+          --configuration Release
+
+      - name: Run tests
+        run: >
+          dotnet test
+          --no-restore
+          --no-build
+          --configuration Release
+          ${{ runner.os == 'Windows' && '-p:IncludeNetCoreAppTargets=false' || '' }}
+          --logger "GitHubActions;summary.includePassedTests=true;summary.includeSkippedTests=true"
+          --
+          RunConfiguration.CollectSourceInformation=true
+
+  # Pack the output into NuGet packages
+  pack:
+    needs: version
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+
+      - name: Run restore
+        run: dotnet restore
+
+      - name: Run build
+        run: >
+          dotnet build
+          --no-restore
+          --configuration Release
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Run pack
+        run: >
+          dotnet pack
+          -p:Version=${{ needs.version.outputs.version }}
+          -p:ContinuousIntegrationBuild=true
+          --no-restore
+          --no-build
+          --configuration Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        with:
+          name: packages
+          path: "**/*.nupkg"
+
+  # Deploy the NuGet packages to the corresponding registries
+  deploy:
+    needs:
+      # Technically, it's not required for the format job to succeed for us to push the package,
+      # so we may consider removing it as a prerequisite here.
+    #   - format
+      - test
+      - pack
+
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      packages: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: packages
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+
+      # Publish to GitHub package registry every time, whether it's a prerelease
+      # version or a stable release version.
+      - name: Publish packages (GitHub Registry)
+        run: >
+          dotnet nuget push **/*.nupkg
+          --source https://nuget.pkg.github.com/passwordless-lib/index.json
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+
+      # Only publish to NuGet on stable releases
+    #   - name: Publish packages (NuGet Registry)
+    #     if: ${{ github.event_name == 'release' }}
+    #     run: >
+    #       dotnet nuget push **/*.nupkg
+    #       --source https://api.nuget.org/v3/index.json
+    #       --api-key ${{ secrets.nuget_api_key }}
