@@ -43,7 +43,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint, and MAY be overridden by the platform.
     /// </summary>
     [JsonPropertyName("timeout")]
-    public long Timeout { get; set; }
+    public ulong Timeout { get; set; }
 
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance.The default is none.

@@ -150,7 +150,7 @@ public class Fido2Tests
             idFidoGenCeAaGuidExt = new X509Extension(oidIdFidoGenCeAaGuid, _asnEncodedAaguid, false);
         }
 
-        public async Task<Fido2.CredentialMakeResult> MakeAttestationResponseAsync()
+        public async Task<MakeNewCredentialResult> MakeAttestationResponseAsync()
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
@@ -159,7 +159,7 @@ public class Fido2Tests
                 Type = PublicKeyCredentialType.PublicKey,
                 Id = new byte[] { 0xf1, 0xd0 },
                 RawId = new byte[] { 0xf1, 0xd0 },
-                Response = new AuthenticatorAttestationRawResponse.ResponseData()
+                Response = new AuthenticatorAttestationRawResponse.AttestationResponse
                 {
                     AttestationObject = _attestationObject.Encode(),
                     ClientDataJson = _clientDataJson,
@@ -179,7 +179,7 @@ public class Fido2Tests
                 }
             };
 
-            var origChallenge = new CredentialCreateOptions
+            var originalOptions = new CredentialCreateOptions
             {
                 Attestation = AttestationConveyancePreference.Direct,
                 AuthenticatorSelection = new AuthenticatorSelection
@@ -228,7 +228,7 @@ public class Fido2Tests
                 Origins = new HashSet<string> { rp },
             });
 
-            var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, origChallenge, callback);
+            var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, originalOptions, callback);
 
             return credentialMakeResult;
         }

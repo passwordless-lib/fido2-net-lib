@@ -23,7 +23,7 @@ public sealed class AuthenticatorClientPinCommand : CtapCommand
     }
 
     /// <summary>
-    /// Required PIN protocol version chosen by the client
+    /// Required PIN protocol version chosen by the client.
     /// </summary>
     [CborMember(0x01)]
     public uint PinProtocol { get; }

@@ -1,13 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Fido2NetLib</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsTrimmable>true</IsTrimmable>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
-  
-  <ItemGroup>
-    <Compile Remove="IMetadataService.cs" />
-  </ItemGroup>
+
 </Project>
