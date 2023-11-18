@@ -36,7 +36,7 @@ public class AssertionOptions : Fido2ResponseBase
     /// This OPTIONAL member contains a list of PublicKeyCredentialDescriptor objects representing public key credentials acceptable to the caller, in descending order of the caller’s preference(the first item in the list is the most preferred credential, and so on down the list)
     /// </summary>
     [JsonPropertyName("allowCredentials")]
-    public IReadOnlyList<PublicKeyCredentialDescriptor> AllowCredentials { get; set; } = new List<PublicKeyCredentialDescriptor>();
+    public IReadOnlyList<PublicKeyCredentialDescriptor> AllowCredentials { get; set; } = Array.Empty<PublicKeyCredentialDescriptor>();
 
     /// <summary>
     /// This member describes the Relying Party's requirements regarding user verification for the get() operation. Eligible authenticators are filtered to only those capable of satisfying this requirement
@@ -65,7 +65,7 @@ public class AssertionOptions : Fido2ResponseBase
             Challenge = challenge,
             Timeout = config.Timeout,
             RpId = config.ServerDomain,
-            AllowCredentials = allowedCredentials ?? Array.Empty<PublicKeyCredentialDescriptor>(),
+            AllowCredentials = allowedCredentials,
             UserVerification = userVerification,
             Extensions = extensions
         };
