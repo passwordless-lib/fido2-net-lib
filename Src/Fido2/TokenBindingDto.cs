@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib
+﻿using System.Text.Json.Serialization;
+
+namespace Fido2NetLib
 {
     public class TokenBindingDto
     {
@@ -7,11 +9,13 @@
         /// supported: Indicates the client supports token binding, but it was not negotiated when communicating with the Relying Party.
         /// present: Indicates token binding was used when communicating with the Relying Party. In this case, the id member MUST be present
         /// </summary>
+        [JsonPropertyName("status")]
         public string? Status { get; set; }
 
         /// <summary>
         /// This member MUST be present if status is present, and MUST a base64url encoding of the Token Binding ID that was used when communicating with the Relying Party.
         /// </summary>
+        [JsonPropertyName("id")]
         public string? Id { get; set; }
 
         public void Verify(byte[]? requestTokenbinding)
