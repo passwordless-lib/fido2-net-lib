@@ -19,13 +19,8 @@ public sealed class AuthenticationExtensionsClientInputs
     /// https://www.w3.org/TR/webauthn/#sctn-appid-extension
     /// </summary>
     [JsonPropertyName("appid")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string AppID { private get; set; }
-
-    public string GetAppID()
-    {
-        return AppID;
-    }
+    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
+    public string AppID { get; set; }
 
     /// <summary>
     /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator supports.
