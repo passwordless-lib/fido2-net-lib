@@ -64,9 +64,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
         IMetadataService? metadataService,
+        byte[]? requestTokenBindingId,
         CancellationToken cancellationToken = default)
     {
-        BaseVerify(config.FullyQualifiedOrigins, options.Challenge);
+        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseNotPublicKey);
@@ -118,23 +119,22 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // https://www.w3.org/TR/webauthn/#sctn-appid-extension
         // FIDO AppID Extension:
         // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
-        var rpid = Raw.Extensions?.AppID ?? false ? options.Extensions?.GetAppID() : options.RpId;
+        var rpid = Raw.Extensions?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
         byte[] hashedRpId = SHA256.HashData(Encoding.UTF8.GetBytes(rpid ?? string.Empty));
         byte[] hash = SHA256.HashData(Raw.Response.ClientDataJson);
+        bool conformanceTesting = metadataService != null && metadataService.ConformanceTesting();
 
         if (!authData.RpIdHash.SequenceEqual(hashedRpId))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidRpidHash, Fido2ErrorMessages.InvalidRpidHash);
 
-        if (options.UserVerification is UserVerificationRequirement.Required)
-        {
-            // 14. Verify that the UP bit of the flags in authData is set.
-            if (!authData.UserPresent)
-                throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
+        // 14. Verify that the UP bit of the flags in authData is set.
+        if (!authData.UserPresent && (!conformanceTesting || options.UserVerification is UserVerificationRequirement.Required))
+            throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
-            // 15. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
-            if (!authData.UserVerified)
-                throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
-        }
+        // 15. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
+        if (options.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
+            throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
+
 
         // 16. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs be the values of the BE and BS bits, respectively, of the flags in authData.
         // Compare currentBe and currentBs with credentialRecord.BE and credentialRecord.BS and apply Relying Party policy, if any.
