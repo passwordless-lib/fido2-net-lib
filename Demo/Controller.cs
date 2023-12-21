@@ -131,7 +131,7 @@ public class MyController : Controller
                 IsBackupEligible = success.Result.IsBackupEligible,
                 IsBackedUp = success.Result.IsBackedUp,
                 AttestationObject = success.Result.AttestationObject,
-                AttestationClientDataJSON = success.Result.AttestationClientDataJson,
+                AttestationClientDataJson = success.Result.AttestationClientDataJson,
                 DevicePublicKeys = new List<byte[]>() { success.Result.DevicePublicKey }
             });
 
@@ -140,7 +140,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new CredentialMakeResult(status: "error", errorMessage: FormatException(e), result: null));
+            return Json(new MakeNewCredentialResult(status: "error", errorMessage: FormatException(e), result: null));
         }
     }
 

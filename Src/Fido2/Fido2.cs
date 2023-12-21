@@ -24,10 +24,10 @@ public class Fido2 : IFido2
     }
 
     /// <summary>
-    /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
+    /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authenticator to create new credentials.
     /// </summary>
     /// <returns></returns>
-    /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
+    /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator. The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
     public CredentialCreateOptions RequestNewCredential(
         Fido2User user,
         List<PublicKeyCredentialDescriptor> excludeCredentials,
@@ -37,11 +37,11 @@ public class Fido2 : IFido2
     }
 
     /// <summary>
-    /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authr to create new credentials
+    /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authenticator to create new credentials.
     /// </summary>
     /// <returns></returns>
     /// <param name="attestationPreference">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
-    /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
+    /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator. The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
     public CredentialCreateOptions RequestNewCredential(
         Fido2User user,
         List<PublicKeyCredentialDescriptor> excludeCredentials,
@@ -55,25 +55,25 @@ public class Fido2 : IFido2
     }
 
     /// <summary>
-    /// Verifies the response from the browser/authr after creating new credentials
+    /// Verifies the response from the browser/authenticator after creating new credentials.
     /// </summary>
-    /// <param name="attestationResponse"></param>
-    /// <param name="origChallenge"></param>
-    /// <param name="isCredentialIdUniqueToUser"></param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="attestationResponse">The attestation response from the authenticator.</param>
+    /// <param name="originalOptions">The original options that was sent to the client.</param>
+    /// <param name="isCredentialIdUniqueToUser">The delegate used to validate that the CredentialID is unique to this user.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
-    public async Task<CredentialMakeResult> MakeNewCredentialAsync(
+    public async Task<MakeNewCredentialResult> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
-        CredentialCreateOptions origChallenge,
+        CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default)
     {
         var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-        var success = await parsedResponse.VerifyAsync(origChallenge, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
+        var success = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
 
         // todo: Set Errormessage etc.
-        return new CredentialMakeResult(
+        return new MakeNewCredentialResult(
             status: "ok",
             errorMessage: string.Empty,
             result: success
@@ -81,7 +81,7 @@ public class Fido2 : IFido2
     }
 
     /// <summary>
-    /// Returns AssertionOptions including a challenge to the browser/authr to assert existing credentials and authenticate a user.
+    /// Returns AssertionOptions including a challenge to the browser/authenticator to assert existing credentials and authenticate a user.
     /// </summary>
     /// <returns></returns>
     public AssertionOptions GetAssertionOptions(
@@ -95,8 +95,15 @@ public class Fido2 : IFido2
     }
 
     /// <summary>
-    /// Verifies the assertion response from the browser/authr to assert existing credentials and authenticate a user.
+    /// Verifies the assertion response from the browser/authenticator to assert existing credentials and authenticate a user.
     /// </summary>
+    /// <param name="assertionResponse">The assertion response from the authenticator.</param>
+    /// <param name="originalOptions">The original options that was sent to the client.</param>
+    /// <param name="storedPublicKey">The stored credential public key.</param>
+    /// <param name="storedDevicePublicKeys">The stored device public keys.</param>
+    /// <param name="storedSignatureCounter">The stored value of the signature counter.</param>
+    /// <param name="isUserHandleOwnerOfCredentialIdCallback">The delegate used to validate that the user handle is indeed owned of the CredentialId.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<VerifyAssertionResult> MakeAssertionAsync(
         AuthenticatorAssertionRawResponse assertionResponse,
@@ -122,35 +129,20 @@ public class Fido2 : IFido2
 
         return result;
     }
-
-    /// <summary>
-    /// Result of parsing and verifying attestation. Used to transport Public Key back to RP
-    /// </summary>
-    public sealed class CredentialMakeResult : Fido2ResponseBase
-    {
-        public CredentialMakeResult(string status, string errorMessage, RegisteredPublicKeyCredential? result)
-        {
-            Status = status;
-            ErrorMessage = errorMessage;
-            Result = result;
-        }
-
-        public RegisteredPublicKeyCredential? Result { get; }
-
-        // todo: add debuginfo?
-    }
 }
 
 /// <summary>
-/// Callback function used to validate that the CredentialID is unique to this User
+/// Callback function used to validate that the CredentialID is unique to this user.
 /// </summary>
 /// <param name="credentialIdUserParams"></param>
+/// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
 /// <returns></returns>
 public delegate Task<bool> IsCredentialIdUniqueToUserAsyncDelegate(IsCredentialIdUniqueToUserParams credentialIdUserParams, CancellationToken cancellationToken);
 
 /// <summary>
-/// Callback function used to validate that the user handle is indeed owned of the CredentialId
+/// Callback function used to validate that the user handle is indeed owned of the CredentialId.
 /// </summary>
 /// <param name="credentialIdUserHandleParams"></param>
+/// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
 /// <returns></returns>
 public delegate Task<bool> IsUserHandleOwnerOfCredentialIdAsync(IsUserHandleOwnerOfCredentialIdParams credentialIdUserHandleParams, CancellationToken cancellationToken);

@@ -25,7 +25,7 @@ public class None : Fido2Tests.Attestation
 
             _attestationObject.Add("attStmt", new CborMap());
             _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey((keyType, alg, crv));
-            Fido2.CredentialMakeResult res;
+            MakeNewCredentialResult res;
 
             res = await MakeAttestationResponseAsync();
 
@@ -51,7 +51,7 @@ public class None : Fido2Tests.Attestation
         _attestationObject.Add("attStmt", new CborMap { { "foo", "bar" } });
         _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
 
         Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
         Assert.Equal("Attestation format none should have no attestation statement", ex.Message);

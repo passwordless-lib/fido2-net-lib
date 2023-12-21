@@ -23,9 +23,9 @@ public interface IFido2
         byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default);
 
-    Task<Fido2.CredentialMakeResult> MakeNewCredentialAsync(
+    Task<MakeNewCredentialResult> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
-        CredentialCreateOptions origChallenge,
+        CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default);

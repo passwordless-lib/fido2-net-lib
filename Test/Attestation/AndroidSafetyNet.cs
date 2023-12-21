@@ -79,7 +79,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             };
 
             JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-            securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+            securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                Convert.ToBase64String(attestnCert.RawData),
+                Convert.ToBase64String(root.RawData)
+            });
 
             string strToken = "";
             if (tokenHandler.CanWriteToken)
@@ -95,7 +98,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestAndroidSafetyNet()
+    public async Task TestAndroidSafetyNet()
     {
         var res = await MakeAttestationResponseAsync();
         Assert.Equal(string.Empty, res.ErrorMessage);
@@ -113,7 +116,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     }
 
     [Fact]
-    public async void TestAndroidSafetyNetRSA()
+    public async Task TestAndroidSafetyNetRSA()
     {
         var (type, alg, _) = Fido2Tests._validCOSEParameters[3];
         X509Certificate2 root, attestnCert;
@@ -169,7 +172,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             };
 
             JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-            securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+            securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                Convert.ToBase64String(attestnCert.RawData),
+                Convert.ToBase64String(root.RawData)
+            });
 
             string strToken = "";
             if (tokenHandler.CanWriteToken)
@@ -199,85 +205,85 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAndroidSafetyNetVerNotString()
+    public async Task TestAndroidSafetyNetVerNotString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("ver", new CborInteger(1));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid version in SafetyNet data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid version in SafetyNet data", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetVerMissing()
+    public async Task TestAndroidSafetyNetVerMissing()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("ver", CborNull.Instance);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid version in SafetyNet data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid version in SafetyNet data", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetVerStrLenZero()
+    public async Task TestAndroidSafetyNetVerStrLenZero()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("ver", new CborTextString(""));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid version in SafetyNet data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid version in SafetyNet data", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseMissing()
+    public async Task TestAndroidSafetyNetResponseMissing()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", CborNull.Instance);
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid response in SafetyNet data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid response in SafetyNet data", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseNotByteString()
+    public async Task TestAndroidSafetyNetResponseNotByteString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborTextString("telephone"));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid response in SafetyNet data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid response in SafetyNet data", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseByteStringLenZero()
+    public async Task TestAndroidSafetyNetResponseByteStringLenZero()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(new byte[] { }));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Invalid response in SafetyNet data", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid response in SafetyNet data", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyResponseWhitespace()
+    public async Task TestAndroidSafetyResponseWhitespace()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(" "u8.ToArray()));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Same(Fido2ErrorMessages.MalformedSafetyNetJwt, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Same(Fido2ErrorMessages.MalformedSafetyNetJwt, ex.Message);
     }
 
     [Theory]
     [InlineData(".")]
     [InlineData("x.x")]
     [InlineData("x.x.")]
-    public void TestAndroidSafetyNetMalformedResponseJWT(string text)
+    public async Task TestAndroidSafetyNetMalformedResponseJWT(string text)
     {
         var response = (byte[])_attestationObject["attStmt"]["response"];
         var responseJWT = Encoding.UTF8.GetString(response);
 
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(Encoding.UTF8.GetBytes(text)));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Same(Fido2ErrorMessages.MalformedSafetyNetJwt, ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Same(Fido2ErrorMessages.MalformedSafetyNetJwt, ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseJWTMissingX5c()
+    public async Task TestAndroidSafetyNetResponseJWTMissingX5c()
     {
         var response = (byte[])_attestationObject["attStmt"]["response"];
         var jwtParts = Encoding.UTF8.GetString(response).Split('.');
@@ -287,12 +293,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(response));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SafetyNet response JWT header missing x5c", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SafetyNet response JWT header missing x5c", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseJWTX5cNoKeys()
+    public async Task TestAndroidSafetyNetResponseJWTX5cNoKeys()
     {
         var response = (byte[])_attestationObject["attStmt"]["response"];
         var jwtParts = Encoding.UTF8.GetString(response).Split('.');
@@ -303,12 +309,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(response));
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("No keys were present in the TOC header in SafetyNet response JWT", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("No keys were present in the TOC header in SafetyNet response JWT", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseJWTX5cInvalidString()
+    public async Task TestAndroidSafetyNetResponseJWTX5cInvalidString()
     {
         var response = (byte[])_attestationObject["attStmt"]["response"];
         var jwtParts = Encoding.UTF8.GetString(response).Split('.');
@@ -319,8 +325,8 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(response));
-        var ex = Assert.ThrowsAnyAsync<Exception>(async () => await MakeAttestationResponseAsync());
-        Assert.Equal("Could not parse X509 certificate", ex.Result.Message);
+        var ex = await Assert.ThrowsAnyAsync<Exception>(MakeAttestationResponseAsync);
+        Assert.Equal("Could not parse X509 certificate", ex.Message);
     }
 
     [Fact]
@@ -348,12 +354,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(response));
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.StartsWith("SafetyNet response security token validation failed", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseClaimTimestampExpired()
+    public async Task TestAndroidSafetyNetResponseClaimTimestampExpired()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -375,11 +381,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -417,7 +419,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -431,12 +436,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseClaimTimestampNotYetValid()
+    public async Task TestAndroidSafetyNetResponseClaimTimestampNotYetValid()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -496,7 +501,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -510,12 +518,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseClaimTimestampMissing()
+    public async Task TestAndroidSafetyNetResponseClaimTimestampMissing()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -575,7 +583,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -589,12 +600,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SafetyNet timestampMs not found SafetyNet attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SafetyNet timestampMs not found SafetyNet attestation", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseClaimNonceMissing()
+    public async Task TestAndroidSafetyNetResponseClaimNonceMissing()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -654,7 +665,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -668,12 +682,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Nonce value not found in SafetyNet attestation", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Nonce value not found in SafetyNet attestation", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseClaimNonceInvalid()
+    public async Task TestAndroidSafetyNetResponseClaimNonceInvalid()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -697,11 +711,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -741,7 +751,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -755,12 +768,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.StartsWith("SafetyNet response nonce / hash value mismatch", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.StartsWith("SafetyNet response nonce / hash value mismatch", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetResponseClaimNonceNotBase64String()
+    public async Task TestAndroidSafetyNetResponseClaimNonceNotBase64String()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -784,11 +797,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -826,7 +835,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -840,8 +852,9 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("Nonce value not base64string in SafetyNet attestation", ex.Result.Message);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Nonce value not base64string in SafetyNet attestation", ex.Message);
     }
 
     [Fact]
@@ -908,7 +921,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -922,14 +938,14 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
 
         Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
         Assert.StartsWith("Invalid SafetyNet attestation cert DnsName", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetCtsProfileMatchMissing()
+    public async Task TestAndroidSafetyNetCtsProfileMatchMissing()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -953,11 +969,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 byte[] serial = RandomNumberGenerator.GetBytes(12);
 
-                using (X509Certificate2 publicOnly = attRequest.Create(
-                    root,
-                    notBefore,
-                    notAfter,
-                    serial))
+                using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
                 {
                     attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
                 }
@@ -995,7 +1007,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -1009,12 +1024,12 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SafetyNet response ctsProfileMatch missing", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SafetyNet response ctsProfileMatch missing", ex.Message);
     }
 
     [Fact]
-    public void TestAndroidSafetyNetCtsProfileMatchFalse()
+    public async Task TestAndroidSafetyNetCtsProfileMatchFalse()
     {
         var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -1074,7 +1089,10 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] { attestnCert.RawData, root.RawData });
+                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
+                    Convert.ToBase64String(attestnCert.RawData),
+                    Convert.ToBase64String(root.RawData)
+                });
 
                 string strToken = "";
                 if (tokenHandler.CanWriteToken)
@@ -1088,7 +1106,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                  });
             }
         }
-        var ex = Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
-        Assert.Equal("SafetyNet response ctsProfileMatch false", ex.Result.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("SafetyNet response ctsProfileMatch false", ex.Message);
     }
 }
