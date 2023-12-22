@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -13,6 +11,7 @@ using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Fido2NetLib;
@@ -21,7 +20,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 {
     private const int _driftTolerance = 0;
 
-    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
+    public override async ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
         // CBOR decoding on it to extract the contained fields
@@ -90,45 +89,39 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
             }
         }
 
-        var validationParameters = new TokenValidationParameters
+        var tokenHandler = new JsonWebTokenHandler();
+
+        var validateTokenResult = await tokenHandler.ValidateTokenAsync(responseJwt, new TokenValidationParameters
         {
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = false,
             ValidateIssuerSigningKey = true,
             IssuerSigningKeys = keys
-        };
+        }).ConfigureAwait(false);
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        SecurityToken validatedToken;
-        try
+        if (!validateTokenResult.IsValid)
         {
-            tokenHandler.ValidateToken(responseJwt, validationParameters, out validatedToken);
-        }
-        catch (SecurityTokenException ex)
-        {
-            throw new Fido2VerificationException("SafetyNet response security token validation failed", ex);
+            throw new Fido2VerificationException("SafetyNet response security token validation failed");
         }
 
         string? nonce = null;
         bool? ctsProfileMatch = null;
         DateTimeOffset? timestamp = null;
 
-        var jwtToken = (JwtSecurityToken)validatedToken;
-
-        foreach (var claim in jwtToken.Claims)
+        foreach (var claim in validateTokenResult.Claims)
         {
-            if (claim is { Type: "nonce", ValueType: "http://www.w3.org/2001/XMLSchema#string" } && claim.Value.Length != 0)
+            switch (claim.Key)
             {
-                nonce = claim.Value;
-            }
-            if (claim is { Type: "ctsProfileMatch", ValueType: "http://www.w3.org/2001/XMLSchema#boolean" })
-            {
-                ctsProfileMatch = bool.Parse(claim.Value);
-            }
-            if (claim is { Type: "timestampMs", ValueType: "http://www.w3.org/2001/XMLSchema#integer64" })
-            {
-                timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(double.Parse(claim.Value, CultureInfo.InvariantCulture));
+                case "nonce" when claim.Value is string { Length: > 0 } nonceClaim:
+                    nonce = nonceClaim;
+                    break;
+                case "ctsProfileMatch" when claim.Value is bool ctsProfileMatchClaim:
+                    ctsProfileMatch = ctsProfileMatchClaim;
+                    break;
+                case "timestampMs" when claim.Value is long timestampMsClaim:
+                    timestamp = DateTimeOffset.UnixEpoch.AddMilliseconds(timestampMsClaim);
+                    break;
             }
         }
 
@@ -180,6 +173,6 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         if (true != ctsProfileMatch)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response ctsProfileMatch false");
 
-        return new(new VerifyAttestationResult(AttestationType.Basic, new X509Certificate2[] { attestationCert }));
+        return new VerifyAttestationResult(AttestationType.Basic, [attestationCert]);
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -11,6 +10,7 @@ using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 using Newtonsoft.Json;
@@ -63,36 +63,34 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
             var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-            var claims = new List<Claim>
+            var claims = new[]
             {
                 new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                 new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                 new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenHandler = new JsonWebTokenHandler();
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
+            var tokenDescriptor = new SecurityTokenDescriptor {
+                AdditionalHeaderClaims = new Dictionary<string, object>()
+                {
+                    { 
+                        JwtHeaderParameterNames.X5c, new[] {
+                            Convert.ToBase64String(attestnCert.RawData),
+                            Convert.ToBase64String(root.RawData)
+                        }
+                    }
+                },
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
             };
 
-            JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-            securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                Convert.ToBase64String(attestnCert.RawData),
-                Convert.ToBase64String(root.RawData)
-            });
-
-            string strToken = "";
-            if (tokenHandler.CanWriteToken)
-            {
-                strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-            }
+            string securityToken = tokenHandler.CreateToken(tokenDescriptor);
 
             _attestationObject.Add("attStmt", new CborMap {
                 { "ver", "F1D0" },
-                { "response", Encoding.UTF8.GetBytes(strToken) }
+                { "response", Encoding.UTF8.GetBytes(securityToken) }
             });
         }
     }
@@ -113,7 +111,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         Assert.Equal("Test User", res.Result.User.DisplayName);
         Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
         Assert.Equal("testuser", res.Result.User.Name);
-        Assert.Equal(new[] { AuthenticatorTransport.Internal }, res.Result.Transports);
+        Assert.Equal([AuthenticatorTransport.Internal], res.Result.Transports);
     }
 
     [Fact]
@@ -158,35 +156,34 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
             var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-            var claims = new List<Claim> {
+            var claims = new[] {
                 new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                 new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                 new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
             };
 
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenHandler = new JsonWebTokenHandler();
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsaAtt), SecurityAlgorithms.RsaSha256Signature)
+                SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsaAtt), SecurityAlgorithms.RsaSha256Signature),
+                AdditionalHeaderClaims = new Dictionary<string, object>
+                {
+                    { 
+                        JwtHeaderParameterNames.X5c, new[] {
+                            Convert.ToBase64String(attestnCert.RawData),
+                            Convert.ToBase64String(root.RawData)
+                        }
+                    }
+                }
             };
 
-            JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-            securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                Convert.ToBase64String(attestnCert.RawData),
-                Convert.ToBase64String(root.RawData)
-            });
-
-            string strToken = "";
-            if (tokenHandler.CanWriteToken)
-            {
-                strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-            }
-
+            string securityToken = tokenHandler.CreateToken(tokenDescriptor);
+          
             _attestationObject.Set("attStmt", new CborMap {
                 { "ver", "F1D0" },
-                { "response", Encoding.UTF8.GetBytes(strToken) }
+                { "response", Encoding.UTF8.GetBytes(securityToken) }
             });
 
             var res = await MakeAttestationResponseAsync();
@@ -254,7 +251,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     public async Task TestAndroidSafetyNetResponseByteStringLenZero()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
-        attStmt.Set("response", new CborByteString(new byte[] { }));
+        attStmt.Set("response", new CborByteString([]));
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Invalid response in SafetyNet data", ex.Message);
     }
@@ -404,36 +401,35 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                var claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        { 
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            } 
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
-
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
+                
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -486,36 +482,35 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                var claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
-
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
+                 
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -569,35 +564,34 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                List<Claim> claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
 
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -651,35 +645,34 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                List<Claim> claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
-
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
+                
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -736,36 +729,35 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
                 attToBeSigned[^1] ^= 0xff;
 
-                var claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);                
 
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -821,35 +813,34 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                var claims = new List<Claim> {
+                var claims = new[] {
                     new Claim("nonce", "n0tbase_64/str!ng" , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
-
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
+                
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -906,36 +897,35 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                var claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
-
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
+                
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -993,35 +983,34 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                var claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
 
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                 });
             }
         }
@@ -1074,36 +1063,35 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
                 var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
 
-                var claims = new List<Claim>
+                var claims = new[]
                 {
                     new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
                     new Claim("ctsProfileMatch", bool.FalseString, ClaimValueTypes.Boolean),
                     new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
                 };
 
-                var tokenHandler = new JwtSecurityTokenHandler();
+                var tokenHandler = new JsonWebTokenHandler();
 
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature)
+                    SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+                    AdditionalHeaderClaims = new Dictionary<string, object>
+                    {
+                        {
+                            JwtHeaderParameterNames.X5c, new[] {
+                                Convert.ToBase64String(attestnCert.RawData),
+                                Convert.ToBase64String(root.RawData)
+                            }
+                        }
+                    }
                 };
 
-                JwtSecurityToken securityToken = (JwtSecurityToken)tokenHandler.CreateToken(tokenDescriptor);
-                securityToken.Header.Add(JwtHeaderParameterNames.X5c, new[] {
-                    Convert.ToBase64String(attestnCert.RawData),
-                    Convert.ToBase64String(root.RawData)
-                });
-
-                string strToken = "";
-                if (tokenHandler.CanWriteToken)
-                {
-                    strToken = new JwtSecurityTokenHandler().WriteToken(securityToken);
-                }
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
 
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
-                    { "response", Encoding.UTF8.GetBytes(strToken) }
+                    { "response", Encoding.UTF8.GetBytes(securityToken) }
                  });
             }
         }
