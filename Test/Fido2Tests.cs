@@ -163,6 +163,7 @@ public class Fido2Tests
                 {
                     AttestationObject = _attestationObject.Encode(),
                     ClientDataJson = _clientDataJson,
+                    Transports = new[] { AuthenticatorTransport.Internal }
                 },
                 Extensions = new AuthenticationExtensionsClientOutputs()
                 {

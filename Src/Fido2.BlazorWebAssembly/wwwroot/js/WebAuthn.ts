@@ -33,7 +33,7 @@ export async function createCreds(options: PublicKeyCredentialCreationOptions) {
         response: {
             attestationObject: toBase64Url(response.attestationObject),
             clientDataJSON: toBase64Url(response.clientDataJSON),
-            transports: response.getTransports ? response.getTransports() : [],
+            transports: response.getTransports ? response.getTransports() : []
         }
     };
     return retval;

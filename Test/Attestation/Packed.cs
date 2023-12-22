@@ -48,6 +48,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
             _attestationObject = new CborMap { { "fmt", "packed" } };
+            Assert.Equal(new[] { AuthenticatorTransport.Internal }, res.Result.Transports);
         }
     }
 
