@@ -1,8 +1,8 @@
 name: master
 
 on:
-  workflow_dispatch:
-    inputs:
+  inputs:
+    workflow_dispatch:
       force_version:
         description: "The version to use"
         required: true
@@ -181,6 +181,7 @@ jobs:
       # Publish to GitHub package registry every time, whether it's a prerelease
       # version or a stable release version.
       - name: Publish packages (GitHub Registry)
+        if: github.event_name != 'pull_request'
         run: >
           dotnet nuget push **/*.nupkg
           --source https://nuget.pkg.github.com/passwordless-lib/index.json
