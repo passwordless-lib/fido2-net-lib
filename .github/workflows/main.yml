@@ -1,8 +1,8 @@
 name: master
 
 on:
-  inputs:
-    workflow_dispatch:
+  workflow_dispatch:
+    inputs:
       force_version:
         description: "The version to use"
         required: true
