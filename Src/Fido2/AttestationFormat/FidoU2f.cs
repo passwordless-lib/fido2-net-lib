@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -10,7 +11,7 @@ namespace Fido2NetLib;
 
 internal sealed class FidoU2f : AttestationVerifier
 {
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
         if (request.AuthData.AttestedCredentialData!.AaGuid.CompareTo(Guid.Empty) != 0)
@@ -86,6 +87,6 @@ internal sealed class FidoU2f : AttestationVerifier
 
         var trustPath = new X509Certificate2[1] { attCert };
 
-        return (AttestationType.AttCa, trustPath);
+        return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
     }
 }

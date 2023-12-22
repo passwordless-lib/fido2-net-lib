@@ -135,7 +135,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
         //     and the hash of the serialized client data computed in step 7
-        (var attType, var trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
 
         // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
@@ -238,7 +238,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
 
         // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-        (var attType, var trustPath) = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
+        (var attType, var trustPath) = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash()).ConfigureAwait(false);
 
         // 5. Complete the steps from § 7.1 Registering a New Credential and, if those steps are successful,
         // store the aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
