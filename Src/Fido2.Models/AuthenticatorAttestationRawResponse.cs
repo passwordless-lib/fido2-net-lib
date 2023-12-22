@@ -32,5 +32,8 @@ public sealed class AuthenticatorAttestationRawResponse
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("clientDataJSON")]
         public byte[] ClientDataJson { get; set; }
+
+        [JsonPropertyName("transports")]
+        public AuthenticatorTransport[] Transports { get; set; }
     }
 }

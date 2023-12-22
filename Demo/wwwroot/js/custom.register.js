@@ -126,7 +126,7 @@ async function registerNewCredential(newCredential) {
         response: {
             AttestationObject: coerceToBase64Url(attestationObject),
             clientDataJSON: coerceToBase64Url(clientDataJSON),
-            transports: newCredential.response.getTransports(),
+            transports: newCredential.response.getTransports()
         },
     };
 
