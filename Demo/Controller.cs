@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
-using static Fido2NetLib.Fido2;
 
 namespace Fido2Demo;
 
@@ -132,7 +124,7 @@ public class MyController : Controller
                 IsBackedUp = success.Result.IsBackedUp,
                 AttestationObject = success.Result.AttestationObject,
                 AttestationClientDataJson = success.Result.AttestationClientDataJson,
-                DevicePublicKeys = new List<byte[]>() { success.Result.DevicePublicKey }
+                DevicePublicKeys = [success.Result.DevicePublicKey]
             });
 
             // 4. return "ok" to the client

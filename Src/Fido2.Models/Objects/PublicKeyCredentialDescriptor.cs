@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using System;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects;

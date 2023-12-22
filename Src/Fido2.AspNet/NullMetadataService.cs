@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace Fido2NetLib;
+﻿namespace Fido2NetLib;
 
 internal sealed class NullMetadataService : IMetadataService
 {

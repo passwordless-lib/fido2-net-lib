@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-
-namespace Fido2Demo;
+﻿namespace Fido2Demo;
 
 public class Program
 {

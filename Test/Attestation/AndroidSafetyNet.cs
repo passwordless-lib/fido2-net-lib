@@ -72,10 +72,11 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
 
             var tokenHandler = new JsonWebTokenHandler();
 
-            var tokenDescriptor = new SecurityTokenDescriptor {
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
                 AdditionalHeaderClaims = new Dictionary<string, object>()
                 {
-                    { 
+                    {
                         JwtHeaderParameterNames.X5c, new[] {
                             Convert.ToBase64String(attestnCert.RawData),
                             Convert.ToBase64String(root.RawData)
@@ -170,7 +171,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 SigningCredentials = new SigningCredentials(new RsaSecurityKey(rsaAtt), SecurityAlgorithms.RsaSha256Signature),
                 AdditionalHeaderClaims = new Dictionary<string, object>
                 {
-                    { 
+                    {
                         JwtHeaderParameterNames.X5c, new[] {
                             Convert.ToBase64String(attestnCert.RawData),
                             Convert.ToBase64String(root.RawData)
@@ -180,7 +181,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
             };
 
             string securityToken = tokenHandler.CreateToken(tokenDescriptor);
-          
+
             _attestationObject.Set("attStmt", new CborMap {
                 { "ver", "F1D0" },
                 { "response", Encoding.UTF8.GetBytes(securityToken) }
@@ -416,17 +417,17 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
                     AdditionalHeaderClaims = new Dictionary<string, object>
                     {
-                        { 
+                        {
                             JwtHeaderParameterNames.X5c, new[] {
                                 Convert.ToBase64String(attestnCert.RawData),
                                 Convert.ToBase64String(root.RawData)
-                            } 
+                            }
                         }
                     }
                 };
 
                 string securityToken = tokenHandler.CreateToken(tokenDescriptor);
-                
+
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
                     { "response", Encoding.UTF8.GetBytes(securityToken) }
@@ -507,7 +508,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 string securityToken = tokenHandler.CreateToken(tokenDescriptor);
-                 
+
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
                     { "response", Encoding.UTF8.GetBytes(securityToken) }
@@ -669,7 +670,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 string securityToken = tokenHandler.CreateToken(tokenDescriptor);
-                
+
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
                     { "response", Encoding.UTF8.GetBytes(securityToken) }
@@ -753,7 +754,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                     }
                 };
 
-                string securityToken = tokenHandler.CreateToken(tokenDescriptor);                
+                string securityToken = tokenHandler.CreateToken(tokenDescriptor);
 
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
@@ -837,7 +838,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 string securityToken = tokenHandler.CreateToken(tokenDescriptor);
-                
+
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
                     { "response", Encoding.UTF8.GetBytes(securityToken) }
@@ -922,7 +923,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 };
 
                 string securityToken = tokenHandler.CreateToken(tokenDescriptor);
-                
+
                 _attestationObject.Set("attStmt", new CborMap {
                     { "ver", "F1D0" },
                     { "response", Encoding.UTF8.GetBytes(securityToken) }

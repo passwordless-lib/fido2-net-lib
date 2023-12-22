@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Fido2NetLib;
+﻿namespace Fido2NetLib;
 
 public static class StringExtensions
 {

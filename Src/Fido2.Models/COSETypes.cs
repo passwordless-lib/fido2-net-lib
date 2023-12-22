@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Fido2NetLib.Objects;
+﻿namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// CBOR Object Signing and Encryption RFC8152 https://tools.ietf.org/html/rfc8152
