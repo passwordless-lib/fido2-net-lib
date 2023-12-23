@@ -57,7 +57,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         AssertionOptions options,
         Fido2Configuration config,
         byte[] storedPublicKey,
-        List<byte[]> storedDevicePublicKeys,
+        IReadOnlyList<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
         IMetadataService? metadataService,
@@ -235,7 +235,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="hash"></param>
     /// </summary>
     private static async ValueTask<byte[]?> DevicePublicKeyAuthenticationAsync(
-        List<byte[]> storedDevicePublicKeys,
+        IReadOnlyList<byte[]> storedDevicePublicKeys,
         AuthenticationExtensionsClientOutputs clientExtensionResults,
         AuthenticatorData authData,
         byte[] hash)
@@ -320,7 +320,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 List<DevicePublicKeyAuthenticatorOutput> matchedDpkKeys = new();
 
                 // For each dpkRecord in credentialRecord.devicePubKeys
-                storedDevicePublicKeys.ForEach(storedDevicePublicKey =>
+                foreach (var storedDevicePublicKey in storedDevicePublicKeys)
                 {
                     var dpkRecord = DevicePublicKeyAuthenticatorOutput.Parse(storedDevicePublicKey);
 
@@ -330,7 +330,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                         // Append dpkRecord to matchedDpkKeys.
                         matchedDpkKeys.Add(dpkRecord);
                     }
-                });
+                }
 
                 // If matchedDpkKeys is empty
                 if (matchedDpkKeys.Count == 0)
