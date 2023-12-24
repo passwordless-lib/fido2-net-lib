@@ -6,18 +6,14 @@ using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
 
-public sealed class VerifyAttestationRequest
+public sealed class VerifyAttestationRequest(
+    CborMap attStmt,
+    AuthenticatorData authenticationData,
+    byte[] clientDataHash)
 {
-    private readonly CborMap _attStmt;
-    private readonly AuthenticatorData _authenticatorData;
-    private readonly byte[] _clientDataHash;
-
-    public VerifyAttestationRequest(CborMap attStmt, AuthenticatorData authenticationData, byte[] clientDataHash)
-    {
-        _attStmt = attStmt;
-        _authenticatorData = authenticationData;
-        _clientDataHash = clientDataHash;
-    }
+    private readonly CborMap _attStmt = attStmt;
+    private readonly AuthenticatorData _authenticatorData = authenticationData;
+    private readonly byte[] _clientDataHash = clientDataHash;
 
     internal CborMap AttStmt => _attStmt;
 
@@ -31,7 +27,7 @@ public sealed class VerifyAttestationRequest
 
     internal CborMap CredentialPublicKey => AuthData.AttestedCredentialData!.CredentialPublicKey.GetCborObject();
 
-    internal byte[] Data => DataHelper.Concat(_authenticatorData.ToByteArray(), _clientDataHash);
+    internal byte[] Data => [.._authenticatorData.ToByteArray(), .._clientDataHash];
 
     internal bool TryGetVer([NotNullWhen(true)] out string? ver)
     {

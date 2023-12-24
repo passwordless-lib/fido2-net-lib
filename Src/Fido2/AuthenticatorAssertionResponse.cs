@@ -160,7 +160,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // done earlier in step 13
 
         // 19. Using credentialRecord.publicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.
-        byte[] data = DataHelper.Concat(Raw.Response.AuthenticatorData, hash);
+        byte[] data = [..Raw.Response.AuthenticatorData, ..hash];
 
         if (storedPublicKey is null || storedPublicKey.Length is 0)
             throw new Fido2VerificationException(Fido2ErrorCode.MissingStoredPublicKey, Fido2ErrorMessages.MissingStoredPublicKey);
@@ -248,7 +248,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
 
         // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
-        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData.ToByteArray(), hash), attObjForDevicePublicKey.Signature))
+        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify([..authData.ToByteArray(), ..hash], attObjForDevicePublicKey.Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
         // 4. If the Relying Party's user account mapped to the credential.id in play (i.e., for the user being

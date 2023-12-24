@@ -7,10 +7,10 @@ using Fido2NetLib.Cbor;
 public sealed class DevicePublicKeyAuthenticatorOutput
 {
     // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-    internal static ReadOnlySpan<byte> _dpkAuthDataPrefix => new byte[] {
+    internal static ReadOnlySpan<byte> _dpkAuthDataPrefix => [
         0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x20, 0x62, 0x6f, 0x75, 0x6e, 0x64, 0x20,
         0x6b, 0x65, 0x79, 0x20, 0x61, 0x74, 0x74, 0x65, 0x73, 0x74, 0x61, 0x74, 0x69,
-        0x6f, 0x6e, 0x20, 0x73, 0x69, 0x67, 0x00, 0xff, 0xff, 0xff, 0xff };
+        0x6f, 0x6e, 0x20, 0x73, 0x69, 0x67, 0x00, 0xff, 0xff, 0xff, 0xff ];
 
     private readonly byte[] _nonce;
 
@@ -77,11 +77,11 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     /// </summary>
     public bool? EpAtt { get; }
 
-    public AuthenticatorData GetAuthenticatorData() => AuthenticatorData.Parse(DataHelper.Concat(_dpkAuthDataPrefix, AaGuid.ToByteArray()));
+    public AuthenticatorData GetAuthenticatorData() => AuthenticatorData.Parse([.._dpkAuthDataPrefix, ..AaGuid.ToByteArray()]);
 
-    public byte[] GetHash() => DataHelper.Concat(DevicePublicKey.GetBytes(), Nonce);
+    public byte[] GetHash() => [..DevicePublicKey.GetBytes(), ..Nonce];
 
-    public ReadOnlySpan<byte> GetAuthenticationMatcher() => DataHelper.Concat(AaGuid.ToByteArray(), DevicePublicKey.GetBytes());
+    public ReadOnlySpan<byte> GetAuthenticationMatcher() => (byte[])[..AaGuid.ToByteArray(), ..DevicePublicKey.GetBytes()];
 
     public byte[] Encode() => _map.Encode();
 
