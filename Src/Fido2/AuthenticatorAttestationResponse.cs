@@ -229,7 +229,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
 
         // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
-        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify([..authData.ToByteArray(), ..hash], attObjForDevicePublicKey.Signature))
+        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify([.. authData.ToByteArray(), .. hash], attObjForDevicePublicKey.Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
         // 4. Optionally, if attestation was requested and the Relying Party wishes to verify it, verify that attStmt is a correct attestation statement, conveying a valid attestation signature,

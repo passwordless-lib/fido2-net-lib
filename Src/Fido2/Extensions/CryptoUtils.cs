@@ -168,7 +168,7 @@ internal static class CryptoUtils
         }
 
         // Concatenate R + S coordinates and return the raw signature
-        return [..p1363R, ..p1363S];
+        return [.. p1363R, .. p1363S];
     }
 
     public static string CDPFromCertificateExts(X509ExtensionCollection exts)

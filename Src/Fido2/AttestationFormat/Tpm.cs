@@ -634,7 +634,7 @@ public sealed class PubArea
                 X = AuthDataHelper.GetSizedByteArray(data, ref offset),
                 Y = AuthDataHelper.GetSizedByteArray(data, ref offset),
             };
-            Unique = [..ECPoint.X, ..ECPoint.Y];
+            Unique = [.. ECPoint.X, .. ECPoint.Y];
         }
 
         if (data.Length != offset)

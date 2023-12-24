@@ -52,7 +52,7 @@ internal sealed class FidoU2f : AttestationVerifier
         var y = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.Y];
 
         // 4c.Let publicKeyU2F be the concatenation 0x04 || x || y
-        byte[] publicKeyU2F = [0x4, ..x, ..y];
+        byte[] publicKeyU2F = [0x4, .. x, .. y];
 
         // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
         byte[] verificationData = [

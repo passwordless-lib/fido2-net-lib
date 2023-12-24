@@ -27,7 +27,7 @@ public sealed class VerifyAttestationRequest(
 
     internal CborMap CredentialPublicKey => AuthData.AttestedCredentialData!.CredentialPublicKey.GetCborObject();
 
-    internal byte[] Data => [.._authenticatorData.ToByteArray(), .._clientDataHash];
+    internal byte[] Data => [.. _authenticatorData.ToByteArray(), .. _clientDataHash];
 
     internal bool TryGetVer([NotNullWhen(true)] out string? ver)
     {

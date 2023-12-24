@@ -77,11 +77,11 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     /// </summary>
     public bool? EpAtt { get; }
 
-    public AuthenticatorData GetAuthenticatorData() => AuthenticatorData.Parse([.._dpkAuthDataPrefix, ..AaGuid.ToByteArray()]);
+    public AuthenticatorData GetAuthenticatorData() => AuthenticatorData.Parse([.. _dpkAuthDataPrefix, .. AaGuid.ToByteArray()]);
 
-    public byte[] GetHash() => [..DevicePublicKey.GetBytes(), ..Nonce];
+    public byte[] GetHash() => [.. DevicePublicKey.GetBytes(), .. Nonce];
 
-    public ReadOnlySpan<byte> GetAuthenticationMatcher() => (byte[])[..AaGuid.ToByteArray(), ..DevicePublicKey.GetBytes()];
+    public ReadOnlySpan<byte> GetAuthenticationMatcher() => (byte[])[.. AaGuid.ToByteArray(), .. DevicePublicKey.GetBytes()];
 
     public byte[] Encode() => _map.Encode();
 
