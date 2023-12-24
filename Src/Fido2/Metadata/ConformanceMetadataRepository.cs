@@ -58,7 +58,8 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
         var content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes(req, FidoSerializerContext.Default.GetBLOBRequest))
         {
-            Headers = {
+            Headers =
+            {
                 { "Content-Type", MediaTypeNames.Application.Json }
             }
         };
