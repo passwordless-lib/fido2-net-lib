@@ -57,10 +57,10 @@ internal sealed class FidoU2f : AttestationVerifier
         // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
         byte[] verificationData = [
             0x00,
-            ..request.AuthData.RpIdHash,
-            ..request.ClientDataHash,
-            ..request.AuthData.AttestedCredentialData.CredentialId,
-            ..publicKeyU2F
+            .. request.AuthData.RpIdHash,
+            .. request.ClientDataHash,
+            .. request.AuthData.AttestedCredentialData.CredentialId,
+            .. publicKeyU2F
         ];
 
         // 6. Verify the sig using verificationData and certificate public key
