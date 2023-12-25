@@ -14,7 +14,7 @@ public abstract class CtapCommand
 
         if (parameters is null)
         {
-            return new byte[] { (byte)Type };
+            return [(byte)Type];
         }
 
         var encodedObject = parameters.Encode();
