@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -36,7 +37,7 @@ internal sealed class Packed : AttestationVerifier
             && subjectMap.TryGetValue("CN", out var cn) && cn.Length > 0;
     }
 
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and 
         // perform CBOR decoding on it to extract the contained fields.
@@ -117,7 +118,7 @@ internal sealed class Packed : AttestationVerifier
 
             // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
 
-            return (AttestationType.AttCa, trustPath);
+            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
         }
 
         // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -145,7 +146,7 @@ internal sealed class Packed : AttestationVerifier
             if (!request.AuthData.AttestedCredentialData.CredentialPublicKey.Verify(request.Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Failed to validate signature");
 
-            return (AttestationType.Self, null!);
+            return new(new VerifyAttestationResult(AttestationType.Self, null!));
         }
     }
 }

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿namespace Fido2NetLib;
 
-namespace Fido2NetLib;
-
-[Serializable]
 public class Fido2MetadataException : Exception
 {
     public Fido2MetadataException()
@@ -15,10 +11,6 @@ public class Fido2MetadataException : Exception
     }
 
     public Fido2MetadataException(string message, Exception innerException) : base(message, innerException)
-    {
-    }
-
-    protected Fido2MetadataException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
     }
 }

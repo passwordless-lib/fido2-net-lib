@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.Threading.Tasks;
 
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
@@ -7,11 +7,11 @@ namespace Fido2NetLib;
 
 public sealed class None : AttestationVerifier
 {
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         if (request.AttStmt.Count != 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation format none should have no attestation statement");
 
-        return (AttestationType.None, null!);
+        return new(new VerifyAttestationResult(AttestationType.None, null!));
     }
 }

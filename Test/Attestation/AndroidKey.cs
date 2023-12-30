@@ -76,6 +76,7 @@ public class AndroidKey : Fido2Tests.Attestation
         Assert.Equal("Test User", res.Result.User.DisplayName);
         Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
         Assert.Equal("testuser", res.Result.User.Name);
+        Assert.Equal(new[] { AuthenticatorTransport.Internal }, res.Result.Transports);
     }
 
     [Fact]
