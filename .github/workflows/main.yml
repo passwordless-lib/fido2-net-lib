@@ -200,10 +200,9 @@ jobs:
           --api-key ${{ secrets.GITHUB_TOKEN }}
 
       # Only publish to NuGet on stable releases
-      # Repeat the run for these inputs: Fido2, Fido2.Models, Fido2.Aspnet
-      - name: Publish package to NuGet Registry
+      - name: Publish packages (NuGet Registry)
         if: ${{ github.event_name == 'release' }}
-        run: |
-          dotnet nuget push **/Fido2.nupkg --source "https://api.nuget.org/v3/index.json" --api-key "${{ secrets.nuget_api_key }}"
-          dotnet nuget push **/Fido2.Models.nupkg --source "https://api.nuget.org/v3/index.json" --api-key "${{ secrets.nuget_api_key }}"
-          dotnet nuget push **/Fido2.AspNet.nupkg --source "https://api.nuget.org/v3/index.json" --api-key "${{ secrets.nuget_api_key }}"
+        run: >
+          dotnet nuget push **/*.nupkg
+          --source https://api.nuget.org/v3/index.json
+          --api-key ${{ secrets.nuget_api_key }}
