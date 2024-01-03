@@ -9,11 +9,5 @@
   </PropertyGroup>
   <ItemGroup Condition="$(IS_DOCKER) == ''">
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-  </ItemGroup>
-
-  <!-- Projects inside "./src" should generate packages -->
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-  </PropertyGroup>
+  </ItemGroup>  
 </Project>
