@@ -204,6 +204,6 @@ jobs:
       - name: Publish package to NuGet Registry
         if: ${{ github.event_name == 'release' }}
         run: |
-          dotnet nuget push **/Fido2.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.nuget_api_key }}
-          dotnet nuget push **/Fido2.Models.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.nuget_api_key }}
-          dotnet nuget push **/Fido2.AspNet.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.nuget_api_key }}
+          dotnet nuget push **/Fido2.nupkg --source "https://api.nuget.org/v3/index.json" --api-key "${{ secrets.nuget_api_key }}"
+          dotnet nuget push **/Fido2.Models.nupkg --source "https://api.nuget.org/v3/index.json" --api-key "${{ secrets.nuget_api_key }}"
+          dotnet nuget push **/Fido2.AspNet.nupkg --source "https://api.nuget.org/v3/index.json" --api-key "${{ secrets.nuget_api_key }}"
