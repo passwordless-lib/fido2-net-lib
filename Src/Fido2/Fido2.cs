@@ -108,7 +108,7 @@ public class Fido2 : IFido2
         AuthenticatorAssertionRawResponse assertionResponse,
         AssertionOptions originalOptions,
         byte[] storedPublicKey,
-        List<byte[]> storedDevicePublicKeys,
+        IReadOnlyList<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
         CancellationToken cancellationToken = default)
