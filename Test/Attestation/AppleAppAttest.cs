@@ -86,62 +86,57 @@ public class AppleAppAttest : Fido2Tests.Attestation
     }
 
     [Fact]
-    public void TestAppleAppAttestMissingX5c()
+    public async Task TestAppleAppAttestMissingX5c()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", CborNull.Instance);
         var verifier = new Fido2NetLib.AppleAppAttest();
-        var ex = Assert.Throws<Fido2VerificationException>(
-        () => { (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(attStmt, _authData, _clientDataJson); });
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => { _ = await verifier.VerifyAsync(attStmt, _authData, _clientDataJson); });
 
         Assert.Equal("Malformed x5c in Apple AppAttest attestation", ex.Message);
     }
 
     [Fact]
-    public void TestAppleAppAttestX5cNotArray()
+    public async Task TestAppleAppAttestX5cNotArray()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborTextString("boomerang"));
         var verifier = new Fido2NetLib.AppleAppAttest();
-        var ex = Assert.Throws<Fido2VerificationException>(
-        () => { (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(attStmt, _authData, _clientDataJson); });
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => { _ = await verifier.VerifyAsync(attStmt, _authData, _clientDataJson); });
 
         Assert.Equal("Malformed x5c in Apple AppAttest attestation", ex.Message);
     }
 
     [Fact]
-    public void TestAppleAppAttestX5cCountNotTwo()
+    public async Task TestAppleAppAttestX5cCountNotTwo()
     {
         var emptyX5c = new CborArray { new byte[0] };
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", emptyX5c);
         var verifier = new Fido2NetLib.AppleAppAttest();
-        var ex = Assert.Throws<Fido2VerificationException>(
-        () => { (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(attStmt, _authData, _clientDataJson); });
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => { _ = await verifier.VerifyAsync(attStmt, _authData, _clientDataJson); });
 
         Assert.Equal("Malformed x5c in Apple AppAttest attestation", ex.Message);
     }
 
     [Fact]
-    public void TestAppleAppAttestX5cValueNotByteString()
+    public async Task TestAppleAppAttestX5cValueNotByteString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborTextString("x"));
         var verifier = new Fido2NetLib.AppleAppAttest();
-        var ex = Assert.Throws<Fido2VerificationException>(
-        () => { (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(attStmt, _authData, _clientDataJson); });
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => { _ = await verifier.VerifyAsync(attStmt, _authData, _clientDataJson); });
 
         Assert.Equal("Malformed x5c in Apple AppAttest attestation", ex.Message);
     }
 
     [Fact]
-    public void TestAppleAppAttestX5cValueZeroLengthByteString()
+    public async Task TestAppleAppAttestX5cValueZeroLengthByteString()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("x5c", new CborArray { new byte[0] });
         var verifier = new Fido2NetLib.AppleAppAttest();
-        var ex = Assert.Throws<Fido2VerificationException>(
-        () => { (AttestationType attType, X509Certificate[] trustPath) = verifier.Verify(attStmt, _authData, _clientDataJson); });
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => { _ = await verifier.VerifyAsync(attStmt, _authData, _clientDataJson); });
 
         Assert.Equal("Malformed x5c in Apple AppAttest attestation", ex.Message);
     }

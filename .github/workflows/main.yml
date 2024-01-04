@@ -93,6 +93,10 @@ jobs:
 
       - name: Install .NET
         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+        with:
+          dotnet-version: | 
+            6.0.x
+            8.0.x
 
       - name: Run restore
         run: dotnet restore
@@ -128,6 +132,10 @@ jobs:
 
       - name: Install .NET
         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+        with:
+          dotnet-version: | 
+            6.0.x
+            8.0.x
 
       - name: Run restore
         run: dotnet restore
@@ -177,19 +185,24 @@ jobs:
 
       - name: Install .NET
         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+        with:
+          dotnet-version: | 
+            6.0.x
+            8.0.x
 
       # Publish to GitHub package registry every time, whether it's a prerelease
       # version or a stable release version.
       - name: Publish packages (GitHub Registry)
+        if: github.event_name != 'pull_request'
         run: >
           dotnet nuget push **/*.nupkg
           --source https://nuget.pkg.github.com/passwordless-lib/index.json
           --api-key ${{ secrets.GITHUB_TOKEN }}
 
       # Only publish to NuGet on stable releases
-    #   - name: Publish packages (NuGet Registry)
-    #     if: ${{ github.event_name == 'release' }}
-    #     run: >
-    #       dotnet nuget push **/*.nupkg
-    #       --source https://api.nuget.org/v3/index.json
-    #       --api-key ${{ secrets.nuget_api_key }}
+      - name: Publish packages (NuGet Registry)
+        if: ${{ github.event_name == 'release' }}
+        run: >
+          dotnet nuget push **/*.nupkg
+          --source https://api.nuget.org/v3/index.json
+          --api-key ${{ secrets.nuget_api_key }}

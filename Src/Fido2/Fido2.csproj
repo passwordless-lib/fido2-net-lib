@@ -7,6 +7,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <IsTrimmable>true</IsTrimmable>
     <NoWarn>$(NoWarn);IDE0057</NoWarn>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
