@@ -115,7 +115,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // https://www.w3.org/TR/webauthn/#sctn-appid-extension
         // FIDO AppID Extension:
         // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
-        var rpid = Raw.Extensions?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
+        var rpid = Raw.ClientExtensionResults?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
         byte[] hashedRpId = SHA256.HashData(Encoding.UTF8.GetBytes(rpid ?? string.Empty));
         byte[] hash = SHA256.HashData(Raw.Response.ClientDataJson);
 
@@ -144,9 +144,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions,
         // i.e., those that were not specified as part of options.extensions. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
         byte[]? devicePublicKeyResult = null;
-        if (Raw.Extensions?.DevicePubKey is not null)
+        if (Raw.ClientExtensionResults?.DevicePubKey is not null)
         {
-            devicePublicKeyResult = await DevicePublicKeyAuthenticationAsync(storedDevicePublicKeys, Raw.Extensions, AuthenticatorData, hash).ConfigureAwait(false);
+            devicePublicKeyResult = await DevicePublicKeyAuthenticationAsync(storedDevicePublicKeys, Raw.ClientExtensionResults, AuthenticatorData, hash).ConfigureAwait(false);
         }
 
         // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation        

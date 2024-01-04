@@ -27,7 +27,15 @@ public class AuthenticatorAssertionRawResponse
     public PublicKeyCredentialType? Type { get; set; }
 
     [JsonPropertyName("extensions")]
-    public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+    [Obsolete("Use ClientExtensionResults instead")]
+    public AuthenticationExtensionsClientOutputs Extensions
+    {
+        get => ClientExtensionResults;
+        set => ClientExtensionResults = value;
+    }
+
+    [JsonPropertyName("clientExtensionResults")]
+    public AuthenticationExtensionsClientOutputs ClientExtensionResults { get; set; }
 
     public sealed class AssertionResponse
     {

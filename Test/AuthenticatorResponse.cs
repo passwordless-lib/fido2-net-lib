@@ -1234,7 +1234,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
                 Extensions = new string[] { "foo", "bar" },
@@ -1264,13 +1264,13 @@ public class AuthenticatorResponseTests
         Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.Signature);
         Assert.Equal(clientDataJson, assertionResponse.Response.ClientDataJson);
         Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.UserHandle);
-        Assert.True(assertionResponse.Extensions.AppID);
-        Assert.Equal(new string[] { "foo", "bar" }, assertionResponse.Extensions.Extensions);
-        Assert.Equal("test", assertionResponse.Extensions.Example);
-        Assert.Equal((ulong)4, assertionResponse.Extensions.UserVerificationMethod[0][0]);
-        Assert.True(assertionResponse.Extensions.PRF.Enabled);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Extensions.PRF.Results.First);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Extensions.PRF.Results.Second);
+        Assert.True(assertionResponse.ClientExtensionResults.AppID);
+        Assert.Equal(new string[] { "foo", "bar" }, assertionResponse.ClientExtensionResults.Extensions);
+        Assert.Equal("test", assertionResponse.ClientExtensionResults.Example);
+        Assert.Equal((ulong)4, assertionResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
+        Assert.True(assertionResponse.ClientExtensionResults.PRF.Enabled);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.ClientExtensionResults.PRF.Results.First);
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.ClientExtensionResults.PRF.Results.Second);
     }
 
     [Fact]
@@ -1310,7 +1310,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.Invalid,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1378,7 +1378,7 @@ public class AuthenticatorResponseTests
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1447,7 +1447,7 @@ public class AuthenticatorResponseTests
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1516,7 +1516,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1585,7 +1585,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1654,7 +1654,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1725,7 +1725,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = true,
                 Extensions = new string[] { "foo", "bar" },
@@ -1795,7 +1795,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1866,7 +1866,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -1936,7 +1936,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -2004,7 +2004,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -2073,7 +2073,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -2142,7 +2142,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -2211,7 +2211,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -2281,7 +2281,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -2350,7 +2350,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },
@@ -2426,7 +2426,7 @@ public class AuthenticatorResponseTests
             Type = PublicKeyCredentialType.PublicKey,
             Id = new byte[] { 0xf1, 0xd0 },
             RawId = new byte[] { 0xf1, 0xd0 },
-            Extensions = new AuthenticationExtensionsClientOutputs()
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
                 Extensions = new string[] { "foo", "bar" },

@@ -38,7 +38,7 @@ public class ExistingU2fRegistrationDataTests
             Id = keyHandleData,
             RawId = keyHandleData,
             Type = PublicKeyCredentialType.PublicKey,
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true
             },
