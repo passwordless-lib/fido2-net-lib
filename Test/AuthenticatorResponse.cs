@@ -253,7 +253,7 @@ public class AuthenticatorResponseTests
                 AttestationObject = new CborMap().Encode(),
                 ClientDataJson = clientDataJson
             },
-            Extensions = new AuthenticationExtensionsClientOutputs
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
                 Extensions = new string[] { "foo", "bar" },
@@ -281,13 +281,13 @@ public class AuthenticatorResponseTests
         Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.RawId);
         Assert.Equal(new byte[] { 0xa0 }, rawResponse.Response.AttestationObject);
         Assert.Equal(clientDataJson, rawResponse.Response.ClientDataJson);
-        Assert.True(rawResponse.Extensions.AppID);
-        Assert.Equal(new string[] { "foo", "bar" }, rawResponse.Extensions.Extensions);
-        Assert.Equal("test", rawResponse.Extensions.Example);
-        Assert.Equal((ulong)4, rawResponse.Extensions.UserVerificationMethod[0][0]);
-        Assert.True(rawResponse.Extensions.PRF.Enabled);
-        Assert.Equal(rawResponse.Extensions.PRF.Results.First, new byte[] { 0xf1, 0xd0 });
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.Extensions.PRF.Results.Second);
+        Assert.True(rawResponse.ClientExtensionResults.AppID);
+        Assert.Equal(new string[] { "foo", "bar" }, rawResponse.ClientExtensionResults.Extensions);
+        Assert.Equal("test", rawResponse.ClientExtensionResults.Example);
+        Assert.Equal((ulong)4, rawResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
+        Assert.True(rawResponse.ClientExtensionResults.PRF.Enabled);
+        Assert.Equal(rawResponse.ClientExtensionResults.PRF.Results.First, new byte[] { 0xf1, 0xd0 });
+        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.ClientExtensionResults.PRF.Results.Second);
     }
 
     [Fact]

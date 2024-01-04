@@ -123,9 +123,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
         byte[]? devicePublicKeyResult = null;
 
-        if (Raw.Extensions?.DevicePubKey is not null)
+        if (Raw.ClientExtensionResults?.DevicePubKey is not null)
         {
-            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(config, metadataService, Raw.Extensions, AttestationObject.AuthData, clientDataHash, cancellationToken).ConfigureAwait(false);
+            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(config, metadataService, Raw.ClientExtensionResults, AttestationObject.AuthData, clientDataHash, cancellationToken).ConfigureAwait(false);
         }
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
