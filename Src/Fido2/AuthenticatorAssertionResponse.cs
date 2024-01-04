@@ -146,7 +146,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         byte[]? devicePublicKeyResult = null;
         if (Raw.ClientExtensionResults?.DevicePubKey is not null)
         {
-            devicePublicKeyResult = await DevicePublicKeyAuthenticationAsync(storedDevicePublicKeys, Raw.Extensions, AuthenticatorData, hash).ConfigureAwait(false);
+            devicePublicKeyResult = await DevicePublicKeyAuthenticationAsync(storedDevicePublicKeys, Raw.ClientExtensionResults, AuthenticatorData, hash).ConfigureAwait(false);
         }
 
         // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation        
