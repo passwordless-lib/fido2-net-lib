@@ -551,6 +551,9 @@ public class Fido2Tests
     [Fact]
     public async Task TestPackedttestationAsyncFailTrustAnchorOnRootCertInTrustPath()
     {
+        if (!OperatingSystem.IsWindows())
+            return;
+
         var targetGuid = new Guid("42383245-4437-3343-3846-423445354132");
         var metadataService = CreateMetadataService("./metadata");
         metadataService.ChangeEntryGuid(new Guid("00000000-0000-0000-0000-000000000004"), targetGuid);
