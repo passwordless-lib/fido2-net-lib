@@ -127,9 +127,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
         byte[]? devicePublicKeyResult = null;
 
-        if (Raw.Extensions?.DevicePubKey is not null)
+        if (Raw.ClientExtensionResults?.DevicePubKey is not null)
         {
-            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(config, metadataService, Raw.Extensions, AttestationObject.AuthData, clientDataHash, cancellationToken).ConfigureAwait(false);
+            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(config, metadataService, Raw.ClientExtensionResults, AttestationObject.AuthData, clientDataHash, cancellationToken).ConfigureAwait(false);
         }
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
@@ -139,7 +139,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
         //     and the hash of the serialized client data computed in step 7
-        (var attType, var trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
 
         // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
@@ -194,7 +194,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             Id = authData.AttestedCredentialData.CredentialId,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
-            // Transports = result of response.getTransports();
+            Transports = Raw.Response.Transports,
             IsBackupEligible = authData.IsBackupEligible,
             IsBackedUp = authData.IsBackedUp,
             AttestationObject = Raw.Response.AttestationObject,
@@ -242,7 +242,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
 
         // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-        (var attType, var trustPath) = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
+        (var attType, var trustPath) = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash()).ConfigureAwait(false);
 
         // 5. Complete the steps from § 7.1 Registering a New Credential and, if those steps are successful,
         // store the aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.

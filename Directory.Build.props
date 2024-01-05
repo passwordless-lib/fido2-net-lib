@@ -29,6 +29,7 @@
   <PropertyGroup>
     <!-- Avoid annoying build warnings when packing using the solution file -->
     <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <!-- Avoid annoying build warnings when packing using the solution file -->
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>

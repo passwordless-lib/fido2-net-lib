@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -20,7 +21,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 {
     private const int _driftTolerance = 0;
 
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
         // CBOR decoding on it to extract the contained fields
@@ -157,8 +158,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Nonce value not base64string in SafetyNet attestation", ex);
         }
 
-        Span<byte> dataHash = stackalloc byte[32];
-        SHA256.HashData(request.Data, dataHash);
+        byte[] dataHash = SHA256.HashData(request.Data);
 
         if (!dataHash.SequenceEqual(nonceHash))
         {
@@ -180,6 +180,6 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         if (true != ctsProfileMatch)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response ctsProfileMatch false");
 
-        return (AttestationType.Basic, new X509Certificate2[] { attestationCert });
+        return new(new VerifyAttestationResult(AttestationType.Basic, new X509Certificate2[] { attestationCert }));
     }
 }

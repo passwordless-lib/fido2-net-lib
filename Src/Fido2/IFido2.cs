@@ -9,7 +9,7 @@ namespace Fido2NetLib;
 public interface IFido2
 {
     AssertionOptions GetAssertionOptions(
-        IEnumerable<PublicKeyCredentialDescriptor> allowedCredentials,
+        IReadOnlyList<PublicKeyCredentialDescriptor> allowedCredentials,
         UserVerificationRequirement? userVerification,
         AuthenticationExtensionsClientInputs? extensions = null);
 
@@ -17,7 +17,7 @@ public interface IFido2
         AuthenticatorAssertionRawResponse assertionResponse,
         AssertionOptions originalOptions,
         byte[] storedPublicKey,
-        List<byte[]> storedDevicePublicKeys,
+        IReadOnlyList<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
         byte[]? requestTokenBindingId = null,
@@ -32,12 +32,12 @@ public interface IFido2
 
     CredentialCreateOptions RequestNewCredential(
         Fido2User user,
-        List<PublicKeyCredentialDescriptor> excludeCredentials,
+        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticationExtensionsClientInputs? extensions = null);
 
     CredentialCreateOptions RequestNewCredential(
         Fido2User user,
-        List<PublicKeyCredentialDescriptor> excludeCredentials,
+        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticatorSelection authenticatorSelection,
         AttestationConveyancePreference attestationPreference,
         AuthenticationExtensionsClientInputs? extensions = null);

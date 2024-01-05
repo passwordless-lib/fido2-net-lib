@@ -21,7 +21,15 @@ public sealed class AuthenticatorAttestationRawResponse
     public AttestationResponse Response { get; set; }
 
     [JsonPropertyName("extensions")]
-    public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+    [Obsolete("Use ClientExtensionResults instead")]
+    public AuthenticationExtensionsClientOutputs Extensions
+    {
+        get => ClientExtensionResults;
+        set => ClientExtensionResults = value;
+    }
+
+    [JsonPropertyName("clientExtensionResults")]
+    public AuthenticationExtensionsClientOutputs ClientExtensionResults { get; set; }
 
     public sealed class AttestationResponse
     {
@@ -32,5 +40,8 @@ public sealed class AuthenticatorAttestationRawResponse
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("clientDataJSON")]
         public byte[] ClientDataJson { get; set; }
+
+        [JsonPropertyName("transports")]
+        public AuthenticatorTransport[] Transports { get; set; }
     }
 }

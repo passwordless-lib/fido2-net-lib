@@ -5,7 +5,6 @@ using Fido2NetLib.Exceptions;
 
 namespace Fido2NetLib;
 
-[Serializable]
 public class Fido2VerificationException : Exception
 {
     public Fido2VerificationException()
@@ -27,10 +26,6 @@ public class Fido2VerificationException : Exception
     }
 
     public Fido2VerificationException(string message, Exception innerException) : base(message, innerException)
-    {
-    }
-
-    protected Fido2VerificationException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
     }
 

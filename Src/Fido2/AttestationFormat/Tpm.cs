@@ -5,6 +5,7 @@ using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -43,7 +44,7 @@ internal sealed class Tpm : AttestationVerifier
         "id:474F4F47", // 'GOOG' Google
     };
 
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
         // (handled in base class)
@@ -202,7 +203,7 @@ internal sealed class Tpm : AttestationVerifier
                 throw new Fido2VerificationException($"aaguid malformed, expected {request.AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
             }
 
-            return (AttestationType.AttCa, trustPath);
+            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
         }
         // If ecdaaKeyId is present, then the attestation type is ECDAA
         else if (request.EcdaaKeyId != null)

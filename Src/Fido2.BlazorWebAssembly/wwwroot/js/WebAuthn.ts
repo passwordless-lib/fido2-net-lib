@@ -29,11 +29,11 @@ export async function createCreds(options: PublicKeyCredentialCreationOptions) {
         id: base64StringToUrl(newCreds.id),
         rawId: toBase64Url(newCreds.rawId),
         type: newCreds.type,
-        extensions: newCreds.getClientExtensionResults(),
+        clientExtensionResults: newCreds.getClientExtensionResults(),
         response: {
             attestationObject: toBase64Url(response.attestationObject),
             clientDataJSON: toBase64Url(response.clientDataJSON),
-            transports: response.getTransports ? response.getTransports() : [],
+            transports: response.getTransports ? response.getTransports() : []
         }
     };
     return retval;
@@ -55,6 +55,7 @@ export async function verify(options: PublicKeyCredentialRequestOptions) {
         id: creds.id,
         rawId: toBase64Url(creds.rawId),
         type: creds.type,
+        clientExtensionResults: creds.getClientExtensionResults(),
         response: {
             authenticatorData: toBase64Url(response.authenticatorData),
             clientDataJSON: toBase64Url(response.clientDataJSON),
