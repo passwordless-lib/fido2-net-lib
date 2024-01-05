@@ -165,7 +165,7 @@ public class Fido2Tests
                     ClientDataJson = _clientDataJson,
                     Transports = new[] { AuthenticatorTransport.Internal }
                 },
-                Extensions = new AuthenticationExtensionsClientOutputs()
+                ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
                 {
                     AppID = true,
                     Extensions = new string[] { "foo", "bar" },

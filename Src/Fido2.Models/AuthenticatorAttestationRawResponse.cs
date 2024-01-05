@@ -21,7 +21,15 @@ public sealed class AuthenticatorAttestationRawResponse
     public AttestationResponse Response { get; set; }
 
     [JsonPropertyName("extensions")]
-    public AuthenticationExtensionsClientOutputs Extensions { get; set; }
+    [Obsolete("Use ClientExtensionResults instead")]
+    public AuthenticationExtensionsClientOutputs Extensions
+    {
+        get => ClientExtensionResults;
+        set => ClientExtensionResults = value;
+    }
+
+    [JsonPropertyName("clientExtensionResults")]
+    public AuthenticationExtensionsClientOutputs ClientExtensionResults { get; set; }
 
     public sealed class AttestationResponse
     {
