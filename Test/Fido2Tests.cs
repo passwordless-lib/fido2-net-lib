@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 
 using NSec.Cryptography;
-
+using Test;
 using static Fido2NetLib.AuthenticatorAttestationResponse;
 
 namespace fido2_net_lib.Test;
@@ -74,6 +74,17 @@ public class Fido2Tests
             new (COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519),
             new (COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K)
         };
+    }
+
+    private TestMetadataService CreateMetadataService(string cacheDir)
+    {
+        var repos = new List<IMetadataRepository>
+        {
+            new FileSystemMetadataRepository(cacheDir)
+        };
+        var simpleService = new TestMetadataService(repos);
+        simpleService.InitializeAsync().Wait();
+        return simpleService;
     }
 
     private async Task<T> GetAsync<T>(string filename)
@@ -537,6 +548,56 @@ public class Fido2Tests
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsU2F.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task TestPackedttestationAsyncFailTrustAnchorOnRootCertInTrustPath()
+    {
+        var targetGuid = new Guid("42383245-4437-3343-3846-423445354132");
+        var metadataService = CreateMetadataService("./metadata");
+        metadataService.ChangeEntryGuid(new Guid("00000000-0000-0000-0000-000000000004"), targetGuid);
+        var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsPacked.json"));
+        var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsPacked.json"));
+        var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+        CborArray X5c = o.AttestationObject.AttStmt["x5c"] as CborArray;
+        var entry = await metadataService.GetEntryAsync(targetGuid);
+        foreach (var attRootCert in entry.MetadataStatement.AttestationRootCertificates)
+            X5c.Add(Encoding.UTF8.GetBytes(attRootCert));
+
+        await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task TestU2FAttestationAsyncFailTrustAnchorBasicFull()
+    {
+        var metadataService = CreateMetadataService("./metadata");
+        metadataService.ChangeEntryGuid(new Guid("00000000-0000-0000-0000-000000000001"), new Guid("00000000-0000-0000-0000-000000000000"));
+        var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsU2F.json"));
+        var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsU2F.json"));
+        var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+        await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task TestU2FAttestationAsyncCantFailTrustAnchorAnonca()
+    {
+        var metadataService = CreateMetadataService("./metadata");
+        metadataService.ChangeEntryGuid(new Guid("00000000-0000-0000-0000-000000000002"), new Guid("00000000-0000-0000-0000-000000000000"));
+        var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsU2F.json"));
+        var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsU2F.json"));
+        var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task TestU2FAttestationAsyncFailTrustAnchorBasicSurrogate()
+    {
+        var metadataService = CreateMetadataService("./metadata");
+        metadataService.ChangeEntryGuid(new Guid("00000000-0000-0000-0000-000000000003"), new Guid("00000000-0000-0000-0000-000000000000"));
+        var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsU2F.json"));
+        var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsU2F.json"));
+        var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+        await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, CancellationToken.None));
     }
 
     [Fact]
