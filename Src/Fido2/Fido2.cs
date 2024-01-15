@@ -66,10 +66,11 @@ public class Fido2 : IFido2
         AuthenticatorAttestationRawResponse attestationResponse,
         CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
+        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default)
     {
         var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-        var success = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
+        var success = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
 
         // todo: Set Errormessage etc.
         return new MakeNewCredentialResult(
@@ -111,6 +112,7 @@ public class Fido2 : IFido2
         IReadOnlyList<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
+        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default)
     {
         var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
@@ -122,6 +124,7 @@ public class Fido2 : IFido2
                                                       storedSignatureCounter,
                                                       isUserHandleOwnerOfCredentialIdCallback,
                                                       _metadataService,
+                                                      requestTokenBindingId,
                                                       cancellationToken);
 
         return result;

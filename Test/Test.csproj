@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
+    <ProjectReference Include="..\Src\Fido2.Development\Fido2.Development.csproj" />
     <ProjectReference Include="..\Src\Fido2.Models\Fido2.Models.csproj" />
     <ProjectReference Include="..\Src\Fido2\Fido2.csproj" />
   </ItemGroup>

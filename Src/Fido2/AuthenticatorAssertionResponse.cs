@@ -61,9 +61,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
         IMetadataService? metadataService,
+        byte[]? requestTokenBindingId,
         CancellationToken cancellationToken = default)
     {
-        BaseVerify(config.FullyQualifiedOrigins, options.Challenge);
+        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseNotPublicKey);
@@ -118,17 +119,19 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         var rpid = Raw.ClientExtensionResults?.AppID ?? false ? options.Extensions?.AppID : options.RpId;
         byte[] hashedRpId = SHA256.HashData(Encoding.UTF8.GetBytes(rpid ?? string.Empty));
         byte[] hash = SHA256.HashData(Raw.Response.ClientDataJson);
+        bool conformanceTesting = metadataService != null && metadataService.ConformanceTesting();
 
         if (!authData.RpIdHash.SequenceEqual(hashedRpId))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidRpidHash, Fido2ErrorMessages.InvalidRpidHash);
 
         // 14. Verify that the UP bit of the flags in authData is set.
-        if (!authData.UserPresent)
+        if (!authData.UserPresent && (!conformanceTesting || options.UserVerification is UserVerificationRequirement.Required))
             throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
         // 15. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
         if (options.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
+
 
         // 16. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs be the values of the BE and BS bits, respectively, of the flags in authData.
         // Compare currentBe and currentBs with credentialRecord.BE and credentialRecord.BS and apply Relying Party policy, if any.
@@ -211,7 +214,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && fmt is not "fido-u2f")
                 throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-            TrustAnchor.Verify(metadataEntry, trustPath);
+            TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true);
         }
 
         return new VerifyAssertionResult

@@ -12,14 +12,14 @@ public sealed class AuthenticationExtensionsClientInputs
     /// </summary>
     [JsonPropertyName("example.extension.bool")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public object Example { get; set; }
+    public bool? Example { get; set; }
 
     /// <summary>
     /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs to request an assertion.
     /// https://www.w3.org/TR/webauthn/#sctn-appid-extension
     /// </summary>
     [JsonPropertyName("appid")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
     public string AppID { get; set; }
 
     /// <summary>
@@ -36,7 +36,7 @@ public sealed class AuthenticationExtensionsClientInputs
     /// </summary>
     [JsonPropertyName("uvm")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? UserVerificationMethod { get; set; }
+    public bool? UserVerificationMethod { private get; set; }
 
 #nullable enable
     /// <summary>
