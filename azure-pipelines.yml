@@ -31,17 +31,17 @@ jobs:
       arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
       projects: 'Demo/Demo.csproj'
   - task: DotNetCoreCLI@2
-    displayName: Publish website [net6.0]
+    displayName: Publish website [net8.0]
     inputs:
       command: publish
-      arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net6.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net6.0'
+      arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net8.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net8.0'
       publishWebProjects: false
       projects: 'Demo/Demo.csproj'
   - task: PublishBuildArtifacts@1
-    displayName: Copy website to artifacts [net6.0]
+    displayName: Copy website to artifacts [net8.0]
     inputs:
-      pathToPublish: $(build.ArtifactStagingDirectory)/net6.0
-      artifactName: Demo .Net 6.0
+      pathToPublish: $(build.ArtifactStagingDirectory)/net8.0
+      artifactName: Demo .Net 8.0
 
 # Build the Blazor WebAssembly demo
 - job: blazorWasmDemo

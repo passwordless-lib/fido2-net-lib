@@ -6,7 +6,7 @@ namespace Fido2NetLib.Ctap2;
 
 public static class CryptoHelper
 {
-    internal static readonly byte[] DefaultIV = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    internal static ReadOnlySpan<byte> DefaultIV => [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     internal static byte[] AesCbcDefaultIvNoPadding(byte[] key, ReadOnlySpan<byte> data)
     {

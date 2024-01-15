@@ -168,7 +168,7 @@ public class UserController : ControllerBase
                 SignCount = result.Result.SignCount,
                 RegDate = DateTimeOffset.UtcNow,
                 AaGuid = result.Result.AaGuid,
-                DevicePublicKeys = new List<byte[]> { result.Result.DevicePublicKey },
+                DevicePublicKeys = [result.Result.DevicePublicKey],
                 Transports = result.Result.Transports,
                 IsBackupEligible = result.Result.IsBackupEligible,
                 IsBackedUp = result.Result.IsBackedUp,
