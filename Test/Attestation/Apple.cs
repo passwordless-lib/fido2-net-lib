@@ -276,7 +276,7 @@ public class Apple : Fido2Tests.Attestation
 
     private string[] StackAllocSha256(ReadOnlySpan<byte> authData, ReadOnlySpan<byte> clientDataJson)
     {
-        byte[] data = [.. authData, ..SHA256.HashData(clientDataJson)];
+        byte[] data = [.. authData, .. SHA256.HashData(clientDataJson)];
         Span<byte> dataHash = stackalloc byte[32];
         SHA256.HashData(data, dataHash);
 

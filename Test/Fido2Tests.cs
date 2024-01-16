@@ -112,7 +112,7 @@ public class Fido2Tests
         }
 
         public byte[] _clientDataHash => SHA256.HashData(_clientDataJson);
-        public byte[] _attToBeSigned => [.. _authData.ToByteArray(), .._clientDataHash];
+        public byte[] _attToBeSigned => [.. _authData.ToByteArray(), .. _clientDataHash];
 
         public byte[] _attToBeSignedHash(HashAlgorithmName alg)
         {

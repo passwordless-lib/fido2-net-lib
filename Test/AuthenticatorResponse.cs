@@ -2415,7 +2415,7 @@ public class AuthenticatorResponseTests
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
             AuthenticatorData = authData,
-            Signature = SignatureAlgorithm.Ed25519.Sign(privateKey,[.. authData, .. SHA256.HashData(clientDataJson)]),
+            Signature = SignatureAlgorithm.Ed25519.Sign(privateKey, [.. authData, .. SHA256.HashData(clientDataJson)]),
             ClientDataJson = clientDataJson,
             UserHandle = [0xf1, 0xd0],
         };

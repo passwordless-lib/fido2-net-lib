@@ -168,7 +168,7 @@ public class Tpm : Fido2Tests.Attestation
                         byte[] hashedData = _attToBeSignedHash(hashAlg);
                         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-                        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+                        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
 
                         var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
@@ -257,7 +257,7 @@ public class Tpm : Fido2Tests.Attestation
                         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
                         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-                        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+                        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
                         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -379,7 +379,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), ..hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm1bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm1bName = [.. tpm1bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -486,7 +486,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -674,7 +674,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -775,7 +775,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -871,7 +871,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -965,7 +965,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1059,7 +1059,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1151,7 +1151,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1245,7 +1245,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
 
         var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
@@ -1341,7 +1341,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1435,7 +1435,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1546,7 +1546,7 @@ public class Tpm : Fido2Tests.Attestation
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1658,7 +1658,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1770,7 +1770,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1864,7 +1864,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -1958,7 +1958,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -2059,7 +2059,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -2153,7 +2153,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -2247,7 +2247,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -2435,7 +2435,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, 0x00, 0x04, .. hashedPubArea];
 
@@ -2529,7 +2529,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, 0x00, 0x00, .. hashedPubArea];
 
@@ -2623,7 +2623,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length + 1);
 
         byte[] tpm2bName = [
@@ -2723,7 +2723,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, 0x00, 0x10, .. hashedPubArea];
 
@@ -2817,7 +2817,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, 0xff, 0xff, .. hashedPubArea];
 
@@ -2911,7 +2911,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3005,7 +3005,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3099,7 +3099,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3193,7 +3193,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
         hashedPubArea[^1] ^= 0xFF;
@@ -3290,7 +3290,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3384,7 +3384,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), ..hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3478,7 +3478,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3572,7 +3572,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3666,7 +3666,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3761,7 +3761,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3855,7 +3855,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -3949,7 +3949,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4048,7 +4048,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4153,7 +4153,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4247,7 +4247,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
 
         var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
 
@@ -4346,7 +4346,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4444,7 +4444,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4542,7 +4542,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4640,7 +4640,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4739,7 +4739,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -4928,7 +4928,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -5133,7 +5133,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
@@ -5227,7 +5227,7 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [..GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
