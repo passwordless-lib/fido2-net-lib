@@ -223,7 +223,7 @@ public class AndroidKey : Fido2Tests.Attestation
     public async Task TestAndroidKeySigNotASN1()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];
-        attStmt.Set("sig", new CborByteString(new byte[] { 0xf1, 0xd0 }));
+        attStmt.Set("sig", new CborByteString([0xf1, 0xd0]));
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Failed to decode android key attestation signature from ASN.1 encoded form", ex.Message);
 
