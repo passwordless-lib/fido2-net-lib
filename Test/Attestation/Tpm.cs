@@ -1740,11 +1740,12 @@ public class Tpm : Fido2Tests.Attestation
 
         _credentialPublicKey = new CredentialPublicKey(cpk);
 
-        unique = GetUInt16BigEndianBytes(x.Length)
-            .Concat(x)
-            .Concat(GetUInt16BigEndianBytes(y.Length))
-            .Concat(y)
-            .ToArray();
+        unique = [
+            .. GetUInt16BigEndianBytes(x.Length),
+            .. x,
+            .. GetUInt16BigEndianBytes(y.Length),
+            .. y
+        ];
 
         curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[2]).Reverse().ToArray();
         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
