@@ -34,15 +34,15 @@ public class FidoU2f : Fido2Tests.Attestation
         var x = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.X];
         var y = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.Y];
 
-        byte[] publicKeyU2F = DataHelper.Concat(new byte[1] { 0x4 }, x, y);
+        byte[] publicKeyU2F = [0x4, .. x, .. y];
 
-        byte[] verificationData = DataHelper.Concat(
-            new byte[1] { 0x00 },
-            _rpIdHash,
-            _clientDataHash,
-            _credentialID,
-            publicKeyU2F
-        );
+        byte[] verificationData = [
+            0x00,
+            .. _rpIdHash,
+            .. _clientDataHash,
+            .. _credentialID,
+            .. publicKeyU2F
+        ];
 
         byte[] signature = Fido2Tests.SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, verificationData, ecdsaAtt, null, null);
 
@@ -164,7 +164,7 @@ public class FidoU2f : Fido2Tests.Attestation
     [Fact]
     public async Task TestU2fSigNotASN1()
     {
-        ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborByteString(new byte[] { 0xf1, 0xd0 }));
+        ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborByteString([0xf1, 0xd0]));
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex.Message);
     }

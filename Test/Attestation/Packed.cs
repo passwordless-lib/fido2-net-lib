@@ -313,7 +313,7 @@ public class Packed : Fido2Tests.Attestation
                     {
                         var avr = new VerifyAssertionResult
                         {
-                            CredentialId = new byte[] { 0xf1, 0xd0 },
+                            CredentialId = [0xf1, 0xd0],
                             ErrorMessage = string.Empty,
                             Status = "ok",
                         };

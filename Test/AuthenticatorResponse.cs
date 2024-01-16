@@ -74,8 +74,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -98,10 +98,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>
-            {
+            PubKeyCredParams =
+            [
                 PubKeyCredParam.ES256
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -177,8 +177,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -201,10 +201,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -246,8 +246,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap().Encode(),
@@ -256,7 +256,7 @@ public class AuthenticatorResponseTests
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -270,24 +270,24 @@ public class AuthenticatorResponseTests
                     Enabled = true,
                     Results = new AuthenticationExtensionsPRFValues
                     {
-                        First = new byte[] { 0xf1, 0xd0 },
-                        Second = new byte[] { 0xf1, 0xd0 }
+                        First = [0xf1, 0xd0],
+                        Second = [0xf1, 0xd0]
                     }
                 }
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, rawResponse.Type);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.Id);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.RawId);
-        Assert.Equal(new byte[] { 0xa0 }, rawResponse.Response.AttestationObject);
+        Assert.Equal([0xf1, 0xd0], rawResponse.Id);
+        Assert.Equal([0xf1, 0xd0], rawResponse.RawId);
+        Assert.Equal([0xa0], rawResponse.Response.AttestationObject);
         Assert.Equal(clientDataJson, rawResponse.Response.ClientDataJson);
         Assert.True(rawResponse.ClientExtensionResults.AppID);
         Assert.Equal(new string[] { "foo", "bar" }, rawResponse.ClientExtensionResults.Extensions);
         Assert.Equal("test", rawResponse.ClientExtensionResults.Example);
         Assert.Equal((ulong)4, rawResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
         Assert.True(rawResponse.ClientExtensionResults.PRF.Enabled);
-        Assert.Equal(rawResponse.ClientExtensionResults.PRF.Results.First, new byte[] { 0xf1, 0xd0 });
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, rawResponse.ClientExtensionResults.PRF.Results.Second);
+        Assert.Equal(rawResponse.ClientExtensionResults.PRF.Results.First, [0xf1, 0xd0]);
+        Assert.Equal([0xf1, 0xd0], rawResponse.ClientExtensionResults.PRF.Results.Second);
     }
 
     [Fact]
@@ -304,8 +304,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = null
         };
 
@@ -388,8 +388,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -412,10 +412,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -484,10 +484,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -530,8 +530,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.Invalid,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -554,10 +554,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -607,8 +607,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -631,10 +631,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -685,8 +685,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -710,10 +710,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -765,8 +765,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -789,10 +789,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -843,8 +843,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -867,10 +867,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -921,8 +921,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -945,10 +945,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -999,8 +999,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -1023,10 +1023,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -1077,8 +1077,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -1101,10 +1101,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -1154,8 +1154,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -1178,10 +1178,10 @@ public class AuthenticatorResponseTests
             },
             Challenge = challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
             Status = "ok",
             User = new Fido2User
@@ -1222,22 +1222,22 @@ public class AuthenticatorResponseTests
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
-            AuthenticatorData = new byte[] { 0xf1, 0xd0 },
-            Signature = new byte[] { 0xf1, 0xd0 },
+            AuthenticatorData = [0xf1, 0xd0],
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1251,26 +1251,26 @@ public class AuthenticatorResponseTests
                     Enabled = true,
                     Results = new AuthenticationExtensionsPRFValues
                     {
-                        First = new byte[] { 0xf1, 0xd0 },
-                        Second = new byte[] { 0xf1, 0xd0 }
+                        First = [0xf1, 0xd0],
+                        Second = [0xf1, 0xd0]
                     }
                 }
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, assertionResponse.Type);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Id);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.RawId);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.AuthenticatorData);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.Signature);
+        Assert.Equal([0xf1, 0xd0], assertionResponse.Id);
+        Assert.Equal([0xf1, 0xd0], assertionResponse.RawId);
+        Assert.Equal([0xf1, 0xd0], assertionResponse.Response.AuthenticatorData);
+        Assert.Equal([0xf1, 0xd0], assertionResponse.Response.Signature);
         Assert.Equal(clientDataJson, assertionResponse.Response.ClientDataJson);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.Response.UserHandle);
+        Assert.Equal([0xf1, 0xd0], assertionResponse.Response.UserHandle);
         Assert.True(assertionResponse.ClientExtensionResults.AppID);
         Assert.Equal(new string[] { "foo", "bar" }, assertionResponse.ClientExtensionResults.Extensions);
         Assert.Equal("test", assertionResponse.ClientExtensionResults.Example);
         Assert.Equal((ulong)4, assertionResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
         Assert.True(assertionResponse.ClientExtensionResults.PRF.Enabled);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.ClientExtensionResults.PRF.Results.First);
-        Assert.Equal(new byte[] { 0xf1, 0xd0 }, assertionResponse.ClientExtensionResults.PRF.Results.Second);
+        Assert.Equal([0xf1, 0xd0], assertionResponse.ClientExtensionResults.PRF.Results.First);
+        Assert.Equal([0xf1, 0xd0], assertionResponse.ClientExtensionResults.PRF.Results.Second);
     }
 
     [Fact]
@@ -1292,28 +1292,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 }
+            UserHandle = [0xf1, 0xd0]
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.Invalid,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1361,27 +1361,27 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            RawId = new byte[] { 0xf1, 0xd0 },
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1430,27 +1430,27 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1498,28 +1498,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = Array.Empty<byte>(),
+            UserHandle = []
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1567,28 +1567,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1636,28 +1636,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1707,28 +1707,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 }
+            UserHandle = [0xf1, 0xd0]
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = true,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1777,28 +1777,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes("https://foo.bar")), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1848,28 +1848,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), 0, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1918,28 +1918,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -1986,28 +1986,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -2055,28 +2055,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BE, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -2124,28 +2124,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -2193,28 +2193,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BS, 0, null).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -2263,28 +2263,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null, new Extensions(new byte[] { 0x42 })).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -2332,28 +2332,28 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null, new Extensions(new byte[] { 0x42 })).ToByteArray(),
-            Signature = new byte[] { 0xf1, 0xd0 },
+            Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse()
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {
@@ -2402,7 +2402,7 @@ public class AuthenticatorResponseTests
             RpId = rp,
             AllowCredentials = new[]
             {
-                new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 })
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
             }
         };
 
@@ -2415,21 +2415,21 @@ public class AuthenticatorResponseTests
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
             AuthenticatorData = authData,
-            Signature = SignatureAlgorithm.Ed25519.Sign(privateKey, DataHelper.Concat(authData, SHA256.HashData(clientDataJson))),
+            Signature = SignatureAlgorithm.Ed25519.Sign(privateKey, [.. authData, .. SHA256.HashData(clientDataJson)]),
             ClientDataJson = clientDataJson,
-            UserHandle = new byte[] { 0xf1, 0xd0 },
+            UserHandle = [0xf1, 0xd0],
         };
 
         var assertionResponse = new AuthenticatorAssertionRawResponse
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
-                Extensions = new string[] { "foo", "bar" },
+                Extensions = ["foo", "bar"],
                 Example = "test",
                 UserVerificationMethod = new ulong[][]
                 {

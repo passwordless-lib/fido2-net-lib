@@ -16,10 +16,10 @@ public class Apple : Fido2Tests.Attestation
     public string[] validX5cStrings;
     public Apple()
     {
-        validX5cStrings = new[] {
+        validX5cStrings = [
             "MIICRDCCAcmgAwIBAgIGAXUCfWGDMAoGCCqGSM49BAMCMEgxHDAaBgNVBAMME0FwcGxlIFdlYkF1dGhuIENBIDExEzARBgNVBAoMCkFwcGxlIEluYy4xEzARBgNVBAgMCkNhbGlmb3JuaWEwHhcNMjAxMDA3MDk0NjEyWhcNMjAxMDA4MDk1NjEyWjCBkTFJMEcGA1UEAwxANjEyNzZmYzAyZDNmZThkMTZiMzNiNTU0OWQ4MTkyMzZjODE3NDZhODNmMmU5NGE2ZTRiZWUxYzcwZjgxYjViYzEaMBgGA1UECwwRQUFBIENlcnRpZmljYXRpb24xEzARBgNVBAoMCkFwcGxlIEluYy4xEzARBgNVBAgMCkNhbGlmb3JuaWEwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAR5/lkIu1EpyAk4t1TATSs0DvpmFbmHaYv1naTlPqPm/vsD2qEnDVgE6KthwVqsokNcfb82nXHKFcUjsABKG3W3o1UwUzAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIE8DAzBgkqhkiG92NkCAIEJjAkoSIEIJxgAhVAs+GYNN/jfsYkRcieGylPeSzka5QTwyMO84aBMAoGCCqGSM49BAMCA2kAMGYCMQDaHBjrI75xAF7SXzyF5zSQB/Lg9PjTdyye+w7stiqy84K6lmo8d3fIptYjLQx81bsCMQCvC8MSN+aewiaU0bMsdxRbdDerCJJj3xJb3KZwloevJ3daCmCcrZrAPYfLp2kDOsg=",
             "MIICNDCCAbqgAwIBAgIQViVTlcen+0Dr4ijYJghTtjAKBggqhkjOPQQDAzBLMR8wHQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJbmMuMRMwEQYDVQQIDApDYWxpZm9ybmlhMB4XDTIwMDMxODE4MzgwMVoXDTMwMDMxMzAwMDAwMFowSDEcMBoGA1UEAwwTQXBwbGUgV2ViQXV0aG4gQ0EgMTETMBEGA1UECgwKQXBwbGUgSW5jLjETMBEGA1UECAwKQ2FsaWZvcm5pYTB2MBAGByqGSM49AgEGBSuBBAAiA2IABIMuhy8mFJGBAiW59fzWu2N4tfVfP8sEW8c1mTR1/VSQRN+b/hkhF2XGmh3aBQs41FCDQBpDT7JNES1Ww+HPv8uYkf7AaWCBvvlsvHfIjd2vRqWu4d1RW1r6q5O+nAsmkaNmMGQwEgYDVR0TAQH/BAgwBgEB/wIBADAfBgNVHSMEGDAWgBQm12TZxXjCWmfRp95rEtAbY/HG1zAdBgNVHQ4EFgQU666CxP+hrFtR1M8kYQUAvmO9d4gwDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQDdixo0gaX62du052V7hB4UTCe3W4dqQYbCsUdXUDNyJ+/lVEV+9kiVDGMuXEg+cMECMCyKYETcIB/P5ZvDTSkwwUh4Udlg7Wp18etKyr44zSW4l9DIBb7wx/eLB6VxxugOBw=="
-        };
+        ];
         _attestationObject = new CborMap { { "fmt", "apple" } };
         var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
         X509Certificate2 root, attestnCert;
@@ -224,8 +224,8 @@ public class Apple : Fido2Tests.Attestation
         var attestationResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = _attestationObject.Encode(),
@@ -244,10 +244,10 @@ public class Apple : Fido2Tests.Attestation
             },
             Challenge = _challenge,
             ErrorMessage = "",
-            PubKeyCredParams = new List<PubKeyCredParam>()
-            {
+            PubKeyCredParams =
+            [
                 PubKeyCredParam.ES256
-            },
+            ],
             Rp = new PublicKeyCredentialRpEntity("https://www.passwordless.dev", "6cc3c9e7967a.ngrok.io", ""),
             Status = "ok",
             User = new Fido2User
@@ -274,9 +274,9 @@ public class Apple : Fido2Tests.Attestation
         var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, originalOptions, callback);
     }
 
-    private string[] StackAllocSha256(byte[] authData, byte[] clientDataJson)
+    private string[] StackAllocSha256(ReadOnlySpan<byte> authData, ReadOnlySpan<byte> clientDataJson)
     {
-        var data = DataHelper.Concat(authData, SHA256.HashData(clientDataJson));
+        byte[] data = [.. authData, .. SHA256.HashData(clientDataJson)];
         Span<byte> dataHash = stackalloc byte[32];
         SHA256.HashData(data, dataHash);
 

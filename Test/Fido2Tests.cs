@@ -60,20 +60,20 @@ public class Fido2Tests
 
         var noCurve = COSE.EllipticCurve.Reserved;
 
-        _validCOSEParameters = new()
-        {
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256),
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384),
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521),
-            new (COSE.KeyType.RSA, COSE.Algorithm.RS256, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.RS384, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.RS512, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.PS256, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.PS384, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.PS512, noCurve),
-            new (COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519),
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K)
-        };
+        _validCOSEParameters =
+        [
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256),
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384),
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521),
+            new(COSE.KeyType.RSA, COSE.Algorithm.RS256, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.RS384, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.RS512, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.PS256, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.PS384, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.PS512, noCurve),
+            new(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519),
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K)
+        ];
     }
 
     private async Task<T> GetAsync<T>(string filename)
@@ -112,8 +112,7 @@ public class Fido2Tests
         }
 
         public byte[] _clientDataHash => SHA256.HashData(_clientDataJson);
-
-        public byte[] _attToBeSigned => DataHelper.Concat(_authData.ToByteArray(), _clientDataHash);
+        public byte[] _attToBeSigned => [.. _authData.ToByteArray(), .. _clientDataHash];
 
         public byte[] _attToBeSignedHash(HashAlgorithmName alg)
         {
@@ -157,18 +156,18 @@ public class Fido2Tests
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {
                 Type = PublicKeyCredentialType.PublicKey,
-                Id = new byte[] { 0xf1, 0xd0 },
-                RawId = new byte[] { 0xf1, 0xd0 },
+                Id = [0xf1, 0xd0],
+                RawId = [0xf1, 0xd0],
                 Response = new AuthenticatorAttestationRawResponse.AttestationResponse
                 {
                     AttestationObject = _attestationObject.Encode(),
                     ClientDataJson = _clientDataJson,
-                    Transports = new[] { AuthenticatorTransport.Internal }
+                    Transports = [AuthenticatorTransport.Internal]
                 },
                 ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
                 {
                     AppID = true,
-                    Extensions = new string[] { "foo", "bar" },
+                    Extensions = ["foo", "bar"],
                     Example = "test",
                     UserVerificationMethod = new ulong[][]
                     {
@@ -502,14 +501,14 @@ public class Fido2Tests
         input.MetadataStatement.AuthenticatorVersion = 1;
         input.MetadataStatement.Upv = new[] { new UafVersion(1, 0) };
         input.MetadataStatement.ProtocolFamily = "foo";
-        input.MetadataStatement.AttestationTypes = new string[] { "bar" };
-        input.MetadataStatement.AuthenticationAlgorithms = new string[] { "alg0", "alg1" };
-        input.MetadataStatement.PublicKeyAlgAndEncodings = new string[] { "example0", "example1" };
-        input.MetadataStatement.TcDisplay = new string[] { "transaction", "confirmation" };
-        input.MetadataStatement.KeyProtection = new string[] { "protector" };
-        input.MetadataStatement.MatcherProtection = new string[] { "stuff", "things" };
+        input.MetadataStatement.AttestationTypes = ["bar"];
+        input.MetadataStatement.AuthenticationAlgorithms = ["alg0", "alg1"];
+        input.MetadataStatement.PublicKeyAlgAndEncodings = ["example0", "example1"];
+        input.MetadataStatement.TcDisplay = ["transaction", "confirmation"];
+        input.MetadataStatement.KeyProtection = ["protector"];
+        input.MetadataStatement.MatcherProtection = ["stuff", "things"];
         input.MetadataStatement.UserVerificationDetails = Array.Empty<VerificationMethodDescriptor[]>();
-        input.MetadataStatement.AttestationRootCertificates = new string[] { "..." };
+        input.MetadataStatement.AttestationRootCertificates = ["..."];
 
         var json = JsonSerializer.Serialize(input);
 
@@ -638,10 +637,10 @@ public class Fido2Tests
         mockMetadataService.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MetadataBLOBPayloadEntry()
             {
-                StatusReports = new StatusReport[]
-                {
-                    new StatusReport() { Status = AuthenticatorStatus.FIDO_CERTIFIED }
-                }
+                StatusReports =
+                [
+                    new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED }
+                ]
             });
         mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
 
@@ -659,11 +658,11 @@ public class Fido2Tests
         mockMetadataService.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MetadataBLOBPayloadEntry()
             {
-                StatusReports = new StatusReport[]
-                {
-                    new StatusReport() { Status = AuthenticatorStatus.FIDO_CERTIFIED },
-                    new StatusReport() { Status = AuthenticatorStatus.REVOKED }
-                }
+                StatusReports =
+                [
+                    new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED },
+                    new StatusReport { Status = AuthenticatorStatus.REVOKED }
+                ]
             });
         mockMetadataService.Setup(m => m.ConformanceTesting()).Returns(false);
 
@@ -817,7 +816,7 @@ public class Fido2Tests
 
             Assert.Null(avr.ErrorMessage);
             Assert.Equal("ok", avr.Status);
-            Assert.Equal(new byte[] { 0xf1, 0xd0 }, avr.CredentialId);
+            Assert.Equal([0xf1, 0xd0], avr.CredentialId);
             Assert.Equal("1", avr.SignCount.ToString("X"));
         }
     }
@@ -892,7 +891,7 @@ public class Fido2Tests
         var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
 
         var hashedClientDataJson = SHA256.HashData(clientDataJson);
-        byte[] data = DataHelper.Concat(authData, hashedClientDataJson);
+        byte[] data = [.. authData, .. hashedClientDataJson];
         byte[] signature = SignData(kty, alg, data, ecdsa, rsa, expandedPrivateKey);
 
         var userHandle = new byte[16];
@@ -913,7 +912,7 @@ public class Fido2Tests
             Origins = new HashSet<string> { rp },
         });
         var existingCredentials = new List<PublicKeyCredentialDescriptor>();
-        var cred = new PublicKeyCredentialDescriptor(new byte[] { 0xf1, 0xd0 });
+        var cred = new PublicKeyCredentialDescriptor([0xf1, 0xd0]);
         existingCredentials.Add(cred);
 
         var options = lib.GetAssertionOptions(existingCredentials, null, null);
@@ -922,8 +921,8 @@ public class Fido2Tests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = new byte[] { 0xf1, 0xd0 },
-            RawId = new byte[] { 0xf1, 0xd0 },
+            Id = [0xf1, 0xd0],
+            RawId = [0xf1, 0xd0],
         };
         IsUserHandleOwnerOfCredentialIdAsync callback = (args, cancellationToken) =>
         {

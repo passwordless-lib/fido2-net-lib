@@ -12,7 +12,7 @@ internal static class SignatureHelper
 
         var writer = new AsnWriter(AsnEncodingRules.BER);
 
-        ReadOnlySpan<byte> zero = new byte[1] { 0 };
+        ReadOnlySpan<byte> zero = [0];
 
         using (writer.PushSequence())
         {

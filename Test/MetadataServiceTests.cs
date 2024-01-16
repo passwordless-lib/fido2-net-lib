@@ -60,17 +60,17 @@ public class MetadataServiceTests
             {
                 NextUpdate = NextUpdate,
                 Number = _number,
-                Entries = new MetadataBLOBPayloadEntry[]
-            {
-                new MetadataBLOBPayloadEntry
-                {
-                    AaGuid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"),
-                    MetadataStatement = new MetadataStatement
+                Entries =
+                [
+                    new MetadataBLOBPayloadEntry
                     {
-                        Description = "Security Key by Yubico with NFC"
+                        AaGuid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"),
+                        MetadataStatement = new MetadataStatement
+                        {
+                            Description = "Security Key by Yubico with NFC"
+                        }
                     }
-                }
-            }
+                ]
             };
 
             return Task.FromResult(payload);
@@ -83,14 +83,9 @@ public class MetadataServiceTests
         }
     }
 
-    public class MockClock : ISystemClock
+    public class MockClock(DateTimeOffset time) : ISystemClock
     {
-        public MockClock(DateTimeOffset time)
-        {
-            UtcNow = time;
-        }
-
-        public DateTimeOffset UtcNow { get; set; }
+        public DateTimeOffset UtcNow { get; set; } = time;
     }
 
     [Fact]
@@ -143,7 +138,7 @@ public class MetadataServiceTests
 
         Assert.Equal(1, staticClient.GetBLOBAsyncCount);
 
-        Assert.True(entry.MetadataStatement.Description == "Security Key by Yubico with NFC");
+        Assert.Equal("Security Key by Yubico with NFC", entry.MetadataStatement.Description);
 
         var blobEntry = await distributedCache.GetStringAsync("DistributedCacheMetadataService:V2:" + staticClient.GetType().Name + ":TOC");
 
