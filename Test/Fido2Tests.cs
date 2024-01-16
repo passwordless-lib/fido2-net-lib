@@ -62,17 +62,17 @@ public class Fido2Tests
 
         _validCOSEParameters =
         [
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256),
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384),
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521),
-            new (COSE.KeyType.RSA, COSE.Algorithm.RS256, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.RS384, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.RS512, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.PS256, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.PS384, noCurve),
-            new (COSE.KeyType.RSA, COSE.Algorithm.PS512, noCurve),
-            new (COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519),
-            new (COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K)
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256),
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES384, COSE.EllipticCurve.P384),
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES512, COSE.EllipticCurve.P521),
+            new(COSE.KeyType.RSA, COSE.Algorithm.RS256, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.RS384, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.RS512, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.PS256, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.PS384, noCurve),
+            new(COSE.KeyType.RSA, COSE.Algorithm.PS512, noCurve),
+            new(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519),
+            new(COSE.KeyType.EC2, COSE.Algorithm.ES256K, COSE.EllipticCurve.P256K)
         ];
     }
 

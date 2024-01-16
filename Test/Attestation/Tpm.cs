@@ -1133,6 +1133,8 @@ public class Tpm : Fido2Tests.Attestation
         unique = rsaParams.Modulus;
         exponent = rsaParams.Exponent;
         byte[] policy = [0x00];
+
+        #pragma warning disable format
         byte[] pubArea = [
             .. TpmAlg.TPM_ALG_RSA.ToUInt16BigEndianBytes(),
             .. tpmAlg,
@@ -1144,6 +1146,7 @@ public class Tpm : Fido2Tests.Attestation
             0x80, 0x00,
             .. BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16))
         ];
+        #pragma warning restore format
 
         byte[] data = [.. _authData.ToByteArray(), .. _clientDataHash];
 
