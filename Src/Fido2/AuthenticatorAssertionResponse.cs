@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
@@ -34,8 +33,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     public ReadOnlySpan<byte> Signature => _raw.Response.Signature;
 
     public byte[]? UserHandle => _raw.Response.UserHandle;
-
-    public byte[]? AttestationObject => _raw.Response.AttestationObject;
 
     public static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
     {
@@ -174,46 +171,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignCount, Fido2ErrorMessages.SignCountIsLessThanSignatureCounter);
 
-        // 21. If response.attestationObject is present and the Relying Party wishes to verify the attestation then...
-        if (AttestationObject is not null)
-        {
-            // ... perform CBOR decoding on attestationObject to obtain the attestation statement format fmt, and the attestation statement attStmt.
-            var cborAttestation = (CborMap)CborObject.Decode(AttestationObject);
-            string fmt = (string)cborAttestation["fmt"]!;
-            var attStmt = (CborMap)cborAttestation["attStmt"]!;
-
-            // 1. Verify that the AT bit in the flags field of authData is set, indicating that attested credential data is included.
-            if (!authData.HasAttestedCredentialData)
-                throw new Fido2VerificationException(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, Fido2ErrorMessages.AttestedCredentialDataFlagNotSet);
-
-            // 2. Verify that the credentialPublicKey and credentialId fields of the attested credential data in authData match credentialRecord.publicKey and credentialRecord.id, respectively.
-            if (!Raw.Id.SequenceEqual(authData.AttestedCredentialData.CredentialId))
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, "Stored credential id does not match id in attested credential data");
-
-            if (!storedPublicKey.SequenceEqual(authData.AttestedCredentialData.CredentialPublicKey.GetBytes()))
-                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, "Stored public key does not match public key in attested credential data");
-
-            // 3. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered WebAuthn Attestation Statement Format Identifier values is maintained in the IANA "WebAuthn Attestation Statement Format Identifiers" registry [IANA-WebAuthn-Registries] established by [RFC8809].
-            var verifier = AttestationVerifier.Create(fmt);
-
-            // 4. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and hash.
-            (var attType, var trustPath) = await verifier.VerifyAsync(attStmt, AuthenticatorData, hash).ConfigureAwait(false);
-
-            // 5. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
-            //     for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
-            //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
-
-            MetadataBLOBPayloadEntry? metadataEntry = null;
-            if (metadataService != null)
-                metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, cancellationToken);
-
-            // while conformance testing, we must reject any authenticator that we cannot get metadata for
-            if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && fmt is not "fido-u2f")
-                throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
-
-            TrustAnchor.Verify(metadataEntry, trustPath);
-        }
-
         return new VerifyAssertionResult
         {
             Status = "ok",
@@ -225,7 +182,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// If the devicePubKey extension was included on a navigator.credentials.get() call, then the below 
+    /// If the devicePubKey extension was included on a navigator.credentials.get() call, then the below
     /// verification steps are performed in the context of this step of § 7.2 Verifying an Authentication Assertion using 
     /// these variables established therein: credential, clientExtensionResults, authData, and hash. Relying Party policy 
     /// may specify whether a response without a devicePubKey is acceptable.

@@ -54,9 +54,5 @@ public class AuthenticatorAssertionRawResponse
         [JsonPropertyName("userHandle")]
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[]? UserHandle { get; set; }
-
-        [JsonPropertyName("attestationObject")]
-        [JsonConverter(typeof(Base64UrlConverter))]
-        public byte[]? AttestationObject { get; set; }
     }
 }
