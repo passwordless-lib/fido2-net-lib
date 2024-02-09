@@ -15,8 +15,8 @@ namespace Fido2NetLib;
 
 internal sealed class Tpm : AttestationVerifier
 {
-    public static readonly HashSet<string> TPMManufacturers = new()
-    {
+    public static readonly HashSet<string> TPMManufacturers =
+    [
         "id:FFFFF1D0", // FIDO testing TPM
         // From https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Version-1.02-Revision-1.00.pdf
         "id:414D4400", // 'AMD' AMD
@@ -42,7 +42,7 @@ internal sealed class Tpm : AttestationVerifier
         "id:57454300", // 'WEC' Winbond
         "id:524F4343", // 'ROCC' Fuzhou Rockchip
         "id:474F4F47", // 'GOOG' Google
-    };
+    ];
 
     public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
@@ -309,9 +309,9 @@ internal sealed class Tpm : AttestationVerifier
 
                         foreach (Asn1Element o in deviceAttributes[0].Sequence)
                         {
-                            wrappedElements.Add(Asn1Element.CreateSetOf(new List<Asn1Element>(1) {
+                            wrappedElements.Add(Asn1Element.CreateSetOf([
                                 Asn1Element.CreateSequence((List<Asn1Element>)o.Sequence)
-                            }));
+                            ]));
                         }
 
                         deviceAttributes = wrappedElements;

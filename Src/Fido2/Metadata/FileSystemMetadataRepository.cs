@@ -13,7 +13,7 @@ namespace Fido2NetLib;
 public sealed class FileSystemMetadataRepository : IMetadataRepository
 {
     private readonly string _path;
-    private readonly IDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
+    private readonly Dictionary<Guid, MetadataBLOBPayloadEntry> _entries;
     private MetadataBLOBPayload? _blob;
 
     public FileSystemMetadataRepository(string path)
@@ -47,13 +47,13 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
                 {
                     AaGuid = statement.AaGuid,
                     MetadataStatement = statement,
-                    StatusReports = new StatusReport[]
-                    {
+                    StatusReports =
+                    [
                         new StatusReport
                         {
                             Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED
                         }
-                    }
+                    ]
                 };
                 if (null != conformanceEntry.AaGuid)
                     _entries.Add(conformanceEntry.AaGuid.Value, conformanceEntry);

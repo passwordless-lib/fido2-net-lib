@@ -13,7 +13,7 @@ public sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborOb
 
     public CborMap()
     {
-        _items = new();
+        _items = [];
     }
 
     public CborMap(int capacity)

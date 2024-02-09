@@ -52,10 +52,7 @@ public class Fido2Configuration
     {
         get
         {
-            if (_origins == null)
-            {
-                _origins = new HashSet<string>(0);
-            }
+            _origins ??= new HashSet<string>(0);
 
             return _origins;
         }
@@ -91,14 +88,14 @@ public class Fido2Configuration
     /// <summary>
     /// List of metadata statuses for an authenticator that should cause attestations to be rejected.
     /// </summary>
-    public AuthenticatorStatus[] UndesiredAuthenticatorMetadataStatuses { get; set; } = new AuthenticatorStatus[]
-    {
+    public AuthenticatorStatus[] UndesiredAuthenticatorMetadataStatuses { get; set; } =
+    [
         AuthenticatorStatus.ATTESTATION_KEY_COMPROMISE,
         AuthenticatorStatus.USER_VERIFICATION_BYPASS,
         AuthenticatorStatus.USER_KEY_REMOTE_COMPROMISE,
         AuthenticatorStatus.USER_KEY_PHYSICAL_COMPROMISE,
         AuthenticatorStatus.REVOKED
-    };
+    ];
 
     /// <summary>
     /// Whether or not to accept a backup eligible credential
