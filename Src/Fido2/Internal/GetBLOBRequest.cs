@@ -2,14 +2,9 @@
 
 namespace Fido2NetLib.Internal;
 
-public readonly struct GetBLOBRequest
+[method: JsonConstructor]
+public readonly struct GetBLOBRequest(string endpoint)
 {
-    [JsonConstructor]
-    public GetBLOBRequest(string endpoint)
-    {
-        Endpoint = endpoint;
-    }
-
     [JsonPropertyName("endpoint")]
-    public string Endpoint { get; }
+    public string Endpoint { get; } = endpoint;
 }

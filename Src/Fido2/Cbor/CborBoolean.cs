@@ -2,19 +2,14 @@
 
 namespace Fido2NetLib.Cbor;
 
-public sealed class CborBoolean : CborObject
+public sealed class CborBoolean(bool value) : CborObject
 {
     public static readonly CborBoolean True = new(true);
     public static readonly CborBoolean False = new(false);
 
-    public CborBoolean(bool value)
-    {
-        Value = value;
-    }
-
     public override CborType Type => CborType.Boolean;
 
-    public bool Value { get; }
+    public bool Value { get; } = value;
 
     public override int GetHashCode()
     {

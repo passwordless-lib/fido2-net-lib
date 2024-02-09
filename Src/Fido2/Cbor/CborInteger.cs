@@ -2,16 +2,11 @@
 
 namespace Fido2NetLib.Cbor;
 
-internal sealed class CborInteger : CborObject
+internal sealed class CborInteger(long value) : CborObject
 {
-    public CborInteger(long value)
-    {
-        Value = value;
-    }
-
     public override CborType Type => CborType.Integer;
 
-    public long Value { get; }
+    public long Value { get; } = value;
 
     public override bool Equals(object? obj)
     {

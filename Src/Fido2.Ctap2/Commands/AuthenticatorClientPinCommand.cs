@@ -3,36 +3,25 @@ using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Ctap2;
 
-public sealed class AuthenticatorClientPinCommand : CtapCommand
+public sealed class AuthenticatorClientPinCommand(
+    uint pinProtocol,
+    AuthenticatorClientPinSubCommand subCommand,
+    CredentialPublicKey? keyAgreement = null,
+    byte[]? pinAuth = null,
+    byte[]? newPinEnc = null,
+    byte[]? pinHashEnc = null) : CtapCommand
 {
-    public AuthenticatorClientPinCommand(
-        uint pinProtocol,
-        AuthenticatorClientPinSubCommand subCommand,
-        CredentialPublicKey? keyAgreement = null,
-        byte[]? pinAuth = null,
-        byte[]? newPinEnc = null,
-        byte[]? pinHashEnc = null)
-    {
-
-        PinProtocol = pinProtocol;
-        SubCommand = subCommand;
-        KeyAgreement = keyAgreement;
-        PinAuth = pinAuth;
-        NewPinEnc = newPinEnc;
-        PinHashEnc = pinHashEnc;
-    }
-
     /// <summary>
     /// Required PIN protocol version chosen by the client.
     /// </summary>
     [CborMember(0x01)]
-    public uint PinProtocol { get; }
+    public uint PinProtocol { get; } = pinProtocol;
 
     /// <summary>
     /// The authenticator Client PIN sub command currently being requested.
     /// </summary>
     [CborMember(0x02)]
-    public AuthenticatorClientPinSubCommand SubCommand { get; }
+    public AuthenticatorClientPinSubCommand SubCommand { get; } = subCommand;
 
     /// <summary>
     /// Public key of platformKeyAgreementKey.
@@ -40,25 +29,25 @@ public sealed class AuthenticatorClientPinCommand : CtapCommand
     /// The "alg" parameter MUST contain a COSEAlgorithmIdentifier value.
     /// </summary>
     [CborMember(0x03)]
-    public CredentialPublicKey? KeyAgreement { get; }
+    public CredentialPublicKey? KeyAgreement { get; } = keyAgreement;
 
     /// <summary>
     /// First 16 bytes of HMAC-SHA-256 of encrypted contents using sharedSecret.
     /// </summary>
     [CborMember(0x04)]
-    public byte[]? PinAuth { get; }
+    public byte[]? PinAuth { get; } = pinAuth;
 
     /// <summary>
     /// Encrypted new PIN using sharedSecret.
     /// </summary>
     [CborMember(0x05)]
-    public byte[]? NewPinEnc { get; }
+    public byte[]? NewPinEnc { get; } = newPinEnc;
 
     /// <summary>
     /// Encrypted first 16 bytes of SHA-256 of PIN using sharedSecret.
     /// </summary>
     [CborMember(0x06)]
-    public byte[]? PinHashEnc { get; }
+    public byte[]? PinHashEnc { get; } = pinHashEnc;
 
     public override CtapCommandType Type => CtapCommandType.AuthenticatorClientPin;
 

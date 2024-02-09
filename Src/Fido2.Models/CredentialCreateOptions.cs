@@ -59,7 +59,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
     /// </summary>
     [JsonPropertyName("excludeCredentials")]
-    public IReadOnlyList<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; } = Array.Empty<PublicKeyCredentialDescriptor>();
+    public IReadOnlyList<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; } = [];
 
     /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
@@ -85,8 +85,8 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
             Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
             Timeout = config.Timeout,
             User = user,
-            PubKeyCredParams = new List<PubKeyCredParam>(10)
-            {
+            PubKeyCredParams =
+            [
                 // Add additional as appropriate
                 PubKeyCredParam.Ed25519,
                 PubKeyCredParam.ES256,
@@ -98,7 +98,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
                 PubKeyCredParam.ES512,
                 PubKeyCredParam.RS512,
                 PubKeyCredParam.PS512,
-            },
+            ],
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
             ExcludeCredentials = excludeCredentials,
@@ -119,29 +119,25 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
 
 #nullable enable
 
-public sealed class PubKeyCredParam
+/// <summary>
+/// Constructs a PubKeyCredParam instance
+/// </summary>
+[method: JsonConstructor]
+public sealed class PubKeyCredParam(
+    COSE.Algorithm alg,
+    PublicKeyCredentialType type = PublicKeyCredentialType.PublicKey)
 {
-    /// <summary>
-    /// Constructs a PubKeyCredParam instance
-    /// </summary>
-    [JsonConstructor]
-    public PubKeyCredParam(COSE.Algorithm alg, PublicKeyCredentialType type = PublicKeyCredentialType.PublicKey)
-    {
-        Type = type;
-        Alg = alg;
-    }
-
     /// <summary>
     /// The type member specifies the type of credential to be created.
     /// </summary>
     [JsonPropertyName("type")]
-    public PublicKeyCredentialType Type { get; }
+    public PublicKeyCredentialType Type { get; } = type;
 
     /// <summary>
     /// The alg member specifies the cryptographic signature algorithm with which the newly generated credential will be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic Curve.
     /// </summary>
     [JsonPropertyName("alg")]
-    public COSE.Algorithm Alg { get; }
+    public COSE.Algorithm Alg { get; } = alg;
 
     public static readonly PubKeyCredParam ES256 = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
     public static readonly PubKeyCredParam ES384 = new(COSE.Algorithm.ES384);
@@ -158,31 +154,28 @@ public sealed class PubKeyCredParam
 /// <summary>
 /// PublicKeyCredentialRpEntity 
 /// </summary>
-public sealed class PublicKeyCredentialRpEntity
+public sealed class PublicKeyCredentialRpEntity(
+    string id,
+    string name,
+    string? icon = null)
 {
-    public PublicKeyCredentialRpEntity(string id, string name, string? icon = null)
-    {
-        Name = name;
-        Id = id;
-        Icon = icon;
-    }
-
     /// <summary>
     /// A unique identifier for the Relying Party entity, which sets the RP ID.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string Id { get; set; } = id;
 
     /// <summary>
     /// A human-readable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
     /// </summary>
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = name;
 
     [JsonPropertyName("icon")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Icon { get; set; }
+    public string? Icon { get; set; } = icon;
 }
+
 #nullable disable
 
 /// <summary>
