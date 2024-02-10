@@ -3,15 +3,9 @@
 /// <summary>
 /// Parameters used for callback function
 /// </summary>
-public sealed class IsUserHandleOwnerOfCredentialIdParams
+public sealed class IsUserHandleOwnerOfCredentialIdParams(byte[] credentialId, byte[] userHandle)
 {
-    public IsUserHandleOwnerOfCredentialIdParams(byte[] credentialId, byte[] userHandle)
-    {
-        CredentialId = credentialId;
-        UserHandle = userHandle;
-    }
+    public byte[] UserHandle { get; } = userHandle;
 
-    public byte[] UserHandle { get; }
-
-    public byte[] CredentialId { get; }
+    public byte[] CredentialId { get; } = credentialId;
 }

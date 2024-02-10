@@ -7,7 +7,12 @@ using Fido2NetLib.Exceptions;
 
 namespace Fido2NetLib.Objects;
 
-public sealed class AuthenticatorData
+public sealed class AuthenticatorData(
+    byte[] rpIdHash,
+    AuthenticatorFlags flags,
+    uint signCount,
+    AttestedCredentialData? acd,
+    Extensions? exts = null)
 {
     /// <summary>
     /// Minimum length of the authenticator data structure.
@@ -17,41 +22,32 @@ public sealed class AuthenticatorData
 
     private const int SHA256HashLenBytes = 32; // 256 bits, 8 bits per byte
 
-    public AuthenticatorData(byte[] rpIdHash, AuthenticatorFlags flags, uint signCount, AttestedCredentialData? acd, Extensions? exts = null)
-    {
-        RpIdHash = rpIdHash;
-        _flags = flags;
-        SignCount = signCount;
-        AttestedCredentialData = acd;
-        Extensions = exts;
-    }
-
     /// <summary>
     /// SHA-256 hash of the RP ID the credential is scoped to.
     /// </summary>
-    public byte[] RpIdHash { get; }
+    public byte[] RpIdHash { get; } = rpIdHash;
 
     /// <summary>
     /// Signature counter, 32-bit unsigned big-endian integer. 
     /// </summary>
-    public uint SignCount { get; }
+    public uint SignCount { get; } = signCount;
 
     /// <summary>
     /// Attested credential data is a variable-length byte array added to the 
     /// authenticator data when generating an attestation object for a given credential.
     /// </summary>
-    public AttestedCredentialData? AttestedCredentialData { get; }
+    public AttestedCredentialData? AttestedCredentialData { get; } = acd;
 
     /// <summary>
     /// Optional extensions to suit particular use cases.
     /// </summary>
-    public Extensions? Extensions { get; }
+    public Extensions? Extensions { get; } = exts;
 
     /// <summary>
     /// Flags contains information from the authenticator about the authentication 
     /// and whether or not certain data is present in the authenticator data.
     /// </summary>
-    private readonly AuthenticatorFlags _flags;
+    private readonly AuthenticatorFlags _flags = flags;
 
     /// <summary>
     /// UserPresent indicates that the user presence test has completed successfully.
