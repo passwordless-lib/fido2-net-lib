@@ -8,7 +8,7 @@ namespace Fido2NetLib;
 /// <remarks>
 /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#authenticatorstatus-enum"/>
 /// </remarks>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(JsonStringEnumConverter<AuthenticatorStatus>))]
 public enum AuthenticatorStatus
 {
     /// <summary>

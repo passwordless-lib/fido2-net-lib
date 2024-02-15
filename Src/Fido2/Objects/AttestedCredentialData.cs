@@ -100,7 +100,7 @@ public sealed class AttestedCredentialData
         position += 16;
 
 #if NET8_0_OR_GREATER
-        Guid aaGuid = new Guid(aaGuidBytes, isBigEndian: true);
+        Guid aaGuid = new Guid(aaGuidBytes.Span, bigEndian: true);
 #else
         Guid aaGuid = GuidHelper.FromBigEndian(aaGuidBytes.ToArray());
 #endif
