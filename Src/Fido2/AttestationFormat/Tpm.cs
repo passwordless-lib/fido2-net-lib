@@ -198,9 +198,9 @@ internal sealed class Tpm : AttestationVerifier
             // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
             if (AaguidFromAttnCertExts(aikCert.Extensions) is byte[] aaguid &&
                 (!aaguid.AsSpan().SequenceEqual(Guid.Empty.ToByteArray())) &&
-                (GuidHelper.FromBigEndian(aaguid).CompareTo(request.AuthData.AttestedCredentialData!.AaGuid) != 0))
+                (new Guid(aaguid, bigEndian: true).CompareTo(request.AuthData.AttestedCredentialData!.AaGuid) != 0))
             {
-                throw new Fido2VerificationException($"aaguid malformed, expected {request.AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
+                throw new Fido2VerificationException($"aaguid malformed, expected {request.AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid, bigEndian: true)}");
             }
 
             return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
