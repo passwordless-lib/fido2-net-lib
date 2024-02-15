@@ -99,7 +99,7 @@ public interface IFido2MetadataServiceBuilder
 public class Fido2NetLibBuilder : IFido2NetLibBuilder, IFido2MetadataServiceBuilder
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="IdentityServerBuilder"/> class.
+    /// Initializes a new instance of the <see cref="Fido2NetLibBuilder"/> class.
     /// </summary>
     /// <param name="services">The services.</param>
     /// <exception cref="System.ArgumentNullException">services</exception>

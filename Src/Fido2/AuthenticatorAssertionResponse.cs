@@ -46,9 +46,12 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// Implements algorithm from https://www.w3.org/TR/webauthn/#verifying-assertion.
     /// </summary>
     /// <param name="options">The original assertion options that was sent to the client.</param>
+    /// <param name="config"></param>
     /// <param name="storedPublicKey">The stored public key for this CredentialId.</param>
+    /// <param name="storedDevicePublicKeys">The stored device public key for this CredentialId.</param>
     /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
     /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID.</param>
+    /// <param name="metadataService"></param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     public async Task<VerifyAssertionResult> VerifyAsync(
         AssertionOptions options,
@@ -186,7 +189,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// verification steps are performed in the context of this step of § 7.2 Verifying an Authentication Assertion using 
     /// these variables established therein: credential, clientExtensionResults, authData, and hash. Relying Party policy 
     /// may specify whether a response without a devicePubKey is acceptable.
-    /// <see cref="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-get"/>
+    /// <see href="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-get"/>
+    /// <param name="storedDevicePublicKeys"></param>
     /// <param name="clientExtensionResults"></param>
     /// <param name="authData"></param>
     /// <param name="hash"></param>

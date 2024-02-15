@@ -209,10 +209,13 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     /// credential, clientExtensionResults, authData, and hash. 
     /// Relying Party policy may specify whether a response without a devicePubKey is acceptable.
     /// </summary>
+    /// <param name="config"></param>
+    /// <param name="metadataService"></param>
     /// <param name="clientExtensionResults"></param>
     /// <param name="authData"></param>
     /// <param name="hash"></param>
-    /// <see cref="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-create"/> 
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <see href="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-create"/> 
     private async Task<byte[]> DevicePublicKeyRegistrationAsync(
         Fido2Configuration config,
         IMetadataService? metadataService,

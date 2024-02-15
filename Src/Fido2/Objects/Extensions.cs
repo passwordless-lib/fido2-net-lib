@@ -3,7 +3,7 @@
 namespace Fido2NetLib.Objects;
 
 /// <summary>
-/// <see cref="https://www.w3.org/TR/webauthn/#extensions"/>
+/// <see href="https://www.w3.org/TR/webauthn/#extensions"/>
 /// </summary>
 public sealed class Extensions
 {
