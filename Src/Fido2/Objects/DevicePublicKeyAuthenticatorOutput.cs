@@ -35,14 +35,14 @@ public sealed class DevicePublicKeyAuthenticatorOutput
 
     /// <summary>
     /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
-    /// <see cref="https://www.w3.org/TR/webauthn/#aaguid"/>
+    /// <see href="https://www.w3.org/TR/webauthn/#aaguid"/>
     /// </summary>
     public Guid AaGuid { get; }
 
     /// <summary>
     /// The credential public key encoded in COSE_Key format, as defined in 
     /// Section 7 of RFC8152, using the CTAP2 canonical CBOR encoding form.
-    /// <see cref="https://www.w3.org/TR/webauthn/#credential-public-key"/>
+    /// <see href="https://www.w3.org/TR/webauthn/#credential-public-key"/>
     /// </summary>
     public CredentialPublicKey DevicePublicKey { get; }
 
@@ -65,7 +65,7 @@ public sealed class DevicePublicKeyAuthenticatorOutput
 
     /// <summary>
     /// Attestation statement formats are identified by a string, called an attestation statement format identifier, chosen by the author of the attestation statement format.
-    /// <see cref="https://w3c.github.io/webauthn/#sctn-attstn-fmt-ids"/>
+    /// <see href="https://w3c.github.io/webauthn/#sctn-attstn-fmt-ids"/>
     /// </summary>
     public string Fmt { get; }
 

@@ -8,7 +8,7 @@ using Fido2NetLib.Objects;
 namespace Fido2NetLib;
 
 /// <summary>
-/// Public API for parsing and verifying FIDO2 attestation & assertion responses.
+/// Public API for parsing and verifying FIDO2 attestation and assertion responses.
 /// </summary>
 public class Fido2 : IFido2
 {
@@ -26,8 +26,10 @@ public class Fido2 : IFido2
     /// <summary>
     /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authenticator to create new credentials.
     /// </summary>
-    /// <returns></returns>
+    /// <param name="user"></param>
     /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator. The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
+    /// <param name="extensions"></param>
+    /// <returns></returns>
     public CredentialCreateOptions RequestNewCredential(
         Fido2User user,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
@@ -39,9 +41,12 @@ public class Fido2 : IFido2
     /// <summary>
     /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authenticator to create new credentials.
     /// </summary>
-    /// <returns></returns>
-    /// <param name="attestationPreference">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
+    /// <param name="user"></param>
     /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator. The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
+    /// <param name="authenticatorSelection"></param>
+    /// <param name="attestationPreference">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
+    /// <param name="extensions"></param>
+    /// <returns></returns>
     public CredentialCreateOptions RequestNewCredential(
         Fido2User user,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
@@ -82,6 +87,9 @@ public class Fido2 : IFido2
     /// <summary>
     /// Returns AssertionOptions including a challenge to the browser/authenticator to assert existing credentials and authenticate a user.
     /// </summary>
+    /// <param name="allowedCredentials"></param>
+    /// <param name="userVerification"></param>
+    /// <param name="extensions"></param>
     /// <returns></returns>
     public AssertionOptions GetAssertionOptions(
         IReadOnlyList<PublicKeyCredentialDescriptor> allowedCredentials,

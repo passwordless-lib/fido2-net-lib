@@ -18,6 +18,12 @@
     <SupportedTargetFrameworks>net6.0</SupportedTargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- 
+      Temporary disabling of CS1591 (Missing XML comment for publicly visible type or member) warning
+      Make sure to re-enable it when https://github.com/passwordless-lib/fido2-net-lib/issues/501 is resolved.
+    -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   
   <!-- Language + Compiler Settings-->
