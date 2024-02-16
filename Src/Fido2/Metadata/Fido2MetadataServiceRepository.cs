@@ -14,9 +14,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Fido2NetLib;
 
-public sealed class Fido2MetadataServiceRepository : IMetadataRepository
+public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory) : IMetadataRepository
 {
-    private ReadOnlySpan<byte> ROOT_CERT =>
+    private static ReadOnlySpan<byte> ROOT_CERT =>
         "MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G"u8 +
         "A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjMxEzARBgNVBAoTCkdsb2JhbFNp"u8 +
         "Z24xEzARBgNVBAMTCkdsb2JhbFNpZ24wHhcNMDkwMzE4MTAwMDAwWhcNMjkwMzE4"u8 +
@@ -37,12 +37,7 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH"u8 +
         "WD9f"u8;
 
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    public Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
     {

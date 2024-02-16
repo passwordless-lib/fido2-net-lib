@@ -2,18 +2,12 @@
 
 namespace Fido2NetLib;
 
-public sealed class MDSGetEndpointResponse
+[method: JsonConstructor]
+public sealed class MDSGetEndpointResponse(string status, string[] result)
 {
-    [JsonConstructor]
-    public MDSGetEndpointResponse(string status, string[] result)
-    {
-        Status = status;
-        Result = result;
-    }
-
     [JsonPropertyName("status")]
-    public string Status { get; }
+    public string Status { get; } = status;
 
     [JsonPropertyName("result")]
-    public string[] Result { get; }
+    public string[] Result { get; } = result;
 }
