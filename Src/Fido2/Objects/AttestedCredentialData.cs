@@ -99,11 +99,8 @@ public sealed class AttestedCredentialData
 
         position += 16;
 
-#if NET8_0_OR_GREATER
-        Guid aaGuid = new Guid(aaGuidBytes, isBigEndian: true);
-#else
-        Guid aaGuid = GuidHelper.FromBigEndian(aaGuidBytes.ToArray());
-#endif
+        var aaGuid = new Guid(aaGuidBytes.Span, bigEndian: true);
+
         // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
         var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(data.Slice(position, 2).Span);
         if (credentialIDLen > _maxCredentialIdLength)
