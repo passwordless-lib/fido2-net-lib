@@ -35,7 +35,7 @@ public sealed class AuthenticationExtensionsLargeBlobOutputs
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("blob")]
     public byte[]? Blob { get; set; }
-    
+
     /// <summary>
     /// Whether or not a blob was written to the authenticator.
     ///

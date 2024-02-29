@@ -15,7 +15,7 @@ public enum LargeBlobSupport
     /// largeBlob support is required -- credential creation will fail if largeBlob is not supported
     /// </summary>
     [EnumMember(Value = "required")] Required,
-    
+
     /// <summary>
     /// largeBlob support is preferred -- credential creation will succeed even if largeBlob is not supported.
     /// </summary>
