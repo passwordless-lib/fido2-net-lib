@@ -61,6 +61,14 @@ public sealed class AuthenticationExtensionsClientInputs
     [JsonPropertyName("prf")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticationExtensionsPRFInputs? PRF { get; set; }
+    
+    /// <summary>
+    /// This client registration extension and authentication extension allows a Relying Party to store opaque data associated with a credential.
+    /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+    /// </summary>
+    [JsonPropertyName("largeBlob")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AuthenticationExtensionsLargeBlobInputs? LargeBlob { get; set; }
 
     /// <summary>
     /// This registration extension allows relying parties to specify a credential protection policy when creating a credential.
