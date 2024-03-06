@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Fido2NetLib.Objects;
@@ -19,7 +17,9 @@ public class AssertionOptions : Fido2ResponseBase
     /// </summary>
     [JsonPropertyName("challenge")]
     [JsonConverter(typeof(Base64UrlConverter))]
-    public byte[]? Challenge { get; set; }
+    public byte[] Challenge { get; set; }
+
+#nullable enable
 
     /// <summary>
     /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
