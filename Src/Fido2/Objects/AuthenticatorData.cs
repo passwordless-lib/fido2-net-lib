@@ -13,7 +13,7 @@ public sealed class AuthenticatorData(
     AuthenticatorFlags flags,
     uint signCount,
     AttestedCredentialData? acd,
-    Extensions? exts = null)
+    Extensions? extensions = null)
 {
     /// <summary>
     /// Minimum length of the authenticator data structure.
@@ -40,7 +40,7 @@ public sealed class AuthenticatorData(
     /// <summary>
     /// Optional extensions to suit particular use cases.
     /// </summary>
-    public Extensions? Extensions { get; } = exts;
+    public Extensions? Extensions { get; } = extensions;
 
     /// <summary>
     /// Flags contains information from the authenticator about the authentication 
