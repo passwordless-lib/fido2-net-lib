@@ -7,11 +7,6 @@ namespace Fido2NetLib.Development;
 public class StoredCredential
 {
     /// <summary>
-    /// The Credential ID of the public key credential source.
-    /// </summary>
-    public byte[] Id { get; set; }
-
-    /// <summary>
     /// The credential public key of the public key credential source.
     /// </summary>
     public byte[] PublicKey { get; set; }
