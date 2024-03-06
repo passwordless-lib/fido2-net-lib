@@ -161,7 +161,6 @@ public class UserController : ControllerBase
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
                 AttestationFormat = result.Result.AttestationFormat,
-                Id = result.Result.Id,
                 Descriptor = new PublicKeyCredentialDescriptor(result.Result.Id),
                 PublicKey = result.Result.PublicKey,
                 UserHandle = result.Result.User.Id,
