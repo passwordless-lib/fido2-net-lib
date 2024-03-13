@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -12,15 +13,13 @@ public sealed class AuthenticatorData(
     AuthenticatorFlags flags,
     uint signCount,
     AttestedCredentialData? acd,
-    Extensions? exts = null)
+    Extensions? extensions = null)
 {
     /// <summary>
     /// Minimum length of the authenticator data structure.
     /// <see href="https://www.w3.org/TR/webauthn/#sec-authenticator-data"/>
     /// </summary>
-    internal const int MinLength = SHA256HashLenBytes + sizeof(AuthenticatorFlags) + sizeof(uint);
-
-    private const int SHA256HashLenBytes = 32; // 256 bits, 8 bits per byte
+    internal const int MinLength = SHA256.HashSizeInBytes + sizeof(AuthenticatorFlags) + sizeof(uint);
 
     /// <summary>
     /// SHA-256 hash of the RP ID the credential is scoped to.
@@ -41,7 +40,7 @@ public sealed class AuthenticatorData(
     /// <summary>
     /// Optional extensions to suit particular use cases.
     /// </summary>
-    public Extensions? Extensions { get; } = exts;
+    public Extensions? Extensions { get; } = extensions;
 
     /// <summary>
     /// Flags contains information from the authenticator about the authentication 
@@ -101,9 +100,7 @@ public sealed class AuthenticatorData(
         var writer = new ArrayBufferWriter<byte>(512);
 
         writer.Write(RpIdHash);
-
-        writer.Write(stackalloc byte[1] { (byte)_flags });
-
+        writer.Write([(byte)_flags]);
         writer.WriteUInt32BigEndian(SignCount);
 
         if (HasAttestedCredentialData && AttestedCredentialData != null)
@@ -130,7 +127,7 @@ public sealed class AuthenticatorData(
         // Input parsing
         var reader = new MemoryReader(data);
 
-        byte[] rpIdHash = reader.ReadBytes(SHA256HashLenBytes);
+        byte[] rpIdHash = reader.ReadBytes(SHA256.HashSizeInBytes);
 
         var flags = (AuthenticatorFlags)reader.ReadByte();
 

@@ -268,20 +268,13 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     /// <summary>
     /// The AttestationObject after CBOR parsing
     /// </summary>
-    public sealed class ParsedAttestationObject
+    public sealed class ParsedAttestationObject(string fmt, CborMap attStmt, AuthenticatorData authData)
     {
-        public ParsedAttestationObject(string fmt, CborMap attStmt, AuthenticatorData authData)
-        {
-            Fmt = fmt;
-            AttStmt = attStmt;
-            AuthData = authData;
-        }
+        public string Fmt { get; } = fmt;
 
-        public string Fmt { get; }
+        public CborMap AttStmt { get; } = attStmt;
 
-        public CborMap AttStmt { get; }
-
-        public AuthenticatorData AuthData { get; }
+        public AuthenticatorData AuthData { get; } = authData;
 
         internal static ParsedAttestationObject FromCbor(CborMap cbor)
         {

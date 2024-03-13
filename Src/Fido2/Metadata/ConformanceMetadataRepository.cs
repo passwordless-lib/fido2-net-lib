@@ -124,8 +124,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
     public async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(rawBLOBJwt))
-            throw new ArgumentNullException(nameof(rawBLOBJwt));
+        ArgumentException.ThrowIfNullOrWhiteSpace(rawBLOBJwt);
 
         var jwtParts = rawBLOBJwt.Split('.');
 

@@ -12,6 +12,7 @@ public sealed class AuthenticationExtensionsPRFOutputs
     /// </summary>
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; }
+
     /// <summary>
     /// The results of evaluating the PRF inputs.
     /// </summary>

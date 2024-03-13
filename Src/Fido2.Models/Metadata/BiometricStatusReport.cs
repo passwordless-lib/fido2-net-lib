@@ -14,8 +14,9 @@ public class BiometricStatusReport
     /// <summary>
     /// Gets or sets the level of the biometric certification of this biometric component of the authenticator.
     /// </summary>
-    [JsonPropertyName("certLevel"), Required]
-    public ushort CertLevel { get; set; }
+    [JsonPropertyName("certLevel")]
+    public required ushort CertLevel { get; set; }
+
     /// <summary>
     /// Gets or sets a single USER_VERIFY constant indicating the modality of the biometric component.
     /// </summary>
@@ -23,8 +24,8 @@ public class BiometricStatusReport
     /// This is not a bit flag combination. 
     /// This value MUST be non-zero and this value MUST correspond to one or more entries in field userVerificationDetails in the related Metadata Statement.
     /// </remarks>
-    [JsonPropertyName("modality"), Required]
-    public ulong Modality { get; set; }
+    [JsonPropertyName("modality")]
+    public required ulong Modality { get; set; }
 
     /// <summary>
     /// Gets or sets a ISO-8601 formatted date since when the certLevel achieved, if applicable. 

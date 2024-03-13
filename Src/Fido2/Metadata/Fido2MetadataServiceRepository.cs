@@ -59,8 +59,7 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
     private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(rawBLOBJwt))
-            throw new ArgumentNullException(nameof(rawBLOBJwt));
+        ArgumentException.ThrowIfNullOrWhiteSpace(rawBLOBJwt);
 
         var jwtParts = rawBLOBJwt.Split('.');
 

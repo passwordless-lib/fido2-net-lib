@@ -29,9 +29,7 @@ public class DistributedCacheMetadataService : IMetadataService
         ILogger<DistributedCacheMetadataService> logger,
         ISystemClock systemClock)
     {
-
-        if (repositories == null)
-            throw new ArgumentNullException(nameof(repositories));
+        ArgumentNullException.ThrowIfNull(repositories);
 
         _repositories = repositories.ToList();
         _distributedCache = distributedCache;

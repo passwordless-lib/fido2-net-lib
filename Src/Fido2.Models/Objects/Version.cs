@@ -8,7 +8,6 @@ namespace Fido2NetLib;
 /// <remarks>
 /// <see href="https://fidoalliance.org/specs/fido-uaf-v1.2-rd-20171128/fido-uaf-protocol-v1.2-rd-20171128.html#version-interface"/>
 /// </remarks>
-
 public class Version
 {
     /// <summary>
