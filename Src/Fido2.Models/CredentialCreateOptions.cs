@@ -55,6 +55,30 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     [JsonPropertyName("authenticatorSelection")]
     public AuthenticatorSelection AuthenticatorSelection { get; set; }
 
+    private IEnumerable<PublicKeyCredentialHint> _hints;
+
+    /// <summary>
+    /// This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" /> to guide the user agent in interacting with the user. Note that the elements have type DOMString despite being taken from that enumeration.
+    /// For compatibility with older user agents, when this hint is used in PublicKeyCredentialCreationOptions, the authenticatorAttachment SHOULD be set to cross-platform.
+    /// </summary>
+    [JsonPropertyName("hints")]
+    public IEnumerable<PublicKeyCredentialHint> Hints
+    {
+        get
+        {
+            return _hints;
+        }
+        set
+        {
+            if (value != null)
+            {
+                AuthenticatorSelection.AuthenticatorAttachment ??= new AuthenticatorAttachment();
+                AuthenticatorSelection.AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform;
+            }
+            _hints = value;
+        }
+    }
+
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
     /// </summary>
