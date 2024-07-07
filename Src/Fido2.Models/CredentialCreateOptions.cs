@@ -70,12 +70,13 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
         }
         set
         {
-            if (value != null)
+            if (value != null && value.Any())
             {
                 AuthenticatorSelection.AuthenticatorAttachment ??= new AuthenticatorAttachment();
                 AuthenticatorSelection.AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform;
+                _hints = value;
             }
-            _hints = value;
+            _hints = null;
         }
     }
 
