@@ -58,9 +58,11 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     private IEnumerable<PublicKeyCredentialHint> _hints;
 
     /// <summary>
-    /// This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" /> to guide the user agent in interacting with the user. Note that the elements have type DOMString despite being taken from that enumeration.
-    /// For compatibility with older user agents, when this hint is used in PublicKeyCredentialCreationOptions, the authenticatorAttachment SHOULD be set to cross-platform.
+    /// Guides the user agent in interacting with the user. This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" />.
     /// </summary>
+    /// <remarks>
+    /// When <see cref="Hints"/> is set, <see cref="AuthenticatorSelection.AuthenticatorAttachment" /> will be set to <see cref="AuthenticatorAttachment.CrossPlatform" /> for compatibility with older user agents.
+    /// </remarks>
     [JsonPropertyName("hints")]
     public IEnumerable<PublicKeyCredentialHint> Hints
     {
