@@ -64,6 +64,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// When <see cref="Hints"/> is set, <see cref="AuthenticatorSelection.AuthenticatorAttachment" /> will be set to <see cref="AuthenticatorAttachment.CrossPlatform" /> for compatibility with older user agents.
     /// </remarks>
     [JsonPropertyName("hints")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IEnumerable<PublicKeyCredentialHint> Hints
     {
         get
