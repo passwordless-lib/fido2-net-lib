@@ -13,4 +13,11 @@ public class CredentialPropertiesOutput
     /// </summary>
     [JsonPropertyName("rk")]
     public bool Rk { get; set; }
+
+
+    /// <summary>
+    /// This OPTIONAL property is a human-palatable description of the credential’s managing authenticator, chosen by the user.
+    /// </summary>
+    [JsonPropertyName("authenticatorDisplayName")]
+    public string? AuthenticatorDisplayName { get; set; }
 }
