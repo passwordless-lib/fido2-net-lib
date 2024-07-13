@@ -61,7 +61,12 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// Guides the user agent in interacting with the user. This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" />.
     /// </summary>
     /// <remarks>
-    /// When <see cref="Hints"/> is set, <see cref="AuthenticatorSelection.AuthenticatorAttachment" /> will be set to <see cref="AuthenticatorAttachment.CrossPlatform" /> for compatibility with older user agents.
+    /// When <see cref="Hints"/> is set, <see cref="AuthenticatorSelection.AuthenticatorAttachment" /> will be set to one of the values in the table below:
+    /// <list type="table">
+    /// <item><term><see cref="PublicKeyCredentialHint.SecurityKey"/></term><description><see cref="AuthenticatorAttachment.CrossPlatform"/></description></item>
+    /// <item><term><see cref="PublicKeyCredentialHint.ClientDevice"/></term><description><see cref="AuthenticatorAttachment.Platform"/></description></item>
+    /// <item><term><see cref="PublicKeyCredentialHint.Hybrid"/></term><description><see cref="AuthenticatorAttachment.CrossPlatform"/></description></item>
+    /// </list>
     /// </remarks>
     [JsonPropertyName("hints")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -73,10 +78,25 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
         }
         set
         {
-            if (value != null && value.Any())
+            if (value != null)
             {
-                AuthenticatorSelection.AuthenticatorAttachment ??= new AuthenticatorAttachment();
-                AuthenticatorSelection.AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform;
+                var firstHint = value.First();
+                switch (firstHint)
+                {
+                    case PublicKeyCredentialHint.SecurityKey:
+                    case PublicKeyCredentialHint.Hybrid:
+                        {
+                            AuthenticatorSelection.AuthenticatorAttachment ??= new AuthenticatorAttachment();
+                            AuthenticatorSelection.AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform;
+                            break;
+                        }
+                    case PublicKeyCredentialHint.ClientDevice:
+                        {
+                            AuthenticatorSelection.AuthenticatorAttachment ??= new AuthenticatorAttachment();
+                            AuthenticatorSelection.AuthenticatorAttachment = AuthenticatorAttachment.Platform;
+                            break;
+                        }
+                }
                 _hints = value;
             }
             _hints = null;
