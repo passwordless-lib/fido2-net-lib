@@ -43,6 +43,12 @@ public class AssertionOptions : Fido2ResponseBase
     public UserVerificationRequirement? UserVerification { get; set; }
 
     /// <summary>
+    /// This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint"/> to guide the user agent in interacting with the user. Note that the elements have type DOMString despite being taken from that enumeration.
+    /// </summary>
+    [JsonPropertyName("hints")]
+    public IReadOnlyList<PublicKeyCredentialHint> Hints { get; set; } = Array.Empty<PublicKeyCredentialHint>();
+
+    /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
     /// </summary>
     [JsonPropertyName("extensions")]

@@ -55,7 +55,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     [JsonPropertyName("authenticatorSelection")]
     public AuthenticatorSelection AuthenticatorSelection { get; set; }
 
-    private List<PublicKeyCredentialHint> _hints;
+    private IReadOnlyList<PublicKeyCredentialHint> _hints = Array.Empty<PublicKeyCredentialHint>();
 
     /// <summary>
     /// Guides the user agent in interacting with the user. This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" />.
@@ -70,7 +70,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// </remarks>
     [JsonPropertyName("hints")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<PublicKeyCredentialHint> Hints
+    public IReadOnlyList<PublicKeyCredentialHint> Hints
     {
         get
         {
@@ -78,10 +78,9 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
         }
         set
         {
-            if (value != null)
+            if (value.Any())
             {
-                var firstHint = value.First();
-                switch (firstHint)
+                switch (value[0])
                 {
                     case PublicKeyCredentialHint.SecurityKey:
                     case PublicKeyCredentialHint.Hybrid:
@@ -97,9 +96,8 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
                             break;
                         }
                 }
-                _hints = value;
             }
-            _hints = null;
+            _hints = value;
         }
     }
 
