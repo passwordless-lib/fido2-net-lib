@@ -13,6 +13,7 @@ public sealed class AuthenticationExtensionsPRFInputs
     /// </summary>
     [JsonPropertyName("eval")]
     public AuthenticationExtensionsPRFValues Eval { get; set; }
+
     /// <summary>
     /// A record mapping base64url encoded credential IDs to PRF inputs to evaluate for that credential.
     /// https://w3c.github.io/webauthn/#dom-authenticationextensionsprfinputs-evalbycredential

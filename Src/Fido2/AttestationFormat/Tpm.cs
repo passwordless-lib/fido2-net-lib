@@ -490,10 +490,10 @@ public sealed class CertInfo
 
     private static readonly Dictionary<TpmAlg, ushort> s_tpmAlgToDigestSizeMap = new()
     {
-        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
-        { TpmAlg.TPM_ALG_SHA256, (256/8) },
-        { TpmAlg.TPM_ALG_SHA384, (384/8) },
-        { TpmAlg.TPM_ALG_SHA512, (512/8) }
+        { TpmAlg.TPM_ALG_SHA1,   SHA1.HashSizeInBytes },
+        { TpmAlg.TPM_ALG_SHA256, SHA256.HashSizeInBytes },
+        { TpmAlg.TPM_ALG_SHA384, SHA384.HashSizeInBytes },
+        { TpmAlg.TPM_ALG_SHA512, SHA512.HashSizeInBytes }
     };
 
     public static (ushort size, byte[] name) NameFromTPM2BName(ReadOnlySpan<byte> ab, ref int offset)
