@@ -81,7 +81,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new CredentialCreateOptions { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new  { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 
@@ -131,7 +131,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new MakeNewCredentialResult(status: "error", errorMessage: FormatException(e), result: null));
+            return Json(new { status = "error", errorMessage = FormatException(e)});
         }
     }
 
@@ -176,7 +176,7 @@ public class MyController : Controller
 
         catch (Exception e)
         {
-            return Json(new AssertionOptions { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new  { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 
@@ -217,7 +217,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new VerifyAssertionResult { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 }

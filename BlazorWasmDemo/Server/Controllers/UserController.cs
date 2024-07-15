@@ -126,9 +126,9 @@ public class UserController : ControllerBase
             // 6. return options to client
             return options;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            return new CredentialCreateOptions { Status = "error", ErrorMessage = FormatException(e) };
+            throw;
         }
     }
 
@@ -151,11 +151,6 @@ public class UserController : ControllerBase
 
             // 3. Verify and make the credentials
             var result = await _fido2.MakeNewCredentialAsync(attestationResponse, options, CredentialIdUniqueToUserAsync, cancellationToken: cancellationToken);
-
-            if (result.Status is "error" || result.Result is null)
-            {
-                return result.ErrorMessage ?? string.Empty;
-            }
 
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
@@ -228,9 +223,9 @@ public class UserController : ControllerBase
             // 5. return options to client
             return options;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            return new AssertionOptions { Status = "error", ErrorMessage = FormatException(e) };
+            throw;
         }
     }
 
@@ -280,18 +275,12 @@ public class UserController : ControllerBase
                 cancellationToken: cancellationToken);
 
             // 4. Store the updated counter
-            if (res.Status is "ok")
+            _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
+            if (res.DevicePublicKey is not null)
             {
-                _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-                if (res.DevicePublicKey is not null)
-                {
-                    creds.DevicePublicKeys.Add(res.DevicePublicKey);
-                }
+                creds.DevicePublicKeys.Add(res.DevicePublicKey);
             }
-            else
-            {
-                return $"Error: {res.ErrorMessage}";
-            }
+            
 
             // 5. return result to client
             var handler = new JwtSecurityTokenHandler();

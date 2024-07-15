@@ -78,8 +78,6 @@ public class Fido2 : IFido2
 
         // todo: Set Errormessage etc.
         return new MakeNewCredentialResult(
-            status: "ok",
-            errorMessage: string.Empty,
             result: success
         );
     }

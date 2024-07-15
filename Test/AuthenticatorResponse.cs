@@ -97,13 +97,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 PubKeyCredParam.ES256
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
