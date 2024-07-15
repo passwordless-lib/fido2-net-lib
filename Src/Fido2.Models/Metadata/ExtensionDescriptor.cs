@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿#nullable enable
+
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
@@ -14,8 +16,8 @@ public class ExtensionDescriptor
     /// <summary>
     /// Gets or sets the identifier that identifies the extension.
     /// </summary>
-    [JsonPropertyName("id"), Required]
-    public string Id { get; set; }
+    [JsonPropertyName("id")]
+    public required string Id { get; set; }
 
     /// <summary>
     /// Gets or sets the tag.
@@ -35,7 +37,7 @@ public class ExtensionDescriptor
     /// This field MAY be missing or it MAY be empty.
     /// </remarks>
     [JsonPropertyName("data")]
-    public string Data { get; set; }
+    public string? Data { get; set; }
 
     /// <summary>
     /// Gets or sets a value indication whether an unknown extensions must be ignored (<c>false</c>) or must lead to an error (<c>true</c>) when the extension is to be processed by the FIDO Server, FIDO Client, ASM, or FIDO Authenticator. 

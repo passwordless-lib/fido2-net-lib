@@ -66,7 +66,7 @@ internal sealed class Apple : AttestationVerifier
         ReadOnlySpan<byte> nonceToHash = request.Data;
 
         // 4. Perform SHA-256 hash of nonceToHash to produce nonce.
-        Span<byte> nonce = stackalloc byte[32];
+        Span<byte> nonce = stackalloc byte[SHA256.HashSizeInBytes];
         SHA256.HashData(nonceToHash, nonce);
 
         // 5. Verify nonce matches the value of the extension with OID ( 1.2.840.113635.100.8.2 ) in credCert.
