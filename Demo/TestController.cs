@@ -96,10 +96,10 @@ public class TestController : Controller
         // 3. Store the credentials in db
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
-            Id = success.Result.Id,
-            PublicKey = success.Result.PublicKey,
-            UserHandle = success.Result.User.Id,
-            SignCount = success.Result.SignCount
+            Descriptor = new PublicKeyCredentialDescriptor(success.Credential.Id),
+            PublicKey = success.Credential.PublicKey,
+            UserHandle = success.Credential.User.Id,
+            SignCount = success.Credential.SignCount
         });
 
         // 4. return "ok" to the client

@@ -111,19 +111,19 @@ public class MyController : Controller
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                Id = success.Result.Id,
-                PublicKey = success.Result.PublicKey,
-                UserHandle = success.Result.User.Id,
-                SignCount = success.Result.SignCount,
-                AttestationFormat = success.Result.AttestationFormat,
+                Id = success.Credential.Id,
+                PublicKey = success.Credential.PublicKey,
+                UserHandle = success.Credential.User.Id,
+                SignCount = success.Credential.SignCount,
+                AttestationFormat = success.Credential.AttestationFormat,
                 RegDate = DateTimeOffset.UtcNow,
-                AaGuid = success.Result.AaGuid,
-                Transports = success.Result.Transports,
-                IsBackupEligible = success.Result.IsBackupEligible,
-                IsBackedUp = success.Result.IsBackedUp,
-                AttestationObject = success.Result.AttestationObject,
-                AttestationClientDataJson = success.Result.AttestationClientDataJson,
-                DevicePublicKeys = [success.Result.DevicePublicKey]
+                AaGuid = success.Credential.AaGuid,
+                Transports = success.Credential.Transports,
+                IsBackupEligible = success.Credential.IsBackupEligible,
+                IsBackedUp = success.Credential.IsBackedUp,
+                AttestationObject = success.Credential.AttestationObject,
+                AttestationClientDataJson = success.Credential.AttestationClientDataJson,
+                DevicePublicKeys = [success.Credential.DevicePublicKey]
             });
 
             // 4. return "ok" to the client

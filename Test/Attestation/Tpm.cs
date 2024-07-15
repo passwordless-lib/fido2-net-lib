@@ -291,16 +291,16 @@ public class Tpm : Fido2Tests.Attestation
             }
             var res = await MakeAttestationResponseAsync();
 
-            Assert.Equal(_aaguid, res.Result.AaGuid);
-            Assert.Equal(_signCount, res.Result.SignCount);
-            Assert.Equal("tpm", res.Result.AttestationFormat);
-            Assert.Equal(_credentialID, res.Result.Id);
-            Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
-            Assert.Equal("Test User", res.Result.User.DisplayName);
-            Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
-            Assert.Equal("testuser", res.Result.User.Name);
+            Assert.Equal(_aaguid, res.Credential.AaGuid);
+            Assert.Equal(_signCount, res.Credential.SignCount);
+            Assert.Equal("tpm", res.Credential.AttestationFormat);
+            Assert.Equal(_credentialID, res.Credential.Id);
+            Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
+            Assert.Equal("Test User", res.Credential.User.DisplayName);
+            Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
+            Assert.Equal("testuser", res.Credential.User.Name);
             _attestationObject = new CborMap { { "fmt", "tpm" } };
-            Assert.Equal([AuthenticatorTransport.Internal], res.Result.Transports);
+            Assert.Equal([AuthenticatorTransport.Internal], res.Credential.Transports);
         }
     }
 
@@ -406,15 +406,15 @@ public class Tpm : Fido2Tests.Attestation
 
         var res = await MakeAttestationResponseAsync();
 
-        Assert.Equal(_aaguid, res.Result.AaGuid);
-        Assert.Equal(_signCount, res.Result.SignCount);
-        Assert.Equal("tpm", res.Result.AttestationFormat);
-        Assert.Equal(_credentialID, res.Result.Id);
-        Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
-        Assert.Equal("Test User", res.Result.User.DisplayName);
-        Assert.Equal("testuser"u8, res.Result.User.Id);
-        Assert.Equal("testuser", res.Result.User.Name);
-        Assert.Equal([AuthenticatorTransport.Internal], res.Result.Transports);
+        Assert.Equal(_aaguid, res.Credential.AaGuid);
+        Assert.Equal(_signCount, res.Credential.SignCount);
+        Assert.Equal("tpm", res.Credential.AttestationFormat);
+        Assert.Equal(_credentialID, res.Credential.Id);
+        Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
+        Assert.Equal("Test User", res.Credential.User.DisplayName);
+        Assert.Equal("testuser"u8, res.Credential.User.Id);
+        Assert.Equal("testuser", res.Credential.User.Name);
+        Assert.Equal([AuthenticatorTransport.Internal], res.Credential.Transports);
     }
 
     [Fact]
@@ -5048,15 +5048,15 @@ public class Tpm : Fido2Tests.Attestation
 
         var res = await MakeAttestationResponseAsync();
 
-        Assert.Equal(_aaguid, res.Result.AaGuid);
-        Assert.Equal(_signCount, res.Result.SignCount);
-        Assert.Equal("tpm", res.Result.AttestationFormat);
-        Assert.Equal(_credentialID, res.Result.Id);
-        Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
-        Assert.Equal("Test User", res.Result.User.DisplayName);
-        Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
-        Assert.Equal("testuser", res.Result.User.Name);
-        Assert.Equal([AuthenticatorTransport.Internal], res.Result.Transports);
+        Assert.Equal(_aaguid, res.Credential.AaGuid);
+        Assert.Equal(_signCount, res.Credential.SignCount);
+        Assert.Equal("tpm", res.Credential.AttestationFormat);
+        Assert.Equal(_credentialID, res.Credential.Id);
+        Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
+        Assert.Equal("Test User", res.Credential.User.DisplayName);
+        Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
+        Assert.Equal("testuser", res.Credential.User.Name);
+        Assert.Equal([AuthenticatorTransport.Internal], res.Credential.Transports);
     }
 
     [Fact]

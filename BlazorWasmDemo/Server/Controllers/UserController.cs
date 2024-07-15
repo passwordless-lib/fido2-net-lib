@@ -155,19 +155,19 @@ public class UserController : ControllerBase
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                AttestationFormat = result.Result.AttestationFormat,
-                Id = result.Result.Id,
-                PublicKey = result.Result.PublicKey,
-                UserHandle = result.Result.User.Id,
-                SignCount = result.Result.SignCount,
+                AttestationFormat = result.Credential.AttestationFormat,
+                Id = result.Credential.Id,
+                PublicKey = result.Credential.PublicKey,
+                UserHandle = result.Credential.User.Id,
+                SignCount = result.Credential.SignCount,
                 RegDate = DateTimeOffset.UtcNow,
-                AaGuid = result.Result.AaGuid,
-                DevicePublicKeys = [result.Result.DevicePublicKey],
-                Transports = result.Result.Transports,
-                IsBackupEligible = result.Result.IsBackupEligible,
-                IsBackedUp = result.Result.IsBackedUp,
-                AttestationObject = result.Result.AttestationObject,
-                AttestationClientDataJson = result.Result.AttestationClientDataJson,
+                AaGuid = result.Credential.AaGuid,
+                DevicePublicKeys = [result.Credential.DevicePublicKey],
+                Transports = result.Credential.Transports,
+                IsBackupEligible = result.Credential.IsBackupEligible,
+                IsBackedUp = result.Credential.IsBackedUp,
+                AttestationObject = result.Credential.AttestationObject,
+                AttestationClientDataJson = result.Credential.AttestationClientDataJson,
             });
 
             // 5. Now we need to remove the options from the pending dictionary

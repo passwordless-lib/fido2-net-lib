@@ -78,7 +78,7 @@ public class Fido2 : IFido2
 
         // todo: Set Errormessage etc.
         return new MakeNewCredentialResult(
-            result: success
+            credential: success
         );
     }
 
