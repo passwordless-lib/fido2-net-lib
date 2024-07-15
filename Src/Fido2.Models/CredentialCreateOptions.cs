@@ -55,6 +55,44 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     [JsonPropertyName("authenticatorSelection")]
     public AuthenticatorSelection AuthenticatorSelection { get; set; }
 
+    private IReadOnlyList<PublicKeyCredentialHint> _hints = Array.Empty<PublicKeyCredentialHint>();
+
+    /// <summary>
+    /// Guides the user agent in interacting with the user. This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" />.
+    /// </summary>
+    /// <remarks>
+    /// When <see cref="Hints"/> is set, <see cref="AuthenticatorSelection.AuthenticatorAttachment" /> will be set to one of the values in the table below:
+    /// <list type="table">
+    /// <item><term><see cref="PublicKeyCredentialHint.SecurityKey"/></term><description><see cref="AuthenticatorAttachment.CrossPlatform"/></description></item>
+    /// <item><term><see cref="PublicKeyCredentialHint.ClientDevice"/></term><description><see cref="AuthenticatorAttachment.Platform"/></description></item>
+    /// <item><term><see cref="PublicKeyCredentialHint.Hybrid"/></term><description><see cref="AuthenticatorAttachment.CrossPlatform"/></description></item>
+    /// </list>
+    /// </remarks>
+    [JsonPropertyName("hints")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<PublicKeyCredentialHint> Hints
+    {
+        get
+        {
+            return _hints;
+        }
+        set
+        {
+            if (value.Any())
+            {
+                AuthenticatorSelection ??= new AuthenticatorSelection();
+                AuthenticatorSelection.AuthenticatorAttachment = value[0] switch
+                {
+                    PublicKeyCredentialHint.SecurityKey or PublicKeyCredentialHint.Hybrid => AuthenticatorAttachment
+                        .CrossPlatform,
+                    PublicKeyCredentialHint.ClientDevice => AuthenticatorAttachment.Platform,
+                    _ => AuthenticatorSelection.AuthenticatorAttachment
+                };
+            }
+            _hints = value;
+        }
+    }
+
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
     /// </summary>
