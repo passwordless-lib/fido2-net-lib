@@ -81,7 +81,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new  { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 
@@ -131,7 +131,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new { status = "error", errorMessage = FormatException(e)});
+            return Json(new { status = "error", errorMessage = FormatException(e) });
         }
     }
 
@@ -176,7 +176,7 @@ public class MyController : Controller
 
         catch (Exception e)
         {
-            return Json(new  { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 

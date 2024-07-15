@@ -280,7 +280,7 @@ public class UserController : ControllerBase
             {
                 creds.DevicePublicKeys.Add(res.DevicePublicKey);
             }
-            
+
 
             // 5. return result to client
             var handler = new JwtSecurityTokenHandler();
