@@ -57,7 +57,7 @@ public class ExistingU2fRegistrationDataTests
 
         var res = await fido2.MakeAssertionAsync(authResponse, options, publicKey.Encode(), null, 0, null);
 
-        Assert.Equal("ok", res.Status);
+        Assert.NotEmpty(res.CredentialId);
     }
 
     public static CborMap CreatePublicKeyFromU2fRegistrationData(byte[] keyHandleData, byte[] publicKeyData)

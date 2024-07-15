@@ -35,15 +35,11 @@ public class Packed : Fido2Tests.Attestation
 
             var res = await MakeAttestationResponseAsync();
 
-            Assert.Equal(string.Empty, res.ErrorMessage);
-            Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.AaGuid);
             Assert.Equal(_signCount, res.Result.SignCount);
             Assert.Equal("packed", res.Result.AttestationFormat);
             Assert.Equal(_credentialID, res.Result.Id);
-            Assert.Null(res.Result.ErrorMessage);
             Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
-            Assert.Null(res.Result.Status);
             Assert.Equal("Test User", res.Result.User.DisplayName);
             Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
@@ -314,21 +310,15 @@ public class Packed : Fido2Tests.Attestation
                         var avr = new VerifyAssertionResult
                         {
                             CredentialId = [0xf1, 0xd0],
-                            ErrorMessage = string.Empty,
-                            Status = "ok",
                         };
                     }
                     break;
             }
-            Assert.Equal(string.Empty, res.ErrorMessage);
-            Assert.Equal("ok", res.Status);
             Assert.Equal(_aaguid, res.Result.AaGuid);
             Assert.Equal(_signCount, res.Result.SignCount);
             Assert.Equal("packed", res.Result.AttestationFormat);
             Assert.Equal(_credentialID, res.Result.Id);
-            Assert.Null(res.Result.ErrorMessage);
             Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
-            Assert.Null(res.Result.Status);
             Assert.Equal("Test User", res.Result.User.DisplayName);
             Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
             Assert.Equal("testuser", res.Result.User.Name);
@@ -880,8 +870,7 @@ public class Packed : Fido2Tests.Attestation
         });
 
         var res = await MakeAttestationResponseAsync();
-        Assert.Equal(string.Empty, res.ErrorMessage);
-        Assert.Equal("ok", res.Status);
+        Assert.NotEmpty(res.Result.Id);
     }
 
     [Fact]

@@ -243,13 +243,11 @@ public class Apple : Fido2Tests.Attestation
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = _challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 PubKeyCredParam.ES256
             ],
             Rp = new PublicKeyCredentialRpEntity("https://www.passwordless.dev", "6cc3c9e7967a.ngrok.io", ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
