@@ -80,22 +80,14 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
         {
             if (value.Any())
             {
-                switch (value[0])
+                AuthenticatorSelection ??= new AuthenticatorSelection();
+                AuthenticatorSelection.AuthenticatorAttachment = value[0] switch
                 {
-                    case PublicKeyCredentialHint.SecurityKey:
-                    case PublicKeyCredentialHint.Hybrid:
-                        {
-                            AuthenticatorSelection.AuthenticatorAttachment ??= new AuthenticatorAttachment();
-                            AuthenticatorSelection.AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform;
-                            break;
-                        }
-                    case PublicKeyCredentialHint.ClientDevice:
-                        {
-                            AuthenticatorSelection.AuthenticatorAttachment ??= new AuthenticatorAttachment();
-                            AuthenticatorSelection.AuthenticatorAttachment = AuthenticatorAttachment.Platform;
-                            break;
-                        }
-                }
+                    PublicKeyCredentialHint.SecurityKey or PublicKeyCredentialHint.Hybrid => AuthenticatorAttachment
+                        .CrossPlatform,
+                    PublicKeyCredentialHint.ClientDevice => AuthenticatorAttachment.Platform,
+                    _ => AuthenticatorSelection.AuthenticatorAttachment
+                };
             }
             _hints = value;
         }
