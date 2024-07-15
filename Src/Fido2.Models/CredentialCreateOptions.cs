@@ -52,6 +52,9 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to select a preference regarding the attestation statement format used, if such an attestation is requested.
     /// </summary>
+    /// <remarks>
+    /// This parameter is advisory and the authenticator MAY use an attestation statement not enumerated in this parameter.
+    /// </remarks>
     [JsonPropertyName("attestationFormats")]
     public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats = Array.Empty<AttestationStatementFormatIdentifier>();
 
