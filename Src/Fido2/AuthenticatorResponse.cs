@@ -63,6 +63,7 @@ public class AuthenticatorResponse
     [JsonPropertyName("origin")]
     public string Origin { get; }
 
+    // [Obsolete("This property is not used and will be removed in a future version once the conformance tool stops testing for it.")]
     [JsonPropertyName("tokenBinding")]
     public TokenBindingDto? TokenBinding { get; set; }
 
@@ -86,10 +87,7 @@ public class AuthenticatorResponse
 
         // 13?. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
         // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
-        if (TokenBinding != null)
-        {
-            TokenBinding.Verify(requestTokenBindingId);
-        }
+        TokenBinding?.Verify(requestTokenBindingId);
     }
 
     /*
