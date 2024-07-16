@@ -253,7 +253,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = true,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -279,7 +279,7 @@ public class AuthenticatorResponseTests
         Assert.Equal(clientDataJson, rawResponse.Response.ClientDataJson);
         Assert.True(rawResponse.ClientExtensionResults.AppID);
         Assert.Equal(new string[] { "foo", "bar" }, rawResponse.ClientExtensionResults.Extensions);
-        Assert.Equal("test", rawResponse.ClientExtensionResults.Example);
+        Assert.True(rawResponse.ClientExtensionResults.Example);
         Assert.Equal((ulong)4, rawResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
         Assert.True(rawResponse.ClientExtensionResults.PRF.Enabled);
         Assert.Equal(rawResponse.ClientExtensionResults.PRF.Results.First, [0xf1, 0xd0]);
@@ -1212,7 +1212,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = true,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1240,11 +1240,12 @@ public class AuthenticatorResponseTests
         Assert.Equal([0xf1, 0xd0], assertionResponse.Response.UserHandle);
         Assert.True(assertionResponse.ClientExtensionResults.AppID);
         Assert.Equal(new string[] { "foo", "bar" }, assertionResponse.ClientExtensionResults.Extensions);
-        Assert.Equal("test", assertionResponse.ClientExtensionResults.Example);
+        Assert.True(assertionResponse.ClientExtensionResults.Example);
         Assert.Equal((ulong)4, assertionResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
         Assert.True(assertionResponse.ClientExtensionResults.PRF.Enabled);
         Assert.Equal([0xf1, 0xd0], assertionResponse.ClientExtensionResults.PRF.Results.First);
         Assert.Equal([0xf1, 0xd0], assertionResponse.ClientExtensionResults.PRF.Results.Second);
+
     }
 
     [Fact]
@@ -1288,7 +1289,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1356,7 +1357,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1425,7 +1426,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1494,7 +1495,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1563,7 +1564,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1632,7 +1633,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1703,7 +1704,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = true,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1773,7 +1774,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1844,7 +1845,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1914,7 +1915,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -1982,7 +1983,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -2051,7 +2052,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -2120,7 +2121,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -2189,7 +2190,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -2259,7 +2260,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -2328,7 +2329,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]
@@ -2404,7 +2405,7 @@ public class AuthenticatorResponseTests
             {
                 AppID = false,
                 Extensions = ["foo", "bar"],
-                Example = "test",
+                Example = true,
                 UserVerificationMethod = new ulong[][]
                 {
                     new ulong[]

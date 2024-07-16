@@ -20,12 +20,14 @@ public interface IFido2
         IReadOnlyList<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
+        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default);
 
     Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
         CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
+        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default);
 
     CredentialCreateOptions RequestNewCredential(

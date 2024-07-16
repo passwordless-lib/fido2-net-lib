@@ -48,6 +48,7 @@ public class AuthenticatorResponse
         Type = response.Type;
         Challenge = response.Challenge;
         Origin = response.Origin;
+        TokenBinding = response.TokenBinding;
     }
 
     public const int MAX_ORIGINS_TO_PRINT = 5;
@@ -62,7 +63,11 @@ public class AuthenticatorResponse
     [JsonPropertyName("origin")]
     public string Origin { get; }
 
-    protected void BaseVerify(IReadOnlySet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge)
+    // [Obsolete("This property is not used and will be removed in a future version once the conformance tool stops testing for it.")]
+    [JsonPropertyName("tokenBinding")]
+    public TokenBindingDto? TokenBinding { get; set; }
+
+    protected void BaseVerify(IReadOnlySet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, byte[]? requestTokenBindingId)
     {
         if (Type is not "webauthn.create" && Type is not "webauthn.get")
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
@@ -79,6 +84,10 @@ public class AuthenticatorResponse
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
         if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
             throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
+
+        // 13?. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained. 
+        // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
+        TokenBinding?.Verify(requestTokenBindingId);
     }
 
     /*
