@@ -200,7 +200,7 @@ public class Packed : Fido2Tests.Attestation
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
             RegisteredPublicKeyCredential credential = null;
-            
+
             switch (type)
             {
                 case COSE.KeyType.EC2:

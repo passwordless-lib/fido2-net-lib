@@ -96,7 +96,7 @@ public class TestController : Controller
         // 3. Store the credentials in db
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
-            Descriptor = new PublicKeyCredentialDescriptor(credential.Id),
+            Id = credential.Id,
             PublicKey = credential.PublicKey,
             UserHandle = credential.User.Id,
             SignCount = credential.SignCount

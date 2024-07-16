@@ -25,7 +25,7 @@ public class None : Fido2Tests.Attestation
 
             _attestationObject.Add("attStmt", new CborMap());
             _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey((keyType, alg, crv));
-            
+
 
             var credential = await MakeAttestationResponseAsync();
 
