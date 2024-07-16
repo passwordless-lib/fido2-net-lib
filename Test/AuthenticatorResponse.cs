@@ -97,13 +97,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 PubKeyCredParam.ES256
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -200,13 +198,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -411,13 +407,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -483,13 +477,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -553,13 +545,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -630,13 +620,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -709,13 +697,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -788,13 +774,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -866,13 +850,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -944,13 +926,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -1022,13 +1002,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -1100,13 +1078,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Discouraged,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",
@@ -1177,13 +1153,11 @@ public class AuthenticatorResponseTests
                 UserVerification = UserVerificationRequirement.Required,
             },
             Challenge = challenge,
-            ErrorMessage = "",
             PubKeyCredParams =
             [
                 new PubKeyCredParam(COSE.Algorithm.ES256)
             ],
             Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            Status = "ok",
             User = new Fido2User
             {
                 Name = "testuser",

@@ -6,7 +6,7 @@ using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib;
 
-public sealed class CredentialCreateOptions : Fido2ResponseBase
+public sealed class CredentialCreateOptions
 {
     /// <summary>
     /// 
@@ -117,8 +117,6 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     {
         return new CredentialCreateOptions
         {
-            Status = "ok",
-            ErrorMessage = string.Empty,
             Challenge = challenge,
             Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
             Timeout = config.Timeout,

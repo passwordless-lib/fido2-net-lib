@@ -134,11 +134,6 @@ public class UserService
                 return "No options received";
             }
 
-            if (options.Status != "ok")
-            {
-                return options.ErrorMessage ?? string.Empty;
-            }
-
             // Present options to user and get response (usernameless users will be asked by their authenticator, which credential they want to use to sign the challenge)
             var assertion = await _webAuthn.VerifyAsync(options);
 

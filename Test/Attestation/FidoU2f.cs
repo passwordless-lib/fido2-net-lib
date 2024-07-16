@@ -55,20 +55,16 @@ public class FidoU2f : Fido2Tests.Attestation
     [Fact]
     public async Task TestU2f()
     {
-        var res = await MakeAttestationResponseAsync();
-        Assert.Equal(string.Empty, res.ErrorMessage);
-        Assert.Equal("ok", res.Status);
-        Assert.Equal(_aaguid, res.Result.AaGuid);
-        Assert.Equal(_signCount, res.Result.SignCount);
-        Assert.Equal("fido-u2f", res.Result.AttestationFormat);
-        Assert.Equal(_credentialID, res.Result.Id);
-        Assert.Null(res.Result.ErrorMessage);
-        Assert.Equal(_credentialPublicKey.GetBytes(), res.Result.PublicKey);
-        Assert.Null(res.Result.Status);
-        Assert.Equal("Test User", res.Result.User.DisplayName);
-        Assert.Equal("testuser"u8.ToArray(), res.Result.User.Id);
-        Assert.Equal("testuser", res.Result.User.Name);
-        Assert.Equal(new[] { AuthenticatorTransport.Internal }, res.Result.Transports);
+        var credential = await MakeAttestationResponseAsync();
+        Assert.Equal(_aaguid, credential.AaGuid);
+        Assert.Equal(_signCount, credential.SignCount);
+        Assert.Equal("fido-u2f", credential.AttestationFormat);
+        Assert.Equal(_credentialID, credential.Id);
+        Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+        Assert.Equal("Test User", credential.User.DisplayName);
+        Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
+        Assert.Equal("testuser", credential.User.Name);
+        Assert.Equal(new[] { AuthenticatorTransport.Internal }, credential.Transports);
     }
 
     [Fact]
