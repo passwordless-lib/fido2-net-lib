@@ -241,7 +241,7 @@ public class AuthenticatorSelection
     [JsonPropertyName("residentKey")]
     public ResidentKeyRequirement ResidentKey
     {
-        private get => _residentKey;
+        get => _residentKey;
         set
         {
             _residentKey = value;
