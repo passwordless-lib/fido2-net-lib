@@ -33,6 +33,7 @@ public sealed class AuthenticationExtensionsClientInputs
     /// <summary>
     /// This extension enables use of a user verification method.
     /// https://www.w3.org/TR/webauthn/#sctn-uvm-extension
+    /// TODO: Remove this completely as it's removed in L3
     /// </summary>
     [JsonPropertyName("uvm")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
