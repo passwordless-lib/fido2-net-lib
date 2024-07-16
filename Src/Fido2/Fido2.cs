@@ -65,7 +65,7 @@ public class Fido2 : IFido2
     /// <param name="attestationResponse">The attestation response from the authenticator.</param>
     /// <param name="originalOptions">The original options that was sent to the client.</param>
     /// <param name="isCredentialIdUniqueToUser">The delegate used to validate that the CredentialID is unique to this user.</param>
-    /// <param name="requestTokenBindingId">deprecated ===</param>
+    /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(
@@ -107,7 +107,7 @@ public class Fido2 : IFido2
     /// <param name="storedDevicePublicKeys">The stored device public keys.</param>
     /// <param name="storedSignatureCounter">The stored value of the signature counter.</param>
     /// <param name="isUserHandleOwnerOfCredentialIdCallback">The delegate used to validate that the user handle is indeed owned of the CredentialId.</param>
-    /// <param name="requestTokenBindingId">Deprecated ===</param>
+    /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<VerifyAssertionResult> MakeAssertionAsync(
