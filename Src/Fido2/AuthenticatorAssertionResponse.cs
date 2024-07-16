@@ -126,16 +126,16 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (!authData.RpIdHash.SequenceEqual(hashedRpId))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidRpidHash, Fido2ErrorMessages.InvalidRpidHash);
 
-        if (options.UserVerification is UserVerificationRequirement.Required)
-        {
-            // 14. Verify that the UP bit of the flags in authData is set.
-            if (!authData.UserPresent)
-                throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
+        var conformanceTesting = metadataService != null && metadataService.ConformanceTesting();
+        
+        // 14. Verify that the UP bit of the flags in authData is set.
+        // Todo: Conformance testing verifies the UVP flags differently than W3C spec, simplify this by removing the mention of conformanceTesting when conformance tools are updated) 
+        if (!authData.UserPresent && !conformanceTesting)
+            throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
-            // 15. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
-            if (!authData.UserVerified)
-                throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
-        }
+        // 15. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
+        if (options.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
+            throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
         
         // 16. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs be the values of the BE and BS bits, respectively, of the flags in authData.
         // Compare currentBe and currentBs with credentialRecord.BE and credentialRecord.BS and apply Relying Party policy, if any.
