@@ -162,7 +162,6 @@ public class UserController : ControllerBase
             {
                 AttestationFormat = result.Result.AttestationFormat,
                 Id = result.Result.Id,
-                Descriptor = new PublicKeyCredentialDescriptor(result.Result.Id),
                 PublicKey = result.Result.PublicKey,
                 UserHandle = result.Result.User.Id,
                 SignCount = result.Result.SignCount,
