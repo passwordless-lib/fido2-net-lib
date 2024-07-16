@@ -55,16 +55,16 @@ public class FidoU2f : Fido2Tests.Attestation
     [Fact]
     public async Task TestU2f()
     {
-        var res = await MakeAttestationResponseAsync();
-        Assert.Equal(_aaguid, res.Credential.AaGuid);
-        Assert.Equal(_signCount, res.Credential.SignCount);
-        Assert.Equal("fido-u2f", res.Credential.AttestationFormat);
-        Assert.Equal(_credentialID, res.Credential.Id);
-        Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
-        Assert.Equal("Test User", res.Credential.User.DisplayName);
-        Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
-        Assert.Equal("testuser", res.Credential.User.Name);
-        Assert.Equal(new[] { AuthenticatorTransport.Internal }, res.Credential.Transports);
+        var credential = await MakeAttestationResponseAsync();
+        Assert.Equal(_aaguid, credential.AaGuid);
+        Assert.Equal(_signCount, credential.SignCount);
+        Assert.Equal("fido-u2f", credential.AttestationFormat);
+        Assert.Equal(_credentialID, credential.Id);
+        Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+        Assert.Equal("Test User", credential.User.DisplayName);
+        Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
+        Assert.Equal("testuser", credential.User.Name);
+        Assert.Equal(new[] { AuthenticatorTransport.Internal }, credential.Transports);
     }
 
     [Fact]

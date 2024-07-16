@@ -149,7 +149,7 @@ public class Fido2Tests
             idFidoGenCeAaGuidExt = new X509Extension(oidIdFidoGenCeAaGuid, _asnEncodedAaguid, false);
         }
 
-        public async Task<MakeNewCredentialResult> MakeAttestationResponseAsync()
+        public async Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync()
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 

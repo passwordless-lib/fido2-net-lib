@@ -106,28 +106,28 @@ public class MyController : Controller
             };
 
             // 2. Verify and make the credentials
-            var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
+            var credential = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
 
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                Id = success.Credential.Id,
-                PublicKey = success.Credential.PublicKey,
-                UserHandle = success.Credential.User.Id,
-                SignCount = success.Credential.SignCount,
-                AttestationFormat = success.Credential.AttestationFormat,
+                Id = credential.Id,
+                PublicKey = credential.PublicKey,
+                UserHandle = credential.User.Id,
+                SignCount = credential.SignCount,
+                AttestationFormat = credential.AttestationFormat,
                 RegDate = DateTimeOffset.UtcNow,
-                AaGuid = success.Credential.AaGuid,
-                Transports = success.Credential.Transports,
-                IsBackupEligible = success.Credential.IsBackupEligible,
-                IsBackedUp = success.Credential.IsBackedUp,
-                AttestationObject = success.Credential.AttestationObject,
-                AttestationClientDataJson = success.Credential.AttestationClientDataJson,
-                DevicePublicKeys = [success.Credential.DevicePublicKey]
+                AaGuid = credential.AaGuid,
+                Transports = credential.Transports,
+                IsBackupEligible = credential.IsBackupEligible,
+                IsBackedUp = credential.IsBackedUp,
+                AttestationObject = credential.AttestationObject,
+                AttestationClientDataJson = credential.AttestationClientDataJson,
+                DevicePublicKeys = [credential.DevicePublicKey]
             });
 
             // 4. return "ok" to the client
-            return Json(success);
+            return Json(credential);
         }
         catch (Exception e)
         {

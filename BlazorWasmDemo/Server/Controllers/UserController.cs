@@ -150,24 +150,25 @@ public class UserController : ControllerBase
             // 2. Create callback so that lib can verify credential id is unique to this user
 
             // 3. Verify and make the credentials
-            var result = await _fido2.MakeNewCredentialAsync(attestationResponse, options, CredentialIdUniqueToUserAsync, cancellationToken: cancellationToken);
+            var credential = await _fido2.MakeNewCredentialAsync(attestationResponse, options, CredentialIdUniqueToUserAsync, cancellationToken: cancellationToken);
 
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                AttestationFormat = result.Credential.AttestationFormat,
-                Id = result.Credential.Id,
-                PublicKey = result.Credential.PublicKey,
-                UserHandle = result.Credential.User.Id,
-                SignCount = result.Credential.SignCount,
+
+                AttestationFormat = credential.AttestationFormat,
+                Id = credential.Id,
+                PublicKey = credential.PublicKey,
+                UserHandle = credential.User.Id,
+                SignCount = credential.SignCount,
                 RegDate = DateTimeOffset.UtcNow,
-                AaGuid = result.Credential.AaGuid,
-                DevicePublicKeys = [result.Credential.DevicePublicKey],
-                Transports = result.Credential.Transports,
-                IsBackupEligible = result.Credential.IsBackupEligible,
-                IsBackedUp = result.Credential.IsBackedUp,
-                AttestationObject = result.Credential.AttestationObject,
-                AttestationClientDataJson = result.Credential.AttestationClientDataJson,
+                AaGuid = credential.AaGuid,
+                DevicePublicKeys = [credential.DevicePublicKey],
+                Transports = credential.Transports,
+                IsBackupEligible = credential.IsBackupEligible,
+                IsBackedUp = credential.IsBackedUp,
+                AttestationObject = credential.AttestationObject,
+                AttestationClientDataJson = credential.AttestationClientDataJson,
             });
 
             // 5. Now we need to remove the options from the pending dictionary

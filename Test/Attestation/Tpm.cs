@@ -289,18 +289,18 @@ public class Tpm : Fido2Tests.Attestation
 
                     break;
             }
-            var res = await MakeAttestationResponseAsync();
+            var credential = await MakeAttestationResponseAsync();
 
-            Assert.Equal(_aaguid, res.Credential.AaGuid);
-            Assert.Equal(_signCount, res.Credential.SignCount);
-            Assert.Equal("tpm", res.Credential.AttestationFormat);
-            Assert.Equal(_credentialID, res.Credential.Id);
-            Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
-            Assert.Equal("Test User", res.Credential.User.DisplayName);
-            Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
-            Assert.Equal("testuser", res.Credential.User.Name);
+            Assert.Equal(_aaguid, credential.AaGuid);
+            Assert.Equal(_signCount, credential.SignCount);
+            Assert.Equal("tpm", credential.AttestationFormat);
+            Assert.Equal(_credentialID, credential.Id);
+            Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+            Assert.Equal("Test User", credential.User.DisplayName);
+            Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
+            Assert.Equal("testuser", credential.User.Name);
             _attestationObject = new CborMap { { "fmt", "tpm" } };
-            Assert.Equal([AuthenticatorTransport.Internal], res.Credential.Transports);
+            Assert.Equal([AuthenticatorTransport.Internal], credential.Transports);
         }
     }
 
@@ -404,17 +404,17 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var res = await MakeAttestationResponseAsync();
+        var credential = await MakeAttestationResponseAsync();
 
-        Assert.Equal(_aaguid, res.Credential.AaGuid);
-        Assert.Equal(_signCount, res.Credential.SignCount);
-        Assert.Equal("tpm", res.Credential.AttestationFormat);
-        Assert.Equal(_credentialID, res.Credential.Id);
-        Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
-        Assert.Equal("Test User", res.Credential.User.DisplayName);
-        Assert.Equal("testuser"u8, res.Credential.User.Id);
-        Assert.Equal("testuser", res.Credential.User.Name);
-        Assert.Equal([AuthenticatorTransport.Internal], res.Credential.Transports);
+        Assert.Equal(_aaguid, credential.AaGuid);
+        Assert.Equal(_signCount, credential.SignCount);
+        Assert.Equal("tpm", credential.AttestationFormat);
+        Assert.Equal(_credentialID, credential.Id);
+        Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+        Assert.Equal("Test User", credential.User.DisplayName);
+        Assert.Equal("testuser"u8, credential.User.Id);
+        Assert.Equal("testuser", credential.User.Name);
+        Assert.Equal([AuthenticatorTransport.Internal], credential.Transports);
     }
 
     [Fact]
@@ -5046,17 +5046,17 @@ public class Tpm : Fido2Tests.Attestation
             { "pubArea", pubArea }
         });
 
-        var res = await MakeAttestationResponseAsync();
+        var crendential = await MakeAttestationResponseAsync();
 
-        Assert.Equal(_aaguid, res.Credential.AaGuid);
-        Assert.Equal(_signCount, res.Credential.SignCount);
-        Assert.Equal("tpm", res.Credential.AttestationFormat);
-        Assert.Equal(_credentialID, res.Credential.Id);
-        Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
-        Assert.Equal("Test User", res.Credential.User.DisplayName);
-        Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
-        Assert.Equal("testuser", res.Credential.User.Name);
-        Assert.Equal([AuthenticatorTransport.Internal], res.Credential.Transports);
+        Assert.Equal(_aaguid, crendential.AaGuid);
+        Assert.Equal(_signCount, crendential.SignCount);
+        Assert.Equal("tpm", crendential.AttestationFormat);
+        Assert.Equal(_credentialID, crendential.Id);
+        Assert.Equal(_credentialPublicKey.GetBytes(), crendential.PublicKey);
+        Assert.Equal("Test User", crendential.User.DisplayName);
+        Assert.Equal("testuser"u8.ToArray(), crendential.User.Id);
+        Assert.Equal("testuser", crendential.User.Name);
+        Assert.Equal([AuthenticatorTransport.Internal], crendential.Transports);
     }
 
     [Fact]

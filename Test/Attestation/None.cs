@@ -25,18 +25,18 @@ public class None : Fido2Tests.Attestation
 
             _attestationObject.Add("attStmt", new CborMap());
             _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey((keyType, alg, crv));
-            MakeNewCredentialResult res;
+            
 
-            res = await MakeAttestationResponseAsync();
+            var credential = await MakeAttestationResponseAsync();
 
-            Assert.Equal(_aaguid, res.Credential.AaGuid);
-            Assert.Equal(_signCount, res.Credential.SignCount);
-            Assert.Equal("none", res.Credential.AttestationFormat);
-            Assert.Equal(_credentialID, res.Credential.Id);
-            Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
-            Assert.Equal("Test User", res.Credential.User.DisplayName);
-            Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
-            Assert.Equal("testuser", res.Credential.User.Name);
+            Assert.Equal(_aaguid, credential.AaGuid);
+            Assert.Equal(_signCount, credential.SignCount);
+            Assert.Equal("none", credential.AttestationFormat);
+            Assert.Equal(_credentialID, credential.Id);
+            Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+            Assert.Equal("Test User", credential.User.DisplayName);
+            Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
+            Assert.Equal("testuser", credential.User.Name);
             _attestationObject = new CborMap { { "fmt", "none" } };
         }
     }

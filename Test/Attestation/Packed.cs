@@ -33,18 +33,18 @@ public class Packed : Fido2Tests.Attestation
                 { "sig", signature }
             });
 
-            var res = await MakeAttestationResponseAsync();
+            var credential = await MakeAttestationResponseAsync();
 
-            Assert.Equal(_aaguid, res.Credential.AaGuid);
-            Assert.Equal(_signCount, res.Credential.SignCount);
-            Assert.Equal("packed", res.Credential.AttestationFormat);
-            Assert.Equal(_credentialID, res.Credential.Id);
-            Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
-            Assert.Equal("Test User", res.Credential.User.DisplayName);
-            Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
-            Assert.Equal("testuser", res.Credential.User.Name);
+            Assert.Equal(_aaguid, credential.AaGuid);
+            Assert.Equal(_signCount, credential.SignCount);
+            Assert.Equal("packed", credential.AttestationFormat);
+            Assert.Equal(_credentialID, credential.Id);
+            Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+            Assert.Equal("Test User", credential.User.DisplayName);
+            Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
+            Assert.Equal("testuser", credential.User.Name);
             _attestationObject = new CborMap { { "fmt", "packed" } };
-            Assert.Equal(new[] { AuthenticatorTransport.Internal }, res.Credential.Transports);
+            Assert.Equal(new[] { AuthenticatorTransport.Internal }, credential.Transports);
         }
     }
 
@@ -199,8 +199,8 @@ public class Packed : Fido2Tests.Attestation
             DateTimeOffset notAfter = notBefore.AddDays(2);
             var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
 
-            MakeNewCredentialResult res = null;
-
+            RegisteredPublicKeyCredential credential = null;
+            
             switch (type)
             {
                 case COSE.KeyType.EC2:
@@ -258,7 +258,7 @@ public class Packed : Fido2Tests.Attestation
                             { "x5c", x5c }
                         });
 
-                        res = await MakeAttestationResponseAsync();
+                        credential = await MakeAttestationResponseAsync();
                     }
                     break;
                 case COSE.KeyType.RSA:
@@ -302,7 +302,7 @@ public class Packed : Fido2Tests.Attestation
                             { "x5c", x5c }
                         });
 
-                        res = await MakeAttestationResponseAsync();
+                        credential = await MakeAttestationResponseAsync();
                     }
                     break;
                 case COSE.KeyType.OKP:
@@ -314,14 +314,14 @@ public class Packed : Fido2Tests.Attestation
                     }
                     break;
             }
-            Assert.Equal(_aaguid, res.Credential.AaGuid);
-            Assert.Equal(_signCount, res.Credential.SignCount);
-            Assert.Equal("packed", res.Credential.AttestationFormat);
-            Assert.Equal(_credentialID, res.Credential.Id);
-            Assert.Equal(_credentialPublicKey.GetBytes(), res.Credential.PublicKey);
-            Assert.Equal("Test User", res.Credential.User.DisplayName);
-            Assert.Equal("testuser"u8.ToArray(), res.Credential.User.Id);
-            Assert.Equal("testuser", res.Credential.User.Name);
+            Assert.Equal(_aaguid, credential.AaGuid);
+            Assert.Equal(_signCount, credential.SignCount);
+            Assert.Equal("packed", credential.AttestationFormat);
+            Assert.Equal(_credentialID, credential.Id);
+            Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+            Assert.Equal("Test User", credential.User.DisplayName);
+            Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
+            Assert.Equal("testuser", credential.User.Name);
             _attestationObject = new CborMap { { "fmt", "packed" } };
         }
     }
@@ -869,8 +869,8 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c },
         });
 
-        var res = await MakeAttestationResponseAsync();
-        Assert.NotEmpty(res.Credential.Id);
+        var credential = await MakeAttestationResponseAsync();
+        Assert.NotEmpty(credential.Id);
     }
 
     [Fact]
