@@ -56,7 +56,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     /// This parameter is advisory and the authenticator MAY use an attestation statement not enumerated in this parameter.
     /// </remarks>
     [JsonPropertyName("attestationFormats")]
-    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats = Array.Empty<AttestationStatementFormatIdentifier>();
+    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; set; } = Array.Empty<AttestationStatementFormatIdentifier>();
 
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the create() operation.

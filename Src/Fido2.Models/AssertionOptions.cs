@@ -58,7 +58,7 @@ public class AssertionOptions : Fido2ResponseBase
     /// This member is intended for use by Relying Parties that wish to select a preference regarding the attestation statement format used, if such an attestation is requested.
     /// </summary>
     [JsonPropertyName("attestationFormats")]
-    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats = Array.Empty<AttestationStatementFormatIdentifier>();
+    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; set; } = Array.Empty<AttestationStatementFormatIdentifier>();
 
     /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator.
