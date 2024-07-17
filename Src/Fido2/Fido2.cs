@@ -67,21 +67,16 @@ public class Fido2 : IFido2
     /// <param name="isCredentialIdUniqueToUser">The delegate used to validate that the CredentialID is unique to this user.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
-    public async Task<MakeNewCredentialResult> MakeNewCredentialAsync(
+    public async Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
         CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         CancellationToken cancellationToken = default)
     {
         var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-        var success = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
+        var credential = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
 
-        // todo: Set Errormessage etc.
-        return new MakeNewCredentialResult(
-            status: "ok",
-            errorMessage: string.Empty,
-            result: success
-        );
+        return credential;
     }
 
     /// <summary>

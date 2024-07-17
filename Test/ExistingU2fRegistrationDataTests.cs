@@ -55,9 +55,9 @@ public class ExistingU2fRegistrationDataTests
             Origins = new HashSet<string> { "https://localhost:44336" } //data was generated with this origin
         });
 
-        var res = await fido2.MakeAssertionAsync(authResponse, options, publicKey.Encode(), null, 0, null);
+        var credential = await fido2.MakeAssertionAsync(authResponse, options, publicKey.Encode(), null, 0, null);
 
-        Assert.Equal("ok", res.Status);
+        Assert.NotEmpty(credential.CredentialId);
     }
 
     public static CborMap CreatePublicKeyFromU2fRegistrationData(byte[] keyHandleData, byte[] publicKeyData)

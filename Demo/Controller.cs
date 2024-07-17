@@ -81,7 +81,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new CredentialCreateOptions { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 
@@ -106,33 +106,32 @@ public class MyController : Controller
             };
 
             // 2. Verify and make the credentials
-            var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
+            var credential = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
 
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                Id = success.Result.Id,
-                Descriptor = new PublicKeyCredentialDescriptor(success.Result.Id),
-                PublicKey = success.Result.PublicKey,
-                UserHandle = success.Result.User.Id,
-                SignCount = success.Result.SignCount,
-                AttestationFormat = success.Result.AttestationFormat,
+                Id = credential.Id,
+                PublicKey = credential.PublicKey,
+                UserHandle = credential.User.Id,
+                SignCount = credential.SignCount,
+                AttestationFormat = credential.AttestationFormat,
                 RegDate = DateTimeOffset.UtcNow,
-                AaGuid = success.Result.AaGuid,
-                Transports = success.Result.Transports,
-                IsBackupEligible = success.Result.IsBackupEligible,
-                IsBackedUp = success.Result.IsBackedUp,
-                AttestationObject = success.Result.AttestationObject,
-                AttestationClientDataJson = success.Result.AttestationClientDataJson,
-                DevicePublicKeys = [success.Result.DevicePublicKey]
+                AaGuid = credential.AaGuid,
+                Transports = credential.Transports,
+                IsBackupEligible = credential.IsBackupEligible,
+                IsBackedUp = credential.IsBackedUp,
+                AttestationObject = credential.AttestationObject,
+                AttestationClientDataJson = credential.AttestationClientDataJson,
+                DevicePublicKeys = [credential.DevicePublicKey]
             });
 
             // 4. return "ok" to the client
-            return Json(success);
+            return Json(credential);
         }
         catch (Exception e)
         {
-            return Json(new MakeNewCredentialResult(status: "error", errorMessage: FormatException(e), result: null));
+            return Json(new { status = "error", errorMessage = FormatException(e) });
         }
     }
 
@@ -177,7 +176,7 @@ public class MyController : Controller
 
         catch (Exception e)
         {
-            return Json(new AssertionOptions { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 
@@ -218,7 +217,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new VerifyAssertionResult { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 }

@@ -9,7 +9,7 @@ public class StoredCredential
     /// <summary>
     /// The Credential ID of the public key credential source.
     /// </summary>
-    public byte[] Id { get; set; }
+    public required byte[] Id { get; set; }
 
     /// <summary>
     /// The credential public key of the public key credential source.
@@ -52,7 +52,10 @@ public class StoredCredential
 
     public byte[] UserId { get; set; }
 
-    public PublicKeyCredentialDescriptor Descriptor { get; set; }
+    /// <summary>
+    /// Exposes an Descriptor Object for this credential, used as input to the library for certain operations.
+    /// </summary>
+    public PublicKeyCredentialDescriptor Descriptor => new(PublicKeyCredentialType.PublicKey, Id, Transports);
 
     public byte[] UserHandle { get; set; }
 

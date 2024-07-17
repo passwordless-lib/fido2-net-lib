@@ -176,7 +176,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         return new VerifyAssertionResult
         {
-            Status = "ok",
             CredentialId = Raw.Id,
             SignCount = authData.SignCount,
             IsBackedUp = authData.IsBackedUp,

@@ -22,7 +22,7 @@ public interface IFido2
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
         CancellationToken cancellationToken = default);
 
-    Task<MakeNewCredentialResult> MakeNewCredentialAsync(
+    Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
         CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,

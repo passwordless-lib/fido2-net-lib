@@ -149,7 +149,7 @@ public class Fido2Tests
             idFidoGenCeAaGuidExt = new X509Extension(oidIdFidoGenCeAaGuid, _asnEncodedAaguid, false);
         }
 
-        public async Task<MakeNewCredentialResult> MakeAttestationResponseAsync()
+        public async Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync()
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
@@ -189,7 +189,6 @@ public class Fido2Tests
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = _challenge,
-                ErrorMessage = "",
                 PubKeyCredParams = new List<PubKeyCredParam>()
                 {
                     new(COSE.Algorithm.ES256),
@@ -206,7 +205,6 @@ public class Fido2Tests
                     new(COSE.Algorithm.ES256K),
                 },
                 Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-                Status = "ok",
                 User = new Fido2User
                 {
                     Name = "testuser",
@@ -814,8 +812,6 @@ public class Fido2Tests
                 avr = await MakeAssertionResponseAsync(type, alg);
             }
 
-            Assert.Null(avr.ErrorMessage);
-            Assert.Equal("ok", avr.Status);
             Assert.Equal([0xf1, 0xd0], avr.CredentialId);
             Assert.Equal("1", avr.SignCount.ToString("X"));
         }

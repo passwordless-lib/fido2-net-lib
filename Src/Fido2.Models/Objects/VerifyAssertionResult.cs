@@ -3,7 +3,7 @@
 /// <summary>
 /// Result of the MakeAssertion verification
 /// </summary>
-public class VerifyAssertionResult : Fido2ResponseBase
+public class VerifyAssertionResult
 {
     public byte[] CredentialId { get; init; }
 

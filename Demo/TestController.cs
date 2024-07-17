@@ -1,5 +1,6 @@
 ﻿using System.Text;
-
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
@@ -34,7 +35,7 @@ public class TestController : Controller
 
     [HttpPost]
     [Route("/attestation/options")]
-    public JsonResult MakeCredentialOptionsTest([FromBody] TEST_MakeCredentialParams opts)
+    public OkObjectResult MakeCredentialOptionsTest([FromBody] TEST_MakeCredentialParams opts)
     {
         var attType = opts.Attestation;
 
@@ -72,12 +73,16 @@ public class TestController : Controller
         HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
 
         // 5. return options to client
-        return Json(options);
+
+        var jsonResponse = JsonSerializer.SerializeToNode(options);
+        jsonResponse["status"] = "ok";
+        jsonResponse["errorMessage"] = "";
+        return new OkObjectResult(jsonResponse);
     }
 
     [HttpPost]
     [Route("/attestation/result")]
-    public async Task<JsonResult> MakeCredentialResultTestAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
+    public async Task<OkObjectResult> MakeCredentialResultTestAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
     {
         // 1. get the options we sent the client
         var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
@@ -91,19 +96,22 @@ public class TestController : Controller
         };
 
         // 2. Verify and make the credentials
-        var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
+        var credential = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
 
         // 3. Store the credentials in db
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
-            Descriptor = new PublicKeyCredentialDescriptor(success.Result.Id),
-            PublicKey = success.Result.PublicKey,
-            UserHandle = success.Result.User.Id,
-            SignCount = success.Result.SignCount
+            Id = credential.Id,
+            PublicKey = credential.PublicKey,
+            UserHandle = credential.User.Id,
+            SignCount = credential.SignCount
         });
 
         // 4. return "ok" to the client
-        return Json(success);
+        var jsonResponse = JsonSerializer.SerializeToNode(credential);
+        jsonResponse["status"] = "ok";
+        jsonResponse["errorMessage"] = "";
+        return new OkObjectResult(jsonResponse);
     }
 
     [HttpPost]
@@ -142,7 +150,10 @@ public class TestController : Controller
         HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
 
         // 5. Return options to client
-        return Json(options);
+        var jsonResponse = JsonSerializer.SerializeToNode(options);
+        jsonResponse["status"] = "ok";
+        jsonResponse["errorMessage"] = "";
+        return new OkObjectResult(jsonResponse);
     }
 
     [HttpPost]

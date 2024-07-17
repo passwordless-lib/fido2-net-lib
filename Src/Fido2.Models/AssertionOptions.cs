@@ -9,7 +9,7 @@ namespace Fido2NetLib;
 /// <summary>
 /// Sent to the browser when we want to Assert credentials and authenticate a user
 /// </summary>
-public class AssertionOptions : Fido2ResponseBase
+public class AssertionOptions
 {
     /// <summary>
     /// This member represents a challenge that the selected authenticator signs, along with other data, when producing an authentication assertion.
@@ -77,8 +77,6 @@ public class AssertionOptions : Fido2ResponseBase
     {
         return new AssertionOptions()
         {
-            Status = "ok",
-            ErrorMessage = string.Empty,
             Challenge = challenge,
             Timeout = config.Timeout,
             RpId = config.ServerDomain,
