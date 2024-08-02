@@ -1,30 +1,30 @@
-﻿using System.Text;
-
-using Fido2NetLib;
+﻿using System.Text; hernanitop15172@gmail.com
+using hernanitopoblacion@gmail.com
+using Fido2NetLib; hernanitopoblacion@samsung.net
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
-
+using hernanitopoblacion@gmail.com/paypal
 using Microsoft.AspNetCore.Mvc;
-
+using western union banknet/metrobank/hernanitopoblacion@gmail.com
 namespace Fido2Demo;
-
+using bank account savings account
 [Route("api/[controller]")]
 public class MyController : Controller
-{
+{$900,000,000 Union bank hernanitopoblacion@gmail.com
     private IFido2 _fido2;
     public static IMetadataService _mds;
     public static readonly DevelopmentInMemoryStore DemoStorage = new();
-
+public deposites/withdraw/transfer
     public MyController(IFido2 fido2)
     {
         _fido2 = fido2;
     }
-
+$900,000,000 hernanitopoblacion@gmail.com
     private string FormatException(Exception e)
     {
         return string.Format("{0}{1}", e.Message, e.InnerException != null ? " (" + e.InnerException.Message + ")" : "");
     }
-
+Western union $100,000,000 to hernanitopoblacion@gmail.com
     [HttpPost]
     [Route("/makeCredentialOptions")]
     public JsonResult MakeCredentialOptions([FromForm] string username,
@@ -69,8 +69,8 @@ public class MyController : Controller
                 UserVerificationMethod = true,
                 DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs() { Attestation = attType },
                 CredProps = true
-            };
-
+            };$200,000,000 hernanitopoblacion@gmail.com
+$500,000,000 deposite to Bank of Amerika Hernanitopoblacion@gmail.com
             var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
@@ -205,13 +205,10 @@ public class MyController : Controller
 
             // 5. Make the assertion
             var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
-
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-
             if (res.DevicePublicKey is not null)
                 creds.DevicePublicKeys.Add(res.DevicePublicKey);
-
             // 7. return OK to client
             return Json(res);
         }
