@@ -25,7 +25,7 @@ public class FidoEnumConverterTests
         Assert.Equal(ABC.A, JsonSerializer.Deserialize<ABC>("\"A\""));
         Assert.Equal(PublicKeyCredentialType.PublicKey, JsonSerializer.Deserialize<PublicKeyCredentialType>("\"PublicKey\""));
 
-        // Case insensitive
+        // Case-insensitive
         Assert.Equal("\"A\"", JsonSerializer.Serialize(ABC.A));
         Assert.Equal(ABC.A, JsonSerializer.Deserialize<ABC>("\"a\""));
         Assert.Equal(PublicKeyCredentialType.PublicKey, JsonSerializer.Deserialize<PublicKeyCredentialType>("\"publickey\""));
