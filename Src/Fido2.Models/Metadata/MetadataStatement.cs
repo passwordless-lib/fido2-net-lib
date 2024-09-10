@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
@@ -7,7 +7,7 @@ namespace Fido2NetLib;
 /// Represents the metadata statement.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#metadata-keys"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.0-ps-20210518.html"/>
 /// </remarks>
 public class MetadataStatement
 {
@@ -47,6 +47,12 @@ public class MetadataStatement
     /// </summary>
     [JsonPropertyName("description"), Required]
     public string Description { get; set; }
+
+    /// <summary>
+    /// Gets or sets a human-readable, short description of the authenticator, in alternative languages. 
+    /// </summary>
+    [JsonPropertyName("friendlyNames")]
+    public IDictionary<string, string> FriendlyNames { get; set; }
 
     /// <summary>
     /// Gets or set a list of human-readable short descriptions of the authenticator in different languages.
