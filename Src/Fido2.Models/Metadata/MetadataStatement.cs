@@ -51,6 +51,7 @@ public class MetadataStatement
     /// <summary>
     /// Gets or sets a human-readable, short description of the authenticator, in alternative languages. 
     /// </summary>
+    /// <value>A dictionary where keys are IETF language codes (e.g. "de-AT" for Austrian-German) and values are human-readable descriptions.</value>
     [JsonPropertyName("friendlyNames")]
     public IDictionary<string, string> FriendlyNames { get; set; }
 
