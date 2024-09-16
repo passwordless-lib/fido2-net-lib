@@ -7,7 +7,7 @@ namespace Fido2NetLib;
 /// Contains the current BiometricStatusReport of one of the authenticator's biometric component.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#biometricstatusreport-dictionary"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#biometricstatusreport-dictionary"/>
 /// </remarks>
 public class BiometricStatusReport
 {
