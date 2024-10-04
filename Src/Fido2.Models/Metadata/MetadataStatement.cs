@@ -7,7 +7,7 @@ namespace Fido2NetLib;
 /// Represents the metadata statement.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#metadata-keys"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.0-ps-20210518.html"/>
 /// </remarks>
 public class MetadataStatement
 {
@@ -49,10 +49,18 @@ public class MetadataStatement
     public string Description { get; set; }
 
     /// <summary>
+    /// Gets or sets a human-readable, short description of the authenticator, in alternative languages. 
+    /// </summary>
+    /// <value>A dictionary where keys are IETF language codes (e.g. "de-AT" for Austrian-German) and values are human-readable descriptions.</value>
+    [JsonPropertyName("friendlyNames")]
+    public IDictionary<string, string> FriendlyNames { get; set; }
+
+    /// <summary>
     /// Gets or set a list of human-readable short descriptions of the authenticator in different languages.
     /// </summary>
+    /// <value>A dictionary where keys are IETF language codes (e.g. "de-AT" for Austrian-German) and values are human-readable descriptions.</value>
     [JsonPropertyName("alternativeDescriptions")]
-    public AlternativeDescriptions IETFLanguageCodesMembers { get; set; }
+    public IDictionary<string, string> AlternativeDescriptions { get; set; }
 
     /// <summary>
     /// Gets or set earliest (i.e. lowest) trustworthy authenticatorVersion meeting the requirements specified in this metadata statement. 
