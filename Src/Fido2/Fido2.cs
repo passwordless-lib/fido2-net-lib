@@ -65,16 +65,18 @@ public class Fido2 : IFido2
     /// <param name="attestationResponse">The attestation response from the authenticator.</param>
     /// <param name="originalOptions">The original options that was sent to the client.</param>
     /// <param name="isCredentialIdUniqueToUser">The delegate used to validate that the CredentialID is unique to this user.</param>
+    /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(
         AuthenticatorAttestationRawResponse attestationResponse,
         CredentialCreateOptions originalOptions,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
+        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default)
     {
         var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-        var credential = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, cancellationToken);
+        var credential = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
 
         return credential;
     }
@@ -105,6 +107,7 @@ public class Fido2 : IFido2
     /// <param name="storedDevicePublicKeys">The stored device public keys.</param>
     /// <param name="storedSignatureCounter">The stored value of the signature counter.</param>
     /// <param name="isUserHandleOwnerOfCredentialIdCallback">The delegate used to validate that the user handle is indeed owned of the CredentialId.</param>
+    /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<VerifyAssertionResult> MakeAssertionAsync(
@@ -114,6 +117,7 @@ public class Fido2 : IFido2
         IReadOnlyList<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
+        byte[]? requestTokenBindingId = null,
         CancellationToken cancellationToken = default)
     {
         var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
@@ -125,6 +129,7 @@ public class Fido2 : IFido2
                                                       storedSignatureCounter,
                                                       isUserHandleOwnerOfCredentialIdCallback,
                                                       _metadataService,
+                                                      requestTokenBindingId,
                                                       cancellationToken);
 
         return result;
