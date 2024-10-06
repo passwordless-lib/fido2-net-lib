@@ -35,7 +35,7 @@ async function handleSignInSubmit(event) {
     console.log("Assertion Options Object", makeAssertionOptions);
 
     // show options error to user
-    if (makeAssertionOptions.status !== "ok") {
+    if (makeAssertionOptions.status === "error") {
         console.log("Error creating assertion options");
         console.log(makeAssertionOptions.errorMessage);
         showErrorAlert(makeAssertionOptions.errorMessage);
