@@ -9,5 +9,5 @@ public sealed class AuthenticationExtensionsDevicePublicKeyInputs
     public string Attestation { get; set; } = "none";
 
     [JsonPropertyName("attestationFormats")]
-    public string[] AttestationFormats { get; set; } = Array.Empty<string>();
+    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; set; } = Array.Empty<AttestationStatementFormatIdentifier>();
 }
