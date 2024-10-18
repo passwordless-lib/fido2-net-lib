@@ -66,8 +66,8 @@ public class CryptoUtilsTests
 
         Assert.False(0 == attestationRootCertificates[0].Issuer.CompareTo(attestationRootCertificates[0].Subject));
         Assert.True(CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates));
-        Assert.True(CryptoUtils.ValidateTrustChain(trustPath, trustPath));
-        Assert.True(CryptoUtils.ValidateTrustChain(attestationRootCertificates, attestationRootCertificates));
+        Assert.False(CryptoUtils.ValidateTrustChain(trustPath, trustPath));
+        Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, attestationRootCertificates));
         Assert.False(CryptoUtils.ValidateTrustChain(attestationRootCertificates, trustPath));
     }
 
