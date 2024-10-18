@@ -41,7 +41,7 @@ async function handleRegisterSubmit(event) {
 
     console.log("Credential Options Object", makeCredentialOptions);
 
-    if (makeCredentialOptions.status !== "ok") {
+    if (makeCredentialOptions.status === "error") {
         console.log("Error creating credential options");
         console.log(makeCredentialOptions.errorMessage);
         showErrorAlert(makeCredentialOptions.errorMessage);
@@ -140,7 +140,7 @@ async function registerNewCredential(newCredential) {
     console.log("Credential Object", response);
 
     // show error
-    if (response.status !== "ok") {
+    if (response.status === "error") {
         console.log("Error creating credential");
         console.log(response.errorMessage);
         showErrorAlert(response.errorMessage);

@@ -49,7 +49,7 @@ internal static class CryptoUtils
         };
     }
 
-    public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
+    public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates, FidoValidationMode validationMode = FidoValidationMode.Default)
     {
         // https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#widl-MetadataStatement-attestationRootCertificates
 
@@ -59,6 +59,8 @@ internal static class CryptoUtils
         // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
 
         // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
+
+        // We have the same singular root cert in trustpath and it is in attestationRootCertificates
         if (trustPath.Length == 1 && trustPath[0].Subject.Equals(trustPath[0].Issuer, StringComparison.Ordinal))
         {
             foreach (X509Certificate2 cert in attestationRootCertificates)
@@ -68,7 +70,6 @@ internal static class CryptoUtils
                     return true;
                 }
             }
-            return false;
         }
 
         // If the attestation cert is not self signed, we will need to build a chain
@@ -101,7 +102,7 @@ internal static class CryptoUtils
             chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
 
             // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
-            if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
+            if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)) && validationMode != FidoValidationMode.FidoConformance2024)
                 chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
 
             // don't allow unknown root now that we have a custom root
