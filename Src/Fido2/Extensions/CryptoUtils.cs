@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -134,13 +134,13 @@ internal static class CryptoUtils
 
         // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
         // ASN.1 requires storing positive integer values with any leading 0s removed
-        // Convert ASN.1 format to IEEE P-1363 format 
-        // determine coefficient size 
+        // Convert ASN.1 format to IEEE P-1363 format
+        // determine coefficient size
 
         // common coefficient sizes include: 32, 48, and 64
         var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
-        // Create buffer to copy R into 
+        // Create buffer to copy R into
         Span<byte> p1363R = coefficientSize <= 64
             ? stackalloc byte[coefficientSize]
             : new byte[coefficientSize];
@@ -154,7 +154,7 @@ internal static class CryptoUtils
             r.CopyTo(p1363R.Slice(coefficientSize - r.Length));
         }
 
-        // Create byte array to copy S into 
+        // Create byte array to copy S into
         Span<byte> p1363S = coefficientSize <= 64
             ? stackalloc byte[coefficientSize]
             : new byte[coefficientSize];

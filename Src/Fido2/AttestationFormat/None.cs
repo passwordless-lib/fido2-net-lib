@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;

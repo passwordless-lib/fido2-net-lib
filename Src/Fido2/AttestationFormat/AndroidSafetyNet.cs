@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -22,7 +22,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 
     public override async ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
-        // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform 
+        // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform
         // CBOR decoding on it to extract the contained fields
         // (handled in base class)
 

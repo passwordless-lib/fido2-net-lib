@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 using Fido2NetLib.Objects;
 
@@ -37,13 +37,13 @@ public class StoredCredential
     public bool IsBackedUp { get; set; }
 
     /// <summary>
-    /// The value of the attestationObject attribute when the public key credential source was registered. 
+    /// The value of the attestationObject attribute when the public key credential source was registered.
     /// Storing this enables the Relying Party to reference the credential's attestation statement at a later time.
     /// </summary>
     public byte[] AttestationObject { get; set; }
 
     /// <summary>
-    /// The value of the clientDataJSON attribute when the public key credential source was registered. 
+    /// The value of the clientDataJSON attribute when the public key credential source was registered.
     /// Storing this in combination with the above attestationObject item enables the Relying Party to re-verify the attestation signature at a later time.
     /// </summary>
     public byte[] AttestationClientDataJson { get; set; }

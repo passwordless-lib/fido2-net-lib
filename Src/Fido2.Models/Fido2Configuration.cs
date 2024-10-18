@@ -1,4 +1,4 @@
-﻿using System.Runtime.Serialization;
+using System.Runtime.Serialization;
 
 namespace Fido2NetLib;
 
@@ -15,7 +15,7 @@ public class Fido2Configuration
     }
 
     /// <summary>
-    /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. 
+    /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
     /// This is treated as a hint, and MAY be overridden by the client.
     /// </summary>
     public uint Timeout { get; set; } = 60000;

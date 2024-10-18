@@ -1,4 +1,4 @@
-﻿namespace BlazorWasmDemo.Client.Shared;
+namespace BlazorWasmDemo.Client.Shared;
 
 using System.Net.Http.Json;
 using System.Text;

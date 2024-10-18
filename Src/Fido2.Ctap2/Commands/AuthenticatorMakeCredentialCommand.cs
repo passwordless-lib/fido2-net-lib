@@ -1,4 +1,4 @@
-﻿using Fido2NetLib.Cbor;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Ctap2;
@@ -30,8 +30,8 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
     public byte[] ClientDataHash { get; }
 
     /// <summary>
-    /// This PublicKeyCredentialRpEntity data structure describes a Relying Party with which the new public key credential will be associated. 
-    /// It contains the Relying party identifier of type text string, (optionally) a human-friendly RP name of type text string, and (optionally) a URL of type text string, referencing a RP icon image. 
+    /// This PublicKeyCredentialRpEntity data structure describes a Relying Party with which the new public key credential will be associated.
+    /// It contains the Relying party identifier of type text string, (optionally) a human-friendly RP name of type text string, and (optionally) a URL of type text string, referencing a RP icon image.
     /// </summary>
     [CborMember(0x02)]
     public PublicKeyCredentialRpEntity Rp { get; }
@@ -46,7 +46,7 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
     public PubKeyCredParam[] PubKeyCredParams { get; }
 
     /// <summary>
-    /// The authenticator returns an error if the authenticator already contains one of the credentials enumerated in this sequence. 
+    /// The authenticator returns an error if the authenticator already contains one of the credentials enumerated in this sequence.
     /// This allows RPs to limit the creation of multiple credentials for the same account on a single authenticator.
     /// </summary>
     [CborMember(0x05)]
@@ -104,7 +104,7 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
 
         if (Options is AuthenticatorMakeCredentialOptions options)
         {
-            // 0x07 : options     
+            // 0x07 : options
             cbor.Add(0x07, options.ToCborObject());
         }
 

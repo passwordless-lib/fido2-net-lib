@@ -1,4 +1,4 @@
-﻿namespace Fido2NetLib.Objects;
+namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// Result of the MakeAssertion verification

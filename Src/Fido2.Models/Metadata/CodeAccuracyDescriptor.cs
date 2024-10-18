@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
 
@@ -11,7 +11,7 @@ namespace Fido2NetLib;
 public sealed class CodeAccuracyDescriptor
 {
     /// <summary>
-    /// Gets or sets the numeric system base (radix) of the code, e.g.  10 in the case of decimal digits. 
+    /// Gets or sets the numeric system base (radix) of the code, e.g.  10 in the case of decimal digits.
     /// </summary>
     [JsonPropertyName("base")]
     public required ushort Base { get; set; }
@@ -30,8 +30,8 @@ public sealed class CodeAccuracyDescriptor
     public ushort MaxRetries { get; set; }
 
     /// <summary>
-    /// Gets or sets the enforced minimum number of seconds wait time after blocking (e.g. due to forced reboot or similar). 
-    /// <para>Zero (0) means this user verification method will be blocked, either permanently or until an alternative user verification method method succeeded.</para> 
+    /// Gets or sets the enforced minimum number of seconds wait time after blocking (e.g. due to forced reboot or similar).
+    /// <para>Zero (0) means this user verification method will be blocked, either permanently or until an alternative user verification method method succeeded.</para>
     /// </summary>
     /// <remarks>
     /// All alternative user verification methods MUST be specified appropriately in the Metadata in <see cref="MetadataStatement.UserVerificationDetails"/>.

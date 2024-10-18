@@ -1,4 +1,4 @@
-﻿namespace Fido2NetLib.Ctap2;
+namespace Fido2NetLib.Ctap2;
 
 #pragma warning disable format
 public enum CtapCommandType : byte

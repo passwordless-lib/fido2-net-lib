@@ -1,4 +1,4 @@
-﻿namespace Fido2NetLib;
+namespace Fido2NetLib;
 
 /// <summary>
 /// Exception thrown when a new attestation comes from an authenticator with a current reported security issue.

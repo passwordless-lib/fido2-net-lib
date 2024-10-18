@@ -1,4 +1,4 @@
-﻿namespace Fido2NetLib.Ctap2.Exceptions;
+namespace Fido2NetLib.Ctap2.Exceptions;
 
 public sealed class CtapException : Exception
 {

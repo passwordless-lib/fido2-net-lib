@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 using Fido2NetLib;
 using Fido2NetLib.Development;

@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects;
 
@@ -55,13 +55,13 @@ public class RegisteredPublicKeyCredential
     public string AttestationFormat { get; init; }
 
     /// <summary>
-    /// The value of the attestationObject attribute when the public key credential source was registered. 
+    /// The value of the attestationObject attribute when the public key credential source was registered.
     /// Storing this enables the Relying Party to reference the credential's attestation statement at a later time.
     /// </summary>
     public byte[] AttestationObject { get; init; }
 
     /// <summary>
-    /// The value of the clientDataJSON attribute when the public key credential source was registered. 
+    /// The value of the clientDataJSON attribute when the public key credential source was registered.
     /// Storing this in combination with the above attestationObject item enables the Relying Party to re-verify the attestation signature at a later time.
     /// </summary>
     public byte[] AttestationClientDataJson { get; init; }

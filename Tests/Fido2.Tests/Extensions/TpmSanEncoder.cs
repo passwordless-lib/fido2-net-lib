@@ -1,4 +1,4 @@
-﻿using System.Formats.Asn1;
+using System.Formats.Asn1;
 using System.Security.Cryptography;
 
 namespace Test;

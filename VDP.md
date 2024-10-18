@@ -49,7 +49,7 @@ Any activities conducted in a manner consistent with this policy will be conside
 We will make a best effort to meet the following SLAs for hackers participating in our program:
 
 * Time to first response (from report submit) - 3 business day
-* Time to triage (from report submit) - 14 business days    
+* Time to triage (from report submit) - 14 business days
 
 The only appropriate place to inquire about a report status is the report email itself. Please refrain from submitting your report or inquiring about its status through additional channels including Github Issues or any other unrelated report, as this unnecessarily binds resources in the security team.
 

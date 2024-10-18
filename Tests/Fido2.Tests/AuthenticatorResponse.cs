@@ -1,4 +1,4 @@
-﻿using System.Formats.Cbor;
+using System.Formats.Cbor;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;

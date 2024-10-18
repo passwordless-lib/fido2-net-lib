@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 
@@ -59,7 +59,7 @@ public static class TrustAnchor
 
             // [ ] ATTESTATION_ECDAA "ecdaa"    | currently handled as self signed  w/ no test coverage
             // [ ] ATTESTATION_ANONCA "anonca"  | currently not verified            w/ no test coverage
-            // [ ] ATTESTATION_NONE "none"      | currently handled as self signed  w/ no test coverage               
+            // [ ] ATTESTATION_NONE "none"      | currently handled as self signed  w/ no test coverage
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace BlazorWasmDemo.Server.Pages;
+namespace BlazorWasmDemo.Server.Pages;
 using System.Diagnostics;
 
 using Microsoft.AspNetCore.Mvc;

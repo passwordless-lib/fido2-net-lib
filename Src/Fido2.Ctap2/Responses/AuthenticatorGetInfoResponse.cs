@@ -1,4 +1,4 @@
-﻿#nullable disable
+#nullable disable
 
 using Fido2NetLib.Cbor;
 
@@ -19,7 +19,7 @@ public sealed class AuthenticatorGetInfoResponse
     public string[] Extensions { get; set; }
 
     /// <summary>
-    /// The claimed AAGUID. 
+    /// The claimed AAGUID.
     /// 16 bytes in length and encoded the same as MakeCredential AuthenticatorData, as specified in [WebAuthn].
     /// </summary>
     [CborMember(0x03)]

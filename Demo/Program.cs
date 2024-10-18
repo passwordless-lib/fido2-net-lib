@@ -1,4 +1,4 @@
-﻿namespace Fido2Demo;
+namespace Fido2Demo;
 
 public class Program
 {

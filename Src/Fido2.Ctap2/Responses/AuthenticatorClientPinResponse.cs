@@ -1,4 +1,4 @@
-﻿using Fido2NetLib.Cbor;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Ctap2;
@@ -7,7 +7,7 @@ public sealed class AuthenticatorClientPinResponse
 {
     /// <summary>
     /// Authenticator key agreement public key in COSE_Key format.
-    /// This will be used to establish a sharedSecret between platform and the authenticator. 
+    /// This will be used to establish a sharedSecret between platform and the authenticator.
     /// The COSE_Key-encoded public key MUST contain the optional "alg" parameter and MUST NOT contain any other optional parameters.
     /// The "alg" parameter MUST contain a COSEAlgorithmIdentifier value.
     /// </summary>

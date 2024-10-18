@@ -1,11 +1,11 @@
-﻿using System.Runtime.Serialization;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// The possible values for requesting the largeBlob extension during credential registration.
-/// 
+///
 /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
 /// </summary>
 [JsonConverter(typeof(FidoEnumConverter<LargeBlobSupport>))]

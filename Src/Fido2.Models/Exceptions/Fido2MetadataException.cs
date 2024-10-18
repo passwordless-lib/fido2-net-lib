@@ -1,4 +1,4 @@
-﻿namespace Fido2NetLib;
+namespace Fido2NetLib;
 
 public class Fido2MetadataException : Exception
 {

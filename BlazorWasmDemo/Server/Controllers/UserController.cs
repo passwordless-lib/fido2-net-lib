@@ -1,4 +1,4 @@
-﻿namespace BlazorWasmDemo.Server.Controllers;
+namespace BlazorWasmDemo.Server.Controllers;
 
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
