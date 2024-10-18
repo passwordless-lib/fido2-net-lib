@@ -1,4 +1,4 @@
-using Fido2NetLib;
+﻿using Fido2NetLib;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;

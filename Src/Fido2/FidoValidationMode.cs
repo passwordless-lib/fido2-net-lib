@@ -1,4 +1,4 @@
-public enum FidoValidationMode
+﻿public enum FidoValidationMode
 {
     WebAuthNLevel3,
     FidoConformance2024,

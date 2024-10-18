@@ -1,4 +1,4 @@
-namespace fido2_net_lib;
+﻿namespace fido2_net_lib;
 
 internal static class CertInfoHelper
 {

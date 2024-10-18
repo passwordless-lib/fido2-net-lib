@@ -1,4 +1,4 @@
-namespace BlazorWasmDemo.Client.Shared.Toasts;
+﻿namespace BlazorWasmDemo.Client.Shared.Toasts;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Timers;

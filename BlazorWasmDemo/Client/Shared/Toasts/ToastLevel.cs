@@ -1,4 +1,4 @@
-namespace BlazorWasmDemo.Client.Shared.Toasts;
+﻿namespace BlazorWasmDemo.Client.Shared.Toasts;
 
 public enum ToastLevel
 {

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http.Extensions;
+﻿using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Net.Http.Headers;
 

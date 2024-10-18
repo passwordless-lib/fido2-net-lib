@@ -1,4 +1,4 @@
-using Fido2NetLib.Cbor;
+﻿using Fido2NetLib.Cbor;
 
 namespace Fido2NetLib.Ctap2;
 

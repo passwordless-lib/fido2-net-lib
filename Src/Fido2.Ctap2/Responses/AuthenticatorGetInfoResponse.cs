@@ -1,4 +1,4 @@
-#nullable disable
+﻿#nullable disable
 
 using Fido2NetLib.Cbor;
 

@@ -1,4 +1,4 @@
-namespace Fido2.BlazorWebAssembly;
+﻿namespace Fido2.BlazorWebAssembly;
 
 using System.Text.Json.Serialization;
 

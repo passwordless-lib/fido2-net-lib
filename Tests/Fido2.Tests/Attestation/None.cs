@@ -1,4 +1,4 @@
-using fido2_net_lib.Test;
+﻿using fido2_net_lib.Test;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;

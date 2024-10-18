@@ -1,4 +1,4 @@
-namespace Fido2NetLib.Exceptions;
+﻿namespace Fido2NetLib.Exceptions;
 
 [Flags]
 public enum Fido2ErrorCode

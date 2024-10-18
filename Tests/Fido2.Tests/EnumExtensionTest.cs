@@ -1,4 +1,4 @@
-using Fido2NetLib.Objects;
+﻿using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Test;
 

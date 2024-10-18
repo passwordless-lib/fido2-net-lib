@@ -1,4 +1,4 @@
-namespace Fido2NetLib.Objects;
+﻿namespace Fido2NetLib.Objects;
 
 using System;
 

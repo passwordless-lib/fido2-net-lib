@@ -1,4 +1,4 @@
-namespace Fido2NetLib.Ctap2;
+﻿namespace Fido2NetLib.Ctap2;
 
 public sealed class AuthenticatorResetCommand : CtapCommand
 {

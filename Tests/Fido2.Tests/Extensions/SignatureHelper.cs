@@ -1,4 +1,4 @@
-using System.Formats.Asn1;
+﻿using System.Formats.Asn1;
 
 namespace fido2_net_lib;
 

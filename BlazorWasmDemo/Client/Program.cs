@@ -1,4 +1,4 @@
-using BlazorWasmDemo.Client;
+﻿using BlazorWasmDemo.Client;
 using BlazorWasmDemo.Client.Shared;
 using BlazorWasmDemo.Client.Shared.Toasts;
 

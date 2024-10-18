@@ -1,4 +1,4 @@
-namespace Fido2NetLib.Cbor.Tests;
+﻿namespace Fido2NetLib.Cbor.Tests;
 
 public class CborTests
 {

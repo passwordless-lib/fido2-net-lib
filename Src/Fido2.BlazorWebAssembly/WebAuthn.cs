@@ -1,4 +1,4 @@
-namespace Fido2.BlazorWebAssembly;
+﻿namespace Fido2.BlazorWebAssembly;
 using Fido2NetLib;
 
 using Microsoft.Extensions.DependencyInjection;

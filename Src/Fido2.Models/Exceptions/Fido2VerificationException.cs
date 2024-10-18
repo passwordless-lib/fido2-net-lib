@@ -1,4 +1,4 @@
-using Fido2NetLib.Exceptions;
+﻿using Fido2NetLib.Exceptions;
 
 namespace Fido2NetLib;
 
