@@ -55,7 +55,15 @@ public class ExistingU2fRegistrationDataTests
             Origins = new HashSet<string> { "https://localhost:44336" } //data was generated with this origin
         });
 
-        var credential = await fido2.MakeAssertionAsync(authResponse, options, publicKey.Encode(), null, 0, null);
+        var credential = await fido2.MakeAssertionAsync(new MakeAssertionParams {
+        
+            AssertionResponse = authResponse,
+            OriginalOptions = options,
+            StoredPublicKey = publicKey.Encode(),
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = null,
+            StoredDevicePublicKeys = null
+        });
 
         Assert.NotEmpty(credential.CredentialId);
     }
