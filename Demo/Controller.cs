@@ -209,7 +209,8 @@ public class MyController : Controller
             };
 
             // 5. Make the assertion
-            var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams {
+            var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
+            {
                 AssertionResponse = clientResponse,
                 OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,

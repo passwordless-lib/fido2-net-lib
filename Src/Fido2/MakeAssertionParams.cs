@@ -11,7 +11,7 @@ public class MakeAssertionParams
     /// <summary>
     /// The assertion response from the authenticator.
     /// </summary>
-    public required  AuthenticatorAssertionRawResponse AssertionResponse { get; init; }
+    public required AuthenticatorAssertionRawResponse AssertionResponse { get; init; }
 
     /// <summary>
     /// The original options that was sent to the client.
@@ -22,7 +22,7 @@ public class MakeAssertionParams
     /// The stored credential public key.
     /// </summary>
     public required byte[] StoredPublicKey { get; init; }
-    
+
     /// <summary>
     /// The stored value of the signature counter.
     /// </summary>
@@ -36,7 +36,7 @@ public class MakeAssertionParams
     /// <summary>
     /// The stored device public keys.
     /// </summary>
-    public IReadOnlyList<byte[]> StoredDevicePublicKeys { get;  init; } = Array.Empty<byte[]>();
+    public IReadOnlyList<byte[]> StoredDevicePublicKeys { get; init; } = Array.Empty<byte[]>();
 
 
     /// <summary>

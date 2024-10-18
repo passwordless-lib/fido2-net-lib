@@ -13,7 +13,7 @@ public class MakeNewCredentialParams
     /// <summary>
     ///  The original options that was sent to the client.
     /// </summary>
-    public required CredentialCreateOptions OriginalOptions { get;  init; }
+    public required CredentialCreateOptions OriginalOptions { get; init; }
 
     /// <summary>
     ///  The delegate used to validate that the CredentialID is unique to this user.
