@@ -150,7 +150,12 @@ public class UserController : ControllerBase
             // 2. Create callback so that lib can verify credential id is unique to this user
 
             // 3. Verify and make the credentials
-            var credential = await _fido2.MakeNewCredentialAsync(attestationResponse, options, CredentialIdUniqueToUserAsync, cancellationToken: cancellationToken);
+            var credential = await _fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
+            {
+                AttestationResponse = attestationResponse,
+                OriginalOptions = options,
+                IsCredentialIdUniqueToUserCallback = CredentialIdUniqueToUserAsync
+            }, cancellationToken: cancellationToken);
 
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
@@ -266,14 +271,15 @@ public class UserController : ControllerBase
             var creds = _demoStorage.GetCredentialById(clientResponse.Id) ?? throw new Exception("Unknown credentials");
 
             // 3. Make the assertion
-            var res = await _fido2.MakeAssertionAsync(
-                clientResponse,
-                options,
-                creds.PublicKey,
-                creds.DevicePublicKeys,
-                creds.SignCount,
-                UserHandleOwnerOfCredentialIdAsync,
-                cancellationToken: cancellationToken);
+            var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
+            {
+                AssertionResponse = clientResponse,
+                OriginalOptions = options,
+                StoredPublicKey = creds.PublicKey,
+                StoredSignatureCounter = creds.SignCount,
+                IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync,
+                StoredDevicePublicKeys = creds.DevicePublicKeys
+            }, cancellationToken: cancellationToken);
 
             // 4. Store the updated counter
             _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);

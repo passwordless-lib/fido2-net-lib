@@ -95,7 +95,12 @@ public class TestController : Controller
         };
 
         // 2. Verify and make the credentials
-        var credential = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
+        var credential = await _fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = attestationResponse,
+            OriginalOptions = options,
+            IsCredentialIdUniqueToUserCallback = callback
+        }, cancellationToken: cancellationToken);
 
         // 3. Store the credentials in db
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
@@ -177,7 +182,15 @@ public class TestController : Controller
         };
 
         // 5. Make the assertion
-        var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
+        var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = clientResponse,
+            OriginalOptions = options,
+            StoredPublicKey = creds.PublicKey,
+            StoredSignatureCounter = storedCounter,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = creds.DevicePublicKeys
+        }, cancellationToken: cancellationToken);
 
         // 6. Store the updated counter
         _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);

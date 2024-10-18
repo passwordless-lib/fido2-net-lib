@@ -13,21 +13,10 @@ public interface IFido2
         UserVerificationRequirement? userVerification,
         AuthenticationExtensionsClientInputs? extensions = null);
 
-    Task<VerifyAssertionResult> MakeAssertionAsync(
-        AuthenticatorAssertionRawResponse assertionResponse,
-        AssertionOptions originalOptions,
-        byte[] storedPublicKey,
-        IReadOnlyList<byte[]> storedDevicePublicKeys,
-        uint storedSignatureCounter,
-        IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-        byte[]? requestTokenBindingId = null,
+    Task<VerifyAssertionResult> MakeAssertionAsync(MakeAssertionParams makeAssertionParams,
         CancellationToken cancellationToken = default);
 
-    Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(
-        AuthenticatorAttestationRawResponse attestationResponse,
-        CredentialCreateOptions originalOptions,
-        IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-        byte[]? requestTokenBindingId = null,
+    Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(MakeNewCredentialParams makeNewCredentialParams,
         CancellationToken cancellationToken = default);
 
     CredentialCreateOptions RequestNewCredential(
