@@ -81,23 +81,23 @@ jobs:
     displayName: 'Install .NET 8.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '8.0.x'  
+      version: '8.0.x'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
       command: restore
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet build $(buildConfiguration)'
     inputs:
       command: build
       arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
       command: test
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
       arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo --collect:"XPlat Code Coverage"'
   - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
     displayName: ReportGenerator
@@ -144,7 +144,7 @@ jobs:
     displayName: 'dotnet restore'
     inputs:
       command: restore
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet format'
     inputs:
@@ -156,10 +156,10 @@ jobs:
     inputs:
       command: build
       arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
       command: test
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
       arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo'
