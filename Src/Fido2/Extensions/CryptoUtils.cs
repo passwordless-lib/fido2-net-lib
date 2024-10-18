@@ -49,7 +49,7 @@ internal static class CryptoUtils
         };
     }
 
-    public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates, bool conformance = false)
+    public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates, FidoValidationMode validationMode = FidoValidationMode.Default)
     {
         // https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#widl-MetadataStatement-attestationRootCertificates
 
@@ -102,7 +102,7 @@ internal static class CryptoUtils
             chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
 
             // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
-            if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)) && !conformance)
+            if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)) && validationMode != FidoValidationMode.FidoConformance2024)
                 chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
 
             // don't allow unknown root now that we have a custom root

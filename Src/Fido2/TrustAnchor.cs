@@ -8,7 +8,7 @@ namespace Fido2NetLib;
 
 public static class TrustAnchor
 {
-    public static void Verify(MetadataBLOBPayloadEntry? metadataEntry, X509Certificate2[] trustPath, bool conformance)
+    public static void Verify(MetadataBLOBPayloadEntry? metadataEntry, X509Certificate2[] trustPath, FidoValidationMode validationMode = FidoValidationMode.Default)
     {
         if (trustPath != null && metadataEntry?.MetadataStatement?.AttestationTypes is not null)
         {
@@ -34,7 +34,7 @@ public static class TrustAnchor
                     throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCertificateChain);
                 }
 
-                if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates, conformance))
+                if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates, validationMode))
                 {
                     throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCertificateChain);
                 }

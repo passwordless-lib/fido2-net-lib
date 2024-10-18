@@ -153,7 +153,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true);
+        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
 
         // 22. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
         //     If self attestation was used, check if self attestation is acceptable under Relying Party policy.
@@ -257,7 +257,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && devicePublicKeyAuthenticatorOutput.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true);
+        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
 
         // Check status reports for authenticator with undesirable status
         var latestStatusReport = metadataEntry?.GetLatestStatusReport();
