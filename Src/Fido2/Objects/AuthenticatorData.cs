@@ -27,12 +27,12 @@ public sealed class AuthenticatorData(
     public byte[] RpIdHash { get; } = rpIdHash;
 
     /// <summary>
-    /// Signature counter, 32-bit unsigned big-endian integer. 
+    /// Signature counter, 32-bit unsigned big-endian integer.
     /// </summary>
     public uint SignCount { get; } = signCount;
 
     /// <summary>
-    /// Attested credential data is a variable-length byte array added to the 
+    /// Attested credential data is a variable-length byte array added to the
     /// authenticator data when generating an attestation object for a given credential.
     /// </summary>
     public AttestedCredentialData? AttestedCredentialData { get; } = acd;
@@ -43,7 +43,7 @@ public sealed class AuthenticatorData(
     public Extensions? Extensions { get; } = extensions;
 
     /// <summary>
-    /// Flags contains information from the authenticator about the authentication 
+    /// Flags contains information from the authenticator about the authentication
     /// and whether or not certain data is present in the authenticator data.
     /// </summary>
     private readonly AuthenticatorFlags _flags = flags;
@@ -61,16 +61,16 @@ public sealed class AuthenticatorData(
     public bool UserVerified => _flags.HasFlag(AuthenticatorFlags.UV);
 
     /// <summary>
-    /// A Public Key Credential Source's generating authenticator determines at creation time whether the public key credential source is allowed to be backed up. 
-    /// Backup eligibility is signaled in authenticator data's flags along with the current backup state. 
-    /// Backup eligibility is a credential property and is permanent for a given public key credential source. 
+    /// A Public Key Credential Source's generating authenticator determines at creation time whether the public key credential source is allowed to be backed up.
+    /// Backup eligibility is signaled in authenticator data's flags along with the current backup state.
+    /// Backup eligibility is a credential property and is permanent for a given public key credential source.
     /// A backup eligible public key credential source is referred to as a multi-device credential whereas one that is not backup eligible is referred to as a single-device credential.
     /// <see href="https://w3c.github.io/webauthn/#backup-eligibility"/>
     /// </summary>
     public bool IsBackupEligible => _flags.HasFlag(AuthenticatorFlags.BE);
 
     /// <summary>
-    /// The current backup state of a multi-device credential as determined by the current managing authenticator. 
+    /// The current backup state of a multi-device credential as determined by the current managing authenticator.
     /// Backup state is signaled in authenticator data's flags and can change over time.
     /// <see href="https://w3c.github.io/webauthn/#backup-state"/>
     /// </summary>

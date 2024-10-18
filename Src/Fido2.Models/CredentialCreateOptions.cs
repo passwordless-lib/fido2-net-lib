@@ -9,7 +9,7 @@ namespace Fido2NetLib;
 public sealed class CredentialCreateOptions
 {
     /// <summary>
-    /// 
+    ///
     /// This member contains data about the Relying Party responsible for the request.
     /// Its value’s name member is required.
     /// Its value’s id member specifies the relying party identifier with which the credential should be associated.If omitted, its value will be the CredentialsContainer object’s relevant settings object's origin's effective domain.
@@ -18,7 +18,7 @@ public sealed class CredentialCreateOptions
     public PublicKeyCredentialRpEntity Rp { get; set; }
 
     /// <summary>
-    /// This member contains data about the user account for which the Relying Party is requesting attestation. 
+    /// This member contains data about the user account for which the Relying Party is requesting attestation.
     /// Its value’s name, displayName and id members are required.
     /// </summary>
     [JsonPropertyName("user")]
@@ -190,7 +190,7 @@ public sealed class PubKeyCredParam(
 }
 
 /// <summary>
-/// PublicKeyCredentialRpEntity 
+/// PublicKeyCredentialRpEntity
 /// </summary>
 public sealed class PublicKeyCredentialRpEntity(
     string id,
@@ -233,9 +233,9 @@ public class AuthenticatorSelection
 
     /// <summary>
     /// Specifies the extent to which the Relying Party desires to create a client-side discoverable credential.
-    /// For historical reasons the naming retains the deprecated “resident” terminology. 
-    /// The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, 
-    /// treating an unknown value as if the member does not exist. 
+    /// For historical reasons the naming retains the deprecated “resident” terminology.
+    /// The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values,
+    /// treating an unknown value as if the member does not exist.
     /// If no value is given then the effective value is required if requireResidentKey is true or discouraged if it is false or absent.
     /// </summary>
     [JsonPropertyName("residentKey")]
@@ -288,8 +288,8 @@ public class AuthenticatorSelection
 public class Fido2User
 {
     /// <summary>
-    /// Required. A human-friendly identifier for a user account. 
-    /// It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames. 
+    /// Required. A human-friendly identifier for a user account.
+    /// It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames.
     /// For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity
     /// </summary>
     [JsonPropertyName("name")]

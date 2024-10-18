@@ -15,13 +15,13 @@ public sealed class MetadataBLOBPayload
     /// Gets or sets the legalHeader, if present, contains a legal guide for accessing and using metadata.
     /// </summary>
     /// <remarks>
-    /// This value MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement. 
+    /// This value MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement.
     /// </remarks>
     [JsonPropertyName("legalHeader")]
     public string LegalHeader { get; set; }
 
-    /// <summary>   
-    /// Gets or sets the serial number of this UAF Metadata BLOB Payload. 
+    /// <summary>
+    /// Gets or sets the serial number of this UAF Metadata BLOB Payload.
     /// </summary>
     /// <remarks>
     /// Serial numbers MUST be consecutive and strictly monotonic, i.e. the successor BLOB will have a no value exactly incremented by one.

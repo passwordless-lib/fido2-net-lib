@@ -51,7 +51,7 @@ OS's use different variable names to represent similar settings. Code should con
 For example, when looking for the user's home directory, on Windows the variable is `USERPROFILE` but on most Linux systems it is `HOME`.
 
 ```cs
-var homeDir = Environment.GetEnvironmentVariable("USERPROFILE") 
+var homeDir = Environment.GetEnvironmentVariable("USERPROFILE")
                   ?? Environment.GetEnvironmentVariable("HOME");
 ```
 

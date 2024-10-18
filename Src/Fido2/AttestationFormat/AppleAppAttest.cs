@@ -24,7 +24,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         {
             if (s.TagValue is 1204)
             {
-                // App ID is the concatenation of your 10-digit team identifier, a period, and your app's CFBundleIdentifier value 
+                // App ID is the concatenation of your 10-digit team identifier, a period, and your app's CFBundleIdentifier value
                 s.CheckExactSequenceLength(1);
                 s[0].CheckTag(Asn1Tag.PrimitiveOctetString);
                 return s[0].GetOctetString();

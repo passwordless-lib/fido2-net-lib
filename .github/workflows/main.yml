@@ -26,7 +26,7 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  
+
 jobs:
   # Determine version
   version:
@@ -43,7 +43,7 @@ jobs:
               echo "Invalid version: ${{ github.event.release.tag_name }}"
               exit 1
           fi
-          
+
           echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
 
       - name: Determine prerelease version
@@ -94,7 +94,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
         with:
-          dotnet-version: | 
+          dotnet-version: |
             6.0.x
             8.0.x
 
@@ -133,7 +133,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
         with:
-          dotnet-version: | 
+          dotnet-version: |
             6.0.x
             8.0.x
 
@@ -147,7 +147,7 @@ jobs:
           --configuration Release
           -p:ContinuousIntegrationBuild=true
           -p:Version=${{ needs.version.outputs.version }}
-          
+
       - name: Run pack
         run: >
           dotnet pack
@@ -186,7 +186,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
         with:
-          dotnet-version: | 
+          dotnet-version: |
             6.0.x
             8.0.x
 

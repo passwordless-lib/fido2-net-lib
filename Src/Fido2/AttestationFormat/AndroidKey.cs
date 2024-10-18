@@ -142,7 +142,7 @@ internal sealed class AndroidKey : AttestationVerifier
         if (!request.TryGetSig(out byte[]? sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationSignature);
 
-        // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
+        // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
         // using the attestation public key in attestnCert with the algorithm specified in alg
         if (!(request.X5c is CborArray { Length: > 0 } x5cArray))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation);

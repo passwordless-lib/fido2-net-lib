@@ -12,7 +12,7 @@ namespace Fido2NetLib;
 public class MetadataStatement
 {
     /// <summary>
-    /// Gets or sets the legalHeader, if present, contains a legal guide for accessing and using metadata, which itself MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement. 
+    /// Gets or sets the legalHeader, if present, contains a legal guide for accessing and using metadata, which itself MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement.
     /// </summary>
     [JsonPropertyName("legalHeader")]
     public string LegalHeader { get; set; }
@@ -27,10 +27,10 @@ public class MetadataStatement
     public string Aaid { get; set; }
 
     /// <summary>
-    /// Gets or sets the Authenticator Attestation GUID. 
+    /// Gets or sets the Authenticator Attestation GUID.
     /// </summary>
     /// <remarks>
-    /// This field MUST be set if the authenticator implements FIDO 2. 
+    /// This field MUST be set if the authenticator implements FIDO 2.
     /// <para>Note: FIDO 2 Authenticators support AAGUID, but they don't support AAID.</para>
     /// </remarks>
     [JsonPropertyName("aaguid")]
@@ -43,13 +43,13 @@ public class MetadataStatement
     public string[] AttestationCertificateKeyIdentifiers { get; set; }
 
     /// <summary>
-    /// Gets or sets a human-readable, short description of the authenticator, in English. 
+    /// Gets or sets a human-readable, short description of the authenticator, in English.
     /// </summary>
     [JsonPropertyName("description"), Required]
     public string Description { get; set; }
 
     /// <summary>
-    /// Gets or sets a human-readable, short description of the authenticator, in alternative languages. 
+    /// Gets or sets a human-readable, short description of the authenticator, in alternative languages.
     /// </summary>
     /// <value>A dictionary where keys are IETF language codes (e.g. "de-AT" for Austrian-German) and values are human-readable descriptions.</value>
     [JsonPropertyName("friendlyNames")]
@@ -63,7 +63,7 @@ public class MetadataStatement
     public IDictionary<string, string> AlternativeDescriptions { get; set; }
 
     /// <summary>
-    /// Gets or set earliest (i.e. lowest) trustworthy authenticatorVersion meeting the requirements specified in this metadata statement. 
+    /// Gets or set earliest (i.e. lowest) trustworthy authenticatorVersion meeting the requirements specified in this metadata statement.
     /// </summary>
     [JsonPropertyName("authenticatorVersion"), Required]
     public ulong AuthenticatorVersion { get; set; }
@@ -89,7 +89,7 @@ public class MetadataStatement
     public UafVersion[] Upv { get; set; }
 
     /// <summary>
-    /// Gets or sets the list of authentication algorithms supported by the authenticator. 
+    /// Gets or sets the list of authentication algorithms supported by the authenticator.
     /// </summary>
     [JsonPropertyName("authenticationAlgorithms"), Required]
     public string[] AuthenticationAlgorithms { get; set; }
@@ -103,7 +103,7 @@ public class MetadataStatement
     /// Gets or sets the supported attestation type(s).
     /// </summary>
     /// <remarks>
-    /// For example: TAG_ATTESTATION_BASIC_FULL(0x3E07), TAG_ATTESTATION_BASIC_SURROGATE(0x3E08). 
+    /// For example: TAG_ATTESTATION_BASIC_FULL(0x3E07), TAG_ATTESTATION_BASIC_SURROGATE(0x3E08).
     /// </remarks>
     [JsonPropertyName("attestationTypes"), Required]
     public string[] AttestationTypes { get; set; }
@@ -165,7 +165,7 @@ public class MetadataStatement
     public string[] TcDisplay { get; set; }
 
     /// <summary>
-    /// Gets or sets the supported MIME content type [RFC2049] for the transaction confirmation display, such as text/plain or image/png. 
+    /// Gets or sets the supported MIME content type [RFC2049] for the transaction confirmation display, such as text/plain or image/png.
     /// </summary>
     [JsonPropertyName("tcDisplayContentType")]
     public string TcDisplayContentType { get; set; }
@@ -183,7 +183,7 @@ public class MetadataStatement
     public string[] AttestationRootCertificates { get; set; }
 
     /// <summary>
-    /// Gets or set a list of trust anchors used for ECDAA attestation. 
+    /// Gets or set a list of trust anchors used for ECDAA attestation.
     /// </summary>
     [JsonPropertyName("ecdaaTrustAnchors")]
     public EcdaaTrustAnchor[] EcdaaTrustAnchors { get; set; }
@@ -195,7 +195,7 @@ public class MetadataStatement
     public string Icon { get; set; }
 
     /// <summary>
-    /// Gets or sets a list of extensions supported by the authenticator. 
+    /// Gets or sets a list of extensions supported by the authenticator.
     /// </summary>
     [JsonPropertyName("supportedExtensions")]
     public ExtensionDescriptor[] SupportedExtensions { get; set; }

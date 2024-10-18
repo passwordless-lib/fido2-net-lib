@@ -11,7 +11,7 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     internal static ReadOnlySpan<byte> _dpkAuthDataPrefix => [
         0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x20, 0x62, 0x6f, 0x75, 0x6e, 0x64, 0x20,
         0x6b, 0x65, 0x79, 0x20, 0x61, 0x74, 0x74, 0x65, 0x73, 0x74, 0x61, 0x74, 0x69,
-        0x6f, 0x6e, 0x20, 0x73, 0x69, 0x67, 0x00, 0xff, 0xff, 0xff, 0xff 
+        0x6f, 0x6e, 0x20, 0x73, 0x69, 0x67, 0x00, 0xff, 0xff, 0xff, 0xff
     ];
     #pragma warning restore format
 
@@ -40,25 +40,25 @@ public sealed class DevicePublicKeyAuthenticatorOutput
     public Guid AaGuid { get; }
 
     /// <summary>
-    /// The credential public key encoded in COSE_Key format, as defined in 
+    /// The credential public key encoded in COSE_Key format, as defined in
     /// Section 7 of RFC8152, using the CTAP2 canonical CBOR encoding form.
     /// <see href="https://www.w3.org/TR/webauthn/#credential-public-key"/>
     /// </summary>
     public CredentialPublicKey DevicePublicKey { get; }
 
     /// <summary>
-    /// Whether this key is scoped to the entire device, or a loosely-defined, narrower scope called "app". 
+    /// Whether this key is scoped to the entire device, or a loosely-defined, narrower scope called "app".
     /// For example, a "device"-scoped key is expected to be the same between an app and a browser on the same device, while an "app"-scoped key would probably not be.
     /// Whatever the scope, a device key is still specific to a given credential and does not provide any ability to link credentials.
     /// Whether device-scoped or not, keys are still device-bound. I.e.an app-scoped key does not enjoy lesser protection from extraction.
-    /// A value of 0x00 means "entire device" ("all apps") scope. 
+    /// A value of 0x00 means "entire device" ("all apps") scope.
     /// 0x01 means "per-app" scope. Values other than 0x00 or 0x01 are reserved for future use.
     /// </summary>
     public uint Scope { get; }
 
     /// <summary>
     /// An authenticator-generated random nonce for inclusion in the attestation signature.
-    /// If the authenticator chooses to not generate a nonce, it sets this to a zero-length byte string. 
+    /// If the authenticator chooses to not generate a nonce, it sets this to a zero-length byte string.
     /// See the note below about "randomNonce" for a discussion on the nonce's purpose.
     /// </summary>
     public ReadOnlySpan<byte> Nonce => _nonce;

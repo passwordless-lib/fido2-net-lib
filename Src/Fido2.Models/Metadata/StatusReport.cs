@@ -44,7 +44,7 @@ public sealed class StatusReport
     public string Url { get; set; }
 
     /// <summary>
-    /// Gets or sets a description of the externally visible aspects of the Authenticator Certification evaluation. 
+    /// Gets or sets a description of the externally visible aspects of the Authenticator Certification evaluation.
     /// </summary>
     [JsonPropertyName("certificationDescriptor")]
     public string CertificationDescriptor { get; set; }
@@ -56,7 +56,7 @@ public sealed class StatusReport
     public string CertificateNumber { get; set; }
 
     /// <summary>
-    /// Gets or set the version of the Authenticator Certification Policy the implementation is Certified to. 
+    /// Gets or set the version of the Authenticator Certification Policy the implementation is Certified to.
     /// </summary>
     [JsonPropertyName("certificationPolicyVersion")]
     public string CertificationPolicyVersion { get; set; }
