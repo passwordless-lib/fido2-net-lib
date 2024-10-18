@@ -237,7 +237,12 @@ public class Fido2Tests
                 Origins = new HashSet<string> { rp },
             });
 
-            var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, originalOptions, callback);
+            var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+            {
+                AttestationResponse = attestationResponse,
+                OriginalOptions = originalOptions,
+                IsCredentialIdUniqueToUserCallback = callback
+            });
 
             return credentialMakeResult;
         }
@@ -988,7 +993,14 @@ public class Fido2Tests
         {
             return Task.FromResult(true);
         };
-        return await lib.MakeAssertionAsync(response, options, cpk.GetBytes(), null, signCount, callback);
+        return await lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = response,
+            OriginalOptions = options,
+            StoredPublicKey = cpk.GetBytes(),
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredSignatureCounter = signCount
+        });
     }
 
     internal static void MakeEdDSA(out byte[] privateKeySeed, out byte[] publicKey, out byte[] expandedPrivateKey)

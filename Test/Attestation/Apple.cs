@@ -269,7 +269,12 @@ public class Apple : Fido2Tests.Attestation
             Origins = new HashSet<string> { "https://www.passwordless.dev" },
         });
 
-        var credentialMakeResult = await lib.MakeNewCredentialAsync(attestationResponse, originalOptions, callback);
+        var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = attestationResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        });
     }
 
     private string[] StackAllocSha256(ReadOnlySpan<byte> authData, ReadOnlySpan<byte> clientDataJson)
