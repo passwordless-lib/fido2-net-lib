@@ -274,7 +274,7 @@ public class UserController : ControllerBase
             var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
             {
                 AssertionResponse = clientResponse,
-                OriginalOptions = options, 
+                OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = creds.SignCount,
                 IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync,
