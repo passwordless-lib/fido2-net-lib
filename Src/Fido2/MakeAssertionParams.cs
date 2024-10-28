@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Fido2NetLib;
 
@@ -38,9 +39,9 @@ public sealed class MakeAssertionParams
     /// </summary>
     public IReadOnlyList<byte[]> StoredDevicePublicKeys { get; init; } = Array.Empty<byte[]>();
 
-
     /// <summary>
     /// DO NOT USE - Deprecated, but kept in code due to conformance testing tool.
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public byte[]? RequestTokenBindingId { get; init; }
 }

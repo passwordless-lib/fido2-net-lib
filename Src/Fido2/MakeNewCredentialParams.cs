@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib;
+﻿using System.ComponentModel;
+
+namespace Fido2NetLib;
 
 /// <summary>
 /// Wraps the input for the MakeNewCredential function
@@ -23,5 +25,6 @@ public sealed class MakeNewCredentialParams
     /// <summary>
     ///  DO NOT USE - Deprecated, but kept in code due to conformance testing tool
     /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public byte[]? RequestTokenBindingId { get; init; }
 }

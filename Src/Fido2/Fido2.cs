@@ -62,7 +62,7 @@ public class Fido2 : IFido2
     /// <summary>
     /// Verifies the response from the browser/authenticator after creating new credentials.
     /// </summary>
-    /// <param name="makeNewCredentialParams">Wraps the input parameters for making a new credential</param>
+    /// <param name="makeNewCredentialParams">The input arguments for creating a passkey</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(MakeNewCredentialParams makeNewCredentialParams,
@@ -94,7 +94,7 @@ public class Fido2 : IFido2
     /// <summary>
     /// Verifies the assertion response from the browser/authenticator to assert existing credentials and authenticate a user.
     /// </summary>
-    /// <param name="makeAssertionParams">Wraps the input arguments for asserting a passkey</param>
+    /// <param name="makeAssertionParams">The input arguments for asserting a passkey</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
     public async Task<VerifyAssertionResult> MakeAssertionAsync(MakeAssertionParams makeAssertionParams,
