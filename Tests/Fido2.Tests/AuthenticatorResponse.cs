@@ -123,7 +123,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { expectedOrigin },
         });
 
-        var result = await lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback);
+        var result = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        });
     }
 
     [Theory]
@@ -224,7 +229,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { expectedOrigin },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.StartsWith("Fully qualified origin", ex.Message);
     }
 
@@ -433,7 +443,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Same(Fido2ErrorMessages.AttestationResponseTypeNotWebAuthnGet, ex.Message);
     }
 
@@ -503,7 +518,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Same(Fido2ErrorMessages.AttestationResponseIdMissing, ex.Message);
     }
 
@@ -571,7 +591,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal("AttestationResponse type must be 'public-key'", ex.Message);
     }
 
@@ -646,7 +671,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal(Fido2ErrorCode.InvalidRpidHash, ex.Code);
         Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Message);
     }
@@ -723,7 +753,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
 
         Assert.Equal(Fido2ErrorCode.UserPresentFlagNotSet, ex.Code);
         Assert.Equal(Fido2ErrorMessages.UserPresentFlagNotSet, ex.Message);
@@ -801,7 +836,12 @@ public class AuthenticatorResponseTests
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
@@ -877,7 +917,12 @@ public class AuthenticatorResponseTests
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
@@ -952,7 +997,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal("Attestation flag not set on attestation data", ex.Message);
     }
 
@@ -1028,7 +1078,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal("Unknown attestation type. Was 'testing'", ex.Message);
         Assert.Equal(Fido2ErrorCode.UnknownAttestationType, ex.Code);
     }
@@ -1104,7 +1159,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal("CredentialId is not unique to this user", ex.Message);
     }
 
@@ -1179,7 +1239,12 @@ public class AuthenticatorResponseTests
             Origins = new HashSet<string> { rp },
         });
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(rawResponse, originalOptions, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
         Assert.Equal("User Verified flag not set in authenticator data and user verification was required", ex.Message);
     }
 
@@ -1313,7 +1378,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.AssertionResponseNotPublicKey, ex.Message);
     }
 
@@ -1381,7 +1454,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.AssertionResponseIdMissing, ex.Message);
     }
 
@@ -1450,7 +1531,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.AssertionResponseRawIdMissing, ex.Message);
     }
 
@@ -1519,7 +1608,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.UserHandleIsEmpty, ex.Message);
     }
 
@@ -1588,7 +1685,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(false);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.UserHandleNotOwnerOfPublicKey, ex.Message);
     }
 
@@ -1657,7 +1762,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.AssertionResponseTypeNotWebAuthnGet, ex.Message);
     }
 
@@ -1728,7 +1841,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Message);
     }
 
@@ -1798,7 +1919,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.InvalidRpidHash, ex.Message);
     }
 
@@ -1868,7 +1997,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.UserPresentFlagNotSet, ex.Message);
     }
 
@@ -1938,7 +2075,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.UserVerificationRequirementNotMet, ex.Message);
     }
 
@@ -2007,7 +2152,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
@@ -2076,7 +2229,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.BackupEligibilityRequirementNotMet, ex.Message);
     }
 
@@ -2145,7 +2306,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Message);
     }
 
@@ -2214,7 +2383,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Message);
     }
 
@@ -2283,7 +2460,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, null, null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = null,
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.MissingStoredPublicKey, ex.Message);
     }
 
@@ -2353,7 +2538,15 @@ public class AuthenticatorResponseTests
         };
 
         fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out var privateKey);
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes(), null, 0, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes(),
+            StoredSignatureCounter = 0,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.InvalidSignature, ex.Message);
     }
 
@@ -2428,7 +2621,15 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(assertionResponse, options, cpk.GetBytes(), null, 2, callback));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = cpk.GetBytes(),
+            StoredSignatureCounter = 2,
+            IsUserHandleOwnerOfCredentialIdCallback = callback,
+            StoredDevicePublicKeys = null
+        }));
         Assert.Equal(Fido2ErrorMessages.SignCountIsLessThanSignatureCounter, ex.Message);
     }
 }

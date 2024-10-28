@@ -62,21 +62,14 @@ public class Fido2 : IFido2
     /// <summary>
     /// Verifies the response from the browser/authenticator after creating new credentials.
     /// </summary>
-    /// <param name="attestationResponse">The attestation response from the authenticator.</param>
-    /// <param name="originalOptions">The original options that was sent to the client.</param>
-    /// <param name="isCredentialIdUniqueToUser">The delegate used to validate that the CredentialID is unique to this user.</param>
-    /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
+    /// <param name="makeNewCredentialParams">The input arguments for creating a passkey</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
-    public async Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(
-        AuthenticatorAttestationRawResponse attestationResponse,
-        CredentialCreateOptions originalOptions,
-        IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
-        byte[]? requestTokenBindingId = null,
+    public async Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(MakeNewCredentialParams makeNewCredentialParams,
         CancellationToken cancellationToken = default)
     {
-        var parsedResponse = AuthenticatorAttestationResponse.Parse(attestationResponse);
-        var credential = await parsedResponse.VerifyAsync(originalOptions, _config, isCredentialIdUniqueToUser, _metadataService, requestTokenBindingId, cancellationToken);
+        var parsedResponse = AuthenticatorAttestationResponse.Parse(makeNewCredentialParams.AttestationResponse);
+        var credential = await parsedResponse.VerifyAsync(makeNewCredentialParams.OriginalOptions, _config, makeNewCredentialParams.IsCredentialIdUniqueToUserCallback, _metadataService, makeNewCredentialParams.RequestTokenBindingId, cancellationToken);
 
         return credential;
     }
@@ -101,35 +94,22 @@ public class Fido2 : IFido2
     /// <summary>
     /// Verifies the assertion response from the browser/authenticator to assert existing credentials and authenticate a user.
     /// </summary>
-    /// <param name="assertionResponse">The assertion response from the authenticator.</param>
-    /// <param name="originalOptions">The original options that was sent to the client.</param>
-    /// <param name="storedPublicKey">The stored credential public key.</param>
-    /// <param name="storedDevicePublicKeys">The stored device public keys.</param>
-    /// <param name="storedSignatureCounter">The stored value of the signature counter.</param>
-    /// <param name="isUserHandleOwnerOfCredentialIdCallback">The delegate used to validate that the user handle is indeed owned of the CredentialId.</param>
-    /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
+    /// <param name="makeAssertionParams">The input arguments for asserting a passkey</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     /// <returns></returns>
-    public async Task<VerifyAssertionResult> MakeAssertionAsync(
-        AuthenticatorAssertionRawResponse assertionResponse,
-        AssertionOptions originalOptions,
-        byte[] storedPublicKey,
-        IReadOnlyList<byte[]> storedDevicePublicKeys,
-        uint storedSignatureCounter,
-        IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialIdCallback,
-        byte[]? requestTokenBindingId = null,
+    public async Task<VerifyAssertionResult> MakeAssertionAsync(MakeAssertionParams makeAssertionParams,
         CancellationToken cancellationToken = default)
     {
-        var parsedResponse = AuthenticatorAssertionResponse.Parse(assertionResponse);
+        var parsedResponse = AuthenticatorAssertionResponse.Parse(makeAssertionParams.AssertionResponse);
 
-        var result = await parsedResponse.VerifyAsync(originalOptions,
+        var result = await parsedResponse.VerifyAsync(makeAssertionParams.OriginalOptions,
                                                       _config,
-                                                      storedPublicKey,
-                                                      storedDevicePublicKeys,
-                                                      storedSignatureCounter,
-                                                      isUserHandleOwnerOfCredentialIdCallback,
+                                                      makeAssertionParams.StoredPublicKey,
+                                                      makeAssertionParams.StoredDevicePublicKeys,
+                                                      makeAssertionParams.StoredSignatureCounter,
+                                                      makeAssertionParams.IsUserHandleOwnerOfCredentialIdCallback,
                                                       _metadataService,
-                                                      requestTokenBindingId,
+                                                      makeAssertionParams.RequestTokenBindingId,
                                                       cancellationToken);
 
         return result;
