@@ -6,7 +6,7 @@ namespace Fido2NetLib;
 /// <summary>
 /// Wraps the input for the MakeAssertion function
 /// </summary>
-public class MakeAssertionParams
+public sealed class MakeAssertionParams
 {
     /// <summary>
     /// The assertion response from the authenticator.

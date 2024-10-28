@@ -3,7 +3,7 @@
 /// <summary>
 /// Wraps the input for the MakeNewCredential function
 /// </summary>
-public class MakeNewCredentialParams
+public sealed class MakeNewCredentialParams
 {
     /// <summary>
     ///  The attestation response from the authenticator.
