@@ -3,7 +3,7 @@
 namespace Fido2NetLib.Objects;
 
 /// <summary>
-/// Authenticator data flags 
+/// Authenticator data flags
 /// <see href="https://www.w3.org/TR/webauthn/#flags"/>
 /// </summary>
 [Flags]
@@ -27,16 +27,16 @@ public enum AuthenticatorFlags : byte
     UV = 0x4,
 
     /// <summary>
-    /// A Public Key Credential Source's generating authenticator determines at creation time whether the public key credential source is allowed to be backed up. 
-    /// Backup eligibility is signaled in authenticator data's flags along with the current backup state. 
-    /// Backup eligibility is a credential property and is permanent for a given public key credential source. 
+    /// A Public Key Credential Source's generating authenticator determines at creation time whether the public key credential source is allowed to be backed up.
+    /// Backup eligibility is signaled in authenticator data's flags along with the current backup state.
+    /// Backup eligibility is a credential property and is permanent for a given public key credential source.
     /// A backup eligible public key credential source is referred to as a multi-device credential whereas one that is not backup eligible is referred to as a single-device credential.
     /// <see href="https://w3c.github.io/webauthn/#backup-eligibility"/>
     /// </summary>
     BE = 0x8,
 
     /// <summary>
-    /// The current backup state of a multi-device credential as determined by the current managing authenticator. 
+    /// The current backup state of a multi-device credential as determined by the current managing authenticator.
     /// Backup state is signaled in authenticator data's flags and can change over time.
     /// <see href="https://w3c.github.io/webauthn/#backup-state"/>
     /// </summary>

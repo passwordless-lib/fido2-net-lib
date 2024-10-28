@@ -9,7 +9,7 @@ namespace Fido2NetLib.Objects;
 /// Note: If the assertion is intended to be run on a web browser, additional transformation must be performed
 /// on the client extension output on the browser side after calling navigator.credentials.get(). Specifically,
 /// the value of <c>largeBlob.blob</c> must be converted from a Uint8Array to a base64url-encoded string.
-/// 
+///
 /// https://w3c.github.io/webauthn/#dictdef-authenticationextensionslargebloboutputs
 /// </summary>
 public sealed class AuthenticationExtensionsLargeBlobOutputs

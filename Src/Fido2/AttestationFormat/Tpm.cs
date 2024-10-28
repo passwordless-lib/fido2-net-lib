@@ -31,7 +31,7 @@ internal sealed class Tpm : AttestationVerifier
         "id:4C454E00", // 'LEN' Lenovo
         "id:4D534654", // 'MSFT' Microsoft
         "id:4E534D20", // 'NSM' National Semiconductor
-        "id:4E545A00", // 'NTZ' Nationz 
+        "id:4E545A00", // 'NTZ' Nationz
         "id:4E544300", // 'NTC' Nuvoton Technology
         "id:51434F4D", // 'QCOM' Qualcomm
         "id:534D5343", // 'SMSC' SMSC
@@ -68,7 +68,7 @@ internal sealed class Tpm : AttestationVerifier
         int coseKty = (int)request.CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
         if (coseKty is 3) // RSA
         {
-            ReadOnlySpan<byte> coseMod = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
+            ReadOnlySpan<byte> coseMod = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus
             ReadOnlySpan<byte> coseExp = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
             if (!coseMod.SequenceEqual(pubArea.Unique))
@@ -116,7 +116,7 @@ internal sealed class Tpm : AttestationVerifier
         if (!dataHash.SequenceEqual(certInfo.ExtraData))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch extraData and attToBeSigned");
 
-        // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
+        // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea
         ReadOnlySpan<byte> pubAreaRawHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)certInfo.Alg), pubArea.Raw);
 
         if (!pubAreaRawHash.SequenceEqual(certInfo.AttestedName))
@@ -164,9 +164,9 @@ internal sealed class Tpm : AttestationVerifier
             (string? tpmManufacturer, string? tpmModel, string? tpmVersion) = SANFromAttnCertExts(aikCert.Extensions);
 
             // From https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf
-            // "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName 
-            // form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device 
-            // Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty 
+            // "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName
+            // form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device
+            // Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty
             // and SHOULD be non-critical if subject is non-empty"
 
             // Best I can figure to do for now?
@@ -191,7 +191,7 @@ internal sealed class Tpm : AttestationVerifier
             if (IsAttnCertCACert(aikCert.Extensions))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert Basic Constraints extension CA component must be false");
 
-            // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] 
+            // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280]
             // are both OPTIONAL as the status of many attestation certificates is available through metadata services.
             // See, for example, the FIDO Metadata Service [FIDOMetadataService].
 
@@ -261,7 +261,7 @@ internal sealed class Tpm : AttestationVerifier
                     nameSequence.CheckMinimumSequenceLength(1);
 
                     /*
-                     
+
                     Per Trusted Computing Group Endorsement Key Credential Profile section 3.2.9:
 
                     "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName-form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device Attributes."
@@ -385,10 +385,10 @@ public enum TpmEccCurve : ushort
     TPM_ECC_NIST_P224,  // 0x0002
     TPM_ECC_NIST_P256,  // 0x0003
     TPM_ECC_NIST_P384,  // 0x0004
-    TPM_ECC_NIST_P521,  // 0x0005  
+    TPM_ECC_NIST_P521,  // 0x0005
     TPM_ECC_BN_P256,    // 0x0010 curve to support ECDAA
     TPM_ECC_BN_P638,    // 0x0011 curve to support ECDAA
-    TPM_ECC_SM2_P256    // 0x0020 
+    TPM_ECC_SM2_P256    // 0x0020
 }
 
 public enum TpmAlg : ushort
@@ -426,7 +426,7 @@ public enum TpmAlg : ushort
     TPM_ALG_CAMELLIA, // 26
     TPM_ALG_CTR = 0x40,
     TPM_ALG_OFB, // 41
-    TPM_ALG_CBC, // 42 
+    TPM_ALG_CBC, // 42
     TPM_ALG_CFB, // 43
     TPM_ALG_ECB // 44
 };
@@ -499,8 +499,8 @@ public sealed class CertInfo
     public static (ushort size, byte[] name) NameFromTPM2BName(ReadOnlySpan<byte> ab, ref int offset)
     {
         // TCG TPM Rev 2.0, part 2, structures, section 10.5.3, TPM2B_NAME
-        // This buffer holds a Name for any entity type. 
-        // The type of Name in the structure is determined by context and the size parameter. 
+        // This buffer holds a Name for any entity type.
+        // The type of Name in the structure is determined by context and the size parameter.
         ushort totalSize = 0;
         if (AuthDataHelper.GetSizedByteArray(ab, ref offset, 2) is byte[] totalBytes)
         {
@@ -514,11 +514,11 @@ public sealed class CertInfo
             size = BinaryPrimitives.ReadUInt16BigEndian(bytes);
         }
 
-        // If size is 4, then the Name is a handle. 
+        // If size is 4, then the Name is a handle.
         if (size is 4)
             throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
 
-        // If size is 0, then no Name is present. 
+        // If size is 0, then no Name is present.
         if (size is 0)
             throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
 
@@ -562,10 +562,10 @@ public sealed class PubArea
         Type = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
         var tpmAlg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
 
-        // TPMI_ALG_HASH 
+        // TPMI_ALG_HASH
         Alg = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
-        // TPMA_OBJECT, attributes that, along with type, determine the manipulations of this object 
+        // TPMA_OBJECT, attributes that, along with type, determine the manipulations of this object
         Attributes = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
 
         // TPM2B_DIGEST, optional policy for using this key, computed using the alg of the object
@@ -591,7 +591,7 @@ public sealed class PubArea
             Scheme = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
         }
 
-        // TPMI_RSA_KEY_BITS, number of bits in the public modulus 
+        // TPMI_RSA_KEY_BITS, number of bits in the public modulus
         KeyBits = null;
 
         // The public exponent, a prime number greater than 2.
@@ -618,9 +618,9 @@ public sealed class PubArea
         // TPMI_ECC_CURVE
         CurveID = null;
 
-        // TPMT_KDF_SCHEME, an optional key derivation scheme for generating a symmetric key from a Z value 
-        // If the kdf  parameter associated with curveID is not TPM_ALG_NULL then this is required to be NULL. 
-        // NOTE There are currently no commands where this parameter has effect and, in the reference code, this field needs to be set to TPM_ALG_NULL. 
+        // TPMT_KDF_SCHEME, an optional key derivation scheme for generating a symmetric key from a Z value
+        // If the kdf  parameter associated with curveID is not TPM_ALG_NULL then this is required to be NULL.
+        // NOTE There are currently no commands where this parameter has effect and, in the reference code, this field needs to be set to TPM_ALG_NULL.
         KDF = null;
 
         if (tpmAlg is TpmAlg.TPM_ALG_ECC)

@@ -9,7 +9,7 @@ namespace Fido2NetLib.Objects;
 /// Note: If a value is specified for <see cref="Write"/>, and the assertion is intended to be invoked on a web browser,
 /// additional transformation must be performed on the client side before calling navigator.credentials.get().
 /// Specifically, the value must be converted from a base64url-encoded string to a Uint8Array.
-/// 
+///
 /// https://w3c.github.io/webauthn/#dictdef-authenticationextensionslargeblobinputs
 /// </summary>
 public sealed class AuthenticationExtensionsLargeBlobInputs
@@ -21,7 +21,7 @@ public sealed class AuthenticationExtensionsLargeBlobInputs
     /// A value of <c>Preferred</c> will allow credential creation to succeed even if largeBlob support is not available.
     ///
     /// Valid only during registration.
-    /// 
+    ///
     /// https://w3c.github.io/webauthn/#dom-authenticationextensionslargeblobinputs-support
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -32,7 +32,7 @@ public sealed class AuthenticationExtensionsLargeBlobInputs
     /// Whether or not to read from the blob.
     ///
     /// Cannot be used in combination with <see cref="Write"/>.
-    /// 
+    ///
     /// Valid only during assertion.
     ///
     /// https://w3c.github.io/webauthn/#dom-authenticationextensionslargeblobinputs-read

@@ -129,7 +129,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         var conformanceTesting = metadataService != null && metadataService.ConformanceTesting();
 
         // 14. Verify that the UP bit of the flags in authData is set.
-        // Todo: Conformance testing verifies the UVP flags differently than W3C spec, simplify this by removing the mention of conformanceTesting when conformance tools are updated) 
+        // Todo: Conformance testing verifies the UVP flags differently than W3C spec, simplify this by removing the mention of conformanceTesting when conformance tools are updated)
         if (!authData.UserPresent && !conformanceTesting)
             throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
@@ -156,7 +156,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             devicePublicKeyResult = await DevicePublicKeyAuthenticationAsync(storedDevicePublicKeys, Raw.ClientExtensionResults, AuthenticatorData, hash).ConfigureAwait(false);
         }
 
-        // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation        
+        // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation
         if (authData.HasExtensionsData && (authData.Extensions is null || authData.Extensions.Length is 0))
             throw new Fido2VerificationException(Fido2ErrorCode.MalformedExtensionsDetected, Fido2ErrorMessages.MalformedExtensionsDetected);
 
@@ -193,8 +193,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
     /// <summary>
     /// If the devicePubKey extension was included on a navigator.credentials.get() call, then the below
-    /// verification steps are performed in the context of this step of § 7.2 Verifying an Authentication Assertion using 
-    /// these variables established therein: credential, clientExtensionResults, authData, and hash. Relying Party policy 
+    /// verification steps are performed in the context of this step of § 7.2 Verifying an Authentication Assertion using
+    /// these variables established therein: credential, clientExtensionResults, authData, and hash. Relying Party policy
     /// may specify whether a response without a devicePubKey is acceptable.
     /// <see href="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-get"/>
     /// <param name="storedDevicePublicKeys"></param>
@@ -215,7 +215,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
         var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
 
-        // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
+        // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk.
         if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify([.. authData.ToByteArray(), .. hash], attObjForDevicePublicKey.Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 

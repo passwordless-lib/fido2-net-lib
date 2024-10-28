@@ -40,14 +40,14 @@ public sealed class AuthenticatorGetAssertionResponse
     public PublicKeyCredentialUserEntity? User { get; set; }
 
     /// <summary>
-    /// Total number of account credentials for the RP.This member is required when more than one account for the RP and the authenticator does not have a display. 
+    /// Total number of account credentials for the RP.This member is required when more than one account for the RP and the authenticator does not have a display.
     /// Omitted when returned for the authenticatorGetNextAssertion method.
     /// </summary>
     [CborMember(0x05)]
     public int? NumberOfCredentials { get; set; }
 
     /// <summary>
-    /// Indicates that a credential was selected by the user via interaction directly with the authenticator, and thus the platform does not need to confirm the credential. 
+    /// Indicates that a credential was selected by the user via interaction directly with the authenticator, and thus the platform does not need to confirm the credential.
     /// MUST NOT be present in response to a request where an allowList was given, where numberOfCredentials is greater than one, nor in response to an authenticatorGetNextAssertion request.
     /// </summary>
     [CborMember(0x06)]

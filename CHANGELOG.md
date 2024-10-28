@@ -1,6 +1,6 @@
 # FIDO2 .NET library (WebAuthn)
 
-[Readme](https://github.com/passwordless-lib/fido2-net-lib/blob/master/README.md) 
+[Readme](https://github.com/passwordless-lib/fido2-net-lib/blob/master/README.md)
 
 2020-03-24 1.1.0
 - Refactored FIDO2 model

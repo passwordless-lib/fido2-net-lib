@@ -21,14 +21,14 @@ public class BiometricStatusReport
     /// Gets or sets a single USER_VERIFY constant indicating the modality of the biometric component.
     /// </summary>
     /// <remarks>
-    /// This is not a bit flag combination. 
+    /// This is not a bit flag combination.
     /// This value MUST be non-zero and this value MUST correspond to one or more entries in field userVerificationDetails in the related Metadata Statement.
     /// </remarks>
     [JsonPropertyName("modality")]
     public required ulong Modality { get; set; }
 
     /// <summary>
-    /// Gets or sets a ISO-8601 formatted date since when the certLevel achieved, if applicable. 
+    /// Gets or sets a ISO-8601 formatted date since when the certLevel achieved, if applicable.
     /// <para>If no date is given, the status is assumed to be effective while present.</para>
     /// </summary>
     [JsonPropertyName("effectiveDate")]
