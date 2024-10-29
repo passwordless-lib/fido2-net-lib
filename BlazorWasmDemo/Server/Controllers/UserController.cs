@@ -219,10 +219,12 @@ public class UserController : ControllerBase
             };
 
             // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
-            var options = _fido2.GetAssertionOptions(
-                existingKeys,
-                userVerification ?? UserVerificationRequirement.Discouraged,
-                exts);
+            var options = _fido2.GetAssertionOptions(new GetAssertionOptionsParams
+            {
+                AllowedCredentials = existingKeys,
+                UserVerification = userVerification ?? UserVerificationRequirement.Discouraged,
+                Extensions = exts
+            });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             _pendingAssertions[new string(options.Challenge.Select(b => (char)b).ToArray())] = options;

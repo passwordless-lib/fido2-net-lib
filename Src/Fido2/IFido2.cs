@@ -8,10 +8,7 @@ namespace Fido2NetLib;
 
 public interface IFido2
 {
-    AssertionOptions GetAssertionOptions(
-        IReadOnlyList<PublicKeyCredentialDescriptor> allowedCredentials,
-        UserVerificationRequirement? userVerification,
-        AuthenticationExtensionsClientInputs? extensions = null);
+    AssertionOptions GetAssertionOptions(GetAssertionOptionsParams getAssertionOptionsParams);
 
     Task<VerifyAssertionResult> MakeAssertionAsync(MakeAssertionParams makeAssertionParams,
         CancellationToken cancellationToken = default);

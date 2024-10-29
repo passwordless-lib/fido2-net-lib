@@ -53,10 +53,15 @@ public class Fido2 : IFido2
     /// <summary>
     /// Returns AssertionOptions including a challenge to the browser/authenticator to assert existing credentials and authenticate a user.
     /// </summary>
-    /// <param name="allowedCredentials"></param>
-    /// <param name="userVerification"></param>
-    /// <param name="extensions"></param>
+    /// <param name="getAssertionOptionsParams">The input arguments for generating AssertionOptions</param>
     /// <returns></returns>
+    public AssertionOptions GetAssertionOptions(GetAssertionOptionsParams getAssertionOptionsParams)
+    {
+        byte[] challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
+
+        return AssertionOptions.Create(_config, challenge, getAssertionOptionsParams.AllowedCredentials, getAssertionOptionsParams.UserVerification, getAssertionOptionsParams.Extensions);
+    }
+
     public AssertionOptions GetAssertionOptions(
         IReadOnlyList<PublicKeyCredentialDescriptor> allowedCredentials,
         UserVerificationRequirement? userVerification,

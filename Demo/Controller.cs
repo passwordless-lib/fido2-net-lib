@@ -166,11 +166,12 @@ public class MyController : Controller
 
             // 3. Create options
             var uv = string.IsNullOrEmpty(userVerification) ? UserVerificationRequirement.Discouraged : userVerification.ToEnum<UserVerificationRequirement>();
-            var options = _fido2.GetAssertionOptions(
-                existingCredentials,
-                uv,
-                exts
-            );
+            var options = _fido2.GetAssertionOptions(new GetAssertionOptionsParams()
+            {
+                AllowedCredentials = existingCredentials,
+                UserVerification = uv,
+                Extensions = exts
+            });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
