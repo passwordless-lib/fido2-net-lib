@@ -285,9 +285,6 @@ public class AuthenticatorSelection
     };
 }
 
-/// <summary>
-///  
-/// </summary>
 public class Fido2User
 {
     /// <summary>
