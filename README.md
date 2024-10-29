@@ -38,7 +38,7 @@ To use the asp.net helpers, install the asp.net-package.
 
 Read more:
 - [Why it's exciting](http://ideasof.andersaberg.com/development/the-passwordless-web)
-- [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113)
+- [Medium](https://medium.com/tokenring/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113)
 - [FIDO Alliance](https://fidoalliance.org/fido2/)
 - [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/)
 - [WebAuthn.Guide](https://webauthn.guide/) from Duo Security
