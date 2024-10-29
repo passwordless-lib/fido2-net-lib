@@ -24,12 +24,12 @@ public sealed class RequestNewCredentialParams
     /// The Relying Party MAY use this OPTIONAL member to specify capabilities and settings that the authenticator MUST or SHOULD satisfy to participate in the create() operation. See § 5.4.4 Authenticator Selection Criteria (dictionary AuthenticatorSelectionCriteria).
     /// </summary>
     public AuthenticatorSelection AuthenticatorSelection { get; init; } = AuthenticatorSelection.Default;
-    
+
     /// <summary>
     /// The Relying Party MAY use this OPTIONAL member to specify a preference regarding attestation conveyance. Its value SHOULD be a member of AttestationConveyancePreference. Client platforms MUST ignore unknown values, treating an unknown value as if the member does not exist.
     /// </summary>
     public AttestationConveyancePreference AttestationPreference { get; init; } = AttestationConveyancePreference.None;
-    
+
     /// <summary>
     /// The Relying Party MAY use this OPTIONAL member to provide client extension inputs requesting additional processing by the client and authenticator. For example, the Relying Party may request that the client returns additional information about the credential that was created.
     /// </summary>

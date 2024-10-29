@@ -74,7 +74,7 @@ public class TestController : Controller
             AttestationPreference = opts.Attestation,
             Extensions = exts
         });
-        
+
         // 4. Temporarily store options, session/in-memory cache/redis/db
         HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
 
