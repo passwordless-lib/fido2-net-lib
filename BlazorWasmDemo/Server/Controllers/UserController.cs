@@ -103,12 +103,13 @@ public class UserController : ControllerBase
             }
 
             // 4. Create options
-            var options = _fido2.RequestNewCredential(
-                user,
-                existingKeys,
-                authenticatorSelection,
-                attestationType ?? AttestationConveyancePreference.None,
-                new AuthenticationExtensionsClientInputs
+            var options = _fido2.RequestNewCredential(new RequestNewCredentialParams
+            {
+                User = user,
+                ExcludeCredentials = existingKeys,
+                AuthenticatorSelection = authenticatorSelection,
+                AttestationPreference = attestationType ?? AttestationConveyancePreference.None,
+                Extensions = new AuthenticationExtensionsClientInputs
                 {
                     Extensions = true,
                     UserVerificationMethod = true,
@@ -118,7 +119,7 @@ public class UserController : ControllerBase
                         Attestation = attestationType?.ToString() ?? AttestationConveyancePreference.None.ToString()
                     },
                 }
-            );
+            });
 
             // 5. Temporarily store options, session/in-memory cache/redis/db
             _pendingCredentials[key] = options;

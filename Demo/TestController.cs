@@ -66,8 +66,15 @@ public class TestController : Controller
             exts.Example = opts.Extensions.Example;
 
         // 3. Create options
-        var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
-
+        var options = _fido2.RequestNewCredential(new RequestNewCredentialParams
+        {
+            User = user,
+            ExcludeCredentials = existingKeys,
+            AuthenticatorSelection = opts.AuthenticatorSelection,
+            AttestationPreference = opts.Attestation,
+            Extensions = exts
+        });
+        
         // 4. Temporarily store options, session/in-memory cache/redis/db
         HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
 

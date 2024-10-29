@@ -71,7 +71,7 @@ public class MyController : Controller
                 CredProps = true
             };
 
-            var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
+            var options = _fido2.RequestNewCredential(new RequestNewCredentialParams { User = user, ExcludeCredentials = existingKeys, AuthenticatorSelection = authenticatorSelection, AttestationPreference = attType.ToEnum<AttestationConveyancePreference>(), Extensions = exts });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());

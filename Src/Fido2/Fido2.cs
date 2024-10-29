@@ -26,37 +26,13 @@ public class Fido2 : IFido2
     /// <summary>
     /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authenticator to create new credentials.
     /// </summary>
-    /// <param name="user"></param>
-    /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator. The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
-    /// <param name="extensions"></param>
+    /// <param name="requestNewCredentialParams">The input arguments for generating CredentialCreateOptions</param>
     /// <returns></returns>
-    public CredentialCreateOptions RequestNewCredential(
-        Fido2User user,
-        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
-        AuthenticationExtensionsClientInputs? extensions = null)
+    public CredentialCreateOptions RequestNewCredential(RequestNewCredentialParams requestNewCredentialParams)
     {
-        return RequestNewCredential(user, excludeCredentials, AuthenticatorSelection.Default, AttestationConveyancePreference.None, extensions);
-    }
+        var challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
+        return CredentialCreateOptions.Create(_config, challenge, requestNewCredentialParams.User, requestNewCredentialParams.AuthenticatorSelection, requestNewCredentialParams.AttestationPreference, requestNewCredentialParams.ExcludeCredentials, requestNewCredentialParams.Extensions);
 
-    /// <summary>
-    /// Returns CredentialCreateOptions including a challenge to be sent to the browser/authenticator to create new credentials.
-    /// </summary>
-    /// <param name="user"></param>
-    /// <param name="excludeCredentials">Recommended. This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator. The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.</param>
-    /// <param name="authenticatorSelection"></param>
-    /// <param name="attestationPreference">This member is intended for use by Relying Parties that wish to express their preference for attestation conveyance. The default is none.</param>
-    /// <param name="extensions"></param>
-    /// <returns></returns>
-    public CredentialCreateOptions RequestNewCredential(
-        Fido2User user,
-        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
-        AuthenticatorSelection authenticatorSelection,
-        AttestationConveyancePreference attestationPreference,
-        AuthenticationExtensionsClientInputs? extensions = null)
-    {
-        byte[] challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
-
-        return CredentialCreateOptions.Create(_config, challenge, user, authenticatorSelection, attestationPreference, excludeCredentials, extensions);
     }
 
     /// <summary>

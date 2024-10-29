@@ -19,15 +19,5 @@ public interface IFido2
     Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(MakeNewCredentialParams makeNewCredentialParams,
         CancellationToken cancellationToken = default);
 
-    CredentialCreateOptions RequestNewCredential(
-        Fido2User user,
-        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
-        AuthenticationExtensionsClientInputs? extensions = null);
-
-    CredentialCreateOptions RequestNewCredential(
-        Fido2User user,
-        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
-        AuthenticatorSelection authenticatorSelection,
-        AttestationConveyancePreference attestationPreference,
-        AuthenticationExtensionsClientInputs? extensions = null);
+    CredentialCreateOptions RequestNewCredential(RequestNewCredentialParams requestNewCredentialParams);
 }
