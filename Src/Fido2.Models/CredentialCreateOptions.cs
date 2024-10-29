@@ -280,7 +280,7 @@ public class AuthenticatorSelection
     public static AuthenticatorSelection Default => new AuthenticatorSelection
     {
         AuthenticatorAttachment = null,
-        ResidentKey = ResidentKeyRequirement.Discouraged,
+        ResidentKey = ResidentKeyRequirement.Preferred,
         UserVerification = UserVerificationRequirement.Preferred
     };
 }
