@@ -55,12 +55,6 @@ public class AssertionOptions
     public IReadOnlyList<PublicKeyCredentialHint> Hints { get; set; } = Array.Empty<PublicKeyCredentialHint>();
 
     /// <summary>
-    /// This member is intended for use by Relying Parties that wish to select a preference regarding the attestation statement format used, if such an attestation is requested.
-    /// </summary>
-    [JsonPropertyName("attestationFormats")]
-    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; set; } = [];
-
-    /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator.
     /// For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
     /// </summary>
