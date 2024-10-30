@@ -35,11 +35,6 @@ public sealed class MakeAssertionParams
     public required IsUserHandleOwnerOfCredentialIdAsync IsUserHandleOwnerOfCredentialIdCallback { get; init; }
 
     /// <summary>
-    /// The stored device public keys.
-    /// </summary>
-    public IReadOnlyList<byte[]> StoredDevicePublicKeys { get; init; } = Array.Empty<byte[]>();
-
-    /// <summary>
     /// DO NOT USE - Deprecated, but kept in code due to conformance testing tool.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]

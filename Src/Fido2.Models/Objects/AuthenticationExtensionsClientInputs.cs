@@ -41,14 +41,6 @@ public sealed class AuthenticationExtensionsClientInputs
 
 #nullable enable
     /// <summary>
-    /// This extension enables use of a user verification method.
-    /// https://www.w3.org/TR/webauthn/#sctn-uvm-extension
-    /// </summary>
-    [JsonPropertyName("devicePubKey")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public AuthenticationExtensionsDevicePublicKeyInputs? DevicePubKey { get; set; }
-
-    /// <summary>
     /// This client registration extension facilitates reporting certain credential properties known by the client to the requesting WebAuthn Relying Party upon creation of a public key credential source as a result of a registration ceremony.
     /// </summary>
     [JsonPropertyName("credProps")]

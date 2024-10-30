@@ -62,8 +62,7 @@ public class ExistingU2fRegistrationDataTests
             OriginalOptions = options,
             StoredPublicKey = publicKey.Encode(),
             StoredSignatureCounter = 0,
-            IsUserHandleOwnerOfCredentialIdCallback = null,
-            StoredDevicePublicKeys = null
+            IsUserHandleOwnerOfCredentialIdCallback = null
         });
 
         Assert.NotEmpty(credential.CredentialId);

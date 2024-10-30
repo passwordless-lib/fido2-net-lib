@@ -48,8 +48,6 @@ public class StoredCredential
     /// </summary>
     public byte[] AttestationClientDataJson { get; set; }
 
-    public List<byte[]> DevicePublicKeys { get; set; }
-
     public byte[] UserId { get; set; }
 
     /// <summary>

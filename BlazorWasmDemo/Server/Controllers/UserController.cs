@@ -112,11 +112,7 @@ public class UserController : ControllerBase
                 {
                     Extensions = true,
                     UserVerificationMethod = true,
-                    CredProps = true,
-                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs
-                    {
-                        Attestation = attestationType?.ToString() ?? AttestationConveyancePreference.None.ToString()
-                    },
+                    CredProps = true
                 }
             );
 
@@ -168,7 +164,6 @@ public class UserController : ControllerBase
                 SignCount = credential.SignCount,
                 RegDate = DateTimeOffset.UtcNow,
                 AaGuid = credential.AaGuid,
-                DevicePublicKeys = [credential.DevicePublicKey],
                 Transports = credential.Transports,
                 IsBackupEligible = credential.IsBackupEligible,
                 IsBackedUp = credential.IsBackedUp,
@@ -213,8 +208,7 @@ public class UserController : ControllerBase
             var exts = new AuthenticationExtensionsClientInputs
             {
                 UserVerificationMethod = true,
-                Extensions = true,
-                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                Extensions = true
             };
 
             // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
@@ -277,16 +271,11 @@ public class UserController : ControllerBase
                 OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = creds.SignCount,
-                IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync,
-                StoredDevicePublicKeys = creds.DevicePublicKeys
+                IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync
             }, cancellationToken: cancellationToken);
 
             // 4. Store the updated counter
             _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-            if (res.DevicePublicKey is not null)
-            {
-                creds.DevicePublicKeys.Add(res.DevicePublicKey);
-            }
 
 
             // 5. return result to client

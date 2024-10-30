@@ -43,11 +43,6 @@ public class RegisteredPublicKeyCredential
     /// </summary>
     public bool IsBackedUp { get; init; }
 
-    /// <summary>
-    /// The public key portion of a hardware-bound device key pair
-    /// </summary>
-    public byte[] DevicePublicKey { get; init; }
-
     public Guid AaGuid { get; init; }
 
     public Fido2User User { get; init; }
