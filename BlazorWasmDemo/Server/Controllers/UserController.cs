@@ -112,11 +112,7 @@ public class UserController : ControllerBase
                 {
                     Extensions = true,
                     UserVerificationMethod = true,
-                    CredProps = true,
-                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs
-                    {
-                        Attestation = attestationType?.ToString() ?? AttestationConveyancePreference.None.ToString()
-                    },
+                    CredProps = true
                 }
             );
 
@@ -212,8 +208,7 @@ public class UserController : ControllerBase
             var exts = new AuthenticationExtensionsClientInputs
             {
                 UserVerificationMethod = true,
-                Extensions = true,
-                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                Extensions = true
             };
 
             // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)

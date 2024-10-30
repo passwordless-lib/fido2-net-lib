@@ -67,7 +67,6 @@ public class MyController : Controller
             {
                 Extensions = true,
                 UserVerificationMethod = true,
-                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs() { Attestation = attType },
                 CredProps = true
             };
 
@@ -159,8 +158,7 @@ public class MyController : Controller
             var exts = new AuthenticationExtensionsClientInputs()
             {
                 Extensions = true,
-                UserVerificationMethod = true,
-                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                UserVerificationMethod = true
             };
 
             // 3. Create options
