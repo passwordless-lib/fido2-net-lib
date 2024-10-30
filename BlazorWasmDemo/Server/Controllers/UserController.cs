@@ -168,7 +168,6 @@ public class UserController : ControllerBase
                 SignCount = credential.SignCount,
                 RegDate = DateTimeOffset.UtcNow,
                 AaGuid = credential.AaGuid,
-                DevicePublicKeys = [credential.DevicePublicKey],
                 Transports = credential.Transports,
                 IsBackupEligible = credential.IsBackupEligible,
                 IsBackedUp = credential.IsBackedUp,
@@ -277,16 +276,11 @@ public class UserController : ControllerBase
                 OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = creds.SignCount,
-                IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync,
-                StoredDevicePublicKeys = creds.DevicePublicKeys
+                IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync
             }, cancellationToken: cancellationToken);
 
             // 4. Store the updated counter
             _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-            if (res.DevicePublicKey is not null)
-            {
-                creds.DevicePublicKeys.Add(res.DevicePublicKey);
-            }
 
 
             // 5. return result to client

@@ -48,7 +48,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="options">The original assertion options that was sent to the client.</param>
     /// <param name="config"></param>
     /// <param name="storedPublicKey">The stored public key for this CredentialId.</param>
-    /// <param name="storedDevicePublicKeys">The stored device public key for this CredentialId.</param>
     /// <param name="storedSignatureCounter">The stored counter value for this CredentialId</param>
     /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID.</param>
     /// <param name="metadataService"></param>
@@ -58,7 +57,6 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         AssertionOptions options,
         Fido2Configuration config,
         byte[] storedPublicKey,
-        IReadOnlyList<byte[]> storedDevicePublicKeys,
         uint storedSignatureCounter,
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
         IMetadataService? metadataService,
@@ -147,14 +145,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             !authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
-        // 17. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
-        // considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions,
-        // i.e., those that were not specified as part of options.extensions. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
-        byte[]? devicePublicKeyResult = null;
-        if (Raw.ClientExtensionResults?.DevicePubKey is not null)
-        {
-            devicePublicKeyResult = await DevicePublicKeyAuthenticationAsync(storedDevicePublicKeys, Raw.ClientExtensionResults, AuthenticatorData, hash).ConfigureAwait(false);
-        }
+   
 
         // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation
         if (authData.HasExtensionsData && (authData.Extensions is null || authData.Extensions.Length is 0))
@@ -186,187 +177,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         {
             CredentialId = Raw.Id,
             SignCount = authData.SignCount,
-            IsBackedUp = authData.IsBackedUp,
-            DevicePublicKey = devicePublicKeyResult,
+            IsBackedUp = authData.IsBackedUp
+            
         };
-    }
-
-    /// <summary>
-    /// If the devicePubKey extension was included on a navigator.credentials.get() call, then the below
-    /// verification steps are performed in the context of this step of § 7.2 Verifying an Authentication Assertion using
-    /// these variables established therein: credential, clientExtensionResults, authData, and hash. Relying Party policy
-    /// may specify whether a response without a devicePubKey is acceptable.
-    /// <see href="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-get"/>
-    /// <param name="storedDevicePublicKeys"></param>
-    /// <param name="clientExtensionResults"></param>
-    /// <param name="authData"></param>
-    /// <param name="hash"></param>
-    /// </summary>
-    private static async ValueTask<byte[]?> DevicePublicKeyAuthenticationAsync(
-        IReadOnlyList<byte[]> storedDevicePublicKeys,
-        AuthenticationExtensionsClientOutputs clientExtensionResults,
-        AuthenticatorData authData,
-        byte[] hash)
-    {
-        // 1. Let attObjForDevicePublicKey be the value of the devicePubKey member of clientExtensionResults.
-        var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey!;
-
-        // 2. Verify that attObjForDevicePublicKey is valid CBOR conforming to the syntax defined above and
-        // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
-        var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
-
-        // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk.
-        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify([.. authData.ToByteArray(), .. hash], attObjForDevicePublicKey.Signature))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
-
-        // 4. If the Relying Party's user account mapped to the credential.id in play (i.e., for the user being
-        // authenticated) holds aaguid, dpk and scope values corresponding to the extracted attObjForDevicePublicKey
-        // fields, then perform binary equality checks between the corresponding stored values and the extracted field
-        // values. The Relying Party MAY have more than one set of {aaguid, dpk, scope} values mapped to the user
-        // account and credential.id pair and each set MUST be checked.
-        if (storedDevicePublicKeys.Count > 0)
-        {
-            var matchedDpkRecords = new List<DevicePublicKeyAuthenticatorOutput>();
-
-            foreach (var storedDevicePublicKey in storedDevicePublicKeys)
-            {
-                var dpkRecord = DevicePublicKeyAuthenticatorOutput.Parse(storedDevicePublicKey);
-                if (dpkRecord.GetAuthenticationMatcher().SequenceEqual(devicePublicKeyAuthenticatorOutput.GetAuthenticationMatcher())
-                    && dpkRecord.Scope.Equals(devicePublicKeyAuthenticatorOutput.Scope))
-                {
-                    matchedDpkRecords.Add(dpkRecord);
-                }
-            }
-
-            // more than one match
-            if (matchedDpkRecords.Count > 1)
-            {
-                // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.NonUniqueDevicePublicKey);
-            }
-            // exactly one match
-            else if (matchedDpkRecords.Count is 1)
-            {
-                // This is likely a known device.
-                // If fmt's value is "none" then there is no attestation signature to verify and this is a known device public key with a valid signature and thus a known device. Terminate these verification steps.
-                if (devicePublicKeyAuthenticatorOutput.Fmt is "none")
-                {
-                    return null;
-                }
-                // Otherwise, check attObjForDevicePublicKey's attStmt by performing a binary equality check between the corresponding stored and extracted attStmt values.
-                else if (devicePublicKeyAuthenticatorOutput.AttStmt.Encode().SequenceEqual(matchedDpkRecords.First().AttStmt.Encode()))
-                {
-                    // Note: This authenticator is not generating a fresh per-response random nonce.
-                    return null;
-                }
-                else
-                {
-                    // Optionally, if attestation was requested and the RP wishes to verify it, verify that attStmt
-                    // is a correct attestation statement, conveying a valid attestation signature, by using the
-                    // attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2
-                    // Attestation calculations. Relying Party policy may specify which attestations are acceptable.
-                    // https://www.w3.org/TR/webauthn/#defined-attestation-formats
-                    var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
-
-                    // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-                    try
-                    {
-                        // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                        _ = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash()).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                        throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.InvalidDevicePublicKeyAttestation, ex);
-                    }
-                }
-            }
-            // This is possibly a new device public key signifying a new device.
-            else if (matchedDpkRecords.Count == 0)
-            {
-                // Let matchedDpkKeys be a new empty set
-                List<DevicePublicKeyAuthenticatorOutput> matchedDpkKeys = new();
-
-                // For each dpkRecord in credentialRecord.devicePubKeys
-                foreach (var storedDevicePublicKey in storedDevicePublicKeys)
-                {
-                    var dpkRecord = DevicePublicKeyAuthenticatorOutput.Parse(storedDevicePublicKey);
-
-                    // If dpkRecord.dpk equals dpk
-                    if (dpkRecord.DevicePublicKey.GetBytes().SequenceEqual(devicePublicKeyAuthenticatorOutput.DevicePublicKey.GetBytes()))
-                    {
-                        // Append dpkRecord to matchedDpkKeys.
-                        matchedDpkKeys.Add(dpkRecord);
-                    }
-                }
-
-                // If matchedDpkKeys is empty
-                if (matchedDpkKeys.Count == 0)
-                {
-                    // If fmt’s value is "none"
-                    if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
-                        // There is no attestation signature to verify and this is a new device.
-                        // Unless Relying Party policy specifies that this attestation is unacceptable, Create a new device-bound key record and then terminate these verification steps.
-                        return devicePublicKeyAuthenticatorOutput.Encode();
-
-                    // Otherwise
-                    else
-                    {
-                        // Optionally, if attestation was requested and the RP wishes to verify it, verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2 Attestation calculations.
-                        // Relying Party policy may specify which attestations are acceptable.
-                        var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
-                        // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-                        try
-                        {
-                            // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                            _ = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash()).ConfigureAwait(false);
-                            return devicePublicKeyAuthenticatorOutput.Encode();
-                        }
-                        catch (Exception ex)
-                        {
-                            // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                            throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.InvalidDevicePublicKeyAttestation, ex);
-                        }
-                    }
-                }
-                else
-                {
-                    // Otherwise there is some form of error: we received a known dpk value, but one or more of the
-                    // accompanying aaguid, scope, or fmt values did not match what the Relying Party has stored
-                    // along with that dpk value. Terminate these verification steps.
-                    throw new Fido2VerificationException(Fido2ErrorCode.DevicePublicKeyAuthentication, Fido2ErrorMessages.MissingStoredPublicKey);
-                }
-            }
-        }
-
-        // Otherwise, the Relying Party does not have attObjForDevicePublicKey fields presently mapped to this user account and credential.id pair:
-        else
-        {
-            // If fmt’s value is "none" there is no attestation signature to verify.
-            // Complete the steps in § 7.2 Verifying an Authentication Assertion and, if those steps are successful, store the extracted aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
-            // Terminate these verification steps.
-            if (devicePublicKeyAuthenticatorOutput.Fmt.Equals("none"))
-                return devicePublicKeyAuthenticatorOutput.Encode();
-            // Otherwise, verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt. See § 10.2.2.2.2 Attestation calculations.
-            // Relying Party policy may specify which attestations are acceptable.
-            else
-            {
-                var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
-                // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-                try
-                {
-                    // This is a known device public key with a valid signature and valid attestation and thus a known device. Terminate these verification steps.
-                    _ = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash()).ConfigureAwait(false);
-                    return devicePublicKeyAuthenticatorOutput.Encode();
-                }
-                catch
-                {
-                    // Some form of error has occurred. It is indeterminate whether this is a known device. Terminate these verification steps.
-                    throw new Fido2VerificationException(Fido2ErrorCode.MissingStoredPublicKey, Fido2ErrorMessages.MissingStoredPublicKey);
-                }
-            }
-        }
-
-        return null;
     }
 }

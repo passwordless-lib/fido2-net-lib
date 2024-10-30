@@ -127,8 +127,7 @@ public class MyController : Controller
                 IsBackupEligible = credential.IsBackupEligible,
                 IsBackedUp = credential.IsBackedUp,
                 AttestationObject = credential.AttestationObject,
-                AttestationClientDataJson = credential.AttestationClientDataJson,
-                DevicePublicKeys = [credential.DevicePublicKey]
+                AttestationClientDataJson = credential.AttestationClientDataJson
             });
 
             // 4. return "ok" to the client
@@ -215,15 +214,11 @@ public class MyController : Controller
                 OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = storedCounter,
-                IsUserHandleOwnerOfCredentialIdCallback = callback,
-                StoredDevicePublicKeys = creds.DevicePublicKeys
+                IsUserHandleOwnerOfCredentialIdCallback = callback
             }, cancellationToken: cancellationToken);
 
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-
-            if (res.DevicePublicKey is not null)
-                creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
             // 7. return OK to client
             return Json(res);
