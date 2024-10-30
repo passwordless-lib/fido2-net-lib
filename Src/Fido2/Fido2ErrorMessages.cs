@@ -39,10 +39,7 @@ internal static class Fido2ErrorMessages
     public static readonly string BackupStateRequirementNotMet           = "Backup state does not match policy requirement";
     public static readonly string CredentialAlgorithmRequirementNotMet   = "Credential algorithm does not match policy requirement";
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
-    public static readonly string MissingAttestationType                 = "Missing attestation type";
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
-    public static readonly string InvalidDevicePublicKeyAttestation      = "Invalid devicePublicKey attestation";
-    public static readonly string NonUniqueDevicePublicKey               = "More than one devicePublicKey match";
     public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";
     public static readonly string UserHandleNotOwnerOfPublicKey          = "User is not owner of the public key identified by the credential id";
 
