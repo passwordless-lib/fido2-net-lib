@@ -198,7 +198,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AaGuid = authData.AttestedCredentialData.AaGuid
         };
     }
-    
+
     /// <summary>
     /// The AttestationObject after CBOR parsing
     /// </summary>

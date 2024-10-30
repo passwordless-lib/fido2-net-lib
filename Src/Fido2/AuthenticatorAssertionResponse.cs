@@ -145,7 +145,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             !authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
-   
+
 
         // Pretty sure these conditions are not able to be met due to the AuthenticatorData constructor implementation
         if (authData.HasExtensionsData && (authData.Extensions is null || authData.Extensions.Length is 0))
@@ -178,7 +178,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             CredentialId = Raw.Id,
             SignCount = authData.SignCount,
             IsBackedUp = authData.IsBackedUp
-            
+
         };
     }
 }
