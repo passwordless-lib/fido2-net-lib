@@ -15,7 +15,7 @@ namespace Fido2NetLib;
 
 internal sealed class Tpm : AttestationVerifier
 {
-    private static string ConvertTPMManufacturerToHexString(string id) => BitConverter.ToString(Convert.FromHexString(id.Split(':')[^1])).Replace("-","");
+    private static string ConvertTPMManufacturerToHexString(string id) => BitConverter.ToString(Convert.FromHexString(id.Split(':')[^1])).Replace("-", "");
 
     public static readonly HashSet<string> TPMManufacturers =
     [
