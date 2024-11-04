@@ -195,6 +195,7 @@ public static class COSE
         {
             "1.2.840.10045.2.1" => KeyType.EC2, // ecPublicKey
             "1.2.840.113549.1.1.1" => KeyType.RSA,
+            "1.3.101.112" => KeyType.OKP,
             _ => throw new Exception($"Unknown oid. Was {oid}")
         };
     }
