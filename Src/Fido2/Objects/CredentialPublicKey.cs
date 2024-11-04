@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-
 using Fido2NetLib.Cbor;
-
 using NSec.Cryptography;
 
 namespace Fido2NetLib.Objects;
@@ -13,6 +11,9 @@ public sealed class CredentialPublicKey
     internal readonly COSE.KeyType _type;
     internal readonly COSE.Algorithm _alg;
     internal readonly CborMap _cpk;
+    internal readonly ECDsa? _ecdsa;
+    internal readonly RSA? _rsa;
+    internal readonly NSec.Cryptography.PublicKey? _eddsa;
 
     public CredentialPublicKey(byte[] cpk)
         : this((CborMap)CborObject.Decode(cpk)) { }
@@ -22,6 +23,25 @@ public sealed class CredentialPublicKey
         _cpk = cpk;
         _type = (COSE.KeyType)(int)cpk[COSE.KeyCommonParameter.KeyType];
         _alg = (COSE.Algorithm)(int)cpk[COSE.KeyCommonParameter.Alg];
+        switch (_type)
+        {
+            case COSE.KeyType.EC2:
+            {
+                _ecdsa = CreateECDsa();
+                return;
+            }
+            case COSE.KeyType.RSA:
+            {
+                _rsa = CreateRSA();
+                return;
+            }
+            case COSE.KeyType.OKP:
+            {
+                _eddsa = CreateEdDSA();
+                return;
+            }
+        }
+        throw new InvalidOperationException($"Missing or unknown kty {_type}");
     }
 
     public CredentialPublicKey(ECDsa ecdsaPublicKey, COSE.Algorithm alg)
@@ -39,6 +59,7 @@ public sealed class CredentialPublicKey
             { COSE.KeyTypeParameter.X, keyParams.Q.X! },
             { COSE.KeyTypeParameter.Y, keyParams.Q.Y! }
         };
+        _ecdsa = CreateECDsa();
     }
 
     public CredentialPublicKey(X509Certificate2 cert, COSE.Algorithm alg)
@@ -51,21 +72,36 @@ public sealed class CredentialPublicKey
             { COSE.KeyCommonParameter.KeyType, _type },
             { COSE.KeyCommonParameter.Alg, _alg }
         };
-
-        if (_type is COSE.KeyType.RSA)
+        switch (_type)
         {
-            var keyParams = cert.GetRSAPublicKey()!.ExportParameters(false);
-            _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus!);
-            _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent!);
-        }
-        else if (_type is COSE.KeyType.EC2)
-        {
-            var ecDsaPubKey = cert.GetECDsaPublicKey()!;
-            var keyParams = ecDsaPubKey.ExportParameters(false);
+            case COSE.KeyType.RSA:
+            {
+                var keyParams = cert.GetRSAPublicKey()!.ExportParameters(false);
+                _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus!);
+                _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent!);
+                _rsa = CreateRSA();
+                break;
+            }
+            case COSE.KeyType.EC2:
+            {
+                var ecDsaPubKey = cert.GetECDsaPublicKey()!;
+                var keyParams = ecDsaPubKey.ExportParameters(false);
 
-            _cpk.Add(COSE.KeyTypeParameter.Crv, keyParams.Curve.ToCoseCurve());
-            _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X!);
-            _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y!);
+                _cpk.Add(COSE.KeyTypeParameter.Crv, keyParams.Curve.ToCoseCurve());
+                _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X!);
+                _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y!);
+                _ecdsa = CreateECDsa();
+                break;
+            }
+            case COSE.KeyType.OKP:
+            {
+                _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.Ed25519);
+                _cpk.Add(COSE.KeyTypeParameter.X, cert.PublicKey.EncodedKeyValue.RawData);
+                _eddsa = CreateEdDSA();
+                break;
+            }
+            default:
+                throw new InvalidOperationException($"MMissing or unknown kty {_type}");
         }
     }
 
@@ -74,20 +110,14 @@ public sealed class CredentialPublicKey
         switch (_type)
         {
             case COSE.KeyType.EC2:
-                using (ECDsa ecdsa = CreateECDsa())
-                {
-                    var ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), ecdsa.KeySize);
-                    return ecdsa.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(_alg));
-                }
+                var ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), _ecdsa!.KeySize);
+                return _ecdsa!.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(_alg));
 
             case COSE.KeyType.RSA:
-                using (RSA rsa = CreateRSA())
-                {
-                    return rsa.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
-                }
+                return _rsa!.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
 
             case COSE.KeyType.OKP:
-                return SignatureAlgorithm.Ed25519.Verify(EdDSAPublicKey, data, signature);
+                return SignatureAlgorithm.Ed25519.Verify(_eddsa!, data, signature);
         }
         throw new InvalidOperationException($"Missing or unknown kty {_type}");
     }
@@ -182,32 +212,29 @@ public sealed class CredentialPublicKey
         }
     }
 
-    internal NSec.Cryptography.PublicKey EdDSAPublicKey
+    internal NSec.Cryptography.PublicKey CreateEdDSA()
     {
-        get
+        if (_type != COSE.KeyType.OKP)
         {
-            if (_type != COSE.KeyType.OKP)
-            {
-                throw new InvalidOperationException($"Must be a OKP key. Was {_type}");
-            }
+            throw new InvalidOperationException($"Must be a OKP key. Was {_type}");
+        }
 
-            switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
-            {
-                case COSE.Algorithm.EdDSA:
-                    var crv = (COSE.EllipticCurve)(int)_cpk[COSE.KeyTypeParameter.Crv];
+        switch (_alg) // https://www.iana.org/assignments/cose/cose.xhtml#algorithms
+        {
+            case COSE.Algorithm.EdDSA:
+                var crv = (COSE.EllipticCurve)(int)_cpk[COSE.KeyTypeParameter.Crv];
 
-                    // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
-                    if (crv is COSE.EllipticCurve.Ed25519)
-                    {
-                        return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, (byte[])_cpk[COSE.KeyTypeParameter.X], KeyBlobFormat.RawPublicKey);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"Missing or unknown crv {crv}");
-                    }
-                default:
-                    throw new InvalidOperationException($"Missing or unknown alg {_alg}");
-            }
+                // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+                if (crv is COSE.EllipticCurve.Ed25519)
+                {
+                    return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, (byte[])_cpk[COSE.KeyTypeParameter.X], KeyBlobFormat.RawPublicKey);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Missing or unknown crv {crv}");
+                }
+            default:
+                throw new InvalidOperationException($"Missing or unknown alg {_alg}");
         }
     }
 
