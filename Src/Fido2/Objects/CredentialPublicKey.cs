@@ -26,20 +26,20 @@ public sealed class CredentialPublicKey
         switch (_type)
         {
             case COSE.KeyType.EC2:
-            {
-                _ecdsa = CreateECDsa();
-                return;
-            }
+                {
+                    _ecdsa = CreateECDsa();
+                    return;
+                }
             case COSE.KeyType.RSA:
-            {
-                _rsa = CreateRSA();
-                return;
-            }
+                {
+                    _rsa = CreateRSA();
+                    return;
+                }
             case COSE.KeyType.OKP:
-            {
-                _eddsa = CreateEdDSA();
-                return;
-            }
+                {
+                    _eddsa = CreateEdDSA();
+                    return;
+                }
         }
         throw new InvalidOperationException($"Missing or unknown kty {_type}");
     }
@@ -75,31 +75,31 @@ public sealed class CredentialPublicKey
         switch (_type)
         {
             case COSE.KeyType.RSA:
-            {
-                var keyParams = cert.GetRSAPublicKey()!.ExportParameters(false);
-                _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus!);
-                _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent!);
-                _rsa = CreateRSA();
-                break;
-            }
+                {
+                    var keyParams = cert.GetRSAPublicKey()!.ExportParameters(false);
+                    _cpk.Add(COSE.KeyTypeParameter.N, keyParams.Modulus!);
+                    _cpk.Add(COSE.KeyTypeParameter.E, keyParams.Exponent!);
+                    _rsa = CreateRSA();
+                    break;
+                }
             case COSE.KeyType.EC2:
-            {
-                var ecDsaPubKey = cert.GetECDsaPublicKey()!;
-                var keyParams = ecDsaPubKey.ExportParameters(false);
+                {
+                    var ecDsaPubKey = cert.GetECDsaPublicKey()!;
+                    var keyParams = ecDsaPubKey.ExportParameters(false);
 
-                _cpk.Add(COSE.KeyTypeParameter.Crv, keyParams.Curve.ToCoseCurve());
-                _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X!);
-                _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y!);
-                _ecdsa = CreateECDsa();
-                break;
-            }
+                    _cpk.Add(COSE.KeyTypeParameter.Crv, keyParams.Curve.ToCoseCurve());
+                    _cpk.Add(COSE.KeyTypeParameter.X, keyParams.Q.X!);
+                    _cpk.Add(COSE.KeyTypeParameter.Y, keyParams.Q.Y!);
+                    _ecdsa = CreateECDsa();
+                    break;
+                }
             case COSE.KeyType.OKP:
-            {
-                _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.Ed25519);
-                _cpk.Add(COSE.KeyTypeParameter.X, cert.PublicKey.EncodedKeyValue.RawData);
-                _eddsa = CreateEdDSA();
-                break;
-            }
+                {
+                    _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.Ed25519);
+                    _cpk.Add(COSE.KeyTypeParameter.X, cert.PublicKey.EncodedKeyValue.RawData);
+                    _eddsa = CreateEdDSA();
+                    break;
+                }
             default:
                 throw new InvalidOperationException($"MMissing or unknown kty {_type}");
         }
