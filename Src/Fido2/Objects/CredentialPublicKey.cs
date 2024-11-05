@@ -101,7 +101,7 @@ public sealed class CredentialPublicKey
                     break;
                 }
             default:
-                throw new InvalidOperationException($"MMissing or unknown kty {_type}");
+                throw new InvalidOperationException($"Missing or unknown kty {_type}");
         }
     }
 
