@@ -442,7 +442,7 @@ public class Packed : Fido2Tests.Attestation
 
         var x5c = new CborArray { attestnCert.RawData, root.RawData };
 
-        var signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
+        var signature = SignData(type, alg, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
@@ -483,7 +483,7 @@ public class Packed : Fido2Tests.Attestation
 
         var x5c = new CborArray { attestnCert.RawData, root.RawData };
 
-        byte[] signature = SignData(type, alg, COSE.EllipticCurve.Reserved, ecdsa: ecdsaAtt);
+        byte[] signature = SignData(type, alg, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
 
         _attestationObject.Add("attStmt", new CborMap {
             { "alg", alg },
