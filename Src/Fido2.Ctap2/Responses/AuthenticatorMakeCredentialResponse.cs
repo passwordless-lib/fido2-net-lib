@@ -46,7 +46,7 @@ public sealed class AuthenticatorMakeCredentialResponse
         {
             switch ((int)key)
             {
-                #pragma warning disable format                
+                #pragma warning disable format
                 case 0x01: result.Fmt          = (string)value;  break;
                 case 0x02: result.AuthData     = (byte[])value;  break;
                 case 0x03: result.AttStmt      = (CborMap)value; break;

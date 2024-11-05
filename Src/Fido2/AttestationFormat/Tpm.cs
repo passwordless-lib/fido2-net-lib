@@ -5,6 +5,7 @@ using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -14,36 +15,38 @@ namespace Fido2NetLib;
 
 internal sealed class Tpm : AttestationVerifier
 {
-    public static readonly HashSet<string> TPMManufacturers = new()
-    {
-        "id:FFFFF1D0", // FIDO testing TPM
-        // From https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Version-1.02-Revision-1.00.pdf
-        "id:414D4400", // 'AMD' AMD
-        "id:41544D4C", // 'ATML' Atmel
-        "id:4252434D", // 'BRCM' Broadcom
-        "id:4353434F", // 'CSCO' Cisco
-        "id:464C5953", // 'FLYS' Flyslice Technologies
-        "id:48504500", // 'HPE' HPE
-        "id:49424d00", // 'IBM' IBM
-        "id:49465800", // 'IFX' Infinion
-        "id:494E5443", // 'INTC' Intel
-        "id:4C454E00", // 'LEN' Lenovo
-        "id:4D534654", // 'MSFT' Microsoft
-        "id:4E534D20", // 'NSM' National Semiconductor
-        "id:4E545A00", // 'NTZ' Nationz 
-        "id:4E544300", // 'NTC' Nuvoton Technology
-        "id:51434F4D", // 'QCOM' Qualcomm
-        "id:534D5343", // 'SMSC' SMSC
-        "id:53544D20", // 'STM ' ST Microelectronics
-        "id:534D534E", // 'SMSN' Samsung
-        "id:534E5300", // 'SNS' Sinosun
-        "id:54584E00", // 'TXN' Texas Instruments
-        "id:57454300", // 'WEC' Winbond
-        "id:524F4343", // 'ROCC' Fuzhou Rockchip
-        "id:474F4F47", // 'GOOG' Google
-    };
+    private static string ConvertTPMManufacturerToHexString(string id) => BitConverter.ToString(Convert.FromHexString(id.Split(':')[^1])).Replace("-", "");
 
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public static readonly HashSet<string> TPMManufacturers =
+    [
+        ConvertTPMManufacturerToHexString("id:FFFFF1D0"), // FIDO testing TPM
+        // From https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Version-1.02-Revision-1.00.pdf
+        ConvertTPMManufacturerToHexString("id:414D4400"), // 'AMD' AMD
+        ConvertTPMManufacturerToHexString("id:41544D4C"), // 'ATML' Atmel
+        ConvertTPMManufacturerToHexString("id:4252434D"), // 'BRCM' Broadcom
+        ConvertTPMManufacturerToHexString("id:4353434F"), // 'CSCO' Cisco
+        ConvertTPMManufacturerToHexString("id:464C5953"), // 'FLYS' Flyslice Technologies
+        ConvertTPMManufacturerToHexString("id:48504500"), // 'HPE' HPE
+        ConvertTPMManufacturerToHexString("id:49424d00"), // 'IBM' IBM
+        ConvertTPMManufacturerToHexString("id:49465800"), // 'IFX' Infinion
+        ConvertTPMManufacturerToHexString("id:494E5443"), // 'INTC' Intel
+        ConvertTPMManufacturerToHexString("id:4C454E00"), // 'LEN' Lenovo
+        ConvertTPMManufacturerToHexString("id:4D534654"), // 'MSFT' Microsoft
+        ConvertTPMManufacturerToHexString("id:4E534D20"), // 'NSM' National Semiconductor
+        ConvertTPMManufacturerToHexString("id:4E545A00"), // 'NTZ' Nationz
+        ConvertTPMManufacturerToHexString("id:4E544300"), // 'NTC' Nuvoton Technology
+        ConvertTPMManufacturerToHexString("id:51434F4D"), // 'QCOM' Qualcomm
+        ConvertTPMManufacturerToHexString("id:534D5343"), // 'SMSC' SMSC
+        ConvertTPMManufacturerToHexString("id:53544D20"), // 'STM ' ST Microelectronics
+        ConvertTPMManufacturerToHexString("id:534D534E"), // 'SMSN' Samsung
+        ConvertTPMManufacturerToHexString("id:534E5300"), // 'SNS' Sinosun
+        ConvertTPMManufacturerToHexString("id:54584E00"), // 'TXN' Texas Instruments
+        ConvertTPMManufacturerToHexString("id:57454300"), // 'WEC' Winbond
+        ConvertTPMManufacturerToHexString("id:524F4343"), // 'ROCC' Fuzhou Rockchip
+        ConvertTPMManufacturerToHexString("id:474F4F47"), // 'GOOG' Google
+    ];
+
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
         // (handled in base class)
@@ -67,7 +70,7 @@ internal sealed class Tpm : AttestationVerifier
         int coseKty = (int)request.CredentialPublicKey[COSE.KeyCommonParameter.KeyType];
         if (coseKty is 3) // RSA
         {
-            ReadOnlySpan<byte> coseMod = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus 
+            ReadOnlySpan<byte> coseMod = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.N]; // modulus
             ReadOnlySpan<byte> coseExp = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.E]; // exponent
 
             if (!coseMod.SequenceEqual(pubArea.Unique))
@@ -115,7 +118,7 @@ internal sealed class Tpm : AttestationVerifier
         if (!dataHash.SequenceEqual(certInfo.ExtraData))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch extraData and attToBeSigned");
 
-        // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea 
+        // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea
         ReadOnlySpan<byte> pubAreaRawHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)certInfo.Alg), pubArea.Raw);
 
         if (!pubAreaRawHash.SequenceEqual(certInfo.AttestedName))
@@ -163,9 +166,9 @@ internal sealed class Tpm : AttestationVerifier
             (string? tpmManufacturer, string? tpmModel, string? tpmVersion) = SANFromAttnCertExts(aikCert.Extensions);
 
             // From https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf
-            // "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName 
-            // form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device 
-            // Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty 
+            // "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName
+            // form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device
+            // Attributes. In accordance with RFC 5280[11], this extension MUST be critical if subject is empty
             // and SHOULD be non-critical if subject is non-empty"
 
             // Best I can figure to do for now?
@@ -176,7 +179,7 @@ internal sealed class Tpm : AttestationVerifier
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
             }
 
-            if (!TPMManufacturers.Contains(tpmManufacturer))
+            if (!TPMManufacturers.Contains(ConvertTPMManufacturerToHexString(tpmManufacturer)))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM manufacturer found parsing TPM attestation");
 
             // 5biiii. The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
@@ -190,19 +193,19 @@ internal sealed class Tpm : AttestationVerifier
             if (IsAttnCertCACert(aikCert.Extensions))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert Basic Constraints extension CA component must be false");
 
-            // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280] 
+            // 5biiiiii. An Authority Information Access (AIA) extension with entry id-ad-ocsp and a CRL Distribution Point extension [RFC5280]
             // are both OPTIONAL as the status of many attestation certificates is available through metadata services.
             // See, for example, the FIDO Metadata Service [FIDOMetadataService].
 
             // 5c. If aikCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the value of this extension matches the aaguid in authenticatorData
             if (AaguidFromAttnCertExts(aikCert.Extensions) is byte[] aaguid &&
                 (!aaguid.AsSpan().SequenceEqual(Guid.Empty.ToByteArray())) &&
-                (GuidHelper.FromBigEndian(aaguid).CompareTo(request.AuthData.AttestedCredentialData!.AaGuid) != 0))
+                (new Guid(aaguid, bigEndian: true).CompareTo(request.AuthData.AttestedCredentialData!.AaGuid) != 0))
             {
-                throw new Fido2VerificationException($"aaguid malformed, expected {request.AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid)}");
+                throw new Fido2VerificationException($"aaguid malformed, expected {request.AuthData.AttestedCredentialData.AaGuid}, got {new Guid(aaguid, bigEndian: true)}");
             }
 
-            return (AttestationType.AttCa, trustPath);
+            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
         }
         // If ecdaaKeyId is present, then the attestation type is ECDAA
         else if (request.EcdaaKeyId != null)
@@ -260,7 +263,7 @@ internal sealed class Tpm : AttestationVerifier
                     nameSequence.CheckMinimumSequenceLength(1);
 
                     /*
-                     
+
                     Per Trusted Computing Group Endorsement Key Credential Profile section 3.2.9:
 
                     "The issuer MUST include TPM manufacturer, TPM part number and TPM firmware version, using the directoryName-form within the GeneralName structure. The ASN.1 encoding is specified in section 3.1.2 TPM Device Attributes."
@@ -308,9 +311,9 @@ internal sealed class Tpm : AttestationVerifier
 
                         foreach (Asn1Element o in deviceAttributes[0].Sequence)
                         {
-                            wrappedElements.Add(Asn1Element.CreateSetOf(new List<Asn1Element>(1) {
+                            wrappedElements.Add(Asn1Element.CreateSetOf([
                                 Asn1Element.CreateSequence((List<Asn1Element>)o.Sequence)
-                            }));
+                            ]));
                         }
 
                         deviceAttributes = wrappedElements;
@@ -384,10 +387,10 @@ public enum TpmEccCurve : ushort
     TPM_ECC_NIST_P224,  // 0x0002
     TPM_ECC_NIST_P256,  // 0x0003
     TPM_ECC_NIST_P384,  // 0x0004
-    TPM_ECC_NIST_P521,  // 0x0005  
+    TPM_ECC_NIST_P521,  // 0x0005
     TPM_ECC_BN_P256,    // 0x0010 curve to support ECDAA
     TPM_ECC_BN_P638,    // 0x0011 curve to support ECDAA
-    TPM_ECC_SM2_P256    // 0x0020 
+    TPM_ECC_SM2_P256    // 0x0020
 }
 
 public enum TpmAlg : ushort
@@ -425,7 +428,7 @@ public enum TpmAlg : ushort
     TPM_ALG_CAMELLIA, // 26
     TPM_ALG_CTR = 0x40,
     TPM_ALG_OFB, // 41
-    TPM_ALG_CBC, // 42 
+    TPM_ALG_CBC, // 42
     TPM_ALG_CFB, // 43
     TPM_ALG_ECB // 44
 };
@@ -489,17 +492,17 @@ public sealed class CertInfo
 
     private static readonly Dictionary<TpmAlg, ushort> s_tpmAlgToDigestSizeMap = new()
     {
-        { TpmAlg.TPM_ALG_SHA1,   (160/8) },
-        { TpmAlg.TPM_ALG_SHA256, (256/8) },
-        { TpmAlg.TPM_ALG_SHA384, (384/8) },
-        { TpmAlg.TPM_ALG_SHA512, (512/8) }
+        { TpmAlg.TPM_ALG_SHA1,   SHA1.HashSizeInBytes },
+        { TpmAlg.TPM_ALG_SHA256, SHA256.HashSizeInBytes },
+        { TpmAlg.TPM_ALG_SHA384, SHA384.HashSizeInBytes },
+        { TpmAlg.TPM_ALG_SHA512, SHA512.HashSizeInBytes }
     };
 
     public static (ushort size, byte[] name) NameFromTPM2BName(ReadOnlySpan<byte> ab, ref int offset)
     {
         // TCG TPM Rev 2.0, part 2, structures, section 10.5.3, TPM2B_NAME
-        // This buffer holds a Name for any entity type. 
-        // The type of Name in the structure is determined by context and the size parameter. 
+        // This buffer holds a Name for any entity type.
+        // The type of Name in the structure is determined by context and the size parameter.
         ushort totalSize = 0;
         if (AuthDataHelper.GetSizedByteArray(ab, ref offset, 2) is byte[] totalBytes)
         {
@@ -513,11 +516,11 @@ public sealed class CertInfo
             size = BinaryPrimitives.ReadUInt16BigEndian(bytes);
         }
 
-        // If size is 4, then the Name is a handle. 
+        // If size is 4, then the Name is a handle.
         if (size is 4)
             throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
 
-        // If size is 0, then no Name is present. 
+        // If size is 0, then no Name is present.
         if (size is 0)
             throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
 
@@ -561,10 +564,10 @@ public sealed class PubArea
         Type = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
         var tpmAlg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Type));
 
-        // TPMI_ALG_HASH 
+        // TPMI_ALG_HASH
         Alg = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
 
-        // TPMA_OBJECT, attributes that, along with type, determine the manipulations of this object 
+        // TPMA_OBJECT, attributes that, along with type, determine the manipulations of this object
         Attributes = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
 
         // TPM2B_DIGEST, optional policy for using this key, computed using the alg of the object
@@ -590,7 +593,7 @@ public sealed class PubArea
             Scheme = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
         }
 
-        // TPMI_RSA_KEY_BITS, number of bits in the public modulus 
+        // TPMI_RSA_KEY_BITS, number of bits in the public modulus
         KeyBits = null;
 
         // The public exponent, a prime number greater than 2.
@@ -617,9 +620,9 @@ public sealed class PubArea
         // TPMI_ECC_CURVE
         CurveID = null;
 
-        // TPMT_KDF_SCHEME, an optional key derivation scheme for generating a symmetric key from a Z value 
-        // If the kdf  parameter associated with curveID is not TPM_ALG_NULL then this is required to be NULL. 
-        // NOTE There are currently no commands where this parameter has effect and, in the reference code, this field needs to be set to TPM_ALG_NULL. 
+        // TPMT_KDF_SCHEME, an optional key derivation scheme for generating a symmetric key from a Z value
+        // If the kdf  parameter associated with curveID is not TPM_ALG_NULL then this is required to be NULL.
+        // NOTE There are currently no commands where this parameter has effect and, in the reference code, this field needs to be set to TPM_ALG_NULL.
         KDF = null;
 
         if (tpmAlg is TpmAlg.TPM_ALG_ECC)
@@ -633,7 +636,7 @@ public sealed class PubArea
                 X = AuthDataHelper.GetSizedByteArray(data, ref offset),
                 Y = AuthDataHelper.GetSizedByteArray(data, ref offset),
             };
-            Unique = DataHelper.Concat(ECPoint.X, ECPoint.Y);
+            Unique = [.. ECPoint.X, .. ECPoint.Y];
         }
 
         if (data.Length != offset)

@@ -8,7 +8,7 @@ namespace Fido2NetLib;
 
 public static class TrustAnchor
 {
-    public static void Verify(MetadataBLOBPayloadEntry? metadataEntry, X509Certificate2[] trustPath)
+    public static void Verify(MetadataBLOBPayloadEntry? metadataEntry, X509Certificate2[] trustPath, FidoValidationMode validationMode = FidoValidationMode.Default)
     {
         if (trustPath != null && metadataEntry?.MetadataStatement?.AttestationTypes is not null)
         {
@@ -29,7 +29,12 @@ public static class TrustAnchor
                     attestationRootCertificates[i] = new X509Certificate2(Convert.FromBase64String(certStrings[i]));
                 }
 
-                if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates))
+                if (trustPath.Length > 1 && attestationRootCertificates.Any(c => string.Equals(c.Thumbprint, trustPath[^1].Thumbprint, StringComparison.Ordinal)))
+                {
+                    throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCertificateChain);
+                }
+
+                if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates, validationMode))
                 {
                     throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCertificateChain);
                 }
@@ -54,7 +59,7 @@ public static class TrustAnchor
 
             // [ ] ATTESTATION_ECDAA "ecdaa"    | currently handled as self signed  w/ no test coverage
             // [ ] ATTESTATION_ANONCA "anonca"  | currently not verified            w/ no test coverage
-            // [ ] ATTESTATION_NONE "none"      | currently handled as self signed  w/ no test coverage               
+            // [ ] ATTESTATION_NONE "none"      | currently handled as self signed  w/ no test coverage
         }
     }
 }

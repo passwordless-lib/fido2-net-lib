@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
 
@@ -14,11 +13,11 @@ public sealed class PatternAccuracyDescriptor
     /// <summary>
     /// Gets or sets the number of possible patterns (having the minimum length) out of which exactly one would be the right one, i.e. 1/probability in the case of equal distribution.
     /// </summary>
-    [JsonPropertyName("minComplexity"), Required]
-    public ulong MinComplexity { get; set; }
+    [JsonPropertyName("minComplexity")]
+    public required ulong MinComplexity { get; set; }
 
     /// <summary>
-    /// Gets or sets maximum number of false attempts before the authenticator will block authentication using this method (at least temporarily). 
+    /// Gets or sets maximum number of false attempts before the authenticator will block authentication using this method (at least temporarily).
     /// <para>Zero (0) means it will never block.</para>
     /// </summary>
     [JsonPropertyName("maxRetries")]

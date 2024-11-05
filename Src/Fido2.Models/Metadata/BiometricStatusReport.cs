@@ -7,27 +7,28 @@ namespace Fido2NetLib;
 /// Contains the current BiometricStatusReport of one of the authenticator's biometric component.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#biometricstatusreport-dictionary"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#biometricstatusreport-dictionary"/>
 /// </remarks>
 public class BiometricStatusReport
 {
     /// <summary>
     /// Gets or sets the level of the biometric certification of this biometric component of the authenticator.
     /// </summary>
-    [JsonPropertyName("certLevel"), Required]
-    public ushort CertLevel { get; set; }
+    [JsonPropertyName("certLevel")]
+    public required ushort CertLevel { get; set; }
+
     /// <summary>
     /// Gets or sets a single USER_VERIFY constant indicating the modality of the biometric component.
     /// </summary>
     /// <remarks>
-    /// This is not a bit flag combination. 
+    /// This is not a bit flag combination.
     /// This value MUST be non-zero and this value MUST correspond to one or more entries in field userVerificationDetails in the related Metadata Statement.
     /// </remarks>
-    [JsonPropertyName("modality"), Required]
-    public ulong Modality { get; set; }
+    [JsonPropertyName("modality")]
+    public required ulong Modality { get; set; }
 
     /// <summary>
-    /// Gets or sets a ISO-8601 formatted date since when the certLevel achieved, if applicable. 
+    /// Gets or sets a ISO-8601 formatted date since when the certLevel achieved, if applicable.
     /// <para>If no date is given, the status is assumed to be effective while present.</para>
     /// </summary>
     [JsonPropertyName("effectiveDate")]

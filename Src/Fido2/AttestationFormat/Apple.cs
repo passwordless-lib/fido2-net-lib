@@ -3,6 +3,7 @@ using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -40,7 +41,7 @@ internal sealed class Apple : AttestationVerifier
         }
     }
 
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
         if (!(request.X5c is CborArray { Length: >= 2 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 }))
@@ -65,7 +66,7 @@ internal sealed class Apple : AttestationVerifier
         ReadOnlySpan<byte> nonceToHash = request.Data;
 
         // 4. Perform SHA-256 hash of nonceToHash to produce nonce.
-        Span<byte> nonce = stackalloc byte[32];
+        Span<byte> nonce = stackalloc byte[SHA256.HashSizeInBytes];
         SHA256.HashData(nonceToHash, nonce);
 
         // 5. Verify nonce matches the value of the extension with OID ( 1.2.840.113635.100.8.2 ) in credCert.
@@ -86,6 +87,6 @@ internal sealed class Apple : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Credential public key in Apple attestation does not match subject public key of credCert");
 
         // 7. If successful, return implementation-specific values representing attestation type Anonymous CA and attestation trust path x5c.
-        return (AttestationType.Basic, trustPath);
+        return new(new VerifyAttestationResult(AttestationType.Basic, trustPath));
     }
 }

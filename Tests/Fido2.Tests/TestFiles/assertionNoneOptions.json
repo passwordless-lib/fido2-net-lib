@@ -1,0 +1,13 @@
+{
+  "challenge": "bNhBhi9JITEQuYNPlxoHHj0kzNsVSLMVM0JfgScPZiS7nGF51omGSNLY61FBZ84gG5nRx0EL0tC8Thrl0Aazcg",
+  "timeout": 60000,
+  "rpId": "localhost",
+  "allowCredentials": [
+    {
+      "type": "public-key",
+      "id": "8Tx_CDyiKeC0A-iHNG78f5hTEDowkXVnOXrR2K-HBGGH75UxhWDzWhoqz32wHQa5afmr9OzzBz7PD3HohOhBIA",
+      "transports": [ "usb", "nfc", "ble" ]
+    }
+  ],
+  "userVerification": "discouraged"
+}

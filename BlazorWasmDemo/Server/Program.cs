@@ -4,7 +4,7 @@
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-var origin = new Uri(builder.Configuration["Origin"]);
+var origin = new Uri(builder.Configuration["Origin"]!);
 builder.Services.AddFido2(options =>
 {
     options.ServerDomain = origin.Host;

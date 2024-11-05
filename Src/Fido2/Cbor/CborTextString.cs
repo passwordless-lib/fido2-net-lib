@@ -2,18 +2,13 @@
 
 namespace Fido2NetLib.Cbor;
 
-public sealed class CborTextString : CborObject
+public sealed class CborTextString(string value) : CborObject
 {
-    public CborTextString(string value)
-    {
-        Value = value;
-    }
-
     public override CborType Type => CborType.TextString;
 
     public int Length => Value.Length;
 
-    public string Value { get; }
+    public string Value { get; } = value ?? throw new ArgumentNullException(nameof(value));
 
     public static implicit operator string(CborTextString value) => value.Value;
 

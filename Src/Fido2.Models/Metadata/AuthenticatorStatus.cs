@@ -6,24 +6,24 @@ namespace Fido2NetLib;
 /// Describes the status of an authenticator model as identified by its AAID and potentially some additional information (such as a specific attestation key).
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-service-v2.0-rd-20180702.html#authenticatorstatus-enum"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#authenticatorstatus-enum"/>
 /// </remarks>
-[JsonConverter(typeof(JsonStringEnumConverter))]
+[JsonConverter(typeof(JsonStringEnumConverter<AuthenticatorStatus>))]
 public enum AuthenticatorStatus
 {
     /// <summary>
-    /// This authenticator is not FIDO certified. 
+    /// This authenticator is not FIDO certified.
     /// </summary>
     NOT_FIDO_CERTIFIED,
     /// <summary>
-    /// This authenticator has passed FIDO functional certification. 
+    /// This authenticator has passed FIDO functional certification.
     /// <para>
     /// This certification scheme is phased out and will be replaced by FIDO_CERTIFIED_L1.
-    /// </para> 
+    /// </para>
     /// </summary>
     FIDO_CERTIFIED,
     /// <summary>
-    /// Indicates that malware is able to bypass the user verification. 
+    /// Indicates that malware is able to bypass the user verification.
     /// <para>This means that the authenticator could be used without the user's consent and potentially even without the user's knowledge.</para>
     /// </summary>
     USER_VERIFICATION_BYPASS,
@@ -35,7 +35,7 @@ public enum AuthenticatorStatus
     /// </remarks>
     ATTESTATION_KEY_COMPROMISE,
     /// <summary>
-    /// This authenticator has identified weaknesses that allow registered keys to be compromised and should not be trusted. 
+    /// This authenticator has identified weaknesses that allow registered keys to be compromised and should not be trusted.
     /// <para>This would include both, e.g. weak entropy that causes predictable keys to be generated or side channels that allow keys or signatures to be forged, guessed or extracted.</para>
     /// </summary>
     USER_KEY_REMOTE_COMPROMISE,
@@ -55,10 +55,10 @@ public enum AuthenticatorStatus
     /// </remarks>
     REVOKED,
     /// <summary>
-    /// The authenticator vendor has completed and submitted the self-certification checklist to the FIDO Alliance. 
+    /// The authenticator vendor has completed and submitted the self-certification checklist to the FIDO Alliance.
     /// </summary>
     /// <remarks>
-    /// If this completed checklist is publicly available, the URL will be specified in <see cref="StatusReport.Url"/>. 
+    /// If this completed checklist is publicly available, the URL will be specified in <see cref="StatusReport.Url"/>.
     /// </remarks>
     SELF_ASSERTION_SUBMITTED,
     /// <summary>

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
+    <NoWarn>$(NoWarm);CA1822;IDE0007;IDE0037;IDE0039;IDE0057;CA1825</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <TestFiles Include="./TestFiles/**/*" />
+    <Content Include="@(TestFiles)">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Visible>false</Visible>
+    </Content>
+    <None Include="@(TestFiles)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\Fido2\Fido2.csproj" />
+    <ProjectReference Include="..\..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
+    <ProjectReference Include="..\..\Src\Fido2.Development\Fido2.Development.csproj" />
+    <ProjectReference Include="..\..\Src\Fido2.Models\Fido2.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="Moq" Version="4.18.4" />
+    <PackageReference Include="ReportGenerator" Version="5.1.14" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="xunit.runner.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

@@ -2,18 +2,11 @@
 
 namespace Fido2NetLib.Cbor;
 
-public sealed class CborByteString : CborObject
+public sealed class CborByteString(byte[] value) : CborObject
 {
-    public CborByteString(byte[] value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        Value = value;
-    }
-
     public override CborType Type => CborType.ByteString;
 
-    public byte[] Value { get; }
+    public byte[] Value { get; } = value ?? throw new ArgumentNullException(nameof(value));
 
     public int Length => Value.Length;
 

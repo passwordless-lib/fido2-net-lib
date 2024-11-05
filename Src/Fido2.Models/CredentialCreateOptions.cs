@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Fido2NetLib.Objects;
@@ -8,10 +6,10 @@ using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib;
 
-public sealed class CredentialCreateOptions : Fido2ResponseBase
+public sealed class CredentialCreateOptions
 {
     /// <summary>
-    /// 
+    ///
     /// This member contains data about the Relying Party responsible for the request.
     /// Its value’s name member is required.
     /// Its value’s id member specifies the relying party identifier with which the credential should be associated.If omitted, its value will be the CredentialsContainer object’s relevant settings object's origin's effective domain.
@@ -20,7 +18,7 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     public PublicKeyCredentialRpEntity Rp { get; set; }
 
     /// <summary>
-    /// This member contains data about the user account for which the Relying Party is requesting attestation. 
+    /// This member contains data about the user account for which the Relying Party is requesting attestation.
     /// Its value’s name, displayName and id members are required.
     /// </summary>
     [JsonPropertyName("user")]
@@ -52,16 +50,63 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     public AttestationConveyancePreference Attestation { get; set; } = AttestationConveyancePreference.None;
 
     /// <summary>
+    /// This member is intended for use by Relying Parties that wish to select a preference regarding the attestation statement format used, if such an attestation is requested.
+    /// </summary>
+    /// <remarks>
+    /// This parameter is advisory and the authenticator MAY use an attestation statement not enumerated in this parameter.
+    /// </remarks>
+    [JsonPropertyName("attestationFormats")]
+    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; set; } = [];
+
+    /// <summary>
     /// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the create() operation.
     /// </summary>
     [JsonPropertyName("authenticatorSelection")]
     public AuthenticatorSelection AuthenticatorSelection { get; set; }
 
+    private IReadOnlyList<PublicKeyCredentialHint> _hints = Array.Empty<PublicKeyCredentialHint>();
+
+    /// <summary>
+    /// Guides the user agent in interacting with the user. This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" />.
+    /// </summary>
+    /// <remarks>
+    /// When <see cref="Hints"/> is set, <see cref="AuthenticatorSelection.AuthenticatorAttachment" /> will be set to one of the values in the table below:
+    /// <list type="table">
+    /// <item><term><see cref="PublicKeyCredentialHint.SecurityKey"/></term><description><see cref="AuthenticatorAttachment.CrossPlatform"/></description></item>
+    /// <item><term><see cref="PublicKeyCredentialHint.ClientDevice"/></term><description><see cref="AuthenticatorAttachment.Platform"/></description></item>
+    /// <item><term><see cref="PublicKeyCredentialHint.Hybrid"/></term><description><see cref="AuthenticatorAttachment.CrossPlatform"/></description></item>
+    /// </list>
+    /// </remarks>
+    [JsonPropertyName("hints")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<PublicKeyCredentialHint> Hints
+    {
+        get
+        {
+            return _hints;
+        }
+        set
+        {
+            if (value.Any())
+            {
+                AuthenticatorSelection ??= new AuthenticatorSelection();
+                AuthenticatorSelection.AuthenticatorAttachment = value[0] switch
+                {
+                    PublicKeyCredentialHint.SecurityKey or PublicKeyCredentialHint.Hybrid => AuthenticatorAttachment
+                        .CrossPlatform,
+                    PublicKeyCredentialHint.ClientDevice => AuthenticatorAttachment.Platform,
+                    _ => AuthenticatorSelection.AuthenticatorAttachment
+                };
+            }
+            _hints = value;
+        }
+    }
+
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials for the same account on a single authenticator.The client is requested to return an error if the new credential would be created on an authenticator that also contains one of the credentials enumerated in this parameter.
     /// </summary>
     [JsonPropertyName("excludeCredentials")]
-    public List<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; }
+    public IReadOnlyList<PublicKeyCredentialDescriptor> ExcludeCredentials { get; set; } = [];
 
     /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator. For example, if transaction confirmation is sought from the user, then the prompt string might be included as an extension.
@@ -70,18 +115,23 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticationExtensionsClientInputs Extensions { get; set; }
 
-    public static CredentialCreateOptions Create(Fido2Configuration config, byte[] challenge, Fido2User user, AuthenticatorSelection authenticatorSelection, AttestationConveyancePreference attestationConveyancePreference, List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions)
+    public static CredentialCreateOptions Create(
+        Fido2Configuration config,
+        byte[] challenge,
+        Fido2User user,
+        AuthenticatorSelection authenticatorSelection,
+        AttestationConveyancePreference attestationConveyancePreference,
+        IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
+        AuthenticationExtensionsClientInputs extensions)
     {
         return new CredentialCreateOptions
         {
-            Status = "ok",
-            ErrorMessage = string.Empty,
             Challenge = challenge,
             Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
             Timeout = config.Timeout,
             User = user,
-            PubKeyCredParams = new List<PubKeyCredParam>(10)
-            {
+            PubKeyCredParams =
+            [
                 // Add additional as appropriate
                 PubKeyCredParam.Ed25519,
                 PubKeyCredParam.ES256,
@@ -93,10 +143,11 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
                 PubKeyCredParam.ES512,
                 PubKeyCredParam.RS512,
                 PubKeyCredParam.PS512,
-            },
+                PubKeyCredParam.RS1
+            ],
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
-            ExcludeCredentials = excludeCredentials ?? new List<PublicKeyCredentialDescriptor>(),
+            ExcludeCredentials = excludeCredentials,
             Extensions = extensions
         };
     }
@@ -114,29 +165,25 @@ public sealed class CredentialCreateOptions : Fido2ResponseBase
 
 #nullable enable
 
-public sealed class PubKeyCredParam
+/// <summary>
+/// Constructs a PubKeyCredParam instance
+/// </summary>
+[method: JsonConstructor]
+public sealed class PubKeyCredParam(
+    COSE.Algorithm alg,
+    PublicKeyCredentialType type = PublicKeyCredentialType.PublicKey)
 {
-    /// <summary>
-    /// Constructs a PubKeyCredParam instance
-    /// </summary>
-    [JsonConstructor]
-    public PubKeyCredParam(COSE.Algorithm alg, PublicKeyCredentialType type = PublicKeyCredentialType.PublicKey)
-    {
-        Type = type;
-        Alg = alg;
-    }
-
     /// <summary>
     /// The type member specifies the type of credential to be created.
     /// </summary>
     [JsonPropertyName("type")]
-    public PublicKeyCredentialType Type { get; }
+    public PublicKeyCredentialType Type { get; } = type;
 
     /// <summary>
     /// The alg member specifies the cryptographic signature algorithm with which the newly generated credential will be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic Curve.
     /// </summary>
     [JsonPropertyName("alg")]
-    public COSE.Algorithm Alg { get; }
+    public COSE.Algorithm Alg { get; } = alg;
 
     public static readonly PubKeyCredParam ES256 = new(COSE.Algorithm.ES256); // External authenticators support the ES256 algorithm
     public static readonly PubKeyCredParam ES384 = new(COSE.Algorithm.ES384);
@@ -148,36 +195,34 @@ public sealed class PubKeyCredParam
     public static readonly PubKeyCredParam PS384 = new(COSE.Algorithm.PS384);
     public static readonly PubKeyCredParam PS512 = new(COSE.Algorithm.PS512);
     public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
+    public static readonly PubKeyCredParam RS1 = new(COSE.Algorithm.RS1);
 }
 
 /// <summary>
-/// PublicKeyCredentialRpEntity 
+/// PublicKeyCredentialRpEntity
 /// </summary>
-public sealed class PublicKeyCredentialRpEntity
+public sealed class PublicKeyCredentialRpEntity(
+    string id,
+    string name,
+    string? icon = null)
 {
-    public PublicKeyCredentialRpEntity(string id, string name, string? icon = null)
-    {
-        Name = name;
-        Id = id;
-        Icon = icon;
-    }
-
     /// <summary>
     /// A unique identifier for the Relying Party entity, which sets the RP ID.
     /// </summary>
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string Id { get; set; } = id;
 
     /// <summary>
     /// A human-readable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
     /// </summary>
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = name;
 
     [JsonPropertyName("icon")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Icon { get; set; }
+    public string? Icon { get; set; } = icon;
 }
+
 #nullable disable
 
 /// <summary>
@@ -197,9 +242,9 @@ public class AuthenticatorSelection
 
     /// <summary>
     /// Specifies the extent to which the Relying Party desires to create a client-side discoverable credential.
-    /// For historical reasons the naming retains the deprecated “resident” terminology. 
-    /// The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, 
-    /// treating an unknown value as if the member does not exist. 
+    /// For historical reasons the naming retains the deprecated “resident” terminology.
+    /// The value SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values,
+    /// treating an unknown value as if the member does not exist.
     /// If no value is given then the effective value is required if requireResidentKey is true or discouraged if it is false or absent.
     /// </summary>
     [JsonPropertyName("residentKey")]
@@ -252,8 +297,8 @@ public class AuthenticatorSelection
 public class Fido2User
 {
     /// <summary>
-    /// Required. A human-friendly identifier for a user account. 
-    /// It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames. 
+    /// Required. A human-friendly identifier for a user account.
+    /// It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames.
     /// For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity
     /// </summary>
     [JsonPropertyName("name")]

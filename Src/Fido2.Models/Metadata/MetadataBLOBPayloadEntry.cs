@@ -1,6 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
@@ -61,13 +59,13 @@ public sealed class MetadataBLOBPayloadEntry
     public StatusReport[] StatusReports { get; set; }
 
     /// <summary>
-    /// Gets or sets ISO-8601 formatted date since when the status report array was set to the current value. 
+    /// Gets or sets ISO-8601 formatted date since when the status report array was set to the current value.
     /// </summary>
     [JsonPropertyName("timeOfLastStatusChange")]
     public string TimeOfLastStatusChange { get; set; }
 
     /// <summary>
-    /// Gets or sets an URL of a list of rogue (i.e. untrusted) individual authenticators. 
+    /// Gets or sets an URL of a list of rogue (i.e. untrusted) individual authenticators.
     /// </summary>
     [JsonPropertyName("rogueListURL")]
     public string RogueListURL { get; set; }

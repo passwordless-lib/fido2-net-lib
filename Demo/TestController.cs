@@ -1,14 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
+﻿using System.Text;
+using System.Text.Json;
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -39,7 +34,7 @@ public class TestController : Controller
 
     [HttpPost]
     [Route("/attestation/options")]
-    public JsonResult MakeCredentialOptionsTest([FromBody] TEST_MakeCredentialParams opts)
+    public OkObjectResult MakeCredentialOptionsTest([FromBody] TEST_MakeCredentialParams opts)
     {
         var attType = opts.Attestation;
 
@@ -77,12 +72,16 @@ public class TestController : Controller
         HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
 
         // 5. return options to client
-        return Json(options);
+
+        var jsonResponse = JsonSerializer.SerializeToNode(options);
+        jsonResponse["status"] = "ok";
+        jsonResponse["errorMessage"] = "";
+        return new OkObjectResult(jsonResponse);
     }
 
     [HttpPost]
     [Route("/attestation/result")]
-    public async Task<JsonResult> MakeCredentialResultTestAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
+    public async Task<OkObjectResult> MakeCredentialResultTestAsync([FromBody] AuthenticatorAttestationRawResponse attestationResponse, CancellationToken cancellationToken)
     {
         // 1. get the options we sent the client
         var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
@@ -96,19 +95,27 @@ public class TestController : Controller
         };
 
         // 2. Verify and make the credentials
-        var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
+        var credential = await _fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = attestationResponse,
+            OriginalOptions = options,
+            IsCredentialIdUniqueToUserCallback = callback
+        }, cancellationToken: cancellationToken);
 
         // 3. Store the credentials in db
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
-            Descriptor = new PublicKeyCredentialDescriptor(success.Result.Id),
-            PublicKey = success.Result.PublicKey,
-            UserHandle = success.Result.User.Id,
-            SignCount = success.Result.SignCount
+            Id = credential.Id,
+            PublicKey = credential.PublicKey,
+            UserHandle = credential.User.Id,
+            SignCount = credential.SignCount
         });
 
         // 4. return "ok" to the client
-        return Json(success);
+        var jsonResponse = JsonSerializer.SerializeToNode(credential);
+        jsonResponse["status"] = "ok";
+        jsonResponse["errorMessage"] = "";
+        return new OkObjectResult(jsonResponse);
     }
 
     [HttpPost]
@@ -147,7 +154,10 @@ public class TestController : Controller
         HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
 
         // 5. Return options to client
-        return Json(options);
+        var jsonResponse = JsonSerializer.SerializeToNode(options);
+        jsonResponse["status"] = "ok";
+        jsonResponse["errorMessage"] = "";
+        return new OkObjectResult(jsonResponse);
     }
 
     [HttpPost]
@@ -172,13 +182,17 @@ public class TestController : Controller
         };
 
         // 5. Make the assertion
-        var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
+        var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = clientResponse,
+            OriginalOptions = options,
+            StoredPublicKey = creds.PublicKey,
+            StoredSignatureCounter = storedCounter,
+            IsUserHandleOwnerOfCredentialIdCallback = callback
+        }, cancellationToken: cancellationToken);
 
         // 6. Store the updated counter
         _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-
-        if (res.DevicePublicKey is not null)
-            creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
         // 7. return OK to client
         return Json(new

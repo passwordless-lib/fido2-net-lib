@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-
-using Fido2NetLib;
+﻿using Fido2NetLib;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -26,7 +23,7 @@ public static class Fido2NetLibBuilderExtensions
 
     private static void AddServices(this IServiceCollection services)
     {
-        services.AddTransient<IFido2, Fido2>();
+        services.AddScoped<IFido2, Fido2>();
         services.AddSingleton<IMetadataService, NullMetadataService>(); //Default implementation if we choose not to enable MDS
         services.TryAddSingleton<ISystemClock, SystemClock>();
     }
@@ -45,14 +42,14 @@ public static class Fido2NetLibBuilderExtensions
 
     public static void AddCachedMetadataService(this IFido2NetLibBuilder builder, Action<IFido2MetadataServiceBuilder> configAction)
     {
-        builder.AddMetadataService<DistributedCacheMetadataService>();
+        builder.Services.AddScoped<IMetadataService, DistributedCacheMetadataService>();
 
         configAction(new Fido2NetLibBuilder(builder.Services));
     }
 
     public static IFido2MetadataServiceBuilder AddFileSystemMetadataRepository(this IFido2MetadataServiceBuilder builder, string directoryPath)
     {
-        builder.Services.AddTransient<IMetadataRepository, FileSystemMetadataRepository>(r =>
+        builder.Services.AddScoped<IMetadataRepository, FileSystemMetadataRepository>(provider =>
         {
             return new FileSystemMetadataRepository(directoryPath);
         });
@@ -65,7 +62,7 @@ public static class Fido2NetLibBuilderExtensions
         HttpClient client = null,
         string origin = "")
     {
-        builder.Services.AddTransient<IMetadataRepository>(provider =>
+        builder.Services.AddScoped<IMetadataRepository>(provider =>
         {
             return new ConformanceMetadataRepository(client, origin);
         });
@@ -83,14 +80,9 @@ public static class Fido2NetLibBuilderExtensions
         if (clientBuilder != null)
             clientBuilder(httpClientBuilder);
 
-        builder.Services.AddTransient<IMetadataRepository, Fido2MetadataServiceRepository>();
+        builder.Services.AddScoped<IMetadataRepository, Fido2MetadataServiceRepository>();
 
         return builder;
-    }
-
-    private static void AddMetadataService<TService>(this IFido2NetLibBuilder builder) where TService : class, IMetadataService
-    {
-        builder.Services.AddScoped<IMetadataService, TService>();
     }
 }
 
@@ -107,7 +99,7 @@ public interface IFido2MetadataServiceBuilder
 public class Fido2NetLibBuilder : IFido2NetLibBuilder, IFido2MetadataServiceBuilder
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="IdentityServerBuilder"/> class.
+    /// Initializes a new instance of the <see cref="Fido2NetLibBuilder"/> class.
     /// </summary>
     /// <param name="services">The services.</param>
     /// <exception cref="System.ArgumentNullException">services</exception>

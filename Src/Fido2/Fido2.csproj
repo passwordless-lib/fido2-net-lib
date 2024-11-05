@@ -7,20 +7,25 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <IsTrimmable>true</IsTrimmable>
     <NoWarn>$(NoWarn);IDE0057</NoWarn>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
     <PackageReference Include="NSec.Cryptography" Version="22.4.0" />
-    <PackageReference Include="System.Formats.Cbor" Version="6.0.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.2" />
+    <PackageReference Include="System.Formats.Cbor" Version="8.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 
+    <InternalsVisibleTo Include="Fido2.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
       The name of the file must equal to the name of the package which is currently
-      defaulting to the project file name (excluding file extension of course)...
+      defaulting to the project file name (excluding file extension of course).
     -->
     <Content Include="build/fido2.targets" PackagePath="build/" />
   </ItemGroup>

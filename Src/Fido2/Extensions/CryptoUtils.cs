@@ -49,7 +49,7 @@ internal static class CryptoUtils
         };
     }
 
-    public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates)
+    public static bool ValidateTrustChain(X509Certificate2[] trustPath, X509Certificate2[] attestationRootCertificates, FidoValidationMode validationMode = FidoValidationMode.Default)
     {
         // https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-metadata-statement-v2.0-id-20180227.html#widl-MetadataStatement-attestationRootCertificates
 
@@ -59,6 +59,8 @@ internal static class CryptoUtils
         // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
 
         // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
+
+        // We have the same singular root cert in trustpath and it is in attestationRootCertificates
         if (trustPath.Length == 1 && trustPath[0].Subject.Equals(trustPath[0].Issuer, StringComparison.Ordinal))
         {
             foreach (X509Certificate2 cert in attestationRootCertificates)
@@ -68,7 +70,6 @@ internal static class CryptoUtils
                     return true;
                 }
             }
-            return false;
         }
 
         // If the attestation cert is not self signed, we will need to build a chain
@@ -101,7 +102,7 @@ internal static class CryptoUtils
             chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
 
             // if the attestation cert has a CDP extension, go ahead and turn on online revocation checking
-            if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)))
+            if (!string.IsNullOrEmpty(CDPFromCertificateExts(trustPath[0].Extensions)) && validationMode != FidoValidationMode.FidoConformance2024)
                 chain.ChainPolicy.RevocationMode = X509RevocationMode.Online;
 
             // don't allow unknown root now that we have a custom root
@@ -133,13 +134,13 @@ internal static class CryptoUtils
 
         // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
         // ASN.1 requires storing positive integer values with any leading 0s removed
-        // Convert ASN.1 format to IEEE P-1363 format 
-        // determine coefficient size 
+        // Convert ASN.1 format to IEEE P-1363 format
+        // determine coefficient size
 
         // common coefficient sizes include: 32, 48, and 64
         var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
 
-        // Create buffer to copy R into 
+        // Create buffer to copy R into
         Span<byte> p1363R = coefficientSize <= 64
             ? stackalloc byte[coefficientSize]
             : new byte[coefficientSize];
@@ -153,7 +154,7 @@ internal static class CryptoUtils
             r.CopyTo(p1363R.Slice(coefficientSize - r.Length));
         }
 
-        // Create byte array to copy S into 
+        // Create byte array to copy S into
         Span<byte> p1363S = coefficientSize <= 64
             ? stackalloc byte[coefficientSize]
             : new byte[coefficientSize];
@@ -168,7 +169,7 @@ internal static class CryptoUtils
         }
 
         // Concatenate R + S coordinates and return the raw signature
-        return DataHelper.Concat(p1363R, p1363S);
+        return [.. p1363R, .. p1363S];
     }
 
     public static string CDPFromCertificateExts(X509ExtensionCollection exts)

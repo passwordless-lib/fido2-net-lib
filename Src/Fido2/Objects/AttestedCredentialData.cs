@@ -10,7 +10,7 @@ public sealed class AttestedCredentialData
 {
     /// <summary>
     /// Minimum length of the attested credential data structure. AAGUID + credentialID length + credential ID + credential public key.
-    /// <see cref="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
+    /// <see href="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
     /// </summary>
     private const int _minLength = 20; // Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte)
 
@@ -34,20 +34,20 @@ public sealed class AttestedCredentialData
 
     /// <summary>
     /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
-    /// <see cref="https://www.w3.org/TR/webauthn/#aaguid"/>
+    /// <see href="https://www.w3.org/TR/webauthn/#aaguid"/>
     /// </summary>
     public Guid AaGuid { get; }
 
     /// <summary>
     /// A probabilistically-unique byte sequence identifying a public key credential source and its authentication assertions.
-    /// <see cref="https://www.w3.org/TR/webauthn/#credential-id"/>
+    /// <see href="https://www.w3.org/TR/webauthn/#credential-id"/>
     /// </summary>
     public byte[] CredentialId { get; }
 
     /// <summary>
-    /// The credential public key encoded in COSE_Key format, as defined in 
+    /// The credential public key encoded in COSE_Key format, as defined in
     /// Section 7 of RFC8152, using the CTAP2 canonical CBOR encoding form.
-    /// <see cref="https://www.w3.org/TR/webauthn/#credential-public-key"/>
+    /// <see href="https://www.w3.org/TR/webauthn/#credential-public-key"/>
     /// </summary>
     public CredentialPublicKey CredentialPublicKey { get; }
 
@@ -99,12 +99,9 @@ public sealed class AttestedCredentialData
 
         position += 16;
 
-#if NET8_0_OR_GREATER
-        Guid aaGuid = new Guid(aaGuidBytes, isBigEndian: true);
-#else
-        Guid aaGuid = GuidHelper.FromBigEndian(aaGuidBytes.ToArray());
-#endif
-        // Byte length of Credential ID, 16-bit unsigned big-endian integer. 
+        var aaGuid = new Guid(aaGuidBytes.Span, bigEndian: true);
+
+        // Byte length of Credential ID, 16-bit unsigned big-endian integer.
         var credentialIDLen = BinaryPrimitives.ReadUInt16BigEndian(data.Slice(position, 2).Span);
         if (credentialIDLen > _maxCredentialIdLength)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_CredentialIdTooLong);
@@ -116,8 +113,8 @@ public sealed class AttestedCredentialData
 
         position += credentialIDLen;
 
-        // "Determining attested credential data's length, which is variable, involves determining 
-        // credentialPublicKey's beginning location given the preceding credentialId's length, and 
+        // "Determining attested credential data's length, which is variable, involves determining
+        // credentialPublicKey's beginning location given the preceding credentialId's length, and
         // then determining the credentialPublicKey's length"
 
 

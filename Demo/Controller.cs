@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 using Fido2NetLib;
 using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
-using static Fido2NetLib.Fido2;
 
 namespace Fido2Demo;
 
@@ -75,7 +67,6 @@ public class MyController : Controller
             {
                 Extensions = true,
                 UserVerificationMethod = true,
-                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs() { Attestation = attType },
                 CredProps = true
             };
 
@@ -89,7 +80,7 @@ public class MyController : Controller
         }
         catch (Exception e)
         {
-            return Json(new CredentialCreateOptions { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 
@@ -114,33 +105,36 @@ public class MyController : Controller
             };
 
             // 2. Verify and make the credentials
-            var success = await _fido2.MakeNewCredentialAsync(attestationResponse, options, callback, cancellationToken: cancellationToken);
+            var credential = await _fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
+            {
+                AttestationResponse = attestationResponse,
+                OriginalOptions = options,
+                IsCredentialIdUniqueToUserCallback = callback
+            }, cancellationToken: cancellationToken);
 
             // 3. Store the credentials in db
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                Id = success.Result.Id,
-                Descriptor = new PublicKeyCredentialDescriptor(success.Result.Id),
-                PublicKey = success.Result.PublicKey,
-                UserHandle = success.Result.User.Id,
-                SignCount = success.Result.SignCount,
-                AttestationFormat = success.Result.AttestationFormat,
+                Id = credential.Id,
+                PublicKey = credential.PublicKey,
+                UserHandle = credential.User.Id,
+                SignCount = credential.SignCount,
+                AttestationFormat = credential.AttestationFormat,
                 RegDate = DateTimeOffset.UtcNow,
-                AaGuid = success.Result.AaGuid,
-                Transports = success.Result.Transports,
-                IsBackupEligible = success.Result.IsBackupEligible,
-                IsBackedUp = success.Result.IsBackedUp,
-                AttestationObject = success.Result.AttestationObject,
-                AttestationClientDataJson = success.Result.AttestationClientDataJson,
-                DevicePublicKeys = new List<byte[]>() { success.Result.DevicePublicKey }
+                AaGuid = credential.AaGuid,
+                Transports = credential.Transports,
+                IsBackupEligible = credential.IsBackupEligible,
+                IsBackedUp = credential.IsBackedUp,
+                AttestationObject = credential.AttestationObject,
+                AttestationClientDataJson = credential.AttestationClientDataJson
             });
 
             // 4. return "ok" to the client
-            return Json(success);
+            return Json(credential);
         }
         catch (Exception e)
         {
-            return Json(new MakeNewCredentialResult(status: "error", errorMessage: FormatException(e), result: null));
+            return Json(new { status = "error", errorMessage = FormatException(e) });
         }
     }
 
@@ -164,8 +158,7 @@ public class MyController : Controller
             var exts = new AuthenticationExtensionsClientInputs()
             {
                 Extensions = true,
-                UserVerificationMethod = true,
-                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                UserVerificationMethod = true
             };
 
             // 3. Create options
@@ -185,7 +178,7 @@ public class MyController : Controller
 
         catch (Exception e)
         {
-            return Json(new AssertionOptions { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 
@@ -213,20 +206,24 @@ public class MyController : Controller
             };
 
             // 5. Make the assertion
-            var res = await _fido2.MakeAssertionAsync(clientResponse, options, creds.PublicKey, creds.DevicePublicKeys, storedCounter, callback, cancellationToken: cancellationToken);
+            var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
+            {
+                AssertionResponse = clientResponse,
+                OriginalOptions = options,
+                StoredPublicKey = creds.PublicKey,
+                StoredSignatureCounter = storedCounter,
+                IsUserHandleOwnerOfCredentialIdCallback = callback
+            }, cancellationToken: cancellationToken);
 
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-
-            if (res.DevicePublicKey is not null)
-                creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
             // 7. return OK to client
             return Json(res);
         }
         catch (Exception e)
         {
-            return Json(new VerifyAssertionResult { Status = "error", ErrorMessage = FormatException(e) });
+            return Json(new { Status = "error", ErrorMessage = FormatException(e) });
         }
     }
 }

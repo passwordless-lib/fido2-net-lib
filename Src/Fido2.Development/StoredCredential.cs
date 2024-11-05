@@ -9,7 +9,7 @@ public class StoredCredential
     /// <summary>
     /// The Credential ID of the public key credential source.
     /// </summary>
-    public byte[] Id { get; set; }
+    public required byte[] Id { get; set; }
 
     /// <summary>
     /// The credential public key of the public key credential source.
@@ -37,22 +37,23 @@ public class StoredCredential
     public bool IsBackedUp { get; set; }
 
     /// <summary>
-    /// The value of the attestationObject attribute when the public key credential source was registered. 
+    /// The value of the attestationObject attribute when the public key credential source was registered.
     /// Storing this enables the Relying Party to reference the credential's attestation statement at a later time.
     /// </summary>
     public byte[] AttestationObject { get; set; }
 
     /// <summary>
-    /// The value of the clientDataJSON attribute when the public key credential source was registered. 
+    /// The value of the clientDataJSON attribute when the public key credential source was registered.
     /// Storing this in combination with the above attestationObject item enables the Relying Party to re-verify the attestation signature at a later time.
     /// </summary>
     public byte[] AttestationClientDataJson { get; set; }
 
-    public List<byte[]> DevicePublicKeys { get; set; }
-
     public byte[] UserId { get; set; }
 
-    public PublicKeyCredentialDescriptor Descriptor { get; set; }
+    /// <summary>
+    /// Exposes an Descriptor Object for this credential, used as input to the library for certain operations.
+    /// </summary>
+    public PublicKeyCredentialDescriptor Descriptor => new(PublicKeyCredentialType.PublicKey, Id, Transports);
 
     public byte[] UserHandle { get; set; }
 

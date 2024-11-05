@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -131,7 +132,7 @@ internal sealed class AndroidKey : AttestationVerifier
         return (softwareEnforcedPurposeValue is 2 && teeEnforcedPurposeValue is 2);
     }
 
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields
         // (handled in base class)
@@ -141,7 +142,7 @@ internal sealed class AndroidKey : AttestationVerifier
         if (!request.TryGetSig(out byte[]? sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationSignature);
 
-        // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash 
+        // 2. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
         // using the attestation public key in attestnCert with the algorithm specified in alg
         if (!(request.X5c is CborArray { Length: > 0 } x5cArray))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_AndroidKeyAttestation);
@@ -220,6 +221,6 @@ internal sealed class AndroidKey : AttestationVerifier
         if (!IsPurposeSign(attExtBytes))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
 
-        return (AttestationType.Basic, trustPath);
+        return new(new VerifyAttestationResult(AttestationType.Basic, trustPath));
     }
 }

@@ -112,11 +112,7 @@ public class UserController : ControllerBase
                 {
                     Extensions = true,
                     UserVerificationMethod = true,
-                    CredProps = true,
-                    DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs
-                    {
-                        Attestation = attestationType?.ToString() ?? AttestationConveyancePreference.None.ToString()
-                    },
+                    CredProps = true
                 }
             );
 
@@ -126,9 +122,9 @@ public class UserController : ControllerBase
             // 6. return options to client
             return options;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            return new CredentialCreateOptions { Status = "error", ErrorMessage = FormatException(e) };
+            throw;
         }
     }
 
@@ -150,30 +146,29 @@ public class UserController : ControllerBase
             // 2. Create callback so that lib can verify credential id is unique to this user
 
             // 3. Verify and make the credentials
-            var result = await _fido2.MakeNewCredentialAsync(attestationResponse, options, CredentialIdUniqueToUserAsync, cancellationToken: cancellationToken);
-
-            if (result.Status is "error" || result.Result is null)
+            var credential = await _fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
             {
-                return result.ErrorMessage ?? string.Empty;
-            }
+                AttestationResponse = attestationResponse,
+                OriginalOptions = options,
+                IsCredentialIdUniqueToUserCallback = CredentialIdUniqueToUserAsync
+            }, cancellationToken: cancellationToken);
 
             // 4. Store the credentials in db
             _demoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
-                AttestationFormat = result.Result.AttestationFormat,
-                Id = result.Result.Id,
-                Descriptor = new PublicKeyCredentialDescriptor(result.Result.Id),
-                PublicKey = result.Result.PublicKey,
-                UserHandle = result.Result.User.Id,
-                SignCount = result.Result.SignCount,
+
+                AttestationFormat = credential.AttestationFormat,
+                Id = credential.Id,
+                PublicKey = credential.PublicKey,
+                UserHandle = credential.User.Id,
+                SignCount = credential.SignCount,
                 RegDate = DateTimeOffset.UtcNow,
-                AaGuid = result.Result.AaGuid,
-                DevicePublicKeys = new List<byte[]> { result.Result.DevicePublicKey },
-                Transports = result.Result.Transports,
-                IsBackupEligible = result.Result.IsBackupEligible,
-                IsBackedUp = result.Result.IsBackedUp,
-                AttestationObject = result.Result.AttestationObject,
-                AttestationClientDataJson = result.Result.AttestationClientDataJson,
+                AaGuid = credential.AaGuid,
+                Transports = credential.Transports,
+                IsBackupEligible = credential.IsBackupEligible,
+                IsBackedUp = credential.IsBackedUp,
+                AttestationObject = credential.AttestationObject,
+                AttestationClientDataJson = credential.AttestationClientDataJson,
             });
 
             // 5. Now we need to remove the options from the pending dictionary
@@ -213,8 +208,7 @@ public class UserController : ControllerBase
             var exts = new AuthenticationExtensionsClientInputs
             {
                 UserVerificationMethod = true,
-                Extensions = true,
-                DevicePubKey = new AuthenticationExtensionsDevicePublicKeyInputs()
+                Extensions = true
             };
 
             // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
@@ -229,9 +223,9 @@ public class UserController : ControllerBase
             // 5. return options to client
             return options;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            return new AssertionOptions { Status = "error", ErrorMessage = FormatException(e) };
+            throw;
         }
     }
 
@@ -271,28 +265,18 @@ public class UserController : ControllerBase
             var creds = _demoStorage.GetCredentialById(clientResponse.Id) ?? throw new Exception("Unknown credentials");
 
             // 3. Make the assertion
-            var res = await _fido2.MakeAssertionAsync(
-                clientResponse,
-                options,
-                creds.PublicKey,
-                creds.DevicePublicKeys,
-                creds.SignCount,
-                UserHandleOwnerOfCredentialIdAsync,
-                cancellationToken: cancellationToken);
+            var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
+            {
+                AssertionResponse = clientResponse,
+                OriginalOptions = options,
+                StoredPublicKey = creds.PublicKey,
+                StoredSignatureCounter = creds.SignCount,
+                IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync
+            }, cancellationToken: cancellationToken);
 
             // 4. Store the updated counter
-            if (res.Status is "ok")
-            {
-                _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-                if (res.DevicePublicKey is not null)
-                {
-                    creds.DevicePublicKeys.Add(res.DevicePublicKey);
-                }
-            }
-            else
-            {
-                return $"Error: {res.ErrorMessage}";
-            }
+            _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
+
 
             // 5. return result to client
             var handler = new JwtSecurityTokenHandler();

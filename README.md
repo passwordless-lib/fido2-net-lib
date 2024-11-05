@@ -1,5 +1,5 @@
 # FIDO2 .NET Library (WebAuthn)
-A working implementation library + demo for [FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/) using [.NET](https://dotnet.microsoft.com/)  
+A working implementation library + demo for [FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/) using [.NET](https://dotnet.microsoft.com/)
 [![Build Status](https://dev.azure.com/anders/Fido2/_apis/build/status/abergs.fido2-net-lib?branchName=master)](https://dev.azure.com/anders/Fido2/_build/latest?definitionId=10&branchName=master)
 [![codecov](https://codecov.io/gh/passwordless-lib/fido2-net-lib/branch/master/graph/badge.svg)](https://codecov.io/gh/passwordless-lib/fido2-net-lib)
 [![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless)
@@ -23,7 +23,7 @@ This project is part of the [.NET foundation](https://dotnetfoundation.org)
 
 ```Install-Package Fido2```
 
-To use the asp.net helpers, install the asp.net-package.  
+To use the asp.net helpers, install the asp.net-package.
 
 ```Install-Package Fido2.AspNet```
 
@@ -33,28 +33,28 @@ To use the asp.net helpers, install the asp.net-package.
 * [Code examples](#examples)
 
 ## What is FIDO2?
-**The passwordless web is coming.**  
+**The passwordless web is coming.**
 [FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) is a new open authentication standard, supported by [browsers](https://www.w3.org/Consortium/Member/List) and [many large tech companies](https://fidoalliance.org/members/) such as Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating *passwordless flows* or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to Active Directory and native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & platform. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
 
-Read more: 
+Read more:
 - [Why it's exciting](http://ideasof.andersaberg.com/development/the-passwordless-web)
-- [Medium](https://blog.tokenize.com/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113)
+- [Medium](https://medium.com/tokenring/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113)
 - [FIDO Alliance](https://fidoalliance.org/fido2/)
 - [Yubico](https://www.yubico.com/2018/08/10-things-youve-been-wondering-about-fido2-webauthn-and-a-passwordless-world/)
 - [WebAuthn.Guide](https://webauthn.guide/) from Duo Security
-- [WebAuthn.io](https://webauthn.io/) 
+- [WebAuthn.io](https://webauthn.io/)
 - [WebAuthn Awesome](https://github.com/herrjemand/WebauthnAwesome)
 
 ## Supported features
 
-- ✅ Attestation API & verification (Register and verify credentials/authenticators)  
+- ✅ Attestation API & verification (Register and verify credentials/authenticators)
 - ✅ Assertion API & verification (Authenticate users)
 - ✅ 100% pass rate in [conformance testing](#conformance-testing-tool) ([results](https://github.com/passwordless-lib/fido2-net-lib/issues/13#issuecomment-457318859))
 - ✅ FIDO2 security keys aka roaming authenticators ([spec](https://www.w3.org/TR/webauthn/#roaming-authenticators)), like SoloKeys [Solo](https://github.com/solokeys/solo/blob/master/README.md), Yubico [YubiKey](https://www.yubico.com/products/yubikey-hardware/), and Feitian [BioPass FIDO2](https://www.ftsafe.com/Products/FIDO2))
 - ✅ Device embedded authenticators aka platform authenticators ([spec](https://www.w3.org/TR/webauthn/#platform-authenticators)), like [Android Key](https://source.android.com/security/keystore/attestation) and [TPM](https://trustedcomputinggroup.org/resource/trusted-platform-module-2-0-a-brief-introduction/))
 - ✅ Backwards compatibility with FIDO U2F authenticators ([spec](https://www.w3.org/TR/#conforming-authenticators-u2f))
-- ✅ [Windows Hello](https://docs.microsoft.com/en-us/microsoft-edge/dev-guide/windows-integration/web-authentication) 
-- ✅ [Face ID and Touch ID for the Web](https://webkit.org/blog/11312/meet-face-id-and-touch-id-for-the-web/) (aka "Apple Hello") 
+- ✅ [Windows Hello](https://docs.microsoft.com/en-us/microsoft-edge/dev-guide/windows-integration/web-authentication)
+- ✅ [Face ID and Touch ID for the Web](https://webkit.org/blog/11312/meet-face-id-and-touch-id-for-the-web/) (aka "Apple Hello")
 - ✅ All currently referenced cryptographic algorithms for FIDO2 Server ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other))
 - ✅ All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", "apple", "apple-appattest", and "none" ([spec](https://www.iana.org/assignments/webauthn/webauthn.xhtml))
 - ✅ FIDO2 Server attestation validation via FIDO Metadata Service V3 ([spec](https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html))
@@ -209,7 +209,7 @@ https://www.nuget.org/packages/Fido2/ and https://www.nuget.org/packages/Fido2.M
 See [Contributing](CONTRIBUTING.md) for information about contributing to the project.
 
 This project has adopted the code of conduct defined by the Contributor Covenant to clarify expected behavior in our community.
-For more information see the [.NET Foundation Code of Conduct](https://dotnetfoundation.org/code-of-conduct). 
+For more information see the [.NET Foundation Code of Conduct](https://dotnetfoundation.org/code-of-conduct).
 
 For security and penetration testing, please see our [Vulnerability Disclosure Program](./VDP.md)
 

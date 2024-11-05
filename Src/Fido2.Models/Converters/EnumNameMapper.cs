@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -9,19 +8,20 @@ namespace Fido2NetLib;
 public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] TEnum>
     where TEnum : struct, Enum
 {
-    private static readonly Dictionary<TEnum, string> s_valueToNames = GetIdToNameMap();
-    private static readonly Dictionary<string, TEnum> s_namesToValues = Invert(s_valueToNames);
+    private static readonly FrozenDictionary<TEnum, string> s_valueToNames = GetIdToNameMap();
+    private static readonly FrozenDictionary<string, TEnum> s_namesToValues = Invert(s_valueToNames);
 
-    private static Dictionary<string, TEnum> Invert(Dictionary<TEnum, string> map)
+    private static FrozenDictionary<string, TEnum> Invert(FrozenDictionary<TEnum, string> map)
     {
-        var result = new Dictionary<string, TEnum>(map.Count, StringComparer.OrdinalIgnoreCase);
+        var items = new KeyValuePair<string, TEnum>[map.Count];
+        int i = 0;
 
         foreach (var item in map)
         {
-            result[item.Value] = item.Key;
+            items[i++] = new(item.Value, item.Key);
         }
 
-        return result;
+        return items.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
     }
 
     public static bool TryGetValue(string name, out TEnum value)
@@ -39,9 +39,9 @@ public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccess
         return s_namesToValues.Keys;
     }
 
-    private static Dictionary<TEnum, string> GetIdToNameMap()
+    private static FrozenDictionary<TEnum, string> GetIdToNameMap()
     {
-        var dic = new Dictionary<TEnum, string>();
+        var items = new List<KeyValuePair<TEnum, string>>();
 
         foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
         {
@@ -49,9 +49,9 @@ public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccess
 
             var value = (TEnum)field.GetValue(null);
 
-            dic[value] = description is not null ? description.Value : value.ToString();
+            items.Add(new(value, description is not null ? description.Value : value.ToString()));
         }
 
-        return dic;
+        return items.ToFrozenDictionary();
     }
 }

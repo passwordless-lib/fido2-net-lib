@@ -3,7 +3,7 @@
 /// <summary>
 /// Result of the MakeAssertion verification
 /// </summary>
-public class VerifyAssertionResult : Fido2ResponseBase
+public class VerifyAssertionResult
 {
     public byte[] CredentialId { get; init; }
 
@@ -16,9 +16,4 @@ public class VerifyAssertionResult : Fido2ResponseBase
     /// The latest value of the BS flag in the authenticator data from any ceremony using the public key credential source.
     /// </summary>
     public bool IsBackedUp { get; init; }
-
-    /// <summary>
-    /// The public key portion of a hardware-bound device key pair
-    /// </summary>
-    public byte[] DevicePublicKey { get; init; }
 }

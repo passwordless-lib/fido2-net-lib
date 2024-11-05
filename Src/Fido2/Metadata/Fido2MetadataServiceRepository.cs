@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -10,13 +9,14 @@ using System.Threading.Tasks;
 
 using Fido2NetLib.Serialization;
 
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Fido2NetLib;
 
-public sealed class Fido2MetadataServiceRepository : IMetadataRepository
+public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory) : IMetadataRepository
 {
-    private ReadOnlySpan<byte> ROOT_CERT =>
+    private static ReadOnlySpan<byte> ROOT_CERT =>
         "MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G"u8 +
         "A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjMxEzARBgNVBAoTCkdsb2JhbFNp"u8 +
         "Z24xEzARBgNVBAMTCkdsb2JhbFNpZ24wHhcNMDkwMzE4MTAwMDAwWhcNMjkwMzE4"u8 +
@@ -37,12 +37,7 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH"u8 +
         "WD9f"u8;
 
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    public Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory)
-    {
-        _httpClientFactory = httpClientFactory;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
     {
@@ -64,8 +59,7 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
 
     private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(rawBLOBJwt))
-            throw new ArgumentNullException(nameof(rawBLOBJwt));
+        ArgumentException.ThrowIfNullOrWhiteSpace(rawBLOBJwt);
 
         var jwtParts = rawBLOBJwt.Split('.');
 
@@ -125,26 +119,26 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
         certChain.ChainPolicy.ExtraStore.Add(rootCert);
         certChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKeys = blobPublicKeys
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler()
+        var tokenHandler = new JsonWebTokenHandler
         {
             // 250k isn't enough bytes for conformance test tool
             // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1097
             MaximumTokenSizeInBytes = rawBLOBJwt.Length
         };
 
-        tokenHandler.ValidateToken(
-            rawBLOBJwt,
-            validationParameters,
-            out var validatedToken);
+        var validateTokenResult = await tokenHandler.ValidateTokenAsync(rawBLOBJwt, new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKeys = blobPublicKeys
+        }).ConfigureAwait(false);
+
+        if (!validateTokenResult.IsValid)
+        {
+            throw new Fido2VerificationException("rawBLOBJwt is not valid");
+        }
 
         if (blobCerts.Length > 1)
         {
@@ -190,9 +184,9 @@ public sealed class Fido2MetadataServiceRepository : IMetadataRepository
         if (!certChainIsValid)
             throw new Fido2VerificationException("Failed to validate cert chain while parsing BLOB");
 
-        var blobPayload = ((JwtSecurityToken)validatedToken).Payload.SerializeToJson();
+        var blobPayload = ((JsonWebToken)validateTokenResult.SecurityToken).EncodedPayload;
 
-        MetadataBLOBPayload blob = JsonSerializer.Deserialize(blobPayload, FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
+        MetadataBLOBPayload blob = JsonSerializer.Deserialize(Base64Url.Decode(blobPayload), FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
         blob.JwtAlg = blobAlg;
         return blob;
     }

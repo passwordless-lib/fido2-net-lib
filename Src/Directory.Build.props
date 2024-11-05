@@ -2,18 +2,9 @@
 <Project>
   <Import Project="..\Directory.Build.props"/>
 
-  <!-- SourceLink Support-->
   <PropertyGroup Condition="$(IS_DOCKER) == ''">
+    <!-- Include PDB in the NuGet package -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
-  <ItemGroup Condition="$(IS_DOCKER) == ''">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
-  </ItemGroup>
 
-  <!-- Projects inside "./src" should generate packages -->
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-  </PropertyGroup>
 </Project>

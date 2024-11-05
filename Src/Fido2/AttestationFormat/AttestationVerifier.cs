@@ -1,6 +1,7 @@
 ﻿using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -10,12 +11,12 @@ namespace Fido2NetLib;
 
 public abstract class AttestationVerifier
 {
-    public (AttestationType, X509Certificate2[]) Verify(CborMap attStmt, AuthenticatorData authenticatorData, byte[] clientDataHash)
+    public ValueTask<VerifyAttestationResult> VerifyAsync(CborMap attStmt, AuthenticatorData authenticatorData, byte[] clientDataHash)
     {
-        return Verify(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash));
+        return VerifyAsync(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash));
     }
 
-    public abstract (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request);
+    public abstract ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request);
 
     public static AttestationVerifier Create(string formatIdentifier)
     {
@@ -29,7 +30,7 @@ public abstract class AttestationVerifier
             "fido-u2f"          => new FidoU2f(),          // https://www.w3.org/TR/webauthn-2/#sctn-fido-u2f-attestation
             "packed"            => new Packed(),           // https://www.w3.org/TR/webauthn-2/#sctn-packed-attestation
             "apple"             => new Apple(),            // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation
-            "apple-appattest"   => new AppleAppAttest(),   // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server  
+            "apple-appattest"   => new AppleAppAttest(),   // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
             _                   => throw new Fido2VerificationException(Fido2ErrorCode.UnknownAttestationType, $"Unknown attestation type. Was '{formatIdentifier}'")
         };
         #pragma warning restore format
@@ -67,7 +68,7 @@ public abstract class AttestationVerifier
     internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
     {
         byte u2fTransports = 0;
-        var ext = exts.FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1"); // id-fido-u2f-ce-transports 
+        var ext = exts.FirstOrDefault(e => e.Oid?.Value is "1.3.6.1.4.1.45724.2.1.1"); // id-fido-u2f-ce-transports
         if (ext != null)
         {
             var decodedU2fTransports = Asn1Element.Decode(ext.RawData);

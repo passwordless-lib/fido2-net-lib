@@ -12,9 +12,9 @@ using Fido2NetLib.Objects;
 namespace Fido2NetLib;
 
 /// <summary>
-/// The AuthenticatorAttestationResponse interface represents the authenticator's response 
+/// The AuthenticatorAttestationResponse interface represents the authenticator's response
 /// to a client’s request for the creation of a new public key credential.
-/// It contains information about the new credential that can be used to identify it for later use, 
+/// It contains information about the new credential that can be used to identify it for later use,
 /// and metadata that can be used by the Relying Party to assess the characteristics of the credential during registration.
 /// </summary>
 public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
@@ -60,6 +60,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         Fido2Configuration config,
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         IMetadataService? metadataService,
+        byte[]? requestTokenBindingId,
         CancellationToken cancellationToken = default)
     {
         // https://www.w3.org/TR/webauthn/#registering-a-new-credential
@@ -74,7 +75,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
         // 9. Verify that the value of C.origin matches the Relying Party's origin.
-        BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge);
+        // 9.5. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.
+        // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
+        // Validated in BaseVerify.
+        BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId);
 
         if (Raw.Id is null || Raw.Id.Length == 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdMissing);
@@ -116,29 +120,23 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (!originalOptions.PubKeyCredParams.Any(a => authData.AttestedCredentialData.CredentialPublicKey.IsSameAlg(a.Alg)))
             throw new Fido2VerificationException(Fido2ErrorCode.CredentialAlgorithmRequirementNotMet, Fido2ErrorMessages.CredentialAlgorithmRequirementNotMet);
 
-        // 18. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected, 
-        //     considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values 
-        //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e., 
+        // 18. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
+        //     considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values
+        //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e.,
         //     no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
         // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
-        byte[]? devicePublicKeyResult = null;
-
-        if (Raw.Extensions?.DevicePubKey is not null)
-        {
-            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(config, metadataService, Raw.Extensions, AttestationObject.AuthData, clientDataHash, cancellationToken).ConfigureAwait(false);
-        }
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
-        //     against the set of supported WebAuthn Attestation Statement Format Identifier values. 
+        //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
         var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
 
-        // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, 
+        // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
         //     and the hash of the serialized client data computed in step 7
-        (var attType, var trustPath) = verifier.Verify(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash);
+        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
 
         // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
-        //     for that attestation type and attestation statement format fmt, from a trusted source or from policy. 
+        //     for that attestation type and attestation statement format fmt, from a trusted source or from policy.
         //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
         MetadataBLOBPayloadEntry? metadataEntry = null;
@@ -149,7 +147,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        TrustAnchor.Verify(metadataEntry, trustPath);
+        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
 
         // 22. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
         //     If self attestation was used, check if self attestation is acceptable under Relying Party policy.
@@ -166,7 +164,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // 23. Verify that the credentialId is ≤ 1023 bytes.
         // Handled by AttestedCredentialData constructor
 
-        // 24. Check that the credentialId is not yet registered to any other user. 
+        // 24. Check that the credentialId is not yet registered to any other user.
         //     If registration is requested for a credential that is already registered to a different user,
         //     the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration
 
@@ -176,7 +174,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         }
 
         // 25. If the attestation statement attStmt verified successfully and is found to be trustworthy,
-        //     then register the new credential with the account that was denoted in the options.user passed to create(), 
+        //     then register the new credential with the account that was denoted in the options.user passed to create(),
         //     by associating it with the credentialId and credentialPublicKey in the attestedCredentialData in authData,
         //     as appropriate for the Relying Party's system.
 
@@ -186,99 +184,31 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         return new RegisteredPublicKeyCredential
         {
-            Type = Raw.Type,
+            Type = Raw.Type.Value,
             Id = authData.AttestedCredentialData.CredentialId,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
-            // Transports = result of response.getTransports();
+            Transports = Raw.Response.Transports,
             IsBackupEligible = authData.IsBackupEligible,
             IsBackedUp = authData.IsBackedUp,
             AttestationObject = Raw.Response.AttestationObject,
             AttestationClientDataJson = Raw.Response.ClientDataJson,
             User = originalOptions.User,
             AttestationFormat = AttestationObject.Fmt,
-            AaGuid = authData.AttestedCredentialData.AaGuid,
-            DevicePublicKey = devicePublicKeyResult
+            AaGuid = authData.AttestedCredentialData.AaGuid
         };
-    }
-
-    /// <summary>
-    /// If the devicePubKey extension was included on a navigator.credentials.create() call, 
-    /// then the below verification steps are performed in the context of this step of § 7.1 
-    /// Registering a New Credential using these variables established therein: 
-    /// credential, clientExtensionResults, authData, and hash. 
-    /// Relying Party policy may specify whether a response without a devicePubKey is acceptable.
-    /// </summary>
-    /// <param name="clientExtensionResults"></param>
-    /// <param name="authData"></param>
-    /// <param name="hash"></param>
-    /// <see cref="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-create"/> 
-    private async Task<byte[]> DevicePublicKeyRegistrationAsync(
-        Fido2Configuration config,
-        IMetadataService? metadataService,
-        AuthenticationExtensionsClientOutputs clientExtensionResults,
-        AuthenticatorData authData,
-        byte[] hash,
-        CancellationToken cancellationToken)
-    {
-        // 1. Let attObjForDevicePublicKey be the value of the devicePubKey member of clientExtensionResults.
-        var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey!;
-
-        // 2. Verify that attObjForDevicePublicKey is valid CBOR conforming to the syntax defined above and
-        // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
-        var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
-
-        // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk. 
-        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify(DataHelper.Concat(authData.ToByteArray(), hash), attObjForDevicePublicKey.Signature))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
-
-        // 4. Optionally, if attestation was requested and the Relying Party wishes to verify it, verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
-        // by using the attestation statement format fmt's verification procedure given attStmt.
-        // https://www.w3.org/TR/webauthn/#defined-attestation-formats
-        var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
-
-        // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-        (var attType, var trustPath) = verifier.Verify(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash());
-
-        // 5. Complete the steps from § 7.1 Registering a New Credential and, if those steps are successful,
-        // store the aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
-        MetadataBLOBPayloadEntry? metadataEntry = null;
-        if (metadataService != null)
-            metadataEntry = await metadataService.GetEntryAsync(devicePublicKeyAuthenticatorOutput.AaGuid, cancellationToken);
-
-        // while conformance testing, we must reject any authenticator that we cannot get metadata for
-        if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && devicePublicKeyAuthenticatorOutput.Fmt is not "fido-u2f")
-            throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
-
-        TrustAnchor.Verify(metadataEntry, trustPath);
-
-        // Check status reports for authenticator with undesirable status
-        var latestStatusReport = metadataEntry?.GetLatestStatusReport();
-        if (latestStatusReport != null && config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
-        {
-            throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
-        }
-
-        return devicePublicKeyAuthenticatorOutput.Encode();
     }
 
     /// <summary>
     /// The AttestationObject after CBOR parsing
     /// </summary>
-    public sealed class ParsedAttestationObject
+    public sealed class ParsedAttestationObject(string fmt, CborMap attStmt, AuthenticatorData authData)
     {
-        public ParsedAttestationObject(string fmt, CborMap attStmt, AuthenticatorData authData)
-        {
-            Fmt = fmt;
-            AttStmt = attStmt;
-            AuthData = authData;
-        }
+        public string Fmt { get; } = fmt;
 
-        public string Fmt { get; }
+        public CborMap AttStmt { get; } = attStmt;
 
-        public CborMap AttStmt { get; }
-
-        public AuthenticatorData AuthData { get; }
+        public AuthenticatorData AuthData { get; } = authData;
 
         internal static ParsedAttestationObject FromCbor(CborMap cbor)
         {

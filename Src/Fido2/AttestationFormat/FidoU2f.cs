@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
@@ -10,7 +11,7 @@ namespace Fido2NetLib;
 
 internal sealed class FidoU2f : AttestationVerifier
 {
-    public override (AttestationType, X509Certificate2[]) Verify(VerifyAttestationRequest request)
+    public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // verify that aaguid is 16 empty bytes (note: required by fido2 conformance testing, could not find this in spec?)
         if (request.AuthData.AttestedCredentialData!.AaGuid.CompareTo(Guid.Empty) != 0)
@@ -51,16 +52,16 @@ internal sealed class FidoU2f : AttestationVerifier
         var y = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.Y];
 
         // 4c.Let publicKeyU2F be the concatenation 0x04 || x || y
-        var publicKeyU2F = DataHelper.Concat(stackalloc byte[1] { 0x4 }, x, y);
+        byte[] publicKeyU2F = [0x4, .. x, .. y];
 
         // 5. Let verificationData be the concatenation of (0x00 || rpIdHash || clientDataHash || credentialId || publicKeyU2F)
-        byte[] verificationData = DataHelper.Concat(
-            stackalloc byte[1] { 0x00 },
-            request.AuthData.RpIdHash,
-            request.ClientDataHash,
-            request.AuthData.AttestedCredentialData.CredentialId,
-            publicKeyU2F
-        );
+        byte[] verificationData = [
+            0x00,
+            .. request.AuthData.RpIdHash,
+            .. request.ClientDataHash,
+            .. request.AuthData.AttestedCredentialData.CredentialId,
+            .. publicKeyU2F
+        ];
 
         // 6. Verify the sig using verificationData and certificate public key
         if (!request.TryGetSig(out byte[]? sig))
@@ -86,6 +87,6 @@ internal sealed class FidoU2f : AttestationVerifier
 
         var trustPath = new X509Certificate2[1] { attCert };
 
-        return (AttestationType.AttCa, trustPath);
+        return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
     }
 }

@@ -11,7 +11,7 @@ namespace Fido2NetLib;
 public class VerificationMethodDescriptor
 {
     /// <summary>
-    /// Gets or sets a single USER_VERIFY constant, not a bit flag combination. 
+    /// Gets or sets a single USER_VERIFY constant, not a bit flag combination.
     /// </summary>
     /// <remarks>
     /// This value MUST be non-zero.

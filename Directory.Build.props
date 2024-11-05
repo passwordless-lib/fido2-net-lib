@@ -7,6 +7,7 @@
     <Description>FIDO2 .NET library (WebAuthn)</Description>
     <RepositoryUrl>https://github.com/passwordless-lib/fido2-net-lib</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageTags>fido2 webauthn</PackageTags>
     <PackageReleaseNotes>Initial release</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/passwordless-lib/fido2-net-lib</PackageProjectUrl>
@@ -15,20 +16,27 @@
   
   <!-- Global Variables -->
   <PropertyGroup>
-    <SupportedTargetFrameworks>net6.0</SupportedTargetFrameworks>
+    <SupportedTargetFrameworks>net8.0</SupportedTargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- 
+      Temporary disabling of CS1591 (Missing XML comment for publicly visible type or member) warning
+      Make sure to re-enable it when https://github.com/passwordless-lib/fido2-net-lib/issues/501 is resolved.
+    -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
-    <LangVersion>11</LangVersion>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
   
   <!--MISC-->
   <PropertyGroup>
     <!-- Avoid annoying build warnings when packing using the solution file -->
     <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <!-- Avoid annoying build warnings when packing using the solution file -->
     <IsTestProject>false</IsTestProject>
   </PropertyGroup>

@@ -14,10 +14,10 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 7.0 SDK'
+    displayName: 'Use .NET 8.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '7.0.x'
+      version: '8.0.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet-demo
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
@@ -31,17 +31,17 @@ jobs:
       arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
       projects: 'Demo/Demo.csproj'
   - task: DotNetCoreCLI@2
-    displayName: Publish website [net6.0]
+    displayName: Publish website [net8.0]
     inputs:
       command: publish
-      arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net6.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net6.0'
+      arguments: '--no-build --nologo --configuration $(BuildConfiguration) --output $(build.ArtifactStagingDirectory)/net8.0 /p:PackageVersion=$(Build.BuildNumber)-development --framework net8.0'
       publishWebProjects: false
       projects: 'Demo/Demo.csproj'
   - task: PublishBuildArtifacts@1
-    displayName: Copy website to artifacts [net6.0]
+    displayName: Copy website to artifacts [net8.0]
     inputs:
-      pathToPublish: $(build.ArtifactStagingDirectory)/net6.0
-      artifactName: Demo .Net 6.0
+      pathToPublish: $(build.ArtifactStagingDirectory)/net8.0
+      artifactName: Demo .Net 8.0
 
 # Build the Blazor WebAssembly demo
 - job: blazorWasmDemo
@@ -50,10 +50,10 @@ jobs:
     vmImage: $(TargetWindowsVMImage)
   steps:
   - task: UseDotNet@2
-    displayName: 'Use .NET 7.0 SDK'
+    displayName: 'Use .NET 8.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '7.0.x'
+      version: '8.0.x'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
@@ -78,26 +78,26 @@ jobs:
       packageType: 'sdk'
       version: '6.0.x'
   - task: UseDotNet@2
-    displayName: 'Install .NET 7.0 SDK'
+    displayName: 'Install .NET 8.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '7.0.x'  
+      version: '8.0.x'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
       command: restore
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet build $(buildConfiguration)'
     inputs:
       command: build
       arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
       command: test
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
       arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo --collect:"XPlat Code Coverage"'
   - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
     displayName: ReportGenerator
@@ -136,15 +136,15 @@ jobs:
       packageType: 'sdk'
       version: '6.0.x'
   - task: UseDotNet@2
-    displayName: 'Use .NET 7.0 SDK'
+    displayName: 'Use .NET 8.0 SDK'
     inputs:
       packageType: 'sdk'
-      version: '7.0.x'
+      version: '8.0.x'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet restore'
     inputs:
       command: restore
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: 'dotnet format'
     inputs:
@@ -156,10 +156,10 @@ jobs:
     inputs:
       command: build
       arguments: '--configuration $(buildConfiguration) --no-restore --nologo "-p:Version=$(Build.BuildNumber)-development"'
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
       command: test
-      projects: 'Test/Test.csproj'
+      projects: 'Tests/Fido2.Tests/Fido2.Tests.csproj'
       arguments: '--configuration $(buildConfiguration) --no-restore --no-build --nologo'
