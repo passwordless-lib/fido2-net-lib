@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System.Buffers;
+using System.Buffers.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
@@ -9,19 +11,30 @@ namespace Fido2NetLib;
 public sealed class Base64UrlConverter : JsonConverter<byte[]>
 {
     public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
+    {       
         if (!reader.HasValueSequence)
         {
-            return Base64Url.DecodeUtf8(reader.ValueSpan);
+            return Base64Url.DecodeFromUtf8(reader.ValueSpan);
         }
         else
         {
-            return Base64Url.Decode(reader.GetString());
-        }
+            return Base64Url.DecodeFromChars(reader.GetString());
+        }     
     }
 
     public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(Base64Url.Encode(value));
+        var rentedBuffer = ArrayPool<byte>.Shared.Rent(Base64Url.GetEncodedLength(value.Length));
+
+        try
+        {
+            Base64Url.EncodeToUtf8(value, rentedBuffer, out _, out int written);
+
+            writer.WriteStringValue(rentedBuffer.AsSpan(0..written));
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -46,7 +47,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 
         try
         {
-            jwtHeaderBytes = Base64Url.Decode(jwtComponents[0]);
+            jwtHeaderBytes = Base64Url.DecodeFromChars(jwtComponents[0]);
         }
         catch (FormatException)
         {

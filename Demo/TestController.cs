@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Buffers.Text;
+using System.Text;
 using System.Text.Json;
 using Fido2NetLib;
 using Fido2NetLib.Development;
@@ -42,7 +43,7 @@ public class TestController : Controller
 
         try
         {
-            username = Base64Url.Decode(opts.Username);
+            username = Base64Url.DecodeFromChars(opts.Username);
         }
         catch (FormatException)
         {

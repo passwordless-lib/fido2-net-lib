@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -132,7 +133,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
             throw new Fido2MetadataException("The JWT does not have the 3 expected components");
 
         var blobHeader = jwtParts[0];
-        using var jsonDoc = JsonDocument.Parse(Base64Url.Decode(blobHeader));
+        using var jsonDoc = JsonDocument.Parse(Base64Url.DecodeFromChars(blobHeader));
         var tokenHeader = jsonDoc.RootElement;
 
         var blobAlg = tokenHeader.TryGetProperty("alg", out var algEl)
@@ -235,7 +236,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
         var blobPayload = ((JsonWebToken)validateTokenResult.SecurityToken).EncodedPayload;
 
-        MetadataBLOBPayload blob = JsonSerializer.Deserialize(Base64Url.Decode(blobPayload), FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
+        MetadataBLOBPayload blob = JsonSerializer.Deserialize(Base64Url.DecodeFromChars(blobPayload), FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
         blob.JwtAlg = blobAlg;
         return blob;
     }
