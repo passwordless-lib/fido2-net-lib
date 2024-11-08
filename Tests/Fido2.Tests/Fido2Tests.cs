@@ -16,7 +16,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 
 using NSec.Cryptography;
+
 using Test;
+
 using static Fido2NetLib.AuthenticatorAttestationResponse;
 
 namespace fido2_net_lib.Test;

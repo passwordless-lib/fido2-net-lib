@@ -858,7 +858,8 @@ public class AuthenticatorResponseTests
             null
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData {
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
+        {
             Type = "webauthn.create",
             Challenge = challenge,
             Origin = rp,

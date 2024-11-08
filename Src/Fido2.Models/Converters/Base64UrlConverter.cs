@@ -11,7 +11,7 @@ namespace Fido2NetLib;
 public sealed class Base64UrlConverter : JsonConverter<byte[]>
 {
     public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {       
+    {
         if (!reader.HasValueSequence)
         {
             return Base64Url.DecodeFromUtf8(reader.ValueSpan);
@@ -19,7 +19,7 @@ public sealed class Base64UrlConverter : JsonConverter<byte[]>
         else
         {
             return Base64Url.DecodeFromChars(reader.GetString());
-        }     
+        }
     }
 
     public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
