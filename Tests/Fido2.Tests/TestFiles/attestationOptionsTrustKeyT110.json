@@ -4,10 +4,10 @@
   "rp":{
     "name":"MyID",
     "id":"localhost"},
-  "user":{
-    "name":"Ela Park",
-    "id":"ABC",
-    "displayName":"Ela Park"
+  "user": {
+    "name": "Ela Park",
+    "id": "QUJD",
+    "displayName": "Ela Park"
   },
   "challenge":"o8oCrLEUQ9f8R1SgrTkIPO_RgxpE__Vy9OI2f1g2gpM",
   "pubKeyCredParams":[

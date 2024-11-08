@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Buffers.Text;
+using System.Security.Cryptography;
 
 using Fido2NetLib;
 using Fido2NetLib.Cbor;
@@ -13,15 +14,15 @@ public class ExistingU2fRegistrationDataTests
     {
         // u2f registration with appId
         var appId = "https://localhost:44336";
-        var keyHandleData = Base64Url.Decode("2uzGTqu9XGoDQpRBhkv3qDYWzEEZrDjOHT94fHe3J9VXl6KpaY6jL1C4gCAVSBCWZejOn-EYSyXfiG7RDQqgKw");
-        var publicKeyData = Base64Url.Decode("BEKJkJiDzo8wlrYbAHmyz5a5vShbkStO58ZO7F-hy4fvBp6TowCZoV2dNGcxIN1yT18799bb_WuP0Yq_DSv5a-U");
+        var keyHandleData = Base64Url.DecodeFromChars("2uzGTqu9XGoDQpRBhkv3qDYWzEEZrDjOHT94fHe3J9VXl6KpaY6jL1C4gCAVSBCWZejOn-EYSyXfiG7RDQqgKw");
+        var publicKeyData = Base64Url.DecodeFromChars("BEKJkJiDzo8wlrYbAHmyz5a5vShbkStO58ZO7F-hy4fvBp6TowCZoV2dNGcxIN1yT18799bb_WuP0Yq_DSv5a-U");
 
         //key as cbor
         var publicKey = CreatePublicKeyFromU2fRegistrationData(keyHandleData, publicKeyData);
 
         var options = new AssertionOptions
         {
-            Challenge = Base64Url.Decode("mNxQVDWI8+ahBXeQJ8iS4jk5pDUd5KetZGVOwSkw2X0"),
+            Challenge = Convert.FromBase64String("mNxQVDWI8+ahBXeQJ8iS4jk5pDUd5KetZGVOwSkw2X0="),
             RpId = "localhost",
             AllowCredentials = new[]
             {
@@ -44,9 +45,9 @@ public class ExistingU2fRegistrationDataTests
             },
             Response = new AuthenticatorAssertionRawResponse.AssertionResponse
             {
-                AuthenticatorData = Base64Url.Decode("B6_fPoU4uitIYRHXuNfpbqt5mrDWz8cp7d1noAUrAucBAAABTQ"),
-                ClientDataJson = Base64Url.Decode("eyJjaGFsbGVuZ2UiOiJtTnhRVkRXSTgtYWhCWGVRSjhpUzRqazVwRFVkNUtldFpHVk93U2t3MlgwIiwib3JpZ2luIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMzYiLCJ0eXBlIjoid2ViYXV0aG4uZ2V0In0"),
-                Signature = Base64Url.Decode("MEQCICHV36RVY9DdFmKZgxF5Z_yScpPPsKcj__8KcPmngtGHAiAq_SzmTY8rZz4-5uNNiz3h6xO9osNTh7O7Mjqtoxul8w")
+                AuthenticatorData = Base64Url.DecodeFromChars("B6_fPoU4uitIYRHXuNfpbqt5mrDWz8cp7d1noAUrAucBAAABTQ"),
+                ClientDataJson = Base64Url.DecodeFromChars("eyJjaGFsbGVuZ2UiOiJtTnhRVkRXSTgtYWhCWGVRSjhpUzRqazVwRFVkNUtldFpHVk93U2t3MlgwIiwib3JpZ2luIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NDQzMzYiLCJ0eXBlIjoid2ViYXV0aG4uZ2V0In0"),
+                Signature = Base64Url.DecodeFromChars("MEQCICHV36RVY9DdFmKZgxF5Z_yScpPPsKcj__8KcPmngtGHAiAq_SzmTY8rZz4-5uNNiz3h6xO9osNTh7O7Mjqtoxul8w")
             }
         };
 
