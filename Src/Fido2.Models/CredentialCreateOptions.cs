@@ -290,7 +290,7 @@ public class AuthenticatorSelection
     {
         AuthenticatorAttachment = null,
         ResidentKey = ResidentKeyRequirement.Discouraged,
-        UserVerification = UserVerificationRequirement.Preferred
+        UserVerification = UserVerificationRequirement.Discouraged
     };
 }
 
