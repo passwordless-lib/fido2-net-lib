@@ -1,4 +1,6 @@
-﻿using System.Buffers;
+﻿#nullable enable
+
+using System.Buffers;
 using System.Buffers.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,13 +14,44 @@ public sealed class Base64UrlConverter : JsonConverter<byte[]>
 {
     public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (!reader.HasValueSequence)
+        byte[]? rentedBuffer = null;
+
+        scoped ReadOnlySpan<byte> source;
+
+        if (!reader.HasValueSequence && !reader.ValueIsEscaped)
         {
-            return Base64Url.DecodeFromUtf8(reader.ValueSpan);
+            source = reader.ValueSpan;
         }
         else
         {
-            return Base64Url.DecodeFromChars(reader.GetString());
+            int valueLength = reader.HasValueSequence ? checked((int)reader.ValueSequence.Length) : reader.ValueSpan.Length;
+
+            Span<byte> buffer = valueLength <= 32 ? stackalloc byte[32] : (rentedBuffer = ArrayPool<byte>.Shared.Rent(valueLength));
+            int bytesRead = reader.CopyString(buffer);
+            source = buffer[..bytesRead];
+        }
+
+        try
+        {
+            return Base64Url.DecodeFromUtf8(source);
+        }
+        catch
+        {
+            if (Base64.IsValid(source))
+            {
+                throw new JsonException("Expected data to be in Base64Url format, but received Base64 encoding instead");
+            }
+            else
+            {
+                throw new JsonException("Invalid Base64Url data");
+            }
+        }
+        finally
+        {
+            if (rentedBuffer != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedBuffer);
+            }
         }
     }
 
