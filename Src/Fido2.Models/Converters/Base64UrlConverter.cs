@@ -12,6 +12,8 @@ namespace Fido2NetLib;
 /// </summary>
 public sealed class Base64UrlConverter : JsonConverter<byte[]>
 {
+    public static bool EnableRelaxedDecoding { get; set; }
+
     public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         byte[]? rentedBuffer = null;
@@ -39,7 +41,14 @@ public sealed class Base64UrlConverter : JsonConverter<byte[]>
         {
             if (Base64.IsValid(source))
             {
-                throw new JsonException("Expected data to be in Base64Url format, but received Base64 encoding instead");
+                if (EnableRelaxedDecoding)
+                {
+                    return Base64Url.DecodeFromUtf8(source);                    
+                }
+                else
+                {
+                    throw new JsonException("Expected data to be in Base64Url format, but received Base64 encoding instead.");
+                }
             }
             else
             {
