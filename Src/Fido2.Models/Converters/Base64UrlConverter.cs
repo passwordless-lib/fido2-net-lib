@@ -43,7 +43,7 @@ public sealed class Base64UrlConverter : JsonConverter<byte[]>
             {
                 if (EnableRelaxedDecoding)
                 {
-                    return Base64Url.DecodeFromUtf8(source);                    
+                    return Base64Url.DecodeFromUtf8(source);
                 }
                 else
                 {
