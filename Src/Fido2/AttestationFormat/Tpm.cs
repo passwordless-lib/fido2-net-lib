@@ -15,33 +15,35 @@ namespace Fido2NetLib;
 
 internal sealed class Tpm : AttestationVerifier
 {
+    private static string ConvertTPMManufacturerToHexString(string id) => BitConverter.ToString(Convert.FromHexString(id.Split(':')[^1])).Replace("-", "");
+
     public static readonly HashSet<string> TPMManufacturers =
     [
-        "id:FFFFF1D0", // FIDO testing TPM
+        ConvertTPMManufacturerToHexString("id:FFFFF1D0"), // FIDO testing TPM
         // From https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Version-1.02-Revision-1.00.pdf
-        "id:414D4400", // 'AMD' AMD
-        "id:41544D4C", // 'ATML' Atmel
-        "id:4252434D", // 'BRCM' Broadcom
-        "id:4353434F", // 'CSCO' Cisco
-        "id:464C5953", // 'FLYS' Flyslice Technologies
-        "id:48504500", // 'HPE' HPE
-        "id:49424d00", // 'IBM' IBM
-        "id:49465800", // 'IFX' Infinion
-        "id:494E5443", // 'INTC' Intel
-        "id:4C454E00", // 'LEN' Lenovo
-        "id:4D534654", // 'MSFT' Microsoft
-        "id:4E534D20", // 'NSM' National Semiconductor
-        "id:4E545A00", // 'NTZ' Nationz
-        "id:4E544300", // 'NTC' Nuvoton Technology
-        "id:51434F4D", // 'QCOM' Qualcomm
-        "id:534D5343", // 'SMSC' SMSC
-        "id:53544D20", // 'STM ' ST Microelectronics
-        "id:534D534E", // 'SMSN' Samsung
-        "id:534E5300", // 'SNS' Sinosun
-        "id:54584E00", // 'TXN' Texas Instruments
-        "id:57454300", // 'WEC' Winbond
-        "id:524F4343", // 'ROCC' Fuzhou Rockchip
-        "id:474F4F47", // 'GOOG' Google
+        ConvertTPMManufacturerToHexString("id:414D4400"), // 'AMD' AMD
+        ConvertTPMManufacturerToHexString("id:41544D4C"), // 'ATML' Atmel
+        ConvertTPMManufacturerToHexString("id:4252434D"), // 'BRCM' Broadcom
+        ConvertTPMManufacturerToHexString("id:4353434F"), // 'CSCO' Cisco
+        ConvertTPMManufacturerToHexString("id:464C5953"), // 'FLYS' Flyslice Technologies
+        ConvertTPMManufacturerToHexString("id:48504500"), // 'HPE' HPE
+        ConvertTPMManufacturerToHexString("id:49424d00"), // 'IBM' IBM
+        ConvertTPMManufacturerToHexString("id:49465800"), // 'IFX' Infinion
+        ConvertTPMManufacturerToHexString("id:494E5443"), // 'INTC' Intel
+        ConvertTPMManufacturerToHexString("id:4C454E00"), // 'LEN' Lenovo
+        ConvertTPMManufacturerToHexString("id:4D534654"), // 'MSFT' Microsoft
+        ConvertTPMManufacturerToHexString("id:4E534D20"), // 'NSM' National Semiconductor
+        ConvertTPMManufacturerToHexString("id:4E545A00"), // 'NTZ' Nationz
+        ConvertTPMManufacturerToHexString("id:4E544300"), // 'NTC' Nuvoton Technology
+        ConvertTPMManufacturerToHexString("id:51434F4D"), // 'QCOM' Qualcomm
+        ConvertTPMManufacturerToHexString("id:534D5343"), // 'SMSC' SMSC
+        ConvertTPMManufacturerToHexString("id:53544D20"), // 'STM ' ST Microelectronics
+        ConvertTPMManufacturerToHexString("id:534D534E"), // 'SMSN' Samsung
+        ConvertTPMManufacturerToHexString("id:534E5300"), // 'SNS' Sinosun
+        ConvertTPMManufacturerToHexString("id:54584E00"), // 'TXN' Texas Instruments
+        ConvertTPMManufacturerToHexString("id:57454300"), // 'WEC' Winbond
+        ConvertTPMManufacturerToHexString("id:524F4343"), // 'ROCC' Fuzhou Rockchip
+        ConvertTPMManufacturerToHexString("id:474F4F47"), // 'GOOG' Google
     ];
 
     public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
@@ -177,7 +179,7 @@ internal sealed class Tpm : AttestationVerifier
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
             }
 
-            if (!TPMManufacturers.Contains(tpmManufacturer))
+            if (!TPMManufacturers.Contains(ConvertTPMManufacturerToHexString(tpmManufacturer)))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM manufacturer found parsing TPM attestation");
 
             // 5biiii. The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.

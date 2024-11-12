@@ -105,7 +105,6 @@ public class Fido2 : IFido2
         var result = await parsedResponse.VerifyAsync(makeAssertionParams.OriginalOptions,
                                                       _config,
                                                       makeAssertionParams.StoredPublicKey,
-                                                      makeAssertionParams.StoredDevicePublicKeys,
                                                       makeAssertionParams.StoredSignatureCounter,
                                                       makeAssertionParams.IsUserHandleOwnerOfCredentialIdCallback,
                                                       _metadataService,

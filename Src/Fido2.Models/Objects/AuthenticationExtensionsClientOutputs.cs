@@ -37,14 +37,6 @@ public class AuthenticationExtensionsClientOutputs
     public ulong[][]? UserVerificationMethod { get; set; }
 
     /// <summary>
-    /// This authenticator registration extension and authentication extension provides a Relying Party with a "device continuity" signal for backup eligible credentials.
-    /// https://w3c.github.io/webauthn/#sctn-device-publickey-extension
-    /// </summary>
-    [JsonPropertyName("devicePubKey")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public AuthenticationExtensionsDevicePublicKeyOutputs? DevicePubKey { get; set; }
-
-    /// <summary>
     /// This client registration extension facilitates reporting certain credential properties known by the client to the requesting WebAuthn Relying Party upon creation of a public key credential source as a result of a registration ceremony.
     /// </summary>
     [JsonPropertyName("credProps")]

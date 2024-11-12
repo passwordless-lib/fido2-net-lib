@@ -188,15 +188,11 @@ public class TestController : Controller
             OriginalOptions = options,
             StoredPublicKey = creds.PublicKey,
             StoredSignatureCounter = storedCounter,
-            IsUserHandleOwnerOfCredentialIdCallback = callback,
-            StoredDevicePublicKeys = creds.DevicePublicKeys
+            IsUserHandleOwnerOfCredentialIdCallback = callback
         }, cancellationToken: cancellationToken);
 
         // 6. Store the updated counter
         _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
-
-        if (res.DevicePublicKey is not null)
-            creds.DevicePublicKeys.Add(res.DevicePublicKey);
 
         // 7. return OK to client
         return Json(new

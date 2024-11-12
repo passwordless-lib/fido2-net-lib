@@ -125,12 +125,6 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e.,
         //     no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
         // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
-        byte[]? devicePublicKeyResult = null;
-
-        if (Raw.ClientExtensionResults?.DevicePubKey is not null)
-        {
-            devicePublicKeyResult = await DevicePublicKeyRegistrationAsync(config, metadataService, Raw.ClientExtensionResults, AttestationObject.AuthData, clientDataHash, cancellationToken).ConfigureAwait(false);
-        }
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
@@ -201,72 +195,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AttestationClientDataJson = Raw.Response.ClientDataJson,
             User = originalOptions.User,
             AttestationFormat = AttestationObject.Fmt,
-            AaGuid = authData.AttestedCredentialData.AaGuid,
-            DevicePublicKey = devicePublicKeyResult
+            AaGuid = authData.AttestedCredentialData.AaGuid
         };
-    }
-
-    /// <summary>
-    /// If the devicePubKey extension was included on a navigator.credentials.create() call,
-    /// then the below verification steps are performed in the context of this step of § 7.1
-    /// Registering a New Credential using these variables established therein:
-    /// credential, clientExtensionResults, authData, and hash.
-    /// Relying Party policy may specify whether a response without a devicePubKey is acceptable.
-    /// </summary>
-    /// <param name="config"></param>
-    /// <param name="metadataService"></param>
-    /// <param name="clientExtensionResults"></param>
-    /// <param name="authData"></param>
-    /// <param name="hash"></param>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
-    /// <see href="https://w3c.github.io/webauthn/#sctn-device-publickey-extension-verification-create"/>
-    private async Task<byte[]> DevicePublicKeyRegistrationAsync(
-        Fido2Configuration config,
-        IMetadataService? metadataService,
-        AuthenticationExtensionsClientOutputs clientExtensionResults,
-        AuthenticatorData authData,
-        byte[] hash,
-        CancellationToken cancellationToken)
-    {
-        // 1. Let attObjForDevicePublicKey be the value of the devicePubKey member of clientExtensionResults.
-        var attObjForDevicePublicKey = clientExtensionResults.DevicePubKey!;
-
-        // 2. Verify that attObjForDevicePublicKey is valid CBOR conforming to the syntax defined above and
-        // perform CBOR decoding on it to extract the contained fields: aaguid, dpk, scope, nonce, fmt, attStmt.
-        var devicePublicKeyAuthenticatorOutput = DevicePublicKeyAuthenticatorOutput.Parse(attObjForDevicePublicKey.AuthenticatorOutput);
-
-        // 3. Verify that signature is a valid signature over the assertion signature input (i.e. authData and hash) by the device public key dpk.
-        if (!devicePublicKeyAuthenticatorOutput.DevicePublicKey.Verify([.. authData.ToByteArray(), .. hash], attObjForDevicePublicKey.Signature))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
-
-        // 4. Optionally, if attestation was requested and the Relying Party wishes to verify it, verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
-        // by using the attestation statement format fmt's verification procedure given attStmt.
-        // https://www.w3.org/TR/webauthn/#defined-attestation-formats
-        var verifier = AttestationVerifier.Create(devicePublicKeyAuthenticatorOutput.Fmt);
-
-        // https://w3c.github.io/webauthn/#sctn-device-publickey-attestation-calculations
-        (var attType, var trustPath) = await verifier.VerifyAsync(devicePublicKeyAuthenticatorOutput.AttStmt, devicePublicKeyAuthenticatorOutput.GetAuthenticatorData(), devicePublicKeyAuthenticatorOutput.GetHash()).ConfigureAwait(false);
-
-        // 5. Complete the steps from § 7.1 Registering a New Credential and, if those steps are successful,
-        // store the aaguid, dpk, scope, fmt, attStmt values indexed to the credential.id in the user account.
-        MetadataBLOBPayloadEntry? metadataEntry = null;
-        if (metadataService != null)
-            metadataEntry = await metadataService.GetEntryAsync(devicePublicKeyAuthenticatorOutput.AaGuid, cancellationToken);
-
-        // while conformance testing, we must reject any authenticator that we cannot get metadata for
-        if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && devicePublicKeyAuthenticatorOutput.Fmt is not "fido-u2f")
-            throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
-
-        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
-
-        // Check status reports for authenticator with undesirable status
-        var latestStatusReport = metadataEntry?.GetLatestStatusReport();
-        if (latestStatusReport != null && config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
-        {
-            throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
-        }
-
-        return devicePublicKeyAuthenticatorOutput.Encode();
     }
 
     /// <summary>

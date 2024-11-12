@@ -50,6 +50,15 @@ public sealed class CredentialCreateOptions
     public AttestationConveyancePreference Attestation { get; set; } = AttestationConveyancePreference.None;
 
     /// <summary>
+    /// This member is intended for use by Relying Parties that wish to select a preference regarding the attestation statement format used, if such an attestation is requested.
+    /// </summary>
+    /// <remarks>
+    /// This parameter is advisory and the authenticator MAY use an attestation statement not enumerated in this parameter.
+    /// </remarks>
+    [JsonPropertyName("attestationFormats")]
+    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; set; } = [];
+
+    /// <summary>
     /// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the create() operation.
     /// </summary>
     [JsonPropertyName("authenticatorSelection")]
@@ -281,7 +290,7 @@ public class AuthenticatorSelection
     {
         AuthenticatorAttachment = null,
         ResidentKey = ResidentKeyRequirement.Preferred,
-        UserVerification = UserVerificationRequirement.Preferred
+        UserVerification = UserVerificationRequirement.Discouraged
     };
 }
 
