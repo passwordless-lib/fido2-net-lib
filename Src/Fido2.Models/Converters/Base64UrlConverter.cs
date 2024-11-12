@@ -37,13 +37,29 @@ public sealed class Base64UrlConverter : JsonConverter<byte[]>
         {
             return Base64Url.DecodeFromUtf8(source);
         }
-        catch
+        catch (Exception ex)
         {
             if (Base64.IsValid(source))
             {
+                static byte[] DecodeBase64FromUtf8(scoped ReadOnlySpan<byte> source)
+                {
+                    var rentedBuffer = ArrayPool<byte>.Shared.Rent(Base64.GetMaxDecodedFromUtf8Length(source.Length));
+
+                    try
+                    {
+                        _ = Base64.DecodeFromUtf8(source, rentedBuffer, out _, out int written);
+
+                        return rentedBuffer[0..written];
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(rentedBuffer);
+                    }
+                }
+
                 if (EnableRelaxedDecoding)
                 {
-                    return Base64Url.DecodeFromUtf8(source);
+                    return DecodeBase64FromUtf8(source);
                 }
                 else
                 {
@@ -52,7 +68,7 @@ public sealed class Base64UrlConverter : JsonConverter<byte[]>
             }
             else
             {
-                throw new JsonException("Invalid Base64Url data");
+                throw new JsonException(ex.Message, ex);
             }
         }
         finally
