@@ -35,7 +35,7 @@ public sealed class CredentialCreateOptions
     /// This member contains information about the desired properties of the credential to be created. The sequence is ordered from most preferred to least preferred. The platform makes a best-effort to create the most preferred credential that it can.
     /// </summary>
     [JsonPropertyName("pubKeyCredParams")]
-    public List<PubKeyCredParam> PubKeyCredParams { get; set; }
+    public IReadOnlyList<PubKeyCredParam> PubKeyCredParams { get; set; }
 
     /// <summary>
     /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete. This is treated as a hint, and MAY be overridden by the platform.
@@ -122,7 +122,9 @@ public sealed class CredentialCreateOptions
         AuthenticatorSelection authenticatorSelection,
         AttestationConveyancePreference attestationConveyancePreference,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
-        AuthenticationExtensionsClientInputs extensions)
+        AuthenticationExtensionsClientInputs extensions,
+        IReadOnlyList<PubKeyCredParam> pubKeyCredParams)
+
     {
         return new CredentialCreateOptions
         {
@@ -130,21 +132,7 @@ public sealed class CredentialCreateOptions
             Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
             Timeout = config.Timeout,
             User = user,
-            PubKeyCredParams =
-            [
-                // Add additional as appropriate
-                PubKeyCredParam.Ed25519,
-                PubKeyCredParam.ES256,
-                PubKeyCredParam.RS256,
-                PubKeyCredParam.PS256,
-                PubKeyCredParam.ES384,
-                PubKeyCredParam.RS384,
-                PubKeyCredParam.PS384,
-                PubKeyCredParam.ES512,
-                PubKeyCredParam.RS512,
-                PubKeyCredParam.PS512,
-                PubKeyCredParam.RS1
-            ],
+            PubKeyCredParams = pubKeyCredParams,
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
             ExcludeCredentials = excludeCredentials,
@@ -196,6 +184,24 @@ public sealed class PubKeyCredParam(
     public static readonly PubKeyCredParam PS512 = new(COSE.Algorithm.PS512);
     public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
     public static readonly PubKeyCredParam RS1 = new(COSE.Algorithm.RS1);
+
+    /// <summary>
+    /// The default algorithms supported by the library
+    /// </summary>
+    public static IReadOnlyList<PubKeyCredParam> Defaults =>
+    [
+        // Add additional as appropriate
+        Ed25519,
+        ES256,
+        RS256,
+        PS256,
+        ES384,
+        RS384,
+        PS384,
+        ES512,
+        RS512,
+        PS512
+    ];
 }
 
 /// <summary>

@@ -15,6 +15,10 @@
     {
       "type": "public-key",
       "alg": -7
+    },
+    {
+      "type": "public-key",
+      "alg": -65535
     }
   ],
   "timeout": 0
