@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Buffers.Text;
+using System.Text.Json.Serialization;
 namespace Fido2NetLib;
 
 public class TokenBindingDto
@@ -25,7 +26,7 @@ public class TokenBindingDto
             case "present":
                 if (string.IsNullOrEmpty(Id))
                     throw new Fido2VerificationException("TokenBinding status was present but Id is missing");
-                var b64 = Base64Url.Encode(requestTokenbinding);
+                var b64 = Base64Url.EncodeToString(requestTokenbinding);
                 if (Id != b64)
                     throw new Fido2VerificationException("Tokenbinding Id does not match");
                 break;

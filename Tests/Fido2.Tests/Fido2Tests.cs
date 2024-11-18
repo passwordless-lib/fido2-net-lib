@@ -16,7 +16,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 
 using NSec.Cryptography;
+
 using Test;
+
 using static Fido2NetLib.AuthenticatorAttestationResponse;
 
 namespace fido2_net_lib.Test;
@@ -113,11 +115,11 @@ public class Fido2Tests
         {
             get
             {
-                return JsonSerializer.SerializeToUtf8Bytes(new
+                return JsonSerializer.SerializeToUtf8Bytes(new MockClientData
                 {
-                    type = "webauthn.create",
-                    challenge = _challenge,
-                    origin = rp
+                    Type = "webauthn.create",
+                    Challenge = _challenge,
+                    Origin = rp
                 });
             }
         }
@@ -947,12 +949,13 @@ public class Fido2Tests
         var challenge = new byte[128];
         RandomNumberGenerator.Fill(challenge);
 
-        var clientData = new
+        var clientData = new MockClientData
         {
-            type = "webauthn.get",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.get",
+            Challenge = challenge,
+            Origin = rp
         };
+
         var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
 
         var hashedClientDataJson = SHA256.HashData(clientDataJson);

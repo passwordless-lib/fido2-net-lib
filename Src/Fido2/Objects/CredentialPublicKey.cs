@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
 using Fido2NetLib.Cbor;
+
 using NSec.Cryptography;
 
 namespace Fido2NetLib.Objects;

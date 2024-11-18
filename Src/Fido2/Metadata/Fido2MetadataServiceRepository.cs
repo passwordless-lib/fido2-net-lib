@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -67,7 +68,7 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             throw new ArgumentException("The JWT does not have the 3 expected components");
 
         var blobHeaderString = jwtParts[0];
-        using var blobHeaderDoc = JsonDocument.Parse(Base64Url.Decode(blobHeaderString));
+        using var blobHeaderDoc = JsonDocument.Parse(Base64Url.DecodeFromChars(blobHeaderString));
         var blobHeader = blobHeaderDoc.RootElement;
 
         string blobAlg = blobHeader.TryGetProperty("alg", out var algEl)
@@ -186,7 +187,7 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
         var blobPayload = ((JsonWebToken)validateTokenResult.SecurityToken).EncodedPayload;
 
-        MetadataBLOBPayload blob = JsonSerializer.Deserialize(Base64Url.Decode(blobPayload), FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
+        MetadataBLOBPayload blob = JsonSerializer.Deserialize(Base64Url.DecodeFromChars(blobPayload), FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
         blob.JwtAlg = blobAlg;
         return blob;
     }

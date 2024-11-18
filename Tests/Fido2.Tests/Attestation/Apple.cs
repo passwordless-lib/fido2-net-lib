@@ -200,11 +200,11 @@ public class Apple : Fido2Tests.Attestation
 
         var authData = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, GetExtensions()).ToByteArray();
         _attestationObject.Set("authData", new CborByteString(authData));
-        var clientData = new
+        var clientData = new MockClientData
         {
-            type = "webauthn.create",
-            challenge = _challenge,
-            origin = "https://www.passwordless.dev",
+            Type = "webauthn.create",
+            Challenge = _challenge,
+            Origin = "https://www.passwordless.dev",
         };
         var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
 

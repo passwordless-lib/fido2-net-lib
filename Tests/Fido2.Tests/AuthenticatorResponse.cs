@@ -1,4 +1,5 @@
-﻿using System.Formats.Cbor;
+﻿using System.Buffers.Text;
+using System.Formats.Cbor;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -21,7 +22,7 @@ public class AuthenticatorResponseTests
         var response = JsonSerializer.Deserialize<AuthenticatorResponse>("""{"type":"webauthn.get","challenge":"J4fjxBV-BNywGRJRm8JZ7znvdiZo9NINObNBpnKnJQEOtplTMF0ERuIrzrkeoO-dNMoeMZjhzqfar7eWRANvPeNFPrB5Q6zlS1ZFPf37F3suIwpXi9NCpFA_RlBSiygLmvcIOa57_QHubZQD3cv0UWtRTLslJjmgumphMc7EFN8","origin":"https://www.passwordless.dev"}""");
 
         Assert.Equal("webauthn.get", response.Type);
-        Assert.Equal(Base64Url.Decode("J4fjxBV-BNywGRJRm8JZ7znvdiZo9NINObNBpnKnJQEOtplTMF0ERuIrzrkeoO-dNMoeMZjhzqfar7eWRANvPeNFPrB5Q6zlS1ZFPf37F3suIwpXi9NCpFA_RlBSiygLmvcIOa57_QHubZQD3cv0UWtRTLslJjmgumphMc7EFN8"), response.Challenge);
+        Assert.Equal(Base64Url.DecodeFromChars("J4fjxBV-BNywGRJRm8JZ7znvdiZo9NINObNBpnKnJQEOtplTMF0ERuIrzrkeoO-dNMoeMZjhzqfar7eWRANvPeNFPrB5Q6zlS1ZFPf37F3suIwpXi9NCpFA_RlBSiygLmvcIOa57_QHubZQD3cv0UWtRTLslJjmgumphMc7EFN8"), response.Challenge);
         Assert.Equal("https://www.passwordless.dev", response.Origin);
     }
 
@@ -65,11 +66,11 @@ public class AuthenticatorResponseTests
             acd
         ).ToByteArray();
 
-        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
         });
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
@@ -170,11 +171,11 @@ public class AuthenticatorResponseTests
             0,
             acd
         ).ToByteArray();
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -242,7 +243,7 @@ public class AuthenticatorResponseTests
     public void TestAuthenticatorAttestationRawResponse()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
             Type = "webauthn.create",
             Challenge = challenge,
@@ -384,7 +385,7 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
             Type = "webauthn.get",
             Challenge = challenge,
@@ -459,11 +460,11 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -532,11 +533,11 @@ public class AuthenticatorResponseTests
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -612,11 +613,11 @@ public class AuthenticatorResponseTests
             null
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -693,11 +694,11 @@ public class AuthenticatorResponseTests
             null
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -776,11 +777,11 @@ public class AuthenticatorResponseTests
             null
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -857,11 +858,11 @@ public class AuthenticatorResponseTests
             null
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -938,11 +939,11 @@ public class AuthenticatorResponseTests
             null
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -1019,11 +1020,11 @@ public class AuthenticatorResponseTests
             acd
         ).ToByteArray();
 
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -1100,11 +1101,11 @@ public class AuthenticatorResponseTests
             0,
             acd
         ).ToByteArray();
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse
@@ -1180,11 +1181,11 @@ public class AuthenticatorResponseTests
             0,
             acd
         ).ToByteArray();
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
         {
-            type = "webauthn.create",
-            challenge = challenge,
-            origin = rp,
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
         });
 
         var rawResponse = new AuthenticatorAttestationRawResponse

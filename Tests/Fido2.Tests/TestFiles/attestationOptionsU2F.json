@@ -4,10 +4,10 @@
   "rp":{
     "name":"localhost",
     "id":"localhost"},
-  "user":{
-    "name":"aseigler",
-    "id":"ABC",
-    "displayName":"aseigler"
+  "user": {
+    "name": "aseigler",
+    "id": "QUJD",
+    "displayName": "aseigler"
   },
   "challenge":"aL2uwApgwumBzTYCcoL0_4DRv_mfYykzgqJBFoJj_WCKNZOpvUQnyjdwMWIWKcY844tyDNLO5pQPBMJrHPz_3g",
   "pubKeyCredParams":[
