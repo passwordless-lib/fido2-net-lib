@@ -18,16 +18,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Models", "Src\Fido2.M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.AspNet", "Src\Fido2.AspNet\Fido2.AspNet.csproj", "{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Ctap2", "Src\Fido2.Ctap2\Fido2.Ctap2.csproj", "{5B998DB8-6E96-4012-B524-32E113815059}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Ctap2.Tests", "Tests\Fido2.Ctap2.Tests\Fido2.Ctap2.Tests.csproj", "{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.BlazorWebAssembly", "Src\Fido2.BlazorWebAssembly\Fido2.BlazorWebAssembly.csproj", "{F314C16B-3E3D-40E6-9B4F-36142B739478}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorWasmDemo.Server", "BlazorWasmDemo\Server\BlazorWasmDemo.Server.csproj", "{0EC19932-290A-4D92-9603-B0533DD022D9}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlazorWasmDemo.Client", "BlazorWasmDemo\Client\BlazorWasmDemo.Client.csproj", "{EAFF4332-145B-4719-B261-827CEB447A62}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Development", "Src\Fido2.Development\Fido2.Development.csproj", "{08089F2C-A0EE-4B2A-BFE6-B959DEAA4971}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fido2.Tests", "Tests\Fido2.Tests\Fido2.Tests.csproj", "{8DE1B773-5F5A-460C-9811-43506752E063}"
@@ -54,26 +44,6 @@ Global
 		{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2A9F26D-142C-4A35-982B-72FBDCB7D7FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5B998DB8-6E96-4012-B524-32E113815059}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5B998DB8-6E96-4012-B524-32E113815059}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5B998DB8-6E96-4012-B524-32E113815059}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5B998DB8-6E96-4012-B524-32E113815059}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BB3D1D09-1506-4DF9-8211-8B284E12B0F8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F314C16B-3E3D-40E6-9B4F-36142B739478}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F314C16B-3E3D-40E6-9B4F-36142B739478}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F314C16B-3E3D-40E6-9B4F-36142B739478}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F314C16B-3E3D-40E6-9B4F-36142B739478}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0EC19932-290A-4D92-9603-B0533DD022D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0EC19932-290A-4D92-9603-B0533DD022D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0EC19932-290A-4D92-9603-B0533DD022D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0EC19932-290A-4D92-9603-B0533DD022D9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EAFF4332-145B-4719-B261-827CEB447A62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EAFF4332-145B-4719-B261-827CEB447A62}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EAFF4332-145B-4719-B261-827CEB447A62}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EAFF4332-145B-4719-B261-827CEB447A62}.Release|Any CPU.Build.0 = Release|Any CPU
 		{08089F2C-A0EE-4B2A-BFE6-B959DEAA4971}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{08089F2C-A0EE-4B2A-BFE6-B959DEAA4971}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08089F2C-A0EE-4B2A-BFE6-B959DEAA4971}.Release|Any CPU.ActiveCfg = Release|Any CPU

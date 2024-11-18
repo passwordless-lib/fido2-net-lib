@@ -17,10 +17,10 @@
     "Fido2Demo": {
       "commandName": "Project",
       "launchBrowser": true,
+      "applicationUrl": "http://localhost:4729/;https://localhost:44329/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "http://localhost:4729/;https://localhost:44329/"
+      }
     }
   }
 }

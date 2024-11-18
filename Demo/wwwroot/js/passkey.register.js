@@ -5,27 +5,25 @@ async function handleRegisterSubmit(event) {
 
     let username = this.username.value;
     let displayName = this.displayName.value;
-
-    // passwordfield is omitted in demo
-    // let password = this.password.value;
+    let rpId = this.rpId.value;
 
     // possible values: none, direct, indirect
-    let attestation_type = "none";
+    let attestation_type = value("#option-attestation");
     // possible values: <empty>, platform, cross-platform
-    let authenticator_attachment = "";
+    let authenticator_attachment = value("#option-authenticator");
 
     // possible values: preferred, required, discouraged
-    let user_verification = "preferred";
+    let user_verification = value("#option-userverification");
 
-    // possible values: discouraged, preferred, required
-    let residentKey = "discouraged";
-
+    // possible values: true,false
+    let residentKey = value("#option-residentkey");
 
 
     // prepare form post data
     var data = new FormData();
     data.append('username', username);
     data.append('displayName', displayName);
+    data.append('rpId', rpId);
     data.append('attType', attestation_type);
     data.append('authType', authenticator_attachment);
     data.append('userVerification', user_verification);
@@ -38,7 +36,7 @@ async function handleRegisterSubmit(event) {
 
     } catch (e) {
         console.error(e);
-        let msg = "Something wen't really wrong";
+        let msg = "Something went really wrong";
         showErrorAlert(msg);
     }
 
@@ -85,7 +83,7 @@ async function handleRegisterSubmit(event) {
             publicKey: makeCredentialOptions
         });
     } catch (e) {
-        var msg = "Could not create credentials in browser. Probably because the username is already registered with your authenticator. Please change username or authenticator."
+        var msg = "Could not create credentials in browser."
         console.error(msg, e);
         showErrorAlert(msg, e);
     }
@@ -94,9 +92,8 @@ async function handleRegisterSubmit(event) {
     console.log("PublicKeyCredential Created", newCredential);
 
     try {
-        registerNewCredential(newCredential);
-
-    } catch (e) {
+        registerNewCredential(newCredential, username);
+    } catch (err) {
         showErrorAlert(err.message ? err.message : err);
     }
 }
@@ -117,7 +114,7 @@ async function fetchMakeCredentialOptions(formData) {
 
 
 // This should be used to verify the auth data with the server
-async function registerNewCredential(newCredential) {
+async function registerNewCredential(newCredential, username) {
     // Move data into Arrays incase it is super long
     let attestationObject = new Uint8Array(newCredential.response.attestationObject);
     let clientDataJSON = new Uint8Array(newCredential.response.clientDataJSON);
@@ -129,10 +126,10 @@ async function registerNewCredential(newCredential) {
         type: newCredential.type,
         extensions: newCredential.getClientExtensionResults(),
         response: {
-            attestationObject: coerceToBase64Url(attestationObject),
+            AttestationObject: coerceToBase64Url(attestationObject),
             clientDataJSON: coerceToBase64Url(clientDataJSON),
             transports: newCredential.response.getTransports()
-        }
+        },
     };
 
     let response;
@@ -155,7 +152,7 @@ async function registerNewCredential(newCredential) {
     // show success 
     Swal.fire({
         title: 'Registration Successful!',
-        text: 'You\'ve registered successfully.',
+        text: username + ' you\'ve registered successfully.',
         type: 'success',
         timer: 2000
     });

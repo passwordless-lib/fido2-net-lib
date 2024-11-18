@@ -29,6 +29,7 @@ public class MyController : Controller
     [Route("/makeCredentialOptions")]
     public JsonResult MakeCredentialOptions([FromForm] string username,
                                             [FromForm] string displayName,
+                                            [FromForm] string rpId,
                                             [FromForm] string attType,
                                             [FromForm] string authType,
                                             [FromForm] string residentKey,
@@ -70,7 +71,7 @@ public class MyController : Controller
                 CredProps = true
             };
 
-            var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
+            var options = _fido2.RequestNewCredential(user, rpId, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -140,7 +141,7 @@ public class MyController : Controller
 
     [HttpPost]
     [Route("/assertionOptions")]
-    public ActionResult AssertionOptionsPost([FromForm] string username, [FromForm] string userVerification)
+    public ActionResult AssertionOptionsPost([FromForm] string username, [FromForm] string rpId, [FromForm] string userVerification)
     {
         try
         {
@@ -166,6 +167,7 @@ public class MyController : Controller
             var options = _fido2.GetAssertionOptions(
                 existingCredentials,
                 uv,
+                rpId,
                 exts
             );
 
@@ -205,6 +207,7 @@ public class MyController : Controller
                 return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
             };
 
+
             // 5. Make the assertion
             var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams
             {
@@ -217,6 +220,11 @@ public class MyController : Controller
 
             // 6. Store the updated counter
             DemoStorage.UpdateCounter(res.CredentialId, res.SignCount);
+
+            var users = await DemoStorage.GetUsersByCredentialIdAsync(res.CredentialId, new CancellationToken());
+            var userName = users.First().Name;
+
+            res.UserName = userName;
 
             // 7. return OK to client
             return Json(res);

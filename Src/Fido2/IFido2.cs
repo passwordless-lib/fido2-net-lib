@@ -11,6 +11,7 @@ public interface IFido2
     AssertionOptions GetAssertionOptions(
         IReadOnlyList<PublicKeyCredentialDescriptor> allowedCredentials,
         UserVerificationRequirement? userVerification,
+        string rpId,
         AuthenticationExtensionsClientInputs? extensions = null);
 
     Task<VerifyAssertionResult> MakeAssertionAsync(MakeAssertionParams makeAssertionParams,
@@ -21,11 +22,13 @@ public interface IFido2
 
     CredentialCreateOptions RequestNewCredential(
         Fido2User user,
+        string rpId,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticationExtensionsClientInputs? extensions = null);
 
     CredentialCreateOptions RequestNewCredential(
         Fido2User user,
+        string rpId,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticatorSelection authenticatorSelection,
         AttestationConveyancePreference attestationPreference,

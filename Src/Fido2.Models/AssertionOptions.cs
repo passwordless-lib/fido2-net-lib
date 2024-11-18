@@ -64,16 +64,19 @@ public class AssertionOptions
 
     public static AssertionOptions Create(
         Fido2Configuration config,
+        string rpId,
         byte[] challenge,
         IReadOnlyList<PublicKeyCredentialDescriptor> allowedCredentials,
         UserVerificationRequirement? userVerification,
         AuthenticationExtensionsClientInputs? extensions)
     {
+        string rp = rpId ?? config.ServerDomain;
+
         return new AssertionOptions()
         {
             Challenge = challenge,
             Timeout = config.Timeout,
-            RpId = config.ServerDomain,
+            RpId = rp,
             AllowCredentials = allowedCredentials,
             UserVerification = userVerification,
             Extensions = extensions

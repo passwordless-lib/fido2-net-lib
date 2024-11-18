@@ -2,13 +2,9 @@
 
 namespace Fido2Demo
 {
-    public class MfaModel : PageModel
+    public class RegisterModel : PageModel
     {
         public void OnGet()
-        {
-        }
-
-        public void OnPost()
         {
         }
     }

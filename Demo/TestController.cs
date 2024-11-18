@@ -5,6 +5,7 @@ using Fido2NetLib.Development;
 using Fido2NetLib.Objects;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.Extensions.Options;
 
 namespace Fido2Demo;
@@ -16,14 +17,16 @@ public class TestController : Controller
 
     private readonly IFido2 _fido2;
     private readonly string _origin;
+    private readonly string _serverDomain;
 
     public TestController(IOptions<Fido2Configuration> fido2Configuration)
     {
         _origin = fido2Configuration.Value.FullyQualifiedOrigins.FirstOrDefault();
-
+        _serverDomain = fido2Configuration.Value.ServerDomain;
+        
         _fido2 = new Fido2(new Fido2Configuration
         {
-            ServerDomain = fido2Configuration.Value.ServerDomain,
+            ServerDomain = _serverDomain,
             ServerName = fido2Configuration.Value.ServerName,
             Origins = fido2Configuration.Value.FullyQualifiedOrigins,
         },
@@ -66,7 +69,7 @@ public class TestController : Controller
             exts.Example = opts.Extensions.Example;
 
         // 3. Create options
-        var options = _fido2.RequestNewCredential(user, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
+        var options = _fido2.RequestNewCredential(user, _serverDomain, existingKeys, opts.AuthenticatorSelection, opts.Attestation, exts);
 
         // 4. Temporarily store options, session/in-memory cache/redis/db
         HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -147,6 +150,7 @@ public class TestController : Controller
         var options = _fido2.GetAssertionOptions(
             existingCredentials,
             uv,
+            _serverDomain,
             exts
         );
 

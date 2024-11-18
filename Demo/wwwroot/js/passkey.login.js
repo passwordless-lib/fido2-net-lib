@@ -3,11 +3,15 @@
 async function handleSignInSubmit(event) {
     event.preventDefault();
 
-    //let username = this.username.value;
+    let username = this.username.value;
+    let rpId = this.rpId.value;
+    let user_verification = value("#option-userverification");
 
     // prepare form post data
     var formData = new FormData();
-    //formData.append('username', username);
+    formData.append('username', username);
+    formData.append('rpId', rpId);
+    formData.append('userVerification', user_verification);
 
     // send to server for registering
     let makeAssertionOptions;
@@ -78,7 +82,6 @@ async function verifyAssertionWithServer(assertedCredential) {
     let clientDataJSON = new Uint8Array(assertedCredential.response.clientDataJSON);
     let rawId = new Uint8Array(assertedCredential.rawId);
     let sig = new Uint8Array(assertedCredential.response.signature);
-    let userHandle = new Uint8Array(assertedCredential.response.userHandle)
     const data = {
         id: assertedCredential.id,
         rawId: coerceToBase64Url(rawId),
@@ -87,7 +90,6 @@ async function verifyAssertionWithServer(assertedCredential) {
         response: {
             authenticatorData: coerceToBase64Url(authData),
             clientDataJSON: coerceToBase64Url(clientDataJSON),
-            userHandle: userHandle !== null ? coerceToBase64Url(userHandle): null,
             signature: coerceToBase64Url(sig)
         }
     };
@@ -119,14 +121,16 @@ async function verifyAssertionWithServer(assertedCredential) {
         return;
     }
 
+    let userName = response.userName;
+
     // show success message
-    Swal.fire({
+    await Swal.fire({
         title: 'Logged In!',
-        text: 'You\'re logged in successfully.',
+        text: 'Hello ' + userName + ' you\'re logged in successfully.',
         type: 'success',
         timer: 2000
     });
 
-    // redirect?
-    //window.location.href = "/dashboard/" + state.user.displayName;
+    // redirect to dashboard to show keys
+    window.location.href = "/dashboard/" + userName;
 }

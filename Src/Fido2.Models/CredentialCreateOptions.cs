@@ -119,15 +119,18 @@ public sealed class CredentialCreateOptions
         Fido2Configuration config,
         byte[] challenge,
         Fido2User user,
+        string rpId,
         AuthenticatorSelection authenticatorSelection,
         AttestationConveyancePreference attestationConveyancePreference,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticationExtensionsClientInputs extensions)
     {
+        var rp = rpId ?? config.ServerDomain;
+
         return new CredentialCreateOptions
         {
             Challenge = challenge,
-            Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
+            Rp = new PublicKeyCredentialRpEntity(rp, config.ServerName, config.ServerIcon),
             Timeout = config.Timeout,
             User = user,
             PubKeyCredParams =
@@ -289,8 +292,8 @@ public class AuthenticatorSelection
     public static AuthenticatorSelection Default => new AuthenticatorSelection
     {
         AuthenticatorAttachment = null,
-        ResidentKey = ResidentKeyRequirement.Preferred,
-        UserVerification = UserVerificationRequirement.Discouraged
+        ResidentKey = ResidentKeyRequirement.Discouraged,
+        UserVerification = UserVerificationRequirement.Preferred
     };
 }
 

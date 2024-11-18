@@ -53,27 +53,6 @@
                                 <span></span>
                             </span>
                         </div>*@
-                    <div id="navbarMenuHeroB" class="navbar-menu">
-                        <div class="navbar-end">
-                            <a class="navbar-item" asp-page="/overview">
-                                Home
-                            </a>
-                            <a class="navbar-item" href="https://github.com/passwordless-lib/fido2-net-lib#examples">
-                                Documentation
-                            </a>
-                            <a class="navbar-item" href="https://opencollective.com/passwordless">
-                                Become a backer
-                            </a>                            
-                            <span class="navbar-item">
-                                <a class="button is-info is-inverted" href="https://github.com/passwordless-lib/fido2-net-lib">
-                                    <span class="icon">
-                                        <i class="fab fa-github"></i>
-                                    </span>
-                                    <span>Download</span>
-                                </a>
-                            </span>
-                        </div>
-                    </div>
                 </div>
             </nav>
         </div>
@@ -93,20 +72,11 @@
             <nav class="tabs is-boxed is-fullwidth">
                 <div class="container">
                     <ul>
-                        <li class="@isActive("/overview")">
-                            <a asp-page="/overview" asp-fragment="heroFoot">Overview</a>
+                        <li class="@isActive("/register")">
+                            <a asp-page="/register" asp-fragment="heroFoot">Register passkey</a>
                         </li>
-                        <li class="@isActive("/mfa")">
-                            <a asp-page="/mfa" asp-fragment="heroFoot">Use as 2FA/MFA</a>
-                        </li>
-                        <li class="@isActive("/passwordless")">
-                            <a asp-page="/passwordless" asp-fragment="heroFoot">Go Passwordless</a>
-                        </li>
-                        <li class="@isActive("/usernameless")">
-                            <a asp-page="/usernameless" asp-fragment="heroFoot">Go Usernameless too</a>
-                        </li>
-                        <li class="@isActive("/custom")">
-                            <a asp-page="/custom" asp-fragment="heroFoot">Custom</a>
+                        <li class="@isActive("/login")">
+                            <a asp-page="/login" asp-fragment="heroFoot">Login with a passkey</a>
                         </li>
                     </ul>
                 </div>
@@ -116,15 +86,6 @@
     @RenderBody()
     <footer class="footer" style="        margin-top: 20vh">
         <div class="content has-text-centered">
-            <p>
-                <strong>Fido2 .NET library</strong> by <a href="https://github.com/abergs">Anders Åberg</a>, <a href="https://github.com/aseigler">Alex Seigler</a> and <a href="https://github.com/passwordless-lib/fido2-net-lib/graphs/contributors">contributors</a>. The source code is licensed
-                <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. Available on <a href="https://github.com/passwordless-lib/fido2-net-lib">Github</a>
-            </p>
-
-            <p><small>Supported by the <a href="https://dotnetfoundation.org">.NET Foundation</a></small></p>
-            <img src="~/images/dotnetfoundation_v4_horizontal.svg" alt=".NET foundation logo" width="220" />
-            
-            <p><small>Illustrations from <a href="https://medium.com/@@herrjemand/introduction-to-webauthn-api-5fd1fb46c285">Ackermann Yuriy</a></small></p>
         </div>
     </footer>
     <script src="~/js/instant.js"></script>

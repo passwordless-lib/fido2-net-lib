@@ -1,0 +1,60 @@
+﻿@page "/register/{handler?}"
+@model Fido2Demo.RegisterModel
+@{
+    Layout = "_Layout.cshtml";
+}
+
+<div class="section">
+    <div class="container">
+        <div class="columns">
+            <div class="column is-3">
+
+                <h3 class="title">Register user</h3>
+                <form action="/mfa" method="post" id="register">
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Enter usename" name="username" required>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Display name</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Enter display name" name="displayName">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">RP ID</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Enter RP ID" name="rpId">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <partial name="_options.cshtml" />
+                    @await Html.PartialAsync("_options.cshtml")
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Register user</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<script src="~/js/passkey.register.js"></script>

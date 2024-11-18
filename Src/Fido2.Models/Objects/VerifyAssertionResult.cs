@@ -7,6 +7,8 @@ public class VerifyAssertionResult
 {
     public byte[] CredentialId { get; init; }
 
+    public string UserName { get; set; }
+
     /// <summary>
     /// The latest value of the signature counter in the authenticator data from any ceremony using the public key credential source.
     /// </summary>

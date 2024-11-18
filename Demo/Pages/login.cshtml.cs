@@ -2,7 +2,7 @@
 
 namespace Fido2Demo
 {
-    public class OverviewModel : PageModel
+    public class LoginModel : PageModel
     {
         public void OnGet()
         {

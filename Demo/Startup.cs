@@ -83,7 +83,7 @@ public class Startup
         app.UseRouting();
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapFallbackToPage("/", "/overview");
+            endpoints.MapFallbackToPage("/", "/register");
             endpoints.MapRazorPages();
             endpoints.MapControllers();
         });

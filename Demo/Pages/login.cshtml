@@ -1,0 +1,60 @@
+﻿@page "/login/{handler?}"
+@model Fido2Demo.LoginModel
+@{
+    Layout = "_Layout.cshtml";
+}
+
+<div class="section">
+    <div class="container">
+        <div class="columns">
+            <div class="column is-3">
+
+                <h3 class="title">Sign in</h3>
+                <form action="/mfa" method="post" id="signin">
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Enter username" name="username" id="login-username">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">RP ID</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input" type="text" placeholder="Enter RP ID" name="rpId">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">User verification</label>
+                        <div class="control">
+                            <div class="select">
+                                <select id="option-userverification">
+                                    <option value="required">Required</option>
+                                    <option selected value="preferred">Preferred</option>
+                                    <option value="discouraged">Discouraged</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-link">Sign in</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="~/js/passkey.login.js"></script>
