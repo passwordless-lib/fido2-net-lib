@@ -124,7 +124,7 @@ public sealed class CredentialCreateOptions
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticationExtensionsClientInputs extensions,
         IReadOnlyList<PubKeyCredParam> pubKeyCredParams)
-        
+
     {
         return new CredentialCreateOptions
         {
@@ -184,7 +184,7 @@ public sealed class PubKeyCredParam(
     public static readonly PubKeyCredParam PS512 = new(COSE.Algorithm.PS512);
     public static readonly PubKeyCredParam Ed25519 = new(COSE.Algorithm.EdDSA);
     public static readonly PubKeyCredParam RS1 = new(COSE.Algorithm.RS1);
-    
+
     /// <summary>
     /// The default algorithms supported by the library
     /// </summary>

@@ -76,7 +76,7 @@ public class TestController : Controller
             AttestationPreference = opts.Attestation,
             Extensions = exts,
             // Conformance tools requires RS1, but it's deprecated
-            PubKeyCredParams = [..PubKeyCredParam.Defaults, PubKeyCredParam.RS1]
+            PubKeyCredParams = [.. PubKeyCredParam.Defaults, PubKeyCredParam.RS1]
         });
 
         // 4. Temporarily store options, session/in-memory cache/redis/db
