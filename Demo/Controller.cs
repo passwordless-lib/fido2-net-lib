@@ -70,7 +70,7 @@ public class MyController : Controller
                 CredProps = true
             };
 
-            var options = _fido2.RequestNewCredential(user, existingKeys, authenticatorSelection, attType.ToEnum<AttestationConveyancePreference>(), exts);
+            var options = _fido2.RequestNewCredential(new RequestNewCredentialParams { User = user, ExcludeCredentials = existingKeys, AuthenticatorSelection = authenticatorSelection, AttestationPreference = attType.ToEnum<AttestationConveyancePreference>(), Extensions = exts });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
@@ -163,11 +163,12 @@ public class MyController : Controller
 
             // 3. Create options
             var uv = string.IsNullOrEmpty(userVerification) ? UserVerificationRequirement.Discouraged : userVerification.ToEnum<UserVerificationRequirement>();
-            var options = _fido2.GetAssertionOptions(
-                existingCredentials,
-                uv,
-                exts
-            );
+            var options = _fido2.GetAssertionOptions(new GetAssertionOptionsParams()
+            {
+                AllowedCredentials = existingCredentials,
+                UserVerification = uv,
+                Extensions = exts
+            });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
             HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
