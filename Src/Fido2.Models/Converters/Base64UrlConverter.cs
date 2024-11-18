@@ -12,6 +12,9 @@ namespace Fido2NetLib;
 /// </summary>
 public sealed class Base64UrlConverter : JsonConverter<byte[]>
 {
+    /// <summary>
+    /// If set to true, the converter will attempt to decode Base64 encoding if Base64Url decoding fails. Intended for fallback purposes only and should be used temporarily.
+    /// </summary>
     public static bool EnableRelaxedDecoding { get; set; }
 
     public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
