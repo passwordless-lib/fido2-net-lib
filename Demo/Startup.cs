@@ -2,6 +2,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.Extensions.FileProviders;
 
 namespace Fido2Demo;
 
@@ -72,6 +73,13 @@ public class Startup
 
         app.UseSession();
         app.UseStaticFiles();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot/.well-known")),
+            RequestPath = new PathString("/.well-known"),
+            DefaultContentType = "application/json",
+            ServeUnknownFileTypes = true
+        });
         app.UseRouting();
         app.UseEndpoints(endpoints =>
         {
