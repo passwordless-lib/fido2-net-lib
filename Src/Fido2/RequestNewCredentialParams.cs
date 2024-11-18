@@ -34,4 +34,9 @@ public sealed class RequestNewCredentialParams
     /// The Relying Party MAY use this OPTIONAL member to provide client extension inputs requesting additional processing by the client and authenticator. For example, the Relying Party may request that the client returns additional information about the credential that was created.
     /// </summary>
     public AuthenticationExtensionsClientInputs? Extensions { get; init; }
+
+    /// <summary>
+    /// For advanced use cases. This member lists the key types and signature algorithms the Relying Party supports, ordered from most preferred to least preferred. The client and authenticator make a best-effort to create a credential of the most preferred type possible. If none of the listed types can be created, the create() operation fails.
+    /// </summary>
+    public IReadOnlyList<PubKeyCredParam> PubKeyCredParams { get; init; } = PubKeyCredParam.Defaults;
 }

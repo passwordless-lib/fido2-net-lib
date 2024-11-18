@@ -611,7 +611,6 @@ public class Fido2Tests
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsPacked.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsPacked.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-        options.PubKeyCredParams.Add(new PubKeyCredParam(COSE.Algorithm.RS1, PublicKeyCredentialType.PublicKey));
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
         var authData = o.AttestationObject.AuthData;
         var acdBytes = authData.AttestedCredentialData.ToByteArray();
@@ -644,7 +643,6 @@ public class Fido2Tests
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA1Response.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA1Options.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-        options.PubKeyCredParams.Add(new PubKeyCredParam(COSE.Algorithm.RS1, PublicKeyCredentialType.PublicKey));
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
     }
 

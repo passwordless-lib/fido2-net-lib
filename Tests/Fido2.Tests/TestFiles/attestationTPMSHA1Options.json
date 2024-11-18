@@ -19,7 +19,11 @@
     {
       "type": "public-key",
       "alg": -257
-    }
+    },
+    {
+      "type": "public-key",
+      "alg": -65535
+    }    
   ],
   "timeout": 60000,
   "attestation": "direct",

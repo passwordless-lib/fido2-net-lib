@@ -31,7 +31,7 @@ public class Fido2 : IFido2
     public CredentialCreateOptions RequestNewCredential(RequestNewCredentialParams requestNewCredentialParams)
     {
         var challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
-        return CredentialCreateOptions.Create(_config, challenge, requestNewCredentialParams.User, requestNewCredentialParams.AuthenticatorSelection, requestNewCredentialParams.AttestationPreference, requestNewCredentialParams.ExcludeCredentials, requestNewCredentialParams.Extensions);
+        return CredentialCreateOptions.Create(_config, challenge, requestNewCredentialParams.User, requestNewCredentialParams.AuthenticatorSelection, requestNewCredentialParams.AttestationPreference, requestNewCredentialParams.ExcludeCredentials, requestNewCredentialParams.Extensions, requestNewCredentialParams.PubKeyCredParams);
 
     }
 
