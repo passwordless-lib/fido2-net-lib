@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>Fido2NetLib</RootNamespace>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
