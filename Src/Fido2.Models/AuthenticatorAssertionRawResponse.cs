@@ -53,7 +53,7 @@ public class AuthenticatorAssertionRawResponse
         public required byte[] ClientDataJson { get; init; }
 
 #nullable enable
-        
+
         [JsonPropertyName("userHandle")]
         [JsonConverter(typeof(Base64UrlConverter))]
         public byte[]? UserHandle { get; init; }
