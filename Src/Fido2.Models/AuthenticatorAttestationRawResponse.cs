@@ -9,17 +9,17 @@ public sealed class AuthenticatorAttestationRawResponse
 {
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonPropertyName("id"), Required]
-    public byte[] Id { get; set; }
+    public byte[] Id { get; init; }
 
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonPropertyName("rawId"), Required]
-    public byte[] RawId { get; set; }
+    public byte[] RawId { get; init; }
 
     [JsonPropertyName("type"), Required]
-    public PublicKeyCredentialType Type { get; set; }
+    public PublicKeyCredentialType Type { get; init; }
 
     [JsonPropertyName("response"), Required]
-    public AttestationResponse Response { get; set; }
+    public AttestationResponse Response { get; init; }
 
     [JsonPropertyName("extensions")]
     [Obsolete("Use ClientExtensionResults instead")]
