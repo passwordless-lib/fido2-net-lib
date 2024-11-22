@@ -330,6 +330,7 @@ public class AuthenticatorResponseTests
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = value,
+                ClientDataJson = null!
             }
         };
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
@@ -345,6 +346,7 @@ public class AuthenticatorResponseTests
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = value,
+                ClientDataJson = null!
             }
         };
 
@@ -370,7 +372,8 @@ public class AuthenticatorResponseTests
         {
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
-                AttestationObject = value
+                AttestationObject = value,
+                ClientDataJson = null!
             }
         };
 
