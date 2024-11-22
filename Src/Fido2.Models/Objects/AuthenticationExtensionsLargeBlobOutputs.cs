@@ -22,7 +22,7 @@ public sealed class AuthenticationExtensionsLargeBlobOutputs
     /// https://w3c.github.io/webauthn/#dom-authenticationextensionslargebloboutputs-supported
     /// </summary>
     [JsonPropertyName("supported")]
-    public bool Supported { get; set; } = false;
+    public bool Supported { get; init; } = false;
 
     /// <summary>
     /// The blob read from the authenticator.
@@ -34,7 +34,7 @@ public sealed class AuthenticationExtensionsLargeBlobOutputs
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonPropertyName("blob")]
-    public byte[]? Blob { get; set; }
+    public byte[]? Blob { get; init; }
 
     /// <summary>
     /// Whether or not a blob was written to the authenticator.
@@ -44,5 +44,5 @@ public sealed class AuthenticationExtensionsLargeBlobOutputs
     /// https://w3c.github.io/webauthn/#dom-authenticationextensionslargebloboutputs-written
     /// </summary>
     [JsonPropertyName("written")]
-    public bool Written { get; set; } = false;
+    public bool Written { get; init; } = false;
 }

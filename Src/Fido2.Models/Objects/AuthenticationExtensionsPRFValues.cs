@@ -14,7 +14,7 @@ public sealed class AuthenticationExtensionsPRFValues
     /// </summary>
     [JsonPropertyName("first")]
     [JsonConverter(typeof(Base64UrlConverter))]
-    public required byte[] First { get; set; }
+    public required byte[] First { get; init; }
 
     /// <summary>
     /// salt2 value to the PRF evaluation.
@@ -22,6 +22,6 @@ public sealed class AuthenticationExtensionsPRFValues
     [JsonPropertyName("second")]
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public byte[]? Second { get; set; }
+    public byte[]? Second { get; init; }
 }
 

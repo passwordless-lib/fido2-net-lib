@@ -1,5 +1,6 @@
 ﻿#nullable disable
 
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 using Fido2NetLib.Objects;
@@ -12,19 +13,19 @@ namespace Fido2NetLib;
 public class AuthenticatorAssertionRawResponse
 {
     [JsonConverter(typeof(Base64UrlConverter))]
-    [JsonPropertyName("id")]
-    public byte[] Id { get; set; }
+    [JsonPropertyName("id"), Required]
+    public byte[] Id { get; init; }
 
     // might be wrong to base64url encode this...
     [JsonConverter(typeof(Base64UrlConverter))]
-    [JsonPropertyName("rawId")]
-    public byte[] RawId { get; set; }
+    [JsonPropertyName("rawId"), Required]
+    public byte[] RawId { get; init; }
 
     [JsonPropertyName("response")]
-    public AssertionResponse Response { get; set; }
+    public AssertionResponse Response { get; init; }
 
-    [JsonPropertyName("type")]
-    public PublicKeyCredentialType? Type { get; set; }
+    [JsonPropertyName("type"), Required]
+    public PublicKeyCredentialType Type { get; init; }
 
     [JsonPropertyName("extensions")]
     [Obsolete("Use ClientExtensionResults instead")]
@@ -34,25 +35,27 @@ public class AuthenticatorAssertionRawResponse
         set => ClientExtensionResults = value;
     }
 
-    [JsonPropertyName("clientExtensionResults")]
+    [JsonPropertyName("clientExtensionResults"), Required]
     public AuthenticationExtensionsClientOutputs ClientExtensionResults { get; set; }
 
     public sealed class AssertionResponse
     {
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("authenticatorData")]
-        public byte[] AuthenticatorData { get; set; }
+        public required byte[] AuthenticatorData { get; init; }
 
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("signature")]
-        public byte[] Signature { get; set; }
+        public required byte[] Signature { get; init; }
 
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("clientDataJSON")]
-        public byte[] ClientDataJson { get; set; }
+        public required byte[] ClientDataJson { get; init; }
+
 #nullable enable
+
         [JsonPropertyName("userHandle")]
         [JsonConverter(typeof(Base64UrlConverter))]
-        public byte[]? UserHandle { get; set; }
+        public byte[]? UserHandle { get; init; }
     }
 }
