@@ -82,7 +82,7 @@ public class AuthenticatorResponse
         var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
 
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
-        if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
+        if (!fullyQualifiedExpectedOrigins.ContainsUrl(fullyQualifiedOrigin))
             throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
 
         // 13?. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.
