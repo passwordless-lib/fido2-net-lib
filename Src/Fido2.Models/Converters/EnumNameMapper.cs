@@ -47,9 +47,9 @@ public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccess
         {
             var description = field.GetCustomAttribute<EnumMemberAttribute>(false);
 
-            var value = (TEnum)field.GetValue(null);
+            var value = (TEnum)field.GetValue(null)!;
 
-            items.Add(new(value, description is not null ? description.Value : value.ToString()));
+            items.Add(new(value, description is not null ? description.Value! : value.ToString()));
         }
 
         return items.ToFrozenDictionary();

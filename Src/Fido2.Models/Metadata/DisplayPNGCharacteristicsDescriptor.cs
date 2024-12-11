@@ -52,6 +52,8 @@ public sealed class DisplayPNGCharacteristicsDescriptor
     [JsonPropertyName("interlace")]
     public required byte Interlace { get; set; }
 
+#nullable disable
+
     /// <summary>
     /// Gets or sets the palette (1 to 256 palette entries).
     /// </summary>

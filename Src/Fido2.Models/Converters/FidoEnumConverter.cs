@@ -12,7 +12,7 @@ public sealed class FidoEnumConverter<[DynamicallyAccessedMembers(DynamicallyAcc
         switch (reader.TokenType)
         {
             case JsonTokenType.String:
-                string text = reader.GetString();
+                string text = reader.GetString()!;
                 if (EnumNameMapper<T>.TryGetValue(text, out T value))
                     return value;
                 else

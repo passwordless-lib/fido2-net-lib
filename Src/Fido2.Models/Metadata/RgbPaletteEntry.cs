@@ -43,7 +43,7 @@ public readonly struct RgbPaletteEntry : IEquatable<RgbPaletteEntry>
             && B == other.B;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return obj is RgbPaletteEntry other && Equals(other);
     }
