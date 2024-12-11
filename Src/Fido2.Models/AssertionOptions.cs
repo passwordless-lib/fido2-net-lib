@@ -11,6 +11,8 @@ namespace Fido2NetLib;
 /// </summary>
 public class AssertionOptions
 {
+#nullable disable
+
     /// <summary>
     /// This member represents a challenge that the selected authenticator signs, along with other data, when producing an authentication assertion.
     /// See the §13.1 Cryptographic Challenges security consideration.

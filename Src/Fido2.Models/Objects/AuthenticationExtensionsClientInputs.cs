@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿#nullable disable
+
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib.Objects;
 
@@ -40,6 +42,7 @@ public sealed class AuthenticationExtensionsClientInputs
     public bool? UserVerificationMethod { private get; set; }
 
 #nullable enable
+
     /// <summary>
     /// This client registration extension facilitates reporting certain credential properties known by the client to the requesting WebAuthn Relying Party upon creation of a public key credential source as a result of a registration ceremony.
     /// </summary>

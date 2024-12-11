@@ -78,7 +78,8 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         var combinedBlob = new MetadataBLOBPayload
         {
             Number = -1,
-            NextUpdate = "2099-08-07"
+            NextUpdate = "2099-08-07",
+            Entries = []
         };
 
         var entries = new List<MetadataBLOBPayloadEntry>();

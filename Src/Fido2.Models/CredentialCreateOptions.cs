@@ -9,7 +9,6 @@ namespace Fido2NetLib;
 public sealed class CredentialCreateOptions
 {
     /// <summary>
-    ///
     /// This member contains data about the Relying Party responsible for the request.
     /// Its value’s name member is required.
     /// Its value’s id member specifies the relying party identifier with which the credential should be associated.If omitted, its value will be the CredentialsContainer object’s relevant settings object's origin's effective domain.
@@ -58,11 +57,15 @@ public sealed class CredentialCreateOptions
     [JsonPropertyName("attestationFormats")]
     public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; set; } = [];
 
+#nullable disable
+
     /// <summary>
     /// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to participate in the create() operation.
     /// </summary>
     [JsonPropertyName("authenticatorSelection")]
     public AuthenticatorSelection AuthenticatorSelection { get; set; }
+
+#nullable enable
 
     private IReadOnlyList<PublicKeyCredentialHint> _hints = Array.Empty<PublicKeyCredentialHint>();
 
@@ -113,7 +116,7 @@ public sealed class CredentialCreateOptions
     /// </summary>
     [JsonPropertyName("extensions")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public AuthenticationExtensionsClientInputs Extensions { get; set; }
+    public AuthenticationExtensionsClientInputs? Extensions { get; set; }
 
     public static CredentialCreateOptions Create(
         Fido2Configuration config,
@@ -122,7 +125,7 @@ public sealed class CredentialCreateOptions
         AuthenticatorSelection authenticatorSelection,
         AttestationConveyancePreference attestationConveyancePreference,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
-        AuthenticationExtensionsClientInputs extensions,
+        AuthenticationExtensionsClientInputs? extensions,
         IReadOnlyList<PubKeyCredParam> pubKeyCredParams)
 
     {
@@ -147,11 +150,9 @@ public sealed class CredentialCreateOptions
 
     public static CredentialCreateOptions FromJson(string json)
     {
-        return JsonSerializer.Deserialize(json, FidoModelSerializerContext.Default.CredentialCreateOptions);
+        return JsonSerializer.Deserialize(json, FidoModelSerializerContext.Default.CredentialCreateOptions)!;
     }
 }
-
-#nullable enable
 
 /// <summary>
 /// Constructs a PubKeyCredParam instance
