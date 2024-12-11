@@ -11,12 +11,12 @@ public sealed class AuthenticationExtensionsPRFOutputs
     /// If PRFs are available for use with the created credential.
     /// </summary>
     [JsonPropertyName("enabled")]
-    public bool Enabled { get; set; }
+    public bool Enabled { get; init; }
 
     /// <summary>
     /// The results of evaluating the PRF inputs.
     /// </summary>
     [JsonPropertyName("results")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public AuthenticationExtensionsPRFValues Results { get; set; }
+    public AuthenticationExtensionsPRFValues Results { get; init; }
 }

@@ -14,11 +14,11 @@ public class Version
     /// Major version.
     /// </summary>
     [JsonPropertyName("major")]
-    public ushort Major { get; set; }
+    public ushort Major { get; init; }
 
     /// <summary>
     /// Minor version.
     /// </summary>
     [JsonPropertyName("minor")]
-    public ushort Minor { get; set; }
+    public ushort Minor { get; init; }
 }

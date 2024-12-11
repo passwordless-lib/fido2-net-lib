@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 using Fido2NetLib.Objects;
 
@@ -7,18 +8,18 @@ namespace Fido2NetLib;
 public sealed class AuthenticatorAttestationRawResponse
 {
     [JsonConverter(typeof(Base64UrlConverter))]
-    [JsonPropertyName("id")]
-    public byte[] Id { get; set; }
+    [JsonPropertyName("id"), Required]
+    public byte[] Id { get; init; }
 
     [JsonConverter(typeof(Base64UrlConverter))]
-    [JsonPropertyName("rawId")]
-    public byte[] RawId { get; set; }
+    [JsonPropertyName("rawId"), Required]
+    public byte[] RawId { get; init; }
 
-    [JsonPropertyName("type")]
-    public PublicKeyCredentialType? Type { get; set; }
+    [JsonPropertyName("type"), Required]
+    public PublicKeyCredentialType Type { get; init; }
 
-    [JsonPropertyName("response")]
-    public AttestationResponse Response { get; set; }
+    [JsonPropertyName("response"), Required]
+    public AttestationResponse Response { get; init; }
 
     [JsonPropertyName("extensions")]
     [Obsolete("Use ClientExtensionResults instead")]
@@ -28,20 +29,20 @@ public sealed class AuthenticatorAttestationRawResponse
         set => ClientExtensionResults = value;
     }
 
-    [JsonPropertyName("clientExtensionResults")]
+    [JsonPropertyName("clientExtensionResults"), Required]
     public AuthenticationExtensionsClientOutputs ClientExtensionResults { get; set; }
 
     public sealed class AttestationResponse
     {
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("attestationObject")]
-        public byte[] AttestationObject { get; set; }
+        public required byte[] AttestationObject { get; init; }
 
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("clientDataJSON")]
-        public byte[] ClientDataJson { get; set; }
+        public required byte[] ClientDataJson { get; init; }
 
-        [JsonPropertyName("transports")]
-        public AuthenticatorTransport[] Transports { get; set; }
+        [JsonPropertyName("transports"), Required]
+        public AuthenticatorTransport[] Transports { get; init; }
     }
 }

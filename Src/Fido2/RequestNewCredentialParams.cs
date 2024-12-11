@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;

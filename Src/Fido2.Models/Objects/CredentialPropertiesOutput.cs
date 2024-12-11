@@ -12,13 +12,12 @@ public class CredentialPropertiesOutput
     /// This OPTIONAL property, known abstractly as the resident key credential property (i.e., client-side discoverable credential property), is a Boolean value indicating whether the PublicKeyCredential returned as a result of a registration ceremony is a client-side discoverable credential. If rk is true, the credential is a discoverable credential. if rk is false, the credential is a server-side credential. If rk is not present, it is not known whether the credential is a discoverable credential or a server-side credential.
     /// </summary>
     [JsonPropertyName("rk")]
-    public bool Rk { get; set; }
-
+    public bool Rk { get; init; }
 
     /// <summary>
     /// This OPTIONAL property is a human-palatable description of the credential’s managing authenticator, chosen by the user.
     /// https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname
     /// </summary>
     [JsonPropertyName("authenticatorDisplayName")]
-    public string? AuthenticatorDisplayName { get; set; }
+    public string? AuthenticatorDisplayName { get; init; }
 }
