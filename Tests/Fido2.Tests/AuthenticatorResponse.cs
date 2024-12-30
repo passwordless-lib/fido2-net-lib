@@ -1275,7 +1275,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -1301,7 +1301,7 @@ public class AuthenticatorResponseTests
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, assertionResponse.Type);
-        Assert.Equal([0xf1, 0xd0], assertionResponse.Id);
+        Assert.Equal("8dA", assertionResponse.Id);
         Assert.Equal([0xf1, 0xd0], assertionResponse.RawId);
         Assert.Equal([0xf1, 0xd0], assertionResponse.Response.AuthenticatorData);
         Assert.Equal([0xf1, 0xd0], assertionResponse.Response.Signature);
@@ -1352,7 +1352,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.Invalid,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -1504,7 +1504,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
                 AppID = false,
@@ -1579,7 +1579,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
@@ -1655,7 +1655,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
@@ -1731,7 +1731,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -1809,7 +1809,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
@@ -1886,7 +1886,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
@@ -1964,7 +1964,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -2041,7 +2041,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -2116,7 +2116,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
@@ -2192,7 +2192,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -2268,7 +2268,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -2344,7 +2344,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
@@ -2421,7 +2421,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
@@ -2497,7 +2497,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {
@@ -2580,7 +2580,7 @@ public class AuthenticatorResponseTests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
             {

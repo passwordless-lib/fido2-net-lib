@@ -265,7 +265,7 @@ public class UserController : ControllerBase
             _pendingAssertions.Remove(key);
 
             // 2. Get registered credential from database
-            var creds = _demoStorage.GetCredentialById(clientResponse.Id) ?? throw new Exception("Unknown credentials");
+            var creds = _demoStorage.GetCredentialById(clientResponse.RawId) ?? throw new Exception("Unknown credentials");
 
             // 3. Make the assertion
             var res = await _fido2.MakeAssertionAsync(new MakeAssertionParams

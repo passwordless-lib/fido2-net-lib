@@ -14,7 +14,8 @@ public class ExistingU2fRegistrationDataTests
     {
         // u2f registration with appId
         var appId = "https://localhost:44336";
-        var keyHandleData = Base64Url.DecodeFromChars("2uzGTqu9XGoDQpRBhkv3qDYWzEEZrDjOHT94fHe3J9VXl6KpaY6jL1C4gCAVSBCWZejOn-EYSyXfiG7RDQqgKw");
+        var keyHandleB64Data = "2uzGTqu9XGoDQpRBhkv3qDYWzEEZrDjOHT94fHe3J9VXl6KpaY6jL1C4gCAVSBCWZejOn-EYSyXfiG7RDQqgKw";
+        var keyHandleData = Base64Url.DecodeFromChars(keyHandleB64Data);
         var publicKeyData = Base64Url.DecodeFromChars("BEKJkJiDzo8wlrYbAHmyz5a5vShbkStO58ZO7F-hy4fvBp6TowCZoV2dNGcxIN1yT18799bb_WuP0Yq_DSv5a-U");
 
         //key as cbor
@@ -36,7 +37,7 @@ public class ExistingU2fRegistrationDataTests
 
         var authResponse = new AuthenticatorAssertionRawResponse
         {
-            Id = keyHandleData,
+            Id = keyHandleB64Data,
             RawId = keyHandleData,
             Type = PublicKeyCredentialType.PublicKey,
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
