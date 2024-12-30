@@ -181,7 +181,7 @@ public class TestController : Controller
         var options = AssertionOptions.FromJson(jsonOptions);
 
         // 2. Get registered credential from database
-        var creds = _demoStorage.GetCredentialById(clientResponse.Id);
+        var creds = _demoStorage.GetCredentialById(clientResponse.RawId);
 
         // 3. Get credential counter from database
         var storedCounter = creds.SignCount;
