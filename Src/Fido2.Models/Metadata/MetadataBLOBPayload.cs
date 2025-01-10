@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
 
@@ -18,7 +17,7 @@ public sealed class MetadataBLOBPayload
     /// This value MAY contain URL(s) pointing to further information, such as a full Terms and Conditions statement.
     /// </remarks>
     [JsonPropertyName("legalHeader")]
-    public string LegalHeader { get; set; }
+    public string? LegalHeader { get; set; }
 
     /// <summary>
     /// Gets or sets the serial number of this UAF Metadata BLOB Payload.
@@ -26,20 +25,22 @@ public sealed class MetadataBLOBPayload
     /// <remarks>
     /// Serial numbers MUST be consecutive and strictly monotonic, i.e. the successor BLOB will have a no value exactly incremented by one.
     /// </remarks>
-    [JsonPropertyName("no"), Required]
-    public int Number { get; set; }
+    [JsonPropertyName("no")]
+    public required int Number { get; set; }
 
     /// <summary>
     /// Gets or sets a formatted date (ISO-8601) when the next update will be provided at latest.
     /// </summary>
-    [JsonPropertyName("nextUpdate"), Required]
-    public string NextUpdate { get; set; }
+    [JsonPropertyName("nextUpdate")]
+    public required string NextUpdate { get; set; }
 
     /// <summary>
     /// Gets or sets a list of zero or more entries of <see cref="MetadataBLOBPayloadEntry"/>.
     /// </summary>
-    [JsonPropertyName("entries"), Required]
-    public MetadataBLOBPayloadEntry[] Entries { get; set; }
+    [JsonPropertyName("entries")]
+    public required MetadataBLOBPayloadEntry[] Entries { get; set; }
+
+#nullable disable
 
     /// <summary>
     /// The "alg" property from the original JWT header. Used to validate MetadataStatements.

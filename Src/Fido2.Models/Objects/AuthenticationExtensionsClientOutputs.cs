@@ -11,8 +11,6 @@ public class AuthenticationExtensionsClientOutputs
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Example { get; set; }
 
-#nullable enable
-
     /// <summary>
     /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs to request an assertion.
     /// https://www.w3.org/TR/webauthn/#sctn-appid-extension

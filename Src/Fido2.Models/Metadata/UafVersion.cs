@@ -35,7 +35,7 @@ public readonly struct UafVersion : IEquatable<UafVersion>
             && Minor == other.Minor;
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         return obj is UafVersion other && Equals(other);
     }

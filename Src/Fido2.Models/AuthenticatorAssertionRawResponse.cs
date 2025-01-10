@@ -38,6 +38,8 @@ public class AuthenticatorAssertionRawResponse
     [JsonPropertyName("clientExtensionResults"), Required]
     public AuthenticationExtensionsClientOutputs ClientExtensionResults { get; set; }
 
+#nullable enable
+
     public sealed class AssertionResponse
     {
         [JsonConverter(typeof(Base64UrlConverter))]
@@ -51,8 +53,6 @@ public class AuthenticatorAssertionRawResponse
         [JsonConverter(typeof(Base64UrlConverter))]
         [JsonPropertyName("clientDataJSON")]
         public required byte[] ClientDataJson { get; init; }
-
-#nullable enable
 
         [JsonPropertyName("userHandle")]
         [JsonConverter(typeof(Base64UrlConverter))]

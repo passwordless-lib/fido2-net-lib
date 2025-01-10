@@ -31,19 +31,19 @@ public class BiometricStatusReport
     /// <para>If no date is given, the status is assumed to be effective while present.</para>
     /// </summary>
     [JsonPropertyName("effectiveDate")]
-    public string EffectiveDate { get; set; }
+    public string? EffectiveDate { get; set; }
 
     /// <summary>
     /// Gets or sets the externally visible aspects of the Biometric Certification evaluation.
     /// </summary>
     [JsonPropertyName("certificationDescriptor")]
-    public string CertificationDescriptor { get; set; }
+    public string? CertificationDescriptor { get; set; }
 
     /// <summary>
     /// Gets or sets the unique identifier for the issued Biometric Certification.
     /// </summary>
     [JsonPropertyName("certificateNumber")]
-    public string CertificateNumber { get; set; }
+    public string? CertificateNumber { get; set; }
 
     /// <summary>
     /// Gets or sets the  version of the Biometric Certification Policy the implementation is Certified to.
@@ -52,7 +52,7 @@ public class BiometricStatusReport
     /// For example: "1.0.0".
     /// </remarks>
     [JsonPropertyName("certificationPolicyVersion")]
-    public string CertificationPolicyVersion { get; set; }
+    public string? CertificationPolicyVersion { get; set; }
 
     /// <summary>
     /// Gets or sets the version of the Biometric Requirements the implementation is certified to.
@@ -61,5 +61,5 @@ public class BiometricStatusReport
     /// For example: "1.0.0".
     /// </remarks>
     [JsonPropertyName("certificationRequirementsVersion")]
-    public string CertificationRequirementsVersion { get; set; }
+    public string? CertificationRequirementsVersion { get; set; }
 }

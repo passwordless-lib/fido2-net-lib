@@ -5,6 +5,7 @@
     <RootNamespace>Fido2NetLib</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsTrimmable>true</IsTrimmable>
+    <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
