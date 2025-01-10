@@ -12,9 +12,8 @@ namespace Fido2NetLib;
 /// </summary>
 public class AuthenticatorAssertionRawResponse
 {
-    [JsonConverter(typeof(Base64UrlConverter))]
     [JsonPropertyName("id"), Required]
-    public byte[] Id { get; init; }
+    public string Id { get; init; }
 
     // might be wrong to base64url encode this...
     [JsonConverter(typeof(Base64UrlConverter))]
