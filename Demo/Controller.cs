@@ -194,7 +194,7 @@ public class MyController : Controller
             var options = AssertionOptions.FromJson(jsonOptions);
 
             // 2. Get registered credential from database
-            var creds = DemoStorage.GetCredentialById(clientResponse.Id) ?? throw new Exception("Unknown credentials");
+            var creds = DemoStorage.GetCredentialById(clientResponse.RawId) ?? throw new Exception("Unknown credentials");
 
             // 3. Get credential counter from database
             var storedCounter = creds.SignCount;

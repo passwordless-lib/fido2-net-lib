@@ -77,7 +77,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (options.AllowCredentials != null && options.AllowCredentials.Any())
         {
             // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
-            if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.Id)))
+            if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.RawId)))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.CredentialIdNotInAllowedCredentials);
         }
 
@@ -87,7 +87,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             if (UserHandle.Length is 0)
                 throw new Fido2VerificationException(Fido2ErrorMessages.UserHandleIsEmpty);
 
-            if (await isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.Id, UserHandle), cancellationToken) is false)
+            if (await isUserHandleOwnerOfCredId(new IsUserHandleOwnerOfCredentialIdParams(Raw.RawId, UserHandle), cancellationToken) is false)
             {
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.UserHandleNotOwnerOfPublicKey);
             }
@@ -177,7 +177,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         return new VerifyAssertionResult
         {
-            CredentialId = Raw.Id,
+            CredentialId = Raw.RawId,
             SignCount = authData.SignCount,
             IsBackedUp = authData.IsBackedUp
 
