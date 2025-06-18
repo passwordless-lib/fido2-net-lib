@@ -57,20 +57,20 @@ jobs:
       version: ${{ github.event.inputs.force_version || steps.stable-version.outputs.version || steps.pre-version.outputs.version }}
 
   # Check formatting
-#   format:
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
+  #   format:
+  #     runs-on: ubuntu-latest
+  #     permissions:
+  #       contents: read
 
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+  #     steps:
+  #       - name: Checkout
+  #         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
 
-#       - name: Install .NET
-#         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
+  #       - name: Install .NET
+  #         uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a # v3.0.3
 
-#       - name: Validate format
-#         run: dotnet format --verify-no-changes
+  #       - name: Validate format
+  #         run: dotnet format --verify-no-changes
 
   # Run tests
   test:
@@ -94,7 +94,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@3951f0dfe7a07e2313ec93c75700083e2005cbab # v4.3.0
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       - name: Run restore
         run: dotnet restore
@@ -131,7 +131,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@3951f0dfe7a07e2313ec93c75700083e2005cbab # v4.3.0
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       - name: Run restore
         run: dotnet restore
@@ -164,7 +164,7 @@ jobs:
     needs:
       # Technically, it's not required for the format job to succeed for us to push the package,
       # so we may consider removing it as a prerequisite here.
-    #   - format
+      #   - format
       - test
       - pack
 
@@ -182,12 +182,13 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@3951f0dfe7a07e2313ec93c75700083e2005cbab # v4.3.0
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       # Publish to GitHub package registry every time, whether it's a prerelease
       # version or a stable release version.
       - name: Publish packages (GitHub Registry)
         if: github.event_name != 'pull_request'
+        continue-on-error: true
         run: >
           dotnet nuget push **/*.nupkg
           --source https://nuget.pkg.github.com/passwordless-lib/index.json
