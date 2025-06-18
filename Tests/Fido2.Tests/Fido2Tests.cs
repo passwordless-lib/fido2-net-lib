@@ -169,7 +169,7 @@ public class Fido2Tests
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {
                 Type = PublicKeyCredentialType.PublicKey,
-                Id = [0xf1, 0xd0],
+                Id = "8dA",
                 RawId = [0xf1, 0xd0],
                 Response = new AuthenticatorAttestationRawResponse.AttestationResponse
                 {
@@ -987,7 +987,7 @@ public class Fido2Tests
         {
             Response = assertion,
             Type = PublicKeyCredentialType.PublicKey,
-            Id = [0xf1, 0xd0],
+            Id = "8dA",
             RawId = [0xf1, 0xd0],
         };
         IsUserHandleOwnerOfCredentialIdAsync callback = (args, cancellationToken) =>
