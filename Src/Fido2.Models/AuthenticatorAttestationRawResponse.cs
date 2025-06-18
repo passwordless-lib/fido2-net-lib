@@ -9,9 +9,11 @@ namespace Fido2NetLib;
 
 public sealed class AuthenticatorAttestationRawResponse
 {
-    [JsonConverter(typeof(Base64UrlConverter))]
+    /// <summary>
+    /// A string containing the credential's identifier. Base64UrlEncoding of <seealso cref="RawId"/>.
+    /// </summary>
     [JsonPropertyName("id"), Required]
-    public byte[] Id { get; init; }
+    public string Id { get; init; }
 
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonPropertyName("rawId"), Required]
