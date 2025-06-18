@@ -8,6 +8,11 @@ on:
         required: true
         default: "0.0.0-test"
         type: string
+      force_release:
+        description: "Force release to nuget.org"
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - master
@@ -196,7 +201,7 @@ jobs:
 
       # Only publish to NuGet on stable releases
       - name: Publish packages (NuGet Registry)
-        if: ${{ github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' || github.event.inputs.force_release }}
         run: >
           dotnet nuget push **/*.nupkg
           --source https://api.nuget.org/v3/index.json
