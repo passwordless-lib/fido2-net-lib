@@ -58,9 +58,7 @@ internal static class CryptoUtils
         // The array does not represent a certificate chain, but only the trust anchor of that chain.
         // A trust anchor can be a root certificate, an intermediate CA certificate or even the attestation certificate itself.
 
-        // Let's check the simplest case first.  If subject and issuer are the same, and the attestation cert is in the list, that's all the validation we need
-
-        // We have the same singular root cert in trustpath and it is in attestationRootCertificates
+        // Single certificate case: if it matches a declared trust anchor, validation is complete
         if (trustPath.Length == 1)
         {
             foreach (X509Certificate2 cert in attestationRootCertificates)
@@ -72,7 +70,7 @@ internal static class CryptoUtils
             }
         }
 
-        // If the attestation cert is not self signed, we will need to build a chain
+        // For certificates not directly declared as trust anchors, build and validate a certificate chain
         var chain = new X509Chain();
 
         // Put all potential trust anchors into extra store
