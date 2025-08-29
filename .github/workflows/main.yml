@@ -1,4 +1,4 @@
-name: master
+name: main
 
 on:
   workflow_dispatch:
@@ -15,10 +15,10 @@ on:
         type: boolean
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
   release:
     types:
       - published
