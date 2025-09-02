@@ -70,6 +70,9 @@ public class Startup
             app.UseRewriter(new RewriteOptions().AddRedirectToWWwIfPasswordlessDomain());
         }
 
+        // Enforce HTTPS redirection for all requests
+        app.UseHttpsRedirection();
+
         app.UseSession();
         app.UseStaticFiles();
         app.UseRouting();

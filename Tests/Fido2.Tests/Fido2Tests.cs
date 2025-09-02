@@ -58,7 +58,7 @@ public class Fido2Tests
 
         _metadataService = service;
 
-        _config = new Fido2Configuration { Origins = new HashSet<string> { "https://localhost:44329" } };
+        _config = new Fido2Configuration { Origins = new HashSet<string> { "https://localhost:5001" } };
 
         var noCurve = COSE.EllipticCurve.Reserved;
 

@@ -64,7 +64,7 @@ dotnet format
 ### Running Demo Applications
 
 ```bash
-# Run ASP.NET Core demo (requires HTTPS, expected at https://localhost:44329)
+# Run ASP.NET Core demo (requires HTTPS, expected at https://localhost:5001)
 dotnet run --project Demo/Demo.csproj
 
 # Run Blazor WebAssembly demo

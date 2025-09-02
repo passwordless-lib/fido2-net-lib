@@ -6,7 +6,7 @@ Since Fido2-net-lib is part of the .NET Foundation, we ask our contributors to a
 
 ## To run the project locally
 
-Start Fido2Demo (preferably https, expected url https://localhost:44329) and open https://localhost:44329/ in the browser.
+Start Fido2Demo (preferably https, expected url https://localhost:5001) and open https://localhost:5001/ in the browser.
 You also need to either set the MetadataService to `null` or add the applicationSettings as described below.
 
 The HTML and javascript is copied (and then updated) from WebAuthn.io.
