@@ -2,7 +2,6 @@
 
 A fully working and battle tested library for passkeys ([FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/)) on [.NET](https://dotnet.microsoft.com/)
 
-[![Build Status](https://dev.azure.com/anders/Fido2/_apis/build/status/abergs.fido2-net-lib?branchName=main)](https://dev.azure.com/anders/Fido2/_build/latest?definitionId=10&branchName=main)
 [![codecov](https://codecov.io/gh/passwordless-lib/fido2-net-lib/branch/main/graph/badge.svg)](https://codecov.io/gh/passwordless-lib/fido2-net-lib)
 [![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless)
 [![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/)
@@ -12,6 +11,8 @@ A fully working and battle tested library for passkeys ([FIDO2](https://fidoalli
 > ### 💡 Bitwarden Passwordless API
 >
 > The quickest way to get started with FIDO2 and WebAuthn is with the [Bitwarden Passwordless API](https://passwordless.dev?gh). It's free up to 10k users and a faster way to start using passkeys on your website or mobile app.
+>
+> Bitwarden Passwordless.dev supports .NET Framework as well as the latest .net 8+.
 >
 > [Get started with passwordless.dev](https://docs.passwordless.dev/guide/get-started.html)
 
