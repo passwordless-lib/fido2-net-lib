@@ -1,15 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Fido2Demo
-{
-    public class MfaModel : PageModel
-    {
-        public void OnGet()
-        {
-        }
+namespace Fido2Demo;
 
-        public void OnPost()
-        {
-        }
+public class MfaModel : PageModel
+{
+    public void OnGet()
+    {
+    }
+
+    public void OnPost()
+    {
     }
 }
