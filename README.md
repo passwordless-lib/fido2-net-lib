@@ -121,8 +121,9 @@ public class AuthController : Controller
 ## Examples
 
 - **[ASP.NET Core Demo](Demo/)** - Complete implementation with registration and authentication
+- **[Demo Controller](Demo/DemoController.cs)** - Main demo API endpoints for registration and authentication
 - **[Blazor WebAssembly Demo](BlazorWasmDemo/)** - Client-side Blazor example
-- **[Test Controller](Demo/TestController.cs)** - Conformance test examples
+- **[Conformance Test Controller](Demo/ConformanceTestController.cs)** - Conformance testing endpoints
 
 For integration patterns, see:
 

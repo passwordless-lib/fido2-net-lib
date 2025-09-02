@@ -11,7 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Fido2Demo;
 
-public class TestController : Controller
+public class ConformanceTestController : Controller
 {
     /* CONFORMANCE TESTING ENDPOINTS */
     private static readonly DevelopmentInMemoryStore _demoStorage = new();
@@ -19,7 +19,7 @@ public class TestController : Controller
     private readonly IFido2 _fido2;
     private readonly string _origin;
 
-    public TestController(IOptions<Fido2Configuration> fido2Configuration)
+    public ConformanceTestController(IOptions<Fido2Configuration> fido2Configuration)
     {
         _origin = fido2Configuration.Value.FullyQualifiedOrigins.FirstOrDefault();
 
