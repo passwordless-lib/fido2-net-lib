@@ -84,9 +84,8 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          # Windows runners don't support Linux Docker containers (needed for tests),
-          # so we currently cannot run tests on Windows.
-          # - windows-latest
+          - windows-latest
+          - macos-latest
 
     runs-on: ${{ matrix.os }}
     permissions:
