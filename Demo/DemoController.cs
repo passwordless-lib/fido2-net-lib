@@ -9,13 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace Fido2Demo;
 
 [Route("api/[controller]")]
-public class MyController : Controller
+public class DemoController : Controller
 {
     private IFido2 _fido2;
     public static IMetadataService _mds;
     public static readonly DevelopmentInMemoryStore DemoStorage = new();
 
-    public MyController(IFido2 fido2)
+    public DemoController(IFido2 fido2)
     {
         _fido2 = fido2;
     }
