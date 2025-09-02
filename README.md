@@ -9,11 +9,11 @@ A fully working and battle tested library for passkeys ([FIDO2](https://fidoalli
 
 [Releases & Change log](https://github.com/passwordless-lib/fido2-net-lib/releases)
 
-### 💡 Passwordless API now available!
-
-The quickest way to get started with FIDO2 and WebAuthn is with the [Passwordless API](https://passwordless.dev?gh). It free to try and get started with before commiting to implement your own server with this library.
-
-[Blog: How to get started](http://ideasof.andersaberg.com/development/passwordless-api)
+> ### 💡 Bitwarden Passwordless API
+>
+> The quickest way to get started with FIDO2 and WebAuthn is with the [Bitwarden Passwordless API](https://passwordless.dev?gh). It's free up to 10k users and a faster way to start using passkeys on your website or mobile app.
+>
+> [Get started with passwordless.dev](https://docs.passwordless.dev/guide/get-started.html)
 
 ### Purpose
 
