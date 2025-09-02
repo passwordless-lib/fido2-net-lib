@@ -41,7 +41,7 @@ public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccess
 
     private static FrozenDictionary<TEnum, string> GetIdToNameMap()
     {
-        var items = new List<KeyValuePair<TEnum, string>>();
+        List<KeyValuePair<TEnum, string>> items = [];
 
         foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
         {

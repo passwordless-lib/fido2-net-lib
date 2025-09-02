@@ -82,7 +82,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
             Entries = []
         };
 
-        var entries = new List<MetadataBLOBPayloadEntry>();
+        List<MetadataBLOBPayloadEntry> entries = [];
 
         foreach (var blobUrl in conformanceEndpoints)
         {

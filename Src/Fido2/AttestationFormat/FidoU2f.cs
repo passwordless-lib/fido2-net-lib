@@ -85,7 +85,7 @@ internal sealed class FidoU2f : AttestationVerifier
 
         // 7. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
 
-        var trustPath = new X509Certificate2[1] { attCert };
+        X509Certificate2[] trustPath = [attCert];
 
         return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
     }

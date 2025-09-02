@@ -162,7 +162,7 @@ internal readonly struct Asn1Element
 
     private static List<Asn1Element> ReadElements(AsnReader reader)
     {
-        var elements = new List<Asn1Element>();
+        List<Asn1Element> elements = [];
 
         while (reader.HasData)
         {
