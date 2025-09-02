@@ -40,7 +40,7 @@ public class ConformanceTestController : Controller
     {
         var attType = opts.Attestation;
 
-        var username = Array.Empty<byte>();
+        byte[] username = [];
 
         try
         {
