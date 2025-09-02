@@ -1,9 +1,13 @@
-# FIDO2 .NET Library (WebAuthn)
-A working implementation library + demo for [FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/) using [.NET](https://dotnet.microsoft.com/)
-[![Build Status](https://dev.azure.com/anders/Fido2/_apis/build/status/abergs.fido2-net-lib?branchName=master)](https://dev.azure.com/anders/Fido2/_build/latest?definitionId=10&branchName=master)
-[![codecov](https://codecov.io/gh/passwordless-lib/fido2-net-lib/branch/master/graph/badge.svg)](https://codecov.io/gh/passwordless-lib/fido2-net-lib)
+# Passkeys - FIDO2 .NET Library (WebAuthn)
+
+A fully working and battle tested library for passkeys ([FIDO2](https://fidoalliance.org/fido2/) and [WebAuthn](https://www.w3.org/TR/webauthn/)) on [.NET](https://dotnet.microsoft.com/)
+
+[![Build Status](https://dev.azure.com/anders/Fido2/_apis/build/status/abergs.fido2-net-lib?branchName=main)](https://dev.azure.com/anders/Fido2/_build/latest?definitionId=10&branchName=main)
+[![codecov](https://codecov.io/gh/passwordless-lib/fido2-net-lib/branch/main/graph/badge.svg)](https://codecov.io/gh/passwordless-lib/fido2-net-lib)
 [![Financial Contributors on Open Collective](https://opencollective.com/passwordless/all/badge.svg?label=financial+contributors)](https://opencollective.com/passwordless)
-[![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/) [Releases & Change log](https://github.com/passwordless-lib/fido2-net-lib/releases)
+[![NuGet Status](http://img.shields.io/nuget/v/Fido2.svg?style=flat-square)](https://www.nuget.org/packages/Fido2/)
+
+[Releases & Change log](https://github.com/passwordless-lib/fido2-net-lib/releases)
 
 ### 💡 Passwordless API now available!
 
@@ -20,23 +24,40 @@ To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.
 
 This project is part of the [.NET foundation](https://dotnetfoundation.org)
 
+## Installation
 
-```Install-Package Fido2```
+**Requirements**: .NET 8.0 or later
 
-To use the asp.net helpers, install the asp.net-package.
+```bash
+dotnet add package Fido2
+```
 
-```Install-Package Fido2.AspNet```
+To use the ASP.NET Core helpers:
+
+```bash
+dotnet add package Fido2.AspNet
+```
+
+For Blazor WebAssembly support:
+
+```bash
+dotnet add package Fido2.BlazorWebAssembly
+```
+
+> **⚠️ Breaking Changes**: If upgrading from v3.x, see the [Upgrade Guide](upgrade-guide.md) for migration instructions.
 
 ### Demo
-* **Online examples**: https://www.passwordless.dev
-* **Library website**: https://fido2-net-lib.passwordless.dev
-* [Code examples](#examples)
+
+- **Library website**: https://fido2-net-lib.passwordless.dev
+- [Code examples](#examples)
 
 ## What is FIDO2?
-**The passwordless web is coming.**
-[FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) is a new open authentication standard, supported by [browsers](https://www.w3.org/Consortium/Member/List) and [many large tech companies](https://fidoalliance.org/members/) such as Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating *passwordless flows* or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to Active Directory and native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & platform. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
+
+**The passwordless web is here.**
+[FIDO2](https://fidoalliance.org/fido2/) / [WebAuthn](https://www.w3.org/TR/webauthn/) is a modern, stable and open authentication standard, supported by [browsers](https://www.w3.org/Consortium/Member/List) and [many large tech companies](https://fidoalliance.org/members/) such as Microsoft, Google etc. The main driver is to allow a user to login without passwords, creating _passwordless flows_ or strong MFA for user signup/login on websites. The standard is not limited to web applications with support coming to native apps. The technology builds on public/private keys, allowing authentication to happen without sharing a secret between the user & website. This brings many benefits, such as easier and safer logins and makes phishing attempts extremely hard.
 
 Read more:
+
 - [Why it's exciting](http://ideasof.andersaberg.com/development/the-passwordless-web)
 - [Medium](https://medium.com/tokenring/fido-2-0-what-is-it-and-why-are-we-excited-31a66df6e113)
 - [FIDO Alliance](https://fidoalliance.org/fido2/)
@@ -58,32 +79,60 @@ Read more:
 - ✅ All currently referenced cryptographic algorithms for FIDO2 Server ([spec](https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-server-v2.0-rd-20180702.html#other))
 - ✅ All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", "apple", "apple-appattest", and "none" ([spec](https://www.iana.org/assignments/webauthn/webauthn.xhtml))
 - ✅ FIDO2 Server attestation validation via FIDO Metadata Service V3 ([spec](https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html))
-- ✅ WebAuthn extensions ([spec](https://www.w3.org/TR/webauthn/#extensions))
-- ✅ Examples & demos
+- ✅ WebAuthn extensions ([spec](https://www.w3.org/TR/webauthn/#extensions)) including PRF, Large Blob, Credential Protection
+- ✅ Blazor WebAssembly support for client-side applications
+- ✅ Examples & demos (ASP.NET Core and Blazor WebAssembly)
 - ✅ Intellisense documentation
-- 💤 [Formal documentation](https://github.com/passwordless-lib/fido2-net-lib/issues/53)
-- 💤 Recommended [usage patterns](https://github.com/passwordless-lib/fido2-net-lib/issues/54)
 
 ## Configuration
 
-  *Only some options are mentioned here, see the [Configuration](https://github.com/passwordless-lib/fido2-net-lib/blob/master/Src/Fido2.Models/Fido2Configuration.cs) class for all options*
+_Only some options are mentioned here, see the [Configuration](https://github.com/passwordless-lib/fido2-net-lib/blob/master/Src/Fido2.Models/Fido2Configuration.cs) class for all options_
 
-* `fido2:MDSCacheDirPath` - App Secret / environment variable that sets the cache path for the MDS. Defaults to "current user's temporary folder"/fido2mdscache. *Optional when using the default [MetadataService provider](https://fidoalliance.org/mds/).*
+- `fido2:MDSCacheDirPath` - App Secret / environment variable that sets the cache path for the MDS. Defaults to "current user's temporary folder"/fido2mdscache. _Optional when using the default [MetadataService provider](https://fidoalliance.org/mds/)._
+
+## Quick Start
+
+### 1. Configure Services (ASP.NET Core)
+
+```csharp
+services.AddFido2(options =>
+{
+    options.ServerDomain = "example.com";
+    options.ServerName = "Example App";
+    options.Origins = new HashSet<string> { "https://example.com" };
+});
+```
+
+### 2. Inject IFido2 Service
+
+```csharp
+public class AuthController : Controller
+{
+    private readonly IFido2 _fido2;
+
+    public AuthController(IFido2 fido2)
+    {
+        _fido2 = fido2;
+    }
+}
+```
 
 ## Examples
 
-See the [demo controller](Demo/Controller.cs) for full examples of both [attestation](https://www.w3.org/TR/webauthn/#sctn-attestation) and [assertion](https://www.w3.org/TR/webauthn/#verifying-assertion).
+- **[ASP.NET Core Demo](Demo/)** - Complete implementation with registration and authentication
+- **[Blazor WebAssembly Demo](BlazorWasmDemo/)** - Client-side Blazor example
+- **[Test Controller](Demo/TestController.cs)** - Conformance test examples
 
-See the [test controller](Demo/TestController.cs) for examples of how to pass the [conformance tests](#conformance-testing-tool).
+For integration patterns, see:
 
-See the [Active Directory Store information](https://github.com/passwordless-lib/fido2-net-lib/issues/68#issuecomment-451758622) and [example credential store](https://github.com/passwordless-lib/fido2-net-lib/blob/ActiveDirectory/fido2-net-lib/ActiveDirectoryStore.cs) for ideas on how to integrate this library with an on-premises Active Directory.
+- [Active Directory Store information](https://github.com/passwordless-lib/fido2-net-lib/issues/68#issuecomment-451758622)
+- [Example credential store](https://github.com/passwordless-lib/fido2-net-lib/blob/ActiveDirectory/fido2-net-lib/ActiveDirectoryStore.cs)
 
-### Create attestation Options
+### Create Attestation Options
 
-To add FIDO2 credentials to an existing user account, we we perform a attestation process. It starts with returning options to the client.
+To add FIDO2 credentials to an existing user account, start by creating options for the client.
 
 ```csharp
-// file: Controller.cs
 // 1. Get user from DB by username (in our example, auto create missing users)
 var user = DemoStorage.GetOrAddUser(username, () => new User
 {
@@ -93,25 +142,36 @@ var user = DemoStorage.GetOrAddUser(username, () => new User
 });
 
 // 2. Get user existing keys by username
-List<PublicKeyCredentialDescriptor> existingKeys = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+var existingKeys = DemoStorage.GetCredentialsByUser(user)
+    .Select(c => c.Descriptor)
+    .ToList();
 
-// 3. Create options
-var options = _lib.RequestNewCredential(user, existingKeys, AuthenticatorSelection.Default, AttestationConveyancePreference.Parse(attType));
+// 3. Create options using new parameter wrapper
+var options = _fido2.RequestNewCredential(new RequestNewCredentialParams
+{
+    User = user,
+    ExcludeCredentials = existingKeys,
+    AuthenticatorSelection = AuthenticatorSelection.Default,
+    AttestationPreference = AttestationConveyancePreference.Parse(attType),
+    Extensions = new AuthenticationExtensionsClientInputs
+    {
+        CredProps = true  // Enable credential properties extension
+    }
+});
 
 // 4. Temporarily store options, session/in-memory cache/redis/db
 HttpContext.Session.SetString("fido2.attestationOptions", options.ToJson());
 
-// 5. return options to client
+// 5. Return options to client
 return Json(options);
 ```
 
-### Register credentials
+### Register Credentials
 
-When the client returns a response, we verify and register the credentials.
+When the client returns a response, verify and register the credentials.
 
 ```csharp
-// file: Controller.cs
-// 1. get the options we sent the client and remove it from storage
+// 1. Get the options we sent the client and remove from storage
 var jsonOptions = HttpContext.Session.GetString("fido2.attestationOptions");
 HttpContext.Session.Remove("fido2.attestationOptions");
 var options = CredentialCreateOptions.FromJson(jsonOptions);
@@ -119,47 +179,54 @@ var options = CredentialCreateOptions.FromJson(jsonOptions);
 // 2. Create callback so that lib can verify credential id is unique to this user
 IsCredentialIdUniqueToUserAsyncDelegate callback = async (IsCredentialIdUniqueToUserParams args) =>
 {
-    List<User> users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
-    if (users.Count > 0) return false;
-
-    return true;
+    var users = await DemoStorage.GetUsersByCredentialIdAsync(args.CredentialId);
+    return users.Count == 0; // Return true if credential ID is unique
 };
 
-// 2. Verify and make the credentials
-var success = await _lib.MakeNewCredentialAsync(attestationResponse, options, callback);
-
-// 3. Store the credentials in db
-DemoStorage.AddCredentialToUser(options.User, new StoredCredential
+// 3. Verify and make the credentials using new parameter wrapper
+var result = await _fido2.MakeNewCredentialAsync(new MakeNewCredentialParams
 {
-    Descriptor = new PublicKeyCredentialDescriptor(success.Result.CredentialId),
-    PublicKey = success.Result.PublicKey,
-    UserHandle = success.Result.User.Id
+    AttestationResponse = attestationResponse,
+    OriginalOptions = options,
+    IsCredentialIdUniqueToUserCallback = callback
 });
 
-// 4. return "ok" to the client
-return Json(success);
+// 4. Store the credentials in database
+DemoStorage.AddCredentialToUser(options.User, new StoredCredential
+{
+    Descriptor = new PublicKeyCredentialDescriptor(result.Id),
+    PublicKey = result.PublicKey,
+    UserHandle = result.User.Id
+});
+
+// 5. Return success to client
+return Json(result);
 ```
 
-### Create Assertion options
+### Create Assertion Options
 
-When a user wants to log a user in, we do an assertion based on the registered credentials.
-
-First we create the assertion options and return to the client.
+For user authentication, create assertion options based on registered credentials.
 
 ```csharp
-// file: Controller.cs
 // 1. Get user from DB
 var user = DemoStorage.GetUser(username);
-if (user == null) return NotFound("username was not registered");
+if (user == null) return NotFound("Username was not registered");
 
 // 2. Get registered credentials from database
-List<PublicKeyCredentialDescriptor> existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
+var existingCredentials = DemoStorage.GetCredentialsByUser(user)
+    .Select(c => c.Descriptor)
+    .ToList();
 
-// 3. Create options
-var options = _lib.GetAssertionOptions(
-    existingCredentials,
-    UserVerificationRequirement.Discouraged
-);
+// 3. Create options using new parameter wrapper
+var options = _fido2.GetAssertionOptions(new GetAssertionOptionsParams
+{
+    AllowedCredentials = existingCredentials,
+    UserVerification = UserVerificationRequirement.Preferred,
+    Extensions = new AuthenticationExtensionsClientInputs
+    {
+        Extensions = true
+    }
+});
 
 // 4. Temporarily store options, session/in-memory cache/redis/db
 HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
@@ -168,8 +235,9 @@ HttpContext.Session.SetString("fido2.assertionOptions", options.ToJson());
 return Json(options);
 ```
 
-### Verify the assertion response
-When the client returns a response, we verify it and accepts the login.
+### Verify the Assertion Response
+
+When the client returns a response, verify it and accept the login.
 
 ```csharp
 // 1. Get the assertion options we sent the client and remove from storage
@@ -178,26 +246,30 @@ HttpContext.Session.Remove("fido2.assertionOptions");
 var options = AssertionOptions.FromJson(jsonOptions);
 
 // 2. Get registered credential from database
-StoredCredential creds = DemoStorage.GetCredentialById(clientResponse.Id);
+var creds = DemoStorage.GetCredentialById(clientResponse.Id);
 
-// 3. Get credential counter from database
-var storedCounter = creds.SignatureCounter;
-
-// 4. Create callback to check if userhandle owns the credentialId
+// 3. Create callback to check if userhandle owns the credentialId
 IsUserHandleOwnerOfCredentialIdAsync callback = async (args) =>
 {
-    List<StoredCredential> storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
+    var storedCreds = await DemoStorage.GetCredentialsByUserHandleAsync(args.UserHandle);
     return storedCreds.Exists(c => c.Descriptor.Id.SequenceEqual(args.CredentialId));
 };
 
-// 5. Make the assertion
-var res = await _lib.MakeAssertionAsync(clientResponse, options, creds.PublicKey, storedCounter, callback);
+// 4. Make the assertion using new parameter wrapper
+var result = await _fido2.MakeAssertionAsync(new MakeAssertionParams
+{
+    AssertionResponse = clientResponse,
+    OriginalOptions = options,
+    StoredPublicKey = creds.PublicKey,
+    StoredSignatureCounter = creds.SignatureCounter,
+    IsUserHandleOwnerOfCredentialIdCallback = callback
+});
 
-// 6. Store the updated counter
-DemoStorage.UpdateCounter(res.CredentialId, res.Counter);
+// 5. Store the updated counter
+DemoStorage.UpdateCounter(result.CredentialId, result.Counter);
 
-// 7. return OK to client
-return Json(res);
+// 6. Return success to client
+return Json(result);
 ```
 
 ## Nuget package
