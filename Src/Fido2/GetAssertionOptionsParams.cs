@@ -22,7 +22,7 @@ public sealed class GetAssertionOptionsParams
     ///
     /// The list is ordered in descending order of preference: the first item in the list is the most preferred credential, and the last is the least preferred.
     /// </summary>
-    public IReadOnlyList<PublicKeyCredentialDescriptor> AllowedCredentials { get; init; } = Array.Empty<PublicKeyCredentialDescriptor>();
+    public IReadOnlyList<PublicKeyCredentialDescriptor> AllowedCredentials { get; init; } = [];
 
     /// <summary>
     /// This OPTIONAL member specifies the Relying Party's requirements regarding user verification for the get() operation. The value SHOULD be a member of UserVerificationRequirement but client platforms MUST ignore unknown values, treating an unknown value as if the member does not exist. Eligible authenticators are filtered to only those capable of satisfying this requirement.

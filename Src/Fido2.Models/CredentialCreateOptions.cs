@@ -67,7 +67,7 @@ public sealed class CredentialCreateOptions
 
 #nullable enable
 
-    private IReadOnlyList<PublicKeyCredentialHint> _hints = Array.Empty<PublicKeyCredentialHint>();
+    private IReadOnlyList<PublicKeyCredentialHint> _hints = [];
 
     /// <summary>
     /// Guides the user agent in interacting with the user. This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint" />.
