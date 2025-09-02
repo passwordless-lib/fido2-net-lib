@@ -16,11 +16,10 @@ public static class ConformanceTesting
             {
                 if (_instance == null)
                 {
-                    var repos = new List<IMetadataRepository>
-                    {
+                    List<IMetadataRepository> repos = [
                         new ConformanceMetadataRepository(null, origin),
                         new FileSystemMetadataRepository(cacheDir)
-                    };
+                    ];
                     var simpleService = new ConformanceMetadataService(repos);
                     simpleService.InitializeAsync().Wait();
                     _instance = simpleService;

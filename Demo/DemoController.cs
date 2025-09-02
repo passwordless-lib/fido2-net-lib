@@ -144,7 +144,7 @@ public class DemoController : Controller
     {
         try
         {
-            var existingCredentials = new List<PublicKeyCredentialDescriptor>();
+            List<PublicKeyCredentialDescriptor> existingCredentials = [];
 
             if (!string.IsNullOrEmpty(username))
             {
