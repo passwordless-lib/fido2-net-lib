@@ -16,16 +16,10 @@ public static class Fido2NetLibBuilderExtensions
         services.AddSingleton(
             resolver => resolver.GetRequiredService<IOptions<Fido2Configuration>>().Value);
 
-        services.AddServices();
+        services.AddScoped<IFido2, Fido2>();
+        services.TryAddSingleton<ISystemClock, SystemClock>();
 
         return new Fido2NetLibBuilder(services);
-    }
-
-    private static void AddServices(this IServiceCollection services)
-    {
-        services.AddScoped<IFido2, Fido2>();
-        services.AddSingleton<IMetadataService, NullMetadataService>(); //Default implementation if we choose not to enable MDS
-        services.TryAddSingleton<ISystemClock, SystemClock>();
     }
 
     public static IFido2NetLibBuilder AddFido2(this IServiceCollection services, Action<Fido2Configuration> setupAction)
@@ -35,19 +29,27 @@ public static class Fido2NetLibBuilderExtensions
         services.AddSingleton(
             resolver => resolver.GetRequiredService<IOptions<Fido2Configuration>>().Value);
 
-        services.AddServices();
+        services.AddScoped<IFido2, Fido2>();
+        services.TryAddSingleton<ISystemClock, SystemClock>();
 
         return new Fido2NetLibBuilder(services);
     }
-
-    public static void AddCachedMetadataService(this IFido2NetLibBuilder builder, Action<IFido2MetadataServiceBuilder> configAction)
+    
+    public static IFido2NetLibBuilder AddMetadataService<T>(this IFido2NetLibBuilder builder)
+        where T : class, IMetadataService
+    {
+        builder.Services.AddScoped<IMetadataService, T>();
+        return builder;
+    }
+    
+    
+    public static IFido2NetLibBuilder AddCachedMetadataService(this IFido2NetLibBuilder builder)
     {
         builder.Services.AddScoped<IMetadataService, DistributedCacheMetadataService>();
-
-        configAction(new Fido2NetLibBuilder(builder.Services));
+        return builder;
     }
 
-    public static IFido2MetadataServiceBuilder AddFileSystemMetadataRepository(this IFido2MetadataServiceBuilder builder, string directoryPath)
+    public static IFido2NetLibBuilder AddFileSystemMetadataRepository(this IFido2NetLibBuilder builder, string directoryPath)
     {
         builder.Services.AddScoped<IMetadataRepository, FileSystemMetadataRepository>(provider =>
         {
@@ -57,8 +59,8 @@ public static class Fido2NetLibBuilderExtensions
         return builder;
     }
 
-    public static IFido2MetadataServiceBuilder AddConformanceMetadataRepository(
-        this IFido2MetadataServiceBuilder builder,
+    public static IFido2NetLibBuilder AddConformanceMetadataRepository(
+        this IFido2NetLibBuilder builder,
         HttpClient client = null,
         string origin = "")
     {
@@ -70,7 +72,7 @@ public static class Fido2NetLibBuilderExtensions
         return builder;
     }
 
-    public static IFido2MetadataServiceBuilder AddFidoMetadataRepository(this IFido2MetadataServiceBuilder builder, Action<IHttpClientBuilder> clientBuilder = null)
+    public static IFido2NetLibBuilder AddFidoMetadataRepository(this IFido2NetLibBuilder builder, Action<IHttpClientBuilder> clientBuilder = null)
     {
         var httpClientBuilder = builder.Services.AddHttpClient(nameof(Fido2MetadataServiceRepository), client =>
         {
@@ -91,12 +93,7 @@ public interface IFido2NetLibBuilder
     IServiceCollection Services { get; }
 }
 
-public interface IFido2MetadataServiceBuilder
-{
-    IServiceCollection Services { get; }
-}
-
-public class Fido2NetLibBuilder : IFido2NetLibBuilder, IFido2MetadataServiceBuilder
+public class Fido2NetLibBuilder : IFido2NetLibBuilder
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Fido2NetLibBuilder"/> class.
