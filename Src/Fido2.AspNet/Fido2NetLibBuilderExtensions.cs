@@ -109,6 +109,25 @@ public static class Fido2NetLibBuilderExtensions
     }
     
     /// <summary>
+    /// Adds a custom metadata repository implementation to the FIDO2 builder.
+    /// </summary>
+    /// <typeparam name="T">The type of metadata repository to add. Must implement <see cref="IMetadataRepository"/>.</typeparam>
+    /// <param name="builder">The FIDO2 builder instance.</param>
+    /// <returns>The <see cref="IFido2NetLibBuilder"/> for method chaining.</returns>
+    /// <remarks>
+    /// This method registers the specified metadata repository implementation as a scoped service,
+    /// replacing any previously registered <see cref="IMetadataRepository"/>.
+    /// The repository provides metadata statements for authenticator validation and attestation verification.
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
+    public static IFido2NetLibBuilder AddMetadataRepository<T>(this IFido2NetLibBuilder builder)
+        where T : class, IMetadataRepository
+    {
+        builder.Services.AddScoped<IMetadataRepository, T>();
+        return builder;
+    }
+    
+    /// <summary>
     /// Adds a file system-based metadata repository to the FIDO2 builder.
     /// </summary>
     /// <param name="builder">The FIDO2 builder instance.</param>
