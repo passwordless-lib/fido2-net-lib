@@ -117,8 +117,13 @@ jobs:
           --configuration Release
           ${{ runner.os == 'Windows' && '-p:IncludeNetCoreAppTargets=false' || '' }}
           --logger "trx;LogFileName=pw-test-results.trx"
+          --collect:"XPlat Code Coverage"
           --
           RunConfiguration.CollectSourceInformation=true
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v5
 
   # Pack the output into NuGet packages
   pack:
