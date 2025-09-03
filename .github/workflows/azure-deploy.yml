@@ -1,0 +1,64 @@
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Demo/**'
+      - 'Src/**'
+      - '.github/workflows/azure-deploy.yml'
+
+env:
+  # Setting these variables allows .NET CLI to use rich color codes in console output
+  TERM: xterm
+  DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: true
+  # Skip boilerplate output
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@3951f0dfe7a07e2313ec93c75700083e2005cbab # v4.3.0
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run restore
+        run: dotnet restore Demo/Demo.csproj
+
+      - name: Run build
+        run: >
+          dotnet build Demo/Demo.csproj
+          --no-restore
+          --configuration Release
+
+      - name: Run tests
+        run: >
+          dotnet test Tests/Fido2.Tests/Fido2.Tests.csproj
+          --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+
+      - name: Publish application
+        run: >
+          dotnet publish Demo/Demo.csproj
+          --no-restore
+          --no-build
+          --configuration Release
+          --output ./publish
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          package: ./publish
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
