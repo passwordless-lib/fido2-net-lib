@@ -49,7 +49,7 @@ dotnet add package Fido2.BlazorWebAssembly
 
 ### Demo
 
-- **Library website**: https://fido2-net-lib.passwordless.dev
+- **Library website**: https://fido2.andersaberg.com
 - [Code examples](#examples)
 
 ## What is FIDO2?
