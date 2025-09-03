@@ -7,7 +7,7 @@ public sealed class CborArray : CborObject, IEnumerable<CborObject>
 {
     public CborArray()
     {
-        Values = new List<CborObject>();
+        Values = [];
     }
 
     public CborArray(List<CborObject> values)

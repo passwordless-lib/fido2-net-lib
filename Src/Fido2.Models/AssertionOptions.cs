@@ -41,7 +41,7 @@ public class AssertionOptions
     /// This OPTIONAL member contains a list of PublicKeyCredentialDescriptor objects representing public key credentials acceptable to the caller, in descending order of the caller’s preference(the first item in the list is the most preferred credential, and so on down the list)
     /// </summary>
     [JsonPropertyName("allowCredentials")]
-    public IReadOnlyList<PublicKeyCredentialDescriptor> AllowCredentials { get; set; } = Array.Empty<PublicKeyCredentialDescriptor>();
+    public IReadOnlyList<PublicKeyCredentialDescriptor> AllowCredentials { get; set; } = [];
 
     /// <summary>
     /// This member describes the Relying Party's requirements regarding user verification for the get() operation.
@@ -54,7 +54,7 @@ public class AssertionOptions
     /// This OPTIONAL member contains zero or more elements from <see cref="PublicKeyCredentialHint"/> to guide the user agent in interacting with the user. Note that the elements have type DOMString despite being taken from that enumeration.
     /// </summary>
     [JsonPropertyName("hints")]
-    public IReadOnlyList<PublicKeyCredentialHint> Hints { get; set; } = Array.Empty<PublicKeyCredentialHint>();
+    public IReadOnlyList<PublicKeyCredentialHint> Hints { get; set; } = [];
 
     /// <summary>
     /// This OPTIONAL member contains additional parameters requesting additional processing by the client and authenticator.

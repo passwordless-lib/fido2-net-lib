@@ -18,8 +18,7 @@ public sealed class RequestNewCredentialParams
     /// <summary>
     ///  The Relying Party SHOULD use this OPTIONAL member to list any existing credentials mapped to this user account (as identified by user.id). This ensures that the new credential is not created on an authenticator that already contains a credential mapped to this user account. If it would be, the client is requested to instead guide the user to use a different authenticator, or return an error if that fails.
     /// </summary>
-    public IReadOnlyList<PublicKeyCredentialDescriptor> ExcludeCredentials { get; init; } =
-        Array.Empty<PublicKeyCredentialDescriptor>();
+    public IReadOnlyList<PublicKeyCredentialDescriptor> ExcludeCredentials { get; init; } = [];
 
     /// <summary>
     /// The Relying Party MAY use this OPTIONAL member to specify capabilities and settings that the authenticator MUST or SHOULD satisfy to participate in the create() operation. See § 5.4.4 Authenticator Selection Criteria (dictionary AuthenticatorSelectionCriteria).
