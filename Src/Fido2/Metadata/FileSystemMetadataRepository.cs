@@ -12,13 +12,13 @@ namespace Fido2NetLib;
 
 public sealed class FileSystemMetadataRepository : IMetadataRepository
 {
-    private readonly string _path;
+    private readonly string _directoryPath;
     private readonly Dictionary<Guid, MetadataBLOBPayloadEntry> _entries;
     private MetadataBLOBPayload? _blob;
 
-    public FileSystemMetadataRepository(string path)
+    public FileSystemMetadataRepository(string directoryPath)
     {
-        _path = path;
+        _directoryPath = directoryPath;
         _entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
     }
 
@@ -37,9 +37,9 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
 
     public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
     {
-        if (Directory.Exists(_path))
+        if (Directory.Exists(_directoryPath))
         {
-            foreach (var filename in Directory.GetFiles(_path))
+            foreach (var filename in Directory.GetFiles(_directoryPath))
             {
                 await using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
                 MetadataStatement statement = await JsonSerializer.DeserializeAsync(fileStream, FidoModelSerializerContext.Default.MetadataStatement, cancellationToken: cancellationToken) ?? throw new NullReferenceException(nameof(statement));
