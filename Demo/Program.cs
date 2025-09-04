@@ -39,13 +39,8 @@ builder.Services.AddFido2(options =>
     options.BackupEligibleCredentialPolicy = builder.Configuration.GetValue<Fido2Configuration.CredentialBackupPolicy>("fido2:backupEligibleCredentialPolicy");
     options.BackedUpCredentialPolicy = builder.Configuration.GetValue<Fido2Configuration.CredentialBackupPolicy>("fido2:backedUpCredentialPolicy");
 })
-.AddCachedMetadataService(config =>
-{
-    config.AddFidoMetadataRepository(httpClientBuilder =>
-    {
-        //TODO: any specific config you want for accessing the MDS
-    });
-});
+.AddFidoMetadataRepository()
+.AddCachedMetadataService();
 
 var app = builder.Build();
 
