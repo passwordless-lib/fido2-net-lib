@@ -17,7 +17,7 @@ public static class RouteHelperExtensions
         public virtual void ApplyRule(RewriteContext context)
         {
             var req = context.HttpContext.Request;
-            if (req.Host.Host is "fido2.azurewebsites.net")
+            if (req.Host.Host is "fido2-net-lib.passwordless.dev" or "fido2.azurewebsites.net")
             {
                 var wwwHost = new HostString("fido2.andersaberg.com");
                 var newUrl = UriHelper.BuildAbsolute("https", wwwHost, req.PathBase, req.Path, req.QueryString);
