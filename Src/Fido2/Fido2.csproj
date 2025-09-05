@@ -12,10 +12,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
-    <PackageReference Include="NSec.Cryptography" Version="25.4.0" />
-    <PackageReference Include="System.Formats.Cbor" Version="9.0.0" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="NSec.Cryptography" />
+    <PackageReference Include="System.Formats.Cbor" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
   </ItemGroup>
 
   <ItemGroup>

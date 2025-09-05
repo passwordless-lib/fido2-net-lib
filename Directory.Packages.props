@@ -1,0 +1,44 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core Framework Packages -->
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageVersion Include="System.Formats.Cbor" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Bcl.Memory" Version="9.0.0" />
+    
+    <!-- Cryptography -->
+    <PackageVersion Include="NSec.Cryptography" Version="25.4.0" />
+    
+    <!-- JWT and Identity -->
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.0" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
+    
+    <!-- ASP.NET Core -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.10" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.10" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.10" />
+    
+    <!-- Development Tools -->
+    <PackageVersion Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.6" />
+    <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="5.6.2" />
+    
+    <!-- JSON -->
+    <PackageVersion Include="System.Text.Json" Version="8.0.5" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    
+    <!-- Testing Framework -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="Moq" Version="4.18.4" />
+    <PackageVersion Include="ReportGenerator" Version="5.1.14" />
+  </ItemGroup>
+
+</Project>
