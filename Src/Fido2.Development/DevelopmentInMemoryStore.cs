@@ -51,7 +51,7 @@ public class DevelopmentInMemoryStore
         var cred = _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
 
         if (cred is null)
-            return Task.FromResult(new List<Fido2User>());
+            return Task.FromResult<List<Fido2User>>([]);
 
         return Task.FromResult(_storedUsers.Where(u => u.Value.Id.SequenceEqual(cred.UserId)).Select(u => u.Value).ToList());
     }

@@ -86,7 +86,7 @@ public abstract class CborObject
 
         var items = count != null
             ? new List<CborObject>(count.Value)
-            : new List<CborObject>();
+            : [];
 
         while (!(reader.PeekState() is CborReaderState.EndArray or CborReaderState.Finished))
         {
