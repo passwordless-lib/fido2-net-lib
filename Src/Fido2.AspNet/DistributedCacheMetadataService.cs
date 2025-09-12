@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 
+using Fido2NetLib.Serialization;
+
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Internal;
@@ -103,7 +105,7 @@ public class DistributedCacheMetadataService : IMetadataService
     {
         await _distributedCache.SetStringAsync(
             GetBlobCacheKey(repository),
-            JsonSerializer.Serialize(payload),
+            JsonSerializer.Serialize(payload, FidoModelSerializerContext.Default.MetadataBLOBPayload),
             new DistributedCacheEntryOptions()
             {
                 AbsoluteExpiration = GetDistributedCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(payload))
@@ -120,7 +122,7 @@ public class DistributedCacheMetadataService : IMetadataService
         {
             try
             {
-                var cachedBlob = JsonSerializer.Deserialize<MetadataBLOBPayload>(distributedCacheEntry);
+                var cachedBlob = JsonSerializer.Deserialize(distributedCacheEntry, FidoModelSerializerContext.Default.MetadataBLOBPayload);
                 var nextUpdateTime = GetNextUpdateTimeFromPayload(cachedBlob);
 
                 //If the cache until time is in the past then update and return new data, otherwise return the cached value
