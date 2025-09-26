@@ -183,6 +183,7 @@ jobs:
     permissions:
       actions: read
       packages: write
+      id-token: write
 
     steps:
       - name: Download artifacts
