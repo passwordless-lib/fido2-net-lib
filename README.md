@@ -25,6 +25,28 @@ To provide a developer friendly and well tested [.NET](https://dotnet.microsoft.
 
 This project is part of the [.NET foundation](https://dotnetfoundation.org)
 
+## .NET 10 Passkeys vs this library?
+
+Wondering if you should use what's in .NET 10 or this library? I've worked together with Microsoft on their passkey implementation and how it relates to this library, so I can share some perspective that may be aid in your decision:
+
+- The passkey support announced Microsoft in .NET 10 **is only available as part of ASP.NET Identity**.
+- Fido2-net-lib is a more capable implementation, and Microsoft recommends you to use this (or any other 3p library) if you want to use more advanced features like attestation. They built a plugin interface so you can combine this library with theirs.
+- Since the passkey specification is evolving, I think using this library will give you access to new parts of the standard faster than using ASP.NET Identity.
+
+**When picking Microsoft asp.net identity is a good idea:**
+
+- You're using ASP.NET Identity and need passkeys.
+- You don't want to use attestation or newer passkey features
+
+**When picking this library is a good idea:**
+
+- You don't want to be tied to using ASP.NET Identity
+- You're building a SPA and doing auth without asp.net identity
+- You want to use modern passkey features
+- You want to use attestation (Could combine this library with the asp.net identity version)
+
+I'm happy that Microsoft is finally joining the passkey train, but this library is probably still what you want to use unless you're running the vanilla asp.net Identity-stack. At least for the time beeing.
+
 ## Installation
 
 **Requirements**: .NET 8.0 or later
