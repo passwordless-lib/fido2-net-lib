@@ -283,7 +283,14 @@ public class AuthenticatorSelection
         set
         {
             _requireResidentKey = value;
-            _residentKey = value ? ResidentKeyRequirement.Required : ResidentKeyRequirement.Discouraged;
+            if (value)
+            {
+                _residentKey = ResidentKeyRequirement.Required;
+            }
+            else if (_residentKey is not ResidentKeyRequirement.Preferred)
+            {
+                _residentKey = ResidentKeyRequirement.Discouraged;
+            }
         }
     }
 

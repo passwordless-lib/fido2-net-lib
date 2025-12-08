@@ -418,6 +418,50 @@ public class Fido2Tests
     }
 
     [Fact]
+    public void AuthenticatorSelection_ResidentKeyPreferred_SurvivesJsonRoundTrip()
+    {
+        // Arrange: Create AuthenticatorSelection with ResidentKey = Preferred
+        var original = new AuthenticatorSelection
+        {
+            ResidentKey = ResidentKeyRequirement.Preferred,
+            UserVerification = UserVerificationRequirement.Preferred
+        };
+
+        // Act: Serialize to JSON and deserialize back
+        var json = JsonSerializer.Serialize(original);
+        var deserialized = JsonSerializer.Deserialize<AuthenticatorSelection>(json);
+
+        // Assert: ResidentKey should still be Preferred after round-trip
+        Assert.Equal(ResidentKeyRequirement.Preferred, deserialized.ResidentKey);
+    }
+
+    [Fact]
+    public void CredentialCreateOptions_ResidentKeyPreferred_SurvivesJsonRoundTrip()
+    {
+        // Arrange: This JSON has residentKey: "preferred" which should be preserved
+        const string json = """
+            {
+                "rp": { "id": "some.rp.id", "name": "Some name" },
+                "user": { "name": "someuserid", "id": "NjVmZGNiOTJiZjQyZjZmZDE0YzViODVk", "displayName": "The User 1234" },
+                "challenge": "kauVQPwQtf4BlhOFObDfTQ",
+                "pubKeyCredParams": [ { "type": "public-key", "alg": -7 }, { "type": "public-key", "alg": -257 } ],
+                "timeout": 60000,
+                "attestation": "none",
+                "attestationFormats": [],
+                "authenticatorSelection": { "residentKey": "preferred", "requireResidentKey": false, "userVerification": "preferred" },
+                "hints": [],
+                "excludeCredentials": []
+            }
+            """;
+
+        // Act: Deserialize the JSON
+        var options = CredentialCreateOptions.FromJson(json);
+
+        // Assert: ResidentKey should be Preferred, not Discouraged
+        Assert.Equal(ResidentKeyRequirement.Preferred, options.AuthenticatorSelection.ResidentKey);
+    }
+
+    [Fact]
     public async Task TestFido2AssertionAsync()
     {
         //var existingKey = "45-43-53-31-20-00-00-00-0E-B4-F3-73-C2-AC-7D-F7-7E-7D-17-D3-A3-A2-CC-AB-E5-C6-B1-42-ED-10-AC-7C-15-72-39-8D-75-C6-5B-B9-76-09-33-A0-30-F2-44-51-C8-31-AF-72-9B-4F-7B-AB-4F-85-2D-7D-1F-E0-B5-BD-A3-3D-0E-D6-18-04-CD-98";
