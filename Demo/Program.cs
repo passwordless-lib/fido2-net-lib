@@ -64,7 +64,21 @@ else
 app.UseHttpsRedirection();
 
 app.UseSession();
+
+// Serve the .well-known/webauthn file for WebAuthn related origins
+// Can be overridden via WEBAUTHN_WELL_KNOWN environment variable (JSON string)
+app.MapGet("/.well-known/webauthn", (IWebHostEnvironment env, IConfiguration config) =>
+{
+    var envContent = config["WEBAUTHN_WELL_KNOWN"];
+    if (!string.IsNullOrEmpty(envContent))
+    {
+        return Results.Content(envContent, "application/json");
+    }
+    return Results.File(Path.Combine(env.WebRootPath, ".well-known", "webauthn"), "application/json");
+});
+
 app.UseStaticFiles();
+
 app.UseRouting();
 
 app.MapFallbackToPage("/", "/overview");
