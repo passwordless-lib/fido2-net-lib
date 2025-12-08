@@ -119,8 +119,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration()
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { expectedOrigin },
         });
 
@@ -225,8 +225,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { expectedOrigin },
         });
 
@@ -442,8 +442,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -517,8 +517,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -590,8 +590,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -670,8 +670,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -752,8 +752,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -834,8 +834,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
         });
@@ -915,8 +915,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
         });
@@ -996,8 +996,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1077,8 +1077,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1158,8 +1158,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1238,8 +1238,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1372,8 +1372,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1447,8 +1447,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1523,8 +1523,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1599,8 +1599,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1675,8 +1675,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1751,8 +1751,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1829,8 +1829,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1906,8 +1906,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -1983,8 +1983,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -2060,8 +2060,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -2136,8 +2136,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -2212,8 +2212,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackupEligibleCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -2288,8 +2288,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackedUpCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -2364,8 +2364,8 @@ public class AuthenticatorResponseTests
         var lib = new Fido2(new Fido2Configuration
         {
             BackedUpCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -2440,8 +2440,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 
@@ -2516,8 +2516,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp }
         });
 
@@ -2599,8 +2599,8 @@ public class AuthenticatorResponseTests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
 

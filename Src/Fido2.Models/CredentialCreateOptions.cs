@@ -132,7 +132,7 @@ public sealed class CredentialCreateOptions
         return new CredentialCreateOptions
         {
             Challenge = challenge,
-            Rp = new PublicKeyCredentialRpEntity(config.ServerDomain, config.ServerName, config.ServerIcon),
+            Rp = new PublicKeyCredentialRpEntity(config.RPID, config.RPName, config.ServerIcon),
             Timeout = config.Timeout,
             User = user,
             PubKeyCredParams = pubKeyCredParams,

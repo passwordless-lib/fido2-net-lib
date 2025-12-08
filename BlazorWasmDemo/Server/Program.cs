@@ -7,8 +7,8 @@ builder.Services.AddRazorPages();
 var origin = new Uri(builder.Configuration["Origin"]!);
 builder.Services.AddFido2(options =>
 {
-    options.ServerDomain = origin.Host;
-    options.ServerName = "FIDO2 Server";
+    options.RPID = origin.Host;
+    options.RPName = "FIDO2 Server";
     options.Origins = new HashSet<string> { origin.AbsoluteUri };
     options.TimestampDriftTolerance = 1000;
 });
