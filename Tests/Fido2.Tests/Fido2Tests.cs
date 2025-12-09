@@ -436,6 +436,22 @@ public class Fido2Tests
     }
 
     [Fact]
+    public void AuthenticatorSelection_RequireResidentKeyTrue_SetsResidentKeyToRequired()
+    {
+        // Arrange & Act: Create AuthenticatorSelection with RequireResidentKey = true
+#pragma warning disable CS0618 // RequireResidentKey is obsolete
+        var selection = new AuthenticatorSelection
+        {
+            RequireResidentKey = true
+        };
+
+        // Assert: ResidentKey should be Required when RequireResidentKey is true
+        Assert.Equal(ResidentKeyRequirement.Required, selection.ResidentKey);
+        Assert.True(selection.RequireResidentKey);
+#pragma warning restore CS0618
+    }
+
+    [Fact]
     public void CredentialCreateOptions_ResidentKeyPreferred_SurvivesJsonRoundTrip()
     {
         // Arrange: This JSON has residentKey: "preferred" which should be preserved
