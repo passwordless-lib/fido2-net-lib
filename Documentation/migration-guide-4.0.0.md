@@ -177,7 +177,8 @@ RegisteredPublicKeyCredential result = await fido2.MakeNewCredentialAsync(...);
 var credentialId = result.Id;           // Previously CredentialId
 var publicKey = result.PublicKey;
 var user = result.User;
-var counter = result.Counter;
+var counter = result.SignCount;
+var credType = result.Type.ToString()
 ```
 
 #### MakeAssertionAsync Return Type
