@@ -2,6 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib;
 
@@ -24,7 +25,7 @@ public sealed class MetadataBLOBPayloadEntry
     /// Gets or sets the AAGUID.
     /// <para>The Authenticator Attestation GUID.</para>
     /// </summary>
-    [JsonPropertyName("aaguid")]
+    [JsonPropertyName("aaguid")] [JsonConverter(typeof(AaGuidConverter))]
     public Guid? AaGuid { get; set; }
 
     /// <summary>

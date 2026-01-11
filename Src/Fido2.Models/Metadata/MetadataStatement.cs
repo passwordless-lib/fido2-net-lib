@@ -2,6 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib;
 
@@ -35,7 +36,7 @@ public class MetadataStatement
     /// This field MUST be set if the authenticator implements FIDO 2.
     /// <para>Note: FIDO 2 Authenticators support AAGUID, but they don't support AAID.</para>
     /// </remarks>
-    [JsonPropertyName("aaguid")]
+    [JsonPropertyName("aaguid")] [JsonConverter(typeof(AaGuidConverter))]
     public Guid? AaGuid { get; set; }
 
     /// <summary>
