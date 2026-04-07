@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 
 using NSec.Cryptography;
 
@@ -112,7 +113,15 @@ public sealed class CredentialPublicKey
         switch (_type)
         {
             case COSE.KeyType.EC2:
-                var ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), _ecdsa!.KeySize);
+                byte[] ecsig;
+                try
+                {
+                    ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), _ecdsa!.KeySize);
+                }
+                catch (Exception ex)
+                {
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature, ex);
+                }
                 return _ecdsa!.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(_alg));
 
             case COSE.KeyType.RSA:
