@@ -141,13 +141,14 @@ public class Tpm : Fido2Tests.Attestation
                         _credentialPublicKey = new CredentialPublicKey(cpk);
 
                         unique = [
-                            .. GetUInt16BigEndianBytes(x.Length),
+                            .. GetUInt16BigEndianBytes((ushort)x.Length),
                             .. x,
-                            .. GetUInt16BigEndianBytes(y.Length),
+                            .. GetUInt16BigEndianBytes((ushort)y.Length),
                             .. y
                         ];
 
-                        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]).Reverse().ToArray();
+                        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]);
+                        Array.Reverse(curveId);
                         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL); // should this be big endian?
 
                         var pubArea = PubAreaHelper.CreatePubArea(
@@ -174,9 +175,14 @@ public class Tpm : Fido2Tests.Attestation
 
                         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
+                        var magic = new byte[] { 0x47, 0x43, 0x54, 0xff };
+                        Array.Reverse(magic);
+                        var tpmType = new byte[] { 0x17, 0x80 };
+                        Array.Reverse(tpmType);
+
                         var certInfo = CertInfoHelper.CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                            magic, // Magic
+                            tpmType, // Type
                             [0x00, 0x01, 0x00], // QualifiedSigner
                             extraData, // ExtraData
                             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -261,9 +267,14 @@ public class Tpm : Fido2Tests.Attestation
                         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
+                        var magic = new byte[] { 0x47, 0x43, 0x54, 0xff };
+                        Array.Reverse(magic);
+                        var tpmType = new byte[] { 0x17, 0x80 };
+                        Array.Reverse(tpmType);
+
                         var certInfo = CertInfoHelper.CreateCertInfo(
-                            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-                            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+                            magic, // Magic
+                            tpmType, // Type
                             [0x00, 0x01, 0x00], // QualifiedSigner
                             extraData, // ExtraData
                             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -380,8 +391,8 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm1bName = [.. tpm1bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -478,13 +489,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -572,13 +583,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -666,13 +677,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -767,13 +778,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -863,13 +874,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -957,13 +968,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1051,13 +1062,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1146,13 +1157,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1247,8 +1258,8 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1327,7 +1338,7 @@ public class Tpm : Fido2Tests.Attestation
             exponent, // Exponent
             curveId, // CurveID
             kdf, // KDF
-            unique.Reverse().ToArray() // Unique
+            unique // Unique
         );
 
         byte[] data = [.. _authData.ToByteArray(), .. _clientDataHash];
@@ -1336,13 +1347,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1430,13 +1441,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1507,19 +1518,21 @@ public class Tpm : Fido2Tests.Attestation
             { COSE.KeyTypeParameter.Crv, curve }
         };
 
-        var x = ((byte[])cpk[COSE.KeyTypeParameter.X]).Reverse().ToArray();
+        var x = (byte[])cpk[COSE.KeyTypeParameter.X];
+        Array.Reverse(x);
         var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
 
         _credentialPublicKey = new CredentialPublicKey(cpk);
 
         unique = [
-            .. GetUInt16BigEndianBytes(x.Length),
+            .. GetUInt16BigEndianBytes((ushort)x.Length),
             .. x,
-            .. GetUInt16BigEndianBytes(y.Length),
+            .. GetUInt16BigEndianBytes((ushort)y.Length),
             .. y
         ];
 
-        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]).Reverse().ToArray();
+        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]);
+        Array.Reverse(curveId);
         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
         var pubArea = PubAreaHelper.CreatePubArea(
@@ -1541,13 +1554,13 @@ public class Tpm : Fido2Tests.Attestation
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1619,18 +1632,20 @@ public class Tpm : Fido2Tests.Attestation
         };
 
         var x = (byte[])cpk[COSE.KeyTypeParameter.X];
-        var y = ((byte[])cpk[COSE.KeyTypeParameter.Y]).Reverse().ToArray();
+        var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
+        Array.Reverse(y);
 
         _credentialPublicKey = new CredentialPublicKey(cpk);
 
         unique = [
-            .. GetUInt16BigEndianBytes(x.Length),
+            .. GetUInt16BigEndianBytes((ushort)x.Length),
             .. x,
-            .. GetUInt16BigEndianBytes(y.Length),
+            .. GetUInt16BigEndianBytes((ushort)y.Length),
             .. y
         ];
 
-        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]).Reverse().ToArray();
+        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[(int)cpk[COSE.KeyTypeParameter.Crv]]);
+        Array.Reverse(curveId);
         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
         var pubArea = PubAreaHelper.CreatePubArea(
@@ -1653,13 +1668,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1736,13 +1751,14 @@ public class Tpm : Fido2Tests.Attestation
         _credentialPublicKey = new CredentialPublicKey(cpk);
 
         unique = [
-            .. GetUInt16BigEndianBytes(x.Length),
+            .. GetUInt16BigEndianBytes((ushort)x.Length),
             .. x,
-            .. GetUInt16BigEndianBytes(y.Length),
+            .. GetUInt16BigEndianBytes((ushort)y.Length),
             .. y
         ];
 
-        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[2]).Reverse().ToArray();
+        curveId = BitConverter.GetBytes((ushort)CoseCurveToTpm[2]);
+        Array.Reverse(curveId);
         kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
 
         var pubArea = PubAreaHelper.CreatePubArea(
@@ -1765,13 +1781,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1859,13 +1875,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -1953,13 +1969,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2054,13 +2070,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2148,13 +2164,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
             [0x47, 0x43, 0x54, 0xff], // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2242,12 +2258,12 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
             [0x17, 0x80], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
@@ -2341,8 +2357,8 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             [], // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2430,13 +2446,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, 0x00, 0x04, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2524,13 +2540,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, 0x00, 0x00, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2629,8 +2645,8 @@ public class Tpm : Fido2Tests.Attestation
         ];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2718,13 +2734,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, 0x00, 0x10, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSignerdo
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2812,13 +2828,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, 0xff, 0xff, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -2906,13 +2922,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3000,13 +3016,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3094,13 +3110,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3188,16 +3204,16 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
 
         hashedPubArea[^1] ^= 0xFF;
 
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3285,13 +3301,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3379,13 +3395,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3473,13 +3489,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3567,13 +3583,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3661,13 +3677,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3756,13 +3772,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3850,13 +3866,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -3944,13 +3960,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4043,13 +4059,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4148,13 +4164,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4249,8 +4265,8 @@ public class Tpm : Fido2Tests.Attestation
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4341,13 +4357,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4439,13 +4455,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4537,13 +4553,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4635,13 +4651,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4734,13 +4750,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4829,13 +4845,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -4923,13 +4939,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -5017,13 +5033,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -5124,13 +5140,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -5218,13 +5234,13 @@ public class Tpm : Fido2Tests.Attestation
         byte[] hashedData = CryptoUtils.HashData(hashAlg, data);
         byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
 
-        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
-        byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+        byte[] extraData = [.. GetUInt16BigEndianBytes((int)hashedData.Length), .. hashedData];
+        byte[] tpm2bNameLen = GetUInt16BigEndianBytes((int)(tpmAlg.Length + hashedPubArea.Length));
         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
 
         var certInfo = CertInfoHelper.CreateCertInfo(
-            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
-            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [ 0xff, 0x54, 0x43, 0x47 ], // Magic
+            [ 0x80, 0x17 ], // Type
             [0x00, 0x01, 0x00], // QualifiedSigner
             extraData, // ExtraData
             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock

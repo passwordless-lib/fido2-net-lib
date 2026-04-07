@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
 
@@ -45,11 +46,15 @@ public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccess
 
         foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
         {
-            var description = field.GetCustomAttribute<EnumMemberAttribute>(false);
+#if NET9_0_OR_GREATER
+            var description = field.GetCustomAttribute<JsonStringEnumMemberNameAttribute>(false)?.Name ?? field.GetCustomAttribute<EnumMemberAttribute>(false)?.Value;
+#else
+            var description = field.GetCustomAttribute<EnumMemberAttribute>(false)?.Value;
+#endif
 
             var value = (TEnum)field.GetValue(null)!;
 
-            items.Add(new(value, description is not null ? description.Value! : value.ToString()));
+            items.Add(new(value, description ?? value.ToString()));
         }
 
         return items.ToFrozenDictionary();

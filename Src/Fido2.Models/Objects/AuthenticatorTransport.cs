@@ -18,24 +18,36 @@ public enum AuthenticatorTransport
     /// Indicates the respective authenticator can be contacted over removable USB.
     /// </summary>
     [EnumMember(Value = "usb")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("usb")]
+#endif
     Usb,
 
     /// <summary>
     /// Indicates the respective authenticator can be contacted over Near Field Communication (NFC).
     /// </summary>
     [EnumMember(Value = "nfc")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("nfc")]
+#endif
     Nfc,
 
     /// <summary>
     /// Indicates the respective authenticator can be contacted over Bluetooth Smart (Bluetooth Low Energy / BLE).
     /// </summary>
     [EnumMember(Value = "ble")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("ble")]
+#endif
     Ble,
 
     /// <summary>
     /// Indicates the respective authenticator can be contacted over over ISO/IEC 7816 smart card with contacts.
     /// </summary>
     [EnumMember(Value = "smart-card")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("smart-card")]
+#endif
     SmartCard,
 
     /// <summary>
@@ -43,6 +55,9 @@ public enum AuthenticatorTransport
     /// and proximity mechanisms. This supports, for example, authentication on a desktop computer using a smartphone.
     /// </summary>
     [EnumMember(Value = "hybrid")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("hybrid")]
+#endif
     Hybrid,
 
     /// <summary>
@@ -50,5 +65,8 @@ public enum AuthenticatorTransport
     /// These authenticators are not removable from the client device.
     /// </summary>
     [EnumMember(Value = "internal")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("internal")]
+#endif
     Internal,
 }

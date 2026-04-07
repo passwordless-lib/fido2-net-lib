@@ -15,17 +15,26 @@ public enum CredentialProtectionPolicy
     /// This is the default state of the credential if the extension is not specified
     /// </summary>
     [EnumMember(Value = "userVerificationOptional")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("userVerificationOptional")]
+#endif
     UserVerificationOptional = 0x01,
 
     /// <summary>
     /// In this configuration, credential is discovered only when its credentialID is provided by the platform or when some form of user verification is performed.
     /// </summary>
     [EnumMember(Value = "userVerificationOptionalWithCredentialIDList")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("userVerificationOptionalWithCredentialIDList")]
+#endif
     UserVerificationOptionalWithCredentialIdList = 0x02,
 
     /// <summary>
     /// TThis reflects that discovery and usage of the credential MUST be preceded by some form of user verification.
     /// </summary>
     [EnumMember(Value = "userVerificationRequired")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("userVerificationRequired")]
+#endif
     UserVerificationRequired = 0x03
 }

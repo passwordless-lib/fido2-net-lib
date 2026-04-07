@@ -32,7 +32,11 @@ internal static class X509CertificateHelper
     {
         try
         {
+#if NET9_0_OR_GREATER
+            return X509CertificateLoader.LoadCertificate(rawData);
+#else
             return new X509Certificate2(rawData);
+#endif
         }
         catch (Exception ex)
         {

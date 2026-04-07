@@ -16,6 +16,9 @@ public enum UserVerificationRequirement
     /// and will fail the operation if the response does not have the UV flag set.
     /// </summary>
     [EnumMember(Value = "required")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("required")]
+#endif
     Required,
 
     /// <summary>
@@ -23,6 +26,9 @@ public enum UserVerificationRequirement
     /// but will not fail the operation if the response does not have the UV flag set.
     /// </summary>
     [EnumMember(Value = "preferred")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("preferred")]
+#endif
     Preferred,
 
     /// <summary>
@@ -30,5 +36,8 @@ public enum UserVerificationRequirement
     /// (e.g., in the interest of minimizing disruption to the user interaction flow).
     /// </summary>
     [EnumMember(Value = "discouraged")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("discouraged")]
+#endif
     Discouraged
 }

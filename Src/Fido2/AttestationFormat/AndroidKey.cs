@@ -158,7 +158,11 @@ internal sealed class AndroidKey : AttestationVerifier
             {
                 try
                 {
+#if NET9_0_OR_GREATER
+                    trustPath[i] = X509CertificateLoader.LoadCertificate(x5cObject.Value);
+#else
                     trustPath[i] = new X509Certificate2(x5cObject.Value);
+#endif
                 }
                 catch (Exception ex) when (i is 0)
                 {

@@ -13,6 +13,9 @@ internal enum MetadataAttestationType
     /// This sharing process shouldt be done according to [UAFMetadataService].
     /// </summary>
     [EnumMember(Value = "basic_full")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("basic_full")]
+#endif
     ATTESTATION_BASIC_FULL = 0x3e07,
 
     /// <summary>
@@ -22,12 +25,18 @@ internal enum MetadataAttestationType
     /// But it is the best thing we can do if the authenticator is not able to have an attestation private key.
     /// </summary>
     [EnumMember(Value = "basic_surrogate")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("basic_surrogate")]
+#endif
     ATTESTATION_BASIC_SURROGATE = 0x3e08,
 
     /// <summary>
     /// Indicates use of elliptic curve based direct anonymous attestation as defined in [FIDOEcdaaAlgorithm].
     /// </summary>
     [EnumMember(Value = "ecdaa")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("ecdaa")]
+#endif
     [Fido2Standard(Optional = true)]
     ATTESTATION_ECDAA = 0x3e09,
 
@@ -35,6 +44,9 @@ internal enum MetadataAttestationType
     /// Indicates PrivacyCA attestation as defined in [TCG-CMCProfile-AIKCertEnroll].
     /// </summary>
     [EnumMember(Value = "attca")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("attca")]
+#endif
     [Fido2Standard(Optional = true)]
     ATTESTATION_PRIVACY_CA = 0x3e10,
 
@@ -42,8 +54,14 @@ internal enum MetadataAttestationType
     /// Anonymization CA (AnonCA)
     /// </summary>
     [EnumMember(Value = "anonca")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("anonca")]
+#endif
     ATTESTATION_ANONCA = 0x3e0c,
 
     [EnumMember(Value = "none")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("none")]
+#endif
     ATTESTATION_NONE = 0x3e0b
 }

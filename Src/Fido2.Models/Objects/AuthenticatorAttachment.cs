@@ -19,11 +19,17 @@ public enum AuthenticatorAttachment
     /// This value indicates platform attachment
     /// </summary>
     [EnumMember(Value = "platform")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("platform")]
+#endif
     Platform,
 
     /// <summary>
     /// This value indicates cross-platform attachment.
     /// </summary>
     [EnumMember(Value = "cross-platform")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("cross-platform")]
+#endif
     CrossPlatform
 }

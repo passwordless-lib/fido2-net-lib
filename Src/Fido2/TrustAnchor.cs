@@ -26,7 +26,11 @@ public static class TrustAnchor
 
                 for (int i = 0; i < attestationRootCertificates.Length; i++)
                 {
+#if NET9_0_OR_GREATER
+                    attestationRootCertificates[i] = X509CertificateLoader.LoadCertificate(Convert.FromBase64String(certStrings[i]));
+#else
                     attestationRootCertificates[i] = new X509Certificate2(Convert.FromBase64String(certStrings[i]));
+#endif
                 }
 
                 if (trustPath.Length > 1 && attestationRootCertificates.Any(c => string.Equals(c.Thumbprint, trustPath[^1].Thumbprint, StringComparison.Ordinal)))

@@ -15,11 +15,17 @@ public enum LargeBlobSupport
     /// largeBlob support is required -- credential creation will fail if largeBlob is not supported
     /// </summary>
     [EnumMember(Value = "required")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("required")]
+#endif
     Required,
 
     /// <summary>
     /// largeBlob support is preferred -- credential creation will succeed even if largeBlob is not supported.
     /// </summary>
     [EnumMember(Value = "preferred")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("preferred")]
+#endif
     Preferred
 }

@@ -14,17 +14,26 @@ public enum PublicKeyCredentialHint
     /// Indicates that the Relying Party believes that users will satisfy this request with a physical security key. For example, an enterprise Relying Party may set this hint if they have issued security keys to their employees and will only accept those authenticators for registration and authentication.
     /// </summary>
     [EnumMember(Value = "security-key")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("security-key")]
+#endif
     SecurityKey,
 
     /// <summary>
     /// Indicates that the Relying Party believes that users will satisfy this request with a platform authenticator attached to the client device.
     /// </summary>
     [EnumMember(Value = "client-device")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("client-device")]
+#endif
     ClientDevice,
 
     /// <summary>
     /// Indicates that the Relying Party believes that users will satisfy this request with general-purpose authenticators such as smartphones. For example, a consumer Relying Party may believe that only a small fraction of their customers possesses dedicated security keys. This option also implies that the local platform authenticator should not be promoted in the UI.
     /// </summary>
     [EnumMember(Value = "hybrid")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("hybrid")]
+#endif
     Hybrid,
 }

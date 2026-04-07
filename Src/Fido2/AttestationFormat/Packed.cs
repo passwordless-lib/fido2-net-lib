@@ -62,7 +62,11 @@ internal sealed class Packed : AttestationVerifier
             {
                 if (x5cArray[i] is CborByteString { Length: > 0 } x5cObject)
                 {
+#if NET9_0_OR_GREATER
+                    var x5cCert = X509CertificateLoader.LoadCertificate(x5cObject.Value);
+#else
                     var x5cCert = new X509Certificate2(x5cObject.Value);
+#endif
 
                     // X509Certificate2.NotBefore/.NotAfter return LOCAL DateTimes, so
                     // it's correct to compare using DateTime.Now.

@@ -1,6 +1,7 @@
 ﻿#nullable disable
 
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
 
@@ -115,18 +116,27 @@ public class Fido2Configuration
         /// This value indicates that the Relying Party requires backup eligible or backed up credentials.
         /// </summary>
         [EnumMember(Value = "required")]
+#if NET9_0_OR_GREATER
+        [JsonStringEnumMemberName("required")]
+#endif
         Required,
 
         /// <summary>
         /// This value indicates that the Relying Party allows backup eligible or backed up credentials.
         /// </summary>
         [EnumMember(Value = "allowed")]
+#if NET9_0_OR_GREATER
+        [JsonStringEnumMemberName("allowed")]
+#endif
         Allowed,
 
         /// <summary>
         /// This value indicates that the Relying Party does not allow backup eligible or backed up credentials.
         /// </summary>
         [EnumMember(Value = "disallowed")]
+#if NET9_0_OR_GREATER
+        [JsonStringEnumMemberName("disallowed")]
+#endif
         Disallowed
     }
 }

@@ -11,8 +11,14 @@ namespace Fido2NetLib.Objects;
 public enum PublicKeyCredentialType
 {
     [EnumMember(Value = "public-key")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("public-key")]
+#endif
     PublicKey,
 
     [EnumMember(Value = "invalid")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("invalid")]
+#endif
     Invalid
 }

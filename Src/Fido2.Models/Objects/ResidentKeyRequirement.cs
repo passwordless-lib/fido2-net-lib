@@ -14,17 +14,26 @@ public enum ResidentKeyRequirement
     /// The Relying Party requires a client-side discoverable credential. The client MUST return an error if a client-side discoverable credential cannot be created.
     /// </summary>
     [EnumMember(Value = "required")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("required")]
+#endif
     Required,
 
     /// <summary>
     /// The Relying Party strongly prefers creating a client-side discoverable credential, but will accept a server-side credential. The client and authenticator SHOULD create a discoverable credential if possible. For example, the client SHOULD guide the user through setting up user verification if needed to create a discoverable credential. This takes precedence over the setting of userVerification.
     /// </summary>
     [EnumMember(Value = "preferred")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("preferred")]
+#endif
     Preferred,
 
     /// <summary>
     /// The Relying Party prefers creating a server-side credential, but will accept a client-side discoverable credential. The client and authenticator SHOULD create a server-side credential if possible.
     /// </summary>
     [EnumMember(Value = "discouraged")]
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("discouraged")]
+#endif
     Discouraged
 }
