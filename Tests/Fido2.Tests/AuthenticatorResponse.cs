@@ -2533,7 +2533,7 @@ public class AuthenticatorResponseTests
         byte[] publicKeyBytes;
         if (useEdDsa)
         {
-            fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out var privateKey);
+            fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out _);
             publicKeyBytes = fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes();
         }
         else
