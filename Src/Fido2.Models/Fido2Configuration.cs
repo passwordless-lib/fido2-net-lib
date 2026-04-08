@@ -42,6 +42,22 @@ public class Fido2Configuration
     /// </summary>
     public string RPName { get; set; }
 
+    /// <inheritdoc cref="RPID"/>
+    [Obsolete("Use RPID instead. This property will be removed in a future major version.")]
+    public string ServerDomain
+    {
+        get => RPID;
+        set => RPID = value;
+    }
+
+    /// <inheritdoc cref="RPName"/>
+    [Obsolete("Use RPName instead. This property will be removed in a future major version.")]
+    public string ServerName
+    {
+        get => RPName;
+        set => RPName = value;
+    }
+
     /// <summary>
     /// A serialized URL which resolves to an image associated with the entity. For example, this could be a user’s avatar or a Relying Party's logo. This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of needing more storage.
     /// </summary>
