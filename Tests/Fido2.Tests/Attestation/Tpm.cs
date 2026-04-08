@@ -1295,6 +1295,7 @@ public class Tpm : Fido2Tests.Attestation
         _credentialPublicKey = GetRSACredentialPublicKey(type, alg, rsaParams);
 
         unique = rsaParams.Modulus;
+        unique.Reverse();
         exponent = rsaParams.Exponent;
 
         var pubArea = PubAreaHelper.CreatePubArea(
