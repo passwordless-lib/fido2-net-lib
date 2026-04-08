@@ -2461,8 +2461,12 @@ public class AuthenticatorResponseTests
         Assert.Equal(Fido2ErrorMessages.MissingStoredPublicKey, ex.Message);
     }
 
-    [Fact]
-    public async Task TestAuthenticatorAssertionInvalidSignature()
+    [Theory]
+    [InlineData(new byte[] { 0x30, 0x00 }, true)]
+    [InlineData(new byte[] { 0x30, 0x00 }, false)]
+    [InlineData(new byte[] { 0xf1, 0xd0 }, true)]
+    [InlineData(new byte[] { 0xf1, 0xd0 }, false)]
+    public async Task TestAuthenticatorAssertionInvalidSignature(byte[] signature, bool useEdDsa)
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
         var rp = "https://www.passwordless.dev";
@@ -2488,7 +2492,7 @@ public class AuthenticatorResponseTests
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
             AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null, new Extensions(new byte[] { 0x42 })).ToByteArray(),
-            Signature = [0xf1, 0xd0],
+            Signature = signature,
             ClientDataJson = clientDataJson,
             UserHandle = [0xf1, 0xd0],
         };
@@ -2526,12 +2530,23 @@ public class AuthenticatorResponseTests
             return Task.FromResult(true);
         };
 
-        fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out var privateKey);
+        byte[] publicKeyBytes;
+        if (useEdDsa)
+        {
+            fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out _);
+            publicKeyBytes = fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes();
+        }
+        else
+        {
+            using var ecdsa = fido2_net_lib.Test.Fido2Tests.MakeECDsa(COSE.Algorithm.ES256, COSE.EllipticCurve.P256);
+            publicKeyBytes = new CredentialPublicKey(ecdsa, COSE.Algorithm.ES256).GetBytes();
+        }
+
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
         {
             AssertionResponse = assertionResponse,
             OriginalOptions = options,
-            StoredPublicKey = fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey).GetBytes(),
+            StoredPublicKey = publicKeyBytes,
             StoredSignatureCounter = 0,
             IsUserHandleOwnerOfCredentialIdCallback = callback
         }));
