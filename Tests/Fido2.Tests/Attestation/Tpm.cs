@@ -254,15 +254,9 @@ public class Tpm : Fido2Tests.Attestation
                         byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
                         byte[] tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
                         byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
-
-                        var magic = new byte[] { 0x47, 0x43, 0x54, 0xff };
-                        Array.Reverse(magic);
-                        var tpmType = new byte[] { 0x17, 0x80 };
-                        Array.Reverse(tpmType);
-
                         var certInfo = CertInfoHelper.CreateCertInfo(
-                            magic, // Magic
-                            tpmType, // Type
+                            [0xff, 0x54, 0x43, 0x47], // Magic
+                            [0x80, 0x17], // Type
                             [0x00, 0x01, 0x00], // QualifiedSigner
                             extraData, // ExtraData
                             [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
@@ -273,7 +267,6 @@ public class Tpm : Fido2Tests.Attestation
                             tpm2bName, // TPM2BName
                             [0x00, 0x00] // AttestedQualifiedNameBuffer
                         );
-
                         byte[] signature = Fido2Tests.SignData(type, alg, certInfo, null, rsaAtt, null);
 
                         _attestationObject.Set("attStmt",
