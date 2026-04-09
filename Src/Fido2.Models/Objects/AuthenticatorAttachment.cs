@@ -12,24 +12,30 @@ namespace Fido2NetLib.Objects;
 /// Note: An authenticator attachment modality selection option is available only in the [[Create]](origin, options, sameOriginWithAncestors) operation. The Relying Party may use it to, for example, ensure the user has a roaming credential for authenticating on another client device; or to specifically register a platform credential for easier reauthentication using a particular client device. The [[DiscoverFromExternalSource]](origin, options, sameOriginWithAncestors) operation has no authenticator attachment modality selection option, so the Relying Party SHOULD accept any of the user’s registered credentials. The client and user will then use whichever is available and convenient at the time.
 /// https://www.w3.org/TR/webauthn-2/#enum-attachment
 /// </remarks>
+#if NET9_0_OR_GREATER
+[JsonConverter(typeof(JsonStringEnumConverter<AuthenticatorAttachment>))]
+#else
 [JsonConverter(typeof(FidoEnumConverter<AuthenticatorAttachment>))]
+#endif
 public enum AuthenticatorAttachment
 {
     /// <summary>
     /// This value indicates platform attachment
     /// </summary>
-    [EnumMember(Value = "platform")]
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("platform")]
+#else
+    [EnumMember(Value = "platform")]
 #endif
     Platform,
 
     /// <summary>
     /// This value indicates cross-platform attachment.
     /// </summary>
-    [EnumMember(Value = "cross-platform")]
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("cross-platform")]
+#else
+    [EnumMember(Value = "cross-platform")]
 #endif
     CrossPlatform
 }
