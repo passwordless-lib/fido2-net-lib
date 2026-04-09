@@ -47,7 +47,7 @@ public static class EnumNameMapper<[DynamicallyAccessedMembers(DynamicallyAccess
         foreach (var field in typeof(TEnum).GetFields(BindingFlags.Public | BindingFlags.Static))
         {
 #if NET9_0_OR_GREATER
-            var description = field.GetCustomAttribute<JsonStringEnumMemberNameAttribute>(false)?.Name ?? field.GetCustomAttribute<EnumMemberAttribute>(false)?.Value;
+            var description = field.GetCustomAttribute<JsonStringEnumMemberNameAttribute>(false)?.Name;
 #else
             var description = field.GetCustomAttribute<EnumMemberAttribute>(false)?.Value;
 #endif
