@@ -137,15 +137,9 @@ public class Apple : Fido2Tests.Attestation
         invalidCert[424] = 0x42;
         invalidX5cStrings[0] = Convert.ToBase64String(invalidCert);
 
-#if NET9_0_OR_GREATER
         var trustPath = invalidX5cStrings
-            .Select(x => X509CertificateLoader.LoadCertificate(Convert.FromBase64String(x)))
+            .Select(x => X509CertificateHelper.CreateFromRawData(Convert.FromBase64String(x)))
             .ToArray();
-#else
-        var trustPath = invalidX5cStrings
-            .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-            .ToArray();
-#endif
 
         var x5c = new CborArray {
             trustPath[0].RawData,
@@ -165,15 +159,9 @@ public class Apple : Fido2Tests.Attestation
         invalidCert[429] = 0x03;
         invalidX5cStrings[0] = Convert.ToBase64String(invalidCert);
 
-#if NET9_0_OR_GREATER
         var trustPath = invalidX5cStrings
-            .Select(x => X509CertificateLoader.LoadCertificate(Convert.FromBase64String(x)))
+            .Select(x => X509CertificateHelper.CreateFromRawData(Convert.FromBase64String(x)))
             .ToArray();
-#else
-        var trustPath = invalidX5cStrings
-            .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-            .ToArray();
-#endif
 
         var x5c = new CborArray {
             trustPath[0].RawData,
@@ -190,15 +178,9 @@ public class Apple : Fido2Tests.Attestation
     [Fact]
     public async Task TestAppleInvalidNonce()
     {
-#if NET9_0_OR_GREATER
         var trustPath = validX5cStrings
-            .Select(x => X509CertificateLoader.LoadCertificate(Convert.FromBase64String(x)))
+            .Select(x => X509CertificateHelper.CreateFromRawData(Convert.FromBase64String(x)))
             .ToArray();
-#else
-        var trustPath = validX5cStrings
-            .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-            .ToArray();
-#endif
 
         var x5c = new CborArray {
             trustPath[0].RawData,
@@ -228,15 +210,9 @@ public class Apple : Fido2Tests.Attestation
 
         var invalidX5cStrings = StackAllocSha256(authData, clientDataJson);
 
-#if NET9_0_OR_GREATER
         var trustPath = invalidX5cStrings
-            .Select(x => X509CertificateLoader.LoadCertificate(Convert.FromBase64String(x)))
+            .Select(x => X509CertificateHelper.CreateFromRawData(Convert.FromBase64String(x)))
             .ToArray();
-#else
-        var trustPath = invalidX5cStrings
-            .Select(x => new X509Certificate2(Convert.FromBase64String(x)))
-            .ToArray();
-#endif
 
         var X5c = new CborArray {
             { trustPath[0].RawData },
