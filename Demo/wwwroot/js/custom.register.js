@@ -34,7 +34,7 @@ async function handleRegisterSubmit(event) {
 
     } catch (e) {
         console.error(e);
-        let msg = "Something wen't really wrong";
+        let msg = "Something went really wrong";
         showErrorAlert(msg);
     }
 
@@ -48,15 +48,8 @@ async function handleRegisterSubmit(event) {
         return;
     }
 
-    // Turn the challenge back into the accepted format of padded base64
-    makeCredentialOptions.challenge = coerceToArrayBuffer(makeCredentialOptions.challenge);
-    // Turn ID into a UInt8Array Buffer for some reason
-    makeCredentialOptions.user.id = coerceToArrayBuffer(makeCredentialOptions.user.id);
-
-    makeCredentialOptions.excludeCredentials = makeCredentialOptions.excludeCredentials.map((c) => {
-        c.id = coerceToArrayBuffer(c.id);
-        return c;
-    });
+    // Parse Base64Url into ArrayBuffers
+    makeCredentialOptions = PublicKeyCredential.parseCreationOptionsFromJSON(makeCredentialOptions);
 
     if (makeCredentialOptions.authenticatorSelection.authenticatorAttachment === null) makeCredentialOptions.authenticatorSelection.authenticatorAttachment = undefined;
 
@@ -113,22 +106,8 @@ async function fetchMakeCredentialOptions(formData) {
 
 // This should be used to verify the auth data with the server
 async function registerNewCredential(newCredential) {
-    // Move data into Arrays incase it is super long
-    let attestationObject = new Uint8Array(newCredential.response.attestationObject);
-    let clientDataJSON = new Uint8Array(newCredential.response.clientDataJSON);
-    let rawId = new Uint8Array(newCredential.rawId);
-
-    const data = {
-        id: newCredential.id,
-        rawId: coerceToBase64Url(rawId),
-        type: newCredential.type,
-        extensions: newCredential.getClientExtensionResults(),
-        response: {
-            attestationObject: coerceToBase64Url(attestationObject),
-            clientDataJSON: coerceToBase64Url(clientDataJSON),
-            transports: newCredential.response.getTransports()
-        },
-    };
+    // Convert ArrayBuffers to Base64Url for HTTP transport
+    const data = newCredential.toJSON();
 
     let response;
     try {

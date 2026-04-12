@@ -35,10 +35,8 @@ async function handleSignInSubmit(event) {
         return;
     }
 
-    makeAssertionOptions.challenge = coerceToArrayBuffer(makeAssertionOptions.challenge);
-    makeAssertionOptions.allowCredentials.forEach(function (listItem) {
-        listItem.id = coerceToArrayBuffer(listItem.id);
-    });
+    // Parse Base64Url into ArrayBuffers
+    makeAssertionOptions = PublicKeyCredential.parseRequestOptionsFromJSON(makeAssertionOptions);
 
     console.log("Assertion options", makeAssertionOptions);
 
@@ -72,25 +70,8 @@ async function handleSignInSubmit(event) {
  * @param {any} assertedCredential
  */
 async function verifyAssertionWithServer(assertedCredential) {
-
-    // Move data into Arrays incase it is super long
-    let authData = new Uint8Array(assertedCredential.response.authenticatorData);
-    let clientDataJSON = new Uint8Array(assertedCredential.response.clientDataJSON);
-    let rawId = new Uint8Array(assertedCredential.rawId);
-    let sig = new Uint8Array(assertedCredential.response.signature);
-    let userHandle = assertedCredential.response.userHandle ? new Uint8Array(assertedCredential.response.userHandle) : null;
-    const data = {
-        id: assertedCredential.id,
-        rawId: coerceToBase64Url(rawId),
-        type: assertedCredential.type,
-        extensions: assertedCredential.getClientExtensionResults(),
-        response: {
-            authenticatorData: coerceToBase64Url(authData),
-            clientDataJSON: coerceToBase64Url(clientDataJSON),
-            userHandle: userHandle ? coerceToBase64Url(userHandle): null,
-            signature: coerceToBase64Url(sig)
-        }
-    };
+    // Convert ArrayBuffers to Base64Url for HTTP transport
+    const data = assertedCredential.toJSON();
 
     let response;
     try {
