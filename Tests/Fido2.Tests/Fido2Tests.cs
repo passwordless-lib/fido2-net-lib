@@ -234,8 +234,8 @@ public class Fido2Tests
 
             var lib = new Fido2(new Fido2Configuration
             {
-                ServerDomain = rp,
-                ServerName = rp,
+                RPID = rp,
+                RPName = rp,
                 Origins = new HashSet<string> { rp },
             });
 
@@ -1033,8 +1033,8 @@ public class Fido2Tests
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = rp,
-            ServerName = rp,
+            RPID = rp,
+            RPName = rp,
             Origins = new HashSet<string> { rp },
         });
         var existingCredentials = new List<PublicKeyCredentialDescriptor>();

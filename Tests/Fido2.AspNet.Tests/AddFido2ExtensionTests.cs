@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using Fido2NetLib;
 
@@ -22,8 +22,8 @@ public class AddFido2ExtensionTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
-                ["ServerName"] = "Test Server",
-                ["ServerDomain"] = "localhost",
+                ["RPName"] = "Test Server",
+                ["RPID"] = "localhost",
                 ["Origins"] = "https://localhost:5001"
             })
             .Build();
@@ -44,13 +44,13 @@ public class AddFido2ExtensionTests
         // Verify Fido2Configuration can be resolved
         var config = serviceProvider.GetService<Fido2Configuration>();
         Assert.NotNull(config);
-        Assert.Equal("Test Server", config.ServerName);
-        Assert.Equal("localhost", config.ServerDomain);
+        Assert.Equal("Test Server", config.RPName);
+        Assert.Equal("localhost", config.RPID);
 
         // Verify ISystemClock is registered
         var systemClock = serviceProvider.GetService<ISystemClock>();
         Assert.NotNull(systemClock);
-        
+
         // Verify MDS is null
         // var mds = serviceProvider.GetService<IMetadataService>();
         // Assert.Null(mds);
@@ -65,8 +65,8 @@ public class AddFido2ExtensionTests
         // Act
         var builder = services.AddFido2(config =>
         {
-            config.ServerName = "Action Server";
-            config.ServerDomain = "example.com";
+            config.RPName = "Action Server";
+            config.RPID = "example.com";
             config.Origins = new HashSet<string> { "https://example.com" };
         });
 
@@ -83,14 +83,14 @@ public class AddFido2ExtensionTests
         // Verify Fido2Configuration can be resolved with correct values
         var config = serviceProvider.GetService<Fido2Configuration>();
         Assert.NotNull(config);
-        Assert.Equal("Action Server", config.ServerName);
-        Assert.Equal("example.com", config.ServerDomain);
+        Assert.Equal("Action Server", config.RPName);
+        Assert.Equal("example.com", config.RPID);
         Assert.Contains("https://example.com", config.Origins);
 
         // Verify ISystemClock is registered
         var systemClock = serviceProvider.GetService<ISystemClock>();
         Assert.NotNull(systemClock);
-        
+
         // Verify MDS is null
         // var mds = serviceProvider.GetService<IMetadataService>();
         // Assert.Null(mds);

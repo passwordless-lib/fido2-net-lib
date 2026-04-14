@@ -75,7 +75,7 @@ public class AssertionOptions
         {
             Challenge = challenge,
             Timeout = config.Timeout,
-            RpId = config.ServerDomain,
+            RpId = config.RPID,
             AllowCredentials = allowedCredentials,
             UserVerification = userVerification,
             Extensions = extensions

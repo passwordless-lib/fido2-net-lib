@@ -25,8 +25,8 @@ public class ConformanceTestController : Controller
 
         _fido2 = new Fido2(new Fido2Configuration
         {
-            ServerDomain = fido2Configuration.Value.ServerDomain,
-            ServerName = fido2Configuration.Value.ServerName,
+            RPID = fido2Configuration.Value.RPID,
+            RPName = fido2Configuration.Value.RPName,
             Origins = fido2Configuration.Value.FullyQualifiedOrigins,
         },
         ConformanceTesting.MetadataServiceInstance(

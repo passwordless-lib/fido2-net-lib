@@ -264,8 +264,8 @@ public class Apple : Fido2Tests.Attestation
 
         var lib = new Fido2(new Fido2Configuration
         {
-            ServerDomain = "6cc3c9e7967a.ngrok.io",
-            ServerName = "6cc3c9e7967a.ngrok.io",
+            RPID = "6cc3c9e7967a.ngrok.io",
+            RPName = "6cc3c9e7967a.ngrok.io",
             Origins = new HashSet<string> { "https://www.passwordless.dev" },
         });
 
