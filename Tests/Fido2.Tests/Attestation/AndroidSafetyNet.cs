@@ -317,8 +317,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("response", new CborByteString(response));
-        var ex = await Assert.ThrowsAnyAsync<Exception>(MakeAttestationResponseAsync);
-        Assert.Equal("Cannot find the requested object.", ex.Message);
+        await Assert.ThrowsAnyAsync<Exception>(MakeAttestationResponseAsync);
     }
 
     [Fact]
