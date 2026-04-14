@@ -158,7 +158,7 @@ internal sealed class AndroidKey : AttestationVerifier
             {
                 try
                 {
-                    trustPath[i] = new X509Certificate2(x5cObject.Value);
+                    trustPath[i] = X509CertificateHelper.CreateFromRawData(x5cObject.Value);
                 }
                 catch (Exception ex) when (i is 0)
                 {

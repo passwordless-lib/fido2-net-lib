@@ -135,7 +135,7 @@ internal sealed class Tpm : AttestationVerifier
             {
                 if (x5cArray[i] is CborByteString { Length: > 0 } x5cObject)
                 {
-                    trustPath[i] = new X509Certificate2(x5cObject.Value);
+                    trustPath[i] = X509CertificateHelper.CreateFromRawData(x5cObject.Value);
                 }
                 else
                 {

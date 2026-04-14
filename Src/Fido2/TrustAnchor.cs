@@ -26,7 +26,7 @@ public static class TrustAnchor
 
                 for (int i = 0; i < attestationRootCertificates.Length; i++)
                 {
-                    attestationRootCertificates[i] = new X509Certificate2(Convert.FromBase64String(certStrings[i]));
+                    attestationRootCertificates[i] = X509CertificateHelper.CreateFromRawData(Convert.FromBase64String(certStrings[i]));
                 }
 
                 if (trustPath.Length > 1 && attestationRootCertificates.Any(c => string.Equals(c.Thumbprint, trustPath[^1].Thumbprint, StringComparison.Ordinal)))

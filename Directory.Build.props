@@ -16,7 +16,7 @@
   
   <!-- Global Variables -->
   <PropertyGroup>
-    <SupportedTargetFrameworks>net8.0</SupportedTargetFrameworks>
+    <SupportedTargetFrameworks>net8.0;net10.0</SupportedTargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -29,7 +29,7 @@
   
   <!-- Language + Compiler Settings-->
   <PropertyGroup>
-    <LangVersion>12</LangVersion>
+    <LangVersion>13</LangVersion>
   </PropertyGroup>
   
   <!--MISC-->

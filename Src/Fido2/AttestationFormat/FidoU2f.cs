@@ -27,7 +27,7 @@ internal sealed class FidoU2f : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_FidoU2fAttestation);
         }
 
-        var attCert = new X509Certificate2((byte[])x5cArray[0]);
+        var attCert = X509CertificateHelper.CreateFromRawData((byte[])x5cArray[0]);
 
         // TODO : Check why this variable isn't used. Remove it or use it.
         var u2fTransports = U2FTransportsFromAttnCert(attCert.Extensions);

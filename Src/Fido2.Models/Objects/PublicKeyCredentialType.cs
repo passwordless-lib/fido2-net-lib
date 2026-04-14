@@ -7,12 +7,24 @@ namespace Fido2NetLib.Objects;
 /// PublicKeyCredentialType.
 /// https://www.w3.org/TR/webauthn-2/#enum-credentialType
 /// </summary>
+#if NET9_0_OR_GREATER
+[JsonConverter(typeof(JsonStringEnumConverter<PublicKeyCredentialType>))]
+#else
 [JsonConverter(typeof(FidoEnumConverter<PublicKeyCredentialType>))]
+#endif
 public enum PublicKeyCredentialType
 {
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("public-key")]
+#else
     [EnumMember(Value = "public-key")]
+#endif
     PublicKey,
 
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("invalid")]
+#else
     [EnumMember(Value = "invalid")]
+#endif
     Invalid
 }

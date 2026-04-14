@@ -7,25 +7,41 @@ namespace Fido2NetLib.Objects;
 /// CredentialProtectionPolicy
 /// https://fidoalliance.org/specs/fido-v2.2-rd-20230321/fido-client-to-authenticator-protocol-v2.2-rd-20230321.html#sctn-credProtect-extension
 /// </summary>
+#if NET9_0_OR_GREATER
+[JsonConverter(typeof(JsonStringEnumConverter<CredentialProtectionPolicy>))]
+#else
 [JsonConverter(typeof(FidoEnumConverter<CredentialProtectionPolicy>))]
+#endif
 public enum CredentialProtectionPolicy
 {
     /// <summary>
     /// This reflects "FIDO_2_0" semantics. In this configuration, performing some form of user verification is OPTIONAL with or without credentialID list.
     /// This is the default state of the credential if the extension is not specified
     /// </summary>
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("userVerificationOptional")]
+#else
     [EnumMember(Value = "userVerificationOptional")]
+#endif
     UserVerificationOptional = 0x01,
 
     /// <summary>
     /// In this configuration, credential is discovered only when its credentialID is provided by the platform or when some form of user verification is performed.
     /// </summary>
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("userVerificationOptionalWithCredentialIDList")]
+#else
     [EnumMember(Value = "userVerificationOptionalWithCredentialIDList")]
+#endif
     UserVerificationOptionalWithCredentialIdList = 0x02,
 
     /// <summary>
     /// TThis reflects that discovery and usage of the credential MUST be preceded by some form of user verification.
     /// </summary>
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("userVerificationRequired")]
+#else
     [EnumMember(Value = "userVerificationRequired")]
+#endif
     UserVerificationRequired = 0x03
 }

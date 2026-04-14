@@ -30,13 +30,10 @@ internal static class X509CertificateHelper
 
     public static X509Certificate2 CreateFromRawData(ReadOnlySpan<byte> rawData)
     {
-        try
-        {
-            return new X509Certificate2(rawData);
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Could not parse X509 certificate", ex);
-        }
+#if NET9_0_OR_GREATER
+        return X509CertificateLoader.LoadCertificate(rawData);
+#else
+        return new X509Certificate2(rawData);
+#endif
     }
 }

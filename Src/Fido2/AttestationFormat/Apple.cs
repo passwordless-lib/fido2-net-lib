@@ -56,7 +56,7 @@ internal sealed class Apple : AttestationVerifier
 
         for (int i = 0; i < trustPath.Length; i++)
         {
-            trustPath[i] = new X509Certificate2((byte[])x5cArray[i]);
+            trustPath[i] = X509CertificateHelper.CreateFromRawData((byte[])x5cArray[i]);
         }
 
         // credCert is the first certificate in the trust path
