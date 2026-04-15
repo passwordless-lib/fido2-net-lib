@@ -19,9 +19,8 @@ public enum ResidentKeyRequirement
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("required")]
-#else
-    [EnumMember(Value = "required")]
 #endif
+    [EnumMember(Value = "required")]
     Required,
 
     /// <summary>
@@ -29,9 +28,8 @@ public enum ResidentKeyRequirement
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("preferred")]
-#else
-    [EnumMember(Value = "preferred")]
 #endif
+    [EnumMember(Value = "preferred")]
     Preferred,
 
     /// <summary>
@@ -39,8 +37,7 @@ public enum ResidentKeyRequirement
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("discouraged")]
-#else
-    [EnumMember(Value = "discouraged")]
 #endif
+    [EnumMember(Value = "discouraged")]
     Discouraged
 }

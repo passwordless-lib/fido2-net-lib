@@ -19,9 +19,8 @@ public enum AttestationStatementFormatIdentifier
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("packed")]
-#else
-    [EnumMember(Value = "packed")]
 #endif
+    [EnumMember(Value = "packed")]
     Packed,
 
     /// <summary>
@@ -29,9 +28,8 @@ public enum AttestationStatementFormatIdentifier
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("tpm")]
-#else
-    [EnumMember(Value = "tpm")]
 #endif
+    [EnumMember(Value = "tpm")]
     Tpm,
 
     /// <summary>
@@ -39,9 +37,8 @@ public enum AttestationStatementFormatIdentifier
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("android-key")]
-#else
-    [EnumMember(Value = "android-key")]
 #endif
+    [EnumMember(Value = "android-key")]
     AndroidKey,
 
     /// <summary>
@@ -49,9 +46,8 @@ public enum AttestationStatementFormatIdentifier
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("android-safetynet")]
-#else
-    [EnumMember(Value = "android-safetynet")]
 #endif
+    [EnumMember(Value = "android-safetynet")]
     AndroidSafetyNet,
 
     /// <summary>
@@ -59,9 +55,8 @@ public enum AttestationStatementFormatIdentifier
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("fido-u2f")]
-#else
-    [EnumMember(Value = "fido-u2f")]
 #endif
+    [EnumMember(Value = "fido-u2f")]
     FidoU2f,
 
     /// <summary>
@@ -69,9 +64,8 @@ public enum AttestationStatementFormatIdentifier
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("apple")]
-#else
-    [EnumMember(Value = "apple")]
 #endif
+    [EnumMember(Value = "apple")]
     Apple,
 
     /// <summary>
@@ -79,9 +73,8 @@ public enum AttestationStatementFormatIdentifier
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("none")]
-#else
-    [EnumMember(Value = "none")]
 #endif
+    [EnumMember(Value = "none")]
     None
 }
 

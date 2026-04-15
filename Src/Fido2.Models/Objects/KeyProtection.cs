@@ -23,9 +23,8 @@ public enum KeyProtection
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("software")]
-#else
-    [EnumMember(Value = "software")]
 #endif
+    [EnumMember(Value = "software")]
     SOFTWARE = 1,
 
     /// <summary>
@@ -33,9 +32,8 @@ public enum KeyProtection
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("hardware")]
-#else
-    [EnumMember(Value = "hardware")]
 #endif
+    [EnumMember(Value = "hardware")]
     HARDWARE = 2,
 
     /// <summary>
@@ -43,9 +41,8 @@ public enum KeyProtection
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("tee")]
-#else
-    [EnumMember(Value = "tee")]
 #endif
+    [EnumMember(Value = "tee")]
     TEE = 4,
 
     /// <summary>
@@ -53,9 +50,8 @@ public enum KeyProtection
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("secure_element")]
-#else
-    [EnumMember(Value = "secure_element")]
 #endif
+    [EnumMember(Value = "secure_element")]
     SECURE_ELEMENT = 0x8,
 
     /// <summary>
@@ -63,8 +59,7 @@ public enum KeyProtection
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("remote_handle")]
-#else
-    [EnumMember(Value = "remote_handle")]
 #endif
+    [EnumMember(Value = "remote_handle")]
     REMOTE_HANDLE = 0x10,
 }

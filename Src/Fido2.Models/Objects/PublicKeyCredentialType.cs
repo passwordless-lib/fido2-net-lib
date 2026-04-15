@@ -16,15 +16,13 @@ public enum PublicKeyCredentialType
 {
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("public-key")]
-#else
-    [EnumMember(Value = "public-key")]
 #endif
+    [EnumMember(Value = "public-key")]
     PublicKey,
 
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("invalid")]
-#else
-    [EnumMember(Value = "invalid")]
 #endif
+    [EnumMember(Value = "invalid")]
     Invalid
 }
