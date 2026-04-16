@@ -126,6 +126,11 @@ public class Fido2Configuration
     /// </summary>
     public CredentialBackupPolicy BackedUpCredentialPolicy { get; set; } = CredentialBackupPolicy.Allowed;
 
+#if NET9_0_OR_GREATER
+    [JsonConverter(typeof(JsonStringEnumConverter<CredentialBackupPolicy>))]
+#else
+    [JsonConverter(typeof(FidoEnumConverter<CredentialBackupPolicy>))]
+#endif
     public enum CredentialBackupPolicy
     {
         /// <summary>
