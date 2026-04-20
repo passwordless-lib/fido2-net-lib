@@ -183,6 +183,7 @@ jobs:
     permissions:
       actions: read
       packages: write
+      id-token: write
 
     steps:
       - name: Download artifacts
@@ -205,10 +206,18 @@ jobs:
           --source https://nuget.pkg.github.com/passwordless-lib/index.json
           --api-key ${{ secrets.GITHUB_TOKEN }}
 
+      # Only login to NuGet on stable release
+      - name: NuGet login (NuGet Registry)
+        uses: NuGet/login@v1
+        if: ${{ github.event_name == 'release' || github.event.inputs.force_release }}
+        id: nuget-login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       # Only publish to NuGet on stable releases
       - name: Publish packages (NuGet Registry)
         if: ${{ github.event_name == 'release' || github.event.inputs.force_release }}
         run: >
           dotnet nuget push **/*.nupkg
           --source https://api.nuget.org/v3/index.json
-          --api-key ${{ secrets.nuget_api_key }}
+          --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
