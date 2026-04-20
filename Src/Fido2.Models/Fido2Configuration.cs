@@ -126,6 +126,11 @@ public class Fido2Configuration
     /// </summary>
     public CredentialBackupPolicy BackedUpCredentialPolicy { get; set; } = CredentialBackupPolicy.Allowed;
 
+#if NET9_0_OR_GREATER
+    [JsonConverter(typeof(JsonStringEnumConverter<CredentialBackupPolicy>))]
+#else
+    [JsonConverter(typeof(FidoEnumConverter<CredentialBackupPolicy>))]
+#endif
     public enum CredentialBackupPolicy
     {
         /// <summary>
@@ -133,9 +138,8 @@ public class Fido2Configuration
         /// </summary>
 #if NET9_0_OR_GREATER
         [JsonStringEnumMemberName("required")]
-#else
-        [EnumMember(Value = "required")]
 #endif
+        [EnumMember(Value = "required")]
         Required,
 
         /// <summary>
@@ -143,9 +147,8 @@ public class Fido2Configuration
         /// </summary>
 #if NET9_0_OR_GREATER
         [JsonStringEnumMemberName("allowed")]
-#else
-        [EnumMember(Value = "allowed")]
 #endif
+        [EnumMember(Value = "allowed")]
         Allowed,
 
         /// <summary>
@@ -153,9 +156,8 @@ public class Fido2Configuration
         /// </summary>
 #if NET9_0_OR_GREATER
         [JsonStringEnumMemberName("disallowed")]
-#else
-        [EnumMember(Value = "disallowed")]
 #endif
+        [EnumMember(Value = "disallowed")]
         Disallowed
     }
 }

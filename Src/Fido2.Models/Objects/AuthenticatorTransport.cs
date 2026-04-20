@@ -23,9 +23,8 @@ public enum AuthenticatorTransport
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("usb")]
-#else
-    [EnumMember(Value = "usb")]
 #endif
+    [EnumMember(Value = "usb")]
     Usb,
 
     /// <summary>
@@ -33,9 +32,8 @@ public enum AuthenticatorTransport
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("nfc")]
-#else
-    [EnumMember(Value = "nfc")]
 #endif
+    [EnumMember(Value = "nfc")]
     Nfc,
 
     /// <summary>
@@ -43,9 +41,8 @@ public enum AuthenticatorTransport
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("ble")]
-#else
-    [EnumMember(Value = "ble")]
 #endif
+    [EnumMember(Value = "ble")]
     Ble,
 
     /// <summary>
@@ -53,9 +50,8 @@ public enum AuthenticatorTransport
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("smart-card")]
-#else
-    [EnumMember(Value = "smart-card")]
 #endif
+    [EnumMember(Value = "smart-card")]
     SmartCard,
 
     /// <summary>
@@ -64,9 +60,8 @@ public enum AuthenticatorTransport
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("hybrid")]
-#else
-    [EnumMember(Value = "hybrid")]
 #endif
+    [EnumMember(Value = "hybrid")]
     Hybrid,
 
     /// <summary>
@@ -75,8 +70,7 @@ public enum AuthenticatorTransport
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("internal")]
-#else
-    [EnumMember(Value = "internal")]
 #endif
+    [EnumMember(Value = "internal")]
     Internal,
 }

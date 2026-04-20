@@ -24,9 +24,8 @@ public enum AuthenticatorAttachment
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("platform")]
-#else
-    [EnumMember(Value = "platform")]
 #endif
+    [EnumMember(Value = "platform")]
     Platform,
 
     /// <summary>
@@ -34,8 +33,7 @@ public enum AuthenticatorAttachment
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("cross-platform")]
-#else
-    [EnumMember(Value = "cross-platform")]
 #endif
+    [EnumMember(Value = "cross-platform")]
     CrossPlatform
 }

@@ -19,9 +19,8 @@ public enum PublicKeyCredentialHint
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("security-key")]
-#else
-    [EnumMember(Value = "security-key")]
 #endif
+    [EnumMember(Value = "security-key")]
     SecurityKey,
 
     /// <summary>
@@ -29,9 +28,8 @@ public enum PublicKeyCredentialHint
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("client-device")]
-#else
-    [EnumMember(Value = "client-device")]
 #endif
+    [EnumMember(Value = "client-device")]
     ClientDevice,
 
     /// <summary>
@@ -39,8 +37,7 @@ public enum PublicKeyCredentialHint
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("hybrid")]
-#else
-    [EnumMember(Value = "hybrid")]
 #endif
+    [EnumMember(Value = "hybrid")]
     Hybrid,
 }

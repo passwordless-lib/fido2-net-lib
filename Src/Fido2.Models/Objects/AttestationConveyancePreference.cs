@@ -20,9 +20,8 @@ public enum AttestationConveyancePreference
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("none")]
-#else
-    [EnumMember(Value = "none")]
 #endif
+    [EnumMember(Value = "none")]
     None,
 
     /// <summary>
@@ -30,9 +29,8 @@ public enum AttestationConveyancePreference
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("indirect")]
-#else
-    [EnumMember(Value = "indirect")]
 #endif
+    [EnumMember(Value = "indirect")]
     Indirect,
 
     /// <summary>
@@ -40,9 +38,8 @@ public enum AttestationConveyancePreference
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("direct")]
-#else
-    [EnumMember(Value = "direct")]
 #endif
+    [EnumMember(Value = "direct")]
     Direct,
 
     /// <summary>
@@ -50,8 +47,7 @@ public enum AttestationConveyancePreference
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("enterprise")]
-#else
-    [EnumMember(Value = "enterprise")]
 #endif
+    [EnumMember(Value = "enterprise")]
     Enterprise
 }

@@ -18,9 +18,8 @@ internal enum MetadataAttestationType
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("basic_full")]
-#else
-    [EnumMember(Value = "basic_full")]
 #endif
+    [EnumMember(Value = "basic_full")]
     ATTESTATION_BASIC_FULL = 0x3e07,
 
     /// <summary>
@@ -31,9 +30,8 @@ internal enum MetadataAttestationType
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("basic_surrogate")]
-#else
-    [EnumMember(Value = "basic_surrogate")]
 #endif
+    [EnumMember(Value = "basic_surrogate")]
     ATTESTATION_BASIC_SURROGATE = 0x3e08,
 
     /// <summary>
@@ -41,9 +39,8 @@ internal enum MetadataAttestationType
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("ecdaa")]
-#else
-    [EnumMember(Value = "ecdaa")]
 #endif
+    [EnumMember(Value = "ecdaa")]
     [Fido2Standard(Optional = true)]
     ATTESTATION_ECDAA = 0x3e09,
 
@@ -52,9 +49,8 @@ internal enum MetadataAttestationType
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("attca")]
-#else
-    [EnumMember(Value = "attca")]
 #endif
+    [EnumMember(Value = "attca")]
     [Fido2Standard(Optional = true)]
     ATTESTATION_PRIVACY_CA = 0x3e10,
 
@@ -63,15 +59,13 @@ internal enum MetadataAttestationType
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("anonca")]
-#else
-    [EnumMember(Value = "anonca")]
 #endif
+    [EnumMember(Value = "anonca")]
     ATTESTATION_ANONCA = 0x3e0c,
 
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("none")]
-#else
-    [EnumMember(Value = "none")]
 #endif
+    [EnumMember(Value = "none")]
     ATTESTATION_NONE = 0x3e0b
 }

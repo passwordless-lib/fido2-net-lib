@@ -20,9 +20,8 @@ public enum CredentialProtectionPolicy
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("userVerificationOptional")]
-#else
-    [EnumMember(Value = "userVerificationOptional")]
 #endif
+    [EnumMember(Value = "userVerificationOptional")]
     UserVerificationOptional = 0x01,
 
     /// <summary>
@@ -30,9 +29,8 @@ public enum CredentialProtectionPolicy
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("userVerificationOptionalWithCredentialIDList")]
-#else
-    [EnumMember(Value = "userVerificationOptionalWithCredentialIDList")]
 #endif
+    [EnumMember(Value = "userVerificationOptionalWithCredentialIDList")]
     UserVerificationOptionalWithCredentialIdList = 0x02,
 
     /// <summary>
@@ -40,8 +38,7 @@ public enum CredentialProtectionPolicy
     /// </summary>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("userVerificationRequired")]
-#else
-    [EnumMember(Value = "userVerificationRequired")]
 #endif
+    [EnumMember(Value = "userVerificationRequired")]
     UserVerificationRequired = 0x03
 }
