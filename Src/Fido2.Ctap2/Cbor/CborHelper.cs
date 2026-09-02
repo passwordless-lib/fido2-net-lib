@@ -66,6 +66,26 @@ internal sealed class CborHelper
         return result;
     }
 
+    /// <summary>
+    /// Decodes an array of PublicKeyCredentialParameters, as returned in the algorithms (0x0A) member
+    /// of an authenticatorGetInfo response.
+    /// </summary>
+    public static PubKeyCredParam[] ToPubKeyCredParams(CborObject cborObject)
+    {
+        var cborArray = (CborArray)cborObject;
+
+        var result = new PubKeyCredParam[cborArray.Length];
+
+        for (int i = 0; i < cborArray.Length; i++)
+        {
+            var map = (CborMap)cborArray[i];
+
+            result[i] = new PubKeyCredParam((COSE.Algorithm)(int)map["alg"]!);
+        }
+
+        return result;
+    }
+
     public static int[] ToInt32Array(CborObject cborObject)
     {
         var cborArray = (CborArray)cborObject;

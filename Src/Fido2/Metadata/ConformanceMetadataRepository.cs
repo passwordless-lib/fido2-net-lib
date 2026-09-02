@@ -79,7 +79,8 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         {
             Number = -1,
             NextUpdate = "2099-08-07",
-            Entries = []
+            Entries = [],
+            JwtAlg = ""
         };
 
         List<MetadataBLOBPayloadEntry> entries = [];

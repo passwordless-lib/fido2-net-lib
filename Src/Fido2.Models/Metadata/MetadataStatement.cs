@@ -204,7 +204,43 @@ public class MetadataStatement
 
     /// <summary>
     /// Gets or sets a computed hash value of this <see cref="MetadataStatement"/>.
-    /// <para>NOTE: This supports the internal infrastructure of Fido2Net and isn't intented to be used by user code.</para>
+    /// <para>NOTE: This supports the internal infrastructure of Fido2NetLib and isn't intended to be used by user code.</para>
     /// </summary>
     public string Hash { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URI to an icon suitable for a dark background, as a data: url.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("iconDark")]
+    public string IconDark { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URI to the authenticator provider's logo for use on a light background, as a data: url.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("providerLogoLight")]
+    public string ProviderLogoLight { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URI to the authenticator provider's logo for use on a dark background, as a data: url.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("providerLogoDark")]
+    public string ProviderLogoDark { get; set; }
+
+    /// <summary>
+    /// Gets or sets an indication of whether this authenticator supports multi-device credentials
+    /// (i.e. credentials that may be synchronized across devices).
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("multiDeviceCredentialSupport")]
+    public string MultiDeviceCredentialSupport { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URL to the credential exchange configuration for this authenticator.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("cxConfigURL")]
+    public string CxConfigURL { get; set; }
 }

@@ -80,7 +80,7 @@ public class AuthenticatorMakeCredentialResponseTests
 
         Assert.Equal("packed", response.Fmt);
         Assert.Equal(154, response.AuthData.Length);
-        Assert.Equal(3, response.AttStmt.Count);
+        Assert.Equal(3, response.AttStmt!.Count);
         Assert.Equal(1, ((CborArray)response.AttStmt["x5c"]!).Length);
     }
 }
