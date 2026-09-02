@@ -65,7 +65,8 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
             Entries = _entries.Select(static o => o.Value).ToArray(),
             NextUpdate = "", //Empty means it won't get cached
             LegalHeader = "Local FAKE",
-            Number = 1
+            Number = 1,
+            JwtAlg = ""
         };
 
         return _blob;

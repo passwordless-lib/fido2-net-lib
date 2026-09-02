@@ -5,6 +5,9 @@ using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Ctap2;
 
+/// <summary>
+/// GetNextAssertion response per CTAP2 protocol.
+/// </summary>
 public sealed class AuthenticatorGetNextAssertionResponse
 {
     /// <summary>
@@ -14,32 +17,35 @@ public sealed class AuthenticatorGetNextAssertionResponse
     [CborMember(0x01)]
     public PublicKeyCredentialDescriptor? Credential { get; set; }
 
-#nullable disable
-
     /// <summary>
-    /// The signed-over contextual bindings made by the authenticator, as specified in [WebAuthn].
+    /// The signed-over contextual bindings made by the authenticator, as specified in WebAuthn.
     /// </summary>
     [CborMember(0x02), Required]
-    public byte[] AuthData { get; set; }
+    public required byte[] AuthData { get; set; }
 
     /// <summary>
-    /// The assertion signature produced by the authenticator, as specified in [WebAuthn].
+    /// The assertion signature produced by the authenticator, as specified in WebAuthn.
     /// </summary>
     [CborMember(0x03), Required]
-    public byte[] Signature { get; set; }
-
-#nullable enable
+    public required byte[] Signature { get; set; }
 
     /// <summary>
     /// PublicKeyCredentialUserEntity structure containing the user account information.
-    /// User identifiable information(name, DisplayName, icon) MUST not be returned if user verification is not done by the authenticator.
+    /// User identifiable information (name, DisplayName, icon) MUST not be returned if user verification is not done by the authenticator.
     /// </summary>
     [CborMember(0x04)]
     public PublicKeyCredentialUserEntity? User { get; set; }
 
+    /// <summary>
+    /// Parses a CBOR object into an AuthenticatorGetNextAssertionResponse.
+    /// </summary>
     public static AuthenticatorGetNextAssertionResponse FromCborObject(CborObject cbor)
     {
-        var result = new AuthenticatorGetNextAssertionResponse();
+        var result = new AuthenticatorGetNextAssertionResponse()
+        {
+            AuthData = [],
+            Signature = []
+        };
 
         foreach (var (key, value) in (CborMap)cbor)
         {

@@ -1,15 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
-    <NoWarn>$(NoWarn);CA1822;IDE0007;IDE0037;IDE0039;IDE0057;CA1825</NoWarn>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <EnableCentralPackageManagement>true</EnableCentralPackageManagement>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Src\Fido2\Fido2.csproj" />
-    <ProjectReference Include="..\..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
-    <ProjectReference Include="..\..\Src\Fido2.Models\Fido2.Models.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" PrivateAssets="All" />
@@ -23,11 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\Src\Fido2.Models\Fido2.Models.csproj" />
   </ItemGroup>
 
 </Project>
