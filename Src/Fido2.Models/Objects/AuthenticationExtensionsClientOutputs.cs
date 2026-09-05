@@ -19,6 +19,14 @@ public class AuthenticationExtensionsClientOutputs
     public bool AppID { get; set; }
 
     /// <summary>
+    /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs
+    /// to prevent re-registration of an existing U2F credential by excluding it, using the same AppID, during a registration ceremony.
+    /// https://www.w3.org/TR/webauthn-3/#sctn-appid-exclude-extension
+    /// </summary>
+    [JsonPropertyName("appidExclude")]
+    public bool AppIDExclude { get; set; }
+
+    /// <summary>
     /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator supports.
     /// https://www.w3.org/TR/webauthn/#sctn-supported-extensions-extension
     /// </summary>
@@ -64,4 +72,15 @@ public class AuthenticationExtensionsClientOutputs
     [JsonPropertyName("credProtect")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public CredentialProtectionPolicy? CredProtect { get; set; }
+
+    /// <summary>
+    /// The minimum PIN length, in Unicode code points, enforced by the authenticator for the created credential.
+    /// Only returned when the Relying Party requested the <c>minPinLength</c> extension and the authenticator/client permit disclosing it.
+    /// This is a CTAP2 authenticator extension exposed to Relying Parties via WebAuthn's generic extension
+    /// passthrough mechanism; it is not itself a WebAuthn-defined extension.
+    /// https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension
+    /// </summary>
+    [JsonPropertyName("minPinLength")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public uint? MinPinLength { get; set; }
 }

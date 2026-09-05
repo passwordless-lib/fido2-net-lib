@@ -263,6 +263,7 @@ public class AuthenticatorResponseTests
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
+                AppIDExclude = true,
                 Extensions = ["foo", "bar"],
                 Example = true,
                 UserVerificationMethod = new ulong[][]
@@ -280,7 +281,8 @@ public class AuthenticatorResponseTests
                         First = [0xf1, 0xd0],
                         Second = [0xf1, 0xd0]
                     }
-                }
+                },
+                MinPinLength = 6
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, rawResponse.Type);
@@ -289,12 +291,14 @@ public class AuthenticatorResponseTests
         Assert.Equal([0xa0], rawResponse.Response.AttestationObject);
         Assert.Equal(clientDataJson, rawResponse.Response.ClientDataJson);
         Assert.True(rawResponse.ClientExtensionResults.AppID);
+        Assert.True(rawResponse.ClientExtensionResults.AppIDExclude);
         Assert.Equal(new string[] { "foo", "bar" }, rawResponse.ClientExtensionResults.Extensions);
         Assert.True(rawResponse.ClientExtensionResults.Example);
         Assert.Equal((ulong)4, rawResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
         Assert.True(rawResponse.ClientExtensionResults.PRF.Enabled);
         Assert.Equal(rawResponse.ClientExtensionResults.PRF.Results.First, [0xf1, 0xd0]);
         Assert.Equal([0xf1, 0xd0], rawResponse.ClientExtensionResults.PRF.Results.Second);
+        Assert.Equal((uint)6, rawResponse.ClientExtensionResults.MinPinLength);
     }
 
     [Fact]
