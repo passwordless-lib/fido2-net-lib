@@ -31,7 +31,7 @@ public class Fido2 : IFido2
     public CredentialCreateOptions RequestNewCredential(RequestNewCredentialParams requestNewCredentialParams)
     {
         var challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
-        return CredentialCreateOptions.Create(_config, challenge, requestNewCredentialParams.User, requestNewCredentialParams.AuthenticatorSelection, requestNewCredentialParams.AttestationPreference, requestNewCredentialParams.ExcludeCredentials, requestNewCredentialParams.Extensions, requestNewCredentialParams.PubKeyCredParams);
+        return CredentialCreateOptions.Create(_config, challenge, requestNewCredentialParams.User, requestNewCredentialParams.AuthenticatorSelection, requestNewCredentialParams.AttestationPreference, requestNewCredentialParams.ExcludeCredentials, requestNewCredentialParams.Extensions, requestNewCredentialParams.PubKeyCredParams, requestNewCredentialParams.Hints, requestNewCredentialParams.AttestationFormats);
 
     }
 
@@ -59,7 +59,7 @@ public class Fido2 : IFido2
     {
         byte[] challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
 
-        return AssertionOptions.Create(_config, challenge, getAssertionOptionsParams.AllowedCredentials, getAssertionOptionsParams.UserVerification, getAssertionOptionsParams.Extensions);
+        return AssertionOptions.Create(_config, challenge, getAssertionOptionsParams.AllowedCredentials, getAssertionOptionsParams.UserVerification, getAssertionOptionsParams.Extensions, getAssertionOptionsParams.Hints);
     }
 
     public AssertionOptions GetAssertionOptions(

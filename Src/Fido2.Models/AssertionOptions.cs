@@ -69,7 +69,8 @@ public class AssertionOptions
         byte[] challenge,
         IReadOnlyList<PublicKeyCredentialDescriptor> allowedCredentials,
         UserVerificationRequirement? userVerification,
-        AuthenticationExtensionsClientInputs? extensions)
+        AuthenticationExtensionsClientInputs? extensions,
+        IReadOnlyList<PublicKeyCredentialHint>? hints = null)
     {
         return new AssertionOptions()
         {
@@ -78,7 +79,8 @@ public class AssertionOptions
             RpId = config.RPID,
             AllowCredentials = allowedCredentials,
             UserVerification = userVerification,
-            Extensions = extensions
+            Extensions = extensions,
+            Hints = hints ?? []
         };
     }
 

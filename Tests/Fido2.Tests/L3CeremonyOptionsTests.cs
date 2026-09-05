@@ -33,6 +33,46 @@ public class L3CeremonyOptionsTests
         DisplayName = "Test User",
     };
 
+    [Fact]
+    public void RequestNewCredentialCarriesHintsAndAttestationFormats()
+    {
+        var options = MakeLib().RequestNewCredential(new RequestNewCredentialParams
+        {
+            User = MakeUser(),
+            Hints = [PublicKeyCredentialHint.SecurityKey, PublicKeyCredentialHint.Hybrid],
+            AttestationFormats = [AttestationStatementFormatIdentifier.Packed, AttestationStatementFormatIdentifier.None],
+        });
+
+        Assert.Equal([PublicKeyCredentialHint.SecurityKey, PublicKeyCredentialHint.Hybrid], options.Hints);
+        Assert.Equal([AttestationStatementFormatIdentifier.Packed, AttestationStatementFormatIdentifier.None], options.AttestationFormats);
+
+        var json = options.ToJson();
+        Assert.Contains("\"hints\":[\"security-key\",\"hybrid\"]", json);
+        Assert.Contains("\"attestationFormats\":[\"packed\",\"none\"]", json);
+    }
+
+    [Fact]
+    public void GetAssertionOptionsCarriesHints()
+    {
+        var options = MakeLib().GetAssertionOptions(new GetAssertionOptionsParams
+        {
+            Hints = [PublicKeyCredentialHint.ClientDevice],
+        });
+
+        Assert.Equal([PublicKeyCredentialHint.ClientDevice], options.Hints);
+        Assert.Contains("\"hints\":[\"client-device\"]", options.ToJson());
+    }
+
+    [Fact]
+    public void CeremonyOptionsDefaultToNoHintsOrAttestationFormats()
+    {
+        var lib = MakeLib();
+
+        Assert.Empty(lib.RequestNewCredential(new RequestNewCredentialParams { User = MakeUser() }).Hints);
+        Assert.Empty(lib.RequestNewCredential(new RequestNewCredentialParams { User = MakeUser() }).AttestationFormats);
+        Assert.Empty(lib.GetAssertionOptions(new GetAssertionOptionsParams()).Hints);
+    }
+
     [Theory]
     [InlineData("\"platform\"", AuthenticatorAttachment.Platform)]
     [InlineData("\"cross-platform\"", AuthenticatorAttachment.CrossPlatform)]

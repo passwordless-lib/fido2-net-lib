@@ -126,7 +126,9 @@ public sealed class CredentialCreateOptions
         AttestationConveyancePreference attestationConveyancePreference,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticationExtensionsClientInputs? extensions,
-        IReadOnlyList<PubKeyCredParam> pubKeyCredParams)
+        IReadOnlyList<PubKeyCredParam> pubKeyCredParams,
+        IReadOnlyList<PublicKeyCredentialHint>? hints = null,
+        IReadOnlyList<AttestationStatementFormatIdentifier>? attestationFormats = null)
 
     {
         if (user.Id is null || user.Id.Length is < 1 or > 64)
@@ -141,8 +143,11 @@ public sealed class CredentialCreateOptions
             PubKeyCredParams = pubKeyCredParams,
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
+            AttestationFormats = attestationFormats ?? [],
             ExcludeCredentials = excludeCredentials,
-            Extensions = extensions
+            Extensions = extensions,
+            // Assigned after AuthenticatorSelection: setting Hints derives the attachment from the first hint.
+            Hints = hints ?? []
         };
     }
 
