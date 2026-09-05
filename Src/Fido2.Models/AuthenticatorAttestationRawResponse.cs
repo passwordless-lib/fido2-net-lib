@@ -46,6 +46,11 @@ public sealed class AuthenticatorAttestationRawResponse
         [JsonPropertyName("clientDataJSON")]
         public required byte[] ClientDataJson { get; init; }
 
+        /// <summary>
+        /// The value returned from the client's <c>getTransports()</c>. Values the library does not recognize are
+        /// discarded rather than rejected; see <see cref="AuthenticatorTransportArrayConverter"/>.
+        /// </summary>
+        [JsonConverter(typeof(AuthenticatorTransportArrayConverter))]
         [JsonPropertyName("transports"), Required]
         public AuthenticatorTransport[] Transports { get; init; }
     }

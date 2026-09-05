@@ -54,4 +54,44 @@ public class L3ExtensionAndTransportToleranceTests : Fido2Tests.Attestation
         Assert.True(credential.UvInitialized);
     }
 
+    [Theory]
+    [InlineData("""["usb"]""", new[] { AuthenticatorTransport.Usb })]
+    [InlineData("""["internal","cable","usb"]""", new[] { AuthenticatorTransport.Internal, AuthenticatorTransport.Usb })]
+    [InlineData("""["cable"]""", new AuthenticatorTransport[0])]
+    [InlineData("""[]""", new AuthenticatorTransport[0])]
+    public void UnknownTransportValuesAreDiscardedRatherThanRejected(string transportsJson, AuthenticatorTransport[] expected)
+    {
+        // getTransports() values are advisory hints; L3 says Relying Parties should accept unknown ones
+        // rather than fail an otherwise valid registration.
+        var json = """{"id":"AAAA","rawId":"AAAA","type":"public-key","clientExtensionResults":{},"response":{"attestationObject":"AAAA","clientDataJSON":"AAAA","transports":"""
+            + transportsJson + "}}";
+
+        var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(json);
+
+        Assert.Equal(expected, response.Response.Transports);
+    }
+
+    [Fact]
+    public void TransportsRoundTripThroughSerialization()
+    {
+        var json = """
+        {"id":"AAAA","rawId":"AAAA","type":"public-key","clientExtensionResults":{},
+         "response":{"attestationObject":"AAAA","clientDataJSON":"AAAA","transports":["usb","internal"]}}
+        """;
+
+        var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(json);
+
+        Assert.Contains("""["usb","internal"]""", JsonSerializer.Serialize(response));
+    }
+
+    [Fact]
+    public void NonStringTransportEntriesAreStillRejected()
+    {
+        var json = """
+        {"id":"AAAA","rawId":"AAAA","type":"public-key","clientExtensionResults":{},
+         "response":{"attestationObject":"AAAA","clientDataJSON":"AAAA","transports":[7]}}
+        """;
+
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(json));
+    }
 }
