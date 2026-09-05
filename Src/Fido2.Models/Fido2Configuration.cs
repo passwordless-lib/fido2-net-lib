@@ -216,6 +216,21 @@ public class Fido2Configuration
     ];
 
     /// <summary>
+    /// How to treat client or authenticator extension outputs that the Relying Party did not ask for.
+    /// Defaults to <see cref="Fido2NetLib.UnsolicitedExtensionPolicy.Ignore"/>.
+    /// </summary>
+    /// <remarks>
+    /// WebAuthn Level 3 permits clients to set extensions of their own accord: "Clients MAY set additional
+    /// authenticator extensions or client extensions and thus cause values to appear in the authenticator extension
+    /// outputs or client extension outputs that were not requested by the Relying Party [...] The Relying Party MUST
+    /// be prepared to handle such situations, whether by ignoring the unsolicited extensions or by rejecting the
+    /// attestation." Either behaviour is conformant, so this is a policy choice; ignoring is the default because
+    /// rejecting fails registrations over outputs the Relying Party never depended on.
+    /// See step 27 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential"/>.
+    /// </remarks>
+    public UnsolicitedExtensionPolicy UnsolicitedExtensionPolicy { get; set; } = UnsolicitedExtensionPolicy.Ignore;
+
+    /// <summary>
     /// Whether or not to accept a backup eligible credential
     /// </summary>
     public CredentialBackupPolicy BackupEligibleCredentialPolicy { get; set; } = CredentialBackupPolicy.Allowed;

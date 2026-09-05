@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
@@ -156,6 +158,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (!authData.HasExtensionsData && authData.Extensions != null)
             throw new Fido2VerificationException(Fido2ErrorCode.UnexpectedExtensionsDetected, Fido2ErrorMessages.UnexpectedExtensionsDetected);
 
+        // Validate extension inputs and outputs for assertion ceremony
+        ValidateAssertionExtensionInputs(options.Extensions);
+        ValidateAssertionExtensionOutputs(options.Extensions, Raw.ClientExtensionResults);
+
         // 18. Let hash be the result of computing a hash over the cData using SHA-256.
         // done earlier in step 13
 
@@ -182,5 +188,341 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             IsBackedUp = authData.IsBackedUp
 
         };
+    }
+
+    /// <summary>
+    /// Validates extension inputs during assertion ceremony.
+    /// Ensures that extension input parameters are well-formed and don't violate constraints.
+    /// </summary>
+    private static void ValidateAssertionExtensionInputs(AuthenticationExtensionsClientInputs? extensions)
+    {
+        if (extensions == null)
+            return;
+
+        // Validate PRF input structure
+        if (extensions.PRF != null)
+        {
+            ValidatePRFInput(extensions.PRF);
+        }
+
+        // Validate LargeBlob input constraints for assertion
+        if (extensions.LargeBlob != null)
+        {
+            ValidateLargeBlobAssertionInput(extensions.LargeBlob);
+        }
+
+        // Validate credentialProtectionPolicy input
+        if (extensions.CredentialProtectionPolicy.HasValue)
+        {
+            var policy = extensions.CredentialProtectionPolicy.Value;
+            if (!Enum.IsDefined(typeof(CredentialProtectionPolicy), policy))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Invalid credentialProtectionPolicy value: {policy}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF extension input structure.
+    /// Ensures eval inputs have proper format and constraints.
+    /// </summary>
+    private static void ValidatePRFInput(AuthenticationExtensionsPRFInputs prfInput)
+    {
+        // PRF input must have eval or evalByCredential (or both)
+        if (prfInput.Eval == null && prfInput.EvalByCredential == null)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "PRF extension input must have 'eval' or 'evalByCredential'");
+        }
+
+        // Validate eval if present
+        if (prfInput.Eval != null)
+        {
+            ValidatePRFInputValues(prfInput.Eval, "eval");
+        }
+
+        // Validate evalByCredential if present
+        if (prfInput.EvalByCredential.HasValue)
+        {
+            var evalByCred = prfInput.EvalByCredential.Value;
+            // Credential ID should be non-empty
+            if (string.IsNullOrEmpty(evalByCred.Key))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "PRF extension 'evalByCredential' has empty credential ID");
+            }
+            // Credential values should be valid
+            ValidatePRFInputValues(evalByCred.Value, "evalByCredential");
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF input values (first and optional second salts).
+    /// </summary>
+    private static void ValidatePRFInputValues(AuthenticationExtensionsPRFValues values, string fieldName)
+    {
+        // First value is required
+        if (values.First == null || values.First.Length == 0)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"PRF extension '{fieldName}' has missing or empty 'first' value");
+        }
+
+        // PRF inputs are typically 32 bytes but allow flexibility
+        if (values.First.Length < 16 || values.First.Length > 512)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"PRF extension '{fieldName}' 'first' value has unexpected length: {values.First.Length}. Expected 16-512 bytes.");
+        }
+
+        // Second value is optional, but if present should have reasonable length
+        if (values.Second != null && values.Second.Length > 0)
+        {
+            if (values.Second.Length < 16 || values.Second.Length > 512)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"PRF extension '{fieldName}' 'second' value has unexpected length: {values.Second.Length}. Expected 16-512 bytes.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates LargeBlob extension input during assertion.
+    /// Ensures read and write constraints are met.
+    /// </summary>
+    private static void ValidateLargeBlobAssertionInput(AuthenticationExtensionsLargeBlobInputs blobInput)
+    {
+        bool hasRead = blobInput.Read;
+        bool hasWrite = blobInput.Write != null && blobInput.Write.Length > 0;
+
+        // Cannot request both read and write in the same operation
+        if (hasRead && hasWrite)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "LargeBlob extension input cannot have both 'read' and 'write' set simultaneously");
+        }
+
+        // At least one of read or write should be requested
+        if (!hasRead && !hasWrite)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "LargeBlob extension input must have either 'read' or 'write' set");
+        }
+
+        // If write is requested, validate blob size
+        if (hasWrite)
+        {
+            if (blobInput.Write!.Length == 0)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "LargeBlob extension 'write' field is empty");
+            }
+
+            // Most authenticators support 512-2048 bytes, but spec allows larger
+            // Enforce a reasonable limit to prevent abuse
+            if (blobInput.Write.Length > 65536) // 64KB limit
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"LargeBlob extension 'write' blob size ({blobInput.Write.Length}) exceeds maximum limit of 64KB");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates the format and content of extension outputs during assertion ceremony.
+    /// Per WebAuthn L3 Section 7.2 Step 17, extension outputs must be as expected.
+    /// </summary>
+    private static void ValidateAssertionExtensionOutputs(
+        AuthenticationExtensionsClientInputs? requestedExtensions,
+        AuthenticationExtensionsClientOutputs? clientExtensionResults)
+    {
+        // If no extensions were requested, skip validation
+        if (requestedExtensions == null || clientExtensionResults == null)
+            return;
+
+        // Validate PRF extension output (can be used in both registration and assertion)
+        if (requestedExtensions.PRF != null && clientExtensionResults.PRF != null)
+        {
+            ValidatePRFOutput(clientExtensionResults.PRF);
+        }
+
+        // Validate extensions discovery (exts) output
+        if (requestedExtensions.Extensions.HasValue && clientExtensionResults.Extensions != null)
+        {
+            ValidateExtensionsDiscoveryOutput(clientExtensionResults.Extensions);
+        }
+
+        // Validate LargeBlob extension output (assertion context: read/write operations)
+        if (requestedExtensions.LargeBlob != null && clientExtensionResults.LargeBlob != null)
+        {
+            ValidateLargeBlobAssertionOutput(requestedExtensions.LargeBlob, clientExtensionResults.LargeBlob);
+        }
+
+        // Validate credential protection policy output if requested
+        if (requestedExtensions.CredentialProtectionPolicy.HasValue && clientExtensionResults.CredProtect.HasValue)
+        {
+            var credProtect = clientExtensionResults.CredProtect.Value;
+            if (!Enum.IsDefined(typeof(CredentialProtectionPolicy), credProtect))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Invalid credentialProtectionPolicy value returned: {credProtect}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates extensions discovery (exts) output.
+    /// </summary>
+    private static void ValidateExtensionsDiscoveryOutput(string[] supportedExtensions)
+    {
+        if (supportedExtensions == null)
+            return;
+
+        foreach (var ext in supportedExtensions)
+        {
+            if (string.IsNullOrWhiteSpace(ext))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "Extension identifier in discovery output is empty or whitespace");
+            }
+
+            if (ext.Length > 128)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Extension identifier '{ext}' is excessively long");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF extension output format per WebAuthn L3 Section 9.
+    /// https://w3c.github.io/webauthn/#prf-extension
+    /// </summary>
+    private static void ValidatePRFOutput(AuthenticationExtensionsPRFOutputs prfOutput)
+    {
+        // If enabled is false, results must not be present
+        if (!prfOutput.Enabled && prfOutput.Results != null)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "PRF extension output has enabled=false but results are present");
+        }
+
+        // If enabled is true and results are present, validate the results format
+        if (prfOutput.Enabled && prfOutput.Results != null)
+        {
+            ValidatePRFValues(prfOutput.Results);
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF values (first and second salts).
+    /// Both first and second should be byte arrays of appropriate length.
+    /// </summary>
+    private static void ValidatePRFValues(AuthenticationExtensionsPRFValues values)
+    {
+        // First value is required
+        if (values.First == null || values.First.Length == 0)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "PRF extension output has missing or empty 'first' value");
+        }
+
+        // PRF output should be 32 bytes (SHA-256 output) or 64 bytes
+        // Allow flexibility for different PRF implementations
+        if (values.First.Length != 32 && values.First.Length != 64)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"PRF extension 'first' value has unexpected length: {values.First.Length}. Expected 32 or 64 bytes.");
+        }
+
+        // Second value is optional, but if present should have same length as first
+        if (values.Second != null && values.Second.Length > 0)
+        {
+            if (values.Second.Length != values.First.Length)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"PRF extension 'second' value length ({values.Second.Length}) does not match 'first' value length ({values.First.Length})");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates LargeBlob extension output during assertion (authentication ceremony).
+    /// Per WebAuthn L3 Section 9, during assertion the output can contain:
+    /// - 'blob' field if 'read' was requested
+    /// - 'written' flag if 'write' was requested
+    /// Cannot have both blob and written in the same response.
+    /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+    /// </summary>
+    private static void ValidateLargeBlobAssertionOutput(
+        AuthenticationExtensionsLargeBlobInputs blobInput,
+        AuthenticationExtensionsLargeBlobOutputs blobOutput)
+    {
+        // During assertion, 'supported' field should not be present
+        if (blobOutput.Supported)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "LargeBlob extension output contains 'supported' field during assertion. This field is only valid during registration.");
+        }
+
+        bool requestedRead = blobInput.Read;
+        bool requestedWrite = blobInput.Write != null && blobInput.Write.Length > 0;
+
+        // Cannot request both read and write in the same operation
+        if (requestedRead && requestedWrite)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "LargeBlob extension input cannot have both 'read' and 'write' set");
+        }
+
+        // If read was requested, blob should be present (or null if read returned nothing)
+        // If blob is present, it should be properly formatted
+        if (requestedRead && blobOutput.Blob != null && blobOutput.Blob.Length > 0)
+        {
+            // Blob should not exceed authenticator's large blob storage limit
+            // Most authenticators support 512 bytes, but spec allows up to 512 bytes
+            // We don't strictly validate the size here as it's implementation-specific
+            if (blobOutput.Blob.Length > 65536) // Reasonable upper limit
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"LargeBlob extension blob size ({blobOutput.Blob.Length}) exceeds reasonable limit");
+            }
+        }
+
+        // Note: if write was requested but blobOutput.Written is false, the authenticator may have
+        // had a legitimate reason to reject the write. We don't throw here; the RP can inspect
+        // blobOutput.Written itself and decide whether that's acceptable.
+
+        // If neither read nor write was requested, neither blob nor written should be present
+        if (!requestedRead && !requestedWrite)
+        {
+            if ((blobOutput.Blob != null && blobOutput.Blob.Length > 0) || blobOutput.Written)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "LargeBlob extension output contains data but neither read nor write was requested");
+            }
+        }
     }
 }

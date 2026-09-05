@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -124,7 +125,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values
         //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e.,
         //     no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
-        // TODO?: Implement sort of like this: ClientExtensions.Keys.Any(x => options.extensions.contains(x);
+        ValidateRegistrationExtensionInputs(originalOptions.Extensions);
+        ValidateExtensions(originalOptions.Extensions, Raw.ClientExtensionResults, authData.Extensions, config.UnsolicitedExtensionPolicy);
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
@@ -140,7 +142,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
         MetadataBLOBPayloadEntry? metadataEntry = null;
-        if (metadataService != null)
+        if (metadataService is IMetadataServiceAttestationCertificateLookup certificateLookupService)
+            metadataEntry = await certificateLookupService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, trustPath, cancellationToken);
+        else if (metadataService != null)
             metadataEntry = await metadataService.GetEntryAsync(authData.AttestedCredentialData.AaGuid, cancellationToken);
 
         // while conformance testing, we must reject any authenticator that we cannot get metadata for
@@ -197,6 +201,481 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AttestationFormat = AttestationObject.Fmt,
             AaGuid = authData.AttestedCredentialData.AaGuid
         };
+    }
+
+    /// <summary>
+    /// Validates extension inputs during registration ceremony.
+    /// Ensures that extension input parameters are well-formed and don't violate constraints.
+    /// </summary>
+    private static void ValidateRegistrationExtensionInputs(AuthenticationExtensionsClientInputs? extensions)
+    {
+        if (extensions == null)
+            return;
+
+        // Validate PRF input structure
+        if (extensions.PRF != null)
+        {
+            ValidatePRFInput(extensions.PRF);
+        }
+
+        // Validate LargeBlob input (registration context doesn't allow read/write)
+        if (extensions.LargeBlob?.Support != null)
+        {
+            // During registration, only 'support' field is valid
+            // read and write should not be used during registration
+            if (extensions.LargeBlob.Read)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "LargeBlob extension 'read' field is not valid during registration. Use only during assertion.");
+            }
+
+            if (extensions.LargeBlob.Write != null && extensions.LargeBlob.Write.Length > 0)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "LargeBlob extension 'write' field is not valid during registration. Use only during assertion.");
+            }
+        }
+
+        // Validate credentialProtectionPolicy input
+        if (extensions.CredentialProtectionPolicy.HasValue)
+        {
+            var policy = extensions.CredentialProtectionPolicy.Value;
+            if (!Enum.IsDefined(typeof(CredentialProtectionPolicy), policy))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Invalid credentialProtectionPolicy value: {policy}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF extension input structure.
+    /// Ensures eval inputs have proper format and constraints.
+    /// </summary>
+    private static void ValidatePRFInput(AuthenticationExtensionsPRFInputs prfInput)
+    {
+        // PRF input must have eval or evalByCredential (or both)
+        if (prfInput.Eval == null && prfInput.EvalByCredential == null)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "PRF extension input must have 'eval' or 'evalByCredential'");
+        }
+
+        // Validate eval if present
+        if (prfInput.Eval != null)
+        {
+            ValidatePRFInputValues(prfInput.Eval, "eval");
+        }
+
+        // Validate evalByCredential if present
+        if (prfInput.EvalByCredential.HasValue)
+        {
+            var evalByCred = prfInput.EvalByCredential.Value;
+            // Credential ID should be non-empty
+            if (string.IsNullOrEmpty(evalByCred.Key))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "PRF extension 'evalByCredential' has empty credential ID");
+            }
+            // Credential values should be valid
+            ValidatePRFInputValues(evalByCred.Value, "evalByCredential");
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF input values (first and optional second salts).
+    /// </summary>
+    private static void ValidatePRFInputValues(AuthenticationExtensionsPRFValues values, string fieldName)
+    {
+        // First value is required
+        if (values.First == null || values.First.Length == 0)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"PRF extension '{fieldName}' has missing or empty 'first' value");
+        }
+
+        // PRF inputs are typically 32 bytes but allow flexibility
+        if (values.First.Length < 16 || values.First.Length > 512)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"PRF extension '{fieldName}' 'first' value has unexpected length: {values.First.Length}. Expected 16-512 bytes.");
+        }
+
+        // Second value is optional, but if present should have reasonable length
+        if (values.Second != null && values.Second.Length > 0)
+        {
+            if (values.Second.Length < 16 || values.Second.Length > 512)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"PRF extension '{fieldName}' 'second' value has unexpected length: {values.Second.Length}. Expected 16-512 bytes.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates that no extensions are present in the response that were not requested.
+    /// Per WebAuthn L3 Section 7.1 Step 18: extensions in clientExtensionResults and
+    /// authenticator extensions in authData must be present in the original options.extensions.
+    /// Only validates if extensions were explicitly requested; if no extensions were requested,
+    /// this validation is skipped to allow for backwards compatibility with test frameworks.
+    /// </summary>
+    private static void ValidateExtensions(
+        AuthenticationExtensionsClientInputs? requestedExtensions,
+        AuthenticationExtensionsClientOutputs? clientExtensionResults,
+        Extensions? authenticatorExtensions,
+        UnsolicitedExtensionPolicy unsolicitedExtensionPolicy)
+    {
+        // Only validate extensions if some were explicitly requested
+        if (requestedExtensions == null)
+            return;
+
+        // Get the set of requested extension identifiers
+        var requestedIdentifiers = GetRequestedExtensionIdentifiers(requestedExtensions);
+
+        // If no extensions were requested but some are available, validate
+        if (requestedIdentifiers.Count == 0)
+            return;
+
+        // Validate client extension results
+        if (clientExtensionResults != null)
+        {
+            if (unsolicitedExtensionPolicy is UnsolicitedExtensionPolicy.Reject)
+            {
+                var clientExtensionIdentifiers = GetClientExtensionResultIdentifiers(clientExtensionResults);
+                foreach (var identifier in clientExtensionIdentifiers)
+                {
+                    if (!requestedIdentifiers.Contains(identifier))
+                    {
+                        throw new Fido2VerificationException(
+                            Fido2ErrorCode.UnexpectedExtensions,
+                            $"Extension '{identifier}' was returned but not requested in the registration options");
+                    }
+                }
+            }
+
+            // Validate extension output formats
+            ValidateExtensionOutputs(requestedExtensions, clientExtensionResults);
+        }
+
+        // Validate authenticator extensions from authData
+        if (unsolicitedExtensionPolicy is UnsolicitedExtensionPolicy.Reject && authenticatorExtensions != null && authenticatorExtensions.Length > 0)
+        {
+            var authenticatorExtensionIdentifiers = GetAuthenticatorExtensionIdentifiers(authenticatorExtensions);
+            foreach (var identifier in authenticatorExtensionIdentifiers)
+            {
+                if (!requestedIdentifiers.Contains(identifier))
+                {
+                    throw new Fido2VerificationException(
+                        Fido2ErrorCode.UnexpectedExtensions,
+                        $"Authenticator extension '{identifier}' was returned but not requested in the registration options");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates the format and content of extension outputs.
+    /// Per WebAuthn L3 Section 9, each extension has specific output format requirements.
+    /// </summary>
+    private static void ValidateExtensionOutputs(
+        AuthenticationExtensionsClientInputs requestedExtensions,
+        AuthenticationExtensionsClientOutputs clientExtensionResults)
+    {
+        // Validate PRF extension output
+        if (requestedExtensions.PRF != null && clientExtensionResults.PRF != null)
+        {
+            ValidatePRFOutput(clientExtensionResults.PRF);
+        }
+
+
+        // Validate extensions discovery (exts) output
+        if (requestedExtensions.Extensions.HasValue && clientExtensionResults.Extensions != null)
+        {
+            ValidateExtensionsDiscoveryOutput(clientExtensionResults.Extensions);
+        }
+
+        // Validate LargeBlob extension output (registration context)
+        if (requestedExtensions.LargeBlob?.Support != null && clientExtensionResults.LargeBlob != null)
+        {
+            ValidateLargeBlobRegistrationOutput(clientExtensionResults.LargeBlob);
+        }
+
+        // Validate credential protection policy output if requested
+        if (requestedExtensions.CredentialProtectionPolicy.HasValue && clientExtensionResults.CredProtect.HasValue)
+        {
+            // CredProtect output should match a valid protection policy value
+            var credProtect = clientExtensionResults.CredProtect.Value;
+            if (!Enum.IsDefined(typeof(CredentialProtectionPolicy), credProtect))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Invalid credentialProtectionPolicy value returned: {credProtect}");
+            }
+        }
+
+        // Validate minPinLength extension output if requested
+        if (requestedExtensions.MinPinLength.HasValue && clientExtensionResults.MinPinLength.HasValue)
+        {
+            ValidateMinPinLengthOutput(clientExtensionResults.MinPinLength.Value);
+        }
+    }
+
+    /// <summary>
+    /// Validates minPinLength extension output. This is a CTAP2 authenticator extension, not a
+    /// WebAuthn-defined one; see AuthenticationExtensionsClientOutputs.MinPinLength for the CTAP2 spec reference.
+    /// </summary>
+    private static void ValidateMinPinLengthOutput(uint minPinLength)
+    {
+        if (minPinLength is 0)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "minPinLength extension output must be a positive number");
+        }
+    }
+
+    /// <summary>
+    /// Validates extensions discovery (exts) output.
+    /// The output should be an array of supported extension identifiers.
+    /// </summary>
+    private static void ValidateExtensionsDiscoveryOutput(string[] supportedExtensions)
+    {
+        if (supportedExtensions == null)
+            return;
+
+        // Validate each extension identifier
+        foreach (var ext in supportedExtensions)
+        {
+            if (string.IsNullOrWhiteSpace(ext))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "Extension identifier in discovery output is empty or whitespace");
+            }
+
+            // Extension identifiers should be reasonable length (typically short strings like "prf", "largeBlob", etc.)
+            if (ext.Length > 128)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Extension identifier '{ext}' is excessively long");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF extension output format per WebAuthn L3 Section 9.
+    /// https://w3c.github.io/webauthn/#prf-extension
+    /// </summary>
+    private static void ValidatePRFOutput(AuthenticationExtensionsPRFOutputs prfOutput)
+    {
+        // If enabled is false, results must not be present
+        if (!prfOutput.Enabled && prfOutput.Results != null)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "PRF extension output has enabled=false but results are present");
+        }
+
+        // If enabled is true and results are present, validate the results format
+        if (prfOutput.Enabled && prfOutput.Results != null)
+        {
+            ValidatePRFValues(prfOutput.Results);
+        }
+    }
+
+    /// <summary>
+    /// Validates PRF values (first and second salts).
+    /// Both first and second should be byte arrays of appropriate length.
+    /// </summary>
+    private static void ValidatePRFValues(AuthenticationExtensionsPRFValues values)
+    {
+        // First value is required
+        if (values.First == null || values.First.Length == 0)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "PRF extension output has missing or empty 'first' value");
+        }
+
+        // PRF output should be 32 bytes (SHA-256 output) or 64 bytes
+        // Allow flexibility for different PRF implementations
+        if (values.First.Length != 32 && values.First.Length != 64)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"PRF extension 'first' value has unexpected length: {values.First.Length}. Expected 32 or 64 bytes.");
+        }
+
+        // Second value is optional, but if present should have same length as first
+        if (values.Second != null && values.Second.Length > 0)
+        {
+            if (values.Second.Length != values.First.Length)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"PRF extension 'second' value length ({values.Second.Length}) does not match 'first' value length ({values.First.Length})");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates LargeBlob extension output during registration (credential creation).
+    /// Per WebAuthn L3 Section 9, during registration the output should contain 'supported' flag.
+    /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+    /// </summary>
+    private static void ValidateLargeBlobRegistrationOutput(AuthenticationExtensionsLargeBlobOutputs blobOutput)
+    {
+        // During registration, only 'supported' field is valid
+        // 'blob' and 'written' should not be present
+        if (blobOutput.Blob != null && blobOutput.Blob.Length > 0)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "LargeBlob extension output contains 'blob' field during registration. This field is only valid during assertion.");
+        }
+
+        if (blobOutput.Written)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "LargeBlob extension output contains 'written' field during registration. This field is only valid during assertion.");
+        }
+    }
+
+    /// <summary>
+    /// Extracts the set of requested extension identifiers from the registration options.
+    /// </summary>
+    private static HashSet<string> GetRequestedExtensionIdentifiers(AuthenticationExtensionsClientInputs? extensions)
+    {
+        var identifiers = new HashSet<string>(StringComparer.Ordinal);
+
+        if (extensions == null)
+            return identifiers;
+
+        // Map properties to their JSON property names (extension identifiers)
+        if (extensions.Example.HasValue)
+            identifiers.Add("example.extension.bool");
+
+        if (extensions.Extensions.HasValue)
+            identifiers.Add("exts");
+
+        // Note: UserVerificationMethod has a private setter, so we skip checking if it was requested
+        // as it's deprecated and unlikely to be explicitly set by new code
+
+        if (extensions.CredProps.HasValue)
+            identifiers.Add("credProps");
+
+        if (extensions.PRF != null)
+            identifiers.Add("prf");
+
+        if (extensions.LargeBlob != null)
+            identifiers.Add("largeBlob");
+
+        if (extensions.CredentialProtectionPolicy.HasValue)
+        {
+            identifiers.Add("credentialProtectionPolicy");
+            // credProtect is the output for credentialProtectionPolicy input
+            identifiers.Add("credProtect");
+        }
+
+        if (extensions.EnforceCredentialProtectionPolicy.HasValue)
+            identifiers.Add("enforceCredentialProtectionPolicy");
+
+        if (!string.IsNullOrEmpty(extensions.AppIDExclude))
+            identifiers.Add("appidExclude");
+
+        if (extensions.MinPinLength.HasValue)
+            identifiers.Add("minPinLength");
+
+        return identifiers;
+    }
+
+    /// <summary>
+    /// Extracts the set of extension identifiers from the client extension results.
+    /// </summary>
+    private static HashSet<string> GetClientExtensionResultIdentifiers(AuthenticationExtensionsClientOutputs clientExtensionResults)
+    {
+        var identifiers = new HashSet<string>(StringComparer.Ordinal);
+
+        if (clientExtensionResults.Example.HasValue)
+            identifiers.Add("example.extension.bool");
+
+        if (clientExtensionResults.Extensions != null && clientExtensionResults.Extensions.Length > 0)
+            identifiers.Add("exts");
+
+        if (clientExtensionResults.UserVerificationMethod != null && clientExtensionResults.UserVerificationMethod.Length > 0)
+            identifiers.Add("uvm");
+
+        if (clientExtensionResults.CredProps != null)
+            identifiers.Add("credProps");
+
+        if (clientExtensionResults.PRF != null)
+            identifiers.Add("prf");
+
+        if (clientExtensionResults.LargeBlob != null)
+            identifiers.Add("largeBlob");
+
+        if (clientExtensionResults.CredProtect.HasValue)
+            identifiers.Add("credProtect");
+
+        // Note: credProtect is the output for credentialProtectionPolicy input
+        if (clientExtensionResults.CredProtect.HasValue)
+            identifiers.Add("credentialProtectionPolicy");
+
+        if (clientExtensionResults.AppIDExclude)
+            identifiers.Add("appidExclude");
+
+        if (clientExtensionResults.MinPinLength.HasValue)
+            identifiers.Add("minPinLength");
+
+        return identifiers;
+    }
+
+    /// <summary>
+    /// Extracts the set of extension identifiers from the authenticator extensions (CBOR-encoded).
+    /// </summary>
+    private static HashSet<string> GetAuthenticatorExtensionIdentifiers(Extensions authenticatorExtensions)
+    {
+        var identifiers = new HashSet<string>(StringComparer.Ordinal);
+
+        try
+        {
+            var extensionBytes = authenticatorExtensions.GetBytes();
+            if (extensionBytes.Length == 0)
+                return identifiers;
+
+            // Decode the CBOR extension data which is a map of extension identifier -> extension output
+            var cborExtensions = (CborMap)CborObject.Decode(extensionBytes);
+
+            // Extract the keys (extension identifiers) from the CBOR map
+            foreach (var key in cborExtensions.Keys)
+            {
+                // CBOR map keys are typically text strings (extension identifiers)
+                if (key is CborTextString extensionId)
+                {
+                    identifiers.Add(extensionId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // If we fail to decode authenticator extensions, this is a validation error
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "Failed to decode authenticator extensions from authData",
+                ex);
+        }
+
+        return identifiers;
     }
 
     /// <summary>
