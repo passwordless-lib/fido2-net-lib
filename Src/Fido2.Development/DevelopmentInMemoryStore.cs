@@ -1,5 +1,7 @@
 ﻿using System.Collections.Concurrent;
 
+using Fido2NetLib.Objects;
+
 namespace Fido2NetLib.Development;
 
 public class DevelopmentInMemoryStore
@@ -37,6 +39,27 @@ public class DevelopmentInMemoryStore
     {
         var cred = _storedCredentials.First(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
         cred.SignCount = counter;
+    }
+
+    /// <summary>
+    /// Applies the credential record state updates a Relying Party performs after a successful authentication
+    /// ceremony: the signature counter, the backup state, and <c>uvInitialized</c>.
+    /// See step 28 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>.
+    /// </summary>
+    /// <remarks>
+    /// Promoting <c>uvInitialized</c> from <see langword="false"/> to <see langword="true"/> SHOULD require
+    /// authorization by an additional authentication factor equivalent to WebAuthn user verification. This
+    /// in-memory development store performs the update unconditionally; a real Relying Party should not.
+    /// </remarks>
+    public void UpdateCredentialRecord(VerifyAssertionResult assertionResult)
+    {
+        var cred = _storedCredentials.First(c => c.Descriptor.Id.AsSpan().SequenceEqual(assertionResult.CredentialId));
+
+        cred.SignCount = assertionResult.SignCount;
+        cred.IsBackedUp = assertionResult.IsBackedUp;
+
+        if (!cred.UvInitialized)
+            cred.UvInitialized = assertionResult.IsUserVerified;
     }
 
     public void AddCredentialToUser(Fido2User user, StoredCredential credential)

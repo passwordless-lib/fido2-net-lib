@@ -36,6 +36,18 @@ public class RegisteredPublicKeyCredential
     public uint SignCount { get; init; }
 
     /// <summary>
+    /// Indicates whether any credential from this public key credential source has had the UV flag set.
+    /// When <see langword="true"/>, the Relying Party MAY consider the UV flag as an authentication factor in
+    /// authentication ceremonies. When <see langword="false"/> -- including an authentication ceremony where it
+    /// would be updated to <see langword="true"/> -- the UV flag MUST NOT be relied upon as an authentication
+    /// factor, because no trust relationship with the authenticator's user verification has been established yet.
+    /// Updating this from <see langword="false"/> to <see langword="true"/> SHOULD require authorization by an
+    /// additional authentication factor equivalent to WebAuthn user verification.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#credential-record"/>
+    /// </summary>
+    public bool UvInitialized { get; init; }
+
+    /// <summary>
     /// The value of the BE flag when the public key credential source was created.
     /// </summary>
     public bool IsBackupEligible { get; init; }

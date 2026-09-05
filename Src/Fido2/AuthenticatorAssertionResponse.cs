@@ -204,8 +204,8 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         {
             CredentialId = Raw.RawId,
             SignCount = authData.SignCount,
-            IsBackedUp = authData.IsBackedUp
-
+            IsBackedUp = authData.IsBackedUp,
+            IsUserVerified = authData.UserVerified
         };
     }
 

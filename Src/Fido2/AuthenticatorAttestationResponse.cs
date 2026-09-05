@@ -199,6 +199,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
             Transports = Raw.Response.Transports,
+            UvInitialized = authData.UserVerified,
             IsBackupEligible = authData.IsBackupEligible,
             IsBackedUp = authData.IsBackedUp,
             AttestationObject = Raw.Response.AttestationObject,

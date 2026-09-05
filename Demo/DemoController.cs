@@ -123,6 +123,7 @@ public class DemoController : Controller
                 RegDate = DateTimeOffset.UtcNow,
                 AaGuid = credential.AaGuid,
                 Transports = credential.Transports,
+                UvInitialized = credential.UvInitialized,
                 IsBackupEligible = credential.IsBackupEligible,
                 IsBackedUp = credential.IsBackedUp,
                 AttestationObject = credential.AttestationObject,
@@ -217,8 +218,8 @@ public class DemoController : Controller
                 IsUserHandleOwnerOfCredentialIdCallback = callback
             }, cancellationToken: cancellationToken);
 
-            // 6. Store the updated counter
-            DemoStorage.UpdateCounter(res.CredentialId, res.SignCount);
+            // 6. Store the updated credential record state (counter, backup state, uvInitialized)
+            DemoStorage.UpdateCredentialRecord(res);
 
             // 7. return OK to client
             return Json(res);

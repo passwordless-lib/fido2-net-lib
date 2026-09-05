@@ -45,4 +45,13 @@ public class L3ExtensionAndTransportToleranceTests : Fido2Tests.Attestation
         Assert.Equal(Fido2ErrorCode.UnexpectedExtensions, ex.Code);
     }
 
+    [Fact]
+    public async Task RegistrationRecordsUvInitializedFromTheUvFlagAsync()
+    {
+        // The harness' authenticator data sets UV.
+        var credential = await MakeAttestationResponseAsync();
+
+        Assert.True(credential.UvInitialized);
+    }
+
 }

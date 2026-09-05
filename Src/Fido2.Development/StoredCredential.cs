@@ -27,6 +27,12 @@ public class StoredCredential
     public AuthenticatorTransport[] Transports { get; set; }
 
     /// <summary>
+    /// Indicates whether any credential from this public key credential source has had the UV flag set.
+    /// See <see cref="RegisteredPublicKeyCredential.UvInitialized"/>.
+    /// </summary>
+    public bool UvInitialized { get; set; }
+
+    /// <summary>
     /// The value of the BE flag when the public key credential source was created.
     /// </summary>
     public bool IsBackupEligible { get; set; }

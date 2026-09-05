@@ -166,6 +166,7 @@ public class UserController : ControllerBase
                 RegDate = DateTimeOffset.UtcNow,
                 AaGuid = credential.AaGuid,
                 Transports = credential.Transports,
+                UvInitialized = credential.UvInitialized,
                 IsBackupEligible = credential.IsBackupEligible,
                 IsBackedUp = credential.IsBackedUp,
                 AttestationObject = credential.AttestationObject,
@@ -278,8 +279,8 @@ public class UserController : ControllerBase
                 IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync
             }, cancellationToken: cancellationToken);
 
-            // 4. Store the updated counter
-            _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
+            // 4. Store the updated credential record state (counter, backup state, uvInitialized)
+            _demoStorage.UpdateCredentialRecord(res);
 
 
             // 5. return result to client
