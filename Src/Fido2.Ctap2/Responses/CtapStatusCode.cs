@@ -44,6 +44,11 @@ public enum CtapStatusCode
     CTAP2_ERR_REQUEST_TOO_LARGE     = 0x39, // Authenticator cannot handle this request due to memory constraints
     CTAP2_ERR_ACTION_TIMEOUT        = 0x3A, // The current operation has timed out
     CTAP2_ERR_UP_REQUIRED           = 0x3B, // User presence is required for the requested operation
+    CTAP2_ERR_UV_BLOCKED            = 0x3C, // built-in user verification is blocked
+    CTAP2_ERR_INTEGRITY_FAILURE     = 0x3D, // A checksum did not match
+    CTAP2_ERR_INVALID_SUBCOMMAND    = 0x3E, // The requested subcommand is either invalid or not implemented
+    CTAP2_ERR_UV_INVALID            = 0x3F, // built-in user verification unsuccessful. The platform SHOULD retry
+    CTAP2_ERR_UNAUTHORIZED_PERMISSION = 0x40, // The permission set has not been granted for the pinUvAuthToken
     CTAP1_ERR_OTHER                 = 0x7F, // Other unspecified error
     CTAP2_ERR_SPEC_LAST             = 0xDF, // CTAP 2 spec last error
     CTAP2_ERR_EXTENSION_FIRST       = 0xE0, // Extension specific error

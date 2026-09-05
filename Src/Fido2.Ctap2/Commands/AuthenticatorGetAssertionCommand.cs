@@ -9,7 +9,7 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
         string rpId,
         byte[] clientDataHash,
         PublicKeyCredentialDescriptor[] allowList,
-        CborMap? extensions = null,
+        CtapGetAssertionExtensions? extensions = null,
         AuthenticatorGetAssertionOptions? options = null,
         byte[]? pinAuth = null,
         uint? pinProtocol = null)
@@ -49,7 +49,7 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
     /// CBOR map of extension identifier → authenticator extension input values.
     /// </summary>
     [CborMember(0x04)]
-    public CborMap? Extensions { get; }
+    public CtapGetAssertionExtensions? Extensions { get; }
 
     /// <summary>
     /// Map of authenticator options.
@@ -81,9 +81,9 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
             { 0x03, AllowList.ToCborArray() } // allowList
         };
 
-        if (Extensions != null)
+        if (Extensions?.ToCborObject() is CborMap extensions)
         {
-            cbor.Add(0x04, Extensions);
+            cbor.Add(0x04, extensions);
         }
 
         if (Options != null)

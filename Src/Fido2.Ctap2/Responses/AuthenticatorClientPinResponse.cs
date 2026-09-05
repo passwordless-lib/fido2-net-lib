@@ -27,6 +27,19 @@ public sealed class AuthenticatorClientPinResponse
     [CborMember(0x03)]
     public int? Retries { get; set; }
 
+    /// <summary>
+    /// Present and true if the authenticator requires a power cycle before any future PIN
+    /// operation. Only valid in response to a getPINRetries request.
+    /// </summary>
+    [CborMember(0x04)]
+    public bool? PowerCycleState { get; set; }
+
+    /// <summary>
+    /// Number of built-in user verification attempts remaining before lockout.
+    /// </summary>
+    [CborMember(0x05)]
+    public int? UVRetries { get; set; }
+
     public static AuthenticatorClientPinResponse FromCborObject(CborObject cbor)
     {
         var result = new AuthenticatorClientPinResponse();
@@ -43,6 +56,12 @@ public sealed class AuthenticatorClientPinResponse
                     break;
                 case 0x03:
                     result.Retries = (int)value;
+                    break;
+                case 0x04:
+                    result.PowerCycleState = (bool)value;
+                    break;
+                case 0x05:
+                    result.UVRetries = (int)value;
                     break;
             }
         }
