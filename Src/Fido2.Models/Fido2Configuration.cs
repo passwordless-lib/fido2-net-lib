@@ -216,6 +216,13 @@ public class Fido2Configuration
     ];
 
     /// <summary>
+    /// How many sub-statements of a <c>compound</c> attestation statement must verify successfully.
+    /// Defaults to <see cref="Fido2NetLib.CompoundAttestationPolicy.RequireAll"/>.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-compound-attestation"/>
+    /// </summary>
+    public CompoundAttestationPolicy CompoundAttestationPolicy { get; set; } = CompoundAttestationPolicy.RequireAll;
+
+    /// <summary>
     /// How to treat client or authenticator extension outputs that the Relying Party did not ask for.
     /// Defaults to <see cref="Fido2NetLib.UnsolicitedExtensionPolicy.Ignore"/>.
     /// </summary>

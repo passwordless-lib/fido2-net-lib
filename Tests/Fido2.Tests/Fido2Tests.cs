@@ -169,7 +169,8 @@ public class Fido2Tests
 
         public async Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync(
             AuthenticationExtensionsClientInputs requestedExtensions,
-            UnsolicitedExtensionPolicy unsolicitedExtensionPolicy = UnsolicitedExtensionPolicy.Ignore)
+            UnsolicitedExtensionPolicy unsolicitedExtensionPolicy = UnsolicitedExtensionPolicy.Ignore,
+            Action<Fido2Configuration> configure = null)
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
@@ -247,6 +248,8 @@ public class Fido2Tests
                 Origins = new HashSet<string> { rp },
                 UnsolicitedExtensionPolicy = unsolicitedExtensionPolicy,
             };
+
+            configure?.Invoke(config);
 
             var lib = new Fido2(config);
 
@@ -530,7 +533,7 @@ public class Fido2Tests
         var clientDataJson = SHA256.HashData(Encoding.UTF8.GetBytes("This is a test. This will need to be removed before merging."));
 
         var verifier = new AppleAppAttest();
-        var verifyResult = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataJson);
+        var verifyResult = await verifier.VerifyAsync((CborMap)AttestationObject.AttStmt, AttestationObject.AuthData, clientDataJson);
         Assert.True(verifyResult.Type.Equals(AttestationType.Basic));
     }
 
@@ -551,7 +554,7 @@ public class Fido2Tests
         var clientDataJson = SHA256.HashData(Encoding.UTF8.GetBytes("1234567890abcdefgh"));
 
         var verifier = new AppleAppAttest();
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => _ = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataJson));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => _ = await verifier.VerifyAsync((CborMap)AttestationObject.AttStmt, AttestationObject.AuthData, clientDataJson));
 
         const string windowsErrorMessage = "Failed to build chain in Apple AppAttest attestation: A required certificate is not within its validity period when verifying against the current system clock or the timestamp in the signed file.";
         const string cryptoKitErrorMessage = "Failed to build chain in Apple AppAttest attestation: An expired certificate was detected.";

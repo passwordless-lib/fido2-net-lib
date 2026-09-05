@@ -31,6 +31,9 @@ public abstract class AttestationVerifier
             "packed"            => new Packed(),           // https://www.w3.org/TR/webauthn-2/#sctn-packed-attestation
             "apple"             => new Apple(),            // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation
             "apple-appattest"   => new AppleAppAttest(),   // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
+            // "compound" carries an array of sub-statements rather than a map, so it does not fit this
+            // contract; AuthenticatorAttestationResponse dispatches it to Compound.VerifyAsync instead.
+            "compound"          => throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"Compound attestation is not verified through {nameof(AttestationVerifier)}; use {nameof(Compound)}.{nameof(Compound.VerifyAsync)}"),
             _                   => throw new Fido2VerificationException(Fido2ErrorCode.UnknownAttestationType, $"Unknown attestation type. Was '{formatIdentifier}'")
         };
         #pragma warning restore format

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -136,12 +137,28 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
-        var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
-
         // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
         //     and the hash of the serialized client data computed in step 7
-        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
+        AttestationType attType;
+        X509Certificate2[] trustPath;
+
+        if (AttestationObject.Fmt is Compound.FormatIdentifier)
+        {
+            if (AttestationObject.AttStmt is not CborArray compoundAttStmt)
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidCompoundAttestationStatement);
+
+            (attType, trustPath) = await Compound.VerifyAsync(compoundAttStmt, AttestationObject.AuthData, clientDataHash, config.CompoundAttestationPolicy).ConfigureAwait(false);
+        }
+        else
+        {
+            if (AttestationObject.AttStmt is not CborMap attStmt)
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAttestationStatement);
+
+            var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
+
+            (attType, trustPath) = await verifier.VerifyAsync(attStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
+        }
 
         // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy.
@@ -688,11 +705,16 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     /// <summary>
     /// The AttestationObject after CBOR parsing
     /// </summary>
-    public sealed class ParsedAttestationObject(string fmt, CborMap attStmt, AuthenticatorData authData)
+    public sealed class ParsedAttestationObject(string fmt, CborObject attStmt, AuthenticatorData authData)
     {
         public string Fmt { get; } = fmt;
 
-        public CborMap AttStmt { get; } = attStmt;
+        /// <summary>
+        /// The attestation statement. This is a <see cref="CborMap"/> for every format defined by WebAuthn except
+        /// <c>compound</c>, whose statement is a <see cref="CborArray"/> of sub-statements.
+        /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-compound-attestation"/>
+        /// </summary>
+        public CborObject AttStmt { get; } = attStmt;
 
         public AuthenticatorData AuthData { get; } = authData;
 
@@ -700,7 +722,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         {
             if (!(
                 cbor["fmt"] is CborTextString fmt &&
-                cbor["attStmt"] is CborMap attStmt &&
+                cbor["attStmt"] is CborMap or CborArray &&
                 cbor["authData"] is CborByteString authData))
             {
                 throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject);
@@ -708,7 +730,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
             return new ParsedAttestationObject(
                 fmt: fmt,
-                attStmt: attStmt,
+                attStmt: cbor["attStmt"]!,
                 authData: AuthenticatorData.Parse(authData)
             );
         }

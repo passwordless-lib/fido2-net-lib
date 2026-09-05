@@ -75,6 +75,16 @@ public enum AttestationStatementFormatIdentifier
     [JsonStringEnumMemberName("none")]
 #endif
     [EnumMember(Value = "none")]
-    None
+    None,
+
+    /// <summary>
+    /// Used to pass multiple, self-contained attestation statements in a single ceremony.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-compound-attestation"/>
+    /// </summary>
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("compound")]
+#endif
+    [EnumMember(Value = "compound")]
+    Compound
 }
 
