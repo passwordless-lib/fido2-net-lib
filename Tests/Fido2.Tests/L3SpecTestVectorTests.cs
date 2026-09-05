@@ -118,17 +118,15 @@ public class L3SpecTestVectorTests
     // limitations rather than problems with the vectors.
 
     [Fact]
-    public async Task Sctn_16_12_Ed448UsesAnUnmodelledCoseAlgorithmAsync()
+    public async Task Sctn_16_12_Ed448IsRecognizedButUnimplementedAsync()
     {
-        // This vector's credential public key declares COSE algorithm -53, which IANA registers as the
-        // fully-specified Ed448 (the Ed25519 vector in §16.11 still uses the generic EdDSA, -8). The library
-        // models neither -53 nor the other fully-specified identifiers -9, -19, -51 and -52, and an
-        // unrecognized algorithm escapes as InvalidOperationException rather than a Fido2VerificationException.
-        //
-        // Ed448 would additionally need signature support that NSec.Cryptography does not provide.
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => RegisterAsync(Vector("16.12")));
+        // This vector's credential public key declares COSE algorithm -53, the fully-specified Ed448. The
+        // algorithm is recognized, so the ceremony is refused cleanly; verifying the signature would need
+        // Ed448 support that NSec.Cryptography does not provide.
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => RegisterAsync(Vector("16.12")));
 
-        Assert.Contains("-53", ex.Message);
+        Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
+        Assert.Contains("Ed448", ex.Message);
     }
 
     [Fact]

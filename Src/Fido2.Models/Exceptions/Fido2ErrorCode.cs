@@ -37,5 +37,6 @@ public enum Fido2ErrorCode
     CrossOriginRequestNotAllowed,
     InvalidAuthenticatorResponseTopOrigin,
     InvalidBackupFlags,
-    BackupEligibilityChanged
+    BackupEligibilityChanged,
+    InvalidCredentialPublicKey
 }

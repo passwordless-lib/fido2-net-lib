@@ -58,6 +58,39 @@ public static class COSE
         /// ECDSA using secp256k1 curve and SHA-256
         /// </summary>
         ES256K = -47,
+
+        // The identifiers below are the "fully-specified" algorithms: unlike ES256/ES384/ES512 and EdDSA, which
+        // leave the curve to the key's crv parameter, each of these fixes the curve as part of the algorithm.
+        // See the IANA COSE Algorithms registry.
+        //
+        // WebAuthn Level 3 recommends against offering ESP256, ESP384, ESP512 or Ed25519 in pubKeyCredParams
+        // (§18.1), but an authenticator may still return a credential using one, so they must be understood.
+
+        /// <summary>
+        /// ECDSA using P-256 curve and SHA-256. Fully-specified equivalent of <see cref="ES256"/>.
+        /// </summary>
+        ESP256 = -9,
+
+        /// <summary>
+        /// EdDSA using the Ed25519 curve. Fully-specified equivalent of <see cref="EdDSA"/> with crv Ed25519.
+        /// </summary>
+        Ed25519 = -19,
+
+        /// <summary>
+        /// ECDSA using P-384 curve and SHA-384. Fully-specified equivalent of <see cref="ES384"/>.
+        /// </summary>
+        ESP384 = -51,
+
+        /// <summary>
+        /// ECDSA using P-521 curve and SHA-512. Fully-specified equivalent of <see cref="ES512"/>.
+        /// </summary>
+        ESP512 = -52,
+
+        /// <summary>
+        /// EdDSA using the Ed448 curve. Signature verification is not implemented: NSec.Cryptography has no
+        /// Ed448 support.
+        /// </summary>
+        Ed448 = -53,
     }
     /// <summary>
     /// COSE Key Common Parameters https://www.iana.org/assignments/cose/cose.xhtml#key-common-parameters

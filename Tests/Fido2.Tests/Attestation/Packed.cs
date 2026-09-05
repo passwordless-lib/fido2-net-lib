@@ -665,8 +665,11 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c }
         });
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(MakeAttestationResponseAsync);
-        Assert.Equal("Missing or unknown alg 42", ex.Message);
+        // An algorithm the library does not know is a malformed credential public key from the wire, so it is
+        // rejected as a Fido2VerificationException rather than escaping as an InvalidOperationException.
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Credential public key algorithm 42 is not valid with curve P256", ex.Message);
     }
 
     [Fact]
