@@ -21,7 +21,13 @@ public class Fido2Configuration
     /// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
     /// This is treated as a hint, and MAY be overridden by the client.
     /// </summary>
-    public uint Timeout { get; set; } = 60000;
+    /// <remarks>
+    /// WebAuthn L3 §15.1 recommends a range of 300000 to 600000 milliseconds and a default of 300000 (5
+    /// minutes), citing WCAG 2.1 Guideline 2.2 "Enough Time". A client that judges a Relying Party's timeout not
+    /// to meet that guideline MAY adjust it. The previous default here was 60000, well below the recommended
+    /// range.
+    /// </remarks>
+    public uint Timeout { get; set; } = 300000;
 
     /// <summary>
     /// TimestampDriftTolerance specifies a time in milliseconds that will be allowed for clock drift on a timestamped attestation.
