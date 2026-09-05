@@ -41,5 +41,6 @@ public enum Fido2ErrorCode
     InvalidCertificateChain,
     UndesiredMetadataStatus,
     CrossOriginRequestNotAllowed,
-    InvalidAuthenticatorResponseTopOrigin
+    InvalidAuthenticatorResponseTopOrigin,
+    InvalidBackupFlags
 }
