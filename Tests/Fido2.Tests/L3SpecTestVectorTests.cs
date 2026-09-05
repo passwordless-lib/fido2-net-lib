@@ -1,199 +1,274 @@
-﻿using Fido2NetLib;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+
+using Fido2NetLib;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test;
 
 /// <summary>
-/// Runs the literal registration/assertion test vectors published in WebAuthn L3 <see href="https://www.w3.org/TR/webauthn-3/#sctn-test-vectors"/>
-/// §16.4 ("crossOrigin": true) and §16.5 ("topOrigin" present) through the real verification pipeline, using the
-/// spec's own byte-for-byte clientDataJSON/attestationObject/authenticatorData/signature values rather than
-/// synthetically generated ones.
+/// Drives the literal test vectors published in WebAuthn L3 §16 through the real verification pipeline.
+/// <see href="https://www.w3.org/TR/webauthn-3/#sctn-test-vectors"/>
 /// </summary>
+/// <remarks>
+/// <para>
+/// Every other attestation test in this suite signs its own fixtures with keys generated in-process, which
+/// checks the library against its own idea of what an authenticator produces. These vectors are authored by the
+/// working group and are byte-exact -- clientDataJSON, attestationObject, authenticatorData and signature all
+/// come from the specification -- so they check the library against something other than itself.
+/// </para>
+/// <para>
+/// The specification addresses them to Relying Party implementers directly: "Relying Party implementers may
+/// check that they can successfully validate the registration outputs given the same challenge input, and that
+/// they can successfully validate the authentication outputs given the same challenge input and the credential
+/// public key and credential ID from the associated registration example." That is the shape of
+/// <see cref="RegisterThenAuthenticateAsync"/>: each vector's registration output feeds its authentication.
+/// </para>
+/// <para>
+/// All vectors use the RP ID <c>example.org</c>, the origin <c>https://example.org</c> and, where applicable,
+/// the topOrigin <c>https://example.com</c>. The data lives in <c>TestFiles/L3SpecTestVectors.json</c>,
+/// extracted verbatim from the specification.
+/// </para>
+/// </remarks>
 public class L3SpecTestVectorTests
 {
-    private static byte[] Hex(string hex) => Convert.FromHexString(hex);
+    private const string RpId = "example.org";
+    private const string Origin = "https://example.org";
+    /// <summary>
+    /// Vectors the library does not verify today, each for a reason recorded in its own test below. They are
+    /// excluded from <see cref="SupportedVectors"/> rather than deleted, so the count check keeps them visible.
+    /// </summary>
+    private static readonly string[] s_divergentSections = ["16.12", "16.13", "16.15", "16.16"];
 
-    private static CredentialCreateOptions BuildCreateOptions(byte[] challenge, string rp)
+    private static readonly IReadOnlyList<SpecVector> s_vectors =
+        JsonSerializer.Deserialize<List<SpecVector>>(File.ReadAllBytes("./L3SpecTestVectors.json"))!;
+
+    private static SpecVector Vector(string section) => s_vectors.Single(v => v.Section == section);
+
+    /// <summary>Every vector the library is expected to verify end to end.</summary>
+    public static TheoryData<string> SupportedVectors()
     {
-        return new CredentialCreateOptions
+        var data = new TheoryData<string>();
+
+        foreach (var vector in s_vectors.Where(v => !s_divergentSections.Contains(v.Section)))
+            data.Add(vector.Section);
+
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(SupportedVectors))]
+    public async Task RegisterThenAuthenticateAsync(string section)
+    {
+        var vector = Vector(section);
+        var lib = MakeLib(vector);
+
+        var credential = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
         {
-            Attestation = AttestationConveyancePreference.None,
-            AuthenticatorSelection = new AuthenticatorSelection
-            {
-                AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                ResidentKey = ResidentKeyRequirement.Discouraged,
-                UserVerification = UserVerificationRequirement.Discouraged,
-            },
-            Challenge = challenge,
-            PubKeyCredParams = [PubKeyCredParam.ES256],
-            Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
-            User = new Fido2User
-            {
-                Name = "testuser",
-                Id = "testuser"u8.ToArray(),
-                DisplayName = "Test User",
-            },
-            Timeout = 60000,
-        };
+            AttestationResponse = MakeAttestationResponse(vector),
+            OriginalOptions = MakeCreateOptions(vector),
+            IsCredentialIdUniqueToUserCallback = static (args, cancellationToken) => Task.FromResult(true),
+        });
+
+        Assert.Equal(vector.Format, credential.AttestationFormat);
+        Assert.Equal(Convert.FromHexString(vector.CredentialId), credential.Id);
+        Assert.Equal(new Guid(Convert.FromHexString(vector.Aaguid), bigEndian: true), credential.AaGuid);
+
+        // The registration output is what the authentication is verified against, exactly as a Relying Party
+        // would do it: the stored public key, signature counter and backup eligibility all come from above.
+        var assertion = await lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = MakeAssertionResponse(vector),
+            OriginalOptions = MakeAssertionOptions(vector, credential),
+            StoredPublicKey = credential.PublicKey,
+            StoredSignatureCounter = credential.SignCount,
+            StoredBackupEligible = credential.IsBackupEligible,
+            IsUserHandleOwnerOfCredentialIdCallback = static (args, cancellationToken) => Task.FromResult(true),
+        });
+
+        Assert.Equal(credential.Id, assertion.CredentialId);
     }
 
     [Fact]
-    public async Task Sctn_16_4_CrossOriginTrue_RegistrationAndAssertionAsync()
+    public async Task Sctn_16_6_AcceptsACredentialIdAtTheMaximumLengthAsync()
     {
-        // https://www.w3.org/TR/webauthn-3/#sctn-test-vectors-none-es256-crossOrigin
-        var regChallenge = Hex("3be5aacd03537142472340ab5969f240f1d87716e20b6807ac230655fa4b3b49");
-        var regClientDataJson = Hex("7b2274797065223a22776562617574686e2e637265617465222c226368616c6c656e6765223a224f2d57717a514e5463554a484930437257576e7951504859647862694332674872434d475666704c4f306b222c226f726967696e223a2268747470733a2f2f6578616d706c652e6f7267222c2263726f73734f726967696e223a747275652c22657874726144617461223a22636c69656e74446174614a534f4e206d617920626520657874656e6465642077697468206164646974696f6e616c206669656c647320696e20746865206675747572652c207375636820617320746869733a207a5a7175457444523944577170573574425754467567227d");
-        var regAttestationObject = Hex("a363666d74646e6f6e656761747453746d74a068617574684461746158a4bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b54500000000883f4f6014f19c09d87aa38123be48d000206e1050c0d2ca2f07c755cb2c66a74c64fa43065c18f938354d9915db2bd5ce57a501020326200121582022200a473f90b11078851550d03b4e44a2279f8c4eca27b3153dedfe03e4e97d225820cbd0be95e746ad6f5a8191be11756e4c0420e72f65b466d39bc56b8b123a9c6e");
-        var expectedAaGuid = new Guid(Hex("883f4f6014f19c09d87aa38123be48d0"), bigEndian: true);
-        var expectedCredentialId = Hex("6e1050c0d2ca2f07c755cb2c66a74c64fa43065c18f938354d9915db2bd5ce57");
+        // 1023 bytes is the largest credential ID a Relying Party may accept (§7.1 step 25).
+        var vector = Vector("16.6");
 
-        var authChallenge = Hex("876aa517ba83fdee65fcffdbca4c84eeae5d54f8041a1fc85c991e5bbb273137");
-        var authAuthenticatorData = Hex("bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b50500000000");
-        var authClientDataJson = Hex("7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a226832716c463771445f65356c5f505f62796b7945377135645650674547685f49584a6b655737736e4d5463222c226f726967696e223a2268747470733a2f2f6578616d706c652e6f7267222c2263726f73734f726967696e223a747275652c22657874726144617461223a22636c69656e74446174614a534f4e206d617920626520657874656e6465642077697468206164646974696f6e616c206669656c647320696e20746865206675747572652c207375636820617320746869733a2039327063545644304162792d713464746d6a36656667227d");
-        var authSignature = Hex("3046022100eb12fcf23b12764c0f122e22371fab92e283879fd798f38ee1841c951b6e40e7022100c76237ff9db77b3c56f30837cda6a09acfa2e915544e609c0733b1184036d1cf");
+        Assert.Equal(1023, Convert.FromHexString(vector.CredentialId).Length);
 
-        var lib = new Fido2(new Fido2Configuration
+        var credential = await RegisterAsync(vector);
+
+        Assert.Equal(1023, credential.Id.Length);
+    }
+
+    private Task<RegisteredPublicKeyCredential> RegisterAsync(SpecVector vector) =>
+        MakeLib(vector).MakeNewCredentialAsync(new MakeNewCredentialParams
         {
-            RPID = "example.org",
-            RPName = "example.org",
-            Origins = new HashSet<string> { "https://example.org" },
-            AllowCrossOriginRequests = true,
+            AttestationResponse = MakeAttestationResponse(vector),
+            OriginalOptions = MakeCreateOptions(vector),
+            IsCredentialIdUniqueToUserCallback = static (args, cancellationToken) => Task.FromResult(true),
         });
 
-        var createOptions = BuildCreateOptions(regChallenge, "example.org");
+    // --- Vectors the library does not verify -----------------------------------------------------------
+    //
+    // Each of these pins the library's current behaviour against a vector the working group published, so the
+    // divergence is visible in the suite rather than hidden by omission. Three of the four are library
+    // limitations rather than problems with the vectors.
 
-        var rawAttestation = new AuthenticatorAttestationRawResponse
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
-            RawId = expectedCredentialId,
-            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
-            {
-                AttestationObject = regAttestationObject,
-                ClientDataJson = regClientDataJson,
-            },
-        };
+    [Fact]
+    public async Task Sctn_16_12_Ed448UsesAnUnmodelledCoseAlgorithmAsync()
+    {
+        // This vector's credential public key declares COSE algorithm -53, which IANA registers as the
+        // fully-specified Ed448 (the Ed25519 vector in §16.11 still uses the generic EdDSA, -8). The library
+        // models neither -53 nor the other fully-specified identifiers -9, -19, -51 and -52, and an
+        // unrecognized algorithm escapes as InvalidOperationException rather than a Fido2VerificationException.
+        //
+        // Ed448 would additionally need signature support that NSec.Cryptography does not provide.
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => RegisterAsync(Vector("16.12")));
 
-        var registered = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
-        {
-            AttestationResponse = rawAttestation,
-            OriginalOptions = createOptions,
-            IsCredentialIdUniqueToUserCallback = (_, _) => Task.FromResult(true),
-        });
-
-        Assert.Equal(expectedAaGuid, registered.AaGuid);
-        Assert.Equal(expectedCredentialId, registered.Id);
-
-        var assertionOptions = new AssertionOptions
-        {
-            Challenge = authChallenge,
-            RpId = "example.org",
-        };
-
-        var rawAssertion = new AuthenticatorAssertionRawResponse
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
-            RawId = expectedCredentialId,
-            Response = new AuthenticatorAssertionRawResponse.AssertionResponse
-            {
-                AuthenticatorData = authAuthenticatorData,
-                ClientDataJson = authClientDataJson,
-                Signature = authSignature,
-            },
-        };
-
-        var assertionResult = await lib.MakeAssertionAsync(new MakeAssertionParams
-        {
-            AssertionResponse = rawAssertion,
-            OriginalOptions = assertionOptions,
-            StoredPublicKey = registered.PublicKey,
-            StoredSignatureCounter = registered.SignCount,
-            IsUserHandleOwnerOfCredentialIdCallback = (_, _) => Task.FromResult(true),
-        });
-
-        Assert.Equal(expectedCredentialId, assertionResult.CredentialId);
+        Assert.Contains("-53", ex.Message);
     }
 
     [Fact]
-    public async Task Sctn_16_5_TopOriginPresent_RegistrationAndAssertionAsync()
+    public async Task Sctn_16_13_TpmVectorUsesAPlaceholderManufacturerAsync()
     {
-        // https://www.w3.org/TR/webauthn-3/#sctn-test-vectors-none-es256-topOrigin
-        var regChallenge = Hex("4e1f4c6198699e33c14f192153f49d7e0e8e3577d5ac416c5f3adc92a41f27e5");
-        var regClientDataJson = Hex("7b2274797065223a22776562617574686e2e637265617465222c226368616c6c656e6765223a225468394d595a68706e6a504254786b68555f53646667364f4e58665672454673587a72636b7151664a2d55222c226f726967696e223a2268747470733a2f2f6578616d706c652e6f7267222c2263726f73734f726967696e223a747275652c22746f704f726967696e223a2268747470733a2f2f6578616d706c652e636f6d227d");
-        var regAttestationObject = Hex("a363666d74646e6f6e656761747453746d74a068617574684461746158a4bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b5410000000097586fd09799a76401c200455099ef2a0020b8ad59b996047ab18e2ceb57206c362da57458793481f4a8ebf101c7ca7cc0f1a5010203262001215820a1c47c1d82da4ebe82cd72207102b380670701993bc35398ae2e5726427fe01d22582086c1080d82987028c7f54ecb1b01185de243b359294a0ed210cd47480f0adc88");
-        var expectedAaGuid = new Guid(Hex("97586fd09799a76401c200455099ef2a"), bigEndian: true);
-        var expectedCredentialId = Hex("b8ad59b996047ab18e2ceb57206c362da57458793481f4a8ebf101c7ca7cc0f1");
+        // The vector's TPM manufacturer is "id:000000000", which is not a TCG-assigned vendor. The library
+        // checks the manufacturer against the real vendor list, so this vector cannot pass -- and should not:
+        // the check is doing its job. Recorded here so the gap is not mistaken for missing TPM support.
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => RegisterAsync(Vector("16.13")));
 
-        var authChallenge = Hex("d54a5c8ca4b62a8e3bb321e3b2bc73856f85a10150db2939ac195739eb1ea066");
-        var authAuthenticatorData = Hex("bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b50500000000");
-        var authClientDataJson = Hex("7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a22315570636a4b53324b6f34377379486a7372787a68572d466f51465132796b3572426c584f6573656f4759222c226f726967696e223a2268747470733a2f2f6578616d706c652e6f7267222c2263726f73734f726967696e223a747275652c22746f704f726967696e223a2268747470733a2f2f6578616d706c652e636f6d222c22657874726144617461223a22636c69656e74446174614a534f4e206d617920626520657874656e6465642077697468206164646974696f6e616c206669656c647320696e20746865206675747572652c207375636820617320746869733a205569466f4a4d56525148444146574669347678557051227d");
-        var authSignature = Hex("3045022100b5a70c81780d5fcc9a4f2ae9caae99058f8accaf58b91fb59329646c28ac6ffc022012e101c165db3c8e9957f0c54dd6ca9b56bc3bd2f280bd2faa6c1d02c6e5c171");
+        Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
+    }
 
-        // The RP's own origin is https://example.org, but this ceremony additionally reports a
-        // topOrigin of https://example.com (the page the RP expects to be sub-framed within, per
-        // WebAuthn L3 §7.1/§7.2 and §13.4.9). Per this library's design, that's validated against
-        // the same configured Origins allowlist as the primary origin check.
-        var lib = new Fido2(new Fido2Configuration
+    [Fact]
+    public async Task Sctn_16_15_AppleVectorCarriesASingleCertificateAsync()
+    {
+        // §8.8 defines the statement as x5c: [ credCert: bytes, * (caCert: bytes) ] -- zero or more CA
+        // certificates follow credCert, so this vector's single-element x5c is well formed. The library
+        // requires at least two elements, which is stricter than the specification.
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => RegisterAsync(Vector("16.15")));
+
+        Assert.Equal(Fido2ErrorMessages.MalformedX5c_AppleAttestation, ex.Message);
+    }
+
+    [Fact]
+    public async Task Sctn_16_16_FidoU2fVectorHasANonZeroAaguidAsync()
+    {
+        // The library requires a zeroed AAGUID for fido-u2f, with a comment noting the rule came from FIDO
+        // conformance testing and could not be found in the specification. It is indeed absent from §8.6's
+        // verification procedure, and this vector carries a non-zero AAGUID, so the check rejects a vector the
+        // working group published. Relaxing it may affect FIDO conformance, so the behaviour stands for now.
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => RegisterAsync(Vector("16.16")));
+
+        Assert.Equal("Aaguid was not empty parsing fido-u2f attestation statement", ex.Message);
+    }
+
+    [Fact]
+    public void EveryPublishedVectorIsAccountedFor()
+    {
+        // §16 ships 15 registration/authentication pairs. If a future revision adds more, this fails rather
+        // than letting a new vector go silently uncovered.
+        Assert.Equal(15, s_vectors.Count);
+        Assert.Equal(15 - s_divergentSections.Length, SupportedVectors().Count);
+        Assert.All(s_divergentSections, section => Assert.NotNull(Vector(section)));
+
+        Assert.Equal(
+            ["android-key", "apple", "fido-u2f", "none", "packed", "tpm"],
+            s_vectors.Select(v => v.Format).Distinct().Order());
+    }
+
+    // --- Fixture construction -------------------------------------------------------------------------
+
+    private static Fido2 MakeLib(SpecVector vector) => new(new Fido2Configuration
+    {
+        RPID = RpId,
+        RPName = RpId,
+        // topOrigin is checked against the configured origins, so a vector framed by example.com needs it listed.
+        Origins = vector.TopOrigin is null
+            ? new HashSet<string> { Origin }
+            : new HashSet<string> { Origin, vector.TopOrigin },
+        AllowCrossOriginRequests = vector.CrossOrigin,
+    });
+
+    private static CredentialCreateOptions MakeCreateOptions(SpecVector vector) => new()
+    {
+        Rp = new PublicKeyCredentialRpEntity(RpId, RpId, null),
+        User = new Fido2User { Name = "testuser", Id = "testuser"u8.ToArray(), DisplayName = "Test User" },
+        Challenge = Convert.FromHexString(vector.Registration.Challenge),
+        PubKeyCredParams = [new PubKeyCredParam((COSE.Algorithm)vector.Alg)],
+        AuthenticatorSelection = new AuthenticatorSelection { UserVerification = UserVerificationRequirement.Discouraged },
+        Attestation = AttestationConveyancePreference.Direct,
+        Timeout = 60000,
+    };
+
+    private static AssertionOptions MakeAssertionOptions(SpecVector vector, RegisteredPublicKeyCredential credential) => new()
+    {
+        Challenge = Convert.FromHexString(vector.Authentication.Challenge),
+        RpId = RpId,
+        AllowCredentials = [new PublicKeyCredentialDescriptor(credential.Id)],
+        UserVerification = UserVerificationRequirement.Discouraged,
+        Timeout = 60000,
+    };
+
+    private static AuthenticatorAttestationRawResponse MakeAttestationResponse(SpecVector vector) => new()
+    {
+        Type = PublicKeyCredentialType.PublicKey,
+        Id = Base64Url(vector.CredentialId),
+        RawId = Convert.FromHexString(vector.CredentialId),
+        ClientExtensionResults = new AuthenticationExtensionsClientOutputs(),
+        Response = new AuthenticatorAttestationRawResponse.AttestationResponse
         {
-            RPID = "example.org",
-            RPName = "example.org",
-            Origins = new HashSet<string> { "https://example.org", "https://example.com" },
-            AllowCrossOriginRequests = true,
-        });
+            AttestationObject = Convert.FromHexString(vector.Registration.AttestationObject),
+            ClientDataJson = Convert.FromHexString(vector.Registration.ClientDataJson),
+            Transports = [],
+        },
+    };
 
-        var createOptions = BuildCreateOptions(regChallenge, "example.org");
-
-        var rawAttestation = new AuthenticatorAttestationRawResponse
+    private static AuthenticatorAssertionRawResponse MakeAssertionResponse(SpecVector vector) => new()
+    {
+        Type = PublicKeyCredentialType.PublicKey,
+        Id = Base64Url(vector.CredentialId),
+        RawId = Convert.FromHexString(vector.CredentialId),
+        ClientExtensionResults = new AuthenticationExtensionsClientOutputs(),
+        Response = new AuthenticatorAssertionRawResponse.AssertionResponse
         {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
-            RawId = expectedCredentialId,
-            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
-            {
-                AttestationObject = regAttestationObject,
-                ClientDataJson = regClientDataJson,
-            },
-        };
+            AuthenticatorData = Convert.FromHexString(vector.Authentication.AuthenticatorData),
+            ClientDataJson = Convert.FromHexString(vector.Authentication.ClientDataJson),
+            Signature = Convert.FromHexString(vector.Authentication.Signature),
+        },
+    };
 
-        var registered = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
-        {
-            AttestationResponse = rawAttestation,
-            OriginalOptions = createOptions,
-            IsCredentialIdUniqueToUserCallback = (_, _) => Task.FromResult(true),
-        });
+    private static string Base64Url(string hex) =>
+        Convert.ToBase64String(Convert.FromHexString(hex)).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-        Assert.Equal(expectedAaGuid, registered.AaGuid);
-        Assert.Equal(expectedCredentialId, registered.Id);
+    public sealed class SpecVector
+    {
+        [JsonPropertyName("section")] public required string Section { get; init; }
+        [JsonPropertyName("title")] public required string Title { get; init; }
+        [JsonPropertyName("format")] public required string Format { get; init; }
+        [JsonPropertyName("alg")] public required int Alg { get; init; }
+        [JsonPropertyName("aaguid")] public required string Aaguid { get; init; }
+        [JsonPropertyName("credentialId")] public required string CredentialId { get; init; }
+        [JsonPropertyName("crossOrigin")] public bool CrossOrigin { get; init; }
+        [JsonPropertyName("topOrigin")] public string TopOrigin { get; init; }
+        [JsonPropertyName("registration")] public required RegistrationVector Registration { get; init; }
+        [JsonPropertyName("authentication")] public required AuthenticationVector Authentication { get; init; }
+    }
 
-        var assertionOptions = new AssertionOptions
-        {
-            Challenge = authChallenge,
-            RpId = "example.org",
-        };
+    public sealed class RegistrationVector
+    {
+        [JsonPropertyName("challenge")] public required string Challenge { get; init; }
+        [JsonPropertyName("clientDataJSON")] public required string ClientDataJson { get; init; }
+        [JsonPropertyName("attestationObject")] public required string AttestationObject { get; init; }
+    }
 
-        var rawAssertion = new AuthenticatorAssertionRawResponse
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
-            RawId = expectedCredentialId,
-            Response = new AuthenticatorAssertionRawResponse.AssertionResponse
-            {
-                AuthenticatorData = authAuthenticatorData,
-                ClientDataJson = authClientDataJson,
-                Signature = authSignature,
-            },
-        };
-
-        var assertionResult = await lib.MakeAssertionAsync(new MakeAssertionParams
-        {
-            AssertionResponse = rawAssertion,
-            OriginalOptions = assertionOptions,
-            StoredPublicKey = registered.PublicKey,
-            StoredSignatureCounter = registered.SignCount,
-            IsUserHandleOwnerOfCredentialIdCallback = (_, _) => Task.FromResult(true),
-        });
-
-        Assert.Equal(expectedCredentialId, assertionResult.CredentialId);
+    public sealed class AuthenticationVector
+    {
+        [JsonPropertyName("challenge")] public required string Challenge { get; init; }
+        [JsonPropertyName("authenticatorData")] public required string AuthenticatorData { get; init; }
+        [JsonPropertyName("clientDataJSON")] public required string ClientDataJson { get; init; }
+        [JsonPropertyName("signature")] public required string Signature { get; init; }
     }
 }
