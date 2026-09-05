@@ -7,6 +7,7 @@ namespace Fido2NetLib.Serialization;
 [JsonSerializable(typeof(MetadataBLOBPayload))]
 [JsonSerializable(typeof(CredentialCreateOptions))]
 [JsonSerializable(typeof(MetadataStatement))]
+[JsonSerializable(typeof(WellKnownWebAuthn))]
 public partial class FidoModelSerializerContext : JsonSerializerContext
 {
 }

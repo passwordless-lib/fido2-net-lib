@@ -100,6 +100,28 @@ public class Fido2Configuration
     }
 
     /// <summary>
+    /// Builds the payload to serve from this RP ID's <c>/.well-known/webauthn</c> endpoint, listing every
+    /// configured origin so user agents can validate
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-related-origins">related origin requests</see>.
+    /// </summary>
+    /// <remarks>
+    /// The spec places no limit on how many origins a Relying Party publishes. Clients are only required to
+    /// process <see cref="WellKnownWebAuthn.MinimumClientSupportedLabels"/> distinct <i>registrable origin
+    /// labels</i>, walking the list in order, so <see cref="Origins"/> should be ordered with the most important
+    /// labels first. Note that many origins can share one label -- see
+    /// <see cref="WellKnownWebAuthn.MinimumClientSupportedLabels"/>.
+    /// </remarks>
+    public WellKnownWebAuthn GetWellKnownWebAuthn()
+    {
+        // Project from Origins rather than FullyQualifiedOrigins so the caller's enumeration order survives:
+        // clients walk the published list in order and stop taking on new labels once they hit their limit.
+        return new WellKnownWebAuthn
+        {
+            Origins = [.. Origins.Select(o => o.ToFullyQualifiedOrigin()).Distinct(StringComparer.OrdinalIgnoreCase)]
+        };
+    }
+
+    /// <summary>
     /// Whether to accept registration/authentication ceremonies performed inside a cross-origin
     /// iframe (i.e. where <c>collectedClientData.crossOrigin</c> is <see langword="true"/>), per
     /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-terms">WebAuthn L3</see>. When
