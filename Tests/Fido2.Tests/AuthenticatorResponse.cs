@@ -2487,7 +2487,8 @@ public class AuthenticatorResponseTests
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
-            AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BS, 0, null).ToByteArray(),
+            // BS requires BE: a credential that is not backup eligible can never be backed up.
+            AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BE | AuthenticatorFlags.BS, 0, null).ToByteArray(),
             Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
             UserHandle = [0xf1, 0xd0],

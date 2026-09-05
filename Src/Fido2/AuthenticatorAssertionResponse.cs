@@ -136,8 +136,16 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (options.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
 
-        // 16. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs be the values of the BE and BS bits, respectively, of the flags in authData.
-        // Compare currentBe and currentBs with credentialRecord.BE and credentialRecord.BS and apply Relying Party policy, if any.
+        // 16. If the BE bit of the flags in authData is not set, verify that the BS bit is not set.
+        //     A credential that is not backup eligible can never be backed up, so this combination is
+        //     malformed regardless of Relying Party policy.
+        if (!authData.IsBackupEligible && authData.IsBackedUp)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidBackupFlags, Fido2ErrorMessages.InvalidBackupFlags);
+
+        // 17. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs
+        //     be the values of the BE and BS bits, respectively, of the flags in authData. Compare currentBe and currentBs with
+        //     credentialRecord.backupEligible and credentialRecord.backupState and apply Relying Party policy, if any.
+        //
         if (authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);

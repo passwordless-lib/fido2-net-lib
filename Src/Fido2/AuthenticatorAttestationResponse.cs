@@ -109,7 +109,13 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (originalOptions.AuthenticatorSelection?.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
 
-        // 15. If the Relying Party uses the credential's backup eligibility to inform its user experience flows and/or policies, evaluate the BE bit of the flags in authData.
+        // 15. If the BE bit of the flags in authData is not set, verify that the BS bit is not set.
+        //     A credential that is not backup eligible can never be backed up, so this combination is
+        //     malformed regardless of Relying Party policy.
+        if (!authData.IsBackupEligible && authData.IsBackedUp)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidBackupFlags, Fido2ErrorMessages.InvalidBackupFlags);
+
+        // 16. If the Relying Party uses the credential's backup eligibility to inform its user experience flows and/or policies, evaluate the BE bit of the flags in authData.
         if (authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
