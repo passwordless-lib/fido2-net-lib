@@ -1,6 +1,10 @@
 ﻿#nullable disable
 
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
@@ -88,5 +92,32 @@ public sealed class MetadataBLOBPayloadEntry
     public StatusReport GetLatestStatusReport()
     {
         return StatusReports.LastOrDefault();
+    }
+
+    /// <summary>
+    /// Computes the certificate's public key identifier per RFC 5280 §4.2.1.2 method (1): the SHA-1 hash of the
+    /// value of the BIT STRING subjectPublicKey (excluding the tag, length, and number of unused bits), encoded
+    /// as a lower-case hex string. This is the identifier format used by <see cref="AttestationCertificateKeyIdentifiers"/>.
+    /// </summary>
+    public static string ComputeAttestationCertificateKeyIdentifier(X509Certificate2 attestationCertificate)
+    {
+        ArgumentNullException.ThrowIfNull(attestationCertificate);
+
+        return Convert.ToHexString(SHA1.HashData(attestationCertificate.PublicKey.EncodedKeyValue.RawData)).ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Determines whether this entry is identified by (i.e. its <see cref="AttestationCertificateKeyIdentifiers"/>
+    /// contains the key identifier of) one of the given attestation certificates. Per the FIDO Metadata Service
+    /// spec, this is how authenticators without an AAID or AAGUID (e.g. FIDO U2F authenticators) are identified.
+    /// </summary>
+    public bool MatchesAttestationCertificate(X509Certificate2 attestationCertificate)
+    {
+        if (AttestationCertificateKeyIdentifiers is not { Length: > 0 })
+            return false;
+
+        var keyIdentifier = ComputeAttestationCertificateKeyIdentifier(attestationCertificate);
+
+        return AttestationCertificateKeyIdentifiers.Contains(keyIdentifier, StringComparer.OrdinalIgnoreCase);
     }
 }

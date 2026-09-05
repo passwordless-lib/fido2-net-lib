@@ -186,11 +186,15 @@ public static class Fido2NetLibBuilderExtensions
     /// <param name="clientBuilder">Optional action to configure the HTTP client used for MDS requests.</param>
     /// <returns>The <see cref="IFido2NetLibBuilder"/> for method chaining.</returns>
     /// <remarks>
-    /// This method registers a <see cref="Fido2MetadataServiceRepository"/> as a scoped service
+    /// This method registers a <see cref="Fido2MetadataServiceRepository"/> as a singleton service
     /// and configures an HTTP client specifically for communicating with the FIDO Alliance MDS v3
     /// endpoint at https://mds3.fidoalliance.org/. The repository fetches and validates
     /// JWT-signed metadata BLOBs containing authenticator metadata and certification status.
-    /// 
+    /// A singleton lifetime lets the repository retain the BLOB's ETag between fetches, so a
+    /// re-fetch can conditionally re-validate (If-None-Match) instead of always re-downloading the
+    /// full BLOB; the underlying <see cref="HttpClient"/> lifetime is still managed by
+    /// <see cref="IHttpClientFactory"/> regardless.
+    ///
     /// The HTTP client is registered with a specific name and can be further configured
     /// using the optional <paramref name="clientBuilder"/> action (e.g., for adding authentication,
     /// custom headers, or timeout settings).
@@ -206,7 +210,7 @@ public static class Fido2NetLibBuilderExtensions
         if (clientBuilder != null)
             clientBuilder(httpClientBuilder);
 
-        builder.Services.AddScoped<IMetadataRepository, Fido2MetadataServiceRepository>();
+        builder.Services.AddSingleton<IMetadataRepository, Fido2MetadataServiceRepository>();
 
         return builder;
     }
