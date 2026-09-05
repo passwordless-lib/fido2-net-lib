@@ -12,11 +12,4 @@ public class CredentialPropertiesOutput
     /// </summary>
     [JsonPropertyName("rk")]
     public bool Rk { get; init; }
-
-    /// <summary>
-    /// This OPTIONAL property is a human-palatable description of the credential’s managing authenticator, chosen by the user.
-    /// https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname
-    /// </summary>
-    [JsonPropertyName("authenticatorDisplayName")]
-    public string? AuthenticatorDisplayName { get; init; }
 }
