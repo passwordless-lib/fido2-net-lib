@@ -63,6 +63,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         IsCredentialIdUniqueToUserAsyncDelegate isCredentialIdUniqueToUser,
         IMetadataService? metadataService,
         byte[]? requestTokenBindingId,
+        CredentialMediationRequirement mediation = CredentialMediationRequirement.Optional,
         CancellationToken cancellationToken = default)
     {
         // https://www.w3.org/TR/webauthn/#registering-a-new-credential
@@ -102,8 +103,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (!authData.RpIdHash.AsSpan().SequenceEqual(rpIdHash))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidRpidHash, Fido2ErrorMessages.InvalidRpidHash);
 
-        // 13. Verify that the User Present bit of the flags in authData is set.
-        if (!authData.UserPresent)
+        // 13. If options.mediation is not set to conditional, verify that the UP bit of the flags in authData is set.
+        //     A conditional create surfaces alongside an existing sign-in rather than as its own prompt, so it
+        //     may legitimately complete without a separate user presence test.
+        if (mediation is not CredentialMediationRequirement.Conditional && !authData.UserPresent)
             throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
         // 14. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.

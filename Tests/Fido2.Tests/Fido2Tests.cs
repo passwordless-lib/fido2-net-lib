@@ -133,7 +133,10 @@ public class Fido2Tests
         }
 
         public byte[] _credentialID;
-        public const AuthenticatorFlags _flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
+        public const AuthenticatorFlags DefaultFlags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UP | AuthenticatorFlags.UV;
+
+        /// <summary>Settable so a test can exercise a ceremony with a different flag combination.</summary>
+        public AuthenticatorFlags _flags { get; set; } = DefaultFlags;
         public ushort _signCount;
         protected Guid _aaguid = new("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
         public Extensions GetExtensions()
@@ -170,7 +173,8 @@ public class Fido2Tests
         public async Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync(
             AuthenticationExtensionsClientInputs requestedExtensions,
             UnsolicitedExtensionPolicy unsolicitedExtensionPolicy = UnsolicitedExtensionPolicy.Ignore,
-            Action<Fido2Configuration> configure = null)
+            Action<Fido2Configuration> configure = null,
+            CredentialMediationRequirement mediation = CredentialMediationRequirement.Optional)
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
@@ -257,7 +261,8 @@ public class Fido2Tests
             {
                 AttestationResponse = attestationResponse,
                 OriginalOptions = originalOptions,
-                IsCredentialIdUniqueToUserCallback = callback
+                IsCredentialIdUniqueToUserCallback = callback,
+                Mediation = mediation
             });
 
             return credentialMakeResult;

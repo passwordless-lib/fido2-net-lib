@@ -114,3 +114,58 @@ public class L3CeremonyOptionsTests
     }
 
 }
+
+/// <summary>
+/// Conditional mediation relaxes the user presence requirement on registration, so it needs a full ceremony.
+/// </summary>
+public class L3ConditionalMediationTests : Fido2Tests.Attestation
+{
+    public L3ConditionalMediationTests()
+    {
+        _attestationObject = new CborMap { { "fmt", "none" }, { "attStmt", new CborMap() } };
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
+
+        // Everything the default harness sets, minus user presence.
+        _flags = AuthenticatorFlags.AT | AuthenticatorFlags.ED | AuthenticatorFlags.UV;
+    }
+
+    [Fact]
+    public async Task RegistrationWithoutUserPresenceIsRejectedUnderDefaultMediationAsync()
+    {
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.UserPresentFlagNotSet, ex.Code);
+    }
+
+    [Fact]
+    public async Task ConditionalRegistrationWithoutUserPresenceIsAcceptedAsync()
+    {
+        // "If options.mediation is not set to conditional, verify that the UP bit of the flags in authData is set."
+        var credential = await MakeAttestationResponseAsync(null, mediation: CredentialMediationRequirement.Conditional);
+
+        Assert.Equal(_credentialID, credential.Id);
+    }
+
+    [Theory]
+    [InlineData(CredentialMediationRequirement.Silent)]
+    [InlineData(CredentialMediationRequirement.Optional)]
+    [InlineData(CredentialMediationRequirement.Required)]
+    public async Task OnlyConditionalMediationWaivesTheUserPresenceCheckAsync(CredentialMediationRequirement mediation)
+    {
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync(null, mediation: mediation));
+
+        Assert.Equal(Fido2ErrorCode.UserPresentFlagNotSet, ex.Code);
+    }
+
+    [Fact]
+    public async Task ConditionalRegistrationStillEnforcesTheOtherFlagChecksAsync()
+    {
+        // Waiving user presence must not waive anything else: drop attested credential data too.
+        _flags = AuthenticatorFlags.ED | AuthenticatorFlags.UV;
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+            () => MakeAttestationResponseAsync(null, mediation: CredentialMediationRequirement.Conditional));
+
+        Assert.Equal(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, ex.Code);
+    }
+}
