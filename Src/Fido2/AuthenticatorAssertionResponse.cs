@@ -53,6 +53,11 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID.</param>
     /// <param name="metadataService"></param>
     /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
+    /// <param name="storedBackupEligible">
+    /// The value of the BE flag recorded when this credential was registered, or <see langword="null"/> if the
+    /// Relying Party does not track backup eligibility. Backup eligibility is a permanent property of a credential,
+    /// so when a value is supplied it MUST match the BE flag of this assertion.
+    /// </param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     public async Task<VerifyAssertionResult> VerifyAsync(
         AssertionOptions options,
@@ -62,6 +67,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
         IMetadataService? metadataService,
         byte[]? requestTokenBindingId,
+        bool? storedBackupEligible = null,
         CancellationToken cancellationToken = default)
     {
         BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId, config.AllowCrossOriginRequests);
@@ -146,6 +152,11 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         //     be the values of the BE and BS bits, respectively, of the flags in authData. Compare currentBe and currentBs with
         //     credentialRecord.backupEligible and credentialRecord.backupState and apply Relying Party policy, if any.
         //
+        //     Backup eligibility is fixed for the lifetime of a credential, so a change of BE relative to the value recorded at
+        //     registration is not a policy question -- it means this is not the credential that was registered.
+        if (storedBackupEligible is bool recordedBackupEligible && recordedBackupEligible != authData.IsBackupEligible)
+            throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityChanged, Fido2ErrorMessages.BackupEligibilityChanged);
+
         if (authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);

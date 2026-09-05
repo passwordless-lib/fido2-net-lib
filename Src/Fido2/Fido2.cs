@@ -90,6 +90,7 @@ public class Fido2 : IFido2
                                                       makeAssertionParams.IsUserHandleOwnerOfCredentialIdCallback,
                                                       _metadataService,
                                                       makeAssertionParams.RequestTokenBindingId,
+                                                      makeAssertionParams.StoredBackupEligible,
                                                       cancellationToken);
 
         return result;

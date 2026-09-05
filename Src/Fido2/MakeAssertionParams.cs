@@ -28,6 +28,18 @@ public sealed class MakeAssertionParams
     public required uint StoredSignatureCounter { get; init; }
 
     /// <summary>
+    /// The value of the BE flag recorded when this credential was registered
+    /// (<see cref="Fido2NetLib.Objects.RegisteredPublicKeyCredential.IsBackupEligible"/>), or <see langword="null"/>
+    /// if the Relying Party does not track backup eligibility.
+    /// </summary>
+    /// <remarks>
+    /// Backup eligibility is a permanent property of a credential, so when a value is supplied the assertion is
+    /// rejected if its BE flag differs. Supplying this is recommended for any Relying Party that stores the flag.
+    /// See step 22 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>.
+    /// </remarks>
+    public bool? StoredBackupEligible { get; init; }
+
+    /// <summary>
     /// The delegate used to validate that the user handle is indeed owned of the CredentialId.
     /// </summary>
     public required IsUserHandleOwnerOfCredentialIdAsync IsUserHandleOwnerOfCredentialIdCallback { get; init; }

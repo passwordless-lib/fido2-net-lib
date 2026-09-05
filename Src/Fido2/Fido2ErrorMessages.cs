@@ -39,6 +39,7 @@ internal static class Fido2ErrorMessages
     public static readonly string BackupStateRequirementNotMet           = "Backup state does not match policy requirement";
     public static readonly string CrossOriginRequestNotAllowed           = "Authenticator response was created in a cross-origin context, but the Relying Party does not allow cross-origin requests";
     public static readonly string InvalidBackupFlags                     = "The backup state (BS) flag is set but the backup eligibility (BE) flag is not";
+    public static readonly string BackupEligibilityChanged               = "Backup eligibility (BE) does not match the value recorded when the credential was registered";
     public static readonly string CredentialAlgorithmRequirementNotMet   = "Credential algorithm does not match policy requirement";
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";

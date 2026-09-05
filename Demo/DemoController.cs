@@ -213,6 +213,7 @@ public class DemoController : Controller
                 OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = storedCounter,
+                StoredBackupEligible = creds.IsBackupEligible,
                 IsUserHandleOwnerOfCredentialIdCallback = callback
             }, cancellationToken: cancellationToken);
 

@@ -274,6 +274,7 @@ public class UserController : ControllerBase
                 OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = creds.SignCount,
+                StoredBackupEligible = creds.IsBackupEligible,
                 IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync
             }, cancellationToken: cancellationToken);
 

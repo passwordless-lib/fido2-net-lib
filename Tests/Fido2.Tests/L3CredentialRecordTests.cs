@@ -63,6 +63,7 @@ public class L3CredentialRecordTests
         Fido2 lib,
         AssertionOptions options,
         AuthenticatorAssertionRawResponse response,
+        bool? storedBackupEligible = null,
         byte[] storedPublicKey = null)
     {
         return lib.MakeAssertionAsync(new MakeAssertionParams
@@ -71,6 +72,7 @@ public class L3CredentialRecordTests
             OriginalOptions = options,
             StoredPublicKey = storedPublicKey,
             StoredSignatureCounter = 0,
+            StoredBackupEligible = storedBackupEligible,
             IsUserHandleOwnerOfCredentialIdCallback = static (args, cancellationToken) => Task.FromResult(true)
         });
     }
@@ -101,4 +103,44 @@ public class L3CredentialRecordTests
         Assert.Equal(Fido2ErrorCode.MissingStoredPublicKey, ex.Code);
     }
 
+    [Theory]
+    [InlineData(true, AuthenticatorFlags.UP | AuthenticatorFlags.UV)]
+    [InlineData(false, AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BE)]
+    public async Task AssertionWhoseBackupEligibilityChangedIsRejectedAsync(bool storedBackupEligible, AuthenticatorFlags flags)
+    {
+        // Backup eligibility is permanent for a credential, so a change means this is not the credential
+        // that was registered.
+        var (options, response) = MakeAssertion(flags);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+            () => AssertAsync(MakeLib(), options, response, storedBackupEligible));
+
+        Assert.Equal(Fido2ErrorCode.BackupEligibilityChanged, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.BackupEligibilityChanged, ex.Message);
+    }
+
+    [Theory]
+    [InlineData(true, AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BE)]
+    [InlineData(false, AuthenticatorFlags.UP | AuthenticatorFlags.UV)]
+    public async Task AssertionWhoseBackupEligibilityMatchesIsAcceptedAsync(bool storedBackupEligible, AuthenticatorFlags flags)
+    {
+        var (options, response) = MakeAssertion(flags);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+            () => AssertAsync(MakeLib(), options, response, storedBackupEligible));
+
+        // Got past the backup eligibility comparison; fails later, on the missing stored public key.
+        Assert.Equal(Fido2ErrorCode.MissingStoredPublicKey, ex.Code);
+    }
+
+    [Fact]
+    public async Task BackupEligibilityIsNotComparedWhenTheRelyingPartyDoesNotTrackItAsync()
+    {
+        var (options, response) = MakeAssertion(AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BE);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+            () => AssertAsync(MakeLib(), options, response, storedBackupEligible: null));
+
+        Assert.Equal(Fido2ErrorCode.MissingStoredPublicKey, ex.Code);
+    }
 }

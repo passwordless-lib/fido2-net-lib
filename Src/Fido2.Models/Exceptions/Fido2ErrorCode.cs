@@ -36,5 +36,6 @@ public enum Fido2ErrorCode
     CredentialAlgorithmRequirementNotMet,
     CrossOriginRequestNotAllowed,
     InvalidAuthenticatorResponseTopOrigin,
-    InvalidBackupFlags
+    InvalidBackupFlags,
+    BackupEligibilityChanged
 }
