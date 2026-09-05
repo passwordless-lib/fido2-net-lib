@@ -91,4 +91,109 @@ public class Fido2ConfigurationTests
         Assert.Empty(wellKnown.Origins);
     }
 
+    [Fact]
+    public void Validate_AllowsMatchingHttpsOriginAndRPID()
+    {
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "https://example.com" }
+        };
+
+        var exception = Record.Exception(config.Validate);
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_AllowsOriginThatIsRegistrableSubdomainOfRPID()
+    {
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "https://login.example.com" }
+        };
+
+        var exception = Record.Exception(config.Validate);
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_AllowsHttpLoopbackOrigin()
+    {
+        var config = new Fido2Configuration
+        {
+            RPID = "localhost",
+            Origins = new HashSet<string> { "http://localhost:5000" }
+        };
+
+        var exception = Record.Exception(config.Validate);
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_AllowsNonWebOrigins()
+    {
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "android:apk-key-hash:Ea3dD4m7ccbwcw+a27/D547hfwYra2gKE4lIBbBjCTU" }
+        };
+
+        var exception = Record.Exception(config.Validate);
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_SkipsCheckWhenRPIDNotSet()
+    {
+        var config = new Fido2Configuration
+        {
+            Origins = new HashSet<string> { "http://unrelated.example.org" }
+        };
+
+        var exception = Record.Exception(config.Validate);
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_ThrowsForHttpOriginThatIsNotLoopback()
+    {
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "http://example.com" }
+        };
+
+        Assert.Throws<Fido2ConfigurationException>(config.Validate);
+    }
+
+    [Fact]
+    public void Validate_ThrowsWhenOriginHostIsNotRelatedToRPID()
+    {
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "https://not-example.org" }
+        };
+
+        Assert.Throws<Fido2ConfigurationException>(config.Validate);
+    }
+
+    [Fact]
+    public void Validate_ThrowsWhenRPIDIsSubdomainOfOrigin()
+    {
+        // RPID must be equal to or a registrable suffix *of* the origin's host, not the reverse.
+        var config = new Fido2Configuration
+        {
+            RPID = "login.example.com",
+            Origins = new HashSet<string> { "https://example.com" }
+        };
+
+        Assert.Throws<Fido2ConfigurationException>(config.Validate);
+    }
 }

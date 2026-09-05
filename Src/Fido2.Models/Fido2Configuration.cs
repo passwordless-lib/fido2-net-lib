@@ -122,6 +122,73 @@ public class Fido2Configuration
     }
 
     /// <summary>
+    /// Verifies that every configured <see cref="Origins"/> entry is a scheme/RP ID pair the
+    /// WebAuthn registration/authentication ceremonies can legitimately accept: the origin's
+    /// scheme must be <c>https</c> (or the origin must be loopback, for local development), and
+    /// <see cref="RPID"/> must equal the origin's host or be a registrable domain suffix of it.
+    /// </summary>
+    /// <remarks>
+    /// This is an opt-in, defense-in-depth sanity check on configuration -- it is not called
+    /// automatically, and is not a substitute for the per-ceremony origin comparison performed in
+    /// <c>AuthenticatorResponse.BaseVerify</c>, which remains the actual security boundary.
+    /// Call it once at application startup (e.g. immediately after building a
+    /// <see cref="Fido2Configuration"/>, or via <c>IValidateOptions&lt;Fido2Configuration&gt;</c>
+    /// / <c>ValidateOnStart()</c> in ASP.NET Core) to fail fast on a misconfigured
+    /// <see cref="Origins"/>/<see cref="RPID"/> pair, per WebAuthn L3 §13.4.9.
+    /// </remarks>
+    /// <exception cref="Fido2ConfigurationException">
+    /// Thrown when <see cref="RPID"/> is set and a configured origin doesn't satisfy the above.
+    /// </exception>
+    public void Validate()
+    {
+        if (string.IsNullOrEmpty(RPID))
+            return;
+
+        // RPID should be a bare domain per spec, but this library has historically tolerated a
+        // full origin URL here too (the value is otherwise only ever hashed/compared verbatim
+        // against itself). Accept either form by comparing against the effective host.
+        var rpIdHost = Uri.TryCreate(RPID, UriKind.Absolute, out var rpIdUri) ? rpIdUri.Host : RPID;
+
+        foreach (var origin in Origins)
+        {
+            Uri uri;
+            try
+            {
+                uri = new Uri(origin);
+            }
+            catch (UriFormatException e)
+            {
+                throw new Fido2ConfigurationException($"Configured origin '{origin}' is not a valid URI", e);
+            }
+
+            // Only web origins have a meaningful host/registrable-domain relationship to an RP ID.
+            // Non-web schemes (e.g. "android:apk-key-hash:...", used for native app callers) are
+            // legitimate WebAuthn origins but aren't subject to the RP ID/origin domain check.
+            if (uri.Scheme is not ("http" or "https"))
+                continue;
+
+            var isLoopback = uri.IsLoopback || string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase);
+
+            if (!string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase) && !isLoopback)
+            {
+                throw new Fido2ConfigurationException(
+                    $"Configured origin '{origin}' does not use the https scheme. WebAuthn requires " +
+                    "a potentially trustworthy origin; only loopback origins (e.g. http://localhost) may use http.");
+            }
+
+            var isSameHost = string.Equals(uri.Host, rpIdHost, StringComparison.OrdinalIgnoreCase);
+            var isRegistrableSuffix = uri.Host.EndsWith("." + rpIdHost, StringComparison.OrdinalIgnoreCase);
+
+            if (!isSameHost && !isRegistrableSuffix)
+            {
+                throw new Fido2ConfigurationException(
+                    $"Configured origin '{origin}' has host '{uri.Host}', which is neither equal to nor a " +
+                    $"registrable domain suffix of the configured RPID '{RPID}'.");
+            }
+        }
+    }
+
+    /// <summary>
     /// Whether to accept registration/authentication ceremonies performed inside a cross-origin
     /// iframe (i.e. where <c>collectedClientData.crossOrigin</c> is <see langword="true"/>), per
     /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-terms">WebAuthn L3</see>. When
