@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Fido2NetLib;
 
-public class DistributedCacheMetadataService : IMetadataService
+public class DistributedCacheMetadataService : IMetadataService, IMetadataServiceAttestationCertificateLookup
 {
     protected readonly IDistributedCache _distributedCache;
     protected readonly IMemoryCache _memoryCache;
@@ -17,21 +18,24 @@ public class DistributedCacheMetadataService : IMetadataService
     protected readonly ILogger<DistributedCacheMetadataService> _logger;
 
     /// <summary>
-    /// Default memory cache interval in seconds for MDS v3.1.1 rate limiting compliance (1 hour).
+    /// Default in-process memory cache interval, capped by the BLOB's NextUpdate value if sooner.
     /// </summary>
     protected readonly TimeSpan _defaultMemoryCacheInterval = TimeSpan.FromHours(1);
 
     /// <summary>
-    /// Buffer period for distributed cache expiry to allow cross-server caching efficiency while respecting MDS v3.1.1 rate limiting windows.
-    /// This allows multiple servers to share cached BLOBs within the 1-hour rate limit window (25 hours buffer).
+    /// Grace period after NextUpdate before a refetch is attempted, to avoid hammering the MDS endpoint
+    /// the moment NextUpdate elapses (the new BLOB may not be published exactly on time).
+    /// FIDO Alliance does not publish a specific rate limit; their own guidance
+    /// (https://fidoalliance.org/metadata/) is to fetch the BLOB about once a month and cache it, since
+    /// MDS data changes infrequently. This buffer is a conservative allowance, not a documented requirement.
     /// </summary>
-    protected readonly TimeSpan _nextUpdateBufferPeriod = TimeSpan.FromHours(25);
+    protected readonly TimeSpan _nextUpdateBufferPeriod = TimeSpan.FromHours(24);
 
     /// <summary>
-    /// Default distributed cache interval in seconds for cross-server caching efficiency while respecting MDS v3.1.1 rate limiting windows.
-    /// This allows multiple servers to share cached BLOBs within the rate limit window (up to 25 hours).
+    /// Default distributed cache interval used when the BLOB has no NextUpdate value. Aligned with FIDO
+    /// Alliance's published guidance to fetch the BLOB about once a month (https://fidoalliance.org/metadata/).
     /// </summary>
-    protected readonly TimeSpan _defaultDistributedCacheInterval = TimeSpan.FromHours(25);
+    protected readonly TimeSpan _defaultDistributedCacheInterval = TimeSpan.FromDays(30);
 
     protected const string CACHE_PREFIX = nameof(DistributedCacheMetadataService) + ":V2";
 
@@ -94,15 +98,15 @@ public class DistributedCacheMetadataService : IMetadataService
     /// <param name="nextUpdateTime">The next update time from the MDS BLOB payload.</param>
     /// <returns>The absolute expiry time for the cached data.</returns>
     /// <remarks>
-    /// For MDS v3.1.1 compliance: The distributed cache expires at NextUpdate + _defaultDistributedCacheInterval (25 hours).
-    /// This allows cross-server caching efficiency while respecting rate limiting windows.
+    /// When the BLOB has a NextUpdate value, the distributed cache expires at NextUpdate + <see cref="_nextUpdateBufferPeriod"/>,
+    /// allowing multiple servers to share the cached BLOB without each independently refetching the moment NextUpdate passes.
+    /// Otherwise it falls back to <see cref="_defaultDistributedCacheInterval"/>.
     /// </remarks>
     protected virtual DateTimeOffset GetDistributedCacheAbsoluteExpiryTime(DateTimeOffset? nextUpdateTime)
     {
         if (nextUpdateTime.HasValue)
         {
-            // For MDS v3.1.1: Add buffer period to allow cross-server caching within rate limit window
-            return nextUpdateTime.Value.Add(_defaultDistributedCacheInterval);
+            return nextUpdateTime.Value.Add(_nextUpdateBufferPeriod);
         }
 
         return _systemClock.UtcNow.Add(_defaultDistributedCacheInterval);
@@ -198,6 +202,11 @@ public class DistributedCacheMetadataService : IMetadataService
 
     public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
     {
+        return await GetEntryAsync(aaguid, attestationCertificates: null, cancellationToken);
+    }
+
+    public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, X509Certificate2[] attestationCertificates, CancellationToken cancellationToken = default)
+    {
         var memCacheEntry = await _memoryCache.GetOrCreateAsync<MetadataBLOBPayloadEntry>(
             $"{CACHE_PREFIX}:{aaguid}",
             async entry =>
@@ -207,7 +216,7 @@ public class DistributedCacheMetadataService : IMetadataService
                     var cachedPayload = await GetMemoryCachedPayload(repo, cancellationToken);
                     if (cachedPayload != null)
                     {
-                        var matchingEntry = cachedPayload.Entries?.FirstOrDefault(o => o.AaGuid == aaguid);
+                        var matchingEntry = FindMatchingEntry(cachedPayload, aaguid, attestationCertificates);
                         if (matchingEntry != null)
                         {
                             entry.AbsoluteExpiration = GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(cachedPayload));
@@ -221,5 +230,28 @@ public class DistributedCacheMetadataService : IMetadataService
             });
 
         return memCacheEntry;
+    }
+
+    /// <summary>
+    /// Finds the entry matching <paramref name="aaguid"/>, falling back to matching
+    /// <paramref name="attestationCertificates"/> against entries identified only by
+    /// <see cref="MetadataBLOBPayloadEntry.AttestationCertificateKeyIdentifiers"/> (e.g. FIDO U2F authenticators,
+    /// which have neither an AAID nor an AAGUID in MDS).
+    /// </summary>
+    protected virtual MetadataBLOBPayloadEntry FindMatchingEntry(MetadataBLOBPayload payload, Guid aaguid, X509Certificate2[] attestationCertificates)
+    {
+        if (payload.Entries is null)
+            return null;
+
+        var matchingEntry = payload.Entries.FirstOrDefault(o => o.AaGuid == aaguid);
+        if (matchingEntry != null)
+            return matchingEntry;
+
+        if (attestationCertificates is not { Length: > 0 })
+            return null;
+
+        return payload.Entries.FirstOrDefault(entry =>
+            entry.AaGuid is null &&
+            attestationCertificates.Any(entry.MatchesAttestationCertificate));
     }
 }

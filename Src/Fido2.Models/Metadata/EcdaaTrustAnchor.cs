@@ -9,6 +9,7 @@ namespace Fido2NetLib;
 /// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#ecdaatrustanchor-dictionary"/>
 /// <para>In the case of ECDAA attestation, the ECDAA-Issuer's trust anchor MUST be specified in this field.</para>
 /// </remarks>
+[Obsolete("ECDAA attestation has been removed from the FIDO Metadata Statement schema as of v3.1.1. This type will be removed in a future major version.")]
 public sealed class EcdaaTrustAnchor
 {
     /// <summary>

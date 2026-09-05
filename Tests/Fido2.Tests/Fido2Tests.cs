@@ -596,7 +596,6 @@ public class Fido2Tests
         input.MetadataStatement.AttachmentHint = Array.Empty<string>();
         input.MetadataStatement.TcDisplayContentType = "text/plain";
         input.MetadataStatement.TcDisplayPNGCharacteristics = Array.Empty<DisplayPNGCharacteristicsDescriptor>();
-        input.MetadataStatement.EcdaaTrustAnchors = Array.Empty<EcdaaTrustAnchor>();
         input.MetadataStatement.Icon = null;
         input.MetadataStatement.SupportedExtensions = Array.Empty<ExtensionDescriptor>();
         // Fields introduced in FIDO Metadata Statement v3.1.1

@@ -177,7 +177,7 @@ public class MdsServiceTests
 
             var provider = services.BuildServiceProvider();
 
-            // Add a scope to get the repository (it's registered as scoped)
+            // Resolve the repository from a scope (it's registered as a singleton, but still resolvable from any scope)
             using var scope = provider.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IMetadataRepository>();
             Assert.NotNull(repository);
@@ -203,7 +203,7 @@ public class MdsServiceTests
 
             var provider = services.BuildServiceProvider();
 
-            // Add a scope to get the repository (it's registered as scoped)
+            // Resolve the repository from a scope (it's registered as a singleton, but still resolvable from any scope)
             using var scope = provider.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IMetadataRepository>();
             Assert.NotNull(repository);
@@ -229,7 +229,7 @@ public class MdsServiceTests
 
             var provider = services.BuildServiceProvider();
 
-            // Add a scope to get the repository (it's registered as scoped)
+            // Resolve the repository from a scope (it's registered as a singleton, but still resolvable from any scope)
             using var scope = provider.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IMetadataRepository>();
             Assert.NotNull(repository);
@@ -238,7 +238,7 @@ public class MdsServiceTests
     }
 
     [Fact]
-    public void AddFido_AddCached_MetadataRepository_Shared_Lifetime()
+    public void AddFido_AddCached_MetadataRepository_Singleton_Lifetime()
     {
         var services = new ServiceCollection();
 
@@ -255,46 +255,15 @@ public class MdsServiceTests
 
             var provider = services.BuildServiceProvider();
 
-            // Add scopes to get the repository (it's registered as scoped)
             using var scope1 = provider.CreateScope();
             using var scope2 = provider.CreateScope();
 
             var firstRepository = scope1.ServiceProvider.GetRequiredService<IMetadataRepository>();
             var secondRepository = scope2.ServiceProvider.GetRequiredService<IMetadataRepository>();
 
-            // With scoped lifetime, these should be different instances
-            Assert.NotSame(firstRepository, secondRepository);
-        }
-        finally { }
-    }
-
-    [Fact]
-    public void AddFido_AddCached_MetadataRepository_Scope_Lifetime()
-    {
-        var services = new ServiceCollection();
-
-        try
-        {
-            // Add logging infrastructure required by DistributedCacheMetadataService
-            services.AddLogging();
-            services.AddMemoryCache();
-            services.AddDistributedMemoryCache();
-
-            var builder = services.AddFido2(config => config.Timeout = 5000);
-            builder.AddCachedMetadataService();
-            builder.AddFidoMetadataRepository();
-
-            var provider = services.BuildServiceProvider();
-
-            // Add scopes to get the repository (it's registered as scoped)
-            using var scope1 = provider.CreateScope();
-            using var scope2 = provider.CreateScope();
-
-            var firstRepository = scope1.ServiceProvider.GetRequiredService<IMetadataRepository>();
-            var secondRepository = scope2.ServiceProvider.GetRequiredService<IMetadataRepository>();
-
-            // With scoped lifetime, these should be different instances (default behavior)
-            Assert.NotSame(firstRepository, secondRepository);
+            // Fido2MetadataServiceRepository is registered as a singleton (not scoped), so that it
+            // can retain the MDS BLOB's ETag across fetches for conditional GET (If-None-Match).
+            Assert.Same(firstRepository, secondRepository);
         }
         finally { }
     }
@@ -338,7 +307,7 @@ public class MdsServiceTests
 
             var provider = services.BuildServiceProvider();
 
-            // Add a scope to get the repository (it's registered as scoped)
+            // Resolve the repository from a scope (it's registered as a singleton, but still resolvable from any scope)
             using var scope = provider.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IMetadataRepository>();
 
