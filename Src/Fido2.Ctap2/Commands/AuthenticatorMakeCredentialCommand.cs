@@ -12,7 +12,10 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
         PubKeyCredParam[] pubKeyCredParams,
         AuthenticatorMakeCredentialOptions options,
         byte[]? pinAuth = null,
-        uint? pinProtocol = null)
+        uint? pinProtocol = null,
+        uint? enterpriseAttestation = null,
+        string[]? attestationFormatsPreference = null,
+        CtapMakeCredentialExtensions? extensions = null)
     {
         ClientDataHash = clientDataHash;
         Rp = rpEntity;
@@ -21,6 +24,9 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
         Options = options;
         PinAuth = pinAuth;
         PinProtocol = pinProtocol;
+        EnterpriseAttestation = enterpriseAttestation;
+        AttestationFormatsPreference = attestationFormatsPreference;
+        Extensions = extensions;
     }
 
     /// <summary>
@@ -53,7 +59,7 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
     public PublicKeyCredentialDescriptor[]? ExcludeList { get; }
 
     [CborMember(0x06)]
-    public CborMap? Extensions { get; }
+    public CtapMakeCredentialExtensions? Extensions { get; }
 
     [CborMember(0x07)]
     public AuthenticatorMakeCredentialOptions? Options { get; }
@@ -70,6 +76,24 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
     /// </summary>
     [CborMember(0x09)]
     public uint? PinProtocol { get; }
+
+    /// <summary>
+    /// Requests an enterprise attestation that includes uniquely identifying information. Only
+    /// meaningful if the authenticator is enterprise-attestation-capable (the <c>ep</c> option ID
+    /// in authenticatorGetInfo). Its value is platform-managed-enterprise-attestation-specific;
+    /// vendor-facilitated implementations ignore the value beyond its presence.
+    /// <para>New in CTAP 2.1.</para>
+    /// </summary>
+    [CborMember(0x0A)]
+    public uint? EnterpriseAttestation { get; }
+
+    /// <summary>
+    /// A prioritized list of attestation statement format identifiers that the client and/or RP
+    /// prefers. A single element of <c>"none"</c> requests omission of attestation.
+    /// <para>New in CTAP 2.3.</para>
+    /// </summary>
+    [CborMember(0x0B)]
+    public string[]? AttestationFormatsPreference { get; }
 
     public override CtapCommandType Type => CtapCommandType.AuthenticatorMakeCredential;
 
@@ -96,10 +120,9 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
             cbor.Add(0x05, ExcludeList.ToCborArray()); // excludeList
         }
 
-        // | { "hmac-secret": true }
-        if (Extensions != null)
+        if (Extensions?.ToCborObject() is CborMap extensions)
         {
-            cbor.Add(0x06, Extensions);
+            cbor.Add(0x06, extensions);
         }
 
         if (Options is AuthenticatorMakeCredentialOptions options)
@@ -112,6 +135,23 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
         {
             cbor.Add(0x08, PinAuth);           // pinAuth(0x08)
             cbor.Add(0x09, PinProtocol ?? 1);  // pinProtocol(0x09)
+        }
+
+        if (EnterpriseAttestation.HasValue)
+        {
+            cbor.Add(0x0A, (int)EnterpriseAttestation.Value);
+        }
+
+        if (AttestationFormatsPreference is { Length: > 0 })
+        {
+            var formats = new CborArray();
+
+            foreach (var format in AttestationFormatsPreference)
+            {
+                formats.Add(format);
+            }
+
+            cbor.Add(0x0B, formats);
         }
 
         return cbor;

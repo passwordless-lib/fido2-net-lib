@@ -26,6 +26,31 @@ internal sealed class CborHelper
         return new PublicKeyCredentialDescriptor(type, id!, null);
     }
 
+    public static PublicKeyCredentialRpEntity DecodePublicKeyCredentialRpEntity(CborMap map)
+    {
+        string? id = null;
+        string? name = null;
+        string? icon = null;
+
+        foreach (var (key, value) in map)
+        {
+            switch ((string)key)
+            {
+                case "id":
+                    id = (string)value;
+                    break;
+                case "name":
+                    name = (string)value;
+                    break;
+                case "icon":
+                    icon = (string)value;
+                    break;
+            }
+        }
+
+        return new PublicKeyCredentialRpEntity(id!, name ?? string.Empty, icon);
+    }
+
     public static PublicKeyCredentialUserEntity DecodePublicKeyCredentialUserEntity(CborMap map)
     {
         var result = new PublicKeyCredentialUserEntity();
