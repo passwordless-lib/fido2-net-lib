@@ -35,17 +35,18 @@ public sealed class AuthenticationExtensionsClientInputs
 
     /// <summary>
     /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator supports.
-    /// https://www.w3.org/TR/webauthn/#sctn-supported-extensions-extension
+    /// https://www.w3.org/TR/webauthn-2/#sctn-supported-extensions-extension
     /// </summary>
+    [Obsolete("The exts (supported extensions) extension was removed in WebAuthn Level 3 and no client will populate it. This member will be removed in a future major version.")]
     [JsonPropertyName("exts")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Extensions { get; set; }
 
     /// <summary>
     /// This extension enables use of a user verification method.
-    /// https://www.w3.org/TR/webauthn/#sctn-uvm-extension
-    /// TODO: Remove this completely as it's removed in L3
+    /// https://www.w3.org/TR/webauthn-2/#sctn-uvm-extension
     /// </summary>
+    [Obsolete("The uvm extension was removed in WebAuthn Level 3 and no client will populate it; see Level 2 if you still need it. This member will be removed in a future major version.")]
     [JsonPropertyName("uvm")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? UserVerificationMethod { private get; set; }

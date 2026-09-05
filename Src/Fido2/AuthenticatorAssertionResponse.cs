@@ -377,10 +377,12 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         }
 
         // Validate extensions discovery (exts) output
+#pragma warning disable CS0618 // uvm and exts were removed in L3; still honoured for Level 2 callers
         if (requestedExtensions.Extensions.HasValue && clientExtensionResults.Extensions != null)
         {
             ValidateExtensionsDiscoveryOutput(clientExtensionResults.Extensions);
         }
+#pragma warning restore CS0618
 
         // Validate LargeBlob extension output (assertion context: read/write operations)
         if (requestedExtensions.LargeBlob != null && clientExtensionResults.LargeBlob != null)

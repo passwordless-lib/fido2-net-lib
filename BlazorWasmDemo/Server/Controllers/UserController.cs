@@ -111,8 +111,6 @@ public class UserController : ControllerBase
                 AttestationPreference = attestationType ?? AttestationConveyancePreference.None,
                 Extensions = new AuthenticationExtensionsClientInputs
                 {
-                    Extensions = true,
-                    UserVerificationMethod = true,
                     CredProps = true
                 }
             });
@@ -208,18 +206,11 @@ public class UserController : ControllerBase
                     existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
             }
 
-            var exts = new AuthenticationExtensionsClientInputs
-            {
-                UserVerificationMethod = true,
-                Extensions = true
-            };
-
             // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
             var options = _fido2.GetAssertionOptions(new GetAssertionOptionsParams
             {
                 AllowedCredentials = existingKeys,
-                UserVerification = userVerification ?? UserVerificationRequirement.Discouraged,
-                Extensions = exts
+                UserVerification = userVerification ?? UserVerificationRequirement.Discouraged
             });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db

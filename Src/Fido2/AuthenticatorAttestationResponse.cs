@@ -425,10 +425,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
 
         // Validate extensions discovery (exts) output
+#pragma warning disable CS0618 // uvm and exts were removed in L3; still honoured for Level 2 callers
         if (requestedExtensions.Extensions.HasValue && clientExtensionResults.Extensions != null)
         {
             ValidateExtensionsDiscoveryOutput(clientExtensionResults.Extensions);
         }
+#pragma warning restore CS0618
 
         // Validate LargeBlob extension output (registration context)
         if (requestedExtensions.LargeBlob?.Support != null && clientExtensionResults.LargeBlob != null)
@@ -593,8 +595,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (extensions.Example.HasValue)
             identifiers.Add("example.extension.bool");
 
+#pragma warning disable CS0618 // uvm and exts were removed in L3; still honoured for Level 2 callers
         if (extensions.Extensions.HasValue)
             identifiers.Add("exts");
+#pragma warning restore CS0618
 
         // Note: UserVerificationMethod has a private setter, so we skip checking if it was requested
         // as it's deprecated and unlikely to be explicitly set by new code
@@ -637,11 +641,13 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (clientExtensionResults.Example.HasValue)
             identifiers.Add("example.extension.bool");
 
+#pragma warning disable CS0618 // uvm and exts were removed in L3; still honoured for Level 2 callers
         if (clientExtensionResults.Extensions != null && clientExtensionResults.Extensions.Length > 0)
             identifiers.Add("exts");
 
         if (clientExtensionResults.UserVerificationMethod != null && clientExtensionResults.UserVerificationMethod.Length > 0)
             identifiers.Add("uvm");
+#pragma warning restore CS0618
 
         if (clientExtensionResults.CredProps != null)
             identifiers.Add("credProps");

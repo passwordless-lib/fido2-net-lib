@@ -65,8 +65,6 @@ public class DemoController : Controller
 
             var exts = new AuthenticationExtensionsClientInputs()
             {
-                Extensions = true,
-                UserVerificationMethod = true,
                 CredProps = true
             };
 
@@ -157,19 +155,12 @@ public class DemoController : Controller
                 existingCredentials = DemoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
             }
 
-            var exts = new AuthenticationExtensionsClientInputs()
-            {
-                Extensions = true,
-                UserVerificationMethod = true
-            };
-
             // 3. Create options
             var uv = string.IsNullOrEmpty(userVerification) ? UserVerificationRequirement.Discouraged : userVerification.ToEnum<UserVerificationRequirement>();
             var options = _fido2.GetAssertionOptions(new GetAssertionOptionsParams()
             {
                 AllowedCredentials = existingCredentials,
-                UserVerification = uv,
-                Extensions = exts
+                UserVerification = uv
             });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db

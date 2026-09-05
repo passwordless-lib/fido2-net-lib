@@ -14,6 +14,11 @@ using NSec.Cryptography;
 
 namespace Test;
 
+// uvm and exts were removed in WebAuthn Level 3 and are [Obsolete] here. These tests still exercise them:
+// the members remain functional for Relying Parties on Level 2 semantics, and the FIDO conformance tool
+// continues to test uvm. Remove this suppression when the members themselves go.
+#pragma warning disable CS0618
+
 public class AuthenticatorResponseTests
 {
     [Fact]
