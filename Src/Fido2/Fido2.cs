@@ -95,6 +95,49 @@ public class Fido2 : IFido2
 
         return result;
     }
+
+    /// <summary>
+    /// Builds the payload for <c>PublicKeyCredential.signalUnknownCredential()</c>, to tell an authenticator that
+    /// a credential it offered is no longer known to this Relying Party.
+    /// </summary>
+    /// <param name="credentialId">The credential ID this Relying Party does not recognize.</param>
+    public UnknownCredentialOptions GetUnknownCredentialOptions(byte[] credentialId)
+    {
+        return new UnknownCredentialOptions { RpId = _config.RPID, CredentialId = credentialId };
+    }
+
+    /// <summary>
+    /// Builds the payload for <c>PublicKeyCredential.signalAllAcceptedCredentials()</c>.
+    /// </summary>
+    /// <param name="userId">The user handle whose credentials are being enumerated.</param>
+    /// <param name="allAcceptedCredentialIds">
+    /// Every credential ID still registered to the user. This must be exhaustive -- an authenticator may delete
+    /// credentials that are absent from it.
+    /// </param>
+    public AllAcceptedCredentialsOptions GetAllAcceptedCredentialsOptions(byte[] userId, IReadOnlyList<byte[]> allAcceptedCredentialIds)
+    {
+        return new AllAcceptedCredentialsOptions
+        {
+            RpId = _config.RPID,
+            UserId = userId,
+            AllAcceptedCredentialIds = allAcceptedCredentialIds
+        };
+    }
+
+    /// <summary>
+    /// Builds the payload for <c>PublicKeyCredential.signalCurrentUserDetails()</c>, so an authenticator can
+    /// refresh the name and display name it shows for the user's credentials.
+    /// </summary>
+    public CurrentUserDetailsOptions GetCurrentUserDetailsOptions(Fido2User user)
+    {
+        return new CurrentUserDetailsOptions
+        {
+            RpId = _config.RPID,
+            UserId = user.Id,
+            Name = user.Name,
+            DisplayName = user.DisplayName
+        };
+    }
 }
 
 /// <summary>

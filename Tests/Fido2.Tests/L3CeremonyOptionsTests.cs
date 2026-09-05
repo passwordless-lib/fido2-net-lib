@@ -113,6 +113,30 @@ public class L3CeremonyOptionsTests
         Assert.DoesNotContain("authenticatorAttachment", JsonSerializer.Serialize(response));
     }
 
+    [Fact]
+    public void SignalUnknownCredentialOptionsSerializeToTheSpecShape()
+    {
+        var options = MakeLib().GetUnknownCredentialOptions([0xf1, 0xd0]);
+
+        Assert.Equal(Rp, options.RpId);
+        Assert.Equal("""{"rpId":"https://www.passwordless.dev","credentialId":"8dA"}""", options.ToJson());
+    }
+
+    [Fact]
+    public void SignalAllAcceptedCredentialsOptionsSerializeToTheSpecShape()
+    {
+        var options = MakeLib().GetAllAcceptedCredentialsOptions("testuser"u8.ToArray(), [[0xf1, 0xd0], [0x00, 0x01]]);
+
+        Assert.Equal("""{"rpId":"https://www.passwordless.dev","userId":"dGVzdHVzZXI","allAcceptedCredentialIds":["8dA","AAE"]}""", options.ToJson());
+    }
+
+    [Fact]
+    public void SignalCurrentUserDetailsOptionsSerializeToTheSpecShape()
+    {
+        var options = MakeLib().GetCurrentUserDetailsOptions(MakeUser());
+
+        Assert.Equal("""{"rpId":"https://www.passwordless.dev","userId":"dGVzdHVzZXI","name":"testuser","displayName":"Test User"}""", options.ToJson());
+    }
 }
 
 /// <summary>
