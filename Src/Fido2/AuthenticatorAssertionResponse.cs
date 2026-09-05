@@ -62,7 +62,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         byte[]? requestTokenBindingId,
         CancellationToken cancellationToken = default)
     {
-        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId);
+        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId, config.AllowCrossOriginRequests);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseNotPublicKey);

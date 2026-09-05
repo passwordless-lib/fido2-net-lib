@@ -78,7 +78,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // 9.5. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.
         // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
         // Validated in BaseVerify.
-        BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId);
+        BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId, config.AllowCrossOriginRequests);
 
         if (Raw.Id is null || Raw.Id.Length == 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdMissing);

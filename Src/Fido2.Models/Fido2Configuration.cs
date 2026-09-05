@@ -100,6 +100,16 @@ public class Fido2Configuration
     }
 
     /// <summary>
+    /// Whether to accept registration/authentication ceremonies performed inside a cross-origin
+    /// iframe (i.e. where <c>collectedClientData.crossOrigin</c> is <see langword="true"/>), per
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-terms">WebAuthn L3</see>. When
+    /// <see langword="false"/> (the default), any response with <c>crossOrigin: true</c> is rejected.
+    /// When <see langword="true"/>, a <c>topOrigin</c> present on the response is still required to
+    /// match one of the configured <see cref="Origins"/>.
+    /// </summary>
+    public bool AllowCrossOriginRequests { get; set; }
+
+    /// <summary>
     /// Metadata service cache directory path.
     /// </summary>
     public string MDSCacheDirPath { get; set; }
