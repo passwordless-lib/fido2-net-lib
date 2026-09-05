@@ -26,7 +26,7 @@ public abstract class AttestationVerifier
             "none"              => new None(),             // https://www.w3.org/TR/webauthn-2/#sctn-none-attestation
             "tpm"               => new Tpm(),              // https://www.w3.org/TR/webauthn-2/#sctn-tpm-attestation
             "android-key"       => new AndroidKey(),       // https://www.w3.org/TR/webauthn-2/#sctn-android-key-attestation
-            "android-safetynet" => new AndroidSafetyNet(), // https://www.w3.org/TR/webauthn-2/#sctn-android-safetynet-attestation
+            "android-safetynet" => new AndroidSafetyNet(), // deprecated in L3: https://www.w3.org/TR/webauthn-3/#sctn-android-safetynet-attestation
             "fido-u2f"          => new FidoU2f(),          // https://www.w3.org/TR/webauthn-2/#sctn-fido-u2f-attestation
             "packed"            => new Packed(),           // https://www.w3.org/TR/webauthn-2/#sctn-packed-attestation
             "apple"             => new Apple(),            // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation

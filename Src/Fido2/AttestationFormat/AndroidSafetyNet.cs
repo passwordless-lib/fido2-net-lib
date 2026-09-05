@@ -17,6 +17,15 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Fido2NetLib;
 
+/// <summary>
+/// Verifies the <c>android-safetynet</c> attestation statement format.
+/// </summary>
+/// <remarks>
+/// Deprecated by WebAuthn Level 3 §8.5: "This format is deprecated and is expected to be removed in a future
+/// revision of this document." Google has also wound down the SafetyNet Attestation API in favour of Play
+/// Integrity, so new authenticators are not expected to produce this format. Verification is kept for
+/// credentials registered while it was current.
+/// </remarks>
 internal sealed class AndroidSafetyNet : AttestationVerifier
 {
     private const int _driftTolerance = 0;

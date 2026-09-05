@@ -137,7 +137,9 @@ public sealed class CredentialCreateOptions
         return new CredentialCreateOptions
         {
             Challenge = challenge,
+#pragma warning disable CS0618 // carried through only so an existing ServerIcon configuration keeps working
             Rp = new PublicKeyCredentialRpEntity(config.RPID, config.RPName, config.ServerIcon),
+#pragma warning restore CS0618
             Timeout = config.Timeout,
             User = user,
             PubKeyCredParams = pubKeyCredParams,
@@ -228,11 +230,20 @@ public sealed class PublicKeyCredentialRpEntity(
     public string Id { get; set; } = id;
 
     /// <summary>
-    /// A human-readable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
+    /// A human-palatable identifier for the Relying Party, intended only for display.
     /// </summary>
+    /// <remarks>
+    /// Deprecated by WebAuthn Level 3 §5.4.1: "This member is deprecated because many clients do not display
+    /// it, but it remains a required dictionary member for backwards compatibility. Relying Parties MAY, as a
+    /// safe default, set this equal to the RP ID."
+    /// </remarks>
     [JsonPropertyName("name")]
     public string Name { get; set; } = name;
 
+    /// <summary>
+    /// No longer part of WebAuthn.
+    /// </summary>
+    [Obsolete("The icon member was removed from PublicKeyCredentialEntity in WebAuthn Level 2 and does not exist in Level 3; clients ignore it. This member will be removed in a future major version.")]
     [JsonPropertyName("icon")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Icon { get; set; } = icon;

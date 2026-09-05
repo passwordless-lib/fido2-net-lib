@@ -2,6 +2,9 @@
 
 namespace Fido2NetLib.Ctap2.Tests;
 
+// The icon member is [Obsolete] but CTAP2 still round-trips it; these tests cover that round-trip.
+#pragma warning disable CS0618
+
 public class AuthenticatorGetAssertionResponseTests
 {
     [Fact]

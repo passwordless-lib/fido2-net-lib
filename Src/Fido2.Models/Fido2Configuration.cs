@@ -66,8 +66,9 @@ public class Fido2Configuration
     }
 
     /// <summary>
-    /// A serialized URL which resolves to an image associated with the entity. For example, this could be a user’s avatar or a Relying Party's logo. This URL MUST be an a priori authenticated URL. Authenticators MUST accept and store a 128-byte minimum length for an icon member’s value. Authenticators MAY ignore an icon member’s value if its length is greater than 128 bytes. The URL’s scheme MAY be "data" to avoid fetches of the URL, at the cost of needing more storage.
+    /// No longer part of WebAuthn: the icon member was removed from PublicKeyCredentialEntity in Level 2.
     /// </summary>
+    [Obsolete("The icon member was removed from PublicKeyCredentialEntity in WebAuthn Level 2 and does not exist in Level 3; clients ignore it. This property will be removed in a future major version.")]
     public string ServerIcon { get; set; }
 
     /// <summary>
