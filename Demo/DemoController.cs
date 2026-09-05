@@ -123,6 +123,7 @@ public class DemoController : Controller
                 RegDate = DateTimeOffset.UtcNow,
                 AaGuid = credential.AaGuid,
                 Transports = credential.Transports,
+                AuthenticatorAttachment = credential.AuthenticatorAttachment,
                 UvInitialized = credential.UvInitialized,
                 IsBackupEligible = credential.IsBackupEligible,
                 IsBackedUp = credential.IsBackedUp,

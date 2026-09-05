@@ -25,6 +25,20 @@ public sealed class AuthenticatorAttestationRawResponse
     [JsonPropertyName("response"), Required]
     public AttestationResponse Response { get; init; }
 
+    /// <summary>
+    /// The attachment modality the client reported for the authenticator that handled this ceremony, or
+    /// <see langword="null"/> if the client did not report one or reported a value this library does not
+    /// recognize.
+    /// </summary>
+    /// <remarks>
+    /// This value is supplied by the client and is not part of the signed authenticator data, so it is
+    /// informational only and MUST NOT be relied upon as a security signal.
+    /// </remarks>
+    [JsonConverter(typeof(AuthenticatorAttachmentConverter))]
+    [JsonPropertyName("authenticatorAttachment")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AuthenticatorAttachment? AuthenticatorAttachment { get; init; }
+
     [JsonPropertyName("extensions")]
     [Obsolete("Use ClientExtensionResults instead")]
     public AuthenticationExtensionsClientOutputs Extensions

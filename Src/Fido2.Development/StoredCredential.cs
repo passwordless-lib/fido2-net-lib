@@ -27,6 +27,12 @@ public class StoredCredential
     public AuthenticatorTransport[] Transports { get; set; }
 
     /// <summary>
+    /// The attachment modality the client reported at registration, if any. Informational only.
+    /// See <see cref="RegisteredPublicKeyCredential.AuthenticatorAttachment"/>.
+    /// </summary>
+    public AuthenticatorAttachment? AuthenticatorAttachment { get; set; }
+
+    /// <summary>
     /// Indicates whether any credential from this public key credential source has had the UV flag set.
     /// See <see cref="RegisteredPublicKeyCredential.UvInitialized"/>.
     /// </summary>

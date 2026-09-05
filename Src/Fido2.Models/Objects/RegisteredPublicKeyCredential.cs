@@ -36,6 +36,13 @@ public class RegisteredPublicKeyCredential
     public uint SignCount { get; init; }
 
     /// <summary>
+    /// The attachment modality the client reported for the authenticator that created this credential, or
+    /// <see langword="null"/> if it reported none or one this library does not recognize. Informational only:
+    /// it is not part of the signed authenticator data.
+    /// </summary>
+    public AuthenticatorAttachment? AuthenticatorAttachment { get; init; }
+
+    /// <summary>
     /// Indicates whether any credential from this public key credential source has had the UV flag set.
     /// When <see langword="true"/>, the Relying Party MAY consider the UV flag as an authentication factor in
     /// authentication ceremonies. When <see langword="false"/> -- including an authentication ceremony where it
