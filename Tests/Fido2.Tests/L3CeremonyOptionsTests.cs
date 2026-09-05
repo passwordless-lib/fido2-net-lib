@@ -113,6 +113,19 @@ public class L3CeremonyOptionsTests
         Assert.DoesNotContain("authenticatorAttachment", JsonSerializer.Serialize(response));
     }
 
+    [Theory]
+    [InlineData("""{"rk":true}""", true)]
+    [InlineData("""{"rk":false}""", false)]
+    [InlineData("""{}""", null)]
+    public void CredentialPropertiesRkIsThreeState(string json, bool? expected)
+    {
+        // "If rk is not present, it is not known whether the credential is a discoverable credential or a
+        // server-side credential" (§10.1.3), so absent must not collapse into false.
+        var credProps = JsonSerializer.Deserialize<CredentialPropertiesOutput>(json);
+
+        Assert.Equal(expected, credProps.Rk);
+    }
+
     [Fact]
     public void SignalUnknownCredentialOptionsSerializeToTheSpecShape()
     {
