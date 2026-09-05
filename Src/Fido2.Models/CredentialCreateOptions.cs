@@ -129,6 +129,9 @@ public sealed class CredentialCreateOptions
         IReadOnlyList<PubKeyCredParam> pubKeyCredParams)
 
     {
+        if (user.Id is null || user.Id.Length is < 1 or > 64)
+            throw new ArgumentException("User handle (user.Id) must be between 1 and 64 bytes", nameof(user));
+
         return new CredentialCreateOptions
         {
             Challenge = challenge,
