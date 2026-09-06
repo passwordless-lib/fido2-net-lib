@@ -60,6 +60,40 @@
                     <p class="help">For register the client will guide the user through setting up user verification if needed to create a discoverable credential. This takes precedence over the setting of userVerification.</p>
                 </div>
 
+                <div class="field">
+                    <label class="label">Algorithms</label>
+                    <div class="control">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-7" checked /> ES256 <span class="has-text-grey">(-7)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-257" checked /> RS256 <span class="has-text-grey">(-257)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-8" checked /> EdDSA <span class="has-text-grey">(-8)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-35" /> ES384 <span class="has-text-grey">(-35)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-36" /> ES512 <span class="has-text-grey">(-36)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-37" /> PS256 <span class="has-text-grey">(-37)</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" class="option-algorithm" value="-47" /> ES256K <span class="has-text-grey">(-47)</span>
+                        </label>
+                    </div>
+                    <p class="help">
+                        <code>pubKeyCredParams</code>, ordered by preference &mdash; the client makes a
+                        best-effort to create the most preferred type it can, and fails if it can create none
+                        of them. Unchecking everything falls back to the library's defaults.
+                        Level 3 recommends <em>against</em> offering the fully-specified
+                        <code>-9</code>/<code>-19</code>/<code>-51</code>/<code>-52</code> here.
+                    </p>
+                </div>
+
                 <hr />
                 <h3 class="is-size-6">WebAuthn Level 3</h3>
 

@@ -76,6 +76,26 @@ public class DemoController : Controller
         return result;
     }
 
+    /// <summary>
+    /// Parses the algorithm picker into pubKeyCredParams, preserving the order the caller sent so the list
+    /// still expresses preference. Falls back to the library defaults when nothing is selected.
+    /// </summary>
+    private static IReadOnlyList<PubKeyCredParam> ParseAlgorithms(string algorithms)
+    {
+        if (string.IsNullOrWhiteSpace(algorithms))
+            return PubKeyCredParam.Defaults;
+
+        var result = new List<PubKeyCredParam>();
+
+        foreach (var part in algorithms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (int.TryParse(part, out var alg) && Enum.IsDefined(typeof(COSE.Algorithm), alg))
+                result.Add(new PubKeyCredParam((COSE.Algorithm)alg));
+        }
+
+        return result.Count > 0 ? result : PubKeyCredParam.Defaults;
+    }
+
     [HttpPost]
     [Route("/makeCredentialOptions")]
     public JsonResult MakeCredentialOptions([FromForm] string username,
@@ -86,7 +106,8 @@ public class DemoController : Controller
                                             [FromForm] string userVerification,
                                             [FromForm] string hints,
                                             [FromForm] string attestationFormats,
-                                            [FromForm] string prf)
+                                            [FromForm] string prf,
+                                            [FromForm] string algorithms)
     {
         try
         {
@@ -122,7 +143,7 @@ public class DemoController : Controller
                 CredProps = true
             };
 
-            // WebAuthn L3 SS10.1.4: the prf extension asks the authenticator to evaluate a PRF over the inputs.
+            // WebAuthn L3 §10.1.4: the prf extension asks the authenticator to evaluate a PRF over the inputs.
             // At registration no eval input is supplied -- the RP is only asking whether prf is available, which
             // the client reports back as prf.enabled.
             if (prf == "true")
@@ -136,11 +157,15 @@ public class DemoController : Controller
                 AttestationPreference = ToEnumOrDefault(attType, AttestationConveyancePreference.None),
                 Extensions = exts,
 
-                // WebAuthn L3 SS5.8.8: hints guide how the user agent presents the ceremony. Advisory only.
+                // WebAuthn L3 §5.8.8: hints guide how the user agent presents the ceremony. Advisory only.
                 Hints = ToEnumList<PublicKeyCredentialHint>(hints),
 
-                // WebAuthn L3 SS5.4: the attestation statement formats this RP prefers, most preferred first.
-                AttestationFormats = ToEnumList<AttestationStatementFormatIdentifier>(attestationFormats)
+                // WebAuthn L3 §5.4: the attestation statement formats this RP prefers, most preferred first.
+                AttestationFormats = ToEnumList<AttestationStatementFormatIdentifier>(attestationFormats),
+
+                // pubKeyCredParams is ordered by Relying Party preference, and the client makes a best effort
+                // to create the most preferred type it can. Empty means "use the library's defaults".
+                PubKeyCredParams = ParseAlgorithms(algorithms)
             });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
@@ -185,7 +210,7 @@ public class DemoController : Controller
                 OriginalOptions = options,
                 IsCredentialIdUniqueToUserCallback = callback,
 
-                // WebAuthn L3 SS5.1.3: a conditional create is performed without a modal prompt, so the
+                // WebAuthn L3 §5.1.3: a conditional create is performed without a modal prompt, so the
                 // authenticator does not test user presence and the UP flag is not required to be set. The
                 // library needs to be told which kind of ceremony this was.
                 Mediation = ToEnumOrDefault(mediation, CredentialMediationRequirement.Optional)
@@ -209,7 +234,7 @@ public class DemoController : Controller
                 AttestationObject = credential.AttestationObject,
                 AttestationClientDataJson = credential.AttestationClientDataJson,
 
-                // WebAuthn L3 SS10.1.3: credProps.rk is three-state. null means the client did not say whether
+                // WebAuthn L3 §10.1.3: credProps.rk is three-state. null means the client did not say whether
                 // the credential is discoverable, which is different from saying it is not.
                 IsDiscoverable = attestationResponse.ClientExtensionResults?.CredProps?.Rk
             });
@@ -311,7 +336,7 @@ public class DemoController : Controller
     }
 
     // ---------------------------------------------------------------------------------------------------
-    // WebAuthn L3 SS5.1.10 signal methods.
+    // WebAuthn L3 §5.1.10 signal methods.
     //
     // These let a Relying Party tell the authenticator that its view of a credential is stale, so a passkey
     // provider can hide or relabel entries the RP no longer accepts. The browser makes the call; the server's
