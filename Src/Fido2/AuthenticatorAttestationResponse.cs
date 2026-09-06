@@ -236,7 +236,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             User = originalOptions.User,
             AttestationFormat = AttestationObject.Fmt,
             AaGuid = authData.AttestedCredentialData.AaGuid,
-            EnterpriseAttestationSerialNumber = attestationResult.EnterpriseAttestationSerialNumber
+            EnterpriseAttestationSerialNumber = attestationResult.EnterpriseAttestationSerialNumber,
+            AuthenticatorExtensionResults = authData.Extensions?.Outputs ?? new AuthenticationExtensionsAuthenticatorOutputs()
         };
     }
 
@@ -405,7 +406,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // Validate authenticator extensions from authData
         if (unsolicitedExtensionPolicy is UnsolicitedExtensionPolicy.Reject && authenticatorExtensions != null && authenticatorExtensions.Length > 0)
         {
-            var authenticatorExtensionIdentifiers = GetAuthenticatorExtensionIdentifiers(authenticatorExtensions);
+            var authenticatorExtensionIdentifiers = authenticatorExtensions.GetIdentifiers();
             foreach (var identifier in authenticatorExtensionIdentifiers)
             {
                 if (!requestedIdentifiers.Contains(identifier))
@@ -679,44 +680,6 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         if (clientExtensionResults.MinPinLength.HasValue)
             identifiers.Add("minPinLength");
-
-        return identifiers;
-    }
-
-    /// <summary>
-    /// Extracts the set of extension identifiers from the authenticator extensions (CBOR-encoded).
-    /// </summary>
-    private static HashSet<string> GetAuthenticatorExtensionIdentifiers(Extensions authenticatorExtensions)
-    {
-        var identifiers = new HashSet<string>(StringComparer.Ordinal);
-
-        try
-        {
-            var extensionBytes = authenticatorExtensions.GetBytes();
-            if (extensionBytes.Length == 0)
-                return identifiers;
-
-            // Decode the CBOR extension data which is a map of extension identifier -> extension output
-            var cborExtensions = (CborMap)CborObject.Decode(extensionBytes);
-
-            // Extract the keys (extension identifiers) from the CBOR map
-            foreach (var key in cborExtensions.Keys)
-            {
-                // CBOR map keys are typically text strings (extension identifiers)
-                if (key is CborTextString extensionId)
-                {
-                    identifiers.Add(extensionId);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            // If we fail to decode authenticator extensions, this is a validation error
-            throw new Fido2VerificationException(
-                Fido2ErrorCode.MalformedExtensionsDetected,
-                "Failed to decode authenticator extensions from authData",
-                ex);
-        }
 
         return identifiers;
     }

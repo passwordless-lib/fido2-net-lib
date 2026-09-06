@@ -27,4 +27,11 @@ public class VerifyAssertionResult
     /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>
     /// </summary>
     public bool IsUserVerified { get; init; }
+
+    /// <summary>
+    /// The authenticator extension outputs from the extensions block of the authenticator data, decoded into
+    /// the outputs CTAP defines. Never <see langword="null"/>; its members are <see langword="null"/> when the
+    /// authenticator returned no such output.
+    /// </summary>
+    public AuthenticationExtensionsAuthenticatorOutputs AuthenticatorExtensionResults { get; init; } = new();
 }

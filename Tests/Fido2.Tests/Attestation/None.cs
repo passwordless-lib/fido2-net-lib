@@ -46,6 +46,27 @@ public class None : Fido2Tests.Attestation
     }
 
     [Fact]
+    public async Task TestNoneSurfacesAuthenticatorExtensionOutputs()
+    {
+        // WebAuthn L3 §7.1 step 27: the Relying Party processes the authenticator extension outputs in authData.
+        _authenticatorExtensions = new CborMap
+        {
+            { "credProtect", 0x03 },
+            { "minPinLength", 6 },
+            { "hmac-secret", true }
+        };
+
+        _attestationObject.Add("attStmt", new CborMap());
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
+
+        var credential = await MakeAttestationResponseAsync();
+
+        Assert.Equal(CredentialProtectionPolicy.UserVerificationRequired, credential.AuthenticatorExtensionResults.CredProtect);
+        Assert.Equal(6u, credential.AuthenticatorExtensionResults.MinPinLength);
+        Assert.True(credential.AuthenticatorExtensionResults.HmacSecret);
+    }
+
+    [Fact]
     public async Task TestNoneWithAttStmt()
     {
         _attestationObject.Add("attStmt", new CborMap { { "foo", "bar" } });

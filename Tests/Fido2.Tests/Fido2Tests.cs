@@ -145,10 +145,12 @@ public class Fido2Tests
         public AuthenticatorFlags _flags { get; set; } = DefaultFlags;
         public ushort _signCount;
         protected Guid _aaguid = new("F1D0F1D0-F1D0-F1D0-F1D0-F1D0F1D0F1D0");
+        /// <summary>Settable so a test can exercise specific authenticator extension outputs.</summary>
+        public CborMap _authenticatorExtensions { get; set; } = new CborMap { { "testing", true } };
+
         public Extensions GetExtensions()
         {
-            var extBytes = new CborMap { { "testing", true } }.Encode();
-            return new Extensions(extBytes);
+            return new Extensions(_authenticatorExtensions.Encode());
         }
 
         public AuthenticatorData _authData => new(_rpIdHash, _flags, _signCount, _acd, GetExtensions());

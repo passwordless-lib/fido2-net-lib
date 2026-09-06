@@ -83,6 +83,13 @@ public class RegisteredPublicKeyCredential
     public string AttestationFormat { get; init; }
 
     /// <summary>
+    /// The authenticator extension outputs from the extensions block of the authenticator data, decoded into
+    /// the outputs CTAP defines. Never <see langword="null"/>; its members are <see langword="null"/> when the
+    /// authenticator returned no such output.
+    /// </summary>
+    public AuthenticationExtensionsAuthenticatorOutputs AuthenticatorExtensionResults { get; init; } = new();
+
+    /// <summary>
     /// The value of the id-fido-gen-ce-sernum extension (OID 1.3.6.1.4.1.45724.1.1.2) in the attestation
     /// certificate, or <see langword="null"/> when the certificate did not carry one. This uniquely identifies a
     /// single device against a particular AAGUID and remains constant across factory resets, so it is only ever
