@@ -151,4 +151,70 @@ public sealed class AuthenticatorGetInfo
     /// </summary>
     [JsonPropertyName("attestationFormats")]
     public string[]? AttestationFormats { get; set; }
+
+    /// <summary>
+    /// If present, the number of internal user verification operations since the last PIN entry.
+    /// </summary>
+    [JsonPropertyName("uvCountSinceLastPinEntry")]
+    public int? UvCountSinceLastPinEntry { get; set; }
+
+    /// <summary>
+    /// If present and set to true, a touch of at least 5 seconds is required for reset.
+    /// </summary>
+    [JsonPropertyName("longTouchForReset")]
+    public bool? LongTouchForReset { get; set; }
+
+    /// <summary>
+    /// An encrypted identifier that lets a platform recognize a specific authenticator across calls. The
+    /// encryption IV is regenerated for every getInfo response, so the value differs between calls and MUST NOT
+    /// be compared directly for equality.
+    /// </summary>
+    /// <remarks>
+    /// CTAP encodes this as a byte string. The Metadata Statement specification does not say how a CTAP byte
+    /// string is rendered in the JSON <c>authenticatorGetInfo</c> structure, so the value is surfaced exactly as
+    /// published rather than decoded under a guess.
+    /// </remarks>
+    [JsonPropertyName("encIdentifier")]
+    public string? EncIdentifier { get; set; }
+
+    /// <summary>
+    /// List of transports that support the reset command. Values are taken from the AuthenticatorTransport
+    /// enumeration in [WebAuthn].
+    /// </summary>
+    [JsonPropertyName("transportsForReset")]
+    public string[]? TransportsForReset { get; set; }
+
+    /// <summary>
+    /// If present and set to true, the authenticator enforces a PIN complexity policy.
+    /// </summary>
+    [JsonPropertyName("pinComplexityPolicy")]
+    public bool? PinComplexityPolicy { get; set; }
+
+    /// <summary>
+    /// A URL describing the enforced PIN complexity policy.
+    /// </summary>
+    /// <inheritdoc cref="EncIdentifier" path="/remarks"/>
+    [JsonPropertyName("pinComplexityPolicyURL")]
+    public string? PinComplexityPolicyURL { get; set; }
+
+    /// <summary>
+    /// The maximum PIN length, in Unicode code points, supported by the authenticator. Applicable to ClientPIN
+    /// only; when absent the effective default is 63 code points.
+    /// </summary>
+    [JsonPropertyName("maxPINLength")]
+    public int? MaxPINLength { get; set; }
+
+    /// <summary>
+    /// An opaque value that changes whenever the state of the authenticator's credential store changes, letting
+    /// a platform detect that its cached view is stale.
+    /// </summary>
+    /// <inheritdoc cref="EncIdentifier" path="/remarks"/>
+    [JsonPropertyName("encCredStoreState")]
+    public string? EncCredStoreState { get; set; }
+
+    /// <summary>
+    /// List of supported authenticatorConfig sub-command identifiers.
+    /// </summary>
+    [JsonPropertyName("authenticatorConfigCommands")]
+    public int[]? AuthenticatorConfigCommands { get; set; }
 }
