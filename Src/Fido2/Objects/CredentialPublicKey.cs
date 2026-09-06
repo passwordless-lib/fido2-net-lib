@@ -17,6 +17,9 @@ public sealed class CredentialPublicKey
     internal readonly ECDsa? _ecdsa;
     internal readonly RSA? _rsa;
     internal readonly NSec.Cryptography.PublicKey? _eddsa;
+#if NET10_0_OR_GREATER
+    internal readonly MLDsa? _mldsa;
+#endif
 
     public CredentialPublicKey(byte[] cpk)
         : this((CborMap)CborObject.Decode(cpk)) { }
@@ -42,6 +45,17 @@ public sealed class CredentialPublicKey
                 {
                     _eddsa = CreateEdDSA();
                     return;
+                }
+            case COSE.KeyType.AKP:
+                {
+#if NET10_0_OR_GREATER
+                    _mldsa = CreateMLDsa();
+                    return;
+#else
+                    throw new Fido2VerificationException(
+                        Fido2ErrorCode.UnimplementedAlgorithm,
+                        $"Credential public key algorithm {_alg} requires .NET 10 or later, which provides System.Security.Cryptography.MLDsa.");
+#endif
                 }
         }
 
@@ -131,6 +145,17 @@ public sealed class CredentialPublicKey
 
             case COSE.KeyType.OKP:
                 return SignatureAlgorithm.Ed25519.Verify(_eddsa!, data, signature);
+
+            case COSE.KeyType.AKP:
+#if NET10_0_OR_GREATER
+                // ML-DSA signs the message directly; there is no separate digest step to select, and the
+                // signature is the fixed-size FIPS 204 encoding rather than a DER structure to unwrap.
+                return _mldsa!.VerifyData(data, signature);
+#else
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.UnimplementedAlgorithm,
+                    $"Credential public key algorithm {_alg} requires .NET 10 or later, which provides System.Security.Cryptography.MLDsa.");
+#endif
         }
 
         throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Missing or unknown kty {_type}");
@@ -302,6 +327,64 @@ public sealed class CredentialPublicKey
         }
     }
 
+#if NET10_0_OR_GREATER
+    /// <summary>
+    /// Imports an <see cref="COSE.KeyType.AKP"/> credential public key as an ML-DSA key.
+    /// </summary>
+    /// <remarks>
+    /// RFC 9964 carries the public key as a single byte string at label -1, in the FIPS 204 encoding, which is
+    /// exactly what <see cref="MLDsa.ImportMLDsaPublicKey(MLDsaAlgorithm, byte[])"/> takes. The algorithm fixes
+    /// the parameter set, so nothing else in the key selects it.
+    /// </remarks>
+    internal MLDsa CreateMLDsa()
+    {
+        if (_type != COSE.KeyType.AKP)
+        {
+            throw new InvalidOperationException($"Must be an AKP key. Was {_type}");
+        }
+
+        var parameterSet = _alg switch
+        {
+            COSE.Algorithm.MLDSA44 => MLDsaAlgorithm.MLDsa44,
+            COSE.Algorithm.MLDSA65 => MLDsaAlgorithm.MLDsa65,
+            COSE.Algorithm.MLDSA87 => MLDsaAlgorithm.MLDsa87,
+            _ => throw new Fido2VerificationException(
+                Fido2ErrorCode.UnimplementedAlgorithm,
+                $"Credential public key algorithm {_alg} is not supported for AKP keys")
+        };
+
+        if (!MLDsa.IsSupported)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.UnimplementedAlgorithm,
+                $"Credential public key algorithm {_alg} is not available: this platform does not implement ML-DSA.");
+        }
+
+        // The indexer throws when the label is absent, so go through TryGetValue: a key that arrives from
+        // the wire without pub is malformed input to be rejected, not a missing-key bug to surface.
+        if (!_cpk.TryGetValue(new CborInteger((int)COSE.KeyTypeParameter.Pub), out var pubValue)
+            || pubValue is not CborByteString pub)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.InvalidCredentialPublicKey,
+                "AKP credential public key is missing the pub parameter, or it is not a byte string");
+        }
+
+        try
+        {
+            return MLDsa.ImportMLDsaPublicKey(parameterSet, (byte[])pub);
+        }
+        catch (Exception ex) when (ex is CryptographicException or ArgumentException)
+        {
+            // A key of the wrong length for the parameter set the algorithm names raises ArgumentException,
+            // which must not reach the caller as-is.
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.InvalidCredentialPublicKey,
+                $"AKP credential public key is not a valid {_alg} public key", ex);
+        }
+    }
+
+#endif
     public static CredentialPublicKey Decode(ReadOnlyMemory<byte> cpk, out int bytesRead)
     {
         var map = (CborMap)CborObject.Decode(cpk, out bytesRead);

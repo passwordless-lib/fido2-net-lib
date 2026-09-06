@@ -91,6 +91,36 @@ public static class COSE
         /// Ed448 support.
         /// </summary>
         Ed448 = -53,
+
+        // Post-quantum signature algorithms, registered by RFC 9964. All three use key type
+        // <see cref="KeyType.AKP"/>, with the public key carried at label -1 (see KeyTypeParameter.Pub)
+        // rather than as curve coordinates.
+        //
+        // Note that these are COSE registrations, not WebAuthn ones: WebAuthn L3 §5.8.5 defers to the COSE
+        // registry, and how an authenticator produces such a credential is still only an individual
+        // Internet-Draft. Verification of an assertion signature, which is all a Relying Party does, follows
+        // from RFC 9964 and needs nothing from that draft.
+
+        /// <summary>
+        /// ML-DSA-44, the FIPS 204 module-lattice signature scheme at security category 2.
+        /// </summary>
+        /// <remarks>
+        /// Verification requires .NET 10 or later, which provides <c>System.Security.Cryptography.MLDsa</c>.
+        /// On earlier targets the library reports <see cref="Exceptions.Fido2ErrorCode.UnimplementedAlgorithm"/>.
+        /// </remarks>
+        MLDSA44 = -48,
+
+        /// <summary>
+        /// ML-DSA-65, the FIPS 204 module-lattice signature scheme at security category 3.
+        /// </summary>
+        /// <inheritdoc cref="MLDSA44" path="/remarks"/>
+        MLDSA65 = -49,
+
+        /// <summary>
+        /// ML-DSA-87, the FIPS 204 module-lattice signature scheme at security category 5.
+        /// </summary>
+        /// <inheritdoc cref="MLDSA44" path="/remarks"/>
+        MLDSA87 = -50,
     }
     /// <summary>
     /// COSE Key Common Parameters https://www.iana.org/assignments/cose/cose.xhtml#key-common-parameters
@@ -150,7 +180,13 @@ public static class COSE
         /// <summary>
         /// the RSA public exponent e
         /// </summary>
-        E = -2
+        E = -2,
+        /// <summary>
+        /// The public key of an <see cref="KeyType.AKP"/> key, as a byte string whose encoding is defined by
+        /// the algorithm. Aliases -1, as <see cref="Crv"/>, <see cref="K"/> and <see cref="N"/> already do:
+        /// the label's meaning depends on the key type.
+        /// </summary>
+        Pub = -1
     }
     /// <summary>
     /// COSE Key Types https://www.iana.org/assignments/cose/cose.xhtml#key-type
@@ -176,7 +212,13 @@ public static class COSE
         /// <summary>
         /// Symmetric Keys
         /// </summary>
-        Symmetric = 4
+        Symmetric = 4,
+        /// <summary>
+        /// Algorithm Key Pair, the key type the algorithm itself defines the encoding for. Used by the ML-DSA
+        /// algorithms, whose public key is a single opaque byte string rather than a set of curve parameters.
+        /// <see href="https://www.rfc-editor.org/rfc/rfc9964.html"/>
+        /// </summary>
+        AKP = 7
     }
 
     /// <summary>
