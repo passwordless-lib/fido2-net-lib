@@ -107,6 +107,7 @@ public class Fido2Tests
         public byte[] _challenge;
         public X500DistinguishedName rootDN = new("CN=Testing, O=FIDO2-NET-LIB, C=US");
         public Oid oidIdFidoGenCeAaGuid = new("1.3.6.1.4.1.45724.1.1.4");
+        public Oid oidIdFidoGenCeSernum = new("1.3.6.1.4.1.45724.1.1.2");
         //private byte[] asnEncodedAaGuid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         //public byte[] asnEncodedAaGuid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         public byte[] _asnEncodedAaguid;
@@ -179,7 +180,8 @@ public class Fido2Tests
             AuthenticationExtensionsClientInputs requestedExtensions,
             UnsolicitedExtensionPolicy unsolicitedExtensionPolicy = UnsolicitedExtensionPolicy.Ignore,
             Action<Fido2Configuration> configure = null,
-            CredentialMediationRequirement mediation = CredentialMediationRequirement.Optional)
+            CredentialMediationRequirement mediation = CredentialMediationRequirement.Optional,
+            AttestationConveyancePreference attestation = AttestationConveyancePreference.Direct)
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
@@ -211,7 +213,7 @@ public class Fido2Tests
 
             var originalOptions = new CredentialCreateOptions
             {
-                Attestation = AttestationConveyancePreference.Direct,
+                Attestation = attestation,
                 AuthenticatorSelection = new AuthenticatorSelection
                 {
                     AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,

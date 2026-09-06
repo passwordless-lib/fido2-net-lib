@@ -71,6 +71,18 @@ public class RegisteredPublicKeyCredential
     public string AttestationFormat { get; init; }
 
     /// <summary>
+    /// The value of the id-fido-gen-ce-sernum extension (OID 1.3.6.1.4.1.45724.1.1.2) in the attestation
+    /// certificate, or <see langword="null"/> when the certificate did not carry one. This uniquely identifies a
+    /// single device against a particular AAGUID and remains constant across factory resets, so it is only ever
+    /// populated for a ceremony that requested
+    /// <see cref="AttestationConveyancePreference.Enterprise"/> attestation.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-enterprise-packed-attestation-cert-requirements"/>
+    /// </remarks>
+    public byte[] EnterpriseAttestationSerialNumber { get; init; }
+
+    /// <summary>
     /// The value of the attestationObject attribute when the public key credential source was registered.
     /// Storing this enables the Relying Party to reference the credential's attestation statement at a later time.
     /// </summary>

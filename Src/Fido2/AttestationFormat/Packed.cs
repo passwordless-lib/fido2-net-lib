@@ -116,9 +116,17 @@ internal sealed class Packed : AttestationVerifier
             // id-fido-u2f-ce-transports
             byte u2fTransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
 
+            // The Extension OID 1.3.6.1.4.1.45724.1.1.2 (id-fido-gen-ce-sernum) MAY additionally be present for
+            // enterprise use, carrying a unique octet string value per device against a particular AAGUID.
+            // It MUST NOT be present in non-enterprise attestations; that rule is enforced by
+            // AuthenticatorAttestationResponse, which is the layer that knows the conveyance preference the
+            // Relying Party asked for.
+            // https://www.w3.org/TR/webauthn-3/#sctn-enterprise-packed-attestation-cert-requirements
+            byte[]? enterpriseAttestationSerialNumber = SerialNumberFromAttnCertExts(attestnCert.Extensions);
+
             // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
 
-            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
+            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath, enterpriseAttestationSerialNumber));
         }
 
         // 3. If ecdaaKeyId is present, then the attestation type is ECDAA

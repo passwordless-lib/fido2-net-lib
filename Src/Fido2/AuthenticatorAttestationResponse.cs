@@ -143,15 +143,14 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
         //     and the hash of the serialized client data computed in step 7
-        AttestationType attType;
-        X509Certificate2[] trustPath;
+        VerifyAttestationResult attestationResult;
 
         if (AttestationObject.Fmt is Compound.FormatIdentifier)
         {
             if (AttestationObject.AttStmt is not CborArray compoundAttStmt)
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidCompoundAttestationStatement);
 
-            (attType, trustPath) = await Compound.VerifyAsync(compoundAttStmt, AttestationObject.AuthData, clientDataHash, config.CompoundAttestationPolicy).ConfigureAwait(false);
+            attestationResult = await Compound.VerifyAsync(compoundAttStmt, AttestationObject.AuthData, clientDataHash, config.CompoundAttestationPolicy).ConfigureAwait(false);
         }
         else
         {
@@ -160,8 +159,16 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
             var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
 
-            (attType, trustPath) = await verifier.VerifyAsync(attStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
+            attestationResult = await verifier.VerifyAsync(attStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
         }
+
+        var (attType, trustPath) = attestationResult;
+
+        // WebAuthn L3 §8.2.2: id-fido-gen-ce-sernum "MUST NOT be present in non-enterprise attestations".
+        // The extension uniquely identifies one device, so accepting it outside an enterprise ceremony would
+        // let an authenticator hand the Relying Party a tracking identifier it never asked for.
+        if (attestationResult.EnterpriseAttestationSerialNumber is not null && originalOptions.Attestation is not AttestationConveyancePreference.Enterprise)
+            throw new Fido2VerificationException(Fido2ErrorCode.UnexpectedEnterpriseAttestation, Fido2ErrorMessages.UnexpectedEnterpriseAttestation);
 
         // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy.
@@ -227,7 +234,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AttestationClientDataJson = Raw.Response.ClientDataJson,
             User = originalOptions.User,
             AttestationFormat = AttestationObject.Fmt,
-            AaGuid = authData.AttestedCredentialData.AaGuid
+            AaGuid = authData.AttestedCredentialData.AaGuid,
+            EnterpriseAttestationSerialNumber = attestationResult.EnterpriseAttestationSerialNumber
         };
     }
 

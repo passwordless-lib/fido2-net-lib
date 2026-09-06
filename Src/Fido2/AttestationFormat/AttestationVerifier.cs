@@ -68,6 +68,38 @@ public abstract class AttestationVerifier
         return aaguid;
     }
 
+    /// <summary>
+    /// Reads the id-fido-gen-ce-sernum extension (OID 1.3.6.1.4.1.45724.1.1.2) from an attestation
+    /// certificate, returning <see langword="null"/> when it is absent. The value is a unique octet string per
+    /// device against a particular AAGUID, constant across factory resets, and is only permitted in
+    /// attestations conveyed for enterprise use.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-enterprise-packed-attestation-cert-requirements"/>
+    /// </remarks>
+    internal static byte[]? SerialNumberFromAttnCertExts(X509ExtensionCollection exts)
+    {
+        var ext = exts.FirstOrDefault(static e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.2"); // id-fido-gen-ce-sernum
+        if (ext is null)
+            return null;
+
+        // "This extension MUST NOT be marked as critical, and the corresponding value is encoded as an OCTET STRING."
+        if (ext.Critical)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.CriticalEnterpriseAttestationSerialNumber);
+
+        var decodedSerialNumber = Asn1Element.Decode(ext.RawData);
+        decodedSerialNumber.CheckTag(Asn1Tag.PrimitiveOctetString);
+
+        byte[] serialNumber = decodedSerialNumber.GetOctetString();
+
+        // "If present, this extension MUST indicate a unique octet string value per device against a particular
+        // AAGUID." An empty string cannot identify a device, so treat it as malformed rather than pass it on.
+        if (serialNumber.Length is 0)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.EmptyEnterpriseAttestationSerialNumber);
+
+        return serialNumber;
+    }
+
     internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
     {
         byte u2fTransports = 0;

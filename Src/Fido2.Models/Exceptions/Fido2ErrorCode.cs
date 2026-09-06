@@ -38,5 +38,6 @@ public enum Fido2ErrorCode
     InvalidAuthenticatorResponseTopOrigin,
     InvalidBackupFlags,
     BackupEligibilityChanged,
-    InvalidCredentialPublicKey
+    InvalidCredentialPublicKey,
+    UnexpectedEnterpriseAttestation
 }

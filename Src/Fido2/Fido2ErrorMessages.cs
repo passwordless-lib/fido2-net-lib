@@ -44,6 +44,9 @@ internal static class Fido2ErrorMessages
     public static readonly string BackupEligibilityChanged               = "Backup eligibility (BE) does not match the value recorded when the credential was registered";
     public static readonly string CredentialAlgorithmRequirementNotMet   = "Credential algorithm does not match policy requirement";
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
+    public static readonly string CriticalEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST NOT be marked as critical";
+    public static readonly string EmptyEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST indicate a unique octet string value per device, but was empty";
+    public static readonly string UnexpectedEnterpriseAttestation        = "The attestation certificate carries the id-fido-gen-ce-sernum extension, which MUST NOT be present in non-enterprise attestations";
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
     public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";
     public static readonly string UserHandleNotOwnerOfPublicKey          = "User is not owner of the public key identified by the credential id";
