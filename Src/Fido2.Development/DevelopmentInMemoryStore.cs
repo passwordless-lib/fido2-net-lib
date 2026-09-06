@@ -68,6 +68,24 @@ public class DevelopmentInMemoryStore
         _storedCredentials.Add(credential);
     }
 
+    /// <summary>
+    /// Removes a credential. Returns <see langword="true"/> if one was found and removed.
+    /// </summary>
+    /// <remarks>
+    /// A Relying Party that deletes a credential should also tell the authenticator, so a passkey provider
+    /// stops offering an entry that will no longer be accepted: see
+    /// <see cref="Objects.AllAcceptedCredentialsOptions"/> and <see cref="Objects.UnknownCredentialOptions"/>.
+    /// </remarks>
+    public bool RemoveCredential(byte[] credentialId)
+    {
+        var cred = _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
+
+        if (cred is null)
+            return false;
+
+        return _storedCredentials.Remove(cred);
+    }
+
     public Task<List<Fido2User>> GetUsersByCredentialIdAsync(byte[] credentialId, CancellationToken cancellationToken = default)
     {
         // our in-mem storage does not allow storing multiple users for a given credentialId. Yours shouldn't either.
