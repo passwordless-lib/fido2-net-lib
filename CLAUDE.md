@@ -64,7 +64,7 @@ dotnet format
 ### Running Demo Applications
 
 ```bash
-# Run ASP.NET Core demo (requires HTTPS, expected at https://localhost:5001)
+# Run ASP.NET Core demo (requires .NET 10 and HTTPS, expected at https://localhost:5001)
 dotnet run --project Demo/Demo.csproj
 
 # Run Blazor WebAssembly demo
@@ -81,7 +81,8 @@ dotnet run --project BlazorWasmDemo/Server/BlazorWasmDemo.Server.csproj
 
 ### Important Settings
 
-- Target Framework: .NET 8.0 (configured via `SupportedTargetFrameworks`)
+- Target Frameworks: .NET 8.0 and .NET 10.0 for the libraries (configured via `SupportedTargetFrameworks`)
+- The `Demo` project targets .NET 10.0 only, so it can verify ML-DSA (`System.Security.Cryptography.MLDsa` is not available on .NET 8)
 - Language Version: C# 12
 - Nullable reference types enabled
 - ImplicitUsings enabled globally

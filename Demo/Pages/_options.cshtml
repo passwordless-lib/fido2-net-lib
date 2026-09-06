@@ -81,8 +81,19 @@
                         <label class="checkbox" style="margin-right: 1rem">
                             <input type="checkbox" class="option-algorithm" value="-37" /> PS256 <span class="has-text-grey">(-37)</span>
                         </label>
-                        <label class="checkbox">
+                        <label class="checkbox" style="margin-right: 1rem">
                             <input type="checkbox" class="option-algorithm" value="-47" /> ES256K <span class="has-text-grey">(-47)</span>
+                        </label>
+                    </div>
+                    <div class="control" style="margin-top: 0.5rem">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-48" /> ML-DSA-44 <span class="has-text-grey">(-48)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-49" /> ML-DSA-65 <span class="has-text-grey">(-49)</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" class="option-algorithm" value="-50" /> ML-DSA-87 <span class="has-text-grey">(-50)</span>
                         </label>
                     </div>
                     <p class="help">
@@ -91,6 +102,12 @@
                         of them. Unchecking everything falls back to the library's defaults.
                         Level 3 recommends <em>against</em> offering the fully-specified
                         <code>-9</code>/<code>-19</code>/<code>-51</code>/<code>-52</code> here.
+                    </p>
+                    <p class="help">
+                        The ML-DSA entries are the post-quantum algorithms RFC 9964 registers for COSE. This
+                        server can verify them, but no shipping authenticator produces them yet, so expect the
+                        client to fall through to whichever conventional algorithm you also offer &mdash; and
+                        to fail outright if you offer nothing else.
                     </p>
                 </div>
 
