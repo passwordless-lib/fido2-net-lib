@@ -276,6 +276,14 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             }
         }
 
+        // getCredBlob reads a blob back, which only an assertion can do.
+        if (extensions.GetCredBlob.HasValue)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The getCredBlob extension is not valid during registration. Use only during assertion.");
+        }
+
         // Validate credentialProtectionPolicy input
         if (extensions.CredentialProtectionPolicy.HasValue)
         {
@@ -638,6 +646,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (extensions.MinPinLength.HasValue)
             identifiers.Add("minPinLength");
 
+        if (extensions.CredBlob != null)
+            identifiers.Add("credBlob");
+
+        if (extensions.PinComplexityPolicy.HasValue)
+            identifiers.Add("pinComplexityPolicy");
+
         return identifiers;
     }
 
@@ -667,6 +681,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         if (clientExtensionResults.LargeBlob != null)
             identifiers.Add("largeBlob");
+
+        if (clientExtensionResults.CredBlob.HasValue)
+            identifiers.Add("credBlob");
 
         if (clientExtensionResults.CredProtect.HasValue)
             identifiers.Add("credProtect");

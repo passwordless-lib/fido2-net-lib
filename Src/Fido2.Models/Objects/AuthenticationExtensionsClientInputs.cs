@@ -104,6 +104,49 @@ public sealed class AuthenticationExtensionsClientInputs
     /// passthrough mechanism; it is not itself a WebAuthn-defined extension.
     /// https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension
     /// </summary>
+    /// <summary>
+    /// A small amount of opaque data, in a Relying Party specific format, to store with the credential. The
+    /// authenticator supports at least 32 bytes; its <c>maxCredBlobLength</c> in <c>authenticatorGetInfo</c>
+    /// reports the actual limit, and a client silently ignores a larger value.
+    /// </summary>
+    /// <remarks>
+    /// Valid only during registration; use <see cref="GetCredBlob"/> to read it back. Anything sensitive stored
+    /// here needs <see cref="CredentialProtectionPolicy"/> set to
+    /// <see cref="Objects.CredentialProtectionPolicy.UserVerificationRequired"/> together with
+    /// <see cref="EnforceCredentialProtectionPolicy"/>, because the blob is otherwise readable without user
+    /// verification.
+    /// <para>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-credBlob-extension"/>
+    /// </para>
+    /// </remarks>
+    [JsonConverter(typeof(Base64UrlConverter))]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("credBlob")]
+    public byte[]? CredBlob { get; set; }
+
+    /// <summary>
+    /// Requests the <c>credBlob</c> stored with the credential. Valid only during assertion.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-credBlob-extension"/>
+    /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("getCredBlob")]
+    public bool? GetCredBlob { get; set; }
+
+    /// <summary>
+    /// Requests the authenticator's current PIN complexity policy, so that an organization issuing configured
+    /// authenticators can check the policy still meets its requirements. Valid only during registration; the
+    /// answer arrives in the authenticator extension outputs rather than the client extension outputs. New in
+    /// CTAP 2.3.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-pinComplexityPolicy-extension"/>
+    /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("pinComplexityPolicy")]
+    public bool? PinComplexityPolicy { get; set; }
+
     [JsonPropertyName("minPinLength")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? MinPinLength { get; set; }

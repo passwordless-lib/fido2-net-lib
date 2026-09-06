@@ -231,6 +231,22 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             ValidateLargeBlobAssertionInput(extensions.LargeBlob);
         }
 
+        // credBlob stores a blob with a new credential, and pinComplexityPolicy reports the policy in force
+        // when one is created; both are registration-only. Reading a stored blob back is getCredBlob.
+        if (extensions.CredBlob != null)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The credBlob extension is not valid during assertion. Use getCredBlob to read the blob back.");
+        }
+
+        if (extensions.PinComplexityPolicy.HasValue)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The pinComplexityPolicy extension is not valid during assertion. Use only during registration.");
+        }
+
         // Validate credentialProtectionPolicy input
         if (extensions.CredentialProtectionPolicy.HasValue)
         {

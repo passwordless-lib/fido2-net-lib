@@ -78,6 +78,30 @@ public class L3CredentialRecordTests
     }
 
     [Fact]
+    public async Task AssertionRejectsTheRegistrationOnlyCredBlobInputAsync()
+    {
+        var (options, response) = MakeAssertion(AuthenticatorFlags.UP | AuthenticatorFlags.UV);
+        options.Extensions = new AuthenticationExtensionsClientInputs { CredBlob = [0xca, 0xfe] };
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => AssertAsync(MakeLib(), options, response));
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("getCredBlob", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AssertionRejectsTheRegistrationOnlyPinComplexityPolicyInputAsync()
+    {
+        var (options, response) = MakeAssertion(AuthenticatorFlags.UP | AuthenticatorFlags.UV);
+        options.Extensions = new AuthenticationExtensionsClientInputs { PinComplexityPolicy = true };
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => AssertAsync(MakeLib(), options, response));
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("not valid during assertion", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AssertionWithBackupStateButNotBackupEligibleIsRejectedAsync()
     {
         // BS set without BE is malformed: a credential that is not backup eligible can never be backed up.

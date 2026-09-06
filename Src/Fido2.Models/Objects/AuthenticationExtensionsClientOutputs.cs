@@ -82,6 +82,29 @@ public class AuthenticationExtensionsClientOutputs
     /// passthrough mechanism; it is not itself a WebAuthn-defined extension.
     /// https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension
     /// </summary>
+    /// <summary>
+    /// Whether the authenticator stored the requested <c>credBlob</c>. Registration only; it may be
+    /// <see langword="false"/> when the blob exceeded the authenticator's <c>maxCredBlobLength</c> or the
+    /// extension is unsupported for non-discoverable credentials.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-credBlob-extension"/>
+    /// </remarks>
+    [JsonPropertyName("credBlob")]
+    public bool? CredBlob { get; set; }
+
+    /// <summary>
+    /// The <c>credBlob</c> stored with the credential, or empty if the authenticator has none for it. Assertion
+    /// only.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-credBlob-extension"/>
+    /// </remarks>
+    [JsonConverter(typeof(Base64UrlConverter))]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("getCredBlob")]
+    public byte[]? GetCredBlob { get; set; }
+
     [JsonPropertyName("minPinLength")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public uint? MinPinLength { get; set; }
