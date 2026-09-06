@@ -113,6 +113,53 @@ public class L3CeremonyOptionsTests
         Assert.DoesNotContain("authenticatorAttachment", JsonSerializer.Serialize(response));
     }
 
+    [Fact]
+    public void TheFullRegistrationResponseJsonShapeIsRead()
+    {
+        // The whole of AuthenticatorAttestationResponseJSON, as PublicKeyCredential.toJSON() produces it.
+        var json = """
+        {"id":"AAAA","rawId":"AAAA","type":"public-key","clientExtensionResults":{},"authenticatorAttachment":"platform",
+         "response":{"attestationObject":"AAAA","clientDataJSON":"AAAA","transports":["internal"],
+                     "authenticatorData":"AQID","publicKey":"BAUG","publicKeyAlgorithm":-7}}
+        """;
+
+        var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(json);
+
+        Assert.Equal([0x01, 0x02, 0x03], response.Response.AuthenticatorData);
+        Assert.Equal([0x04, 0x05, 0x06], response.Response.PublicKey);
+        Assert.Equal(COSE.Algorithm.ES256, response.Response.PublicKeyAlgorithm);
+    }
+
+    [Fact]
+    public void TheRegistrationResponseJsonCopiesAreOptional()
+    {
+        // publicKey is absent when the user agent does not understand the negotiated algorithm, and a client
+        // that predates Level 3 sends none of the three.
+        var json = """{"id":"AAAA","rawId":"AAAA","type":"public-key","clientExtensionResults":{},"response":{"attestationObject":"AAAA","clientDataJSON":"AAAA","transports":["internal"]}}""";
+
+        var response = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(json);
+
+        Assert.Null(response.Response.AuthenticatorData);
+        Assert.Null(response.Response.PublicKey);
+        Assert.Null(response.Response.PublicKeyAlgorithm);
+
+        var roundTripped = JsonSerializer.Serialize(response);
+
+        Assert.DoesNotContain("authenticatorData", roundTripped);
+        Assert.DoesNotContain("publicKey", roundTripped);
+    }
+
+    [Theory]
+    [InlineData(ClientCapability.ConditionalCreate, "conditionalCreate")]
+    [InlineData(ClientCapability.RelatedOrigins, "relatedOrigins")]
+    [InlineData(ClientCapability.SignalAllAcceptedCredentials, "signalAllAcceptedCredentials")]
+    [InlineData(ClientCapability.UserVerifyingPlatformAuthenticator, "userVerifyingPlatformAuthenticator")]
+    public void ClientCapabilitiesUseTheirSpecNames(ClientCapability capability, string expected)
+    {
+        Assert.Equal($"\"{expected}\"", JsonSerializer.Serialize(capability));
+        Assert.Equal(capability, JsonSerializer.Deserialize<ClientCapability>($"\"{expected}\""));
+    }
+
     [Theory]
     [InlineData("""{"rk":true}""", true)]
     [InlineData("""{"rk":false}""", false)]
