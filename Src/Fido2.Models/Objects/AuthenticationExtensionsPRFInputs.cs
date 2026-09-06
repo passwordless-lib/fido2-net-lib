@@ -14,6 +14,7 @@ public sealed class AuthenticationExtensionsPRFInputs
     /// https://w3c.github.io/webauthn/#dom-authenticationextensionsprfinputs-eval
     /// </summary>
     [JsonPropertyName("eval")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticationExtensionsPRFValues Eval { get; set; }
 
     /// <summary>
