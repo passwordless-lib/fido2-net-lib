@@ -1,4 +1,4 @@
-namespace Fido2NetLib.Ctap2;
+﻿namespace Fido2NetLib.Ctap2;
 
 /// <summary>
 /// Response to the authenticatorConfig (0x0D) command. The standard sub commands

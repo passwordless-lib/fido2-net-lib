@@ -1,4 +1,4 @@
-using Fido2NetLib;
+﻿using Fido2NetLib;
 using Fido2NetLib.Serialization;
 
 using Microsoft.AspNetCore.Builder;
