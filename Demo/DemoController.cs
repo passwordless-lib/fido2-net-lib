@@ -220,6 +220,7 @@ public class DemoController : Controller
             DemoStorage.AddCredentialToUser(options.User, new StoredCredential
             {
                 Id = credential.Id,
+                RpId = credential.RpId,
                 PublicKey = credential.PublicKey,
                 UserHandle = credential.User.Id,
                 SignCount = credential.SignCount,

@@ -20,6 +20,18 @@ public class RegisteredPublicKeyCredential
     public byte[] Id { get; init; }
 
     /// <summary>
+    /// The value of the <c>rp.id</c> parameter specified in the <c>create()</c> operation during credential
+    /// registration. This is a core property of the credential that determines where it can be used. Storing it
+    /// helps later on: to audit the credential's use, to troubleshoot authentication problems, or to use it
+    /// across different domains via
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-related-origins">Related Origins</see>.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#credential-record"/>
+    /// </remarks>
+    public string RpId { get; init; }
+
+    /// <summary>
     /// The credential public key of the public key credential source.
     /// </summary>
     [JsonConverter(typeof(Base64UrlConverter))]

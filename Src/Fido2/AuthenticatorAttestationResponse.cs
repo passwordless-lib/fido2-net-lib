@@ -223,6 +223,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         {
             Type = Raw.Type,
             Id = authData.AttestedCredentialData.CredentialId,
+            RpId = originalOptions.Rp.Id,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
             Transports = Raw.Response.Transports,
