@@ -3,79 +3,170 @@
 @{
     ViewData["Title"] = "dashboard";
     Layout = "_Layout.cshtml";
-
-    // Please know that this is not good for production:
-    var DemoStorage = DemoController.DemoStorage;
-    var _mds = DemoController._mds;
-
-    var username = Model.Username;
-
-    // 1. Get user from DB
-    var user = DemoStorage.GetUser(username);
-
-    // 2. Get registered credentials from database
-    var existingCredentials = DemoStorage.GetCredentialsByUser(user);
-
-
-
 }
 
 <div class="section">
     <div class="container">
-        <h1 class="title is-1">Dashboard for: @username</h1>
+        <h1 class="title is-1">Dashboard for: @Model.Username</h1>
 
-        <p>This page shows all registered keys on this username. Please note that keys are only persisted in memory on the dev server.</p>
+        <p>
+            This page shows the <a href="https://www.w3.org/TR/webauthn-3/#credential-record">credential record</a>
+            WebAuthn Level 3 asks a Relying Party to keep for each registered credential. Keys are only persisted
+            in memory on the dev server.
+        </p>
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <td>Date</td>
-                    <td>Desc</td>
-                    <td>Counter</td>
-                    <td>AAGuid</td>
-                    <td>UserHandle</td>
-                    <td>UserId</td>
-                    <td>Attestation Type</td>
-                    <td>Public Key</td>
-                </tr>
-            </thead>
-            @foreach (var item in existingCredentials)
-            {
-                var desc = "";
-                var icon = "";
-                var userHandle = System.Text.Encoding.UTF8.GetString(item.UserHandle);
-                var userId = System.Text.Encoding.UTF8.GetString(item.UserId);
-                var publicKey = System.Convert.ToBase64String(item.PublicKey);
-                try
-                {
+        @if (!Model.UserExists)
+        {
+            <div class="notification is-warning" style="margin-top: 1.5rem">
+                No user named <strong>@Model.Username</strong> is registered on this server. Register first, or
+                check the username.
+            </div>
+        }
+        else if (Model.Credentials.Count == 0)
+        {
+            <div class="notification" style="margin-top: 1.5rem">
+                <strong>@Model.Username</strong> exists but has no registered credentials.
+            </div>
+        }
+        else
+        {
+            <div class="table-container">
+                <table class="table is-striped is-fullwidth">
+                    <thead>
+                        <tr>
+                            <th>Registered</th>
+                            <th>Authenticator</th>
+                            <th>Sign count</th>
+                            <th>Attestation</th>
+                            <th>Transports</th>
+                            <th>Attachment</th>
+                            <th title="Whether the credential is a client-side discoverable credential (credProps.rk)">Discoverable</th>
+                            <th title="Whether a UV-capable ceremony has established a trust relationship (credential record uvInitialized)">uvInitialized</th>
+                            <th title="Backup Eligibility flag from the authenticator data at registration">BE</th>
+                            <th title="Backup State flag, updated on every ceremony">BS</th>
+                            <th>Keys</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Credentials)
+                        {
+                            var cred = item.Credential;
+                            <tr>
+                                <td>@cred.RegDate.ToString("u")</td>
+                                <td>
+                                    @if (item.AuthenticatorDescription is not null)
+                                    {
+                                        <span>@item.AuthenticatorDescription</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="has-text-grey" title="AAGUID @cred.AaGuid">Not in metadata</span>
+                                    }
+                                </td>
+                                <td>@cred.SignCount</td>
+                                <td>@cred.AttestationFormat</td>
+                                <td>
+                                    @if (cred.Transports is { Length: > 0 })
+                                    {
+                                        @string.Join(", ", cred.Transports)
+                                    }
+                                    else
+                                    {
+                                        <span class="has-text-grey">none reported</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (cred.AuthenticatorAttachment is not null)
+                                    {
+                                        @cred.AuthenticatorAttachment
+                                    }
+                                    else
+                                    {
+                                        <span class="has-text-grey">not reported</span>
+                                    }
+                                </td>
+                                <td>
+                                    @* credProps.rk is three-state in L3: absent means the client did not say. *@
+                                    @if (cred.IsDiscoverable is true)
+                                    {
+                                        <span class="tag is-success">yes</span>
+                                    }
+                                    else if (cred.IsDiscoverable is false)
+                                    {
+                                        <span class="tag">no</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tag is-light" title="The client did not report credProps.rk">unknown</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (cred.UvInitialized)
+                                    {
+                                        <span class="tag is-success">yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tag">no</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (cred.IsBackupEligible)
+                                    {
+                                        <span class="tag is-info">yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tag">no</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (cred.IsBackedUp)
+                                    {
+                                        <span class="tag is-info">yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tag">no</span>
+                                    }
+                                </td>
+                                <td>
+                                    <details>
+                                        <summary>show</summary>
+                                        <p><strong>Credential ID</strong><br /><code>@item.CredentialId</code></p>
+                                        <p><strong>Public key</strong><br /><code>@item.PublicKey</code></p>
+                                        <p><strong>AAGUID</strong><br /><code>@cred.AaGuid</code></p>
+                                        <p><strong>User handle</strong><br /><code>@item.UserHandle</code></p>
+                                        <p><strong>User ID</strong><br /><code>@item.UserId</code></p>
+                                    </details>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
 
-                    if (_mds != null)
-                    {
-                        var entry = await _mds.GetEntryAsync(item.AaGuid);
-                        desc = entry.MetadataStatement.Description.ToString();
-                        icon = entry.MetadataStatement.Icon.ToString();
-                    }
-
-                }
-                catch { }
-
-                <tr>
-                    <td>@item.RegDate</td>
-                    <td><img src="@icon" /> @desc</td>
-                    <td>@item.SignCount</td>
-                    <td>@item.AaGuid</td>
-                    <td>@userHandle</td>
-                    <td>@userId</td>
-                    <td>@item.AttestationFormat</td>
-                    <td>
-                        <details>
-                            <summary>@publicKey.Substring(0, 10).Substring(0, 10)...</summary>
-                            @publicKey
-                        </details>
-                    </td>
-                </tr>
-            }
-        </table>
-
+            @* WebAuthn L3 SS5.1.10. The server produces the payloads; the browser makes the calls. *@
+            <h2 class="title is-4" style="margin-top: 2rem">Signal credential changes</h2>
+            <div class="content">
+                <p>
+                    Signal methods tell the authenticator that this Relying Party's view of a credential has
+                    changed, so a passkey provider can hide or relabel stale entries. They are best-effort and
+                    report no result &mdash; a resolved promise only means the payload was well formed.
+                </p>
+            </div>
+            <div class="buttons">
+                <button class="button is-link is-light" id="signal-all-accepted" data-username="@Model.Username">
+                    signalAllAcceptedCredentials()
+                </button>
+                <button class="button is-link is-light" id="signal-current-user" data-username="@Model.Username">
+                    signalCurrentUserDetails()
+                </button>
+            </div>
+            <p id="signal-status" class="help"></p>
+        }
     </div>
 </div>
+
+<script src="~/js/webauthn.js"></script>
+<script src="~/js/dashboard.js"></script>

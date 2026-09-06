@@ -59,7 +59,89 @@
                     </div>
                     <p class="help">For register the client will guide the user through setting up user verification if needed to create a discoverable credential. This takes precedence over the setting of userVerification.</p>
                 </div>
+
+                <hr />
+                <h3 class="is-size-6">WebAuthn Level 3</h3>
+
+                <div class="field">
+                    <label class="label">Hints</label>
+                    <div class="control">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-hint" value="security-key" /> security-key
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-hint" value="client-device" /> client-device
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" class="option-hint" value="hybrid" /> hybrid
+                        </label>
+                    </div>
+                    <p class="help">
+                        &sect;5.8.8. Guides how the browser presents the ceremony, in the order checked here.
+                        Hints are advisory &mdash; they do not restrict what the user may actually use. Setting a
+                        hint also derives the authenticator attachment, so it takes precedence over the
+                        Authenticator setting above.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Attestation formats</label>
+                    <div class="control">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-attestation-format" value="packed" /> packed
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-attestation-format" value="tpm" /> tpm
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-attestation-format" value="apple" /> apple
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" class="option-attestation-format" value="none" /> none
+                        </label>
+                    </div>
+                    <p class="help">
+                        &sect;5.4. The attestation statement formats this Relying Party prefers, most preferred
+                        first. Advisory: the authenticator may still use a format that is not listed. Only
+                        meaningful when the attestation type above is not None.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Mediation</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-mediation">
+                                <option selected value="">Optional (default)</option>
+                                <option value="conditional">Conditional</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="help">
+                        &sect;5.1.3. A conditional create is offered quietly by the browser rather than in a modal
+                        prompt. Because no user presence test happens, the UP flag is not set and the server has
+                        to know the ceremony was conditional in order to accept it.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="option-prf" /> Request the <code>prf</code> extension
+                    </label>
+                    <p class="help">
+                        &sect;10.1.4. At registration this only asks whether the authenticator can evaluate a
+                        pseudo-random function for this credential; the client reports the answer back as
+                        <code>prf.enabled</code>.
+                    </p>
+                </div>
             </form>
+
+            <h3 class="is-size-6" style="margin-top: 1.5rem">This browser's client capabilities</h3>
+            <p class="help">
+                &sect;5.1.7. What <code>getClientCapabilities()</code> reports, so you can tell what is worth
+                trying here.
+            </p>
+            <div id="client-capabilities" style="margin-top: 0.5rem"></div>
         </div>
     </div>
 </div>

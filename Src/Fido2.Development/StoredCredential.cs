@@ -60,6 +60,14 @@ public class StoredCredential
     /// </summary>
     public byte[] AttestationClientDataJson { get; set; }
 
+    /// <summary>
+    /// What the client reported through the <c>credProps</c> extension's <c>rk</c> value at registration:
+    /// <see langword="true"/> for a discoverable credential, <see langword="false"/> for a server-side
+    /// credential, and <see langword="null"/> when the client did not say which.
+    /// See <see cref="CredentialPropertiesOutput.Rk"/>.
+    /// </summary>
+    public bool? IsDiscoverable { get; set; }
+
     public byte[] UserId { get; set; }
 
     /// <summary>
