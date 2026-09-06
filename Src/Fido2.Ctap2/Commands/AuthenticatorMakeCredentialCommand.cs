@@ -111,7 +111,8 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
         foreach (PubKeyCredParam pubKeyCredParam in PubKeyCredParams)
         {
             pubKeyCredParams.Add(pubKeyCredParam.ToCborObject());
-        };
+        }
+        ;
 
         cbor.Add(0x04, pubKeyCredParams);
 
