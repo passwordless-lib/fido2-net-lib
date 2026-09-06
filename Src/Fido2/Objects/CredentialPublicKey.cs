@@ -5,7 +5,9 @@ using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 
+#if !FIDO2_DISABLE_NSEC
 using NSec.Cryptography;
+#endif
 
 namespace Fido2NetLib.Objects;
 
@@ -16,7 +18,9 @@ public sealed class CredentialPublicKey
     internal readonly CborMap _cpk;
     internal readonly ECDsa? _ecdsa;
     internal readonly RSA? _rsa;
+#if !FIDO2_DISABLE_NSEC
     internal readonly NSec.Cryptography.PublicKey? _eddsa;
+#endif
 #if NET10_0_OR_GREATER
     internal readonly MLDsa? _mldsa;
 #endif
@@ -43,8 +47,12 @@ public sealed class CredentialPublicKey
                 }
             case COSE.KeyType.OKP:
                 {
+#if FIDO2_DISABLE_NSEC
+                    throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, EdDsaUnavailable);
+#else
                     _eddsa = CreateEdDSA();
                     return;
+#endif
                 }
             case COSE.KeyType.AKP:
                 {
@@ -114,10 +122,14 @@ public sealed class CredentialPublicKey
                 }
             case COSE.KeyType.OKP:
                 {
+#if FIDO2_DISABLE_NSEC
+                    throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, EdDsaUnavailable);
+#else
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.Ed25519);
                     _cpk.Add(COSE.KeyTypeParameter.X, cert.PublicKey.EncodedKeyValue.RawData);
                     _eddsa = CreateEdDSA();
                     break;
+#endif
                 }
             default:
                 throw new InvalidOperationException($"Missing or unknown kty {_type}");
@@ -144,7 +156,11 @@ public sealed class CredentialPublicKey
                 return _rsa!.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
 
             case COSE.KeyType.OKP:
+#if FIDO2_DISABLE_NSEC
+                throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, EdDsaUnavailable);
+#else
                 return SignatureAlgorithm.Ed25519.Verify(_eddsa!, data, signature);
+#endif
 
             case COSE.KeyType.AKP:
 #if NET10_0_OR_GREATER
@@ -290,6 +306,15 @@ public sealed class CredentialPublicKey
         }
     }
 
+#if FIDO2_DISABLE_NSEC
+    /// <summary>
+    /// Message used wherever an EdDSA operation is refused because the library was built with
+    /// <c>DisableNSec=true</c>.
+    /// </summary>
+    private const string EdDsaUnavailable =
+        "EdDSA is not available: this build of Fido2 was compiled with DisableNSec=true, which omits the "
+        + "NSec.Cryptography dependency that provides Ed25519.";
+#else
     internal NSec.Cryptography.PublicKey CreateEdDSA()
     {
         if (_type != COSE.KeyType.OKP)
@@ -326,6 +351,7 @@ public sealed class CredentialPublicKey
                     $"Credential public key algorithm {_alg} is not supported for OKP keys");
         }
     }
+#endif
 
 #if NET10_0_OR_GREATER
     /// <summary>
