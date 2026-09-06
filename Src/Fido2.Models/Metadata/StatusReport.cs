@@ -9,7 +9,7 @@ namespace Fido2NetLib;
 /// Contains an AuthenticatorStatus and additional data associated with it, if any.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#statusreport-dictionary"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.1.1-ps-20260105.html#statusreport-dictionary"/>
 /// </remarks>
 public sealed class StatusReport
 {
@@ -26,6 +26,30 @@ public sealed class StatusReport
     /// </summary>
     [JsonPropertyName("effectiveDate")]
     public string EffectiveDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the authenticator version (firmware version) that this status report relates to.
+    /// </summary>
+    /// <remarks>
+    /// For a FIDO_CERTIFIED* status the report applies to this version and higher, until a later status report
+    /// supersedes it. For <see cref="AuthenticatorStatus.USER_VERIFICATION_BYPASS"/> it identifies the vulnerable
+    /// firmware version; for <see cref="AuthenticatorStatus.UPDATE_AVAILABLE"/>, the updated version now available;
+    /// for <see cref="AuthenticatorStatus.SELF_ASSERTION_SUBMITTED"/>, the version the self assertion was based on.
+    /// </remarks>
+    [JsonPropertyName("authenticatorVersion")]
+    public ulong? AuthenticatorVersion { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Base64-encoded PKIX certificate identifying the compromised batch attestation certificate
+    /// related to the affected authenticators, if applicable.
+    /// </summary>
+    /// <remarks>
+    /// Base64-encoded [RFC4648] (not base64url!) / DER [ITU-X690-2008] PKIX certificate. Typically present for
+    /// <see cref="AuthenticatorStatus.USER_KEY_REMOTE_COMPROMISE"/>. <see cref="Certificate"/> will typically not
+    /// be present when this field is.
+    /// </remarks>
+    [JsonPropertyName("batchCertificate")]
+    public string BatchCertificate { get; set; }
 
     /// <summary>
     /// Gets or sets Base64-encoded PKIX certificate value related to the current status, if applicable.
@@ -64,8 +88,47 @@ public sealed class StatusReport
     public string CertificationPolicyVersion { get; set; }
 
     /// <summary>
+    /// Gets or sets the supported certification profiles, as defined in the active version of the Authenticator
+    /// Certification Policy document.
+    /// </summary>
+    /// <remarks>
+    /// At the time the specification was written the supported profiles were "consumer" and "enterprise".
+    /// </remarks>
+    [JsonPropertyName("certificationProfiles")]
+    public string[] CertificationProfiles { get; set; }
+
+    /// <summary>
     /// Gets or set the version of the Authenticator Security Requirements the implementation is Certified to.
     /// </summary>
     [JsonPropertyName("certificationRequirementsVersion")]
     public string CertificationRequirementsVersion { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ISO-8601 formatted date on which this status will expire, if applicable.
+    /// <para>If no date is given, the status is assumed to have no scheduled expiry.</para>
+    /// </summary>
+    /// <remarks>
+    /// For a FIPS140_CERTIFIED_* status this is the sunset date given in the FIPS certificate.
+    /// </remarks>
+    [JsonPropertyName("sunsetDate")]
+    public string SunsetDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the revision number of the FIPS 140 specification, e.g. 3 in the case of FIPS 140-3.
+    /// </summary>
+    /// <remarks>
+    /// Present if and only if <see cref="Status"/> is one of the FIPS140_CERTIFIED_* values.
+    /// </remarks>
+    [JsonPropertyName("fipsRevision")]
+    public ulong? FipsRevision { get; set; }
+
+    /// <summary>
+    /// Gets or sets the physical security level of the FIPS certification.
+    /// </summary>
+    /// <remarks>
+    /// Present if and only if <see cref="Status"/> is one of the FIPS140_CERTIFIED_* values. This reflects the
+    /// physical security level, which may deviate from the overall level named by the status itself.
+    /// </remarks>
+    [JsonPropertyName("fipsPhysicalSecurityLevel")]
+    public ulong? FipsPhysicalSecurityLevel { get; set; }
 }
