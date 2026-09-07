@@ -89,7 +89,17 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.CredentialIdNotInAllowedCredentials);
         }
 
-        // 6. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id
+        // 6. Identify the user being authenticated and let credentialRecord be the credential record for the credential.
+        //    "If the user was not identified before the authentication ceremony was initiated, verify that
+        //     response.userHandle is present." An empty allowCredentials is that case: the Relying Party named no
+        //     credential to use, so the assertion is tied to an account only by the user handle the authenticator
+        //     returns. Without it, the ceremony would identify the user by credential ID alone, which is exactly
+        //     what this step exists to prevent.
+        if (options.AllowCredentials is null or { Count: 0 } && UserHandle is null)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.UserHandleIsRequired);
+
+        //    Otherwise the user was identified up front, and a user handle, if the authenticator returned one,
+        //    must belong to that account.
         if (UserHandle != null)
         {
             if (UserHandle.Length is 0)

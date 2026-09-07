@@ -27,6 +27,7 @@ internal static class Fido2ErrorMessages
     public static readonly string UserPresentFlagNotSet                  = "User Present flag not set in authenticator data";
     public static readonly string InvalidCertificateChain                = "Invalid certificate chain";
     public static readonly string UserHandleIsEmpty                      = "UserHandle was empty DOMString. It should either be null or have a value.";
+    public static readonly string UserHandleIsRequired                   = "UserHandle is required when the assertion options carry no allowCredentials, because nothing else identifies the user account.";
     public static readonly string InvalidAttestedCredentialData_TooShort = "Not enough bytes to be a valid AttestedCredentialData";
     public static readonly string InvalidAttestedCredentialData_CredentialIdTooLong = "CredentialId too many bytes";
     public static readonly string MissingAuthenticatorResponseChallenge  = "Authenticator response challenge may not be null";

@@ -22,7 +22,9 @@ internal static class L3AssertionHarness
     internal static Task<VerifyAssertionResult> AssertAsync(
         AuthenticationExtensionsClientInputs requestedExtensions,
         AuthenticationExtensionsClientOutputs clientExtensionResults = null,
-        IReadOnlyList<PublicKeyCredentialDescriptor> allowCredentials = null)
+        IReadOnlyList<PublicKeyCredentialDescriptor> allowCredentials = null,
+        bool omitUserHandle = false,
+        byte[] userHandle = null)
     {
         using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var parameters = ecdsa.ExportParameters(false);
@@ -69,7 +71,7 @@ internal static class L3AssertionHarness
                 AuthenticatorData = authenticatorData,
                 Signature = signature,
                 ClientDataJson = clientDataJson,
-                UserHandle = [0xf1, 0xd0]
+                UserHandle = omitUserHandle ? null : userHandle ?? [0xf1, 0xd0]
             }
         };
 
