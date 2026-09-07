@@ -107,6 +107,24 @@ public class Fido2Configuration
     }
 
     /// <summary>
+    /// Whether this Relying Party uses
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-related-origins">related origin requests</see>, i.e.
+    /// it serves the resource <see cref="GetWellKnownWebAuthn"/> builds and accepts ceremonies from origins
+    /// that are not under <see cref="RPID"/>.
+    /// </summary>
+    /// <remarks>
+    /// This relaxes <see cref="Validate"/> only. Origins must still be <c>https</c> (or loopback), and the
+    /// per-ceremony origin comparison is unaffected -- an origin is accepted because it is in
+    /// <see cref="Origins"/>, which is true either way.
+    /// <para>
+    /// Leave this <see langword="false"/> unless the well-known resource is actually being served: without
+    /// it, a user agent rejects a ceremony from an origin outside <see cref="RPID"/>, and the startup check
+    /// is what catches that before any user does.
+    /// </para>
+    /// </remarks>
+    public bool AllowRelatedOrigins { get; set; }
+
+    /// <summary>
     /// Builds the payload to serve from this RP ID's <c>/.well-known/webauthn</c> endpoint, listing every
     /// configured origin so user agents can validate
     /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-related-origins">related origin requests</see>.
@@ -135,6 +153,10 @@ public class Fido2Configuration
     /// <see cref="RPID"/> must equal the origin's host or be a registrable domain suffix of it.
     /// </summary>
     /// <remarks>
+    /// The host relationship is the whole point of related origin requests, so
+    /// <see cref="AllowRelatedOrigins"/> turns that half of the check off. The scheme requirement is not
+    /// relaxed: §5.11 changes which origins may share an RP ID, not which origins WebAuthn will talk to.
+    /// <para>
     /// This is an opt-in, defense-in-depth sanity check on configuration -- it is not called
     /// automatically, and is not a substitute for the per-ceremony origin comparison performed in
     /// <c>AuthenticatorResponse.BaseVerify</c>, which remains the actual security boundary.
@@ -142,6 +164,7 @@ public class Fido2Configuration
     /// <see cref="Fido2Configuration"/>, or via <c>IValidateOptions&lt;Fido2Configuration&gt;</c>
     /// / <c>ValidateOnStart()</c> in ASP.NET Core) to fail fast on a misconfigured
     /// <see cref="Origins"/>/<see cref="RPID"/> pair, per WebAuthn L3 §13.4.9.
+    /// </para>
     /// </remarks>
     /// <exception cref="Fido2ConfigurationException">
     /// Thrown when <see cref="RPID"/> is set and a configured origin doesn't satisfy the above.
@@ -183,6 +206,11 @@ public class Fido2Configuration
                     "a potentially trustworthy origin; only loopback origins (e.g. http://localhost) may use http.");
             }
 
+            // Related origin requests exist so that a Relying Party can share one RP ID across origins that
+            // have no domain relationship to it at all, so this is the one check they turn off.
+            if (AllowRelatedOrigins)
+                continue;
+
             var isSameHost = string.Equals(uri.Host, rpIdHost, StringComparison.OrdinalIgnoreCase);
             var isRegistrableSuffix = uri.Host.EndsWith("." + rpIdHost, StringComparison.OrdinalIgnoreCase);
 
@@ -190,7 +218,8 @@ public class Fido2Configuration
             {
                 throw new Fido2ConfigurationException(
                     $"Configured origin '{origin}' has host '{uri.Host}', which is neither equal to nor a " +
-                    $"registrable domain suffix of the configured RPID '{RPID}'.");
+                    $"registrable domain suffix of the configured RPID '{RPID}'. If this Relying Party serves " +
+                    $"/.well-known/webauthn for related origin requests, set {nameof(AllowRelatedOrigins)}.");
             }
         }
     }

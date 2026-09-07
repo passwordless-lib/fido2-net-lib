@@ -173,6 +173,51 @@ public class Fido2ConfigurationTests
     }
 
     [Fact]
+    public void Validate_AllowsUnrelatedHostsWhenRelatedOriginsAreInUse()
+    {
+        // Related origin requests exist so one RP ID can be shared across origins with no domain
+        // relationship to it. Rejecting those was rejecting the feature.
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "https://example.com", "https://example.co.uk", "https://example.de" },
+            AllowRelatedOrigins = true,
+        };
+
+        var exception = Record.Exception(config.Validate);
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_StillRequiresHttpsWhenRelatedOriginsAreInUse()
+    {
+        // §5.11 changes which origins may share an RP ID, not which origins WebAuthn will talk to.
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "http://example.co.uk" },
+            AllowRelatedOrigins = true,
+        };
+
+        Assert.Throws<Fido2ConfigurationException>(config.Validate);
+    }
+
+    [Fact]
+    public void Validate_PointsAtRelatedOriginsWhenAnUnrelatedHostIsRejected()
+    {
+        var config = new Fido2Configuration
+        {
+            RPID = "example.com",
+            Origins = new HashSet<string> { "https://example.co.uk" },
+        };
+
+        var exception = Assert.Throws<Fido2ConfigurationException>(config.Validate);
+
+        Assert.Contains(nameof(Fido2Configuration.AllowRelatedOrigins), exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Validate_ThrowsWhenOriginHostIsNotRelatedToRPID()
     {
         var config = new Fido2Configuration
