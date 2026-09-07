@@ -32,7 +32,7 @@ public sealed class MakeNewCredentialParams
     /// Only <see cref="CredentialMediationRequirement.Conditional"/> changes verification: a conditional create
     /// is allowed to complete without a user presence test, so the UP flag check is skipped. Do not set this
     /// unless the ceremony really was invoked with <c>mediation: "conditional"</c> -- doing otherwise waives a
-    /// check the spec requires. See step 14 of
+    /// check the spec requires. See step 15 of
     /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential"/>.
     /// </remarks>
     public CredentialMediationRequirement Mediation { get; init; } = CredentialMediationRequirement.Optional;

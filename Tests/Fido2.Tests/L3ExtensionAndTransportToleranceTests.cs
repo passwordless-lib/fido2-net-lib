@@ -11,7 +11,7 @@ namespace Test;
 
 /// <summary>
 /// Covers the WebAuthn Level 3 tolerances a Relying Party is expected to have towards values it did not
-/// ask for: unsolicited extension outputs (§7.1 step 27) and transport hints outside
+/// ask for: unsolicited extension outputs (§7.1 step 28) and transport hints outside
 /// <see cref="AuthenticatorTransport"/> (§5.2.1).
 /// </summary>
 public class L3ExtensionAndTransportToleranceTests : Fido2Tests.Attestation

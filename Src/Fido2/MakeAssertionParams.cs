@@ -35,7 +35,7 @@ public sealed class MakeAssertionParams
     /// <remarks>
     /// Backup eligibility is a permanent property of a credential, so when a value is supplied the assertion is
     /// rejected if its BE flag differs. Supplying this is recommended for any Relying Party that stores the flag.
-    /// See step 22 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>.
+    /// See step 19 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>.
     /// </remarks>
     public bool? StoredBackupEligible { get; init; }
 

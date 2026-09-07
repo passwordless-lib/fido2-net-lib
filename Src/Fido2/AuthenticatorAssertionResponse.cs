@@ -117,7 +117,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
         // Both handled in BaseVerify
 
-        // 13. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
+        // 15. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
 
         // https://www.w3.org/TR/webauthn/#sctn-appid-extension
         // FIDO AppID Extension:
@@ -133,22 +133,22 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         var conformanceTesting = metadataService != null && metadataService.ConformanceTesting();
 
-        // 14. Verify that the UP bit of the flags in authData is set.
+        // 16. Verify that the UP bit of the flags in authData is set.
         // Todo: Conformance testing verifies the UVP flags differently than W3C spec, simplify this by removing the mention of conformanceTesting when conformance tools are updated)
         if (!authData.UserPresent && !conformanceTesting)
             throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
-        // 15. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
+        // 17. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
         if (options.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
 
-        // 16. If the BE bit of the flags in authData is not set, verify that the BS bit is not set.
+        // 18. If the BE bit of the flags in authData is not set, verify that the BS bit is not set.
         //     A credential that is not backup eligible can never be backed up, so this combination is
         //     malformed regardless of Relying Party policy.
         if (!authData.IsBackupEligible && authData.IsBackedUp)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidBackupFlags, Fido2ErrorMessages.InvalidBackupFlags);
 
-        // 17. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs
+        // 19. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs
         //     be the values of the BE and BS bits, respectively, of the flags in authData. Compare currentBe and currentBs with
         //     credentialRecord.backupEligible and credentialRecord.backupState and apply Relying Party policy, if any.
         //
@@ -166,7 +166,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
 
-        // 17. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
+        // 23. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
         // considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions,
         // i.e., those that were not specified as part of options.extensions. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
 
@@ -181,10 +181,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         ValidateAssertionExtensionInputs(options.Extensions);
         ValidateAssertionExtensionOutputs(options.Extensions, Raw.ClientExtensionResults);
 
-        // 18. Let hash be the result of computing a hash over the cData using SHA-256.
-        // done earlier in step 13
+        // 20. Let hash be the result of computing a hash over the cData using SHA-256.
+        // done earlier in step 15
 
-        // 19. Using credentialRecord.publicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.
+        // 21. Using credentialRecord.publicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.
         byte[] data = [.. Raw.Response.AuthenticatorData, .. hash];
 
         if (storedPublicKey is null || storedPublicKey.Length is 0)
@@ -195,7 +195,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (!cpk.Verify(data, Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
-        // 20. If authData.signCount is nonzero or credentialRecord.signCount is nonzero
+        // 22. If authData.signCount is nonzero or credentialRecord.signCount is nonzero
         if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignCount, Fido2ErrorMessages.SignCountIsLessThanSignatureCounter);
 

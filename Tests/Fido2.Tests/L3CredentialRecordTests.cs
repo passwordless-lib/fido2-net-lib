@@ -11,8 +11,8 @@ namespace Test;
 
 /// <summary>
 /// Covers the WebAuthn Level 3 credential record rules that apply to the authentication ceremony:
-/// the BE/BS flag invariant (§7.2 step 21), the comparison of the current BE flag against the value
-/// recorded at registration (§7.2 step 22), and the <c>uvInitialized</c> state update (§7.2 step 28).
+/// the BE/BS flag invariant (§7.2 step 18), the comparison of the current BE flag against the value
+/// recorded at registration (§7.2 step 19), and the <c>uvInitialized</c> state update (§7.2 step 24).
 /// </summary>
 public class L3CredentialRecordTests
 {

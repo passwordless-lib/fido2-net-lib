@@ -43,9 +43,9 @@ public enum AuthenticatorFlags : byte
     BS = 0x10,
 
     /// <summary>
-    /// Reserved for future use (RFU4)
+    /// Reserved for future use (RFU2)
     /// </summary>
-    RFU4 = 0x20,
+    RFU2 = 0x20,
 
     /// <summary>
     /// Attested credential data included indicates that the authenticator added attested credential data to the authenticator data.

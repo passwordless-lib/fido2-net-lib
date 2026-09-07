@@ -6,8 +6,8 @@
 /// </summary>
 /// <remarks>
 /// WebAuthn requires a Relying Party to process these alongside the client extension outputs
-/// (<see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential">§7.1 step 27</see> and
-/// <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion">§7.2 step 22</see>). Every member is
+/// (<see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential">§7.1 step 28</see> and
+/// <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion">§7.2 step 23</see>). Every member is
 /// <see langword="null"/> when the authenticator did not return that extension, when its value had the wrong
 /// CBOR type, or when the extensions block as a whole did not decode.
 /// <para>
@@ -59,7 +59,7 @@ public sealed class AuthenticationExtensionsAuthenticatorOutputs
     /// ask, and only during registration. New in CTAP 2.3.
     /// </summary>
     /// <remarks>
-    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-pinComplexityPolicy-extension"/>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-pincomplexitypolicy-extension"/>
     /// </remarks>
     public bool? PinComplexityPolicy { get; init; }
 

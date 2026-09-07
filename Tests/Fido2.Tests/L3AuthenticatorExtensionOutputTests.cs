@@ -5,7 +5,7 @@ namespace Test;
 
 /// <summary>
 /// Covers decoding of the authenticator extension outputs carried in the extensions block of the authenticator
-/// data, which WebAuthn L3 §7.1 step 27 and §7.2 step 22 require a Relying Party to be able to process.
+/// data, which WebAuthn L3 §7.1 step 28 and §7.2 step 23 require a Relying Party to be able to process.
 /// </summary>
 public class L3AuthenticatorExtensionOutputTests
 {

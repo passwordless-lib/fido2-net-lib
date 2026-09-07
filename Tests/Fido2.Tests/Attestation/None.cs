@@ -38,7 +38,7 @@ public class None : Fido2Tests.Attestation
             Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
             Assert.Equal("testuser", credential.User.Name);
 
-            // WebAuthn L3 §7.1 step 26: the credential record records the rp.id the ceremony was run under.
+            // WebAuthn L3 §7.1 step 27: the credential record records the rp.id the ceremony was run under.
             Assert.Equal(rp, credential.RpId);
 
             _attestationObject = new CborMap { { "fmt", "none" } };
@@ -48,7 +48,7 @@ public class None : Fido2Tests.Attestation
     [Fact]
     public async Task TestNoneSurfacesAuthenticatorExtensionOutputs()
     {
-        // WebAuthn L3 §7.1 step 27: the Relying Party processes the authenticator extension outputs in authData.
+        // WebAuthn L3 §7.1 step 28: the Relying Party processes the authenticator extension outputs in authData.
         _authenticatorExtensions = new CborMap
         {
             { "credProtect", 0x03 },

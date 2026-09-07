@@ -44,7 +44,7 @@ public class DevelopmentInMemoryStore
     /// <summary>
     /// Applies the credential record state updates a Relying Party performs after a successful authentication
     /// ceremony: the signature counter, the backup state, and <c>uvInitialized</c>.
-    /// See step 28 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>.
+    /// See step 24 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>.
     /// </summary>
     /// <remarks>
     /// Promoting <c>uvInitialized</c> from <see langword="false"/> to <see langword="true"/> SHOULD require

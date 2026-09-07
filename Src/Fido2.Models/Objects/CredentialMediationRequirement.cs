@@ -12,7 +12,7 @@ namespace Fido2NetLib.Objects;
 /// The only value WebAuthn treats specially is <see cref="Conditional"/>: "If options.mediation is not set to
 /// conditional, verify that the UP bit of the flags in authData is set" -- a conditional create (used for
 /// upgrading an existing password login to a passkey) may complete without a user presence test.
-/// See step 14 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential"/>.
+/// See step 15 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential"/>.
 /// </remarks>
 #if NET9_0_OR_GREATER
 [JsonConverter(typeof(JsonStringEnumConverter<CredentialMediationRequirement>))]

@@ -240,7 +240,7 @@ public class Fido2Configuration
     /// be prepared to handle such situations, whether by ignoring the unsolicited extensions or by rejecting the
     /// attestation." Either behaviour is conformant, so this is a policy choice; ignoring is the default because
     /// rejecting fails registrations over outputs the Relying Party never depended on.
-    /// See step 27 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential"/>.
+    /// See step 28 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential"/>.
     /// </remarks>
     public UnsolicitedExtensionPolicy UnsolicitedExtensionPolicy { get; set; } = UnsolicitedExtensionPolicy.Ignore;
 

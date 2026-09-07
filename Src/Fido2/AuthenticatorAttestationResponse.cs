@@ -40,7 +40,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (rawResponse.Response.AttestationObject is null || rawResponse.Response.AttestationObject.Length is 0)
             throw new Fido2VerificationException(Fido2ErrorMessages.MissingAttestationObject);
 
-        // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure
+        // 13. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure
         // to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
         CborMap cborAttestation;
         try
@@ -76,11 +76,15 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (Type is not "webauthn.create")
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseTypeNotWebAuthnGet);
 
-        // 8. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call.
-        // 9. Verify that the value of C.origin matches the Relying Party's origin.
-        // 9.5. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.
-        // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
+        // 8. Verify that the value of C.challenge equals the base64url encoding of pkOptions.challenge.
+        // 9. Verify that the value of C.origin is an origin expected by the Relying Party.
+        // 10. If C.crossOrigin is present and set to true, verify that the Relying Party expects that this credential
+        //     would have been created within an iframe that is not same-origin with its ancestors.
+        // 11. If C.topOrigin is present, verify the same, and that it matches the origin of a page the Relying Party
+        //     expects to be sub-framed within.
         // Validated in BaseVerify.
+        // Token Binding is no longer part of the ceremony in Level 3; C.tokenBinding is still validated here for
+        // callers on older clients.
         BaseVerify(config.FullyQualifiedOrigins, originalOptions.Challenge, requestTokenBindingId, config.AllowCrossOriginRequests);
 
         if (Raw.Id is null || Raw.Id.Length == 0)
@@ -91,35 +95,35 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         var authData = AttestationObject.AuthData;
 
-        // 10. Let hash be the result of computing a hash over response.clientDataJSON using SHA-256.
+        // 12. Let hash be the result of computing a hash over response.clientDataJSON using SHA-256.
         byte[] clientDataHash = SHA256.HashData(Raw.Response.ClientDataJson);
         byte[] rpIdHash = SHA256.HashData(Encoding.UTF8.GetBytes(originalOptions.Rp.Id));
 
-        // 11. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt,
+        // 13. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to obtain the attestation statement format fmt,
         //    the authenticator data authData, and the attestation statement attStmt.
         //    Handled in AuthenticatorAttestationResponse::Parse()
 
-        // 12. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party
+        // 14. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party
         if (!authData.RpIdHash.AsSpan().SequenceEqual(rpIdHash))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidRpidHash, Fido2ErrorMessages.InvalidRpidHash);
 
-        // 13. If options.mediation is not set to conditional, verify that the UP bit of the flags in authData is set.
+        // 15. If options.mediation is not set to conditional, verify that the UP bit of the flags in authData is set.
         //     A conditional create surfaces alongside an existing sign-in rather than as its own prompt, so it
         //     may legitimately complete without a separate user presence test.
         if (mediation is not CredentialMediationRequirement.Conditional && !authData.UserPresent)
             throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
-        // 14. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.
+        // 16. If the Relying Party requires user verification for this registration, verify that the User Verified bit of the flags in authData is set.
         if (originalOptions.AuthenticatorSelection?.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
 
-        // 15. If the BE bit of the flags in authData is not set, verify that the BS bit is not set.
+        // 17. If the BE bit of the flags in authData is not set, verify that the BS bit is not set.
         //     A credential that is not backup eligible can never be backed up, so this combination is
         //     malformed regardless of Relying Party policy.
         if (!authData.IsBackupEligible && authData.IsBackedUp)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidBackupFlags, Fido2ErrorMessages.InvalidBackupFlags);
 
-        // 16. If the Relying Party uses the credential's backup eligibility to inform its user experience flows and/or policies, evaluate the BE bit of the flags in authData.
+        // 18. If the Relying Party uses the credential's backup eligibility to inform its user experience flows and/or policies, evaluate the BE bit of the flags in authData.
         if (authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
@@ -127,22 +131,22 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (!authData.HasAttestedCredentialData)
             throw new Fido2VerificationException(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, Fido2ErrorMessages.AttestedCredentialDataFlagNotSet);
 
-        // 17. Verify that the "alg" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.
+        // 20. Verify that the "alg" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.
         if (!originalOptions.PubKeyCredParams.Any(a => authData.AttestedCredentialData.CredentialPublicKey.IsSameAlg(a.Alg)))
             throw new Fido2VerificationException(Fido2ErrorCode.CredentialAlgorithmRequirementNotMet, Fido2ErrorMessages.CredentialAlgorithmRequirementNotMet);
 
-        // 18. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
+        // 28. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
         //     considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values
         //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e.,
         //     no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
         ValidateRegistrationExtensionInputs(originalOptions.Extensions);
         ValidateExtensions(originalOptions.Extensions, Raw.ClientExtensionResults, authData.Extensions, config.UnsolicitedExtensionPolicy);
 
-        // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
+        // 21. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
-        // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
+        // 22. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
-        //     and the hash of the serialized client data computed in step 7
+        //     and the hash of the serialized client data computed in step 12
         VerifyAttestationResult attestationResult;
 
         if (AttestationObject.Fmt is Compound.FormatIdentifier)
@@ -170,7 +174,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (attestationResult.EnterpriseAttestationSerialNumber is not null && originalOptions.Attestation is not AttestationConveyancePreference.Enterprise)
             throw new Fido2VerificationException(Fido2ErrorCode.UnexpectedEnterpriseAttestation, Fido2ErrorMessages.UnexpectedEnterpriseAttestation);
 
-        // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
+        // 23. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy.
         //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
@@ -186,9 +190,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
 
-        // 22. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
+        // 24. Assess the attestation trustworthiness using the outputs of the verification procedure in step 22, as follows:
         //     If self attestation was used, check if self attestation is acceptable under Relying Party policy.
-        //     If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 15.
+        //     If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 23.
         //     Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.
 
         // Check status reports for authenticator with undesirable status
@@ -198,10 +202,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
         }
 
-        // 23. Verify that the credentialId is ≤ 1023 bytes.
+        // 25. Verify that the credentialId is ≤ 1023 bytes.
         // Handled by AttestedCredentialData constructor
 
-        // 24. Check that the credentialId is not yet registered to any other user.
+        // 26. Check that the credentialId is not yet registered to any other user.
         //     If registration is requested for a credential that is already registered to a different user,
         //     the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration
 
@@ -210,12 +214,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.NonUniqueCredentialId, Fido2ErrorMessages.NonUniqueCredentialId);
         }
 
-        // 25. If the attestation statement attStmt verified successfully and is found to be trustworthy,
+        // 27/29. If the attestation statement attStmt verified successfully and is found to be trustworthy,
         //     then register the new credential with the account that was denoted in the options.user passed to create(),
         //     by associating it with the credentialId and credentialPublicKey in the attestedCredentialData in authData,
         //     as appropriate for the Relying Party's system.
 
-        // 26. If the attestation statement attStmt successfully verified but is not trustworthy per step 16 above,
+        // 24. If the attestation statement attStmt successfully verified but is not trustworthy per step 24 above,
         //     the Relying Party SHOULD fail the registration ceremony.
         //     This implementation throws if the outputs are not trustworthy for a particular attestation type.
 
