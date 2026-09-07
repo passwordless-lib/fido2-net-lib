@@ -44,7 +44,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Implements algorithm from https://www.w3.org/TR/webauthn/#verifying-assertion.
+    /// Implements algorithm from https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion.
     /// </summary>
     /// <param name="options">The original assertion options that was sent to the client.</param>
     /// <param name="config"></param>
@@ -84,7 +84,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // 5. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
         if (options.AllowCredentials != null && options.AllowCredentials.Any())
         {
-            // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
+            // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn-3/#publickeycredential
             if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.RawId)))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.CredentialIdNotInAllowedCredentials);
         }
@@ -129,7 +129,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         // 15. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
 
-        // https://www.w3.org/TR/webauthn/#sctn-appid-extension
+        // https://www.w3.org/TR/webauthn-3/#sctn-appid-extension
         // FIDO AppID Extension:
         // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
 
@@ -364,13 +364,15 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Validates LargeBlob extension output during assertion (authentication ceremony).
-    /// Per WebAuthn L3 Section 9, during assertion the output can contain:
-    /// - 'blob' field if 'read' was requested
-    /// - 'written' flag if 'write' was requested
-    /// Cannot have both blob and written in the same response.
-    /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+    /// Validates the <c>largeBlob</c> extension output of an authentication ceremony, which carries
+    /// <c>blob</c> when a read was requested and <c>written</c> when a write was.
     /// </summary>
+    /// <remarks>
+    /// <c>supported</c> is "only present in registration outputs", so it is rejected here.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension"/>
+    /// </para>
+    /// </remarks>
     private static void ValidateLargeBlobAssertionOutput(
         AuthenticationExtensionsLargeBlobInputs blobInput,
         AuthenticationExtensionsLargeBlobOutputs blobOutput)

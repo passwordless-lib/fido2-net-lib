@@ -87,7 +87,7 @@ internal sealed class Packed : AttestationVerifier
             if (!cpk.Verify(request.Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid full packed signature");
 
-            // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
+            // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn-3/#sctn-packed-attestation-cert-requirements
             // 2bi. Version MUST be set to 3
             if (attestnCert.Version != 3)
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Packed x5c attestation certificate not V3");
@@ -143,7 +143,7 @@ internal sealed class Packed : AttestationVerifier
 
             // 3a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
             // using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId
-            // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
+            // https://www.w3.org/TR/webauthn-1/#biblio-fidoecdaaalgorithm
 
             // 3b. If successful, return attestation type ECDAA and attestation trust path ecdaaKeyId.
             // attnType = AttestationType.ECDAA;

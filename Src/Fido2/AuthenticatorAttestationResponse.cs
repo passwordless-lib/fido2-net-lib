@@ -66,7 +66,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         CredentialMediationRequirement mediation = CredentialMediationRequirement.Optional,
         CancellationToken cancellationToken = default)
     {
-        // https://www.w3.org/TR/webauthn/#registering-a-new-credential
+        // https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential
         // 5. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
         // 6. Let C, the client data claimed as collected during the credential creation, be the result of running an implementation-specific JSON parser on JSONtext.
         //    Note: C may be any implementation-specific data structure representation, as long as C’s components are referenceable, as required by this algorithm.
@@ -373,8 +373,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Validates the format and content of extension outputs.
-    /// Per WebAuthn L3 Section 9, each extension has specific output format requirements.
+    /// Validates the format and content of extension outputs. Each extension defines its own, in
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-defined-client-extensions">WebAuthn Level 3 §10.1</see>.
     /// </summary>
     private static void ValidateExtensionOutputs(
         AuthenticationExtensionsClientInputs requestedExtensions,
@@ -436,10 +436,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Validates LargeBlob extension output during registration (credential creation).
-    /// Per WebAuthn L3 Section 9, during registration the output should contain 'supported' flag.
-    /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+    /// Validates the <c>largeBlob</c> extension output of a registration ceremony, whose only member is
+    /// <c>supported</c> -- "only present in registration outputs".
     /// </summary>
+    /// <remarks>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension"/>
+    /// </remarks>
     private static void ValidateLargeBlobRegistrationOutput(AuthenticationExtensionsLargeBlobOutputs blobOutput)
     {
         // During registration, only 'supported' field is valid

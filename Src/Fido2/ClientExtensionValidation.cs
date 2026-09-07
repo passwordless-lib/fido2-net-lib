@@ -189,7 +189,7 @@ internal static class ClientExtensionValidation
                 $"The prf extension output's 'first' value is {values.First.Length} bytes; a PRF result is {PRFResultLength} bytes.");
         }
 
-        if (values.Second is { Length: > 0 } second && second.Length is not PRFResultLength)
+        if (values.Second is { } second && second.Length is not PRFResultLength)
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,

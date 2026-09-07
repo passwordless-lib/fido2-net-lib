@@ -18,7 +18,7 @@ public sealed class AuthenticationExtensionsClientInputs
 
     /// <summary>
     /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs to request an assertion.
-    /// https://www.w3.org/TR/webauthn/#sctn-appid-extension
+    /// https://www.w3.org/TR/webauthn-3/#sctn-appid-extension
     /// </summary>
     [JsonPropertyName("appid")]
     [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
@@ -34,10 +34,11 @@ public sealed class AuthenticationExtensionsClientInputs
     public string AppIDExclude { get; set; }
 
     /// <summary>
-    /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator supports.
-    /// https://www.w3.org/TR/webauthn-2/#sctn-supported-extensions-extension
+    /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator
+    /// supports. Defined by WebAuthn Level 1 and removed in Level 2.
+    /// https://www.w3.org/TR/webauthn-1/#sctn-supported-extensions-extension
     /// </summary>
-    [Obsolete("The exts (supported extensions) extension was removed in WebAuthn Level 3 and no client will populate it. This member will be removed in a future major version.")]
+    [Obsolete("The exts (supported extensions) extension was defined by WebAuthn Level 1 and removed in Level 2; no client will populate it. This member will be removed in a future major version.")]
     [JsonPropertyName("exts")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Extensions { get; set; }
@@ -62,7 +63,7 @@ public sealed class AuthenticationExtensionsClientInputs
 
     /// <summary>
     /// This extension allows a Relying Party to evaluate outputs from a pseudo-random function (PRF) associated with a credential.
-    /// https://w3c.github.io/webauthn/#prf-extension
+    /// https://www.w3.org/TR/webauthn-3/#prf-extension
     /// </summary>
     [JsonPropertyName("prf")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -70,7 +71,7 @@ public sealed class AuthenticationExtensionsClientInputs
 
     /// <summary>
     /// This client registration extension and authentication extension allows a Relying Party to store opaque data associated with a credential.
-    /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+    /// https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension
     /// </summary>
     [JsonPropertyName("largeBlob")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -15,7 +15,8 @@ public class AssertionOptions
 
     /// <summary>
     /// This member represents a challenge that the selected authenticator signs, along with other data, when producing an authentication assertion.
-    /// See the §13.1 Cryptographic Challenges security consideration.
+    /// See the <see href="https://www.w3.org/TR/webauthn-3/#sctn-cryptographic-challenges">§13.4.3
+    /// Cryptographic Challenges</see> security consideration.
     /// </summary>
     [JsonPropertyName("challenge")]
     [JsonConverter(typeof(Base64UrlConverter))]

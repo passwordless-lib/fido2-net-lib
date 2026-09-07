@@ -332,7 +332,7 @@ public class Fido2User
     /// <summary>
     /// Required. A human-friendly identifier for a user account.
     /// It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames.
-    /// For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity
+    /// For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://www.w3.org/TR/webauthn-3/#dictdef-publickeycredentialentity
     /// </summary>
     [JsonPropertyName("name")]
     public string Name { get; set; }
