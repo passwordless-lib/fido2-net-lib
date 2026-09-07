@@ -82,6 +82,36 @@ public class AuthenticatorGetAssertionResponseTests
 
         Assert.Equal(1, response.NumberOfCredentials!.Value);
 
+        // No unsigned extension outputs in this response.
+        Assert.Null(response.UnsignedExtensionOutputs);
+    }
 
+    [Fact]
+    public void DeserializeUnsignedExtensionOutputs()
+    {
+        // CTAP 2.2 added unsignedExtensionOutputs (0x08): extension outputs that are not signed over, and so
+        // are carried outside the authenticator data. The largeBlob extension reports its results this way.
+        string hexEncodedCborData = """
+
+            00                                      # status = success
+            a3                                      # map(3)
+               02                                   # unsigned(2) - authData
+               43                                   # bytes(3)
+                  010203                            # ...
+               03                                   # unsigned(3) - signature
+               43                                   # bytes(3)
+                  040506                            # ...
+               08                                   # unsigned(8) - unsignedExtensionOutputs
+               a1                                   # map(1)
+                  69                                # text(9)
+                     6c61726765426c6f62             # "largeBlob"
+                  f5                                # true
+            """;
+
+        var response = AuthenticatorGetAssertionResponse.FromCborObject(TestHelper.GetResponse(hexEncodedCborData).GetCborObject());
+
+        Assert.NotNull(response.UnsignedExtensionOutputs);
+        Assert.Single(response.UnsignedExtensionOutputs);
+        Assert.True((bool)(Fido2NetLib.Cbor.CborBoolean)response.UnsignedExtensionOutputs["largeBlob"]!);
     }
 }
