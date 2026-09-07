@@ -99,12 +99,6 @@ public sealed class AuthenticationExtensionsClientInputs
     public bool? EnforceCredentialProtectionPolicy { get; set; }
 
     /// <summary>
-    /// This registration extension allows a Relying Party to request the minimum PIN length used by the authenticator.
-    /// This is a CTAP2 authenticator extension exposed to Relying Parties via WebAuthn's generic extension
-    /// passthrough mechanism; it is not itself a WebAuthn-defined extension.
-    /// https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension
-    /// </summary>
-    /// <summary>
     /// A small amount of opaque data, in a Relying Party specific format, to store with the credential. The
     /// authenticator supports at least 32 bytes; its <c>maxCredBlobLength</c> in <c>authenticatorGetInfo</c>
     /// reports the actual limit, and a client silently ignores a larger value.
@@ -147,6 +141,17 @@ public sealed class AuthenticationExtensionsClientInputs
     [JsonPropertyName("pinComplexityPolicy")]
     public bool? PinComplexityPolicy { get; set; }
 
+    /// <summary>
+    /// Requests the minimum PIN length the authenticator enforces. Valid only during registration.
+    /// </summary>
+    /// <remarks>
+    /// A CTAP2 authenticator extension exposed to Relying Parties through WebAuthn's generic extension
+    /// passthrough; it is not itself a WebAuthn-defined extension. The authenticator answers only a Relying
+    /// Party it has been configured to answer.
+    /// <para>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension"/>
+    /// </para>
+    /// </remarks>
     [JsonPropertyName("minPinLength")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? MinPinLength { get; set; }

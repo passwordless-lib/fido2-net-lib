@@ -44,7 +44,7 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidBackupFlags                     = "The backup state (BS) flag is set but the backup eligibility (BE) flag is not";
     public static readonly string BackupEligibilityChanged               = "Backup eligibility (BE) does not match the value recorded when the credential was registered";
     public static readonly string CredentialAlgorithmRequirementNotMet   = "Credential algorithm does not match policy requirement";
-    public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
+    public static readonly string NonUniqueCredentialId                  = "CredentialId is already registered";
     public static readonly string CriticalEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST NOT be marked as critical";
     public static readonly string EmptyEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST indicate a unique octet string value per device, but was empty";
     public static readonly string CriticalFirmwareVersion                = "The id-fido-gen-ce-fw-version extension MUST NOT be marked as critical";

@@ -1327,7 +1327,7 @@ public class AuthenticatorResponseTests
             OriginalOptions = originalOptions,
             IsCredentialIdUniqueToUserCallback = callback
         }));
-        Assert.Equal("CredentialId is not unique to this user", ex.Message);
+        Assert.Equal("CredentialId is already registered", ex.Message);
     }
 
     [Fact]

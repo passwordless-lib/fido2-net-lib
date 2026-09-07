@@ -138,10 +138,11 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // 28. (Out of order: the spec processes extension outputs near the end of the ceremony, but nothing
         //     in between depends on them, and validating early fails a bad response before the expensive
         //     attestation work.)
-        //     Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
-        //     considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values
-        //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e.,
-        //     no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
+        //     Process the client extension outputs in clientExtensionResults and the authenticator extension
+        //     outputs in the extensions in authData as required by the Relying Party. Level 3 dropped Level 2's
+        //     rule that no unrequested extension may appear -- "clients MAY set additional authenticator
+        //     extensions or client extensions ... The Relying Party MUST be prepared to handle such situations"
+        //     -- so unsolicited outputs are ignored unless config.UnsolicitedExtensionPolicy says otherwise.
         ValidateRegistrationExtensionInputs(originalOptions.Extensions);
         ValidateExtensions(originalOptions.Extensions, Raw.ClientExtensionResults, authData.Extensions, config.UnsolicitedExtensionPolicy);
 
@@ -177,7 +178,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (attestationResult.EnterpriseAttestationSerialNumber is not null && originalOptions.Attestation is not AttestationConveyancePreference.Enterprise)
             throw new Fido2VerificationException(Fido2ErrorCode.UnexpectedEnterpriseAttestation, Fido2ErrorMessages.UnexpectedEnterpriseAttestation);
 
-        // 23. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
+        // 23. If validation is successful, obtain a list of acceptable trust anchors (i.e. attestation root certificates)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy.
         //     For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
 
@@ -194,9 +195,11 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
 
         // 24. Assess the attestation trustworthiness using the outputs of the verification procedure in step 22, as follows:
-        //     If self attestation was used, check if self attestation is acceptable under Relying Party policy.
-        //     If ECDAA was used, verify that the identifier of the ECDAA-Issuer public key used is included in the set of acceptable trust anchors obtained in step 23.
-        //     Otherwise, use the X.509 certificates returned by the verification procedure to verify that the attestation public key correctly chains up to an acceptable root certificate.
+        //     If no attestation was provided, verify that None attestation is acceptable under Relying Party policy.
+        //     If self attestation was used, verify that self attestation is acceptable under Relying Party policy.
+        //     Otherwise, use the X.509 certificates returned as the attestation trust path from the verification
+        //     procedure to verify that the attestation public key either correctly chains up to an acceptable root
+        //     certificate, or is itself an acceptable certificate.
 
         // Check status reports for authenticator with undesirable status
         var latestStatusReport = metadataEntry?.GetLatestStatusReport();
@@ -208,9 +211,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // 25. Verify that the credentialId is ≤ 1023 bytes.
         // Handled by AttestedCredentialData constructor
 
-        // 26. Check that the credentialId is not yet registered to any other user.
-        //     If registration is requested for a credential that is already registered to a different user,
-        //     the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration
+        // 26. Verify that the credentialId is not yet registered for any user. Level 3 widened this from Level 2's
+        //     "any other user": "if the credentialId is already known then the Relying Party SHOULD fail this
+        //     registration ceremony", including when it is already this user's, because an attacker who obtained
+        //     a credential ID and public key could otherwise register a victim's credential as their own.
 
         if (await isCredentialIdUniqueToUser(new IsCredentialIdUniqueToUserParams(authData.AttestedCredentialData.CredentialId, originalOptions.User), cancellationToken) is false)
         {
@@ -306,12 +310,14 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Validates that no extensions are present in the response that were not requested.
-    /// Per WebAuthn L3 Section 7.1 Step 18: extensions in clientExtensionResults and
-    /// authenticator extensions in authData must be present in the original options.extensions.
-    /// Only validates if extensions were explicitly requested; if no extensions were requested,
-    /// this validation is skipped to allow for backwards compatibility with test frameworks.
+    /// Processes the extension outputs of a registration ceremony, per step 28 of WebAuthn Level 3 §7.1.
     /// </summary>
+    /// <remarks>
+    /// Level 3 no longer requires that every returned extension have been requested -- clients may add their
+    /// own, and a Relying Party must cope -- so an output that was not asked for is rejected only when
+    /// <paramref name="unsolicitedExtensionPolicy"/> says to. What is always checked is that the outputs of
+    /// the extensions that <em>were</em> requested are well formed.
+    /// </remarks>
     private static void ValidateExtensions(
         AuthenticationExtensionsClientInputs? requestedExtensions,
         AuthenticationExtensionsClientOutputs? clientExtensionResults,

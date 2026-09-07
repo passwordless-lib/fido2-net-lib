@@ -320,8 +320,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Validates the format and content of extension outputs during assertion ceremony.
-    /// Per WebAuthn L3 Section 7.2 Step 17, extension outputs must be as expected.
+    /// Processes the extension outputs of an authentication ceremony, per step 23 of WebAuthn Level 3 §7.2.
     /// </summary>
     private static void ValidateAssertionExtensionOutputs(
         AuthenticationExtensionsClientInputs? requestedExtensions,

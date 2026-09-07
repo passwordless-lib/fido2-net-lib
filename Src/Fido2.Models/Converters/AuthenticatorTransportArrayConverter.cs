@@ -14,7 +14,7 @@ namespace Fido2NetLib;
 /// The <c>transports</c> member of an attestation response is whatever the client returned from
 /// <c>getTransports()</c>. WebAuthn Level 3 states that these values SHOULD be members of
 /// <c>AuthenticatorTransport</c> "but Relying Parties SHOULD accept and store unknown values"
-/// (<see href="https://www.w3.org/TR/webauthn-3/#dom-publickeycredentialsource-transports"/>), and clients do in
+/// (<see href="https://www.w3.org/TR/webauthn-3/#dom-authenticatorattestationresponse-gettransports"/>), and clients do in
 /// practice return values outside the enumeration. Failing to deserialize such a response would abort an otherwise
 /// valid registration ceremony over an advisory hint, so unrecognized values are dropped instead.
 /// </para>

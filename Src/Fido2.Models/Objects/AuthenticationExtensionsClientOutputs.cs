@@ -76,13 +76,6 @@ public class AuthenticationExtensionsClientOutputs
     public CredentialProtectionPolicy? CredProtect { get; set; }
 
     /// <summary>
-    /// The minimum PIN length, in Unicode code points, enforced by the authenticator for the created credential.
-    /// Only returned when the Relying Party requested the <c>minPinLength</c> extension and the authenticator/client permit disclosing it.
-    /// This is a CTAP2 authenticator extension exposed to Relying Parties via WebAuthn's generic extension
-    /// passthrough mechanism; it is not itself a WebAuthn-defined extension.
-    /// https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension
-    /// </summary>
-    /// <summary>
     /// Whether the authenticator stored the requested <c>credBlob</c>. Registration only; it may be
     /// <see langword="false"/> when the blob exceeded the authenticator's <c>maxCredBlobLength</c> or the
     /// extension is unsupported for non-discoverable credentials.
@@ -105,6 +98,18 @@ public class AuthenticationExtensionsClientOutputs
     [JsonPropertyName("getCredBlob")]
     public byte[]? GetCredBlob { get; set; }
 
+    /// <summary>
+    /// The minimum PIN length, in Unicode code points, the authenticator enforces for the created credential.
+    /// Returned only when the Relying Party requested the <c>minPinLength</c> extension and the authenticator
+    /// is configured to disclose it to that Relying Party.
+    /// </summary>
+    /// <remarks>
+    /// A CTAP2 authenticator extension exposed to Relying Parties through WebAuthn's generic extension
+    /// passthrough; it is not itself a WebAuthn-defined extension.
+    /// <para>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension"/>
+    /// </para>
+    /// </remarks>
     [JsonPropertyName("minPinLength")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public uint? MinPinLength { get; set; }

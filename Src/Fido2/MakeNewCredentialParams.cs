@@ -20,7 +20,7 @@ public sealed class MakeNewCredentialParams
     public required CredentialCreateOptions OriginalOptions { get; init; }
 
     /// <summary>
-    ///  The delegate used to validate that the CredentialID is unique to this user.
+    /// The delegate used to validate that the credential ID is not yet registered for any user.
     /// </summary>
     public required IsCredentialIdUniqueToUserAsyncDelegate IsCredentialIdUniqueToUserCallback { get; init; }
 

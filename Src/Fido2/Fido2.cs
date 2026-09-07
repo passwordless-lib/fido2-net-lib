@@ -141,8 +141,17 @@ public class Fido2 : IFido2
 }
 
 /// <summary>
-/// Callback function used to validate that the CredentialID is unique to this user.
+/// Callback function used to validate that the credential ID is not yet registered for any user.
 /// </summary>
+/// <remarks>
+/// Step 26 of WebAuthn Level 3 §7.1: "verify that the credentialId is not yet registered for any user. If
+/// the credentialId is already known then the Relying Party SHOULD fail this registration ceremony." Level 2
+/// asked only whether the credential belonged to a <em>different</em> user; Level 3 widened it, because an
+/// attacker who obtained a credential ID and public key could otherwise register a victim's credential as
+/// their own. Return <see langword="false"/> if the credential ID is known at all, whoever holds it --
+/// <see cref="IsCredentialIdUniqueToUserParams.User"/> is supplied for logging and for Relying Parties that
+/// deliberately keep the narrower Level 2 behaviour.
+/// </remarks>
 /// <param name="credentialIdUserParams"></param>
 /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
 /// <returns></returns>
