@@ -1,5 +1,13 @@
 ﻿namespace Fido2NetLib.Ctap2;
 
+/// <summary>
+/// The CTAP status codes, per the error response values table in
+/// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html">CTAP 2.3</see>.
+/// </summary>
+/// <remarks>
+/// A few values CTAP 2.0 defined no longer appear in the 2.3 table. They are kept here, marked as such, so that
+/// a response from an older authenticator still reports a name rather than a bare number.
+/// </remarks>
 #pragma warning disable format
 public enum CtapStatusCode
 {
@@ -16,17 +24,19 @@ public enum CtapStatusCode
     CTAP2_ERR_INVALID_CBOR          = 0x12, // Error when parsing CBOR
     CTAP2_ERR_MISSING_PARAMETER     = 0x14, // Missing non-optional parameter
     CTAP2_ERR_LIMIT_EXCEEDED        = 0x15, // Limit for number of items exceeded
-    CTAP2_ERR_UNSUPPORTED_EXTENSION = 0x16, // Unsupported extension
+    CTAP2_ERR_UNSUPPORTED_EXTENSION = 0x16, // Unsupported extension. CTAP 2.0 only; absent from the CTAP 2.3 table
+    CTAP2_ERR_FP_DATABASE_FULL      = 0x17, // Fingerprint database is full, e.g. during enrollment
+    CTAP2_ERR_LARGE_BLOB_STORAGE_FULL = 0x18, // Large blob storage is full
     CTAP2_ERR_CREDENTIAL_EXCLUDED   = 0x19, // Valid credential found in the exclude list
     CTAP2_ERR_PROCESSING            = 0x21, // Processing (Lengthy operation is in progress)
-    CTAP2_ERR_INVALID_CREDENTIA     = 0x22, // Credential not valid for the authenticator
+    CTAP2_ERR_INVALID_CREDENTIAL    = 0x22, // Credential not valid for the authenticator
     CTAP2_ERR_USER_ACTION_PENDING   = 0x23, // Authentication is waiting for user interaction
     CTAP2_ERR_OPERATION_PENDING     = 0x24, // Processing, lengthy operation is in progress
     CTAP2_ERR_NO_OPERATIONS         = 0x25, // No request is pending
     CTAP2_ERR_UNSUPPORTED_ALGORITHM = 0x26, // Authenticator does not support requested algorithm
     CTAP2_ERR_OPERATION_DENIED      = 0x27, // Not authorized for requested operation
     CTAP2_ERR_KEY_STORE_FULL        = 0x28, // Internal key storage is full
-    CTAP2_ERR_NO_OPERATION_PENDING  = 0x2A, // No outstanding operations
+    CTAP2_ERR_NO_OPERATION_PENDING  = 0x2A, // No outstanding operations. CTAP 2.0 only; absent from the CTAP 2.3 table
     CTAP2_ERR_UNSUPPORTED_OPTION    = 0x2B, // Unsupported option
     CTAP2_ERR_INVALID_OPTION        = 0x2C, // Not a valid option for current operation
     CTAP2_ERR_KEEPALIVE_CANCEL      = 0x2D, // Pending keep alive was cancelled
@@ -38,9 +48,9 @@ public enum CtapStatusCode
     CTAP2_ERR_PIN_AUTH_INVALID      = 0x33, // PIN authentication,pinAuth, verification failed
     CTAP2_ERR_PIN_AUTH_BLOCKED      = 0x34, // PIN authentication,pinAuth, blocked. Requires power recycle to reset
     CTAP2_ERR_PIN_NOT_SET           = 0x35, // No PIN has been set
-    CTAP2_ERR_PIN_REQUIRED          = 0x36, // PIN is required for the selected operation
+    CTAP2_ERR_PUAT_REQUIRED         = 0x36, // A pinUvAuthToken is required for the selected operation (CTAP 2.0 named this CTAP2_ERR_PIN_REQUIRED)
     CTAP2_ERR_PIN_POLICY_VIOLATION  = 0x37, // PIN policy violation. Currently only enforces minimum length
-    CTAP2_ERR_PIN_TOKEN_EXPIRED     = 0x38, // pinToken expired on authenticator
+    CTAP2_ERR_PIN_TOKEN_EXPIRED     = 0x38, // pinToken expired. CTAP 2.0 only; 0x38 is reserved for future use in CTAP 2.3
     CTAP2_ERR_REQUEST_TOO_LARGE     = 0x39, // Authenticator cannot handle this request due to memory constraints
     CTAP2_ERR_ACTION_TIMEOUT        = 0x3A, // The current operation has timed out
     CTAP2_ERR_UP_REQUIRED           = 0x3B, // User presence is required for the requested operation

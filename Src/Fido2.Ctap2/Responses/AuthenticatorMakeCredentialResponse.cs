@@ -41,6 +41,16 @@ public sealed class AuthenticatorMakeCredentialResponse
     public byte[]? LargeBlobKey { get; set; }
 
     /// <summary>
+    /// A map, keyed by extension identifier, of unsigned extension outputs. Unlike the extension outputs inside
+    /// the authenticator data these are not signed over, so they are carried here instead. Authenticators omit
+    /// this field when no processed extension defines unsigned outputs, and an empty map means the same as an
+    /// omitted field.
+    /// <para>New in CTAP 2.2.</para>
+    /// </summary>
+    [CborMember(0x06)]
+    public CborMap? UnsignedExtensionOutputs { get; set; }
+
+    /// <summary>
     /// Parses a CBOR object into an AuthenticatorMakeCredentialResponse.
     /// </summary>
     public static AuthenticatorMakeCredentialResponse FromCborObject(CborObject cbor)
@@ -62,6 +72,7 @@ public sealed class AuthenticatorMakeCredentialResponse
                 case 0x03: result.AttStmt      = (CborMap)value; break;
                 case 0x04: result.EpAtt        = (bool)value;    break;
                 case 0x05: result.LargeBlobKey = (byte[])value;  break;
+                case 0x06: result.UnsignedExtensionOutputs = (CborMap)value; break;
                 #pragma warning restore format
             }
         }
