@@ -244,6 +244,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AttestationFormat = AttestationObject.Fmt,
             AaGuid = authData.AttestedCredentialData.AaGuid,
             EnterpriseAttestationSerialNumber = attestationResult.EnterpriseAttestationSerialNumber,
+            FirmwareVersion = attestationResult.FirmwareVersion,
             AuthenticatorExtensionResults = authData.Extensions?.Outputs ?? new AuthenticationExtensionsAuthenticatorOutputs()
         };
     }

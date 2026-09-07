@@ -100,6 +100,43 @@ public abstract class AttestationVerifier
         return serialNumber;
     }
 
+    /// <summary>
+    /// Reads the id-fido-gen-ce-fw-version extension (OID 1.3.6.1.4.1.45724.1.1.5) from an attestation
+    /// certificate, returning <see langword="null"/> when it is absent. The value differentiates the firmware
+    /// of one authenticator model and is incremented for each new firmware release.
+    /// </summary>
+    /// <remarks>
+    /// It is directly comparable with the <c>authenticatorVersion</c> a Metadata Service status report gives
+    /// for the same model, which is how a Relying Party can tell that an authenticator is running firmware
+    /// older than the one a certification or a fix applies to.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-packed-attestation-cert-requirements"/>
+    /// </para>
+    /// </remarks>
+    internal static ulong? FirmwareVersionFromAttnCertExts(X509ExtensionCollection exts)
+    {
+        var ext = exts.FirstOrDefault(static e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.5"); // id-fido-gen-ce-fw-version
+        if (ext is null)
+            return null;
+
+        // "The extension MUST NOT be marked as critical."
+        if (ext.Critical)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.CriticalFirmwareVersion);
+
+        var decodedFirmwareVersion = Asn1Element.Decode(ext.RawData);
+        decodedFirmwareVersion.CheckTag(Asn1Tag.Integer);
+
+        var firmwareVersion = decodedFirmwareVersion.GetBigInteger();
+
+        // "This attribute contains an INTEGER with a non-negative value which is incremented for new firmware
+        // release versions." Metadata reports the same quantity as an unsigned 64-bit authenticatorVersion, so
+        // anything outside that range cannot be the value this extension is meant to carry.
+        if (firmwareVersion.Sign < 0 || firmwareVersion > ulong.MaxValue)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidFirmwareVersion);
+
+        return (ulong)firmwareVersion;
+    }
+
     internal static byte U2FTransportsFromAttnCert(X509ExtensionCollection exts)
     {
         byte u2fTransports = 0;

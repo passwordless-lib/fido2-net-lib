@@ -102,6 +102,22 @@ public class RegisteredPublicKeyCredential
     public byte[] EnterpriseAttestationSerialNumber { get; init; }
 
     /// <summary>
+    /// The value of the id-fido-gen-ce-fw-version extension (OID 1.3.6.1.4.1.45724.1.1.5) in the attestation
+    /// certificate, or <see langword="null"/> when the certificate did not carry one. It differentiates the
+    /// firmware of one authenticator model and is incremented for each new firmware release.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="EnterpriseAttestationSerialNumber"/> this identifies a build rather than a device, so
+    /// it carries no tracking risk and is populated for any conveyance preference. It is directly comparable
+    /// with the <c>authenticatorVersion</c> of the model's Metadata Service status report, which is how a
+    /// Relying Party can tell that an authenticator predates a certification or a firmware fix.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-packed-attestation-cert-requirements"/>
+    /// </para>
+    /// </remarks>
+    public ulong? FirmwareVersion { get; init; }
+
+    /// <summary>
     /// The value of the attestationObject attribute when the public key credential source was registered.
     /// Storing this enables the Relying Party to reference the credential's attestation statement at a later time.
     /// </summary>

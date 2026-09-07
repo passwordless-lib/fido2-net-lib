@@ -1090,4 +1090,66 @@ public class Packed : Fido2Tests.Attestation
         Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
         Assert.Same(Fido2ErrorMessages.EmptyEnterpriseAttestationSerialNumber, ex.Message);
     }
+
+    [Fact]
+    public async Task TestFullFirmwareVersionIsSurfaced()
+    {
+        // WebAuthn L3 §8.2.1: "The firmware of a particular authenticator model MAY be differentiated using
+        // the Extension OID 1.3.6.1.4.1.45724.1.1.5 (id-fido-gen-ce-fw-version). When present, this attribute
+        // contains an INTEGER with a non-negative value which is incremented for new firmware release
+        // versions."
+        var credential = await MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(7), false),
+            AttestationConveyancePreference.Direct);
+
+        Assert.Equal(7ul, credential.FirmwareVersion);
+    }
+
+    [Fact]
+    public async Task TestFullWithoutFirmwareVersionReportsNone()
+    {
+        var credential = await MakeFullPackedAttestationResponseAsync(null, AttestationConveyancePreference.Direct);
+
+        Assert.Null(credential.FirmwareVersion);
+    }
+
+    [Theory]
+    [InlineData(AttestationConveyancePreference.None)]
+    [InlineData(AttestationConveyancePreference.Indirect)]
+    [InlineData(AttestationConveyancePreference.Direct)]
+    [InlineData(AttestationConveyancePreference.Enterprise)]
+    public async Task TestFullFirmwareVersionIsNotRestrictedToEnterpriseAttestation(AttestationConveyancePreference attestation)
+    {
+        // Unlike id-fido-gen-ce-sernum, this identifies a firmware build rather than a device, so it carries
+        // no tracking risk and no conveyance preference forbids it.
+        var credential = await MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(42), false),
+            attestation);
+
+        Assert.Equal(42ul, credential.FirmwareVersion);
+    }
+
+    [Fact]
+    public async Task TestFullCriticalFirmwareVersionIsRejected()
+    {
+        // "The extension MUST NOT be marked as critical."
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(7), true),
+            AttestationConveyancePreference.Direct));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Same(Fido2ErrorMessages.CriticalFirmwareVersion, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullNegativeFirmwareVersionIsRejected()
+    {
+        // "an INTEGER with a non-negative value"
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(-1), false),
+            AttestationConveyancePreference.Direct));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Same(Fido2ErrorMessages.InvalidFirmwareVersion, ex.Message);
+    }
 }

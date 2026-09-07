@@ -47,6 +47,8 @@ internal static class Fido2ErrorMessages
     public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
     public static readonly string CriticalEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST NOT be marked as critical";
     public static readonly string EmptyEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST indicate a unique octet string value per device, but was empty";
+    public static readonly string CriticalFirmwareVersion                = "The id-fido-gen-ce-fw-version extension MUST NOT be marked as critical";
+    public static readonly string InvalidFirmwareVersion                 = "The id-fido-gen-ce-fw-version extension MUST contain a non-negative INTEGER representable as an unsigned 64-bit authenticator version";
     public static readonly string UnexpectedEnterpriseAttestation        = "The attestation certificate carries the id-fido-gen-ce-sernum extension, which MUST NOT be present in non-enterprise attestations";
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
     public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";

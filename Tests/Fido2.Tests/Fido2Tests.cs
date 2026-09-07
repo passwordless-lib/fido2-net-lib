@@ -108,6 +108,7 @@ public class Fido2Tests
         public X500DistinguishedName rootDN = new("CN=Testing, O=FIDO2-NET-LIB, C=US");
         public Oid oidIdFidoGenCeAaGuid = new("1.3.6.1.4.1.45724.1.1.4");
         public Oid oidIdFidoGenCeSernum = new("1.3.6.1.4.1.45724.1.1.2");
+        public Oid oidIdFidoGenCeFwVersion = new("1.3.6.1.4.1.45724.1.1.5");
         //private byte[] asnEncodedAaGuid = new byte[] { 0x04, 0x10, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         //public byte[] asnEncodedAaGuid = new byte[] { 0x04, 0x10, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, 0xf1, 0xd0, };
         public byte[] _asnEncodedAaguid;

@@ -124,9 +124,16 @@ internal sealed class Packed : AttestationVerifier
             // https://www.w3.org/TR/webauthn-3/#sctn-enterprise-packed-attestation-cert-requirements
             byte[]? enterpriseAttestationSerialNumber = SerialNumberFromAttnCertExts(attestnCert.Extensions);
 
+            // The Extension OID 1.3.6.1.4.1.45724.1.1.5 (id-fido-gen-ce-fw-version) MAY be present, carrying
+            // the firmware version of this particular authenticator. Comparing it against the
+            // authenticatorVersion in the model's Metadata Service status report is how a Relying Party tells
+            // that an authenticator predates a certification or a firmware fix.
+            // https://www.w3.org/TR/webauthn-3/#sctn-packed-attestation-cert-requirements
+            ulong? firmwareVersion = FirmwareVersionFromAttnCertExts(attestnCert.Extensions);
+
             // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
 
-            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath, enterpriseAttestationSerialNumber));
+            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath, enterpriseAttestationSerialNumber, firmwareVersion));
         }
 
         // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
