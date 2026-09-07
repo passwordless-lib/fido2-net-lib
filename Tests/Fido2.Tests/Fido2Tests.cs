@@ -148,6 +148,21 @@ public class Fido2Tests
         /// <summary>Settable so a test can exercise specific authenticator extension outputs.</summary>
         public CborMap _authenticatorExtensions { get; set; } = new CborMap { { "testing", true } };
 
+        /// <summary>Settable so a test can exercise specific client extension outputs.</summary>
+        public AuthenticationExtensionsClientOutputs _clientExtensionResults { get; set; } = new AuthenticationExtensionsClientOutputs
+        {
+            AppID = true,
+            Extensions = ["foo", "bar"],
+            Example = true,
+            UserVerificationMethod = new ulong[][]
+            {
+                new ulong[]
+                {
+                    4 // USER_VERIFY_PASSCODE_INTERNAL
+                },
+            },
+        };
+
         public Extensions GetExtensions()
         {
             return new Extensions(_authenticatorExtensions.Encode());
@@ -198,19 +213,7 @@ public class Fido2Tests
                     ClientDataJson = _clientDataJson,
                     Transports = [AuthenticatorTransport.Internal]
                 },
-                ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
-                {
-                    AppID = true,
-                    Extensions = ["foo", "bar"],
-                    Example = true,
-                    UserVerificationMethod = new ulong[][]
-                    {
-                        new ulong[]
-                        {
-                            4 // USER_VERIFY_PASSCODE_INTERNAL
-                        },
-                    },
-                }
+                ClientExtensionResults = _clientExtensionResults
             };
 
             var originalOptions = new CredentialCreateOptions

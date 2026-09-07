@@ -180,7 +180,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.UnexpectedExtensionsDetected, Fido2ErrorMessages.UnexpectedExtensionsDetected);
 
         // Validate extension inputs and outputs for assertion ceremony
-        ValidateAssertionExtensionInputs(options.Extensions);
+        ValidateAssertionExtensionInputs(options.Extensions, options.AllowCredentials);
         ValidateAssertionExtensionOutputs(options.Extensions, Raw.ClientExtensionResults);
 
         // 20. Let hash be the result of computing a hash over the cData using SHA-256.
@@ -216,7 +216,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// Validates extension inputs during assertion ceremony.
     /// Ensures that extension input parameters are well-formed and don't violate constraints.
     /// </summary>
-    private static void ValidateAssertionExtensionInputs(AuthenticationExtensionsClientInputs? extensions)
+    private static void ValidateAssertionExtensionInputs(
+        AuthenticationExtensionsClientInputs? extensions,
+        IReadOnlyList<PublicKeyCredentialDescriptor>? allowCredentials)
     {
         if (extensions == null)
             return;
@@ -224,7 +226,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // Validate PRF input structure
         if (extensions.PRF != null)
         {
-            ClientExtensionValidation.ValidatePRFInput(extensions.PRF);
+            ClientExtensionValidation.ValidateAssertionPRFInput(extensions.PRF, allowCredentials);
         }
 
         // Validate LargeBlob input constraints for assertion
@@ -323,7 +325,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // Validate PRF extension output (can be used in both registration and assertion)
         if (requestedExtensions.PRF != null && clientExtensionResults.PRF != null)
         {
-            ClientExtensionValidation.ValidatePRFOutput(clientExtensionResults.PRF);
+            ClientExtensionValidation.ValidateAssertionPRFOutput(clientExtensionResults.PRF);
         }
 
         // Validate extensions discovery (exts) output

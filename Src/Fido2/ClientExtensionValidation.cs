@@ -1,4 +1,9 @@
-﻿using Fido2NetLib.Exceptions;
+﻿using System;
+using System.Buffers.Text;
+using System.Collections.Generic;
+using System.Linq;
+
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
@@ -14,127 +19,181 @@ namespace Fido2NetLib;
 internal static class ClientExtensionValidation
 {
     /// <summary>
-    /// Validates PRF extension input structure.
-    /// Ensures eval inputs have proper format and constraints.
+    /// The length of a PRF result: "the PRFs provided by this extension map from BufferSources of any length
+    /// to 32-byte BufferSources".
     /// </summary>
-    internal static void ValidatePRFInput(AuthenticationExtensionsPRFInputs prfInput)
+    private const int PRFResultLength = 32;
+
+    /// <summary>
+    /// Validates the <c>prf</c> extension input of a registration ceremony.
+    /// </summary>
+    /// <remarks>
+    /// Both members are optional -- an empty <c>prf</c> input is how a Relying Party asks only whether PRFs
+    /// are available -- but <c>evalByCredential</c> is registration-invalid: a client returns a
+    /// <c>NotSupportedError</c> for it rather than creating the credential.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#prf-extension"/>
+    /// </para>
+    /// </remarks>
+    internal static void ValidateRegistrationPRFInput(AuthenticationExtensionsPRFInputs prfInput)
     {
-        // PRF input must have eval or evalByCredential (or both)
-        if (prfInput.Eval == null && prfInput.EvalByCredential == null)
+        // "If evalByCredential is present, return a DOMException whose name is NotSupportedError."
+        if (prfInput.EvalByCredential is not null)
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,
-                "PRF extension input must have 'eval' or 'evalByCredential'");
+                "The prf extension's 'evalByCredential' is not valid during registration. Use 'eval' instead.");
         }
 
-        // Validate eval if present
-        if (prfInput.Eval != null)
-        {
+        if (prfInput.Eval is not null)
             ValidatePRFInputValues(prfInput.Eval, "eval");
+    }
+
+    /// <summary>
+    /// Validates the <c>prf</c> extension input of an authentication ceremony against the
+    /// <paramref name="allowCredentials"/> it accompanies.
+    /// </summary>
+    /// <remarks>
+    /// Both members are optional. When <c>evalByCredential</c> is used, a client requires a non-empty
+    /// <c>allowCredentials</c> and requires every key to name one of its entries; checking that here turns a
+    /// browser-side <c>NotSupportedError</c> or <c>SyntaxError</c> into a diagnosable server-side failure.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#prf-extension"/>
+    /// </para>
+    /// </remarks>
+    internal static void ValidateAssertionPRFInput(
+        AuthenticationExtensionsPRFInputs prfInput,
+        IReadOnlyList<PublicKeyCredentialDescriptor>? allowCredentials)
+    {
+        if (prfInput.Eval is not null)
+            ValidatePRFInputValues(prfInput.Eval, "eval");
+
+        if (prfInput.EvalByCredential is not { Count: > 0 } evalByCredential)
+            return;
+
+        // "If evalByCredential is not empty but allowCredentials is empty, return a DOMException whose name
+        //  is NotSupportedError."
+        if (allowCredentials is not { Count: > 0 })
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The prf extension's 'evalByCredential' requires a non-empty allowCredentials.");
         }
 
-        // Validate evalByCredential if present
-        if (prfInput.EvalByCredential.HasValue)
+        foreach (var (credentialId, values) in evalByCredential)
         {
-            var evalByCred = prfInput.EvalByCredential.Value;
-            // Credential ID should be non-empty
-            if (string.IsNullOrEmpty(evalByCred.Key))
+            // "If any key in evalByCredential is the empty string, or is not a valid base64url encoding, or
+            //  does not equal the id of some element of allowCredentials after performing base64url
+            //  decoding, then return a DOMException whose name is SyntaxError."
+            if (string.IsNullOrEmpty(credentialId))
             {
                 throw new Fido2VerificationException(
                     Fido2ErrorCode.MalformedExtensionsDetected,
-                    "PRF extension 'evalByCredential' has empty credential ID");
+                    "The prf extension's 'evalByCredential' has an empty credential ID key.");
             }
-            // Credential values should be valid
-            ValidatePRFInputValues(evalByCred.Value, "evalByCredential");
+
+            byte[] decodedCredentialId;
+
+            try
+            {
+                decodedCredentialId = Base64Url.DecodeFromChars(credentialId);
+            }
+            catch (FormatException e)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"The prf extension's 'evalByCredential' key '{credentialId}' is not valid base64url.", e);
+            }
+
+            if (!allowCredentials.Any(credential => credential.Id.AsSpan().SequenceEqual(decodedCredentialId)))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"The prf extension's 'evalByCredential' key '{credentialId}' does not match any allowCredentials entry.");
+            }
+
+            ValidatePRFInputValues(values, "evalByCredential");
         }
     }
 
     /// <summary>
-    /// Validates PRF input values (first and optional second salts).
+    /// Validates one pair of PRF salts.
     /// </summary>
+    /// <remarks>
+    /// The PRFs "map from BufferSources of any length", so a salt has no length to check against -- the
+    /// client hashes it with a context string before it ever reaches an authenticator. Only the presence of
+    /// the required member is checked.
+    /// </remarks>
     private static void ValidatePRFInputValues(AuthenticationExtensionsPRFValues values, string fieldName)
     {
-        // First value is required
-        if (values.First == null || values.First.Length == 0)
+        if (values.First is null)
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,
-                $"PRF extension '{fieldName}' has missing or empty 'first' value");
-        }
-
-        // PRF inputs are typically 32 bytes but allow flexibility
-        if (values.First.Length < 16 || values.First.Length > 512)
-        {
-            throw new Fido2VerificationException(
-                Fido2ErrorCode.MalformedExtensionsDetected,
-                $"PRF extension '{fieldName}' 'first' value has unexpected length: {values.First.Length}. Expected 16-512 bytes.");
-        }
-
-        // Second value is optional, but if present should have reasonable length
-        if (values.Second != null && values.Second.Length > 0)
-        {
-            if (values.Second.Length < 16 || values.Second.Length > 512)
-            {
-                throw new Fido2VerificationException(
-                    Fido2ErrorCode.MalformedExtensionsDetected,
-                    $"PRF extension '{fieldName}' 'second' value has unexpected length: {values.Second.Length}. Expected 16-512 bytes.");
-            }
+                $"The prf extension's '{fieldName}' is missing its required 'first' value.");
         }
     }
 
     /// <summary>
-    /// Validates PRF extension output format per WebAuthn L3 Section 9.
-    /// https://w3c.github.io/webauthn/#prf-extension
+    /// Validates the <c>prf</c> extension output of a registration ceremony.
     /// </summary>
-    internal static void ValidatePRFOutput(AuthenticationExtensionsPRFOutputs prfOutput)
+    /// <remarks>
+    /// Client extension processing sets <c>enabled</c> on a registration whether or not PRFs turned out to
+    /// be available, so results alongside a <see langword="false"/> are a contradiction. An absent
+    /// <c>enabled</c> means the client does not implement the extension at all, which is the Relying Party's
+    /// business rather than a malformed response.
+    /// </remarks>
+    internal static void ValidateRegistrationPRFOutput(AuthenticationExtensionsPRFOutputs prfOutput)
     {
-        // If enabled is false, results must not be present
-        if (!prfOutput.Enabled && prfOutput.Results != null)
+        if (prfOutput.Enabled is false && prfOutput.Results is not null)
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,
-                "PRF extension output has enabled=false but results are present");
+                "The prf extension output reports enabled=false but carries results.");
         }
 
-        // If enabled is true and results are present, validate the results format
-        if (prfOutput.Enabled && prfOutput.Results != null)
-        {
-            ValidatePRFValues(prfOutput.Results);
-        }
+        if (prfOutput.Results is not null)
+            ValidatePRFResults(prfOutput.Results);
     }
 
     /// <summary>
-    /// Validates PRF values (first and second salts).
-    /// Both first and second should be byte arrays of appropriate length.
+    /// Validates the <c>prf</c> extension output of an authentication ceremony.
     /// </summary>
-    private static void ValidatePRFValues(AuthenticationExtensionsPRFValues values)
+    /// <remarks>
+    /// Client extension processing for an assertion initializes the output to an empty dictionary and only
+    /// ever sets <c>results</c>, so there is no <c>enabled</c> to reason about here -- the registration rule
+    /// must not be applied, or every PRF-carrying assertion fails.
+    /// </remarks>
+    internal static void ValidateAssertionPRFOutput(AuthenticationExtensionsPRFOutputs prfOutput)
     {
-        // First value is required
-        if (values.First == null || values.First.Length == 0)
+        if (prfOutput.Results is not null)
+            ValidatePRFResults(prfOutput.Results);
+    }
+
+    /// <summary>
+    /// Validates the results of evaluating the PRF, which are 32 bytes each.
+    /// </summary>
+    private static void ValidatePRFResults(AuthenticationExtensionsPRFValues values)
+    {
+        if (values.First is null or [])
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,
-                "PRF extension output has missing or empty 'first' value");
+                "The prf extension output has a missing or empty 'first' value.");
         }
 
-        // PRF output should be 32 bytes (SHA-256 output) or 64 bytes
-        // Allow flexibility for different PRF implementations
-        if (values.First.Length != 32 && values.First.Length != 64)
+        if (values.First.Length is not PRFResultLength)
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,
-                $"PRF extension 'first' value has unexpected length: {values.First.Length}. Expected 32 or 64 bytes.");
+                $"The prf extension output's 'first' value is {values.First.Length} bytes; a PRF result is {PRFResultLength} bytes.");
         }
 
-        // Second value is optional, but if present should have same length as first
-        if (values.Second != null && values.Second.Length > 0)
+        if (values.Second is { Length: > 0 } second && second.Length is not PRFResultLength)
         {
-            if (values.Second.Length != values.First.Length)
-            {
-                throw new Fido2VerificationException(
-                    Fido2ErrorCode.MalformedExtensionsDetected,
-                    $"PRF extension 'second' value length ({values.Second.Length}) does not match 'first' value length ({values.First.Length})");
-            }
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"The prf extension output's 'second' value is {second.Length} bytes; a PRF result is {PRFResultLength} bytes.");
         }
     }
 

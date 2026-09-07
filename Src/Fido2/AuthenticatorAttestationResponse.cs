@@ -260,7 +260,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // Validate PRF input structure
         if (extensions.PRF != null)
         {
-            ClientExtensionValidation.ValidatePRFInput(extensions.PRF);
+            ClientExtensionValidation.ValidateRegistrationPRFInput(extensions.PRF);
         }
 
         // Validate LargeBlob input (registration context doesn't allow read/write)
@@ -376,7 +376,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         // Validate PRF extension output
         if (requestedExtensions.PRF != null && clientExtensionResults.PRF != null)
         {
-            ClientExtensionValidation.ValidatePRFOutput(clientExtensionResults.PRF);
+            ClientExtensionValidation.ValidateRegistrationPRFOutput(clientExtensionResults.PRF);
         }
 
 
