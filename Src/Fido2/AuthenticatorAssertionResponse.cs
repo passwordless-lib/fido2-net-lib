@@ -232,7 +232,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // Validate LargeBlob input constraints for assertion
         if (extensions.LargeBlob != null)
         {
-            ValidateLargeBlobAssertionInput(extensions.LargeBlob);
+            ValidateLargeBlobAssertionInput(extensions.LargeBlob, allowCredentials);
         }
 
         // credBlob stores a blob with a new credential, and pinComplexityPolicy reports the policy in force
@@ -265,48 +265,47 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Validates LargeBlob extension input during assertion.
-    /// Ensures read and write constraints are met.
+    /// Validates the <c>largeBlob</c> extension input of an authentication ceremony against the
+    /// <paramref name="allowCredentials"/> it accompanies.
     /// </summary>
-    private static void ValidateLargeBlobAssertionInput(AuthenticationExtensionsLargeBlobInputs blobInput)
+    /// <remarks>
+    /// The three conditions a client rejects with a <c>NotSupportedError</c>, checked here so that they
+    /// surface as diagnosable server-side failures. Requesting neither a read nor a write is not among them,
+    /// and neither the blob nor the ceremony has a size limit that this specification states.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension"/>
+    /// </para>
+    /// </remarks>
+    private static void ValidateLargeBlobAssertionInput(
+        AuthenticationExtensionsLargeBlobInputs blobInput,
+        IReadOnlyList<PublicKeyCredentialDescriptor>? allowCredentials)
     {
-        bool hasRead = blobInput.Read;
-        bool hasWrite = blobInput.Write != null && blobInput.Write.Length > 0;
-
-        // Cannot request both read and write in the same operation
-        if (hasRead && hasWrite)
+        // "If support is present: return a DOMException whose name is NotSupportedError."
+        if (blobInput.Support is not null)
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,
-                "LargeBlob extension input cannot have both 'read' and 'write' set simultaneously");
+                "The largeBlob extension's 'support' is not valid during assertion. Use only during registration.");
         }
 
-        // At least one of read or write should be requested
-        if (!hasRead && !hasWrite)
+        bool hasWrite = blobInput.Write is not null;
+
+        // "If both read and write are present: return a DOMException whose name is NotSupportedError."
+        if (blobInput.Read && hasWrite)
         {
             throw new Fido2VerificationException(
                 Fido2ErrorCode.MalformedExtensionsDetected,
-                "LargeBlob extension input must have either 'read' or 'write' set");
+                "The largeBlob extension input cannot carry both 'read' and 'write'.");
         }
 
-        // If write is requested, validate blob size
-        if (hasWrite)
+        // "If write is present: if allowCredentials does not contain exactly one element, return a
+        //  DOMException whose name is NotSupportedError." The blob is stored against the credential that
+        //  the assertion used, so the ceremony has to name exactly which one that will be.
+        if (hasWrite && allowCredentials is not { Count: 1 })
         {
-            if (blobInput.Write!.Length == 0)
-            {
-                throw new Fido2VerificationException(
-                    Fido2ErrorCode.MalformedExtensionsDetected,
-                    "LargeBlob extension 'write' field is empty");
-            }
-
-            // Most authenticators support 512-2048 bytes, but spec allows larger
-            // Enforce a reasonable limit to prevent abuse
-            if (blobInput.Write.Length > 65536) // 64KB limit
-            {
-                throw new Fido2VerificationException(
-                    Fido2ErrorCode.MalformedExtensionsDetected,
-                    $"LargeBlob extension 'write' blob size ({blobInput.Write.Length}) exceeds maximum limit of 64KB");
-            }
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"The largeBlob extension's 'write' requires allowCredentials to contain exactly one credential, but it contains {allowCredentials?.Count ?? 0}.");
         }
     }
 
@@ -376,30 +375,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         }
 
         bool requestedRead = blobInput.Read;
-        bool requestedWrite = blobInput.Write != null && blobInput.Write.Length > 0;
-
-        // Cannot request both read and write in the same operation
-        if (requestedRead && requestedWrite)
-        {
-            throw new Fido2VerificationException(
-                Fido2ErrorCode.MalformedExtensionsDetected,
-                "LargeBlob extension input cannot have both 'read' and 'write' set");
-        }
-
-        // If read was requested, blob should be present (or null if read returned nothing)
-        // If blob is present, it should be properly formatted
-        if (requestedRead && blobOutput.Blob != null && blobOutput.Blob.Length > 0)
-        {
-            // Blob should not exceed authenticator's large blob storage limit
-            // Most authenticators support 512 bytes, but spec allows up to 512 bytes
-            // We don't strictly validate the size here as it's implementation-specific
-            if (blobOutput.Blob.Length > 65536) // Reasonable upper limit
-            {
-                throw new Fido2VerificationException(
-                    Fido2ErrorCode.MalformedExtensionsDetected,
-                    $"LargeBlob extension blob size ({blobOutput.Blob.Length}) exceeds reasonable limit");
-            }
-        }
+        bool requestedWrite = blobInput.Write is not null;
 
         // Note: if write was requested but blobOutput.Written is false, the authenticator may have
         // had a legitimate reason to reject the write. We don't throw here; the RP can inspect

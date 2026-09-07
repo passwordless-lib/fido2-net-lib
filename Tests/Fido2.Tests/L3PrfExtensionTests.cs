@@ -133,86 +133,16 @@ public class L3PrfRegistrationTests : Fido2Tests.Attestation
 
 public class L3PrfAssertionTests
 {
-    private const string Rp = "https://www.passwordless.dev";
-    private static readonly byte[] s_credentialId = [0xf1, 0xd0];
-
     private static AuthenticationExtensionsPRFValues Salt(int length) =>
         new() { First = RandomNumberGenerator.GetBytes(length) };
 
-    /// <summary>
-    /// Runs a complete, correctly signed ES256 assertion so that a failure can only come from the extension
-    /// rules under test rather than from anything else in the ceremony.
-    /// </summary>
+    private static readonly byte[] s_credentialId = L3AssertionHarness.CredentialId;
+
     private static Task<VerifyAssertionResult> AssertAsync(
         AuthenticationExtensionsClientInputs requestedExtensions,
         AuthenticationExtensionsClientOutputs clientExtensionResults = null,
-        IReadOnlyList<PublicKeyCredentialDescriptor> allowCredentials = null)
-    {
-        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-        var parameters = ecdsa.ExportParameters(false);
-        var credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(
-            COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, parameters.Q.X, parameters.Q.Y);
-
-        byte[] challenge = RandomNumberGenerator.GetBytes(128);
-
-        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
-        {
-            Type = "webauthn.get",
-            Challenge = challenge,
-            Origin = Rp
-        });
-
-        byte[] authenticatorData = new AuthenticatorData(
-            SHA256.HashData(Encoding.UTF8.GetBytes(Rp)),
-            AuthenticatorFlags.UP | AuthenticatorFlags.UV,
-            1,
-            null).ToByteArray();
-
-        byte[] signature = Fido2Tests.SignData(
-            COSE.KeyType.EC2,
-            COSE.Algorithm.ES256,
-            [.. authenticatorData, .. SHA256.HashData(clientDataJson)],
-            ecdsa);
-
-        var options = new AssertionOptions
-        {
-            Challenge = challenge,
-            RpId = Rp,
-            AllowCredentials = allowCredentials ?? [new PublicKeyCredentialDescriptor(s_credentialId)],
-            Extensions = requestedExtensions
-        };
-
-        var response = new AuthenticatorAssertionRawResponse
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = s_credentialId,
-            ClientExtensionResults = clientExtensionResults ?? new AuthenticationExtensionsClientOutputs(),
-            Response = new AuthenticatorAssertionRawResponse.AssertionResponse
-            {
-                AuthenticatorData = authenticatorData,
-                Signature = signature,
-                ClientDataJson = clientDataJson,
-                UserHandle = [0xf1, 0xd0]
-            }
-        };
-
-        var lib = new Fido2(new Fido2Configuration
-        {
-            RPID = Rp,
-            RPName = Rp,
-            Origins = new HashSet<string> { Rp }
-        });
-
-        return lib.MakeAssertionAsync(new MakeAssertionParams
-        {
-            AssertionResponse = response,
-            OriginalOptions = options,
-            StoredPublicKey = credentialPublicKey.GetBytes(),
-            StoredSignatureCounter = 0,
-            IsUserHandleOwnerOfCredentialIdCallback = static (args, cancellationToken) => Task.FromResult(true)
-        });
-    }
+        IReadOnlyList<PublicKeyCredentialDescriptor> allowCredentials = null) =>
+        L3AssertionHarness.AssertAsync(requestedExtensions, clientExtensionResults, allowCredentials);
 
     [Fact]
     public async Task ResultsWithoutEnabledAreAcceptedAsync()

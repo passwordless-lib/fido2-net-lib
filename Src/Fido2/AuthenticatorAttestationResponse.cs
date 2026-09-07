@@ -263,23 +263,23 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             ClientExtensionValidation.ValidateRegistrationPRFInput(extensions.PRF);
         }
 
-        // Validate LargeBlob input (registration context doesn't allow read/write)
-        if (extensions.LargeBlob?.Support != null)
+        // "If read or write is present: return a DOMException whose name is NotSupportedError." That holds
+        // whether or not support was given -- support is itself optional during registration, so this
+        // cannot be conditioned on it.
+        if (extensions.LargeBlob is { } largeBlob)
         {
-            // During registration, only 'support' field is valid
-            // read and write should not be used during registration
-            if (extensions.LargeBlob.Read)
+            if (largeBlob.Read)
             {
                 throw new Fido2VerificationException(
                     Fido2ErrorCode.MalformedExtensionsDetected,
-                    "LargeBlob extension 'read' field is not valid during registration. Use only during assertion.");
+                    "The largeBlob extension's 'read' is not valid during registration. Use only during assertion.");
             }
 
-            if (extensions.LargeBlob.Write != null && extensions.LargeBlob.Write.Length > 0)
+            if (largeBlob.Write is not null)
             {
                 throw new Fido2VerificationException(
                     Fido2ErrorCode.MalformedExtensionsDetected,
-                    "LargeBlob extension 'write' field is not valid during registration. Use only during assertion.");
+                    "The largeBlob extension's 'write' is not valid during registration. Use only during assertion.");
             }
         }
 
