@@ -198,15 +198,28 @@ internal static class ClientExtensionValidation
     }
 
     /// <summary>
-    /// Validates extensions discovery (exts) output.
-    /// The output should be an array of supported extension identifiers.
+    /// The maximum length of a WebAuthn extension identifier: "all extension identifiers MUST be a maximum
+    /// of 32 octets in length".
     /// </summary>
+    private const int MaxExtensionIdentifierOctets = 32;
+
+    /// <summary>
+    /// Validates the output of the supported extensions (<c>exts</c>) extension, an array of extension
+    /// identifiers.
+    /// </summary>
+    /// <remarks>
+    /// Identifiers are bounded by §9.1 rather than by the extension that reports them: at most 32 octets,
+    /// and "only printable USASCII characters, excluding backslash and doublequote". The extension itself
+    /// was removed in Level 3 and is kept for callers still on Level 2.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-extension-id"/>
+    /// </para>
+    /// </remarks>
     internal static void ValidateExtensionsDiscoveryOutput(string[] supportedExtensions)
     {
         if (supportedExtensions == null)
             return;
 
-        // Validate each extension identifier
         foreach (var ext in supportedExtensions)
         {
             if (string.IsNullOrWhiteSpace(ext))
@@ -216,12 +229,22 @@ internal static class ClientExtensionValidation
                     "Extension identifier in discovery output is empty or whitespace");
             }
 
-            // Extension identifiers should be reasonable length (typically short strings like "prf", "largeBlob", etc.)
-            if (ext.Length > 128)
+            // VCHAR as defined in RFC 5234, minus %x22 (") and %x5c (\).
+            foreach (char c in ext)
+            {
+                if (c is < '\x21' or > '\x7e' or '"' or '\\')
+                {
+                    throw new Fido2VerificationException(
+                        Fido2ErrorCode.MalformedExtensionsDetected,
+                        $"Extension identifier '{ext}' contains a character that is not printable USASCII.");
+                }
+            }
+
+            if (ext.Length > MaxExtensionIdentifierOctets)
             {
                 throw new Fido2VerificationException(
                     Fido2ErrorCode.MalformedExtensionsDetected,
-                    $"Extension identifier '{ext}' is excessively long");
+                    $"Extension identifier '{ext}' is {ext.Length} octets; the maximum is {MaxExtensionIdentifierOctets}.");
             }
         }
     }
