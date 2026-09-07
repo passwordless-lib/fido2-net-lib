@@ -11,8 +11,8 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
         PublicKeyCredentialDescriptor[] allowList,
         CtapGetAssertionExtensions? extensions = null,
         AuthenticatorGetAssertionOptions? options = null,
-        byte[]? pinAuth = null,
-        uint? pinProtocol = null)
+        byte[]? pinUvAuthParam = null,
+        uint? pinUvAuthProtocol = null)
     {
         ArgumentNullException.ThrowIfNull(rpId);
         ArgumentNullException.ThrowIfNull(clientDataHash);
@@ -22,8 +22,8 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
         AllowList = allowList;
         Extensions = extensions;
         Options = options;
-        PinAuth = pinAuth;
-        PinProtocol = pinProtocol;
+        PinUvAuthParam = pinUvAuthParam;
+        PinUvAuthProtocol = pinUvAuthProtocol;
     }
 
     /// <summary>
@@ -58,17 +58,17 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
     public AuthenticatorGetAssertionOptions? Options { get; }
 
     /// <summary>
-    /// First 16 bytes of HMAC-SHA-256 of clientDataHash using pinToken which platform got from the authenticator:
-    /// HMAC-SHA-256(pinToken, clientDataHash).
+    /// First 16 bytes of HMAC-SHA-256 of clientDataHash using pinUvAuthToken which platform got from the authenticator:
+    /// HMAC-SHA-256(pinUvAuthToken, clientDataHash).
     /// </summary>
     [CborMember(0x06)]
-    public byte[]? PinAuth { get; }
+    public byte[]? PinUvAuthParam { get; }
 
     /// <summary>
     /// PIN protocol version selected by client.
     /// </summary>
     [CborMember(0x07)]
-    public uint? PinProtocol { get; }
+    public uint? PinUvAuthProtocol { get; }
 
     public override CtapCommandType Type => CtapCommandType.AuthenticatorGetAssertion;
 
@@ -91,10 +91,10 @@ public sealed class AuthenticatorGetAssertionCommand : CtapCommand
             cbor.Add(0x05, Options.ToCborObject());
         }
 
-        if (PinAuth is not null)
+        if (PinUvAuthParam is not null)
         {
-            cbor.Add(0x06, PinAuth);           // pinAuth(0x08)
-            cbor.Add(0x07, PinProtocol ?? 1);  // pinProtocol(0x09)
+            cbor.Add(0x06, PinUvAuthParam);           // pinUvAuthParam(0x08)
+            cbor.Add(0x07, PinUvAuthProtocol ?? 1);  // pinUvAuthProtocol(0x09)
         }
 
         return cbor;

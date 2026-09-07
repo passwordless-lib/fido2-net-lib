@@ -567,11 +567,11 @@ public abstract class FidoAuthenticator
 
     public async ValueTask<int> GetRetriesAsync()
     {
-        var command = new AuthenticatorClientPinCommand(pinProtocol: 0x01, subCommand: AuthenticatorClientPinSubCommand.GetRetries);
+        var command = new AuthenticatorClientPinCommand(pinUvAuthProtocol: 0x01, subCommand: AuthenticatorClientPinSubCommand.GetPinRetries);
 
         var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
 
-        return result.Retries!.Value;
+        return result.PinRetries!.Value;
     }
 
     /// <param name="newPinUnicode">The new PIN, as UTF-16.</param>
@@ -598,13 +598,13 @@ public abstract class FidoAuthenticator
         byte[] newPinEnc = protocol.Encrypt(sharedSecret, CryptoHelper.ZeroPadRight(newPin, 64));
 
         // authenticate(sharedSecret, newPinEnc)
-        var pinAuth = protocol.Authenticate(sharedSecret, newPinEnc);
+        var pinUvAuthParam = protocol.Authenticate(sharedSecret, newPinEnc);
 
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol: (uint)protocol.Version,
+            pinUvAuthProtocol: (uint)protocol.Version,
             subCommand: AuthenticatorClientPinSubCommand.SetPin,
             keyAgreement: platformKey,
-            pinAuth: pinAuth,
+            pinUvAuthParam: pinUvAuthParam,
             newPinEnc: newPinEnc
         );
 
@@ -640,13 +640,13 @@ public abstract class FidoAuthenticator
         byte[] newPinEnc = protocol.Encrypt(sharedSecret, CryptoHelper.ZeroPadRight(newPin, 64));
 
         // authenticate(sharedSecret, newPinEnc || pinHashEnc)
-        byte[] pinAuth = protocol.Authenticate(sharedSecret, [.. newPinEnc, .. pinHashEnc]);
+        byte[] pinUvAuthParam = protocol.Authenticate(sharedSecret, [.. newPinEnc, .. pinHashEnc]);
 
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol: (uint)protocol.Version,
+            pinUvAuthProtocol: (uint)protocol.Version,
             subCommand: AuthenticatorClientPinSubCommand.ChangePin,
             keyAgreement: platformKey,
-            pinAuth: pinAuth,
+            pinUvAuthParam: pinUvAuthParam,
             newPinEnc: newPinEnc,
             pinHashEnc: pinHashEnc
         );
@@ -673,7 +673,7 @@ public abstract class FidoAuthenticator
         byte[] pinHashEnc = protocol.Encrypt(sharedSecret, SHA256.HashData(curPin).AsSpan(0, 16));
 
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol: (uint)protocol.Version,
+            pinUvAuthProtocol: (uint)protocol.Version,
             subCommand: AuthenticatorClientPinSubCommand.GetPinToken,
             keyAgreement: platformKey,
             pinHashEnc: pinHashEnc
@@ -681,7 +681,7 @@ public abstract class FidoAuthenticator
 
         var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
 
-        return result.PinToken!;
+        return result.PinUvAuthToken!;
     }
 
     /// <summary>
@@ -689,7 +689,7 @@ public abstract class FidoAuthenticator
     /// </summary>
     public async ValueTask<int> GetUVRetriesAsync()
     {
-        var command = new AuthenticatorClientPinCommand(pinProtocol: 0x01, subCommand: AuthenticatorClientPinSubCommand.GetUVRetries);
+        var command = new AuthenticatorClientPinCommand(pinUvAuthProtocol: 0x01, subCommand: AuthenticatorClientPinSubCommand.GetUVRetries);
 
         var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
 
@@ -733,7 +733,7 @@ public abstract class FidoAuthenticator
         byte[] pinHashEnc = protocol.Encrypt(sharedSecret, SHA256.HashData(curPin).AsSpan(0, 16));
 
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol: (uint)protocol.Version,
+            pinUvAuthProtocol: (uint)protocol.Version,
             subCommand: AuthenticatorClientPinSubCommand.GetPinUvAuthTokenUsingPinWithPermissions,
             keyAgreement: platformKey,
             pinHashEnc: pinHashEnc,
@@ -743,7 +743,7 @@ public abstract class FidoAuthenticator
 
         var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
 
-        return result.PinToken!;
+        return result.PinUvAuthToken!;
     }
 
     /// <summary>
@@ -768,7 +768,7 @@ public abstract class FidoAuthenticator
         uint pinUvAuthProtocol = 1)
     {
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol: pinUvAuthProtocol,
+            pinUvAuthProtocol: pinUvAuthProtocol,
             subCommand: AuthenticatorClientPinSubCommand.GetPinUvAuthTokenUsingUvWithPermissions,
             keyAgreement: platformKey,
             permissions: permissions,
@@ -777,7 +777,7 @@ public abstract class FidoAuthenticator
 
         var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
 
-        return result.PinToken!;
+        return result.PinUvAuthToken!;
     }
 
     /// <summary>
@@ -921,7 +921,7 @@ public abstract class FidoAuthenticator
     {
         protocol ??= PinUvAuthProtocolOne.Instance;
 
-        var command = new AuthenticatorClientPinCommand(pinProtocol: (uint)protocol.Version, subCommand: AuthenticatorClientPinSubCommand.GetKeyAgreement);
+        var command = new AuthenticatorClientPinCommand(pinUvAuthProtocol: (uint)protocol.Version, subCommand: AuthenticatorClientPinSubCommand.GetKeyAgreement);
 
         var result = await ExecuteClientPinCommandAsync(command).ConfigureAwait(false);
 
