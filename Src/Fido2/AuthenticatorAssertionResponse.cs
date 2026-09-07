@@ -166,7 +166,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
 
-        // 23. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
+        // 23. (Out of order: the spec processes extension outputs near the end of the ceremony, but nothing
+        //     in between depends on them, and validating early fails a bad response before the signature check.)
+        //     Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
         // considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions,
         // i.e., those that were not specified as part of options.extensions. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
 

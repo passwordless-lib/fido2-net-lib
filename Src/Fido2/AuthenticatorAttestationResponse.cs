@@ -135,7 +135,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (!originalOptions.PubKeyCredParams.Any(a => authData.AttestedCredentialData.CredentialPublicKey.IsSameAlg(a.Alg)))
             throw new Fido2VerificationException(Fido2ErrorCode.CredentialAlgorithmRequirementNotMet, Fido2ErrorMessages.CredentialAlgorithmRequirementNotMet);
 
-        // 28. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
+        // 28. (Out of order: the spec processes extension outputs near the end of the ceremony, but nothing
+        //     in between depends on them, and validating early fails a bad response before the expensive
+        //     attestation work.)
+        //     Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
         //     considering the client extension input values that were given as the extensions option in the create() call.  In particular, any extension identifier values
         //     in the clientExtensionResults and the extensions in authData MUST be also be present as extension identifier values in the extensions member of options, i.e.,
         //     no extensions are present that were not requested. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
