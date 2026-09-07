@@ -4,10 +4,10 @@ using Fido2NetLib.Objects;
 namespace Fido2NetLib.Ctap2;
 
 public sealed class AuthenticatorClientPinCommand(
-    uint pinProtocol,
+    uint pinUvAuthProtocol,
     AuthenticatorClientPinSubCommand subCommand,
     CredentialPublicKey? keyAgreement = null,
-    byte[]? pinAuth = null,
+    byte[]? pinUvAuthParam = null,
     byte[]? newPinEnc = null,
     byte[]? pinHashEnc = null,
     PinUvAuthTokenPermissions? permissions = null,
@@ -17,7 +17,7 @@ public sealed class AuthenticatorClientPinCommand(
     /// Required PIN protocol version chosen by the client.
     /// </summary>
     [CborMember(0x01)]
-    public uint PinProtocol { get; } = pinProtocol;
+    public uint PinUvAuthProtocol { get; } = pinUvAuthProtocol;
 
     /// <summary>
     /// The authenticator Client PIN sub command currently being requested.
@@ -37,7 +37,7 @@ public sealed class AuthenticatorClientPinCommand(
     /// First 16 bytes of HMAC-SHA-256 of encrypted contents using sharedSecret.
     /// </summary>
     [CborMember(0x04)]
-    public byte[]? PinAuth { get; } = pinAuth;
+    public byte[]? PinUvAuthParam { get; } = pinUvAuthParam;
 
     /// <summary>
     /// Encrypted new PIN using sharedSecret.
@@ -75,7 +75,7 @@ public sealed class AuthenticatorClientPinCommand(
     {
         var cbor = new CborMap
         {
-            { 0x01, PinProtocol },
+            { 0x01, PinUvAuthProtocol },
             { 0x02, (int)SubCommand }
         };
 
@@ -84,9 +84,9 @@ public sealed class AuthenticatorClientPinCommand(
             cbor.Add(0x03, KeyAgreement.GetCborObject());
         }
 
-        if (PinAuth != null)
+        if (PinUvAuthParam != null)
         {
-            cbor.Add(0x04, PinAuth);
+            cbor.Add(0x04, PinUvAuthParam);
         }
 
         if (NewPinEnc != null)
@@ -116,7 +116,7 @@ public sealed class AuthenticatorClientPinCommand(
 public enum AuthenticatorClientPinSubCommand
 {
     #pragma warning disable format
-    GetRetries                              = 0x01,
+    GetPinRetries                              = 0x01,
     GetKeyAgreement                         = 0x02,
     SetPin                                  = 0x03,
     ChangePin                               = 0x04,

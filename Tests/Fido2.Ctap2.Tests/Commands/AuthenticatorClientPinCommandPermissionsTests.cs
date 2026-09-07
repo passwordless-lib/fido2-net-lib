@@ -28,7 +28,7 @@ public class AuthenticatorClientPinCommandPermissionsTests
     public void GetPayload_WithPermissionsAndRpId_EncodesBothMembers()
     {
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol: 1,
+            pinUvAuthProtocol: 1,
             subCommand: AuthenticatorClientPinSubCommand.GetPinUvAuthTokenUsingPinWithPermissions,
             pinHashEnc: new byte[16],
             permissions: PinUvAuthTokenPermissions.MakeCredential | PinUvAuthTokenPermissions.GetAssertion,
@@ -44,7 +44,7 @@ public class AuthenticatorClientPinCommandPermissionsTests
     public void GetPayload_WithoutPermissions_OmitsPermissionsAndRpIdMembers()
     {
         var command = new AuthenticatorClientPinCommand(
-            pinProtocol: 1,
+            pinUvAuthProtocol: 1,
             subCommand: AuthenticatorClientPinSubCommand.GetPinToken,
             pinHashEnc: new byte[16]);
 

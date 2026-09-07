@@ -45,8 +45,8 @@ public enum CtapStatusCode
     CTAP2_ERR_NOT_ALLOWED           = 0x30, // Continuation command, such as, authenticatorGetNextAssertion not allowed
     CTAP2_ERR_PIN_INVALID           = 0x31, // PIN Invalid
     CTAP2_ERR_PIN_BLOCKED           = 0x32, // PIN Blocked
-    CTAP2_ERR_PIN_AUTH_INVALID      = 0x33, // PIN authentication,pinAuth, verification failed
-    CTAP2_ERR_PIN_AUTH_BLOCKED      = 0x34, // PIN authentication,pinAuth, blocked. Requires power recycle to reset
+    CTAP2_ERR_PIN_AUTH_INVALID      = 0x33, // PIN authentication,pinUvAuthParam, verification failed
+    CTAP2_ERR_PIN_AUTH_BLOCKED      = 0x34, // PIN authentication using pinUvAuthToken blocked. Requires power cycle to reset
     CTAP2_ERR_PIN_NOT_SET           = 0x35, // No PIN has been set
     CTAP2_ERR_PUAT_REQUIRED         = 0x36, // A pinUvAuthToken is required for the selected operation (CTAP 2.0 named this CTAP2_ERR_PIN_REQUIRED)
     CTAP2_ERR_PIN_POLICY_VIOLATION  = 0x37, // PIN policy violation. Currently only enforces minimum length

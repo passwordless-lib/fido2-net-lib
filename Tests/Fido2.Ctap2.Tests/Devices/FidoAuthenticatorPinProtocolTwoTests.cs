@@ -36,7 +36,7 @@ public class FidoAuthenticatorPinProtocolTwoTests
         var result = await authenticator.NegotiateSharedSecretAsync(PinUvAuthProtocolTwo.Instance);
 
         var command = Assert.IsType<AuthenticatorClientPinCommand>(authenticator.LastCommand);
-        Assert.Equal(2u, command.PinProtocol);
+        Assert.Equal(2u, command.PinUvAuthProtocol);
 
         Assert.Equal(64, result.SharedSecret.Length);
     }
@@ -58,8 +58,8 @@ public class FidoAuthenticatorPinProtocolTwoTests
 
         var command = Assert.IsType<AuthenticatorClientPinCommand>(authenticator.LastCommand);
 
-        Assert.Equal(2u, command.PinProtocol);
-        Assert.Equal(32, command.PinAuth!.Length);
+        Assert.Equal(2u, command.PinUvAuthProtocol);
+        Assert.Equal(32, command.PinUvAuthParam!.Length);
         // protocol two's encrypt prepends a random 16-byte IV to the ciphertext.
         Assert.Equal(16 + 64, command.NewPinEnc!.Length);
     }
