@@ -143,8 +143,9 @@ public sealed class AuthenticatorGetInfo
     /// <summary>
     /// List of authenticatorConfig vendorPrototype subcommand identifiers.
     /// </summary>
+    [JsonConverter(typeof(CommandIdentifierArrayConverter))]
     [JsonPropertyName("vendorPrototypeConfigCommands")]
-    public int[]? VendorPrototypeConfigCommands { get; set; }
+    public ulong[]? VendorPrototypeConfigCommands { get; set; }
 
     /// <summary>
     /// List of supported attestation statement formats, in decreasing order of authenticator preference.
@@ -215,6 +216,7 @@ public sealed class AuthenticatorGetInfo
     /// <summary>
     /// List of supported authenticatorConfig sub-command identifiers.
     /// </summary>
+    [JsonConverter(typeof(CommandIdentifierArrayConverter))]
     [JsonPropertyName("authenticatorConfigCommands")]
-    public int[]? AuthenticatorConfigCommands { get; set; }
+    public ulong[]? AuthenticatorConfigCommands { get; set; }
 }
