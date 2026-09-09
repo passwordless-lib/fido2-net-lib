@@ -9,8 +9,10 @@ internal static class Fido2ErrorMessages
     public static readonly string AssertionResponseNotPublicKey          = "AssertionResponse type must be 'public-key'";
     public static readonly string AssertionResponseIdMissing             = "AssertionResponse Id is missing";
     public static readonly string AssertionResponseRawIdMissing          = "AssertionResponse RawId is missing";
+    public static readonly string AssertionResponseIdNotBase64Url        = "AssertionResponse Id is not valid base64url, or does not match RawId";
 
     public static readonly string AttestationResponseIdMissing           = "AttestationResponse Id is missing";
+    public static readonly string AttestationResponseIdNotBase64Url      = "AttestationResponse Id is not valid base64url, or does not match RawId";
     public static readonly string AttestationResponseNotPublicKey        = "AttestationResponse type must be 'public-key'";
     public static readonly string AttestationResponseTypeNotWebAuthnGet  = "AttestationResponse type must be 'webauthn.create'";
 

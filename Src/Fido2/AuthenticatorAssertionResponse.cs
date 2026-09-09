@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -80,6 +81,21 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         if (Raw.RawId is null)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseRawIdMissing);
+
+        // credential.id is base64url(credential.rawId); a value that doesn't decode to exactly RawId's bytes is
+        // either malformed or was tampered with in transit.
+        byte[] decodedId;
+        try
+        {
+            decodedId = Base64Url.DecodeFromChars(Raw.Id);
+        }
+        catch (FormatException e)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseIdNotBase64Url, e);
+        }
+
+        if (!decodedId.AsSpan().SequenceEqual(Raw.RawId))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseIdNotBase64Url);
 
         // 5. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
         if (options.AllowCredentials != null && options.AllowCredentials.Any())

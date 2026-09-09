@@ -40,8 +40,9 @@ public class AuthenticatorAssertionRawResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public AuthenticatorAttachment? AuthenticatorAttachment { get; init; }
 
+    /// <inheritdoc cref="AuthenticatorAttestationRawResponse.Type" path="/summary"/>
     [JsonPropertyName("type"), Required]
-    public PublicKeyCredentialType Type { get; init; }
+    public PublicKeyCredentialType? Type { get; init; }
 
     [JsonPropertyName("extensions")]
     [Obsolete("Use ClientExtensionResults instead")]
