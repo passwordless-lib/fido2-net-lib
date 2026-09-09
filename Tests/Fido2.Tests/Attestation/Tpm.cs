@@ -304,6 +304,121 @@ public class Tpm : Fido2Tests.Attestation
         }
     }
 
+    /// <summary>
+    /// TPMU_ASYM_SCHEME (via TPMT_ECC_SCHEME) is a union: unless the scheme selector is TPM_ALG_NULL, it is
+    /// followed by scheme-specific detail -- for TPM_ALG_ECDSA, a TPMI_ALG_HASH naming the signature hash
+    /// algorithm. PubArea previously assumed the selector was the entire field, so a pubArea naming an explicit
+    /// hash algorithm (as opposed to TPM_ALG_NULL, which fido2-net-lib's own test fixtures always use) misaligned
+    /// every field read after it and eventually crashed with a NullReferenceException reading the EC point.
+    /// </summary>
+    [Fact]
+    public async Task TestTPMEccSchemeWithHashAlgorithmDetailIsParsedCorrectly()
+    {
+        var type = COSE.KeyType.EC2;
+        var alg = COSE.Algorithm.ES256;
+        tpmAlg = GetTmpAlg(alg).ToUInt16BigEndianBytes();
+
+        using var ecdsaRoot = ECDsa.Create();
+        var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+        rootRequest.CertificateExtensions.Add(caExt);
+
+        using var rootCert = rootRequest.CreateSelfSigned(notBefore, notAfter);
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+
+        attRequest.CertificateExtensions.Add(notCAExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
+        attRequest.CertificateExtensions.Add(aikCertSanExt);
+        attRequest.CertificateExtensions.Add(tcgKpAIKCertExt);
+
+        byte[] serial = RandomNumberGenerator.GetBytes(12);
+
+        using (X509Certificate2 publicOnly = attRequest.Create(rootCert, notBefore, notAfter, serial))
+        {
+            attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+        }
+
+        var x5c = new CborArray { attestnCert.RawData, rootCert.RawData };
+
+        var ecParams = ecdsaAtt.ExportParameters(true);
+
+        var cpk = new CborMap {
+            { COSE.KeyCommonParameter.KeyType, type },
+            { COSE.KeyCommonParameter.Alg, alg},
+            { COSE.KeyTypeParameter.X, ecParams.Q.X},
+            { COSE.KeyTypeParameter.Y, ecParams.Q.Y},
+            { COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.P256},
+        };
+
+        var x = (byte[])cpk[COSE.KeyTypeParameter.X];
+        var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
+
+        _credentialPublicKey = new CredentialPublicKey(cpk);
+
+        unique = [
+            .. GetUInt16BigEndianBytes(x.Length),
+            .. x,
+            .. GetUInt16BigEndianBytes(y.Length),
+            .. y
+        ];
+
+        curveId = BitConverter.GetBytes((ushort)TpmEccCurve.TPM_ECC_NIST_P256).Reverse().ToArray();
+        kdf = BitConverter.GetBytes((ushort)TpmAlg.TPM_ALG_NULL);
+
+        var pubArea = PubAreaHelper.CreatePubArea(
+            TpmAlg.TPM_ALG_ECC, // Type
+            tpmAlg, // Alg
+            [0x00, 0x00, 0x00, 0x00], // Attributes
+            [0x00], // Policy
+            [0x00, 0x10], // Symmetric
+            [0x00, (byte)TpmAlg.TPM_ALG_ECDSA, 0x00, (byte)TpmAlg.TPM_ALG_SHA256], // Scheme: ECDSA with an explicit SHA-256 hashAlg detail
+            [0x80, 0x00], // KeyBits
+            exponent, // Exponent
+            curveId, // CurveID
+            kdf, // KDF
+            unique // Unique
+        );
+
+        var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(alg);
+        byte[] hashedData = _attToBeSignedHash(hashAlg);
+        byte[] hashedPubArea = CryptoUtils.HashData(hashAlg, pubArea);
+
+        byte[] extraData = [.. GetUInt16BigEndianBytes(hashedData.Length), .. hashedData];
+
+        var tpm2bNameLen = GetUInt16BigEndianBytes(tpmAlg.Length + hashedPubArea.Length);
+
+        byte[] tpm2bName = [.. tpm2bNameLen, .. tpmAlg, .. hashedPubArea];
+
+        var certInfo = CertInfoHelper.CreateCertInfo(
+            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [0x00, 0x01, 0x00], // QualifiedSigner
+            extraData, // ExtraData
+            [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
+            [0x00, 0x00, 0x00, 0x00], // ResetCount
+            [0x00, 0x00, 0x00, 0x00], // RestartCount
+            [0x00], // Safe
+            [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // FirmwareVersion
+            tpm2bName, // TPM2BName
+            [0x00, 0x00] // AttestedQualifiedNameBuffer
+        );
+
+        byte[] signature = Fido2Tests.SignData(type, alg, certInfo, ecdsaAtt, null, null);
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "ver", "2.0" },
+            { "alg", alg },
+            { "x5c", x5c },
+            { "sig", signature },
+            { "certInfo", certInfo },
+            { "pubArea", pubArea }
+        });
+
+        var credential = await MakeAttestationResponseAsync();
+
+        Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+    }
+
     [Fact]
     public async Task TestTPMAikCertSANTCGConformant()
     {
