@@ -591,6 +591,20 @@ public sealed class PubArea
         {
             Symmetric = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
             Scheme = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
+
+            // TPMU_ASYM_SCHEME (via TPMT_RSA_SCHEME/TPMT_ECC_SCHEME): unless scheme is TPM_ALG_NULL, the
+            // selector above is followed by scheme-specific detail. Every scheme this library can encounter
+            // here (RSASSA, RSAPSS, OAEP, ECDSA, ECDH, ECSCHNORR, SM2) carries a single TPMI_ALG_HASH; ECDAA
+            // additionally carries a UINT16 count. Both are fixed-size, so skipping them (rather than
+            // interpreting them) is enough to keep the offset aligned for CurveID/KDF/Unique below.
+            var schemeAlg = (TpmAlg)Enum.ToObject(typeof(TpmAlg), BinaryPrimitives.ReadUInt16BigEndian(Scheme));
+            if (schemeAlg is not TpmAlg.TPM_ALG_NULL)
+            {
+                _ = AuthDataHelper.GetSizedByteArray(data, ref offset, 2); // hashAlg
+
+                if (schemeAlg is TpmAlg.TPM_ALG_ECDAA)
+                    _ = AuthDataHelper.GetSizedByteArray(data, ref offset, 2); // count
+            }
         }
 
         // TPMI_RSA_KEY_BITS, number of bits in the public modulus
