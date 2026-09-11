@@ -1,4 +1,5 @@
 ﻿using Fido2NetLib.Cbor;
+using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Ctap2.Tests;
 
@@ -91,6 +92,63 @@ public class AuthenticatorGetInfoResponseTests
         Assert.True(response.PinComplexityPolicy);
         Assert.Equal(63, response.MaxPinLength);
         Assert.Equal("0a0b0c0d", Convert.ToHexString(response.EncCredStoreState!).ToLower());
+    }
+
+    /// <summary>
+    /// Covers the members neither <see cref="Deserialize"/> nor <see cref="DeserializeLegacyU2fAuthenticator"/>
+    /// touch: 0x07 through 0x17, plus 0x1C and 0x1F. Generated with Python's cbor2 (canonical=False) rather
+    /// than hand-encoded, since this is a map(19).
+    /// </summary>
+    [Fact]
+    public void DeserializeRemainingCtap22And23Members()
+    {
+        string hexEncodedCborData = """
+
+            00                                      # status = success
+            b3                                      # map(19)
+            07 0a                                   # 0x07 maxCredentialCountInList = 10
+            08 1880                                 # 0x08 maxCredentialIdLength = 128
+            09 8263757362636e6663                   # 0x09 transports = ["usb", "nfc"]
+            0a 81a163616c6726                        # 0x0A algorithms = [{"alg": -7}]
+            0b 190400                               # 0x0B maxSerializedLargeBlobArray = 1024
+            0c f5                                   # 0x0C forcePINChange = true
+            0d 04                                   # 0x0D minPINLength = 4
+            0e 1a00050506                           # 0x0E firmwareVersion = 328966
+            0f 1820                                 # 0x0F maxCredBlobLength = 32
+            10 01                                   # 0x10 maxRPIDsForSetMinPINLength = 1
+            11 03                                   # 0x11 preferredPlatformUvAttempts = 3
+            12 02                                   # 0x12 uvModality = 2
+            13 a16c464950532d434d56502d4c3101       # 0x13 certifications = {"FIPS-CMVP-L1": 1}
+            14 1832                                 # 0x14 remainingDiscoverableCredentials = 50
+            15 820102                               # 0x15 vendorPrototypeConfigCommands = [1, 2]
+            16 82667061636b6564646e6f6e65            # 0x16 attestationFormats = ["packed", "none"]
+            17 02                                   # 0x17 uvCountSinceLastPinEntry = 2
+            181c 44aabbccdd                         # 0x1C pinComplexityPolicyURL = 0xaabbccdd
+            181f 83010203                           # 0x1F authenticatorConfigCommands = [1, 2, 3]
+            """;
+
+        var response = AuthenticatorGetInfoResponse.FromCborObject(TestHelper.GetResponse(hexEncodedCborData).GetCborObject());
+
+        Assert.Equal(10, response.MaxCredentialCountInList);
+        Assert.Equal(128, response.MaxCredentialIdLength);
+        Assert.Equal(["usb", "nfc"], response.Transports!);
+        Assert.Single(response.Algorithms!);
+        Assert.Equal(COSE.Algorithm.ES256, response.Algorithms![0].Alg);
+        Assert.Equal(1024, response.MaxSerializedLargeBlobArray);
+        Assert.True(response.ForcePinChange);
+        Assert.Equal(4, response.MinPinLength);
+        Assert.Equal(328966, response.FirmwareVersion);
+        Assert.Equal(32, response.MaxCredBlobLength);
+        Assert.Equal(1, response.MaxRpidsForSetMinPinLength);
+        Assert.Equal(3, response.PreferredPlatformUvAttempts);
+        Assert.Equal(2, response.UvModality);
+        Assert.Equal(1, (int)response.Certifications!["FIPS-CMVP-L1"]!);
+        Assert.Equal(50, response.RemainingDiscoverableCredentials);
+        Assert.Equal([1, 2], response.VendorPrototypeConfigCommands!);
+        Assert.Equal(["packed", "none"], response.AttestationFormats!);
+        Assert.Equal(2, response.UvCountSinceLastPinEntry);
+        Assert.Equal("aabbccdd", Convert.ToHexString(response.PinComplexityPolicyUrl!).ToLower());
+        Assert.Equal([1, 2, 3], response.AuthenticatorConfigCommands!);
     }
 
     /// <summary>

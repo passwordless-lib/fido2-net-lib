@@ -13,6 +13,10 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" PrivateAssets="All" />
+    <!-- The 8.0.x TestHost's ResponseBodyPipeWriter doesn't implement PipeWriter.UnflushedBytes, which
+         System.Text.Json's PipeWriter fast path requires starting with the .NET 10 runtime. -->
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" VersionOverride="10.0.12" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Condition="'$(TargetFramework)' != 'net10.0'" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Moq" />
     <PackageReference Include="xunit" />

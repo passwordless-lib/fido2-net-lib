@@ -70,6 +70,42 @@ public class MetadataModelTests
     }
 
     [Fact]
+    public void CommandIdentifierArraysRoundTripThroughSerialization()
+    {
+        var info = new AuthenticatorGetInfo
+        {
+            VendorPrototypeConfigCommands = [1, 2, ulong.MaxValue],
+        };
+
+        var json = JsonSerializer.Serialize(info);
+        var roundTripped = JsonSerializer.Deserialize<AuthenticatorGetInfo>(json);
+
+        Assert.Equal(info.VendorPrototypeConfigCommands, roundTripped.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysAreNullWhenTheJsonValueIsNull()
+    {
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":null}""");
+
+        Assert.Null(info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysRejectANonArrayValue()
+    {
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":"not-an-array"}"""));
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysRejectANonNumberElement()
+    {
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":[1,"two"]}"""));
+    }
+
+    [Fact]
     public void AuthenticatorGetInfoWithoutTheCtap23MembersStillParses()
     {
         var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"versions":["FIDO_2_0"]}""");
