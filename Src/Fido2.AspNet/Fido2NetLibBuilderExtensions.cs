@@ -71,7 +71,7 @@ public static class Fido2NetLibBuilderExtensions
 
         return new Fido2NetLibBuilder(services);
     }
-    
+
     /// <summary>
     /// Adds a custom metadata service implementation to the FIDO2 builder.
     /// </summary>
@@ -89,7 +89,7 @@ public static class Fido2NetLibBuilderExtensions
         builder.Services.AddScoped<IMetadataService, T>();
         return builder;
     }
-    
+
     /// <summary>
     /// Adds the distributed cache-based metadata service to the FIDO2 builder.
     /// </summary>
@@ -107,7 +107,7 @@ public static class Fido2NetLibBuilderExtensions
         builder.Services.AddScoped<IMetadataService, DistributedCacheMetadataService>();
         return builder;
     }
-    
+
     /// <summary>
     /// Adds a custom metadata repository implementation to the FIDO2 builder.
     /// </summary>
@@ -126,7 +126,7 @@ public static class Fido2NetLibBuilderExtensions
         builder.Services.AddScoped<IMetadataRepository, T>();
         return builder;
     }
-    
+
     /// <summary>
     /// Adds a file system-based metadata repository to the FIDO2 builder.
     /// </summary>
@@ -178,7 +178,7 @@ public static class Fido2NetLibBuilderExtensions
 
         return builder;
     }
-    
+
     /// <summary>
     /// Adds the official FIDO Alliance Metadata Service (MDS) repository to the FIDO2 builder.
     /// </summary>
