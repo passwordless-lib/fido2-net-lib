@@ -1,154 +1,29 @@
-﻿document.getElementById('register').addEventListener('submit', handleRegisterSubmit);
+﻿// Custom: every option comes from the controls in _options.cshtml, so this page is the one to use when
+// checking how a particular combination behaves in a particular browser.
 
-async function handleRegisterSubmit(event) {
+document.getElementById('register').addEventListener('submit', function (event) {
     event.preventDefault();
 
-    let username = this.username.value;
-    let displayName = this.displayName.value;
+    registerCeremony({
+        username: this.username.value,
+        displayName: this.displayName.value,
+        attestation: value('#option-attestation'),
+        authenticatorAttachment: value('#option-authenticator'),
+        userVerification: value('#option-userverification'),
+        residentKey: value('#option-residentkey'),
 
-    // possible values: none, direct, indirect
-    let attestation_type = value("#option-attestation");
-    // possible values: <empty>, platform, cross-platform
-    let authenticator_attachment = value("#option-authenticator");
+        // WebAuthn L3 §5.8.8 hints and §5.4 attestationFormats: both are ordered by preference and both
+        // are advisory.
+        hints: checkedValues('.option-hint'),
+        attestationFormats: checkedValues('.option-attestation-format'),
 
-    // possible values: preferred, required, discouraged
-    let user_verification = value("#option-userverification");
+        // WebAuthn L3 §10.1.4
+        prf: value('#option-prf'),
 
-    // possible values: true,false
-    let residentKey = value("#option-residentkey");
-
-
-    // prepare form post data
-    var data = new FormData();
-    data.append('username', username);
-    data.append('displayName', displayName);
-    data.append('attType', attestation_type);
-    data.append('authType', authenticator_attachment);
-    data.append('userVerification', user_verification);
-    data.append('residentKey', residentKey);
-
-    // send to server for registering
-    let makeCredentialOptions;
-    try {
-        makeCredentialOptions = await fetchMakeCredentialOptions(data);
-
-    } catch (e) {
-        console.error(e);
-        let msg = "Something went really wrong";
-        showErrorAlert(msg);
-    }
-
-
-    console.log("Credential Options Object", makeCredentialOptions);
-
-    if (makeCredentialOptions.status === "error") {
-        console.log("Error creating credential options");
-        console.log(makeCredentialOptions.errorMessage);
-        showErrorAlert(makeCredentialOptions.errorMessage);
-        return;
-    }
-
-    // Parse Base64Url into ArrayBuffers
-    makeCredentialOptions = PublicKeyCredential.parseCreationOptionsFromJSON(makeCredentialOptions);
-
-    if (makeCredentialOptions.authenticatorSelection.authenticatorAttachment === null) makeCredentialOptions.authenticatorSelection.authenticatorAttachment = undefined;
-
-    console.log("Credential Options Formatted", makeCredentialOptions);
-
-    Swal.fire({
-        title: 'Registering...',
-        text: 'Tap your security key to finish registration.',
-        imageUrl: "/images/securitykey.min.svg",
-        showCancelButton: true,
-        showConfirmButton: false,
-        focusConfirm: false,
-        focusCancel: false
+        // WebAuthn L3 §5.1.3: a conditional create is offered without a modal prompt.
+        mediation: value('#option-mediation')
     });
+});
 
-
-    console.log("Creating PublicKeyCredential...");
-
-    let newCredential;
-    try {
-        newCredential = await navigator.credentials.create({
-            publicKey: makeCredentialOptions
-        });
-    } catch (e) {
-        var msg = "Could not create credentials in browser. Probably because the username is already registered with your authenticator. Please change username or authenticator."
-        console.error(msg, e);
-        showErrorAlert(msg, e);
-    }
-
-
-    console.log("PublicKeyCredential Created", newCredential);
-
-    try {
-        registerNewCredential(newCredential);
-    } catch (err) {
-        showErrorAlert(err.message ? err.message : err);
-    }
-}
-
-async function fetchMakeCredentialOptions(formData) {
-    let response = await fetch('/makeCredentialOptions', {
-        method: 'POST', // or 'PUT'
-        body: formData, // data can be `string` or {object}!
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-
-    let data = await response.json();
-
-    return data;
-}
-
-
-// This should be used to verify the auth data with the server
-async function registerNewCredential(newCredential) {
-    // Convert ArrayBuffers to Base64Url for HTTP transport
-    const data = newCredential.toJSON();
-
-    let response;
-    try {
-        response = await registerCredentialWithServer(data);
-    } catch (e) {
-        showErrorAlert(e);
-    }
-
-    console.log("Credential Object", response);
-
-    // show error
-    if (response.status === "error") {
-        console.log("Error creating credential");
-        console.log(response.errorMessage);
-        showErrorAlert(response.errorMessage);
-        return;
-    }
-
-    // show success 
-    Swal.fire({
-        title: 'Registration Successful!',
-        text: 'You\'ve registered successfully.',
-        type: 'success',
-        timer: 2000
-    });
-
-    // redirect to dashboard?
-    //window.location.href = "/dashboard/" + state.user.displayName;
-}
-
-async function registerCredentialWithServer(formData) {
-    let response = await fetch('/makeCredential', {
-        method: 'POST', // or 'PUT'
-        body: JSON.stringify(formData), // data can be `string` or {object}!
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    });
-
-    let data = await response.json();
-
-    return data;
-}
+// WebAuthn L3 §5.1.7: report what this browser says it can do.
+renderClientCapabilities('client-capabilities');

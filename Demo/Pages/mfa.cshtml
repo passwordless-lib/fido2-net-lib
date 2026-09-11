@@ -8,7 +8,7 @@
     <div class="container">
         <h1 class="title is-1">Scenario: 2FA/MFA</h1>
         <div class="content"><p>This is scenario where we just want to use FIDO as the MFA. The user register and logins with their username and password. For demo purposes, we trigger the MFA registering on sign up.</p></div>
-        <div class="notification is-danger" style="display:none">
+        <div class="notification is-danger" id="notSupportedWarning" style="display:none">
             Please note: Your browser does not seem to support WebAuthn yet. <a href="https://caniuse.com/#search=webauthn" target="_blank">Supported browsers</a>
         </div>
 
@@ -113,11 +113,12 @@
             <p>In this flow the Relying Party does not necessarily need to tell the Authenticator device to verify the human identity (we could set UserVerification to discourage) to minimize user interactions needed to sign in. More on UserVerification in the other scenarios.</p>
 
             <p>
-                Read the source code for this demo here: <a href="@Url.ToGithub("Demo/wwwroot/js/mfa.register.js")">mfa.register.js</a> and <a href="@Url.ToGithub("Demo/wwwroot/js/mfa.login.js")">mfa.login.js</a>
+                Read the source code for this demo here: <a href="@Url.ToGithub("Demo/wwwroot/js/mfa.register.js")">mfa.register.js</a> and <a href="@Url.ToGithub("Demo/wwwroot/js/mfa.login.js")">mfa.login.js</a> &mdash; these set the options that make this scenario what it is. The ceremony they run is shared by every scenario and lives in <a href="@Url.ToGithub("Demo/wwwroot/js/webauthn.js")">webauthn.js</a>.
             </p>
         </div>
     </div>
 </div>
 
+<script src="~/js/webauthn.js"></script>
 <script src="~/js/mfa.register.js"></script>
 <script src="~/js/mfa.login.js"></script>
