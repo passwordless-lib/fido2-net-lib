@@ -2,6 +2,7 @@
 using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace fido2_net_lib.Test;
@@ -58,5 +59,16 @@ public class CredentialPublicKeyTests
     {
         X509Certificate2 okpCert = new(X509CertificateHelper.CreateFromBase64String("MIIBhTCCATegAwIBAgIUfKk9eVV+OkGNxxguVYluGHPPI+swBQYDK2VwMDgxCzAJBgNVBAYTAlVTMREwDwYDVQQIDAhGbG9yaWRzYTEWMBQGA1UECgwNRklETzItTkVULUxJQjAeFw0yNDExMDQwMDM3MDNaFw0yNDEyMDQwMDM3MDNaMDgxCzAJBgNVBAYTAlVTMREwDwYDVQQIDAhGbG9yaWRzYTEWMBQGA1UECgwNRklETzItTkVULUxJQjAqMAUGAytlcAMhAJ2oFxsqEgM4DiMSJNskAYoKf55FXZhrde4Ho2UMJoKuo1MwUTAdBgNVHQ4EFgQUyhKwoqOmiB3UeXztoIPueEi7qSgwHwYDVR0jBBgwFoAUyhKwoqOmiB3UeXztoIPueEi7qSgwDwYDVR0TAQH/BAUwAwEB/zAFBgMrZXADQQArZ82PaihKfiOHNDPCmax/vgsuMlJcQsAywcQFZfaRiNyU5Cq7hwOvNlA1wl1j9hZjV/SiPsfNSgY7nwTGf9cE"u8));
         CredentialPublicKey cpk = new(okpCert, COSE.Algorithm.EdDSA);
+    }
+
+    [Fact]
+    public void Ed448IsRefusedAsUnimplementedRatherThanCrashing()
+    {
+        byte[] x = RandomNumberGenerator.GetBytes(57); // Ed448 public keys are 57 bytes
+
+        var ex = Assert.Throws<Fido2VerificationException>(() =>
+            Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed448, x));
+
+        Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
     }
 }
