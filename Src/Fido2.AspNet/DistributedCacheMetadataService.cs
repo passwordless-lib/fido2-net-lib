@@ -16,9 +16,22 @@ public class DistributedCacheMetadataService : IMetadataService
     protected readonly List<IMetadataRepository> _repositories;
     protected readonly ILogger<DistributedCacheMetadataService> _logger;
 
+    /// <summary>
+    /// Default memory cache interval in seconds for MDS v3.1.1 rate limiting compliance (1 hour).
+    /// </summary>
     protected readonly TimeSpan _defaultMemoryCacheInterval = TimeSpan.FromHours(1);
+
+    /// <summary>
+    /// Buffer period for distributed cache expiry to allow cross-server caching efficiency while respecting MDS v3.1.1 rate limiting windows.
+    /// This allows multiple servers to share cached BLOBs within the 1-hour rate limit window (25 hours buffer).
+    /// </summary>
     protected readonly TimeSpan _nextUpdateBufferPeriod = TimeSpan.FromHours(25);
-    protected readonly TimeSpan _defaultDistributedCacheInterval = TimeSpan.FromDays(8);
+
+    /// <summary>
+    /// Default distributed cache interval in seconds for cross-server caching efficiency while respecting MDS v3.1.1 rate limiting windows.
+    /// This allows multiple servers to share cached BLOBs within the rate limit window (up to 25 hours).
+    /// </summary>
+    protected readonly TimeSpan _defaultDistributedCacheInterval = TimeSpan.FromHours(25);
 
     protected const string CACHE_PREFIX = nameof(DistributedCacheMetadataService) + ":V2";
 
@@ -75,12 +88,21 @@ public class DistributedCacheMetadataService : IMetadataService
         return expiryTime;
     }
 
-    protected virtual DateTimeOffset GetDistributedCacheAbsoluteExpiryTime(DateTimeOffset? nextUpdatTime)
+    /// <summary>
+    /// Gets the absolute expiry time for the distributed cache.
+    /// </summary>
+    /// <param name="nextUpdateTime">The next update time from the MDS BLOB payload.</param>
+    /// <returns>The absolute expiry time for the cached data.</returns>
+    /// <remarks>
+    /// For MDS v3.1.1 compliance: The distributed cache expires at NextUpdate + _defaultDistributedCacheInterval (25 hours).
+    /// This allows cross-server caching efficiency while respecting rate limiting windows.
+    /// </remarks>
+    protected virtual DateTimeOffset GetDistributedCacheAbsoluteExpiryTime(DateTimeOffset? nextUpdateTime)
     {
-        if (nextUpdatTime.HasValue)
+        if (nextUpdateTime.HasValue)
         {
-            if (nextUpdatTime > _systemClock.UtcNow)
-                return nextUpdatTime.Value.Add(_defaultDistributedCacheInterval);
+            // For MDS v3.1.1: Add buffer period to allow cross-server caching within rate limit window
+            return nextUpdateTime.Value.Add(_defaultDistributedCacheInterval);
         }
 
         return _systemClock.UtcNow.Add(_defaultDistributedCacheInterval);
