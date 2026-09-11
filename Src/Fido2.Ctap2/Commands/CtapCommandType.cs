@@ -18,27 +18,3 @@ public enum CtapCommandType : byte
     AuthenticatorVendorFirst           = 0x40, // | NA
     AuthenticatorVendorLast            = 0xBF, // | NA
 };
-
-public static class CtapCommandTypeHelper
-{
-    public static string Canonicalize(this CtapCommandType command)
-    {
-        return command switch
-        {
-            CtapCommandType.AuthenticatorMakeCredential       => "authenticatorMakeCredential",
-            CtapCommandType.AuthenticatorGetAssertion         => "authenticatorGetAssertion",
-            CtapCommandType.AuthenticatorGetInfo               => "authenticatorGetInfo",
-            CtapCommandType.AuthenticatorClientPin             => "authenticatorClientPIN",
-            CtapCommandType.AuthenticatorReset                 => "authenticatorReset",
-            CtapCommandType.AuthenticatorGetNextAssertion      => "authenticatorGetNextAssertion",
-            CtapCommandType.AuthenticatorBioEnrollment         => "authenticatorBioEnrollment",
-            CtapCommandType.AuthenticatorCredentialManagement  => "authenticatorCredentialManagement",
-            CtapCommandType.AuthenticatorSelection             => "authenticatorSelection",
-            CtapCommandType.AuthenticatorLargeBlobs            => "authenticatorLargeBlobs",
-            CtapCommandType.AuthenticatorConfig                => "authenticatorConfig",
-            CtapCommandType.AuthenticatorVendorFirst           => "authenticatorVendorFirst",
-            CtapCommandType.AuthenticatorVendorLast            => "authenticatorVendorLast",
-            _                                                  => throw new Exception("Invalid command")
-        };
-    }
-}
