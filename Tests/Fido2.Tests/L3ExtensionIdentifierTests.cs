@@ -61,11 +61,30 @@ public class L3ExtensionIdentifierTests : Fido2Tests.Attestation
         Assert.Contains("printable USASCII", ex.Message, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task AnEmptyOrWhitespaceIdentifierIsRejectedAsync(string identifier)
+    {
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => RegisterAsync([identifier]));
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("empty or whitespace", ex.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task AConventionalIdentifierIsAcceptedAsync()
     {
         var credential = await RegisterAsync(["prf", "largeBlob", "myCompany_extension"]);
 
         Assert.Equal(_credentialID, credential.Id);
+    }
+
+    [Fact]
+    public void ANullIdentifierArrayIsANoOp()
+    {
+        // Both call sites already guard on clientExtensionResults.Extensions != null before calling this, so
+        // in practice this is defensive rather than reachable -- covered directly since the method is internal.
+        ClientExtensionValidation.ValidateExtensionsDiscoveryOutput(null);
     }
 }

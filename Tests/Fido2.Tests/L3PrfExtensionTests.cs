@@ -129,6 +129,57 @@ public class L3PrfRegistrationTests : Fido2Tests.Attestation
         Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
         Assert.Contains("32 bytes", ex.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task AMissingFirstResultIsRejectedAsync()
+    {
+        _clientExtensionResults = new AuthenticationExtensionsClientOutputs
+        {
+            PRF = new AuthenticationExtensionsPRFOutputs { Enabled = true, Results = new AuthenticationExtensionsPRFValues { First = [] } }
+        };
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync(
+            new AuthenticationExtensionsClientInputs { PRF = new AuthenticationExtensionsPRFInputs() }));
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("missing or empty", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ASecondResultThatIsNotThirtyTwoBytesIsRejectedAsync()
+    {
+        _clientExtensionResults = new AuthenticationExtensionsClientOutputs
+        {
+            PRF = new AuthenticationExtensionsPRFOutputs
+            {
+                Enabled = true,
+                Results = new AuthenticationExtensionsPRFValues
+                {
+                    First = RandomNumberGenerator.GetBytes(32),
+                    Second = RandomNumberGenerator.GetBytes(16)
+                }
+            }
+        };
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync(
+            new AuthenticationExtensionsClientInputs { PRF = new AuthenticationExtensionsPRFInputs() }));
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("'second' value", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AnEvalWithoutAFirstValueIsRejectedAsync()
+    {
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync(
+            new AuthenticationExtensionsClientInputs
+            {
+                PRF = new AuthenticationExtensionsPRFInputs { Eval = new AuthenticationExtensionsPRFValues { First = null! } }
+            }));
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("missing its required 'first' value", ex.Message, StringComparison.Ordinal);
+    }
 }
 
 public class L3PrfAssertionTests
@@ -247,6 +298,22 @@ public class L3PrfAssertionTests
 
         Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
         Assert.Contains("does not match any allowCredentials", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EvalByCredentialKeysMustNotBeEmptyAsync()
+    {
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => AssertAsync(
+            new AuthenticationExtensionsClientInputs
+            {
+                PRF = new AuthenticationExtensionsPRFInputs
+                {
+                    EvalByCredential = new Dictionary<string, AuthenticationExtensionsPRFValues> { [""] = Salt(32) }
+                }
+            }));
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("empty credential ID key", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]

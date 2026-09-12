@@ -171,4 +171,42 @@ public class L3CompoundAttestationTests : Fido2Tests.Attestation
         Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
         Assert.Contains(nameof(Compound), ex.Message, System.StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task CompoundFallsBackToTheFirstSuccessWhenNoneConveyRealAttestationAsync()
+    {
+        // Every sub-statement here verifies but reports AttestationType.None, so there is no "real"
+        // attestation to prefer -- the first successful result is returned as-is.
+        SetCompound(ValidNoneSubStatement(), ValidNoneSubStatement());
+
+        var credential = await MakeAttestationResponseAsync();
+
+        Assert.Equal("compound", credential.AttestationFormat);
+    }
+
+    [Fact]
+    public async Task CompoundSubStatementThatIsNotAMapIsRejectedAsync()
+    {
+        var array = new CborArray();
+        array.Add(ValidPackedSubStatement());
+        array.Add("not a sub-statement map");
+
+        _attestationObject = new CborMap { { "fmt", "compound" }, { "attStmt", array } };
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Contains("must be a CBOR map", ex.Message);
+    }
+
+    [Fact]
+    public async Task CompoundSubStatementMissingFmtIsRejectedAsync()
+    {
+        SetCompound(ValidPackedSubStatement(), new CborMap { { "attStmt", new CborMap() } });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Contains("missing a 'fmt' text string", ex.Message);
+    }
 }

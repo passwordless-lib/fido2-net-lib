@@ -1,4 +1,6 @@
-﻿using Fido2NetLib.Cbor;
+﻿using Fido2NetLib;
+using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Test;
@@ -111,5 +113,30 @@ public class L3AuthenticatorExtensionOutputTests
         // A block that is not a CBOR map at all is only an error where the Relying Party asked for the outputs
         // to be validated; reading the typed outputs must not throw.
         Assert.Null(new Extensions([0xff, 0xff, 0xff]).Outputs.MinPinLength);
+    }
+
+    [Fact]
+    public void GetIdentifiersReturnsTheTextKeysOfTheDecodedMap()
+    {
+        var extensions = new CborMap { { "hmac-secret", true }, { "credProtect", 1 } };
+
+        var identifiers = new Extensions(extensions.Encode()).GetIdentifiers();
+
+        Assert.Equal(new HashSet<string> { "hmac-secret", "credProtect" }, identifiers);
+    }
+
+    [Fact]
+    public void GetIdentifiersIsEmptyForAnEmptyBlock()
+    {
+        Assert.Empty(new Extensions([]).GetIdentifiers());
+    }
+
+    [Fact]
+    public void GetIdentifiersThrowsWhenTheBlockDoesNotDecode()
+    {
+        var ex = Assert.Throws<Fido2VerificationException>(() => new Extensions([0xff, 0xff, 0xff]).GetIdentifiers());
+
+        Assert.Equal(Fido2ErrorCode.MalformedExtensionsDetected, ex.Code);
+        Assert.Contains("Failed to decode", ex.Message, StringComparison.Ordinal);
     }
 }
