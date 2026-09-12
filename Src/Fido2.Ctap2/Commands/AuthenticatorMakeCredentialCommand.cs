@@ -11,16 +11,22 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
         PublicKeyCredentialUserEntity user,
         PubKeyCredParam[] pubKeyCredParams,
         AuthenticatorMakeCredentialOptions options,
-        byte[]? pinAuth = null,
-        uint? pinProtocol = null)
+        byte[]? pinUvAuthParam = null,
+        uint? pinUvAuthProtocol = null,
+        uint? enterpriseAttestation = null,
+        string[]? attestationFormatsPreference = null,
+        CtapMakeCredentialExtensions? extensions = null)
     {
         ClientDataHash = clientDataHash;
         Rp = rpEntity;
         User = user;
         PubKeyCredParams = pubKeyCredParams;
         Options = options;
-        PinAuth = pinAuth;
-        PinProtocol = pinProtocol;
+        PinUvAuthParam = pinUvAuthParam;
+        PinUvAuthProtocol = pinUvAuthProtocol;
+        EnterpriseAttestation = enterpriseAttestation;
+        AttestationFormatsPreference = attestationFormatsPreference;
+        Extensions = extensions;
     }
 
     /// <summary>
@@ -53,23 +59,41 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
     public PublicKeyCredentialDescriptor[]? ExcludeList { get; }
 
     [CborMember(0x06)]
-    public CborMap? Extensions { get; }
+    public CtapMakeCredentialExtensions? Extensions { get; }
 
     [CborMember(0x07)]
     public AuthenticatorMakeCredentialOptions? Options { get; }
 
     /// <summary>
-    /// First 16 bytes of HMAC-SHA-256 of clientDataHash using pinToken which platform got from the authenticator:
-    /// HMAC-SHA-256(pinToken, clientDataHash).
+    /// First 16 bytes of HMAC-SHA-256 of clientDataHash using pinUvAuthToken which platform got from the authenticator:
+    /// HMAC-SHA-256(pinUvAuthToken, clientDataHash).
     /// </summary>
     [CborMember(0x08)]
-    public byte[]? PinAuth { get; }
+    public byte[]? PinUvAuthParam { get; }
 
     /// <summary>
     /// PIN protocol version chosen by the client
     /// </summary>
     [CborMember(0x09)]
-    public uint? PinProtocol { get; }
+    public uint? PinUvAuthProtocol { get; }
+
+    /// <summary>
+    /// Requests an enterprise attestation that includes uniquely identifying information. Only
+    /// meaningful if the authenticator is enterprise-attestation-capable (the <c>ep</c> option ID
+    /// in authenticatorGetInfo). Its value is platform-managed-enterprise-attestation-specific;
+    /// vendor-facilitated implementations ignore the value beyond its presence.
+    /// <para>New in CTAP 2.1.</para>
+    /// </summary>
+    [CborMember(0x0A)]
+    public uint? EnterpriseAttestation { get; }
+
+    /// <summary>
+    /// A prioritized list of attestation statement format identifiers that the client and/or RP
+    /// prefers. A single element of <c>"none"</c> requests omission of attestation.
+    /// <para>New in CTAP 2.3.</para>
+    /// </summary>
+    [CborMember(0x0B)]
+    public string[]? AttestationFormatsPreference { get; }
 
     public override CtapCommandType Type => CtapCommandType.AuthenticatorMakeCredential;
 
@@ -97,10 +121,9 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
             cbor.Add(0x05, ExcludeList.ToCborArray()); // excludeList
         }
 
-        // | { "hmac-secret": true }
-        if (Extensions != null)
+        if (Extensions?.ToCborObject() is CborMap extensions)
         {
-            cbor.Add(0x06, Extensions);
+            cbor.Add(0x06, extensions);
         }
 
         if (Options is AuthenticatorMakeCredentialOptions options)
@@ -109,10 +132,27 @@ public sealed class AuthenticatorMakeCredentialCommand : CtapCommand
             cbor.Add(0x07, options.ToCborObject());
         }
 
-        if (PinAuth is not null)
+        if (PinUvAuthParam is not null)
         {
-            cbor.Add(0x08, PinAuth);           // pinAuth(0x08)
-            cbor.Add(0x09, PinProtocol ?? 1);  // pinProtocol(0x09)
+            cbor.Add(0x08, PinUvAuthParam);           // pinUvAuthParam(0x08)
+            cbor.Add(0x09, PinUvAuthProtocol ?? 1);  // pinUvAuthProtocol(0x09)
+        }
+
+        if (EnterpriseAttestation.HasValue)
+        {
+            cbor.Add(0x0A, (int)EnterpriseAttestation.Value);
+        }
+
+        if (AttestationFormatsPreference is { Length: > 0 })
+        {
+            var formats = new CborArray();
+
+            foreach (var format in AttestationFormatsPreference)
+            {
+                formats.Add(format);
+            }
+
+            cbor.Add(0x0B, formats);
         }
 
         return cbor;

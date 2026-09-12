@@ -15,17 +15,30 @@ public sealed class AuthenticatorClientPinResponse
     public CredentialPublicKey? KeyAgreement { get; set; }
 
     /// <summary>
-    /// Encrypted pinToken using sharedSecret to be used in subsequent authenticatorMakeCredential and authenticatorGetAssertion operations.
+    /// Encrypted pinUvAuthToken using sharedSecret to be used in subsequent authenticatorMakeCredential and authenticatorGetAssertion operations.
     /// </summary>
     [CborMember(0x02)]
-    public byte[]? PinToken { get; set; }
+    public byte[]? PinUvAuthToken { get; set; }
 
     /// <summary>
     /// Number of PIN attempts remaining before lockout.
-    /// This is optionally used to show in UI when collecting the PIN in Setting a new PIN, Changing existing PIN and Getting pinToken from the authenticator flows.
+    /// This is optionally used to show in UI when collecting the PIN in Setting a new PIN, Changing existing PIN and Getting pinUvAuthToken from the authenticator flows.
     /// </summary>
     [CborMember(0x03)]
-    public int? Retries { get; set; }
+    public int? PinRetries { get; set; }
+
+    /// <summary>
+    /// Present and true if the authenticator requires a power cycle before any future PIN
+    /// operation. Only valid in response to a getPINRetries request.
+    /// </summary>
+    [CborMember(0x04)]
+    public bool? PowerCycleState { get; set; }
+
+    /// <summary>
+    /// Number of built-in user verification attempts remaining before lockout.
+    /// </summary>
+    [CborMember(0x05)]
+    public int? UVRetries { get; set; }
 
     public static AuthenticatorClientPinResponse FromCborObject(CborObject cbor)
     {
@@ -39,10 +52,16 @@ public sealed class AuthenticatorClientPinResponse
                     result.KeyAgreement = new CredentialPublicKey((CborMap)value);
                     break;
                 case 0x02:
-                    result.PinToken = (byte[])value;
+                    result.PinUvAuthToken = (byte[])value;
                     break;
                 case 0x03:
-                    result.Retries = (int)value;
+                    result.PinRetries = (int)value;
+                    break;
+                case 0x04:
+                    result.PowerCycleState = (bool)value;
+                    break;
+                case 0x05:
+                    result.UVRetries = (int)value;
                     break;
             }
         }

@@ -28,7 +28,7 @@ public class TestHelper
         }
 
         // Remove spaces
-        sb.Replace(" ", "");
+        sb.Replace(" ", string.Empty);
 
         return sb.ToString();
     }

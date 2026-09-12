@@ -6,7 +6,7 @@ namespace Fido2NetLib;
 /// The BiometricAccuracyDescriptor describes relevant accuracy/complexity aspects in the case of a biometric user verification method.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/fido-v2.0-rd-20180702/fido-metadata-statement-v2.0-rd-20180702.html#biometricaccuracydescriptor-dictionary"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.1.1-ps-20260105.html#biometricaccuracydescriptor-dictionary"/>
 /// </remarks>
 public sealed class BiometricAccuracyDescriptor
 {
@@ -26,6 +26,19 @@ public sealed class BiometricAccuracyDescriptor
     /// </summary>
     [JsonPropertyName("selfAttestedFAR")]
     public double SelfAttestedFAR { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Impostor Attack Presentation Accept Rate (IAPAR) threshold: the proportion of impostor
+    /// attack presentations using the same presentation attack instrument (PAI) species that result in accept.
+    /// </summary>
+    /// <remarks>
+    /// [ISOIEC-30107-3]. Biometric certification can be achieved for an IAPAR threshold of less than 7%, OR less
+    /// than 15% for each of the PAI species tested. If the authenticator did not pass biometric certification
+    /// the vendor may submit any number, which has not been validated against the biometric performance
+    /// requirements.
+    /// </remarks>
+    [JsonPropertyName("iAPARThreshold")]
+    public double IAPARThreshold { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum number of alternative templates from different fingers allowed.

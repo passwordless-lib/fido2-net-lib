@@ -567,30 +567,62 @@ public class Fido2Tests
         var input = new MetadataBLOBPayloadEntry()
         {
             AaGuid = Guid.NewGuid(),
-            MetadataStatement = new MetadataStatement(),
+            MetadataStatement = new MetadataStatement
+            {
+                Description = "Test entry",
+                AuthenticatorVersion = 1,
+                Schema = 3,
+                Upv = [new UafVersion(1, 0)],
+                ProtocolFamily = "foo",
+                AttestationTypes = ["bar"],
+                AuthenticationAlgorithms = ["alg0", "alg1"],
+                PublicKeyAlgAndEncodings = ["example0", "example1"],
+                TcDisplay = ["transaction", "confirmation"],
+                KeyProtection = ["protector"],
+                MatcherProtection = ["stuff", "things"],
+                UserVerificationDetails = Array.Empty<VerificationMethodDescriptor[]>(),
+                AttestationRootCertificates = ["..."]
+            },
             StatusReports = Array.Empty<StatusReport>(),
             TimeOfLastStatusChange = DateTime.UtcNow.ToString("o")
         };
 
         input.MetadataStatement.AaGuid = Guid.NewGuid();
-        input.MetadataStatement.Description = "Test entry";
-        input.MetadataStatement.AuthenticatorVersion = 1;
-        input.MetadataStatement.Upv = new[] { new UafVersion(1, 0) };
-        input.MetadataStatement.ProtocolFamily = "foo";
-        input.MetadataStatement.AttestationTypes = ["bar"];
-        input.MetadataStatement.AuthenticationAlgorithms = ["alg0", "alg1"];
-        input.MetadataStatement.PublicKeyAlgAndEncodings = ["example0", "example1"];
-        input.MetadataStatement.TcDisplay = ["transaction", "confirmation"];
-        input.MetadataStatement.KeyProtection = ["protector"];
-        input.MetadataStatement.MatcherProtection = ["stuff", "things"];
-        input.MetadataStatement.UserVerificationDetails = Array.Empty<VerificationMethodDescriptor[]>();
-        input.MetadataStatement.AttestationRootCertificates = ["..."];
+        input.MetadataStatement.FriendlyNames = new Dictionary<string, string>();
+        input.MetadataStatement.AlternativeDescriptions = new Dictionary<string, string>();
+        input.MetadataStatement.IsKeyRestricted = true;
+        input.MetadataStatement.IsFreshUserVerificationRequired = false;
+        input.MetadataStatement.CryptoStrength = 128;
+        input.MetadataStatement.AttachmentHint = Array.Empty<string>();
+        input.MetadataStatement.TcDisplayContentType = "text/plain";
+        input.MetadataStatement.TcDisplayPNGCharacteristics = Array.Empty<DisplayPNGCharacteristicsDescriptor>();
+        input.MetadataStatement.Icon = null;
+        input.MetadataStatement.SupportedExtensions = Array.Empty<ExtensionDescriptor>();
+        // Fields introduced in FIDO Metadata Statement v3.1.1
+        input.MetadataStatement.IconDark = "data:image/png;base64,aWNvbkRhcms=";
+        input.MetadataStatement.ProviderLogoLight = "data:image/png;base64,bGlnaHQ=";
+        input.MetadataStatement.ProviderLogoDark = "data:image/png;base64,ZGFyaw==";
+        input.MetadataStatement.MultiDeviceCredentialSupport = "supported";
+        input.MetadataStatement.CxConfigURL = "https://example.com/cx-config.json";
 
         var json = JsonSerializer.Serialize(input);
 
         var output = JsonSerializer.Deserialize<MetadataBLOBPayloadEntry>(json);
 
         Assert.Equal(input.AaGuid, output.AaGuid);
+
+        Assert.Equal(input.MetadataStatement.IconDark, output.MetadataStatement.IconDark);
+        Assert.Equal(input.MetadataStatement.ProviderLogoLight, output.MetadataStatement.ProviderLogoLight);
+        Assert.Equal(input.MetadataStatement.ProviderLogoDark, output.MetadataStatement.ProviderLogoDark);
+        Assert.Equal(input.MetadataStatement.MultiDeviceCredentialSupport, output.MetadataStatement.MultiDeviceCredentialSupport);
+        Assert.Equal(input.MetadataStatement.CxConfigURL, output.MetadataStatement.CxConfigURL);
+
+        // The v3.1.1 names must appear verbatim on the wire.
+        Assert.Contains("\"iconDark\"", json);
+        Assert.Contains("\"providerLogoLight\"", json);
+        Assert.Contains("\"providerLogoDark\"", json);
+        Assert.Contains("\"multiDeviceCredentialSupport\"", json);
+        Assert.Contains("\"cxConfigURL\"", json);
     }
 
     [Fact]

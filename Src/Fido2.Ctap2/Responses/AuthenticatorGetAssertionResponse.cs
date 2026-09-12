@@ -1,11 +1,13 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Ctap2;
 
+/// <summary>
+/// Assertion response per CTAP2 protocol.
+/// </summary>
 public sealed class AuthenticatorGetAssertionResponse
 {
     /// <summary>
@@ -15,22 +17,17 @@ public sealed class AuthenticatorGetAssertionResponse
     [CborMember(0x01)]
     public PublicKeyCredentialDescriptor? Credential { get; set; }
 
-#nullable disable
-
     /// <summary>
-    /// The signed-over contextual bindings made by the authenticator, as specified in [WebAuthn].
+    /// The signed-over contextual bindings made by the authenticator, as specified in WebAuthn.
     /// </summary>
     [CborMember(0x02), Required]
-    public byte[] AuthData { get; set; }
+    public required byte[] AuthData { get; set; }
 
     /// <summary>
-    /// The assertion signature produced by the authenticator, as specified in [WebAuthn].
+    /// The assertion signature produced by the authenticator, as specified in WebAuthn.
     /// </summary>
     [CborMember(0x03), Required]
-    public byte[] Signature { get; set; }
-
-
-#nullable enable
+    public required byte[] Signature { get; set; }
 
     /// <summary>
     /// PublicKeyCredentialUserEntity structure containing the user account information.
@@ -40,7 +37,7 @@ public sealed class AuthenticatorGetAssertionResponse
     public PublicKeyCredentialUserEntity? User { get; set; }
 
     /// <summary>
-    /// Total number of account credentials for the RP.This member is required when more than one account for the RP and the authenticator does not have a display.
+    /// Total number of account credentials for the RP. This member is required when more than one account for the RP and the authenticator does not have a display.
     /// Omitted when returned for the authenticatorGetNextAssertion method.
     /// </summary>
     [CborMember(0x05)]
@@ -51,19 +48,34 @@ public sealed class AuthenticatorGetAssertionResponse
     /// MUST NOT be present in response to a request where an allowList was given, where numberOfCredentials is greater than one, nor in response to an authenticatorGetNextAssertion request.
     /// </summary>
     [CborMember(0x06)]
-    [DefaultValue(false)]
     public bool? UserSelected { get; set; }
 
     /// <summary>
     /// The contents of the associated largeBlobKey if present for the asserted credential, and if largeBlobKey was true in the extensions input.
     /// </summary>
     [CborMember(0x07)]
-    [DefaultValue(false)]
     public byte[]? LargeBlobKey { get; set; }
 
+    /// <summary>
+    /// A map, keyed by extension identifier, of unsigned extension outputs. Unlike the extension outputs inside
+    /// the authenticator data these are not signed over, so they are carried here instead. Authenticators omit
+    /// this field when no processed extension defines unsigned outputs, and an empty map means the same as an
+    /// omitted field.
+    /// <para>New in CTAP 2.2.</para>
+    /// </summary>
+    [CborMember(0x08)]
+    public CborMap? UnsignedExtensionOutputs { get; set; }
+
+    /// <summary>
+    /// Parses a CBOR object into an AuthenticatorGetAssertionResponse.
+    /// </summary>
     public static AuthenticatorGetAssertionResponse FromCborObject(CborObject cbor)
     {
-        var result = new AuthenticatorGetAssertionResponse();
+        var result = new AuthenticatorGetAssertionResponse()
+        {
+            AuthData = [],
+            Signature = []
+        };
 
         foreach (var (key, value) in (CborMap)cbor)
         {
@@ -82,13 +94,16 @@ public sealed class AuthenticatorGetAssertionResponse
                     result.User = CborHelper.DecodePublicKeyCredentialUserEntity((CborMap)value);
                     break;
                 case 0x05:
-                    result.NumberOfCredentials = (int)value;
+                    result.NumberOfCredentials = (int?)value;
                     break;
                 case 0x06:
-                    result.UserSelected = (bool)value;
+                    result.UserSelected = (bool?)value;
                     break;
                 case 0x07:
                     result.LargeBlobKey = (byte[])value;
+                    break;
+                case 0x08:
+                    result.UnsignedExtensionOutputs = (CborMap)value;
                     break;
             }
         }

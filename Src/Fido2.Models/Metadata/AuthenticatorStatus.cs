@@ -6,7 +6,7 @@ namespace Fido2NetLib;
 /// Describes the status of an authenticator model as identified by its AAID and potentially some additional information (such as a specific attestation key).
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html#authenticatorstatus-enum"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.1.1-ps-20260105.html#authenticatorstatus-enum"/>
 /// </remarks>
 [JsonConverter(typeof(JsonStringEnumConverter<AuthenticatorStatus>))]
 public enum AuthenticatorStatus
@@ -84,5 +84,47 @@ public enum AuthenticatorStatus
     /// <summary>
     /// The authenticator has passed FIDO Authenticator certification at level 3+. This level is more strict than level <see cref="FIDO_CERTIFIED_L3"/>.
     /// </summary>
-    FIDO_CERTIFIED_L3plus
+    FIDO_CERTIFIED_L3plus,
+
+    // The members below are appended rather than placed in the specification's order so that the numeric value
+    // of every member above is unchanged. The enum is serialized by name, but UndesiredAuthenticatorMetadataStatuses
+    // can be bound from configuration by number, where a shifted ordinal would silently change which status a
+    // Relying Party rejects.
+
+    /// <summary>
+    /// The authenticator vendor has decided to retire the product, and this authenticator should no longer be accepted.
+    /// </summary>
+    /// <remarks>
+    /// For example, a prototype version of an authenticator that was added to the FIDO MDS and has since been
+    /// superseded by the final product might have its entry set to retired.
+    /// <para>
+    /// This status is not rejected by default. Add it to <see cref="Fido2Configuration.UndesiredAuthenticatorMetadataStatuses"/>
+    /// to refuse registrations from retired authenticator models.
+    /// </para>
+    /// </remarks>
+    RETIRED,
+    /// <summary>
+    /// The authenticator has passed FIPS 140 certification at overall level 1.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="StatusReport.FipsRevision"/> and <see cref="StatusReport.FipsPhysicalSecurityLevel"/> are present
+    /// if and only if the status is one of the FIPS140_CERTIFIED_* values. Note that the physical security level
+    /// reported there may deviate from this overall level.
+    /// </remarks>
+    FIPS140_CERTIFIED_L1,
+    /// <summary>
+    /// The authenticator has passed FIPS 140 certification at overall level 2.
+    /// </summary>
+    /// <inheritdoc cref="FIPS140_CERTIFIED_L1" path="/remarks"/>
+    FIPS140_CERTIFIED_L2,
+    /// <summary>
+    /// The authenticator has passed FIPS 140 certification at overall level 3.
+    /// </summary>
+    /// <inheritdoc cref="FIPS140_CERTIFIED_L1" path="/remarks"/>
+    FIPS140_CERTIFIED_L3,
+    /// <summary>
+    /// The authenticator has passed FIPS 140 certification at overall level 4.
+    /// </summary>
+    /// <inheritdoc cref="FIPS140_CERTIFIED_L1" path="/remarks"/>
+    FIPS140_CERTIFIED_L4
 };

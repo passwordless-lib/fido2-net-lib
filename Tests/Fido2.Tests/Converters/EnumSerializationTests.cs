@@ -1,7 +1,8 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Fido2NetLib;
+﻿using Fido2NetLib;
 using Fido2NetLib.Objects;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Test.Converters;
 
@@ -135,8 +136,13 @@ public class EnumSerializationTests
     [InlineData(AuthenticatorStatus.FIDO_CERTIFIED_L2plus, "FIDO_CERTIFIED_L2plus")]
     [InlineData(AuthenticatorStatus.FIDO_CERTIFIED_L3, "FIDO_CERTIFIED_L3")]
     [InlineData(AuthenticatorStatus.FIDO_CERTIFIED_L3plus, "FIDO_CERTIFIED_L3plus")]
+    [InlineData(AuthenticatorStatus.RETIRED, "RETIRED")]
+    [InlineData(AuthenticatorStatus.FIPS140_CERTIFIED_L1, "FIPS140_CERTIFIED_L1")]
+    [InlineData(AuthenticatorStatus.FIPS140_CERTIFIED_L2, "FIPS140_CERTIFIED_L2")]
+    [InlineData(AuthenticatorStatus.FIPS140_CERTIFIED_L3, "FIPS140_CERTIFIED_L3")]
+    [InlineData(AuthenticatorStatus.FIPS140_CERTIFIED_L4, "FIPS140_CERTIFIED_L4")]
     public void TestAuthenticatorStatus(AuthenticatorStatus value, string expected) => TestEnum(value, expected);
-    
+
     [Theory]
     [InlineData(COSE.Algorithm.ES256, "-7")]
     [InlineData(COSE.Algorithm.RS256, "-257")]

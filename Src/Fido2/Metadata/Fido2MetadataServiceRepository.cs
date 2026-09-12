@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Buffers.Text;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
@@ -15,6 +17,15 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Fido2NetLib;
 
+/// <summary>
+/// Fetches, validates, and caches the FIDO Alliance Metadata Service (MDS) v3.1.1 BLOB.
+/// </summary>
+/// <remarks>
+/// This type is registered as a singleton by <c>AddFidoMetadataRepository</c> so that the conditional-GET
+/// (ETag/If-None-Match) state below is retained across fetches -- MDS publishes an ETag on the BLOB response,
+/// and reusing it lets a re-fetch (once the caller's own cache has expired) receive a 304 Not Modified instead
+/// of re-downloading the full multi-megabyte BLOB when it hasn't actually changed.
+/// </remarks>
 public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory) : IMetadataRepository
 {
     private static ReadOnlySpan<byte> ROOT_CERT =>
@@ -38,7 +49,33 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH"u8 +
         "WD9f"u8;
 
+    private const int MaxRetryAttempts = 4;
+    private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(30);
+
+    // Asymmetric signing algorithms accepted for the BLOB JWT. Explicitly enumerated as defense in
+    // depth against alg-confusion attacks (e.g. "none" or a symmetric alg substituted for the
+    // certificate's public key material), rather than relying solely on key-type inference.
+    private static readonly string[] AllowedJwsAlgorithms =
+    [
+        SecurityAlgorithms.EcdsaSha256,
+        SecurityAlgorithms.EcdsaSha384,
+        SecurityAlgorithms.EcdsaSha512,
+        SecurityAlgorithms.RsaSha256,
+        SecurityAlgorithms.RsaSha384,
+        SecurityAlgorithms.RsaSha512,
+        SecurityAlgorithms.RsaSsaPssSha256,
+        SecurityAlgorithms.RsaSsaPssSha384,
+        SecurityAlgorithms.RsaSsaPssSha512,
+    ];
+
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+
+    private sealed record CachedRawBlob(EntityTagHeaderValue ETag, string RawBlob);
+
+    // Set after each successful (non-304) fetch that returns an ETag, and read at the start of the next fetch
+    // to conditionally re-validate. Plain field access is fine here: a torn read just means an occasional
+    // fetch skips the conditional GET optimization, not a correctness issue.
+    private CachedRawBlob? _cachedRawBlob;
 
     public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
     {
@@ -53,9 +90,64 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
     private async Task<string> GetRawBlobAsync(CancellationToken cancellationToken)
     {
-        return await _httpClientFactory
-            .CreateClient(nameof(Fido2MetadataServiceRepository))
-            .GetStringAsync("/", cancellationToken);
+        var httpClient = _httpClientFactory.CreateClient(nameof(Fido2MetadataServiceRepository));
+        var cached = _cachedRawBlob;
+
+        for (var attempt = 0; ; attempt++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/");
+            if (cached is not null)
+            {
+                request.Headers.IfNoneMatch.Add(cached.ETag);
+            }
+
+            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+            if (response.StatusCode is HttpStatusCode.NotModified && cached is not null)
+            {
+                return cached.RawBlob;
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                var rawBlob = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                _cachedRawBlob = response.Headers.ETag is { } etag
+                    ? new CachedRawBlob(etag, rawBlob)
+                    : null;
+
+                return rawBlob;
+            }
+
+            var isThrottled = response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
+
+            if (!isThrottled || attempt >= MaxRetryAttempts)
+            {
+                throw new Fido2MetadataException(
+                    $"Failed to retrieve MDS BLOB: server returned {(int)response.StatusCode} {response.StatusCode}" +
+                    (isThrottled ? $" after {attempt + 1} attempts" : string.Empty));
+            }
+
+            var delay = GetRetryDelay(response.Headers.RetryAfter, attempt);
+            await Task.Delay(delay, cancellationToken);
+        }
+    }
+
+    private static TimeSpan GetRetryDelay(System.Net.Http.Headers.RetryConditionHeaderValue? retryAfter, int attempt)
+    {
+        TimeSpan? serverRequestedDelay = retryAfter switch
+        {
+            { Delta: { } delta } => delta,
+            { Date: { } date } => date - DateTimeOffset.UtcNow,
+            _ => null
+        };
+
+        // fall back to exponential backoff with jitter when the server didn't specify Retry-After
+        var backoff = serverRequestedDelay is { } d && d > TimeSpan.Zero
+            ? d
+            : TimeSpan.FromSeconds(Math.Pow(2, attempt)) + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 250));
+
+        return backoff > MaxRetryDelay ? MaxRetryDelay : backoff;
     }
 
     private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, CancellationToken cancellationToken)
@@ -74,6 +166,11 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         string blobAlg = blobHeader.TryGetProperty("alg", out var algEl)
             ? algEl.GetString()!
             : throw new Fido2MetadataException("No alg value was present in the BLOB header");
+
+        if (Array.IndexOf(AllowedJwsAlgorithms, blobAlg) < 0)
+        {
+            throw new Fido2MetadataException($"Unsupported alg value '{blobAlg}' was present in the BLOB header");
+        }
 
 
         if (!blobHeader.TryGetProperty("x5c", out var x5cEl))
@@ -133,7 +230,8 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             ValidateAudience = false,
             ValidateLifetime = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKeys = blobPublicKeys
+            IssuerSigningKeys = blobPublicKeys,
+            ValidAlgorithms = AllowedJwsAlgorithms
         }).ConfigureAwait(false);
 
         if (!validateTokenResult.IsValid)

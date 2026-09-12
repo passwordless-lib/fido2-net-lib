@@ -9,7 +9,7 @@ namespace Fido2NetLib;
 /// Represents the metadata statement.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.0-ps-20210518.html"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.1.1-ps-20260105.html"/>
 /// </remarks>
 public class MetadataStatement
 {
@@ -187,8 +187,14 @@ public class MetadataStatement
     /// <summary>
     /// Gets or set a list of trust anchors used for ECDAA attestation.
     /// </summary>
+    /// <remarks>
+    /// ECDAA attestation has been removed from the FIDO Metadata Statement schema as of v3.1.1.
+    /// </remarks>
+    [Obsolete("ECDAA attestation has been removed from the FIDO Metadata Statement schema as of v3.1.1. This property will be removed in a future major version.")]
     [JsonPropertyName("ecdaaTrustAnchors")]
+#pragma warning disable CS0618 // Type or member is obsolete
     public EcdaaTrustAnchor[] EcdaaTrustAnchors { get; set; }
+#pragma warning restore CS0618 // Type or member is obsolete
 
     /// <summary>
     /// Gets or set a data: url [RFC2397] encoded PNG [PNG] icon for the Authenticator.
@@ -204,7 +210,55 @@ public class MetadataStatement
 
     /// <summary>
     /// Gets or sets a computed hash value of this <see cref="MetadataStatement"/>.
-    /// <para>NOTE: This supports the internal infrastructure of Fido2Net and isn't intented to be used by user code.</para>
+    /// <para>NOTE: This supports the internal infrastructure of Fido2NetLib and isn't intended to be used by user code.</para>
     /// </summary>
     public string Hash { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URI to an icon suitable for a dark background, as a data: url.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("iconDark")]
+    public string IconDark { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URI to the authenticator provider's logo for use on a light background, as a data: url.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("providerLogoLight")]
+    public string ProviderLogoLight { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URI to the authenticator provider's logo for use on a dark background, as a data: url.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("providerLogoDark")]
+    public string ProviderLogoDark { get; set; }
+
+    /// <summary>
+    /// Gets or sets an indication of whether this authenticator supports multi-device credentials
+    /// (i.e. credentials that may be synchronized across devices).
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("multiDeviceCredentialSupport")]
+    public string MultiDeviceCredentialSupport { get; set; }
+
+    /// <summary>
+    /// Gets or sets the same information reported by an authenticator when invoking the CTAP2
+    /// "authenticatorGetInfo" method: supported versions, extensions, AAGUID, and capabilities.
+    /// </summary>
+    /// <remarks>
+    /// This field must be present for FIDO2 authenticators that natively support FIDO CTAP.
+    /// Platform API-only authenticators should not provide this field; UAF and U2F authenticators
+    /// do not support it.
+    /// </remarks>
+    [JsonPropertyName("authenticatorGetInfo")]
+    public AuthenticatorGetInfo AuthenticatorGetInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets a URL to the credential exchange configuration for this authenticator.
+    /// <para>New in FIDO Metadata Statement v3.1.1.</para>
+    /// </summary>
+    [JsonPropertyName("cxConfigURL")]
+    public string CxConfigURL { get; set; }
 }

@@ -80,7 +80,37 @@ public class AuthenticatorMakeCredentialResponseTests
 
         Assert.Equal("packed", response.Fmt);
         Assert.Equal(154, response.AuthData.Length);
-        Assert.Equal(3, response.AttStmt.Count);
+        Assert.Equal(3, response.AttStmt!.Count);
         Assert.Equal(1, ((CborArray)response.AttStmt["x5c"]!).Length);
+
+        // No unsigned extension outputs in this response.
+        Assert.Null(response.UnsignedExtensionOutputs);
+    }
+
+    [Fact]
+    public void DeserializeUnsignedExtensionOutputs()
+    {
+        // CTAP 2.2 added unsignedExtensionOutputs (0x06) to the makeCredential response.
+        string hexEncodedCborData = """
+            00                                      # status = success
+            a3                                      # map(3)
+               01                                   # unsigned(1) - fmt
+               64                                   # text(4)
+                  6e6f6e65                          # "none"
+               02                                   # unsigned(2) - authData
+               43                                   # bytes(3)
+                  010203                            # ...
+               06                                   # unsigned(6) - unsignedExtensionOutputs
+               a1                                   # map(1)
+                  69                                # text(9)
+                     6c61726765426c6f62             # "largeBlob"
+                  f5                                # true
+            """;
+
+        var response = AuthenticatorMakeCredentialResponse.FromCborObject(TestHelper.GetResponse(hexEncodedCborData).GetCborObject());
+
+        Assert.Equal("none", response.Fmt);
+        Assert.NotNull(response.UnsignedExtensionOutputs);
+        Assert.Single(response.UnsignedExtensionOutputs);
     }
 }
