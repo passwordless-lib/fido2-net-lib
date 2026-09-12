@@ -129,6 +129,14 @@ public class MLDsaCredentialPublicKeyTests
     [Fact]
     public void RejectsAnAkpKeyWithoutAPubParameter()
     {
+        if (!MLDsa.IsSupported)
+        {
+            // CreateMLDsa() checks IsSupported before it ever looks for pub, so on a platform without ML-DSA
+            // this key is refused as unimplemented rather than as malformed -- there is nothing left here to
+            // assert about the pub parameter specifically.
+            return;
+        }
+
         var cpk = new CborMap
         {
             { COSE.KeyCommonParameter.KeyType, COSE.KeyType.AKP },
