@@ -18,6 +18,12 @@ namespace Test;
 /// ML-DSA verification is available only where the platform provides <c>System.Security.Cryptography.MLDsa</c>,
 /// which means .NET 10 or later. On earlier targets the library refuses the key cleanly, the way it already
 /// does for Ed448, and the tests below assert that refusal instead.
+/// <para>
+/// Compiling for net10.0 is not enough on its own: <c>MLDsa.IsSupported</c> is also false on a .NET 10
+/// runtime whose platform back-end doesn't implement it -- e.g. Linux without OpenSSL 3.5+, or macOS today.
+/// Tests that exercise the actual algorithm skip themselves (return early) in that case, the same way
+/// <c>CredentialPublicKeyTests.CanUseECCurves</c> already skips secP256k1 on macOS.
+/// </para>
 /// </remarks>
 public class MLDsaCredentialPublicKeyTests
 {
@@ -49,19 +55,15 @@ public class MLDsaCredentialPublicKeyTests
         _ => throw new ArgumentOutOfRangeException(nameof(alg)),
     };
 
-    [Fact]
-    public void TheRuntimeProvidesMLDsa()
-    {
-        // Everything below depends on this. Asserted separately so that a platform without ML-DSA fails
-        // with one clear message rather than five confusing ones.
-        Assert.True(MLDsa.IsSupported,
-            "This .NET 10 runtime does not implement ML-DSA, so the credential public key tests below cannot run.");
-    }
-
     [Theory]
     [MemberData(nameof(Algorithms))]
     public void VerifiesAGenuineSignature(COSE.Algorithm alg)
     {
+        if (!MLDsa.IsSupported)
+        {
+            return;
+        }
+
         using var key = MLDsa.GenerateKey(ParameterSet(alg));
         var data = "authenticatorData || clientDataHash"u8.ToArray();
         var signature = key.SignData(data);
@@ -75,6 +77,11 @@ public class MLDsaCredentialPublicKeyTests
     [MemberData(nameof(Algorithms))]
     public void RejectsATamperedSignature(COSE.Algorithm alg)
     {
+        if (!MLDsa.IsSupported)
+        {
+            return;
+        }
+
         using var key = MLDsa.GenerateKey(ParameterSet(alg));
         var data = "authenticatorData || clientDataHash"u8.ToArray();
         var signature = key.SignData(data);
@@ -88,6 +95,11 @@ public class MLDsaCredentialPublicKeyTests
     [Fact]
     public void RejectsASignatureOverDifferentData()
     {
+        if (!MLDsa.IsSupported)
+        {
+            return;
+        }
+
         using var key = MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa44);
         var signature = key.SignData("one message"u8.ToArray());
 
@@ -99,6 +111,11 @@ public class MLDsaCredentialPublicKeyTests
     [Fact]
     public void RejectsAKeyFromADifferentParameterSet()
     {
+        if (!MLDsa.IsSupported)
+        {
+            return;
+        }
+
         // An ML-DSA-65 public key declared as ML-DSA-44. The algorithm fixes the parameter set, so the key
         // is the wrong length for what it claims to be.
         using var key = MLDsa.GenerateKey(MLDsaAlgorithm.MLDsa65);
