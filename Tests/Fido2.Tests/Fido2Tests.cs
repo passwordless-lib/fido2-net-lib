@@ -199,15 +199,19 @@ public class Fido2Tests
             UnsolicitedExtensionPolicy unsolicitedExtensionPolicy = UnsolicitedExtensionPolicy.Ignore,
             Action<Fido2Configuration> configure = null,
             CredentialMediationRequirement mediation = CredentialMediationRequirement.Optional,
-            AttestationConveyancePreference attestation = AttestationConveyancePreference.Direct)
+            AttestationConveyancePreference attestation = AttestationConveyancePreference.Direct,
+            IMetadataService metadataService = null,
+            List<PubKeyCredParam> pubKeyCredParams = null,
+            string id = null,
+            byte[] rawId = null)
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {
                 Type = PublicKeyCredentialType.PublicKey,
-                Id = "8dA",
-                RawId = [0xf1, 0xd0],
+                Id = id ?? "8dA",
+                RawId = rawId ?? [0xf1, 0xd0],
                 Response = new AuthenticatorAttestationRawResponse.AttestationResponse
                 {
                     AttestationObject = _attestationObject.Encode(),
@@ -227,7 +231,7 @@ public class Fido2Tests
                     UserVerification = UserVerificationRequirement.Discouraged,
                 },
                 Challenge = _challenge,
-                PubKeyCredParams = new List<PubKeyCredParam>()
+                PubKeyCredParams = pubKeyCredParams ?? new List<PubKeyCredParam>()
                 {
                     new(COSE.Algorithm.ES256),
                     new(COSE.Algorithm.ES384),
@@ -268,7 +272,7 @@ public class Fido2Tests
 
             configure?.Invoke(config);
 
-            var lib = new Fido2(config);
+            var lib = new Fido2(config, metadataService);
 
             var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
             {

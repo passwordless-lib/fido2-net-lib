@@ -24,7 +24,9 @@ internal static class L3AssertionHarness
         AuthenticationExtensionsClientOutputs clientExtensionResults = null,
         IReadOnlyList<PublicKeyCredentialDescriptor> allowCredentials = null,
         bool omitUserHandle = false,
-        byte[] userHandle = null)
+        byte[] userHandle = null,
+        string id = null,
+        byte[] rawId = null)
     {
         using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var parameters = ecdsa.ExportParameters(false);
@@ -63,8 +65,8 @@ internal static class L3AssertionHarness
         var response = new AuthenticatorAssertionRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = CredentialId,
+            Id = id ?? "8dA",
+            RawId = rawId ?? CredentialId,
             ClientExtensionResults = clientExtensionResults ?? new AuthenticationExtensionsClientOutputs(),
             Response = new AuthenticatorAssertionRawResponse.AssertionResponse
             {
