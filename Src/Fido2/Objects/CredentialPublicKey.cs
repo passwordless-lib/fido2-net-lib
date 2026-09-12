@@ -240,6 +240,10 @@ public sealed class CredentialPublicKey
                 {
                     return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, (byte[])_cpk[COSE.KeyTypeParameter.X], KeyBlobFormat.RawPublicKey);
                 }
+                else if (crv is COSE.EllipticCurve.Ed448)
+                {
+                    throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "Ed448 is not yet supported. NSec.Cryptography library version does not include Ed448 support.");
+                }
                 else
                 {
                     throw new InvalidOperationException($"Missing or unknown crv {crv}");
