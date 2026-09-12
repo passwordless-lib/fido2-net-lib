@@ -106,6 +106,27 @@ public class MetadataModelTests
     }
 
     [Fact]
+    public void CommandIdentifierArraysAreEmptyWhenTheJsonArrayIsEmpty()
+    {
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":[]}""");
+
+        Assert.Empty(info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysClampAnInRangeValueThatArrivedAsADouble()
+    {
+        // A decimal-formatted literal fails Utf8JsonReader.TryGetUInt64 even though its value is well within
+        // ulong's range, forcing the same GetDouble()+clamp fallback as an out-of-range value -- exercising the
+        // "no clamping needed" side of ClampToUInt64, as opposed to the ulong.MaxValue-saturating side.
+        var json = """{"vendorPrototypeConfigCommands":[123.0]}""";
+
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>(json);
+
+        Assert.Equal([123UL], info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
     public void AuthenticatorGetInfoWithoutTheCtap23MembersStillParses()
     {
         var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"versions":["FIDO_2_0"]}""");
