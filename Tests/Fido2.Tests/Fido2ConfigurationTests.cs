@@ -241,4 +241,29 @@ public class Fido2ConfigurationTests
 
         Assert.Throws<Fido2ConfigurationException>(config.Validate);
     }
+
+    [Fact]
+    public void PolicyPropertiesDefaultToTheDocumentedValues()
+    {
+        var config = new Fido2Configuration();
+
+        Assert.False(config.AllowCrossOriginRequests);
+        Assert.Equal(CompoundAttestationPolicy.RequireAll, config.CompoundAttestationPolicy);
+        Assert.Equal(UnsolicitedExtensionPolicy.Ignore, config.UnsolicitedExtensionPolicy);
+    }
+
+    [Fact]
+    public void PolicyPropertiesCanBeOverridden()
+    {
+        var config = new Fido2Configuration
+        {
+            AllowCrossOriginRequests = true,
+            CompoundAttestationPolicy = CompoundAttestationPolicy.RequireAny,
+            UnsolicitedExtensionPolicy = UnsolicitedExtensionPolicy.Reject,
+        };
+
+        Assert.True(config.AllowCrossOriginRequests);
+        Assert.Equal(CompoundAttestationPolicy.RequireAny, config.CompoundAttestationPolicy);
+        Assert.Equal(UnsolicitedExtensionPolicy.Reject, config.UnsolicitedExtensionPolicy);
+    }
 }
