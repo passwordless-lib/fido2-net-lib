@@ -208,7 +208,9 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
             {
                 if (element.Certificate.Issuer != element.Certificate.Subject)
                 {
-                    var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
+                    if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
+                        throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
+
                     var crlFile = await DownloadDataAsync(cdp, cancellationToken);
                     if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
                         throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");

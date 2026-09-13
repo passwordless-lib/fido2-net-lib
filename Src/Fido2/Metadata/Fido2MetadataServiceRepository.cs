@@ -252,7 +252,9 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             {
                 if (element.Certificate.Issuer != element.Certificate.Subject)
                 {
-                    var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
+                    if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
+                        throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
+
                     using var client = _httpClientFactory.CreateClient();
                     var crlFile = await client.GetByteArrayAsync(cdp, cancellationToken);
                     if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
