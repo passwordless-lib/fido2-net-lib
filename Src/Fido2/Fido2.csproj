@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
     <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="NSec.Cryptography" Condition="'$(DisableNSec)' != 'true'" />
     <PackageReference Include="System.Formats.Cbor" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />

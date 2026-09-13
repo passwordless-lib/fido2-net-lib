@@ -138,21 +138,25 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Could not fetch metadata from {0}", repository.GetType().Name);
+            _logger.MetadataFetchFailed(ex, repository.GetType().Name);
             return null;
         }
     }
 
     protected virtual async Task StoreDistributedCachedBlob(IMetadataRepository repository, MetadataBLOBPayload payload, CancellationToken cancellationToken = default)
     {
+        var expires = GetDistributedCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(payload));
+
         await _distributedCache.SetStringAsync(
             GetBlobCacheKey(repository),
             JsonSerializer.Serialize(payload),
             new DistributedCacheEntryOptions()
             {
-                AbsoluteExpiration = GetDistributedCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(payload))
+                AbsoluteExpiration = expires
             },
             cancellationToken);
+
+        _logger.BlobCached(repository.GetType().Name, expires);
     }
 
     protected virtual async Task<MetadataBLOBPayload> GetDistributedCachedBlob(IMetadataRepository repository, CancellationToken cancellationToken = default)
@@ -170,19 +174,27 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
                 //If the cache until time is in the past then update and return new data, otherwise return the cached value
                 if (nextUpdateTime == null || nextUpdateTime.Value.Add(_nextUpdateBufferPeriod) < _systemClock.UtcNow)
                 {
+                    _logger.CachedBlobDue(repository.GetType().Name, nextUpdateTime);
+
                     var payload = await GetRepositoryPayloadWithErrorHandling(repository, cancellationToken);
                     if (payload != null)
                     {
                         await StoreDistributedCachedBlob(repository, payload, cancellationToken);
                         return payload;
                     }
+
+                    _logger.ContinuingWithDueCachedBlob(repository.GetType().Name);
+                }
+                else
+                {
+                    _logger.CachedBlobCurrent(repository.GetType().Name, nextUpdateTime);
                 }
 
                 return cachedBlob;
             }
             catch (JsonException ex)
             {
-                _logger.LogWarning(ex, "{0}: Invalid BLOB value in distributed cache", nameof(DistributedCacheMetadataService));
+                _logger.CachedBlobUnreadable(ex, repository.GetType().Name);
             }
         }
 
@@ -190,6 +202,10 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
         if (repoBlob != null)
         {
             await StoreDistributedCachedBlob(repository, repoBlob, cancellationToken);
+        }
+        else
+        {
+            _logger.NoMetadataAvailable(repository.GetType().Name);
         }
 
         return repoBlob;
