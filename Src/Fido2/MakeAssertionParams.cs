@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 
+using Fido2NetLib.Objects;
+
 namespace Fido2NetLib;
 
 /// <summary>
@@ -43,6 +45,12 @@ public sealed class MakeAssertionParams
     /// The delegate used to validate that the user handle is indeed owned of the CredentialId.
     /// </summary>
     public required IsUserHandleOwnerOfCredentialIdAsync IsUserHandleOwnerOfCredentialIdCallback { get; init; }
+
+    /// <summary>
+    /// What the user should have been shown, when the assertion comes from Secure Payment Confirmation. Leave it
+    /// <see langword="null"/> for a login: a payment assertion is then refused, so one cannot be replayed as a login.
+    /// </summary>
+    public SecurePaymentConfirmationExpectations? SecurePaymentConfirmation { get; init; }
 
     /// <summary>
     /// DO NOT USE - Deprecated, but kept in code due to conformance testing tool.
