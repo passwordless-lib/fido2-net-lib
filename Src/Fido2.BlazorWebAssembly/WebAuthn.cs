@@ -15,7 +15,7 @@ public class WebAuthn
     public WebAuthn(IJSRuntime js)
     {
         _initializer = Task.Run(async () =>
-            _jsModule = await js.InvokeAsync<IJSObjectReference>("import", "./_content/Fido2.BlazorWebAssembly/js/WebAuthn.js"));
+            _jsModule = await js.InvokeAsync<IJSObjectReference>("import", "./_content/Fido2.BlazorWebAssembly/js/WebAuthn.ts"));
     }
 
     /// <summary>
