@@ -39,7 +39,8 @@ var authenticatorSelection = new AuthenticatorSelection
     ResidentKey = ResidentKeyRequirement.Discouraged // if you don't want resident keys
 };
 ```
-`status` and `errorMessage` were removed from `options` objects
+
+### `status` and `errorMessage` were removed from `options` objects
 
 `CredentialCreateOptions` and `AssertionOptions` no longer carry `Status`/`ErrorMessage` ([#529](https://github.com/passwordless-lib/fido2-net-lib/pull/529)). The library only ever set `Status = "ok"` — errors were always raised as `Fido2VerificationException`, so nothing consumed these values for real error handling. If your client-side code branches on `data.status === "ok"`, drop that check; the response no longer has the field, and its absence is not an error.
 
