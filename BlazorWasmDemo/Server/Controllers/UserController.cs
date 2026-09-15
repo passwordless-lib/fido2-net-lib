@@ -111,8 +111,6 @@ public class UserController : ControllerBase
                 AttestationPreference = attestationType ?? AttestationConveyancePreference.None,
                 Extensions = new AuthenticationExtensionsClientInputs
                 {
-                    Extensions = true,
-                    UserVerificationMethod = true,
                     CredProps = true
                 }
             });
@@ -160,12 +158,15 @@ public class UserController : ControllerBase
 
                 AttestationFormat = credential.AttestationFormat,
                 Id = credential.Id,
+                RpId = credential.RpId,
                 PublicKey = credential.PublicKey,
                 UserHandle = credential.User.Id,
                 SignCount = credential.SignCount,
                 RegDate = DateTimeOffset.UtcNow,
                 AaGuid = credential.AaGuid,
                 Transports = credential.Transports,
+                AuthenticatorAttachment = credential.AuthenticatorAttachment,
+                UvInitialized = credential.UvInitialized,
                 IsBackupEligible = credential.IsBackupEligible,
                 IsBackedUp = credential.IsBackedUp,
                 AttestationObject = credential.AttestationObject,
@@ -206,18 +207,11 @@ public class UserController : ControllerBase
                     existingKeys = _demoStorage.GetCredentialsByUser(user).Select(c => c.Descriptor).ToList();
             }
 
-            var exts = new AuthenticationExtensionsClientInputs
-            {
-                UserVerificationMethod = true,
-                Extensions = true
-            };
-
             // 2. Create options (usernameless users will be prompted by their device to select a credential from their own list)
             var options = _fido2.GetAssertionOptions(new GetAssertionOptionsParams
             {
                 AllowedCredentials = existingKeys,
-                UserVerification = userVerification ?? UserVerificationRequirement.Discouraged,
-                Extensions = exts
+                UserVerification = userVerification ?? UserVerificationRequirement.Discouraged
             });
 
             // 4. Temporarily store options, session/in-memory cache/redis/db
@@ -274,11 +268,12 @@ public class UserController : ControllerBase
                 OriginalOptions = options,
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = creds.SignCount,
+                StoredBackupEligible = creds.IsBackupEligible,
                 IsUserHandleOwnerOfCredentialIdCallback = UserHandleOwnerOfCredentialIdAsync
             }, cancellationToken: cancellationToken);
 
-            // 4. Store the updated counter
-            _demoStorage.UpdateCounter(res.CredentialId, res.SignCount);
+            // 4. Store the updated credential record state (counter, backup state, uvInitialized)
+            _demoStorage.UpdateCredentialRecord(res);
 
 
             // 5. return result to client

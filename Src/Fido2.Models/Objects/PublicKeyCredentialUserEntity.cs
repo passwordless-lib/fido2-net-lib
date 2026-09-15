@@ -1,5 +1,6 @@
 ﻿#nullable disable
 
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Fido2NetLib.Objects;
@@ -16,5 +17,9 @@ public sealed class PublicKeyCredentialUserEntity
 
     public string DisplayName { get; set; }
 
+    /// <summary>
+    /// No longer part of WebAuthn.
+    /// </summary>
+    [Obsolete("The icon member was removed from PublicKeyCredentialEntity in WebAuthn Level 2 and does not exist in Level 3; clients ignore it. This member will be removed in a future major version.")]
     public string Icon { get; set; }
 }

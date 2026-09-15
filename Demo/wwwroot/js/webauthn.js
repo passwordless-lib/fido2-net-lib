@@ -72,7 +72,8 @@ async function registerCeremony(config) {
             residentKey: config.residentKey,
             hints: (config.hints || []).join(','),
             attestationFormats: (config.attestationFormats || []).join(','),
-            prf: config.prf ? 'true' : ''
+            prf: config.prf ? 'true' : '',
+            algorithms: (config.algorithms || []).join(',')
         });
     } catch (e) {
         console.error(e);
@@ -85,6 +86,11 @@ async function registerCeremony(config) {
     if (isServerError(options)) {
         showErrorAlert(options.errorMessage);
         return;
+    }
+
+    // The playground shows the options exactly as they arrived, before the browser parses them.
+    if (config.onRequest) {
+        config.onRequest(options);
     }
 
     // WebAuthn L3 §5.1.8: the server speaks the JSON form of the options, the browser turns it into the
@@ -133,11 +139,17 @@ async function registerCeremony(config) {
 
     console.log('PublicKeyCredential Created', newCredential);
 
+    const credentialJson = newCredential.toJSON();
+
+    if (config.onResponse) {
+        config.onResponse(credentialJson);
+    }
+
     let result;
     try {
         // WebAuthn L3 §5.1: toJSON() gives the base64url-encoded form the server model expects.
         const query = config.mediation ? '?mediation=' + encodeURIComponent(config.mediation) : '';
-        result = await postJson('/makeCredential' + query, newCredential.toJSON());
+        result = await postJson('/makeCredential' + query, credentialJson);
     } catch (e) {
         showErrorAlert('Could not send the new credential to the server.', e);
         return;
@@ -160,7 +172,7 @@ async function registerCeremony(config) {
     // The usernameless flow has no username to redirect with -- the server generated the account name --
     // so prefer the name it echoes back on the credential.
     const registeredName = (result.user && result.user.name) || config.username;
-    if (registeredName) {
+    if (registeredName && !config.stayOnPage) {
         window.location.href = '/dashboard/' + encodeURIComponent(registeredName);
     }
 }
@@ -198,6 +210,10 @@ async function signInCeremony(config) {
         return;
     }
 
+    if (config.onRequest) {
+        config.onRequest(options);
+    }
+
     options = PublicKeyCredential.parseRequestOptionsFromJSON(options);
 
     console.log('Assertion options', options);
@@ -230,9 +246,15 @@ async function signInCeremony(config) {
         return;
     }
 
+    const assertionJson = credential.toJSON();
+
+    if (config.onResponse) {
+        config.onResponse(assertionJson);
+    }
+
     let result;
     try {
-        result = await postJson('/makeAssertion', credential.toJSON());
+        result = await postJson('/makeAssertion', assertionJson);
     } catch (e) {
         showErrorAlert('Could not verify the assertion with the server.', e);
         return;

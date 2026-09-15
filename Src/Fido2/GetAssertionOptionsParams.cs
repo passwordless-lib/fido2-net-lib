@@ -33,4 +33,12 @@ public sealed class GetAssertionOptionsParams
     /// The Relying Party MAY use this OPTIONAL member to provide client extension inputs requesting additional processing by the client and authenticator.
     /// </summary>
     public AuthenticationExtensionsClientInputs? Extensions { get; init; }
+
+    /// <summary>
+    /// Zero or more hints, in descending order of preference, guiding the user agent in how it presents this
+    /// authentication to the user. Hints are not requirements and do not bind the user agent, but they take
+    /// precedence over any conflicting transports in <see cref="AllowedCredentials"/>.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#enum-hints"/>
+    /// </summary>
+    public IReadOnlyList<PublicKeyCredentialHint> Hints { get; init; } = [];
 }

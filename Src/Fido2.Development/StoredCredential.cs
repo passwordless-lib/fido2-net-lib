@@ -12,6 +12,18 @@ public class StoredCredential
     public required byte[] Id { get; set; }
 
     /// <summary>
+    /// The value of the <c>rp.id</c> parameter specified in the <c>create()</c> operation during credential
+    /// registration. This is a core property of the credential that determines where it can be used. Storing it
+    /// helps later on: to audit the credential's use, to troubleshoot authentication problems, or to use it
+    /// across different domains via
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-related-origins">Related Origins</see>.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#credential-record"/>
+    /// </remarks>
+    public string RpId { get; set; }
+
+    /// <summary>
     /// The credential public key of the public key credential source.
     /// </summary>
     public byte[] PublicKey { get; set; }
@@ -25,6 +37,18 @@ public class StoredCredential
     /// The value returned from getTransports() when the public key credential source was registered.
     /// </summary>
     public AuthenticatorTransport[] Transports { get; set; }
+
+    /// <summary>
+    /// The attachment modality the client reported at registration, if any. Informational only.
+    /// See <see cref="RegisteredPublicKeyCredential.AuthenticatorAttachment"/>.
+    /// </summary>
+    public AuthenticatorAttachment? AuthenticatorAttachment { get; set; }
+
+    /// <summary>
+    /// Indicates whether any credential from this public key credential source has had the UV flag set.
+    /// See <see cref="RegisteredPublicKeyCredential.UvInitialized"/>.
+    /// </summary>
+    public bool UvInitialized { get; set; }
 
     /// <summary>
     /// The value of the BE flag when the public key credential source was created.
@@ -47,6 +71,14 @@ public class StoredCredential
     /// Storing this in combination with the above attestationObject item enables the Relying Party to re-verify the attestation signature at a later time.
     /// </summary>
     public byte[] AttestationClientDataJson { get; set; }
+
+    /// <summary>
+    /// What the client reported through the <c>credProps</c> extension's <c>rk</c> value at registration:
+    /// <see langword="true"/> for a discoverable credential, <see langword="false"/> for a server-side
+    /// credential, and <see langword="null"/> when the client did not say which.
+    /// See <see cref="CredentialPropertiesOutput.Rk"/>.
+    /// </summary>
+    public bool? IsDiscoverable { get; set; }
 
     public byte[] UserId { get; set; }
 

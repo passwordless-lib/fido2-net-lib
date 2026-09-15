@@ -8,15 +8,18 @@ namespace Fido2NetLib.Objects;
 public class CredentialPropertiesOutput
 {
     /// <summary>
-    /// This OPTIONAL property, known abstractly as the resident key credential property (i.e., client-side discoverable credential property), is a Boolean value indicating whether the PublicKeyCredential returned as a result of a registration ceremony is a client-side discoverable credential. If rk is true, the credential is a discoverable credential. if rk is false, the credential is a server-side credential. If rk is not present, it is not known whether the credential is a discoverable credential or a server-side credential.
+    /// This OPTIONAL property, known abstractly as the resident key credential property (i.e., client-side
+    /// discoverable credential property), indicates whether the credential returned by a registration ceremony
+    /// is a client-side discoverable credential.
     /// </summary>
+    /// <remarks>
+    /// Three-state, per WebAuthn L3 §10.1.3: <see langword="true"/> means the credential is discoverable,
+    /// <see langword="false"/> means it is a server-side credential, and <see langword="null"/> means the client
+    /// did not report which -- "If rk is not present, it is not known whether the credential is a discoverable
+    /// credential or a server-side credential." Treating an absent value as <see langword="false"/> would claim
+    /// knowledge the client did not provide.
+    /// </remarks>
     [JsonPropertyName("rk")]
-    public bool Rk { get; init; }
-
-    /// <summary>
-    /// This OPTIONAL property is a human-palatable description of the credential’s managing authenticator, chosen by the user.
-    /// https://w3c.github.io/webauthn/#dom-credentialpropertiesoutput-authenticatordisplayname
-    /// </summary>
-    [JsonPropertyName("authenticatorDisplayName")]
-    public string? AuthenticatorDisplayName { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Rk { get; init; }
 }

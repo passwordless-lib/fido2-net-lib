@@ -10,7 +10,7 @@ namespace Fido2NetLib;
 /// <remarks>
 /// Entries are published in the rogue list a <see cref="MetadataBLOBPayloadEntry.RogueListURL"/> points at, and
 /// are removed again if the authenticator becomes known not to be rogue any longer.
-/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.1.1-ps-20260105.html#roguelistentry-dictionary"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-service-v3.1.1-ps-20260105.html#sctn-rogue-list-entry"/>
 /// </remarks>
 public sealed class RogueListEntry
 {

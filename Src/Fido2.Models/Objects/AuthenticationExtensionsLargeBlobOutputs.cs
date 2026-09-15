@@ -9,7 +9,7 @@ namespace Fido2NetLib.Objects;
 /// on the client extension output on the browser side after calling navigator.credentials.get(). Specifically,
 /// the value of <c>largeBlob.blob</c> must be converted from a Uint8Array to a base64url-encoded string.
 ///
-/// https://w3c.github.io/webauthn/#dictdef-authenticationextensionslargebloboutputs
+/// https://www.w3.org/TR/webauthn-3/#dictdef-authenticationextensionslargebloboutputs
 /// </summary>
 public sealed class AuthenticationExtensionsLargeBlobOutputs
 {
@@ -18,7 +18,7 @@ public sealed class AuthenticationExtensionsLargeBlobOutputs
     ///
     /// Valid only during registration.
     ///
-    /// https://w3c.github.io/webauthn/#dom-authenticationextensionslargebloboutputs-supported
+    /// https://www.w3.org/TR/webauthn-3/#dom-authenticationextensionslargebloboutputs-supported
     /// </summary>
     [JsonPropertyName("supported")]
     public bool Supported { get; init; } = false;
@@ -28,7 +28,7 @@ public sealed class AuthenticationExtensionsLargeBlobOutputs
     ///
     /// Valid only during assertion.
     ///
-    /// https://w3c.github.io/webauthn/#dom-authenticationextensionslargebloboutputs-blob
+    /// https://www.w3.org/TR/webauthn-3/#dom-authenticationextensionslargebloboutputs-blob
     /// </summary>
     [JsonConverter(typeof(Base64UrlConverter))]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -40,7 +40,7 @@ public sealed class AuthenticationExtensionsLargeBlobOutputs
     ///
     /// Valid only during assertion.
     ///
-    /// https://w3c.github.io/webauthn/#dom-authenticationextensionslargebloboutputs-written
+    /// https://www.w3.org/TR/webauthn-3/#dom-authenticationextensionslargebloboutputs-written
     /// </summary>
     [JsonPropertyName("written")]
     public bool Written { get; init; } = false;

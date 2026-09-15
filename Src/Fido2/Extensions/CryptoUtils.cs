@@ -45,6 +45,10 @@ internal static class CryptoUtils
             (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
             (COSE.Algorithm)13 => HashAlgorithmName.SHA512,
             COSE.Algorithm.EdDSA => HashAlgorithmName.SHA512,
+            COSE.Algorithm.ESP256 => HashAlgorithmName.SHA256,
+            COSE.Algorithm.ESP384 => HashAlgorithmName.SHA384,
+            COSE.Algorithm.ESP512 => HashAlgorithmName.SHA512,
+            COSE.Algorithm.Ed25519 => HashAlgorithmName.SHA512,
             _ => throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCoseAlgorithmValue),
         };
     }

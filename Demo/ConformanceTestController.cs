@@ -117,6 +117,7 @@ public class ConformanceTestController : Controller
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
             Id = credential.Id,
+            RpId = credential.RpId,
             PublicKey = credential.PublicKey,
             UserHandle = credential.User.Id,
             SignCount = credential.SignCount
@@ -146,11 +147,15 @@ public class ConformanceTestController : Controller
         if (null != assertionClientParams.authenticatorSelection)
             uv = assertionClientParams.authenticatorSelection.UserVerification;
 
+        // uvm was removed in WebAuthn L3, but the FIDO conformance tool still exercises it, so this controller
+        // keeps requesting it deliberately.
+#pragma warning disable CS0618
         var exts = new AuthenticationExtensionsClientInputs
         {
             AppID = _origin,
             UserVerificationMethod = true
         };
+#pragma warning restore CS0618
         if (null != assertionClientParams.Extensions && null != assertionClientParams.Extensions.Example)
             exts.Example = assertionClientParams.Extensions.Example;
 

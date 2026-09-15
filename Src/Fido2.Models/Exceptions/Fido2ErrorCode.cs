@@ -33,5 +33,11 @@ public enum Fido2ErrorCode
     UnimplementedAlgorithm,
     BackupEligibilityRequirementNotMet,
     BackupStateRequirementNotMet,
-    CredentialAlgorithmRequirementNotMet
+    CredentialAlgorithmRequirementNotMet,
+    CrossOriginRequestNotAllowed,
+    InvalidAuthenticatorResponseTopOrigin,
+    InvalidBackupFlags,
+    BackupEligibilityChanged,
+    InvalidCredentialPublicKey,
+    UnexpectedEnterpriseAttestation
 }

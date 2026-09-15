@@ -1,4 +1,4 @@
-namespace Fido2NetLib.Ctap2;
+﻿namespace Fido2NetLib.Ctap2;
 
 /// <summary>
 /// Request for the authenticatorSelection (0x0B) command, letting the platform ask a user to
