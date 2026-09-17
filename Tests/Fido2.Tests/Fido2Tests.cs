@@ -113,6 +113,9 @@ public class Fido2Tests
         // own root instead of Apple's real WebAuthn root.
         public X509Certificate2 AppleWebAuthnRootOverride;
 
+        // Likewise for android-safetynet against Google's real root.
+        public X509Certificate2 AndroidSafetyNetRootOverride;
+
         public byte[] _rpIdHash => SHA256.HashData(Encoding.UTF8.GetBytes(rp));
 
         public byte[] _clientDataJson
@@ -242,6 +245,7 @@ public class Fido2Tests
                 RPName = rp,
                 Origins = new HashSet<string> { rp },
                 AppleWebAuthnRootCertificate = AppleWebAuthnRootOverride,
+                AndroidSafetyNetRootCertificate = AndroidSafetyNetRootOverride,
             });
 
             var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
