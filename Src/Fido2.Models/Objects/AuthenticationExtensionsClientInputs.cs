@@ -21,7 +21,7 @@ public sealed class AuthenticationExtensionsClientInputs
     /// https://www.w3.org/TR/webauthn/#sctn-appid-extension
     /// </summary>
     [JsonPropertyName("appid")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string AppID { get; set; }
 
     /// <summary>
