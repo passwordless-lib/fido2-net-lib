@@ -1091,4 +1091,18 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("SafetyNet response ctsProfileMatch false", ex.Message);
     }
+
+    [Fact]
+    public async Task TestAndroidSafetyNetResponseJWTHeaderNotJson()
+    {
+        var response = (byte[])_attestationObject["attStmt"]["response"];
+        var jwtParts = Encoding.UTF8.GetString(response).Split('.');
+        jwtParts[0] = Base64Url.EncodeToString(Encoding.UTF8.GetBytes("{not json"));
+        response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
+        var attStmt = (CborMap)_attestationObject["attStmt"];
+        attStmt.Set("response", new CborByteString(response));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("SafetyNet response JWT is malformed", ex.Message);
+    }
 }

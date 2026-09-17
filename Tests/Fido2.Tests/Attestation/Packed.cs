@@ -665,8 +665,9 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c }
         });
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(MakeAttestationResponseAsync);
-        Assert.Equal("Missing or unknown alg 42", ex.Message);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm 42 cannot be used with an EC2 key on curve P256", ex.Message);
     }
 
     [Fact]
@@ -972,5 +973,112 @@ public class Packed : Fido2Tests.Attestation
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Attestation certificate has CA cert flag present", ex.Message);
+    }
+
+    /// <summary>
+    /// Builds a full packed attestation whose ES256 attestation certificate is self-signed with the given subject and
+    /// extensions, so a test can vary just the certificate.
+    /// </summary>
+    private void AddFullAttStmtWithSelfSignedCert(X500DistinguishedName subject, params X509Extension[] extensions)
+    {
+        var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attRequest = new CertificateRequest(subject, ecdsaAtt, HashAlgorithmName.SHA256);
+        foreach (var extension in extensions)
+            attRequest.CertificateExtensions.Add(extension);
+
+        using var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        byte[] signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", signature },
+            { "x5c", new CborArray { attestnCert.RawData } }
+        });
+    }
+
+    [Fact]
+    public async Task TestFullAttCertSubjectEmpty()
+    {
+        AddFullAttStmtWithSelfSignedCert(new X500DistinguishedName(""), notCAExt);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.InvalidAttestationCertSubject, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAttCertAaguidNot16Bytes()
+    {
+        // OCTET STRING of 3 bytes where the AAGUID's 16 are required
+        var shortAaguidExt = new X509Extension(oidIdFidoGenCeAaGuid, [0x04, 0x03, 0xf1, 0xd0, 0xf1], false);
+        AddFullAttStmtWithSelfSignedCert(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), notCAExt, shortAaguidExt);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("id-fido-gen-ce-aaguid extension must be a 16-byte OCTET STRING, got 3 bytes", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAttCertAaguidNotOctetString()
+    {
+        // a UTF8String where an OCTET STRING is required
+        var textAaguidExt = new X509Extension(oidIdFidoGenCeAaGuid, [0x0c, 0x02, 0x41, 0x42], false);
+        AddFullAttStmtWithSelfSignedCert(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), notCAExt, textAaguidExt);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("id-fido-gen-ce-aaguid extension is not an OCTET STRING", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAlgDoesNotMatchAttCertKeyType()
+    {
+        // an EC attestation certificate with an RSA algorithm identifier
+        var (type, _, curve) = Fido2Tests._validCOSEParameters[0];
+
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attRequest = new CertificateRequest(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), ecdsaAtt, HashAlgorithmName.SHA256);
+        attRequest.CertificateExtensions.Add(notCAExt);
+        using var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "alg", COSE.Algorithm.RS256 },
+            { "sig", SignData(type, COSE.Algorithm.ES256, curve, ecdsa: ecdsaAtt) },
+            { "x5c", new CborArray { attestnCert.RawData } }
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm RS256 cannot be used with an EC2 key on curve P256", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAlgDoesNotMatchRsaAttCertKeyType()
+    {
+        // an RSA attestation certificate with an ECDSA algorithm identifier
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
+
+        using var rsaAtt = RSA.Create(2048);
+        var attRequest = new CertificateRequest(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), rsaAtt, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        attRequest.CertificateExtensions.Add(notCAExt);
+        using var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "alg", COSE.Algorithm.ES256 },
+            { "sig", new byte[64] },
+            { "x5c", new CborArray { attestnCert.RawData } }
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm ES256 cannot be used with an RSA key", ex.Message);
     }
 }

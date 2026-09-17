@@ -44,7 +44,7 @@ public sealed class CredentialPublicKey
                     return;
                 }
         }
-        throw new InvalidOperationException($"Missing or unknown kty {_type}");
+        throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Missing or unknown kty {_type}");
     }
 
     public CredentialPublicKey(ECDsa ecdsaPublicKey, COSE.Algorithm alg)
@@ -104,7 +104,7 @@ public sealed class CredentialPublicKey
                     break;
                 }
             default:
-                throw new InvalidOperationException($"Missing or unknown kty {_type}");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Missing or unknown kty {_type}");
         }
     }
 
@@ -186,7 +186,10 @@ public sealed class CredentialPublicKey
                 curve = ECCurve.NamedCurves.nistP521;
                 break;
             default:
-                throw new InvalidOperationException($"Missing or unknown alg {_alg}");
+                // the alg names one hash/curve pairing and crv another (or is not an ECDSA algorithm at all);
+                // reached with attacker-chosen values both when parsing a credential public key and when an
+                // attestation statement's alg is paired with its certificate's key
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an EC2 key on curve {crv}");
         }
 
         return ECDsa.Create(new ECParameters
@@ -218,7 +221,7 @@ public sealed class CredentialPublicKey
                 case COSE.Algorithm.RS512:
                     return RSASignaturePadding.Pkcs1;
                 default:
-                    throw new InvalidOperationException($"Missing or unknown alg {_alg}");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an RSA key");
             }
         }
     }
@@ -246,10 +249,10 @@ public sealed class CredentialPublicKey
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Missing or unknown crv {crv}");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Missing or unknown crv {crv}");
                 }
             default:
-                throw new InvalidOperationException($"Missing or unknown alg {_alg}");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an OKP key");
         }
     }
 

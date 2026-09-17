@@ -1,4 +1,5 @@
-﻿using System.Formats.Asn1;
+﻿using System;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -53,9 +54,23 @@ public abstract class AttestationVerifier
         var ext = exts.FirstOrDefault(static e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
         if (ext != null)
         {
-            var decodedAaguid = Asn1Element.Decode(ext.RawData);
-            decodedAaguid.CheckTag(Asn1Tag.PrimitiveOctetString);
+            Asn1Element decodedAaguid;
+            try
+            {
+                decodedAaguid = Asn1Element.Decode(ext.RawData);
+                decodedAaguid.CheckTag(Asn1Tag.PrimitiveOctetString);
+            }
+            catch (Exception ex)
+            {
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "id-fido-gen-ce-aaguid extension is not an OCTET STRING", ex);
+            }
+
             aaguid = decodedAaguid.GetOctetString();
+
+            // ... containing the AAGUID as a 16-byte OCTET STRING; anything else cannot be compared with the
+            // authenticator data's AAGUID (and would make the Guid constructor throw)
+            if (aaguid.Length != 16)
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"id-fido-gen-ce-aaguid extension must be a 16-byte OCTET STRING, got {aaguid.Length} bytes");
 
             // The extension MUST NOT be marked as critical
             if (ext.Critical)

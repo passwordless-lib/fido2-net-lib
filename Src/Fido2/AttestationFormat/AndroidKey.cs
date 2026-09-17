@@ -172,7 +172,11 @@ internal sealed class AndroidKey : AttestationVerifier
         }
 
         X509Certificate2 androidKeyCert = trustPath[0];
-        ECDsa androidKeyPubKey = androidKeyCert.GetECDsaPublicKey()!; // attestation public key
+
+        // attestation public key; GetECDsaPublicKey returns null for any other key algorithm, and the
+        // signature check below only handles ECDSA, so say so rather than dereference the null
+        if (androidKeyCert.GetECDsaPublicKey() is not ECDsa androidKeyPubKey)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Android Key attestation certificate public key is not an Elliptic Curve (EC) public key");
 
         byte[] ecSignature;
         try

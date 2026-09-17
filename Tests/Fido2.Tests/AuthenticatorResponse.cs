@@ -239,6 +239,55 @@ public class AuthenticatorResponseTests
         Assert.StartsWith("Fully qualified origin", ex.Message);
     }
 
+    // C.origin is attacker-controlled: a client data JSON without one, or with one the URI parser cannot read,
+    // must fail verification rather than escape as ArgumentNullException or UriFormatException.
+    [Theory]
+    [InlineData("{\"type\":\"webauthn.create\",\"challenge\":\"AQID\"}", Fido2ErrorCode.MissingAuthenticatorResponseOrigin)]
+    [InlineData("{\"type\":\"webauthn.create\",\"challenge\":\"AQID\",\"origin\":null}", Fido2ErrorCode.MissingAuthenticatorResponseOrigin)]
+    [InlineData("{\"type\":\"webauthn.create\",\"challenge\":\"AQID\",\"origin\":\"\"}", Fido2ErrorCode.MissingAuthenticatorResponseOrigin)]
+    [InlineData("{\"type\":\"webauthn.create\",\"challenge\":\"AQID\",\"origin\":\"not a url\"}", Fido2ErrorCode.InvalidAuthenticatorResponseOrigin)]
+    [InlineData("{\"type\":\"webauthn.create\",\"challenge\":\"AQID\",\"origin\":\"https://\"}", Fido2ErrorCode.InvalidAuthenticatorResponseOrigin)]
+    public async Task TestAuthenticatorOriginMissingOrMalformed(string clientDataJson, Fido2ErrorCode expectedCode)
+    {
+        const string rp = "https://www.passwordless.dev";
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var authData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.AT, 0, acd).ToByteArray();
+
+        var rawResponse = new AuthenticatorAttestationRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = "8dA",
+            RawId = [0xf1, 0xd0],
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = new CborMap {
+                    { "fmt", "none" },
+                    { "attStmt", new CborMap() },
+                    { "authData", authData }
+                }.Encode(),
+                ClientDataJson = Encoding.UTF8.GetBytes(clientDataJson)
+            },
+        };
+
+        var originalOptions = new CredentialCreateOptions
+        {
+            Challenge = [0x01, 0x02, 0x03],
+            PubKeyCredParams = [new PubKeyCredParam(COSE.Algorithm.ES256)],
+            Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+            User = new Fido2User { Name = "testuser", Id = "testuser"u8.ToArray(), DisplayName = "Test User" },
+        };
+
+        var lib = new Fido2(new Fido2Configuration { RPID = rp, RPName = rp, Origins = new HashSet<string> { rp } });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = (args, cancellationToken) => Task.FromResult(true)
+        }));
+        Assert.Equal(expectedCode, ex.Code);
+    }
+
     [Fact]
     public void TestAuthenticatorAttestationRawResponse()
     {
