@@ -40,9 +40,20 @@ internal sealed class Tpm : AttestationVerifier
         }
     }
 
+    /// <summary>
+    /// The tcg-at-tpmManufacturer value ("id:FFFFF1D0", in the form <see cref="TPMManufacturers"/> uses) of the
+    /// FIDO conformance tools' simulated TPM. It is not a TCG-registered vendor, so it is accepted only when the
+    /// ceremony is running under <see cref="FidoValidationMode.FidoConformance2024"/>; a production registration
+    /// whose AIK certificate names it is refused like any other unregistered manufacturer.
+    /// </summary>
+    internal static readonly string FidoConformanceToolTpmManufacturer = ConvertTPMManufacturerToHexString("id:FFFFF1D0");
+
+    /// <summary>
+    /// The TPM manufacturers accepted in an AIK certificate's Subject Alternative Name: the product implementations
+    /// in the TCG TPM Vendor ID Registry, in upper-case hex.
+    /// </summary>
     public static readonly HashSet<string> TPMManufacturers =
     [
-        ConvertTPMManufacturerToHexString("id:FFFFF1D0"), // FIDO testing TPM (used by the FIDO conformance tools' TPM simulator)
         // TCG TPM Vendor ID Registry, Family 1.2 and 2.0, Version 1.06 Revision 0.96 (2024-08-30), section 4.1 Product Implementations
         // https://trustedcomputinggroup.org/wp-content/uploads/TCG-TPM-Vendor-ID-Registry-Family-1.2-and-2.0-Version-1.06-Revision-0.96_pub.pdf
         ConvertTPMManufacturerToHexString("id:414D4400"), // 'AMD' AMD
@@ -232,7 +243,7 @@ internal sealed class Tpm : AttestationVerifier
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SAN missing TPMManufacturer, TPMModel, or TPMVersion from TPM attestation certificate");
             }
 
-            if (TryConvertTPMManufacturerToHexString(tpmManufacturer) is not string manufacturerId || !TPMManufacturers.Contains(manufacturerId))
+            if (TryConvertTPMManufacturerToHexString(tpmManufacturer) is not string manufacturerId || !IsAcceptedManufacturer(manufacturerId, request.ValidationMode))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM manufacturer found parsing TPM attestation");
 
             // 5biiii. The Extended Key Usage extension MUST contain the "joint-iso-itu-t(2) internationalorganizations(23) 133 tcg-kp(8) tcg-kp-AIKCertificate(3)" OID.
@@ -284,6 +295,14 @@ internal sealed class Tpm : AttestationVerifier
         { 2, TpmEccCurve.TPM_ECC_NIST_P384},
         { 3, TpmEccCurve.TPM_ECC_NIST_P521}
     };
+
+    private static bool IsAcceptedManufacturer(string manufacturerId, FidoValidationMode validationMode)
+    {
+        if (TPMManufacturers.Contains(manufacturerId))
+            return true;
+
+        return validationMode is FidoValidationMode.FidoConformance2024 && manufacturerId == FidoConformanceToolTpmManufacturer;
+    }
 
     /// <summary>
     /// Runs one of the TPM structure parsers over attacker-supplied bytes. The parsers index into fixed-size

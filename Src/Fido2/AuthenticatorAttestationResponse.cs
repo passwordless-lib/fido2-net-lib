@@ -130,10 +130,15 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
         var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
 
+        // The FIDO conformance tools' simulated authenticators differ from production ones in a few documented
+        // ways; the verifiers (and, below, trust anchor validation) relax exactly those when a conformance
+        // repository is the source of metadata, and nowhere else.
+        var validationMode = metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default;
+
         // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
         //     and the hash of the serialized client data computed in step 7
-        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
+        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, validationMode).ConfigureAwait(false);
 
         // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy.

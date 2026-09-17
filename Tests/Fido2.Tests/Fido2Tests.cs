@@ -720,13 +720,27 @@ public class Fido2Tests
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
     }
 
+    /// <summary>
+    /// Stands in for the FIDO conformance tools' metadata service: the TPM fixtures below were captured from the
+    /// tools' simulated TPM, whose manufacturer (id:FFFFF1D0) is only accepted on a conformance run, and the tools'
+    /// metadata has an entry for every authenticator they simulate.
+    /// </summary>
+    private static IMetadataService ConformanceRunMetadataService()
+    {
+        var service = new Mock<IMetadataService>(MockBehavior.Strict);
+        service.Setup(m => m.ConformanceTesting()).Returns(true);
+        service.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid aaguid, CancellationToken _) => new MetadataBLOBPayloadEntry { AaGuid = aaguid, StatusReports = [] });
+        return service.Object;
+    }
+
     [Fact]
     public async Task TestTPMSHA256AttestationAsync()
     {
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA256Response.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA256Options.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), ConformanceRunMetadataService(), null, CancellationToken.None);
     }
 
     [Fact]
@@ -735,7 +749,18 @@ public class Fido2Tests
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA1Response.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA1Options.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, CancellationToken.None);
+        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), ConformanceRunMetadataService(), null, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task TestTPMConformanceToolCaptureIsRefusedOutsideAConformanceRun()
+    {
+        // the same capture, verified as a production registration: id:FFFFF1D0 is not a TCG-registered vendor
+        var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA256Response.json"));
+        var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA256Options.json"));
+        var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), null, null, CancellationToken.None));
+        Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
     }
 
     [Fact]

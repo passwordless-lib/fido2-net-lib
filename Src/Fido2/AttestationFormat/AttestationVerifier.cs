@@ -16,6 +16,11 @@ public abstract class AttestationVerifier
         return VerifyAsync(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash));
     }
 
+    public ValueTask<VerifyAttestationResult> VerifyAsync(CborMap attStmt, AuthenticatorData authenticatorData, byte[] clientDataHash, FidoValidationMode validationMode)
+    {
+        return VerifyAsync(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash, validationMode));
+    }
+
     public abstract ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request);
 
     public static AttestationVerifier Create(string formatIdentifier)

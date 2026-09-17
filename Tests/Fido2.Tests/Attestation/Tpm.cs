@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Binary;
+using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -9,6 +10,8 @@ using Fido2NetLib;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
+
+using Moq;
 
 namespace Test.Attestation;
 
@@ -59,7 +62,7 @@ public class Tpm : Fido2Tests.Attestation
             false);
 
         byte[] asnEncodedSAN = TpmSanEncoder.Encode(
-            manufacturer: "id:FFFFF1D0",
+            manufacturer: "id:4D534654", // 'MSFT' Microsoft
             model: "FIDO2-NET-LIB-TEST-TPM",
             version: "id:F1D00002"
         );
@@ -440,7 +443,7 @@ public class Tpm : Fido2Tests.Attestation
         attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
         byte[] asnEncodedSAN = TpmSanEncoder.Encode(
-            manufacturer: "id:FFFFF1D0",
+            manufacturer: "id:4D534654", // 'MSFT' Microsoft
             model: "FIDO2-NET-LIB-TestTPMAikCertSANTCGConformant",
             version: "id:F1D00002"
         );
@@ -5720,6 +5723,76 @@ public class Tpm : Fido2Tests.Attestation
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
+    }
+
+    private X509Extension FidoConformanceToolSanExt => new("2.5.29.17", TpmSanEncoder.Encode("id:FFFFF1D0", "FIDO2-NET-LIB-TEST-TPM", "id:F1D00002"), false);
+
+    [Fact]
+    public async Task TestTPMAikCertSANFidoConformanceToolManufacturerRefusedByDefault()
+    {
+        // the conformance tools' simulated TPM is not a TCG-registered vendor, and a production run is not a conformance run
+        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var ecParams = ecdsa.ExportParameters(false);
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecParams.Q.X, ecParams.Q.Y);
+
+        AddTpmAttStmt(CreateEccPubArea(ecParams, TpmEccCurve.TPM_ECC_NIST_P256), sanExt: FidoConformanceToolSanExt);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
+
+        // and the verifier itself, asked explicitly for the default validation, agrees
+        var verifier = AttestationVerifier.Create("tpm");
+        ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => await verifier.VerifyAsync((CborMap)_attestationObject["attStmt"], _authData, _clientDataHash, FidoValidationMode.Default));
+        Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestTPMAikCertSANFidoConformanceToolManufacturerAcceptedOnConformanceRuns()
+    {
+        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var ecParams = ecdsa.ExportParameters(false);
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecParams.Q.X, ecParams.Q.Y);
+
+        AddTpmAttStmt(CreateEccPubArea(ecParams, TpmEccCurve.TPM_ECC_NIST_P256), sanExt: FidoConformanceToolSanExt);
+
+        // the verifier, under conformance validation
+        var verifier = AttestationVerifier.Create("tpm");
+        var result = await verifier.VerifyAsync((CborMap)_attestationObject["attStmt"], _authData, _clientDataHash, FidoValidationMode.FidoConformance2024);
+        Assert.Equal(AttestationType.AttCa, result.Type);
+
+        // and the whole ceremony, which derives that mode from the metadata service reporting a conformance run
+        var conformanceMetadataService = new Mock<IMetadataService>(MockBehavior.Strict);
+        conformanceMetadataService.Setup(m => m.ConformanceTesting()).Returns(true);
+        conformanceMetadataService.Setup(m => m.GetEntryAsync(_aaguid, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MetadataBLOBPayloadEntry { AaGuid = _aaguid, StatusReports = [] });
+
+        _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
+        var rawResponse = new AuthenticatorAttestationRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = Base64Url.EncodeToString(_credentialID),
+            RawId = _credentialID,
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = _attestationObject.Encode(),
+                ClientDataJson = _clientDataJson,
+                Transports = [AuthenticatorTransport.Internal]
+            },
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
+        };
+        var options = new CredentialCreateOptions
+        {
+            Challenge = _challenge,
+            Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+            User = new Fido2User { Name = "testuser", Id = "testuser"u8.ToArray(), DisplayName = "Test User" },
+            PubKeyCredParams = [PubKeyCredParam.ES256],
+            AuthenticatorSelection = AuthenticatorSelection.Default
+        };
+        var config = new Fido2Configuration { RPID = rp, RPName = rp, Origins = new HashSet<string> { rp } };
+
+        var credential = await AuthenticatorAttestationResponse.Parse(rawResponse).VerifyAsync(options, config, (_, _) => Task.FromResult(true), conformanceMetadataService.Object, null);
+
+        Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
     }
 
     [Fact]
