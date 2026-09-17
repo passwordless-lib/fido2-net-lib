@@ -526,6 +526,94 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Message);
     }
 
+    /// <summary>
+    /// Replaces the statement's response with a JWT, signed by a fresh attest.android.com certificate, whose timestampMs
+    /// is <paramref name="timestampOffset"/> from now.
+    /// </summary>
+    private void SetResponseWithTimestamp(TimeSpan timestampOffset)
+    {
+        var attDN = new X500DistinguishedName("CN=attest.android.com, OU=SafetyNet Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
+        DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+        DateTimeOffset notAfter = notBefore.AddDays(2);
+
+        using var ecdsaRoot = ECDsa.Create();
+        var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+        rootRequest.CertificateExtensions.Add(caExt);
+        using var root = rootRequest.CreateSelfSigned(notBefore, notAfter);
+
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+        using var attestnCert = attRequest.Create(root, notBefore, notAfter, RandomNumberGenerator.GetBytes(12));
+
+        var claims = new[]
+        {
+            new Claim("nonce", Convert.ToBase64String(_attToBeSignedHash(HashAlgorithmName.SHA256)), ClaimValueTypes.String),
+            new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
+            new Claim("timestampMs", DateTimeOffset.UtcNow.Add(timestampOffset).ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
+        };
+
+        string securityToken = new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAtt), SecurityAlgorithms.EcdsaSha256Signature),
+            AdditionalHeaderClaims = new Dictionary<string, object>
+            {
+                { JwtHeaderParameterNames.X5c, new[] { Convert.ToBase64String(attestnCert.RawData), Convert.ToBase64String(root.RawData) } }
+            }
+        });
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "ver", "F1D0" },
+            { "response", Encoding.UTF8.GetBytes(securityToken) }
+        });
+
+        // This root is freshly generated per call and replaces whatever attStmt the constructor built, so the
+        // trust anchor used to verify it must be replaced to match -- otherwise chain validation fails before
+        // the timestamp check this method exists to exercise is ever reached.
+        AndroidSafetyNetRootOverride = X509CertificateHelper.CreateFromRawData(root.RawData);
+    }
+
+    private ValueTask<VerifyAttestationResult> VerifyWithDriftToleranceAsync(int driftToleranceMilliseconds)
+    {
+        var verifier = AttestationVerifier.Create("android-safetynet", new Fido2Configuration
+        {
+            TimestampDriftTolerance = driftToleranceMilliseconds,
+            AndroidSafetyNetRootCertificate = AndroidSafetyNetRootOverride,
+        });
+
+        return verifier.VerifyAsync((CborMap)_attestationObject["attStmt"], _authData, _clientDataHash);
+    }
+
+    [Fact]
+    public async Task TestAndroidSafetyNetTimestampDriftToleranceWidensTheWindow()
+    {
+        // 30 seconds in the future: outside "between one minute ago and now"...
+        SetResponseWithTimestamp(TimeSpan.FromSeconds(30));
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => await VerifyWithDriftToleranceAsync(0));
+        Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now", ex.Message);
+
+        // ...unless the Relying Party allows for a minute of clock drift
+        var result = await VerifyWithDriftToleranceAsync(60_000);
+        Assert.Equal(AttestationType.Basic, result.Type);
+
+        // and the same at the other end of the window
+        SetResponseWithTimestamp(TimeSpan.FromSeconds(-90));
+
+        await Assert.ThrowsAsync<Fido2VerificationException>(async () => await VerifyWithDriftToleranceAsync(0));
+        await VerifyWithDriftToleranceAsync(60_000);
+    }
+
+    [Fact]
+    public async Task TestAndroidSafetyNetTimestampDriftToleranceComesFromConfiguration()
+    {
+        SetResponseWithTimestamp(TimeSpan.FromSeconds(30));
+
+        // the harness verifies with a default configuration, whose tolerance is zero
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.StartsWith("SafetyNet timestampMs must be between one minute ago and now, got:", ex.Message);
+    }
+
     [Fact]
     public async Task TestAndroidSafetyNetResponseClaimTimestampMissing()
     {

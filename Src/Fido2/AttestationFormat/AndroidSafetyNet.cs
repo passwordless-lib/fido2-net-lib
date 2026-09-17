@@ -28,7 +28,7 @@ namespace Fido2NetLib;
 /// </remarks>
 internal sealed class AndroidSafetyNet : AttestationVerifier
 {
-    private const int _driftTolerance = 0;
+    private readonly int _driftTolerance;
 
     /// <summary>
     /// The JWT header is attacker-supplied; a base64url-decodable but non-JSON header must fail verification
@@ -49,7 +49,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
     private readonly X509Certificate2 _trustAnchor;
 
     /// <summary>
-    /// Verifies against Google's SafetyNet root.
+    /// Verifies against Google's SafetyNet root, with no allowance for clock drift.
     /// </summary>
     public AndroidSafetyNet() : this(GtsRootR1) { }
 
@@ -57,9 +57,16 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
     /// Verifies against the given root, so a Relying Party can override the trust anchor and the tests can use a
     /// root of their own.
     /// </summary>
-    public AndroidSafetyNet(X509Certificate2 trustAnchor)
+    /// <param name="trustAnchor">The root the attestation certificate chain must terminate at.</param>
+    /// <param name="driftToleranceMilliseconds">
+    /// How far, in milliseconds, the response's timestampMs may fall outside the "between one minute ago and now"
+    /// window, allowing for clock drift between the Relying Party and Google's attestation service
+    /// (<see cref="Fido2Configuration.TimestampDriftTolerance"/>).
+    /// </param>
+    public AndroidSafetyNet(X509Certificate2 trustAnchor, int driftToleranceMilliseconds = 0)
     {
         _trustAnchor = trustAnchor;
+        _driftTolerance = driftToleranceMilliseconds;
     }
 
     // Google Trust Services root R1, which the SafetyNet attestation certificate chain terminates at.

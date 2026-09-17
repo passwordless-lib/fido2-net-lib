@@ -32,8 +32,10 @@ public class Fido2Configuration
 
     /// <summary>
     /// TimestampDriftTolerance specifies a time in milliseconds that will be allowed for clock drift on a timestamped attestation.
+    /// Used by the android-safetynet verifier, which requires the response's timestampMs to fall between one minute
+    /// ago and now; the tolerance widens that window at both ends.
     /// </summary>
-    public int TimestampDriftTolerance { get; set; } = 0; //Pretty sure 0 will never work - need a better default?
+    public int TimestampDriftTolerance { get; set; } = 0;
 
     /// <summary>
     /// The size of the challenges sent to the client
