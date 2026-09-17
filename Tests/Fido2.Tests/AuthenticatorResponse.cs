@@ -75,8 +75,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
+            Id = Base64Url.EncodeToString(acd.CredentialId),
+            RawId = acd.CredentialId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -181,8 +181,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
+            Id = Base64Url.EncodeToString(acd.CredentialId),
+            RawId = acd.CredentialId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -1033,8 +1033,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
+            Id = Base64Url.EncodeToString(acd.CredentialId),
+            RawId = acd.CredentialId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -1114,8 +1114,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
+            Id = Base64Url.EncodeToString(acd.CredentialId),
+            RawId = acd.CredentialId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
@@ -1172,6 +1172,76 @@ public class AuthenticatorResponseTests
         Assert.Equal("CredentialId is not unique to this user", ex.Message);
     }
 
+    // credential.rawId is the credential ID (5.1), the same bytes as the credentialId in the attested credential
+    // data; a response that says otherwise is malformed, and must not be registered under either id.
+    [Theory]
+    [InlineData(new byte[] { 0xf1, 0xd0 })]
+    [InlineData(new byte[0])]
+    public async Task TestAuthenticatorAttestationResponseRawIdNotAttestedCredentialId(byte[] rawId)
+    {
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var authData = new AuthenticatorData(
+            SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
+            AuthenticatorFlags.AT | AuthenticatorFlags.UP,
+            0,
+            acd
+        ).ToByteArray();
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
+        {
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp
+        });
+
+        var rawResponse = new AuthenticatorAttestationRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = Base64Url.EncodeToString(acd.CredentialId),
+            RawId = rawId,
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = new CborMap {
+                    { "fmt", "none" },
+                    { "attStmt", new CborMap() },
+                    { "authData", authData }
+                }.Encode(),
+                ClientDataJson = clientDataJson
+            },
+        };
+
+        var originalOptions = new CredentialCreateOptions
+        {
+            Challenge = challenge,
+            PubKeyCredParams = [new PubKeyCredParam(COSE.Algorithm.ES256)],
+            Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+            User = new Fido2User
+            {
+                Name = "testuser",
+                Id = "testuser"u8.ToArray(),
+                DisplayName = "Test User",
+            },
+        };
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = (args, cancellationToken) => Task.FromResult(true)
+        }));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestationResponse, ex.Code);
+        Assert.Equal(rawId.Length is 0 ? Fido2ErrorMessages.AttestationResponseRawIdMissing : Fido2ErrorMessages.AttestationResponseRawIdMismatch, ex.Message);
+    }
+
     [Fact]
     public async Task TestAuthenticatorAttestationResponseUVRequired()
     {
@@ -1194,8 +1264,8 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
+            Id = Base64Url.EncodeToString(acd.CredentialId),
+            RawId = acd.CredentialId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {

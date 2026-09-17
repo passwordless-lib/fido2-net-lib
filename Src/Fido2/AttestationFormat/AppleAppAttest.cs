@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
 
@@ -79,7 +80,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER - encoded ASN.1 sequence.Decode the sequence and extract the single octet string that it contains. Verify that the string equals nonce.
         // Steps 2 - 4 done in the "apple" format verifier
         var apple = new Apple();
-        (var attType, var trustPath) = await apple.VerifyAsync(request).ConfigureAwait(false);
+        (_, var trustPath) = await apple.VerifyAsync(request).ConfigureAwait(false);
 
         // 5. Create the SHA256 hash of the public key in credCert, and verify that it matches the key identifier from your app.
         byte[] credCertPKHash = SHA256.HashData(credCert.GetPublicKey());
@@ -115,6 +116,9 @@ internal sealed class AppleAppAttest : AttestationVerifier
             throw new Fido2VerificationException("Mismatch between credentialId and keyIdentifier in Apple AppAttest attestation");
         }
 
-        return new VerifyAttestationResult(attType, trustPath);
+        // App Attest is not a WebAuthn attestation and Apple assigns it no WebAuthn attestation type; it is
+        // reported as Basic, as it always has been, independently of what the "apple" verifier reports for
+        // the WebAuthn format that shares its nonce and key checks.
+        return new VerifyAttestationResult(AttestationType.Basic, trustPath);
     }
 }

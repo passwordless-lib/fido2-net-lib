@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Buffers.Text;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -162,15 +163,24 @@ public class Fido2Tests
             idFidoGenCeAaGuidExt = new X509Extension(oidIdFidoGenCeAaGuid, _asnEncodedAaguid, false);
         }
 
-        public async Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync()
+        public Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync()
+        {
+            return MakeAttestationResponseAsync(metadataService: null);
+        }
+
+        /// <summary>
+        /// Runs the registration ceremony over <see cref="_attestationObject"/>, consulting <paramref name="metadataService"/>
+        /// for the authenticator's metadata when one is given.
+        /// </summary>
+        public async Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync(IMetadataService metadataService)
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {
                 Type = PublicKeyCredentialType.PublicKey,
-                Id = "8dA",
-                RawId = [0xf1, 0xd0],
+                Id = Base64Url.EncodeToString(_credentialID),
+                RawId = _credentialID,
                 Response = new AuthenticatorAttestationRawResponse.AttestationResponse
                 {
                     AttestationObject = _attestationObject.Encode(),
@@ -237,7 +247,7 @@ public class Fido2Tests
                 RPID = rp,
                 RPName = rp,
                 Origins = new HashSet<string> { rp },
-            });
+            }, metadataService);
 
             var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
             {
