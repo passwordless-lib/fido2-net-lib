@@ -931,6 +931,147 @@ public class AuthenticatorResponseTests
     }
 
     [Fact]
+    public async Task TestAuthenticatorAttestationResponseBackedUpPolicyRequired()
+    {
+        // BackedUpCredentialPolicy must be enforced at registration too: a credential can already be backed up
+        // (BS set) at creation, e.g. a synced passkey. Here the credential is not backed up but policy requires it.
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+        var authData = new AuthenticatorData(
+            SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
+            AuthenticatorFlags.UP | AuthenticatorFlags.UV,
+            0,
+            null
+        ).ToByteArray();
+
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
+        {
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
+        });
+
+        var rawResponse = new AuthenticatorAttestationRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = "8dA",
+            RawId = [0xf1, 0xd0],
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = new CborMap {
+                    { "fmt", "testing" },
+                    { "attStmt", new CborMap() },
+                    { "authData", authData }
+                }.Encode(),
+                ClientDataJson = clientDataJson
+            },
+        };
+
+        var originalOptions = new CredentialCreateOptions
+        {
+            Attestation = AttestationConveyancePreference.Direct,
+            Challenge = challenge,
+            PubKeyCredParams = [new PubKeyCredParam(COSE.Algorithm.ES256)],
+            Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+            User = new Fido2User
+            {
+                Name = "testuser",
+                Id = "testuser"u8.ToArray(),
+                DisplayName = "Test User",
+            },
+            Timeout = 60000,
+        };
+
+        IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) => Task.FromResult(true);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+            BackedUpCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Required,
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
+        Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestAuthenticatorAttestationResponseBackedUpPolicyDisallowed()
+    {
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+        // Backed up (BS) implies backup eligible (BE).
+        var authData = new AuthenticatorData(
+            SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
+            AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BE | AuthenticatorFlags.BS,
+            0,
+            null
+        ).ToByteArray();
+
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
+        {
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
+        });
+
+        var rawResponse = new AuthenticatorAttestationRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = "8dA",
+            RawId = [0xf1, 0xd0],
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = new CborMap {
+                    { "fmt", "testing" },
+                    { "attStmt", new CborMap() },
+                    { "authData", authData }
+                }.Encode(),
+                ClientDataJson = clientDataJson
+            },
+        };
+
+        var originalOptions = new CredentialCreateOptions
+        {
+            Attestation = AttestationConveyancePreference.Direct,
+            Challenge = challenge,
+            PubKeyCredParams = [new PubKeyCredParam(COSE.Algorithm.ES256)],
+            Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+            User = new Fido2User
+            {
+                Name = "testuser",
+                Id = "testuser"u8.ToArray(),
+                DisplayName = "Test User",
+            },
+            Timeout = 60000,
+        };
+
+        IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) => Task.FromResult(true);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+            BackedUpCredentialPolicy = Fido2Configuration.CredentialBackupPolicy.Disallowed,
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
+        Assert.Equal(Fido2ErrorMessages.BackupStateRequirementNotMet, ex.Message);
+    }
+
+    [Fact]
     public async Task TestAuthenticatorAttestationResponseNoAttestedCredentialData()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);
@@ -2610,6 +2751,80 @@ public class AuthenticatorResponseTests
                     }
                 },
             }
+        };
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+        });
+
+        IsUserHandleOwnerOfCredentialIdAsync callback = static (args, cancellationToken) =>
+        {
+            return Task.FromResult(true);
+        };
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = assertionResponse,
+            OriginalOptions = options,
+            StoredPublicKey = cpk.GetBytes(),
+            StoredSignatureCounter = 2,
+            IsUserHandleOwnerOfCredentialIdCallback = callback
+        }));
+        Assert.Equal(Fido2ErrorMessages.SignCountIsLessThanSignatureCounter, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestAuthenticatorAssertionZeroSignCountWithNonZeroStoredCounterIsRejected()
+    {
+        // A credential that previously reported a non-zero counter (stored > 0) but now presents a zero counter
+        // is the cloned-authenticator signal (WebAuthn L3 7.2 step 21). The previous `authData.SignCount > 0`
+        // guard silently accepted it; the stored-counter-nonzero arm must now reject it.
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+
+        var authenticatorResponse = new AuthenticatorResponse(
+           type: "webauthn.get",
+           challenge: challenge,
+           origin: rp
+       );
+
+        byte[] clientDataJson = JsonSerializer.SerializeToUtf8Bytes(authenticatorResponse, FidoSerializerContext.Default.AuthenticatorResponse);
+
+        var options = new AssertionOptions
+        {
+            Challenge = challenge,
+            RpId = rp,
+            AllowCredentials = new[]
+            {
+                new PublicKeyCredentialDescriptor([0xf1, 0xd0])
+            }
+        };
+
+        // signCount == 0
+        var authData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV, 0, null, new Extensions(new byte[] { 0x42 })).ToByteArray();
+
+        fido2_net_lib.Test.Fido2Tests.MakeEdDSA(out _, out var publicKey, out var expandedPrivateKey);
+        Key privateKey = Key.Import(SignatureAlgorithm.Ed25519, expandedPrivateKey, KeyBlobFormat.RawPrivateKey);
+        var cpk = fido2_net_lib.Test.Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, publicKey);
+
+        var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse
+        {
+            AuthenticatorData = authData,
+            Signature = SignatureAlgorithm.Ed25519.Sign(privateKey, [.. authData, .. SHA256.HashData(clientDataJson)]),
+            ClientDataJson = clientDataJson,
+            UserHandle = [0xf1, 0xd0],
+        };
+
+        var assertionResponse = new AuthenticatorAssertionRawResponse
+        {
+            Response = assertion,
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = "8dA",
+            RawId = [0xf1, 0xd0],
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs(),
         };
 
         var lib = new Fido2(new Fido2Configuration

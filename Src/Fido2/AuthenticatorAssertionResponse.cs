@@ -170,8 +170,11 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (!cpk.Verify(data, Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
-        // 20. If authData.signCount is nonzero or credentialRecord.signCount is nonzero
-        if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)
+        // 20. If authData.signCount is nonzero or credentialRecord.signCount is nonzero, and authData.signCount
+        // is less than or equal to the stored counter, the authenticator may be cloned (WebAuthn L3 7.2 step 21).
+        // The earlier `authData.SignCount > 0` guard silently skipped this when a previously-counting credential
+        // (stored counter > 0) presented a zero counter, which is exactly the cloned-authenticator signal.
+        if ((authData.SignCount != 0 || storedSignatureCounter != 0) && authData.SignCount <= storedSignatureCounter)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignCount, Fido2ErrorMessages.SignCountIsLessThanSignatureCounter);
 
 
