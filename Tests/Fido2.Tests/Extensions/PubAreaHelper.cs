@@ -46,12 +46,24 @@ internal static class PubAreaHelper
             stream.Write(symmetric);
             stream.Write(scheme);
             stream.Write(keyBits);
-            stream.Write(BitConverter.GetBytes(exponent[0] + (exponent[1] << 8) + (exponent[2] << 16)));
+            stream.Write(GetUInt32BigEndianBytes(exponent));
             stream.Write(GetUInt16BigEndianBytes(unique.Length));
             stream.Write(unique);
         }
 
         return stream.ToArray();
+    }
+
+    /// <summary>
+    /// Writes a COSE-style unsigned big-endian exponent as the fixed 32-bit big-endian field pubArea marshals it in.
+    /// </summary>
+    internal static byte[] GetUInt32BigEndianBytes(ReadOnlySpan<byte> unsignedBigEndian)
+    {
+        var buffer = new byte[4];
+
+        unsignedBigEndian.CopyTo(buffer.AsSpan(4 - unsignedBigEndian.Length));
+
+        return buffer;
     }
 
     private static byte[] GetUInt16BigEndianBytes(int value)
