@@ -58,78 +58,73 @@ internal sealed class AndroidKey : AttestationVerifier
         return false;
     }
 
+    // Values and tag numbers from the Android KeyMint key attestation schema.
+    // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
+    private const int KM_TAG_PURPOSE = 1;
+    private const int KM_TAG_ORIGIN = 702;
+    private const int KM_ORIGIN_GENERATED = 0;
+    private const int KM_PURPOSE_SIGN = 2;
+
     public static bool IsOriginGenerated(byte[] attExtBytes)
     {
-        int softwareEnforcedOriginValue = 0;
-        int teeEnforcedOriginValue = 0;
-        // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
-        // origin tag is 702
+        // The origin (tag 702) MUST be present in an authorization list and equal KM_ORIGIN_GENERATED.
+        // An absent origin is not evidence the key was generated in secure hardware (it could have been
+        // imported), so a missing tag must fail closed rather than default to "generated".
         var keyDescription = Asn1Element.Decode(attExtBytes);
 
-        var softwareEnforced = keyDescription[6].Sequence;
-        foreach (Asn1Element s in softwareEnforced)
+        bool found = false;
+
+        foreach (var authorizationList in new[] { keyDescription[6].Sequence, keyDescription[7].Sequence })
         {
-            switch (s.TagValue)
+            foreach (Asn1Element entry in authorizationList)
             {
-                case 702:
-                    softwareEnforcedOriginValue = s[0].GetInt32();
-                    break;
-                default:
-                    break;
+                if (entry.TagValue is KM_TAG_ORIGIN)
+                {
+                    found = true;
+
+                    if (entry[0].GetInt32() != KM_ORIGIN_GENERATED)
+                        return false;
+                }
             }
         }
 
-        var teeEnforced = keyDescription[7].Sequence;
-        foreach (Asn1Element s in teeEnforced)
-        {
-            switch (s.TagValue)
-            {
-                case 702:
-                    teeEnforcedOriginValue = s[0].GetInt32();
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        return (softwareEnforcedOriginValue is 0 && teeEnforcedOriginValue is 0);
+        return found;
     }
 
     public static bool IsPurposeSign(byte[] attExtBytes)
     {
-        int softwareEnforcedPurposeValue = 2;
-        int teeEnforcedPurposeValue = 2;
-        // https://developer.android.com/training/articles/security-key-attestation#certificate_schema
-        // purpose tag is 1
+        // The purpose (tag 1) is a SET OF INTEGER. It MUST be present in an authorization list and contain
+        // KM_PURPOSE_SIGN. An absent purpose must fail closed rather than default to "sign", and the whole
+        // set is inspected rather than only its first element.
         var keyDescription = Asn1Element.Decode(attExtBytes);
-        var softwareEnforced = keyDescription[6].Sequence;
 
-        foreach (Asn1Element s in softwareEnforced)
+        bool found = false;
+
+        foreach (var authorizationList in new[] { keyDescription[6].Sequence, keyDescription[7].Sequence })
         {
-            switch (s.TagValue)
+            foreach (Asn1Element entry in authorizationList)
             {
-                case 1:
-                    softwareEnforcedPurposeValue = s[0][0].GetInt32();
-                    break;
-                default:
-                    break;
+                if (entry.TagValue is KM_TAG_PURPOSE)
+                {
+                    found = true;
+
+                    bool containsSign = false;
+                    foreach (Asn1Element purpose in entry[0].Sequence)
+                    {
+                        if (purpose.GetInt32() == KM_PURPOSE_SIGN)
+                        {
+                            containsSign = true;
+                            break;
+                        }
+                    }
+
+                    if (!containsSign)
+                        return false;
+                }
             }
         }
 
-        var teeEnforced = keyDescription[7].Sequence;
-        foreach (Asn1Element s in teeEnforced)
-        {
-            switch (s.TagValue)
-            {
-                case 1:
-                    teeEnforcedPurposeValue = s[0][0].GetInt32();
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        return (softwareEnforcedPurposeValue is 2 && teeEnforcedPurposeValue is 2);
+        return found;
     }
 
     public override ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
@@ -207,19 +202,31 @@ internal sealed class AndroidKey : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed android key AttestationRecord extension verifying android key attestation certificate extension");
         }
 
-        // 5. Verify the following using the appropriate authorization list from the attestation certificate extension data
+        // 5. Verify the following using the appropriate authorization list from the attestation certificate
+        // extension data. A malformed authorization list must fail as a Fido2VerificationException rather than
+        // escape as a raw ASN.1/index exception.
+        try
+        {
+            // 5a. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID
+            if (FindAllApplicationsField(attExtBytes))
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Found all applications field in android key attestation certificate extension");
 
-        // 5a. The AuthorizationList.allApplications field is not present, since PublicKeyCredential MUST be bound to the RP ID
-        if (FindAllApplicationsField(attExtBytes))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Found all applications field in android key attestation certificate extension");
+            // 5bi. The value in the AuthorizationList.origin field is equal to KM_ORIGIN_GENERATED ( which == 0).
+            if (!IsOriginGenerated(attExtBytes))
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Found origin field not set to KM_ORIGIN_GENERATED in android key attestation certificate extension");
 
-        // 5bi. The value in the AuthorizationList.origin field is equal to KM_ORIGIN_GENERATED ( which == 0).
-        if (!IsOriginGenerated(attExtBytes))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Found origin field not set to KM_ORIGIN_GENERATED in android key attestation certificate extension");
-
-        // 5bii. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
-        if (!IsPurposeSign(attExtBytes))
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
+            // 5bii. The value in the AuthorizationList.purpose field is equal to KM_PURPOSE_SIGN (which == 2).
+            if (!IsPurposeSign(attExtBytes))
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension");
+        }
+        catch (Fido2VerificationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed authorization list in android key attestation certificate extension", ex);
+        }
 
         return new(new VerifyAttestationResult(AttestationType.Basic, trustPath));
     }
