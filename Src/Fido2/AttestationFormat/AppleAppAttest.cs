@@ -77,8 +77,9 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // 2. Create clientDataHash as the SHA256 hash of the one-time challenge your server sends to your app before performing the attestation, and append that hash to the end of the authenticator data (authData from the decoded object).
         // 3. Generate a new SHA256 hash of the composite item to create nonce.
         // 4. Obtain the value of the credCert extension with OID 1.2.840.113635.100.8.2, which is a DER - encoded ASN.1 sequence.Decode the sequence and extract the single octet string that it contains. Verify that the string equals nonce.
-        // Steps 2 - 4 done in the "apple" format verifier
-        var apple = new Apple();
+        // Steps 2 - 4 done in the "apple" format verifier. The chain was already validated above against the
+        // App Attest root, so tell the reused verifier not to run its own (Apple WebAuthn root) chain build.
+        var apple = new Apple(verifyChain: false);
         (var attType, var trustPath) = await apple.VerifyAsync(request).ConfigureAwait(false);
 
         // 5. Create the SHA256 hash of the public key in credCert, and verify that it matches the key identifier from your app.

@@ -128,7 +128,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
-        var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
+        var verifier = AttestationVerifier.Create(AttestationObject.Fmt, config);
 
         // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData

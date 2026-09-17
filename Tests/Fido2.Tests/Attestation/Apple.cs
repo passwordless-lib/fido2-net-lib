@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Formats.Asn1;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
@@ -73,6 +74,21 @@ public class Apple : Fido2Tests.Attestation
 
             _attestationObject.Add("attStmt", new CborMap { { "x5c", X5c } });
         }
+    }
+
+    [Fact]
+    public void BundledAppleWebAuthnRootCA_IsIssuerOfGenuineAppleIntermediate()
+    {
+        // Guards the bundled Apple WebAuthn Root CA against a transcription error: the genuine
+        // "Apple WebAuthn CA 1" intermediate (validX5cStrings[1], real Apple data) must chain to it.
+        using var intermediate = X509CertificateHelper.CreateFromRawData(Convert.FromBase64String(validX5cStrings[1]));
+        using var chain = new X509Chain();
+        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+        chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+        chain.ChainPolicy.CustomTrustStore.Add(Fido2NetLib.Apple.AppleWebAuthnRootCA);
+        chain.ChainPolicy.VerificationTime = intermediate.NotBefore.AddDays(1);
+
+        Assert.True(chain.Build(intermediate));
     }
 
     [Fact]
@@ -195,100 +211,97 @@ public class Apple : Fido2Tests.Attestation
     [Fact]
     public async Task TestApplePublicKeyMismatch()
     {
-        var cpkBytes = new byte[] { 0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21, 0x58, 0x20, 0x79, 0xfe, 0x59, 0x08, 0xbb, 0x51, 0x29, 0xc8, 0x09, 0x38, 0xb7, 0x54, 0xc0, 0x4d, 0x2b, 0x34, 0x0e, 0xfa, 0x66, 0x15, 0xb9, 0x87, 0x69, 0x8b, 0xf5, 0x9d, 0xa4, 0xe5, 0x3e, 0xa3, 0xe6, 0xfe, 0x22, 0x58, 0x20, 0xfb, 0x03, 0xda, 0xa1, 0x27, 0x0d, 0x58, 0x04, 0xe8, 0xab, 0x61, 0xc1, 0x5a, 0xac, 0xa2, 0x43, 0x5c, 0x7d, 0xbf, 0x36, 0x9d, 0x71, 0xca, 0x15, 0xc5, 0x23, 0xb0, 0x00, 0x4a, 0x1b, 0x75, 0xb7 };
-        _credentialPublicKey = new CredentialPublicKey(cpkBytes);
+        // A credCert whose public key differs from the attested credential public key must be rejected. The
+        // nonce still matches, so verification reaches the public-key comparison before the chain check.
+        using var credCertKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var otherKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
-        var authData = new AuthenticatorData(_rpIdHash, _flags, _signCount, _acd, GetExtensions()).ToByteArray();
-        _attestationObject.Set("authData", new CborByteString(authData));
-        var clientData = new MockClientData
+        _credentialPublicKey = new CredentialPublicKey(otherKey, COSE.Algorithm.ES256);
+
+        byte[] nonce = SHA256.HashData([.. _authData.ToByteArray(), .. _clientDataHash]);
+        (X509Certificate2 root, X509Certificate2 credCert) = BuildAppleCredentialChain(credCertKey, nonce);
+        using (root)
+        using (credCert)
         {
-            Type = "webauthn.create",
-            Challenge = _challenge,
-            Origin = "https://www.passwordless.dev",
-        };
-        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(clientData);
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { credCert.RawData, root.RawData });
+            AppleWebAuthnRootOverride = root;
 
-        var invalidX5cStrings = StackAllocSha256(authData, clientDataJson);
-
-        var trustPath = invalidX5cStrings
-            .Select(x => X509CertificateHelper.CreateFromRawData(Convert.FromBase64String(x)))
-            .ToArray();
-
-        var X5c = new CborArray {
-            { trustPath[0].RawData },
-            { trustPath[1].RawData }
-        };
-
-        ((CborMap)_attestationObject["attStmt"]).Set("x5c", X5c);
-
-        var attestationResponse = new AuthenticatorAttestationRawResponse
-        {
-            Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
-            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
-            {
-                AttestationObject = _attestationObject.Encode(),
-                ClientDataJson = clientDataJson,
-            }
-        };
-
-        var originalOptions = new CredentialCreateOptions
-        {
-            Attestation = AttestationConveyancePreference.Direct,
-            AuthenticatorSelection = new AuthenticatorSelection
-            {
-                AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
-                ResidentKey = ResidentKeyRequirement.Required,
-                UserVerification = UserVerificationRequirement.Discouraged,
-            },
-            Challenge = _challenge,
-            PubKeyCredParams =
-            [
-                PubKeyCredParam.ES256
-            ],
-            Rp = new PublicKeyCredentialRpEntity("https://www.passwordless.dev", "6cc3c9e7967a.ngrok.io", ""),
-            User = new Fido2User
-            {
-                Name = "testuser",
-                Id = "testuser"u8.ToArray(),
-                DisplayName = "Test User",
-            },
-            Timeout = 60000,
-        };
-
-        IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) =>
-        {
-            return Task.FromResult(true);
-        };
-
-        var lib = new Fido2(new Fido2Configuration
-        {
-            RPID = "6cc3c9e7967a.ngrok.io",
-            RPName = "6cc3c9e7967a.ngrok.io",
-            Origins = new HashSet<string> { "https://www.passwordless.dev" },
-        });
-
-        var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
-        {
-            AttestationResponse = attestationResponse,
-            OriginalOptions = originalOptions,
-            IsCredentialIdUniqueToUserCallback = callback
-        });
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+            Assert.Equal("Credential public key in Apple attestation does not match subject public key of credCert", ex.Message);
+        }
     }
 
-    private string[] StackAllocSha256(ReadOnlySpan<byte> authData, ReadOnlySpan<byte> clientDataJson)
+    [Fact]
+    public async Task TestAppleValidChainSucceedsWhenRootInjected()
     {
-        byte[] data = [.. authData, .. SHA256.HashData(clientDataJson)];
-        Span<byte> dataHash = stackalloc byte[32];
-        SHA256.HashData(data, dataHash);
+        // A well-formed apple attestation whose chain terminates at the configured root verifies successfully.
+        using var credCertKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        _credentialPublicKey = new CredentialPublicKey(credCertKey, COSE.Algorithm.ES256);
 
-        var invalidX5cStrings = validX5cStrings;
-        var invalidCert = Convert.FromBase64String(invalidX5cStrings[0]);
-        Buffer.BlockCopy(dataHash.ToArray(), 0, invalidCert, 433, 32);
-        invalidCert[485] = 0xdb;
-        invalidX5cStrings[0] = Convert.ToBase64String(invalidCert);
+        byte[] nonce = SHA256.HashData([.. _authData.ToByteArray(), .. _clientDataHash]);
+        (X509Certificate2 root, X509Certificate2 credCert) = BuildAppleCredentialChain(credCertKey, nonce);
+        using (root)
+        using (credCert)
+        {
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { credCert.RawData, root.RawData });
+            AppleWebAuthnRootOverride = root;
 
-        return invalidX5cStrings;
+            var credential = await MakeAttestationResponseAsync();
+
+            Assert.Equal("apple", credential.AttestationFormat);
+            Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
+        }
+    }
+
+    [Fact]
+    public async Task TestAppleChainNotAnchoredToConfiguredRootIsRejected()
+    {
+        // Nonce and public key match, but the chain does not terminate at the configured (Apple) root, so a
+        // self-signed credCert can no longer masquerade as a genuine Apple attestation.
+        using var credCertKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        _credentialPublicKey = new CredentialPublicKey(credCertKey, COSE.Algorithm.ES256);
+
+        byte[] nonce = SHA256.HashData([.. _authData.ToByteArray(), .. _clientDataHash]);
+        (X509Certificate2 root, X509Certificate2 credCert) = BuildAppleCredentialChain(credCertKey, nonce);
+
+        using var otherRootKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var otherRootRequest = new CertificateRequest("CN=Unrelated Root CA", otherRootKey, HashAlgorithmName.SHA256);
+        otherRootRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+
+        using (root)
+        using (credCert)
+        using (var unrelatedRoot = otherRootRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1)))
+        {
+            ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { credCert.RawData, root.RawData });
+            AppleWebAuthnRootOverride = unrelatedRoot; // a different root than the one that signed credCert
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+            Assert.StartsWith("Failed to build chain in Apple attestation", ex.Message);
+        }
+    }
+
+    private (X509Certificate2 root, X509Certificate2 credCert) BuildAppleCredentialChain(ECDsa credCertKey, byte[] nonce)
+    {
+        using var rootKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var rootRequest = new CertificateRequest("CN=Test Apple WebAuthn Root CA", rootKey, HashAlgorithmName.SHA256);
+        rootRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        var root = rootRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+
+        // Apple credCert extension 1.2.840.113635.100.8.2 is SEQUENCE { [1] { OCTET STRING nonce } }.
+        var writer = new AsnWriter(AsnEncodingRules.DER);
+        using (writer.PushSequence())
+        using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1)))
+        {
+            writer.WriteOctetString(nonce);
+        }
+        var nonceExtension = new X509Extension("1.2.840.113635.100.8.2", writer.Encode(), false);
+
+        var credRequest = new CertificateRequest("CN=attest.apple.com", credCertKey, HashAlgorithmName.SHA256);
+        credRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
+        credRequest.CertificateExtensions.Add(nonceExtension);
+
+        var credCert = credRequest.Create(root, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), RandomNumberGenerator.GetBytes(12));
+
+        return (root, credCert);
     }
 }
