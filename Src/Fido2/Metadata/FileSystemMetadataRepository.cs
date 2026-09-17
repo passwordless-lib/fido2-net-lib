@@ -13,7 +13,7 @@ namespace Fido2NetLib;
 public sealed class FileSystemMetadataRepository : IMetadataRepository
 {
     private readonly string _directoryPath;
-    private readonly Dictionary<Guid, MetadataBLOBPayloadEntry> _entries;
+    private Dictionary<Guid, MetadataBLOBPayloadEntry> _entries;
     private MetadataBLOBPayload? _blob;
 
     public FileSystemMetadataRepository(string directoryPath)
@@ -35,8 +35,15 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
         return null;
     }
 
+    /// <summary>
+    /// Reads every metadata statement in the directory into a BLOB. The directory is read afresh on each call,
+    /// so a cache that has expired can refetch it; the statements read last time are only replaced once the
+    /// whole directory has been read successfully.
+    /// </summary>
     public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
     {
+        var entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
+
         if (Directory.Exists(_directoryPath))
         {
             foreach (var filename in Directory.GetFiles(_directoryPath))
@@ -55,10 +62,13 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
                         }
                     ]
                 };
-                if (null != conformanceEntry.AaGuid)
-                    _entries.Add(conformanceEntry.AaGuid.Value, conformanceEntry);
+
+                if (conformanceEntry.AaGuid is Guid aaGuid && !entries.TryAdd(aaGuid, conformanceEntry))
+                    throw new Fido2MetadataException($"Metadata statement '{filename}' has the same AAGUID ({aaGuid}) as another statement in '{_directoryPath}'");
             }
         }
+
+        _entries = entries;
 
         _blob = new MetadataBLOBPayload()
         {

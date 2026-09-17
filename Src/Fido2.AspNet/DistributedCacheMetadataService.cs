@@ -177,27 +177,31 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
         return repoBlob;
     }
 
+    /// <summary>
+    /// Gets the repository's BLOB from the in-process cache, filling it from the distributed cache (and behind
+    /// that, the repository) on a miss.
+    /// </summary>
+    /// <remarks>
+    /// A fetch that yields nothing is not cached: the memory cache stores null values, and one stored without
+    /// an expiry would stand in for the BLOB until the process restarted, so a transient outage on the first
+    /// lookup would silently switch metadata validation off for good. Leaving the miss uncached means the next
+    /// lookup tries again.
+    /// </remarks>
     protected virtual async Task<MetadataBLOBPayload> GetMemoryCachedPayload(IMetadataRepository repository, CancellationToken cancellationToken = default)
     {
         var cacheKey = GetBlobCacheKey(repository);
 
-        var memCacheEntry = await _memoryCache.GetOrCreateAsync<MetadataBLOBPayload>(cacheKey, async memCacheEntry =>
-        {
-            var distributedCacheBlob = await GetDistributedCachedBlob(repository, cancellationToken);
+        if (_memoryCache.TryGetValue(cacheKey, out MetadataBLOBPayload cachedBlob))
+            return cachedBlob;
 
-            if (distributedCacheBlob != null)
-            {
-                var nextUpdateTime = GetNextUpdateTimeFromPayload(distributedCacheBlob);
+        var distributedCacheBlob = await GetDistributedCachedBlob(repository, cancellationToken);
 
-                memCacheEntry.AbsoluteExpiration = GetMemoryCacheAbsoluteExpiryTime(nextUpdateTime);
-
-                return distributedCacheBlob;
-            }
-
+        if (distributedCacheBlob is null)
             return null;
-        });
 
-        return memCacheEntry;
+        _memoryCache.Set(cacheKey, distributedCacheBlob, GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(distributedCacheBlob)));
+
+        return distributedCacheBlob;
     }
 
     public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
@@ -205,31 +209,44 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
         return await GetEntryAsync(aaguid, attestationCertificates: null, cancellationToken);
     }
 
+    /// <remarks>
+    /// A lookup that found no entry is cached (as null) only when at least one repository actually supplied a
+    /// BLOB to search, and then only until the earliest of those BLOBs expires, so an AAGUID that is genuinely
+    /// unknown is not looked up again on every registration, while one that could not be looked up because no
+    /// BLOB was available is retried next time.
+    /// </remarks>
     public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, X509Certificate2[] attestationCertificates, CancellationToken cancellationToken = default)
     {
-        var memCacheEntry = await _memoryCache.GetOrCreateAsync<MetadataBLOBPayloadEntry>(
-            $"{CACHE_PREFIX}:{aaguid}",
-            async entry =>
+        var cacheKey = $"{CACHE_PREFIX}:{aaguid}";
+
+        if (_memoryCache.TryGetValue(cacheKey, out MetadataBLOBPayloadEntry cachedEntry))
+            return cachedEntry;
+
+        DateTimeOffset? missExpiry = null;
+
+        foreach (var repo in _repositories)
+        {
+            var cachedPayload = await GetMemoryCachedPayload(repo, cancellationToken);
+            if (cachedPayload is null)
+                continue;
+
+            var payloadExpiry = GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(cachedPayload));
+
+            var matchingEntry = FindMatchingEntry(cachedPayload, aaguid, attestationCertificates);
+            if (matchingEntry != null)
             {
-                foreach (var repo in _repositories)
-                {
-                    var cachedPayload = await GetMemoryCachedPayload(repo, cancellationToken);
-                    if (cachedPayload != null)
-                    {
-                        var matchingEntry = FindMatchingEntry(cachedPayload, aaguid, attestationCertificates);
-                        if (matchingEntry != null)
-                        {
-                            entry.AbsoluteExpiration = GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(cachedPayload));
-                            return matchingEntry;
-                        }
-                    }
-                }
+                _memoryCache.Set(cacheKey, matchingEntry, payloadExpiry);
+                return matchingEntry;
+            }
 
-                return null;
+            if (missExpiry is null || payloadExpiry < missExpiry.Value)
+                missExpiry = payloadExpiry;
+        }
 
-            });
+        if (missExpiry.HasValue)
+            _memoryCache.Set<MetadataBLOBPayloadEntry>(cacheKey, null, missExpiry.Value);
 
-        return memCacheEntry;
+        return null;
     }
 
     /// <summary>

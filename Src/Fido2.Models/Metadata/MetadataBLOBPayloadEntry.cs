@@ -2,6 +2,7 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -86,12 +87,47 @@ public sealed class MetadataBLOBPayloadEntry
     public string RogueListHash { get; set; }
 
     /// <summary>
-    /// Gets the latest, most current status report for the authenticator.
+    /// Gets the latest, most current status report for the authenticator: the one with the most recent
+    /// <see cref="StatusReport.EffectiveDate"/>.
     /// </summary>
+    /// <remarks>
+    /// The Metadata Service does not define an order for <see cref="StatusReports"/>, and the published BLOB
+    /// lists most entries newest first, so the array position says nothing about currency. A report whose
+    /// effective date is missing or unparseable sorts before every dated one; among reports with the same
+    /// effective date (or none), the last in the array wins, as the spec's oldest-first examples suggest.
+    /// </remarks>
     /// <returns>Latest status report, or null if there are no reports.</returns>
     public StatusReport GetLatestStatusReport()
     {
-        return StatusReports.LastOrDefault();
+        if (StatusReports is not { Length: > 0 })
+            return null;
+
+        StatusReport latest = null;
+        DateTimeOffset latestEffectiveDate = DateTimeOffset.MinValue;
+
+        foreach (var report in StatusReports)
+        {
+            var effectiveDate = ParseEffectiveDate(report.EffectiveDate);
+
+            if (latest is null || effectiveDate >= latestEffectiveDate)
+            {
+                latest = report;
+                latestEffectiveDate = effectiveDate;
+            }
+        }
+
+        return latest;
+    }
+
+    /// <summary>
+    /// Parses an ISO 8601 effective date ("2023-12-20", or a full date-time); anything else counts as the
+    /// oldest possible date.
+    /// </summary>
+    private static DateTimeOffset ParseEffectiveDate(string effectiveDate)
+    {
+        return DateTimeOffset.TryParse(effectiveDate, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed)
+            ? parsed
+            : DateTimeOffset.MinValue;
     }
 
     /// <summary>
