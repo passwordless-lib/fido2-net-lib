@@ -141,10 +141,13 @@ public sealed class AuthenticatorGetInfo
     public int? RemainingDiscoverableCredentials { get; set; }
 
     /// <summary>
-    /// List of authenticatorConfig vendorPrototype subcommand identifiers.
+    /// List of authenticatorConfig vendorPrototype subcommand identifiers. Real subcommand identifiers are small,
+    /// but this is <see langword="double"/> rather than <see langword="int"/> because the FIDO conformance tool's
+    /// test metadata deliberately sends values as large as 2^64 to exercise this field, which int/long/ulong all
+    /// overflow on.
     /// </summary>
     [JsonPropertyName("vendorPrototypeConfigCommands")]
-    public int[]? VendorPrototypeConfigCommands { get; set; }
+    public double[]? VendorPrototypeConfigCommands { get; set; }
 
     /// <summary>
     /// List of supported attestation statement formats, in decreasing order of authenticator preference.
