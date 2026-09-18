@@ -31,6 +31,8 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidAttestedCredentialData_CredentialIdTooLong = "CredentialId too many bytes";
     public static readonly string MissingAuthenticatorResponseChallenge  = "Authenticator response challenge may not be null";
     public static readonly string InvalidAuthenticatorResponseChallenge  = "Authenticator response challenge does not match original challenge";
+    public static readonly string MissingAuthenticatorResponseOrigin     = "Authenticator response origin may not be null or empty";
+    public static readonly string InvalidAuthenticatorResponseOrigin     = "Authenticator response origin is not a valid origin";
     public static readonly string AttestedCredentialDataFlagNotSet       = "Attestation flag not set on attestation data";
     public static readonly string MissingAuthenticatorData               = "Authenticator data may not be null";
     public static readonly string InvalidAuthenticatorData_TooShort      = $"Authenticator data is less than the minimum structure length of {AuthenticatorData.MinLength}";

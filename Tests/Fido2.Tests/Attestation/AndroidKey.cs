@@ -174,6 +174,28 @@ public class AndroidKey : Fido2Tests.Attestation
     }
 
     [Fact]
+    public async Task TestAndroidKeyX5cCertNotEc()
+    {
+        _attestationObject = new CborMap { { "fmt", "android-key" } };
+        using var rsaAtt = RSA.Create(2048);
+        var attRequest = new CertificateRequest("CN=AndroidKeyTesting, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US", rsaAtt, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+        attRequest.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.11129.2.1.17", EncodeAttestationRecord(), false));
+
+        using X509Certificate2 attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "alg", COSE.Algorithm.RS256 },
+            { "x5c", new CborArray { attestnCert.RawData } },
+            { "sig", new byte[256] }
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Android Key attestation certificate public key is not an Elliptic Curve (EC) public key", ex.Message);
+    }
+
+    [Fact]
     public async Task TestAndroidKeyMissingAlg()
     {
         var attStmt = (CborMap)_attestationObject["attStmt"];

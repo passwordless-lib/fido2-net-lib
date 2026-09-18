@@ -2,6 +2,7 @@
 using System.Security.Cryptography.X509Certificates;
 
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
@@ -70,5 +71,71 @@ public class CredentialPublicKeyTests
             Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed448, x));
 
         Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
+    }
+
+    // Each of these is reachable with attacker-chosen values (a credential public key in authenticator data, or an
+    // attestation statement's alg paired with its certificate's key) and used to escape as InvalidOperationException.
+    [Fact]
+    public void UnknownKeyTypeIsAVerificationFailure()
+    {
+        var cpk = new CborMap {
+            { COSE.KeyCommonParameter.KeyType, COSE.KeyType.Symmetric },
+            { COSE.KeyCommonParameter.Alg, COSE.Algorithm.ES256 }
+        };
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => new CredentialPublicKey(cpk));
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Missing or unknown kty Symmetric", ex.Message);
+    }
+
+    [Theory]
+    [InlineData(COSE.Algorithm.ES384, COSE.EllipticCurve.P256, "Algorithm ES384 cannot be used with an EC2 key on curve P256")]
+    [InlineData(COSE.Algorithm.RS256, COSE.EllipticCurve.P256, "Algorithm RS256 cannot be used with an EC2 key on curve P256")]
+    [InlineData(COSE.Algorithm.ES256, COSE.EllipticCurve.Ed25519, "Algorithm ES256 cannot be used with an EC2 key on curve Ed25519")]
+    public void MismatchedEcAlgorithmAndCurveIsAVerificationFailure(COSE.Algorithm alg, COSE.EllipticCurve crv, string expectedMessage)
+    {
+        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var ecParams = ecdsa.ExportParameters(false);
+
+        var ex = Assert.Throws<Fido2VerificationException>(() =>
+            Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, alg, crv, ecParams.Q.X, ecParams.Q.Y));
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal(expectedMessage, ex.Message);
+    }
+
+    [Fact]
+    public void RsaKeyWithNonRsaAlgorithmIsAVerificationFailure()
+    {
+        using var rsa = RSA.Create(2048);
+        var rsaParams = rsa.ExportParameters(false);
+        var cpk = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.RSA, COSE.Algorithm.ES256, rsaParams.Modulus, rsaParams.Exponent);
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => cpk.Verify(new byte[32], new byte[256]));
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm ES256 cannot be used with an RSA key", ex.Message);
+    }
+
+    [Fact]
+    public void OkpKeyWithNonEdDsaAlgorithmIsAVerificationFailure()
+    {
+        Fido2Tests.MakeEdDSA(out _, out var publicKey, out _);
+
+        var ex = Assert.Throws<Fido2VerificationException>(() =>
+            Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.ES256, COSE.EllipticCurve.Ed25519, publicKey));
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm ES256 cannot be used with an OKP key", ex.Message);
+    }
+
+    [Fact]
+    public void UnknownCertificateKeyAlgorithmIsAVerificationFailure()
+    {
+        var ex = Assert.Throws<Fido2VerificationException>(() => COSE.GetKeyTypeFromOid("1.2.840.10040.4.1")); // id-dsa
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Unknown public key algorithm OID 1.2.840.10040.4.1", ex.Message);
     }
 }

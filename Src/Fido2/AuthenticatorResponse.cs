@@ -79,7 +79,20 @@ public class AuthenticatorResponse
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, Fido2ErrorMessages.InvalidAuthenticatorResponseChallenge);
 
-        var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
+        // C.origin is attacker-controlled; a missing or unparseable value must fail verification rather than
+        // surface as an ArgumentNullException or UriFormatException from the URI parser.
+        if (string.IsNullOrEmpty(Origin))
+            throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseOrigin, Fido2ErrorMessages.MissingAuthenticatorResponseOrigin);
+
+        string fullyQualifiedOrigin;
+        try
+        {
+            fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
+        }
+        catch (UriFormatException ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, $"{Fido2ErrorMessages.InvalidAuthenticatorResponseOrigin}: '{Origin}'", ex);
+        }
 
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
         if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))

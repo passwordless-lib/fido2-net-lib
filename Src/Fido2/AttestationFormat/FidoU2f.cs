@@ -33,7 +33,12 @@ internal sealed class FidoU2f : AttestationVerifier
         var u2fTransports = U2FTransportsFromAttnCert(attCert.Extensions);
 
         // 2b. If certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve, terminate this algorithm and return an appropriate error
-        var pubKey = attCert.GetECDsaPublicKey()!;
+        // (GetECDsaPublicKey returns null for any other key algorithm, e.g. an RSA attestation certificate)
+        if (attCert.GetECDsaPublicKey() is not ECDsa pubKey)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve");
+        }
+
         var keyParams = pubKey.ExportParameters(false);
 
         if (!keyParams.Curve.Oid.Value!.Equals(ECCurve.NamedCurves.nistP256.Oid.Value, StringComparison.Ordinal))
@@ -45,11 +50,24 @@ internal sealed class FidoU2f : AttestationVerifier
         // see rpIdHash, credentialId, and credentialPublicKey members of base class AuthenticatorData (AuthData)
 
         // 4. Convert the COSE_KEY formatted credentialPublicKey (see Section 7 of [RFC8152]) to CTAP1/U2F public Key format (Raw ANSI X9.62 public key format)
+        // Only an EC2 key has the "-2"/"-3" coordinates the next two steps read; for any other kty the same
+        // integer labels mean something else (e.g. an RSA key's n and e), or are absent.
+        if (request.AuthData.AttestedCredentialData.CredentialPublicKey._type is not COSE.KeyType.EC2)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"fido-u2f attestation requires an EC2 credential public key, got {request.AuthData.AttestedCredentialData.CredentialPublicKey._type}");
+        }
+
         // 4a. Let x be the value corresponding to the "-2" key (representing x coordinate) in credentialPublicKey, and confirm its size to be of 32 bytes. If size differs or "-2" key is not found, terminate this algorithm and return an appropriate error
         var x = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.X];
 
+        if (x.Length != 32)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"fido-u2f credential public key x-coordinate must be 32 bytes, got {x.Length}");
+
         // 4b. Let y be the value corresponding to the "-3" key (representing y coordinate) in credentialPublicKey, and confirm its size to be of 32 bytes. If size differs or "-3" key is not found, terminate this algorithm and return an appropriate error
         var y = (byte[])request.CredentialPublicKey[COSE.KeyTypeParameter.Y];
+
+        if (y.Length != 32)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"fido-u2f credential public key y-coordinate must be 32 bytes, got {y.Length}");
 
         // 4c.Let publicKeyU2F be the concatenation 0x04 || x || y
         byte[] publicKeyU2F = [0x4, .. x, .. y];

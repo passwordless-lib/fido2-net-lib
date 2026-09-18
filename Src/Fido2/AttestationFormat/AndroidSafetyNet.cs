@@ -21,6 +21,22 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 {
     private const int _driftTolerance = 0;
 
+    /// <summary>
+    /// The JWT header is attacker-supplied; a base64url-decodable but non-JSON header must fail verification
+    /// rather than surface as a JsonException.
+    /// </summary>
+    private static JsonDocument ParseJwtHeader(byte[] jwtHeaderBytes)
+    {
+        try
+        {
+            return JsonDocument.Parse(jwtHeaderBytes);
+        }
+        catch (JsonException ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedSafetyNetJwt, ex);
+        }
+    }
+
     public override async ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform
@@ -54,7 +70,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorMessages.MalformedSafetyNetJwt);
         }
 
-        using var jwtHeaderJsonDoc = JsonDocument.Parse(jwtHeaderBytes);
+        using var jwtHeaderJsonDoc = ParseJwtHeader(jwtHeaderBytes);
         var jwtHeaderJson = jwtHeaderJsonDoc.RootElement;
 
         if (!jwtHeaderJson.TryGetProperty("x5c", out var x5cEl))
