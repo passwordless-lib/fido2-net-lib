@@ -666,9 +666,6 @@ public class Fido2Tests
     [Fact]
     public async Task TestPackedttestationAsyncFailTrustAnchorOnRootCertInTrustPath()
     {
-        if (!OperatingSystem.IsWindows())
-            return;
-
         var targetGuid = new Guid("42383245-4437-3343-3846-423445354132");
         var metadataService = CreateMetadataService("./metadata");
         metadataService.ChangeEntryGuid(new Guid("00000000-0000-0000-0000-000000000004"), targetGuid);
@@ -677,10 +674,12 @@ public class Fido2Tests
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
         CborArray X5c = o.AttestationObject.AttStmt["x5c"] as CborArray;
         var entry = await metadataService.GetEntryAsync(targetGuid);
+        // x5c carries DER; the text form only ever passed because Windows' certificate loader sniffs base64
         foreach (var attRootCert in entry.MetadataStatement.AttestationRootCertificates)
-            X5c.Add(Encoding.UTF8.GetBytes(attRootCert));
+            X5c.Add(Convert.FromBase64String(attRootCert));
 
-        await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, CancellationToken.None));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, CancellationToken.None));
+        Assert.Equal("Invalid certificate chain", ex.Message);
     }
 
     [Fact]
@@ -816,10 +815,6 @@ public class Fido2Tests
     [Fact]
     public async Task TestInvalidU2FAttestationAsync()
     {
-        // TODO: Figure out why this test fails on macOS and Linux
-        if (!OperatingSystem.IsWindows())
-            return;
-
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsATKey.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsATKey.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);

@@ -293,10 +293,8 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             {
                 if (element.Certificate.Issuer != element.Certificate.Subject)
                 {
-                    var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
-
-                    if (!IsHttpUrl(cdp))
-                        continue;
+                    if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
+                        throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
 
                     using var client = _httpClientFactory.CreateClient();
                     var crlFile = await client.GetByteArrayAsync(cdp, cancellationToken);
@@ -311,11 +309,5 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         MetadataBLOBPayload blob = JsonSerializer.Deserialize(Base64Url.DecodeFromChars(blobPayload), FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
         blob.JwtAlg = blobAlg;
         return blob;
-    }
-
-    private static bool IsHttpUrl(string? url)
-    {
-        return Uri.TryCreate(url, UriKind.Absolute, out var uri)
-            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 }
