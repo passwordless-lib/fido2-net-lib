@@ -8,6 +8,17 @@ using Microsoft.Extensions.Logging;
 
 namespace Fido2NetLib;
 
+/// <summary>
+/// Caches the validated FIDO Metadata BLOB in an <see cref="IDistributedCache"/> (and an in-process
+/// <see cref="IMemoryCache"/>) so it is not re-fetched on every request.
+/// </summary>
+/// <remarks>
+/// Security note: the BLOB is written to the distributed cache as its parsed payload, without its JWS
+/// signature, and is trusted as-is when read back -- it is not re-validated on read. Anything able to write to
+/// the distributed cache can therefore plant arbitrary metadata (attestation roots, authenticator status
+/// reports) that this service will trust. Treat the distributed cache as part of the trust boundary: it must be
+/// access-controlled and not shared with untrusted workloads.
+/// </remarks>
 public class DistributedCacheMetadataService : IMetadataService, IMetadataServiceAttestationCertificateLookup
 {
     protected readonly IDistributedCache _distributedCache;
