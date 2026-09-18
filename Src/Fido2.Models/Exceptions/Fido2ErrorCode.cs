@@ -38,5 +38,6 @@ public enum Fido2ErrorCode
     BackupStateRequirementNotMet,
     CredentialAlgorithmRequirementNotMet,
     MissingAttestationObject,
-    InvalidCertificateChain
+    InvalidCertificateChain,
+    UndesiredMetadataStatus
 }
