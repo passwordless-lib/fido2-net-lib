@@ -98,6 +98,9 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (Raw.Id is null || Raw.Id.Length == 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdMissing);
 
+        if (Raw.RawId is null || Raw.RawId.Length == 0)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseRawIdMissing);
+
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseNotPublicKey);
 
@@ -173,7 +176,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
+        TrustAnchor.Verify(metadataEntry, trustPath, attType, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
 
         // 22. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
         //     If self attestation was used, check if self attestation is acceptable under Relying Party policy.
@@ -189,6 +192,14 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 23. Verify that the credentialId is ≤ 1023 bytes.
         // Handled by AttestedCredentialData constructor
+
+        // credential.rawId is the credential ID (5.1 PublicKeyCredential), i.e. the credentialId in the attested
+        // credential data the authenticator signed. The two come from different parts of the response, and only
+        // the attested one is covered by the attestation signature; a client sending something else as rawId is
+        // malformed, and a Relying Party that looks credentials up by rawId would register one id and be asked
+        // for another.
+        if (!authData.AttestedCredentialData.CredentialId.AsSpan().SequenceEqual(Raw.RawId))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseRawIdMismatch);
 
         // 24. Check that the credentialId is not yet registered to any other user.
         //     If registration is requested for a credential that is already registered to a different user,
@@ -221,6 +232,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AttestationClientDataJson = Raw.Response.ClientDataJson,
             User = originalOptions.User,
             AttestationFormat = AttestationObject.Fmt,
+            AttestationType = attType.Value,
             AaGuid = authData.AttestedCredentialData.AaGuid
         };
     }

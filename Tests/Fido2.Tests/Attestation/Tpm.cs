@@ -297,6 +297,7 @@ public class Tpm : Fido2Tests.Attestation
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);
             Assert.Equal("tpm", credential.AttestationFormat);
+            Assert.Equal("attca", credential.AttestationType);
             Assert.Equal(_credentialID, credential.Id);
             Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
             Assert.Equal("Test User", credential.User.DisplayName);

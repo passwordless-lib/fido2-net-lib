@@ -91,7 +91,7 @@ internal sealed class Apple : AttestationVerifier
         if (!cpk.GetBytes().AsSpan().SequenceEqual(request.AuthData.AttestedCredentialData!.CredentialPublicKey.GetBytes()))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Credential public key in Apple attestation does not match subject public key of credCert");
 
-        // 7. If successful, return implementation-specific values representing attestation type Anonymous CA and attestation trust path x5c.
-        return new(new VerifyAttestationResult(AttestationType.Basic, trustPath));
+        // 7. If successful, return implementation-specific values representing attestation type Anonymization CA and attestation trust path x5c.
+        return new(new VerifyAttestationResult(AttestationType.AnonCA, trustPath));
     }
 }

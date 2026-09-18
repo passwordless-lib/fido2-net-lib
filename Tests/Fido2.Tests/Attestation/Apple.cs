@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Buffers.Text;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
@@ -224,8 +225,8 @@ public class Apple : Fido2Tests.Attestation
         var attestationResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
+            Id = Base64Url.EncodeToString(_credentialID),
+            RawId = _credentialID,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = _attestationObject.Encode(),
@@ -275,6 +276,9 @@ public class Apple : Fido2Tests.Attestation
             OriginalOptions = originalOptions,
             IsCredentialIdUniqueToUserCallback = callback
         });
+
+        // 8.8 step 7: attestation type Anonymization CA
+        Assert.Equal("anonca", credentialMakeResult.AttestationType);
     }
 
     private string[] StackAllocSha256(ReadOnlySpan<byte> authData, ReadOnlySpan<byte> clientDataJson)

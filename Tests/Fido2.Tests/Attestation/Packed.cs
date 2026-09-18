@@ -38,6 +38,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);
             Assert.Equal("packed", credential.AttestationFormat);
+            Assert.Equal("self", credential.AttestationType);
             Assert.Equal(_credentialID, credential.Id);
             Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
             Assert.Equal("Test User", credential.User.DisplayName);
@@ -77,6 +78,67 @@ public class Packed : Fido2Tests.Attestation
         });
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Failed to validate signature", ex.Message);
+    }
+
+    private static async Task<TestMetadataService> CreateMetadataServiceWithEntryForAsync(Guid entryInMetadataDirectory, Guid aaguid)
+    {
+        var metadataService = new TestMetadataService([new FileSystemMetadataRepository("./metadata")]);
+        await metadataService.InitializeAsync();
+        metadataService.ChangeEntryGuid(entryInMetadataDirectory, aaguid);
+        return metadataService;
+    }
+
+    [Fact]
+    public async Task TestSelfRefusedForModelWhoseMetadataDoesNotDeclareSurrogateAttestation()
+    {
+        // "256K1 U2F Authenticator basic_full": attestationTypes is ["basic_full"] only
+        var metadataService = await CreateMetadataServiceWithEntryForAsync(new Guid("00000000-0000-0000-0000-000000000001"), _aaguid);
+        var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", SignData(type, alg, crv) }
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync(metadataService));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.SelfAttestationNotDeclaredInMetadata, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestSelfAcceptedForModelWhoseMetadataDeclaresSurrogateAttestation()
+    {
+        // "256K1 U2F Authenticator basic_surrogate": attestationTypes is ["basic_surrogate"]
+        var metadataService = await CreateMetadataServiceWithEntryForAsync(new Guid("00000000-0000-0000-0000-000000000003"), _aaguid);
+        var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", SignData(type, alg, crv) }
+        });
+
+        var credential = await MakeAttestationResponseAsync(metadataService);
+
+        Assert.Equal("self", credential.AttestationType);
+        Assert.Equal(_aaguid, credential.AaGuid);
+    }
+
+    [Fact]
+    public async Task TestSelfAcceptedForModelWhoseMetadataDeclaresBothFullAndSurrogateAttestation()
+    {
+        // "Secp256R1 Packed Authenticator": attestationTypes is ["basic_full", "basic_surrogate"]
+        var metadataService = await CreateMetadataServiceWithEntryForAsync(new Guid("00000000-0000-0000-0000-000000000004"), _aaguid);
+        var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", SignData(type, alg, crv) }
+        });
+
+        var credential = await MakeAttestationResponseAsync(metadataService);
+
+        Assert.Equal("self", credential.AttestationType);
     }
 
     [Fact]
@@ -317,6 +379,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);
             Assert.Equal("packed", credential.AttestationFormat);
+            Assert.Equal("attca", credential.AttestationType);
             Assert.Equal(_credentialID, credential.Id);
             Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
             Assert.Equal("Test User", credential.User.DisplayName);
