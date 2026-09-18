@@ -285,10 +285,16 @@ public class Apple : Fido2Tests.Attestation
 
     private (X509Certificate2 root, X509Certificate2 credCert) BuildAppleCredentialChain(ECDsa credCertKey, byte[] nonce)
     {
+        // Shared across root and leaf: CertificateRequest.Create rejects a leaf notAfter later than the issuer's,
+        // and computing each bound from its own DateTimeOffset.UtcNow call risks the leaf's landing a few
+        // milliseconds after the root's.
+        var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
+        var notAfter = DateTimeOffset.UtcNow.AddDays(1);
+
         using var rootKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var rootRequest = new CertificateRequest("CN=Test Apple WebAuthn Root CA", rootKey, HashAlgorithmName.SHA256);
         rootRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
-        var root = rootRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        var root = rootRequest.CreateSelfSigned(notBefore, notAfter);
 
         // Apple credCert extension 1.2.840.113635.100.8.2 is SEQUENCE { [1] { OCTET STRING nonce } }.
         var writer = new AsnWriter(AsnEncodingRules.DER);
@@ -303,7 +309,7 @@ public class Apple : Fido2Tests.Attestation
         credRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
         credRequest.CertificateExtensions.Add(nonceExtension);
 
-        var credCert = credRequest.Create(root, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1), RandomNumberGenerator.GetBytes(12));
+        var credCert = credRequest.Create(root, notBefore, notAfter, RandomNumberGenerator.GetBytes(12));
 
         return (root, credCert);
     }
