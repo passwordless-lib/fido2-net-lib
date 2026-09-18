@@ -121,7 +121,9 @@ public class Fido2MetadataServiceRepositoryTests
         public HttpClient CreateClient(string name) => throw new InvalidOperationException("No HTTP request should be made");
     }
 
-    private static (X509Certificate2 root, X509Certificate2 leaf, ECDsa leafKey) BuildChain()
+    private const string LeafCrlUrl = "http://crl.test/leaf.crl";
+
+    private static (X509Certificate2 root, X509Certificate2 leaf, ECDsa leafKey) BuildChain(bool leafHasCrlDistributionPoint = true)
     {
         using var rootKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var rootRequest = new CertificateRequest("CN=Test MDS Root", rootKey, HashAlgorithmName.SHA256);
@@ -131,9 +133,37 @@ public class Fido2MetadataServiceRepositoryTests
         var leafKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var leafRequest = new CertificateRequest("CN=Test MDS Signer", leafKey, HashAlgorithmName.SHA256);
         leafRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
+        if (leafHasCrlDistributionPoint)
+        {
+            leafRequest.CertificateExtensions.Add(CertificateRevocationListBuilder.BuildCrlDistributionPointExtension([LeafCrlUrl]));
+        }
         var leaf = leafRequest.Create(root, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1), RandomNumberGenerator.GetBytes(8));
 
         return (root, leaf, leafKey);
+    }
+
+    private static byte[] BuildEmptyCrl(X509Certificate2 root)
+    {
+        var builder = new CertificateRevocationListBuilder();
+        return builder.Build(root, crlNumber: 1, DateTimeOffset.UtcNow.AddDays(7), HashAlgorithmName.SHA256);
+    }
+
+    // Serves the given CRL bytes for any request, so a chain that pins to the provided root and whose leaf
+    // names an HTTP(S) CRL distribution point can be revocation-checked without a real network fetch.
+    private sealed class CrlServingHttpClientFactory(byte[] crl) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new(new StaticContentHandler(crl));
+
+        private sealed class StaticContentHandler(byte[] content) : HttpMessageHandler
+        {
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(content)
+                });
+            }
+        }
     }
 
     private static string ToBase64Url(byte[] data) => Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
@@ -158,7 +188,9 @@ public class Fido2MetadataServiceRepositoryTests
         using (leafKey)
         {
             string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
-            var repository = new Fido2MetadataServiceRepository(new ThrowingHttpClientFactory());
+            // The leaf names an HTTP CRL distribution point, so a revocation check is required and must succeed
+            // against an empty CRL served for it.
+            var repository = new Fido2MetadataServiceRepository(new CrlServingHttpClientFactory(BuildEmptyCrl(root)));
 
             var blob = await repository.DeserializeAndValidateBlobAsync(jwt, root, CancellationToken.None);
 

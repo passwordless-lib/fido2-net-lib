@@ -5742,7 +5742,7 @@ public class Tpm : Fido2Tests.Attestation
         Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
 
         // and the verifier itself, asked explicitly for the default validation, agrees
-        var verifier = AttestationVerifier.Create("tpm");
+        var verifier = AttestationVerifier.Create("tpm", null);
         ex = await Assert.ThrowsAsync<Fido2VerificationException>(async () => await verifier.VerifyAsync((CborMap)_attestationObject["attStmt"], _authData, _clientDataHash, FidoValidationMode.Default));
         Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
     }
@@ -5757,7 +5757,7 @@ public class Tpm : Fido2Tests.Attestation
         AddTpmAttStmt(CreateEccPubArea(ecParams, TpmEccCurve.TPM_ECC_NIST_P256), sanExt: FidoConformanceToolSanExt);
 
         // the verifier, under conformance validation
-        var verifier = AttestationVerifier.Create("tpm");
+        var verifier = AttestationVerifier.Create("tpm", null);
         var result = await verifier.VerifyAsync((CborMap)_attestationObject["attStmt"], _authData, _clientDataHash, FidoValidationMode.FidoConformance2024);
         Assert.Equal(AttestationType.AttCa, result.Type);
 
