@@ -21,6 +21,8 @@ namespace Test.Attestation;
 
 public class AndroidSafetyNet : Fido2Tests.Attestation
 {
+    private byte[] _safetyNetRootRawData;
+
     public AndroidSafetyNet()
     {
         _attestationObject = new CborMap { { "fmt", "android-safetynet" } };
@@ -38,6 +40,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
         using (var ecdsaAtt = ECDsa.Create(eCCurve))
         {
+            _safetyNetRootRawData = root.RawData;
             var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
             var serial = RandomNumberGenerator.GetBytes(12);
@@ -100,6 +103,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     [Fact]
     public async Task TestAndroidSafetyNet()
     {
+        AndroidSafetyNetRootOverride = X509CertificateHelper.CreateFromRawData(_safetyNetRootRawData);
         var credential = await MakeAttestationResponseAsync();
         Assert.Equal(_aaguid, credential.AaGuid);
         Assert.Equal(_signCount, credential.SignCount);
@@ -111,6 +115,15 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
         Assert.Equal("testuser", credential.User.Name);
         Assert.Equal([AuthenticatorTransport.Internal], credential.Transports);
+    }
+
+    [Fact]
+    public void BundledGtsRootR1_HasExpectedThumbprint()
+    {
+        // Guards the bundled Google Trust Services root R1 against a transcription error in the embedded cert.
+        Assert.Equal(
+            "D947432ABDE7B7FA90FC2E6B59101B1280E0E1C7E4E40FA3C6887FFF57A7F4CF",
+            Fido2NetLib.AndroidSafetyNet.GtsRootR1.GetCertHashString(HashAlgorithmName.SHA256));
     }
 
     [Fact]
@@ -185,6 +198,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 { "response", Encoding.UTF8.GetBytes(securityToken) }
             });
 
+            AndroidSafetyNetRootOverride = root;
             var credential = await MakeAttestationResponseAsync();
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);

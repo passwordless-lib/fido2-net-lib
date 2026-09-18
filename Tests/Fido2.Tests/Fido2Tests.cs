@@ -110,6 +110,13 @@ public class Fido2Tests
         protected X509BasicConstraintsExtension notCAExt = new(false, false, 0, false);
         public X509Extension idFidoGenCeAaGuidExt;
 
+        // When set, injected into the Fido2Configuration so an apple-format test can chain-verify against its
+        // own root instead of Apple's real WebAuthn root.
+        public X509Certificate2 AppleWebAuthnRootOverride;
+
+        // Likewise for android-safetynet against Google's real root.
+        public X509Certificate2 AndroidSafetyNetRootOverride;
+
         public byte[] _rpIdHash => SHA256.HashData(Encoding.UTF8.GetBytes(rp));
 
         public byte[] _clientDataJson
@@ -247,6 +254,8 @@ public class Fido2Tests
                 RPID = rp,
                 RPName = rp,
                 Origins = new HashSet<string> { rp },
+                AppleWebAuthnRootCertificate = AppleWebAuthnRootOverride,
+                AndroidSafetyNetRootCertificate = AndroidSafetyNetRootOverride,
             }, metadataService);
 
             var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams

@@ -152,7 +152,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
-        var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
+        var verifier = AttestationVerifier.Create(AttestationObject.Fmt, config);
 
         // The FIDO conformance tools' simulated authenticators differ from production ones in a few documented
         // ways; the verifiers (and, below, trust anchor validation) relax exactly those when a conformance

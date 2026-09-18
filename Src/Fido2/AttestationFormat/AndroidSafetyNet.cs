@@ -37,6 +37,28 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         }
     }
 
+    private readonly X509Certificate2 _trustAnchor;
+
+    /// <summary>
+    /// Verifies against Google's SafetyNet root.
+    /// </summary>
+    public AndroidSafetyNet() : this(GtsRootR1) { }
+
+    /// <summary>
+    /// Verifies against the given root, so a Relying Party can override the trust anchor and the tests can use a
+    /// root of their own.
+    /// </summary>
+    public AndroidSafetyNet(X509Certificate2 trustAnchor)
+    {
+        _trustAnchor = trustAnchor;
+    }
+
+    // Google Trust Services root R1, which the SafetyNet attestation certificate chain terminates at.
+    // From https://i.pki.goog/r1.pem
+    // SHA-256 fingerprint D947432ABDE7B7FA90FC2E6B59101B1280E0E1C7E4E40FA3C6887FFF57A7F4CF.
+    public static readonly X509Certificate2 GtsRootR1 = X509CertificateHelper.CreateFromBase64String(
+        "MIIFVzCCAz+gAwIBAgINAgPlk28xsBNJiGuiFzANBgkqhkiG9w0BAQwFADBHMQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEUMBIGA1UEAxMLR1RTIFJvb3QgUjEwHhcNMTYwNjIyMDAwMDAwWhcNMzYwNjIyMDAwMDAwWjBHMQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEUMBIGA1UEAxMLR1RTIFJvb3QgUjEwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQC2EQKLHuOhd5s73L+UPreVp0A8of2C+X0yBoJx9vaMf/vo27xqLpeXo4xL+Sv2sfnOhB2x+cWX3u+58qPpvBKJXqeqUqv4IyfLpLGcY9vXmX7wCl7raKb0xlpHDU0QM+NOsROjyBhsS+z8CZDfnWQpJSMHobTSPS5g4M/SCYe7zUjwTcLCeoiKu7rPWRnWr4+wB7CeMfGCwcDfLqZtbBkOtdh+JhpFAz2weaSUKK0PfyblqAj+lug8aJRT7oM6iCsVlgmy4HqMLnXWnOunVmSPlk9orj2XwoSPwLxAwAtcvfaHszVsrBhQf4TgTM2S0yDpM7xSma8ytSmzJSq0SPly4cpk9+aCEI3oncKKiPo4Zor8Y/kB+Xj9e1x3+naH+uzfsQ55lVe0vSbv1gHR6xYKu44LtcXFilWr06zqkUspzBmkMiVOKvFlRNACzqrOSbTqn3yDsEB750Orp2yjj32JgfpMpf/VjsPOS+C12LOORc92wO1AK/1TD7Cn1TsNsYqiA94xrcx36m97PtbfkSIS5r762DL8EGMUUXLeXdYWk70paDPvOmbsB4om3xPXV2V4J95eSRQAogB/mqghtqmxlbCluQ0WEdrHbEg8QOB+DVrNVjzRlwW5y0vtOUucxD/SVRNuJLDWcfr0wbrM7Rv1/oFB2ACYPTrIrnqYNxgFlQIDAQABo0IwQDAOBgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQU5K8rJnEaK0gnhS9SZizv8IkTcT4wDQYJKoZIhvcNAQEMBQADggIBAJ+qQibbC5u+/x6Wki4+omVKapi6Ist9wTrYggoGxval3sBOh2Z5ofmmWJyq+bXmYOfg6LEeQkEzCzc9zolwFcq1JKjPa7XSQCGYzyI0zzvFIoTgxQ6KfF2I5DUkzps+GlQebtuyh6f88/qBVRRiClmpIgUxPoLW7ttXNLwzldMXG+gnoot7TiYaelpkttGsN/H9oPM47HLwEXWdyzRSjeZ2axfG34arJ45JK3VmgRAhpuo+9K4l/3wV3s6MJT/KYnAK9y8JZgfIPxz88NtFMN9iiMG1D53Dn0reWVlHxYciNuaCp+0KueIHoI17eko8cdLiA6EfMgfdG+RCzgwARWGAtQsgWSl4vflVy2PFPEz0tv/bal8xa5meLMFrUKTX5hgUvYU/Z6tGn6D/Qqc6f1zLXbBwHSs09dR2CQzreExZBfMzQsNhFRAbd03OIozUhfJFfbdT6u9AWpQKXCBfTkBdYiJ23//OYb2MI3jSNwLgjt7RETeJ9r/tSQdirpLsQBqvFAnZ0E6yove+7u7Y/9waLd64NnHi/Hm3lCXRSHNboTXns5lndcEZOitHTtNCjv0xyBZm2tIMPNuzjsmhDYAPexZ3FL//2wmUspO8IFgV6dtxQ/PeEMMA3KgqlbbC1j+Qa3bbbP6MvPJwNQzcmRk13NfIRmPVNnGuV/u3gm3c"u8);
+
     public override async ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request)
     {
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform
@@ -189,6 +211,22 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 
         if (true != ctsProfileMatch)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response ctsProfileMatch false");
+
+        // 7. Verify the certificate chain terminates at the configured Google root. Google's SafetyNet root is
+        // not in the FIDO Metadata Service, so this cannot be deferred to metadata-based trust-anchor validation;
+        // without it a self-signed certificate issued to "attest.android.com" would be accepted.
+        using (var chain = new X509Chain())
+        {
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+            chain.ChainPolicy.CustomTrustStore.Add(_trustAnchor);
+
+            for (int i = 1; i < certs.Length; i++)
+                chain.ChainPolicy.ExtraStore.Add(certs[i]);
+
+            if (!chain.Build(attestationCert))
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"Failed to build chain in SafetyNet attestation: {chain.ChainStatus.FirstOrDefault().StatusInformation?.Trim()}");
+        }
 
         return new VerifyAttestationResult(AttestationType.Basic, [attestationCert]);
     }

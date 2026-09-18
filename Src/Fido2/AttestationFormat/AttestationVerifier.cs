@@ -24,7 +24,7 @@ public abstract class AttestationVerifier
 
     public abstract ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request);
 
-    public static AttestationVerifier Create(string formatIdentifier)
+    public static AttestationVerifier Create(string formatIdentifier, Fido2Configuration config)
     {
         #pragma warning disable format
         return formatIdentifier switch
@@ -32,10 +32,10 @@ public abstract class AttestationVerifier
             "none"              => new None(),             // https://www.w3.org/TR/webauthn-2/#sctn-none-attestation
             "tpm"               => new Tpm(),              // https://www.w3.org/TR/webauthn-2/#sctn-tpm-attestation
             "android-key"       => new AndroidKey(),       // https://www.w3.org/TR/webauthn-2/#sctn-android-key-attestation
-            "android-safetynet" => new AndroidSafetyNet(), // https://www.w3.org/TR/webauthn-2/#sctn-android-safetynet-attestation
+            "android-safetynet" => new AndroidSafetyNet(config?.AndroidSafetyNetRootCertificate ?? AndroidSafetyNet.GtsRootR1), // https://www.w3.org/TR/webauthn-2/#sctn-android-safetynet-attestation
             "fido-u2f"          => new FidoU2f(),          // https://www.w3.org/TR/webauthn-2/#sctn-fido-u2f-attestation
             "packed"            => new Packed(),           // https://www.w3.org/TR/webauthn-2/#sctn-packed-attestation
-            "apple"             => new Apple(),            // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation
+            "apple"             => new Apple(config?.AppleWebAuthnRootCertificate ?? Apple.AppleWebAuthnRootCA), // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation
             "apple-appattest"   => new AppleAppAttest(),   // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
             _                   => throw new Fido2VerificationException(Fido2ErrorCode.UnknownAttestationType, $"Unknown attestation type. Was '{formatIdentifier}'")
         };
