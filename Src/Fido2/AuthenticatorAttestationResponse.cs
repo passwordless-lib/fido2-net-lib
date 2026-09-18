@@ -33,10 +33,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
     {
         if (rawResponse?.Response is null)
-            throw new Fido2VerificationException("Expected rawResponse, got null");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.MissingRawResponse);
 
         if (rawResponse.Response.AttestationObject is null || rawResponse.Response.AttestationObject.Length is 0)
-            throw new Fido2VerificationException(Fido2ErrorMessages.MissingAttestationObject);
+            throw new Fido2VerificationException(Fido2ErrorCode.MissingAttestationObject, Fido2ErrorMessages.MissingAttestationObject);
 
         // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure
         // to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.

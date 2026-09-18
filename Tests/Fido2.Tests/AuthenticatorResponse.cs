@@ -237,6 +237,7 @@ public class AuthenticatorResponseTests
             IsCredentialIdUniqueToUserCallback = callback
         }));
         Assert.StartsWith("Fully qualified origin", ex.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, ex.Code);
     }
 
     // C.origin is attacker-controlled: a client data JSON without one, or with one the URI parser cannot read,
@@ -352,6 +353,33 @@ public class AuthenticatorResponseTests
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(null));
 
         Assert.Equal("Expected rawResponse, got null", ex.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestationResponse, ex.Code);
+    }
+
+    [Fact]
+    public void TestAuthenticatorAssertionRawResponseNull()
+    {
+        var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAssertionResponse.Parse(null));
+
+        Assert.Equal("Expected rawResponse, got null", ex.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidAssertionResponse, ex.Code);
+    }
+
+    [Fact]
+    public void TestAuthenticatorAssertionResponseNull()
+    {
+        var rawResponse = new AuthenticatorAssertionRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = "8dA",
+            RawId = [0xf1, 0xd0],
+            Response = null
+        };
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAssertionResponse.Parse(rawResponse));
+
+        Assert.Equal("Expected rawResponse, got null", ex.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidAssertionResponse, ex.Code);
     }
 
     [Fact]
@@ -367,6 +395,7 @@ public class AuthenticatorResponseTests
 
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
         Assert.Equal("Expected rawResponse, got null", ex.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestationResponse, ex.Code);
     }
 
     [Theory]
@@ -384,6 +413,7 @@ public class AuthenticatorResponseTests
         };
         var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
         Assert.Equal("Missing AttestationObject", ex.Message);
+        Assert.Equal(Fido2ErrorCode.MissingAttestationObject, ex.Code);
     }
 
     [Theory]

@@ -168,10 +168,22 @@ internal sealed class AndroidKey : AttestationVerifier
 
         X509Certificate2 androidKeyCert = trustPath[0];
 
-        // attestation public key; GetECDsaPublicKey returns null for any other key algorithm, and the
-        // signature check below only handles ECDSA, so say so rather than dereference the null
-        if (androidKeyCert.GetECDsaPublicKey() is not ECDsa androidKeyPubKey)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Android Key attestation certificate public key is not an Elliptic Curve (EC) public key");
+        // The attestation public key comes out of a certificate the authenticator supplied, so an undecodable
+        // key is the attestation's fault, not a cryptographic failure of the verifier. GetECDsaPublicKey returns
+        // null for any other key algorithm, and the signature check below only handles ECDSA, so say so rather
+        // than dereference the null.
+        ECDsa? androidKeyPubKey;
+        try
+        {
+            androidKeyPubKey = androidKeyCert.GetECDsaPublicKey();
+        }
+        catch (CryptographicException ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationPublicKey, ex);
+        }
+
+        if (androidKeyPubKey is null)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidAndroidKeyAttestationPublicKey);
 
         byte[] ecSignature;
         try
@@ -201,9 +213,9 @@ internal sealed class AndroidKey : AttestationVerifier
             if (!request.ClientDataHash.SequenceEqual(attestationChallenge))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Mismatch between attestationChallenge and hashedClientDataJson verifying android key attestation certificate extension");
         }
-        catch (Exception)
+        catch (Exception ex) when (ex is not Fido2VerificationException) // a mismatch above is its own rejection, not a malformed record
         {
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed android key AttestationRecord extension verifying android key attestation certificate extension");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed android key AttestationRecord extension verifying android key attestation certificate extension", ex);
         }
 
         // 5. Verify the following using the appropriate authorization list from the attestation certificate

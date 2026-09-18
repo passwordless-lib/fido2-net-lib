@@ -558,7 +558,7 @@ public sealed class CertInfo
     public CertInfo(byte[] data)
     {
         if (data is null || data.Length is 0)
-            throw new Fido2VerificationException("Malformed certInfo bytes");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed certInfo bytes");
 
         int offset = 0;
 
@@ -566,17 +566,17 @@ public sealed class CertInfo
 
         Magic = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
         if (0xff544347 != BinaryPrimitives.ReadUInt32BigEndian(Magic))
-            throw new Fido2VerificationException("Bad magic number " + Convert.ToHexString(Magic));
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Bad magic number " + Convert.ToHexString(Magic));
 
         Type = AuthDataHelper.GetSizedByteArray(data, ref offset, 2);
         if (0x8017 != BinaryPrimitives.ReadUInt16BigEndian(Type))
-            throw new Fido2VerificationException("Bad structure tag " + Convert.ToHexString(Type));
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Bad structure tag " + Convert.ToHexString(Type));
 
         QualifiedSigner = AuthDataHelper.GetSizedByteArray(data, ref offset);
 
         ExtraData = AuthDataHelper.GetSizedByteArray(data, ref offset);
         if (ExtraData is null || ExtraData.Length is 0)
-            throw new Fido2VerificationException("Bad extraData in certInfo");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Bad extraData in certInfo");
 
         Clock = AuthDataHelper.GetSizedByteArray(data, ref offset, 8);
         ResetCount = AuthDataHelper.GetSizedByteArray(data, ref offset, 4);
@@ -590,7 +590,7 @@ public sealed class CertInfo
         AttestedQualifiedNameBuffer = AuthDataHelper.GetSizedByteArray(data, ref offset);
 
         if (data.Length != offset)
-            throw new Fido2VerificationException("Leftover bits decoding certInfo");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Leftover bits decoding certInfo");
     }
     public ReadOnlySpan<byte> Raw => _data;
 
@@ -635,11 +635,11 @@ public sealed class CertInfo
 
         // If size is 4, then the Name is a handle.
         if (size is 4)
-            throw new Fido2VerificationException("Unexpected handle in TPM2B_NAME");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Unexpected handle in TPM2B_NAME");
 
         // If size is 0, then no Name is present.
         if (size is 0)
-            throw new Fido2VerificationException("Unexpected no name found in TPM2B_NAME");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Unexpected no name found in TPM2B_NAME");
 
         // Otherwise, the size shall be the size of a TPM_ALG_ID plus the size of the digest produced by the indicated hash algorithm.
         byte[] name;
@@ -652,16 +652,16 @@ public sealed class CertInfo
             }
             else
             {
-                throw new Fido2VerificationException("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm");
             }
         }
         else
         {
-            throw new Fido2VerificationException("Invalid TPM_ALG_ID found in TPM2B_NAME");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid TPM_ALG_ID found in TPM2B_NAME");
         }
 
         if (totalSize != bytes!.Length + name.Length)
-            throw new Fido2VerificationException("Unexpected extra bytes found in TPM2B_NAME");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Unexpected extra bytes found in TPM2B_NAME");
 
         return (size, name);
     }
@@ -774,7 +774,7 @@ public sealed class PubArea
         }
 
         if (data.Length != offset)
-            throw new Fido2VerificationException("Leftover bytes decoding pubArea");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Leftover bytes decoding pubArea");
     }
 
     public ReadOnlySpan<byte> Raw => _data;

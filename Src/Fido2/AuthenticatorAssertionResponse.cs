@@ -36,7 +36,7 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     public static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
     {
         if (rawResponse?.Response is null)
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, "Expected rawResponse, got null");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.MissingRawResponse);
 
         // AuthenticatorData.Parse decodes attacker-controlled bytes; an assertion may set the AT flag over
         // truncated attested credential data. Funnel any malformed-input failure into a

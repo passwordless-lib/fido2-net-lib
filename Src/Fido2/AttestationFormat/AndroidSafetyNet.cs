@@ -97,17 +97,17 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 
         if (!jwtHeaderJson.TryGetProperty("x5c", out var x5cEl))
         {
-            throw new Fido2VerificationException("SafetyNet response JWT header missing x5c");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response JWT header missing x5c");
         }
 
         if (!x5cEl.TryDecodeArrayOfBase64EncodedBytes(out var x5cRawKeys))
         {
-            throw new Fido2VerificationException("SafetyNet response JWT header has a malformed x5c value");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response JWT header has a malformed x5c value");
         }
 
         if (x5cRawKeys.Length is 0)
         {
-            throw new Fido2VerificationException("No keys were present in the TOC header in SafetyNet response JWT");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "No keys were present in the TOC header in SafetyNet response JWT");
         }
 
         var certs = new X509Certificate2[x5cRawKeys.Length];
@@ -141,7 +141,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
 
         if (!validateTokenResult.IsValid)
         {
-            throw new Fido2VerificationException("SafetyNet response security token validation failed");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "SafetyNet response security token validation failed");
         }
 
         string? nonce = null;

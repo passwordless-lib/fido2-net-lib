@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 using Fido2NetLib.Cbor;
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib;
@@ -17,7 +18,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         var appleExtension = exts.FirstOrDefault(static e => e.Oid?.Value is "1.2.840.113635.100.8.5");
 
         if (appleExtension is null || appleExtension.RawData is null)
-            throw new Fido2VerificationException("Extension with OID 1.2.840.113635.100.8.5 not found on Apple AppAttest credCert");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Extension with OID 1.2.840.113635.100.8.5 not found on Apple AppAttest credCert");
 
         var appleAttestationASN = Asn1Element.Decode(appleExtension.RawData);
         appleAttestationASN.CheckTag(Asn1Tag.Sequence);
@@ -31,7 +32,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
                 return s[0].GetOctetString();
             }
         }
-        throw new Fido2VerificationException("Apple AppAttest attestation extension 1.2.840.113635.100.8.5 has invalid data");
+        throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Apple AppAttest attestation extension 1.2.840.113635.100.8.5 has invalid data");
     }
 
     // From https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem
@@ -51,7 +52,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // 1. Verify that the x5c array contains the intermediate and leaf certificates for App Attest, starting from the credential certificate in the first data buffer in the array (credcert).
         if (!(request.X5c is CborArray { Length: 2 } x5cArray && x5cArray[0] is CborByteString { Length: > 0 } && x5cArray[1] is CborByteString { Length: > 0 }))
         {
-            throw new Fido2VerificationException("Malformed x5c in Apple AppAttest attestation");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed x5c in Apple AppAttest attestation");
         }
 
         // Verify the validity of the certificates using Apple's App Attest root certificate.
@@ -88,7 +89,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         byte[] keyIdentifier = Convert.FromHexString(credCert.GetNameInfo(X509NameType.SimpleName, false));
         if (!credCertPKHash.AsSpan().SequenceEqual(keyIdentifier))
         {
-            throw new Fido2VerificationException("Public key hash does not match key identifier in Apple AppAttest attestation");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Public key hash does not match key identifier in Apple AppAttest attestation");
         }
 
         // 6. Compute the SHA256 hash of your app's App ID, and verify that it’s the same as the authenticator data's RP ID hash.
@@ -96,25 +97,25 @@ internal sealed class AppleAppAttest : AttestationVerifier
         byte[] appIdHash = SHA256.HashData(appId);
         if (!appIdHash.AsSpan().SequenceEqual(request.AuthData.RpIdHash))
         {
-            throw new Fido2VerificationException("App ID hash does not match RP ID hash in Apple AppAttest attestation");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "App ID hash does not match RP ID hash in Apple AppAttest attestation");
         }
 
         // 7. Verify that the authenticator data's counter field equals 0.
         if (request.AuthData.SignCount != 0)
         {
-            throw new Fido2VerificationException("Sign count does not equal 0 in Apple AppAttest attestation");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Sign count does not equal 0 in Apple AppAttest attestation");
         }
 
         // 8. Verify that the authenticator data's aaguid field is either appattestdevelop if operating in the development environment, or appattest followed by seven 0x00 bytes if operating in the production environment.
         if (!request.AuthData.AttestedCredentialData.AaGuid.Equals(devAaguid) && !request.AuthData.AttestedCredentialData.AaGuid.Equals(prodAaguid))
         {
-            throw new Fido2VerificationException("Invalid aaguid encountered in Apple AppAttest attestation");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid aaguid encountered in Apple AppAttest attestation");
         }
 
         // 9. Verify that the authenticator data's credentialId field is the same as the key identifier.
         if (!keyIdentifier.SequenceEqual(request.AuthData.AttestedCredentialData.CredentialId))
         {
-            throw new Fido2VerificationException("Mismatch between credentialId and keyIdentifier in Apple AppAttest attestation");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Mismatch between credentialId and keyIdentifier in Apple AppAttest attestation");
         }
 
         // App Attest is not a WebAuthn attestation and Apple assigns it no WebAuthn attestation type; it is

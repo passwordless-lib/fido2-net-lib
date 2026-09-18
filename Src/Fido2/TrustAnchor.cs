@@ -57,12 +57,12 @@ public static class TrustAnchor
 
                 if (trustPath.Length > 1 && attestationRootCertificates.Any(c => string.Equals(c.Thumbprint, trustPath[^1].Thumbprint, StringComparison.Ordinal)))
                 {
-                    throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCertificateChain);
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidCertificateChain, Fido2ErrorMessages.InvalidCertificateChain);
                 }
 
                 if (!CryptoUtils.ValidateTrustChain(trustPath, attestationRootCertificates, validationMode))
                 {
-                    throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCertificateChain);
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidCertificateChain, Fido2ErrorMessages.InvalidCertificateChain);
                 }
             }
 
@@ -76,8 +76,7 @@ public static class TrustAnchor
 
                 if (!string.Equals(trustPath0.Subject, trustPath0.Issuer, StringComparison.Ordinal))
                 {
-                    // TODO: Improve this error message
-                    throw new Fido2VerificationException("Attestation with full attestation from authenticator that does not support full attestation");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.FullAttestationNotDeclaredInMetadata);
                 }
             }
 

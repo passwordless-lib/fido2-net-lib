@@ -79,7 +79,7 @@ public abstract class AttestationVerifier
 
             // The extension MUST NOT be marked as critical
             if (ext.Critical)
-                throw new Fido2VerificationException("extension MUST NOT be marked as critical");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "extension MUST NOT be marked as critical");
         }
 
         return aaguid;
