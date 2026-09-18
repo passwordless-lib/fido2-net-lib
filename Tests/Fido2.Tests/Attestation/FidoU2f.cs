@@ -210,6 +210,10 @@ public class FidoU2f : Fido2Tests.Attestation
         // coordinates the U2F public key format is assembled from. Corrupting the coordinates on the already-built
         // CredentialPublicKey (rather than constructing a new one from the bad bytes) avoids feeding an invalid EC
         // point through ECDsa.Create, whose validation is stricter on some platforms than others.
+        //
+        // CredentialPublicKey.CreateECDsa validates coordinate length itself before ever reaching ECDsa.Create, so
+        // this is rejected while parsing the attested credential data -- before the fido-u2f verifier's own,
+        // otherwise-unreachable copy of the same check (WebAuthn 8.6 step 4a/4b) would run.
         var cpk = _credentialPublicKey.GetCborObject();
         var x = (byte[])cpk[COSE.KeyTypeParameter.X];
         var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
@@ -217,7 +221,7 @@ public class FidoU2f : Fido2Tests.Attestation
         cpk.Set(COSE.KeyTypeParameter.Y, [0x00, .. y]);
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
-        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
-        Assert.Equal("fido-u2f credential public key x-coordinate must be 32 bytes, got 33", ex.Message);
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("EC2 credential public key x-coordinate must be 32 bytes for curve P256, got 33", ex.Message);
     }
 }

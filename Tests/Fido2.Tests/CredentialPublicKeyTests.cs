@@ -47,12 +47,16 @@ public class CredentialPublicKeyTests
     }
 
     [Theory]
-    [InlineData("A501020326200121581F6F56E6590BD91D39744F83A820E8B3FBB6608DA583794091538296D1DA73E2225820B0A65E0B18D3189DA3B4A7036202ADF65A6B68EFF8C24825532D7A04386AE628", 0x80131501)]
-    public void InvalidCoseKey(string str, uint hresult)
+    // A 31-byte (not 32) EC2 x-coordinate. Left to ECDsa.Create, this surfaces as a raw CryptographicException
+    // whose exact type/HResult depends on the platform's crypto backend; CredentialPublicKey now rejects the
+    // malformed coordinate length itself first, so the result is a Fido2VerificationException everywhere.
+    [InlineData("A501020326200121581F6F56E6590BD91D39744F83A820E8B3FBB6608DA583794091538296D1DA73E2225820B0A65E0B18D3189DA3B4A7036202ADF65A6B68EFF8C24825532D7A04386AE628")]
+    public void InvalidCoseKey(string str)
     {
         var cpkBytes = Convert.FromHexString(str);
-        var ex = Assert.Throws<CryptographicException>(() => new CredentialPublicKey(cpkBytes));
-        Assert.True(((uint)ex.HResult) == hresult);
+        var ex = Assert.Throws<Fido2VerificationException>(() => new CredentialPublicKey(cpkBytes));
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("EC2 credential public key x-coordinate must be 32 bytes for curve P256, got 31", ex.Message);
     }
 
     [Fact]

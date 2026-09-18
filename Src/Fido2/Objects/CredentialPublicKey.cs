@@ -161,6 +161,7 @@ public sealed class CredentialPublicKey
         };
 
         ECCurve curve;
+        int coordinateSize;
 
         var crv = (COSE.EllipticCurve)(int)_cpk[COSE.KeyTypeParameter.Crv]!;
 
@@ -175,15 +176,19 @@ public sealed class CredentialPublicKey
                 }
 
                 curve = ECCurve.CreateFromFriendlyName("secP256k1");
+                coordinateSize = 32;
                 break;
             case (COSE.Algorithm.ES256, COSE.EllipticCurve.P256):
                 curve = ECCurve.NamedCurves.nistP256;
+                coordinateSize = 32;
                 break;
             case (COSE.Algorithm.ES384, COSE.EllipticCurve.P384):
                 curve = ECCurve.NamedCurves.nistP384;
+                coordinateSize = 48;
                 break;
             case (COSE.Algorithm.ES512, COSE.EllipticCurve.P521):
                 curve = ECCurve.NamedCurves.nistP521;
+                coordinateSize = 66;
                 break;
             default:
                 // the alg names one hash/curve pairing and crv another (or is not an ECDSA algorithm at all);
@@ -191,6 +196,17 @@ public sealed class CredentialPublicKey
                 // attestation statement's alg is paired with its certificate's key
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an EC2 key on curve {crv}");
         }
+
+        // Coordinates of the wrong length are attacker-reachable (a credential public key in authenticator data,
+        // or an attestation statement's alg paired with its certificate's key) and must be rejected here with a
+        // precise, consistent error. Left unchecked, ECDsa.Create's own validation of a malformed ECPoint differs
+        // by platform crypto backend -- OpenSSL tolerates lengths CNG (Windows) rejects -- so which exception
+        // surfaces, and from where, would otherwise depend on the host OS.
+        if (point.X!.Length != coordinateSize)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"EC2 credential public key x-coordinate must be {coordinateSize} bytes for curve {crv}, got {point.X.Length}");
+
+        if (point.Y!.Length != coordinateSize)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"EC2 credential public key y-coordinate must be {coordinateSize} bytes for curve {crv}, got {point.Y.Length}");
 
         return ECDsa.Create(new ECParameters
         {
