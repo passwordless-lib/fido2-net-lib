@@ -56,7 +56,12 @@ internal sealed class Apple : AttestationVerifier
 
         for (int i = 0; i < trustPath.Length; i++)
         {
-            trustPath[i] = X509CertificateHelper.CreateFromRawData((byte[])x5cArray[i]);
+            // Only x5cArray[0] was type-checked above; casting the rest with (byte[]) would throw a raw
+            // InvalidCastException on a malformed chain, so verify each element is a byte string first.
+            if (x5cArray[i] is not CborByteString { Length: > 0 } x5cCert)
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.MalformedX5c_AppleAttestation);
+
+            trustPath[i] = X509CertificateHelper.CreateFromRawData(x5cCert.Value);
         }
 
         // credCert is the first certificate in the trust path

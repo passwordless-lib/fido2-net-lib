@@ -50,7 +50,22 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationObject, Fido2ErrorMessages.InvalidAttestationObject, ex);
         }
 
-        var attestationObject = ParsedAttestationObject.FromCbor(cborAttestation);
+        // FromCbor parses attacker-controlled authenticator data (attested credential data, the COSE public
+        // key, extensions). Any malformed-input failure in there must surface as a Fido2VerificationException
+        // rather than a raw ArgumentOutOfRangeException/KeyNotFoundException/InvalidCastException.
+        ParsedAttestationObject attestationObject;
+        try
+        {
+            attestationObject = ParsedAttestationObject.FromCbor(cborAttestation);
+        }
+        catch (Fido2VerificationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject, ex);
+        }
 
         return new AuthenticatorAttestationResponse(rawResponse, attestationObject);
     }
