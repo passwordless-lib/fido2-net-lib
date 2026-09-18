@@ -827,9 +827,11 @@ public class Packed : Fido2Tests.Attestation
 
         if (OperatingSystem.IsMacOS())
         {
-            // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
-            var ex = await Assert.ThrowsAnyAsync<CryptographicException>(MakeAttestationResponseAsync);
-            Assert.Equal("Unknown format in import.", ex.Message);
+            // Apple's crypto library refuses to even parse these corrupted cert bytes (raw message would be
+            // "Unknown format in import."), before ever reaching the "not V3" check below; X509CertificateHelper
+            // now wraps that parse failure the same way it wraps every other malformed-certificate case.
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+            Assert.Equal("Malformed X.509 certificate", ex.Message);
         }
 
         else
