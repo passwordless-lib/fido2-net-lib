@@ -58,6 +58,12 @@ else
 // Enforce HTTPS redirection for all requests
 app.UseHttpsRedirection();
 
+// Optional: record conformance-endpoint traffic and the reason for every rejection (see ConformanceTrafficLog.cs)
+if (builder.Configuration["conformance:trafficLog"] is { Length: > 0 } trafficLogPath)
+{
+    app.UseMiddleware<ConformanceTrafficLogMiddleware>(trafficLogPath);
+}
+
 app.UseSession();
 
 // Serve the .well-known/webauthn file for WebAuthn related origins

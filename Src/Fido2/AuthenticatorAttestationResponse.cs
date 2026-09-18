@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers.Text;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -33,10 +35,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     public static AuthenticatorAttestationResponse Parse(AuthenticatorAttestationRawResponse rawResponse)
     {
         if (rawResponse?.Response is null)
-            throw new Fido2VerificationException("Expected rawResponse, got null");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.MissingRawResponse);
 
         if (rawResponse.Response.AttestationObject is null || rawResponse.Response.AttestationObject.Length is 0)
-            throw new Fido2VerificationException(Fido2ErrorMessages.MissingAttestationObject);
+            throw new Fido2VerificationException(Fido2ErrorCode.MissingAttestationObject, Fido2ErrorMessages.MissingAttestationObject);
 
         // 8. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure
         // to obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement attStmt.
@@ -50,7 +52,22 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationObject, Fido2ErrorMessages.InvalidAttestationObject, ex);
         }
 
-        var attestationObject = ParsedAttestationObject.FromCbor(cborAttestation);
+        // FromCbor parses attacker-controlled authenticator data (attested credential data, the COSE public
+        // key, extensions). Any malformed-input failure in there must surface as a Fido2VerificationException
+        // rather than a raw ArgumentOutOfRangeException/KeyNotFoundException/InvalidCastException.
+        ParsedAttestationObject attestationObject;
+        try
+        {
+            attestationObject = ParsedAttestationObject.FromCbor(cborAttestation);
+        }
+        catch (Fido2VerificationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.MalformedAttestationObject, Fido2ErrorMessages.MalformedAttestationObject, ex);
+        }
 
         return new AuthenticatorAttestationResponse(rawResponse, attestationObject);
     }
@@ -83,6 +100,24 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (Raw.Id is null || Raw.Id.Length == 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdMissing);
 
+        if (Raw.RawId is null || Raw.RawId.Length == 0)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseRawIdMissing);
+
+        // credential.id is base64url(credential.rawId); a value that doesn't decode to exactly RawId's bytes is
+        // either malformed or was tampered with in transit.
+        byte[] decodedId;
+        try
+        {
+            decodedId = Base64Url.DecodeFromChars(Raw.Id);
+        }
+        catch (FormatException e)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdNotBase64Url, e);
+        }
+
+        if (!decodedId.AsSpan().SequenceEqual(Raw.RawId))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdNotBase64Url);
+
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseNotPublicKey);
 
@@ -113,6 +148,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
 
+        // Enforce the backup-state policy at registration too, not only at assertion: a credential can already
+        // be backed up (BS set) at creation, e.g. a synced passkey.
+        if (authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
+            !authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
+            throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
+
         if (!authData.HasAttestedCredentialData)
             throw new Fido2VerificationException(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, Fido2ErrorMessages.AttestedCredentialDataFlagNotSet);
 
@@ -128,12 +169,17 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 19. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt
         //     against the set of supported WebAuthn Attestation Statement Format Identifier values.
-        var verifier = AttestationVerifier.Create(AttestationObject.Fmt);
+        var verifier = AttestationVerifier.Create(AttestationObject.Fmt, config);
+
+        // The FIDO conformance tools' simulated authenticators differ from production ones in a few documented
+        // ways; the verifiers (and, below, trust anchor validation) relax exactly those when a conformance
+        // repository is the source of metadata, and nowhere else.
+        var validationMode = metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default;
 
         // 20. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature,
         //     by using the attestation statement format fmt’s verification procedure given attStmt, authData
         //     and the hash of the serialized client data computed in step 7
-        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash).ConfigureAwait(false);
+        (var attType, var trustPath) = await verifier.VerifyAsync(AttestationObject.AttStmt, AttestationObject.AuthData, clientDataHash, validationMode).ConfigureAwait(false);
 
         // 21. If validation is successful, obtain a list of acceptable trust anchors (attestation root certificates or ECDAA-Issuer public keys)
         //     for that attestation type and attestation statement format fmt, from a trusted source or from policy.
@@ -147,7 +193,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        TrustAnchor.Verify(metadataEntry, trustPath, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
+        TrustAnchor.Verify(metadataEntry, trustPath, attType, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
 
         // 22. Assess the attestation trustworthiness using the outputs of the verification procedure in step 14, as follows:
         //     If self attestation was used, check if self attestation is acceptable under Relying Party policy.
@@ -163,6 +209,14 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         // 23. Verify that the credentialId is ≤ 1023 bytes.
         // Handled by AttestedCredentialData constructor
+
+        // credential.rawId is the credential ID (5.1 PublicKeyCredential), i.e. the credentialId in the attested
+        // credential data the authenticator signed. The two come from different parts of the response, and only
+        // the attested one is covered by the attestation signature; a client sending something else as rawId is
+        // malformed, and a Relying Party that looks credentials up by rawId would register one id and be asked
+        // for another.
+        if (!authData.AttestedCredentialData.CredentialId.AsSpan().SequenceEqual(Raw.RawId))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseRawIdMismatch);
 
         // 24. Check that the credentialId is not yet registered to any other user.
         //     If registration is requested for a credential that is already registered to a different user,
@@ -184,7 +238,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         return new RegisteredPublicKeyCredential
         {
-            Type = Raw.Type,
+            Type = Raw.Type!.Value,
             Id = authData.AttestedCredentialData.CredentialId,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
@@ -195,6 +249,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             AttestationClientDataJson = Raw.Response.ClientDataJson,
             User = originalOptions.User,
             AttestationFormat = AttestationObject.Fmt,
+            AttestationType = attType.Value,
             AaGuid = authData.AttestedCredentialData.AaGuid
         };
     }

@@ -19,9 +19,14 @@ public class ConformanceTestController : Controller
     private readonly IFido2 _fido2;
     private readonly string _origin;
 
-    public ConformanceTestController(IOptions<Fido2Configuration> fido2Configuration)
+    public ConformanceTestController(IOptions<Fido2Configuration> fido2Configuration, IConfiguration configuration)
     {
         _origin = fido2Configuration.Value.FullyQualifiedOrigins.FirstOrDefault();
+
+        // The tool's metadata statements: the zip it exports, or a directory they were unpacked into
+        var metadataPath = configuration["conformance:metadata"] is { Length: > 0 } configured
+            ? configured
+            : System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance");
 
         _fido2 = new Fido2(new Fido2Configuration
         {
@@ -29,9 +34,7 @@ public class ConformanceTestController : Controller
             RPName = fido2Configuration.Value.RPName,
             Origins = fido2Configuration.Value.FullyQualifiedOrigins,
         },
-        ConformanceTesting.MetadataServiceInstance(
-            System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance"), _origin)
-        );
+        ConformanceTesting.MetadataServiceInstance(metadataPath, _origin));
     }
 
     [HttpPost]

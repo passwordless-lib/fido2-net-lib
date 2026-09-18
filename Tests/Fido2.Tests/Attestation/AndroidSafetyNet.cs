@@ -21,6 +21,8 @@ namespace Test.Attestation;
 
 public class AndroidSafetyNet : Fido2Tests.Attestation
 {
+    private byte[] _safetyNetRootRawData;
+
     public AndroidSafetyNet()
     {
         _attestationObject = new CborMap { { "fmt", "android-safetynet" } };
@@ -38,6 +40,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
         using (var ecdsaAtt = ECDsa.Create(eCCurve))
         {
+            _safetyNetRootRawData = root.RawData;
             var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
 
             var serial = RandomNumberGenerator.GetBytes(12);
@@ -100,16 +103,27 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
     [Fact]
     public async Task TestAndroidSafetyNet()
     {
+        AndroidSafetyNetRootOverride = X509CertificateHelper.CreateFromRawData(_safetyNetRootRawData);
         var credential = await MakeAttestationResponseAsync();
         Assert.Equal(_aaguid, credential.AaGuid);
         Assert.Equal(_signCount, credential.SignCount);
         Assert.Equal("android-safetynet", credential.AttestationFormat);
+        Assert.Equal("basic", credential.AttestationType);
         Assert.Equal(_credentialID, credential.Id);
         Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
         Assert.Equal("Test User", credential.User.DisplayName);
         Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
         Assert.Equal("testuser", credential.User.Name);
         Assert.Equal([AuthenticatorTransport.Internal], credential.Transports);
+    }
+
+    [Fact]
+    public void BundledGtsRootR1_HasExpectedThumbprint()
+    {
+        // Guards the bundled Google Trust Services root R1 against a transcription error in the embedded cert.
+        Assert.Equal(
+            "D947432ABDE7B7FA90FC2E6B59101B1280E0E1C7E4E40FA3C6887FFF57A7F4CF",
+            Fido2NetLib.AndroidSafetyNet.GtsRootR1.GetCertHashString(HashAlgorithmName.SHA256));
     }
 
     [Fact]
@@ -184,6 +198,7 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
                 { "response", Encoding.UTF8.GetBytes(securityToken) }
             });
 
+            AndroidSafetyNetRootOverride = root;
             var credential = await MakeAttestationResponseAsync();
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);
@@ -1090,5 +1105,19 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         }
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("SafetyNet response ctsProfileMatch false", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestAndroidSafetyNetResponseJWTHeaderNotJson()
+    {
+        var response = (byte[])_attestationObject["attStmt"]["response"];
+        var jwtParts = Encoding.UTF8.GetString(response).Split('.');
+        jwtParts[0] = Base64Url.EncodeToString(Encoding.UTF8.GetBytes("{not json"));
+        response = Encoding.UTF8.GetBytes(string.Join(".", jwtParts));
+        var attStmt = (CborMap)_attestationObject["attStmt"];
+        attStmt.Set("response", new CborByteString(response));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("SafetyNet response JWT is malformed", ex.Message);
     }
 }

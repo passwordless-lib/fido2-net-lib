@@ -79,11 +79,24 @@ public class AuthenticatorResponse
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, Fido2ErrorMessages.InvalidAuthenticatorResponseChallenge);
 
-        var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
+        // C.origin is attacker-controlled; a missing or unparseable value must fail verification rather than
+        // surface as an ArgumentNullException or UriFormatException from the URI parser.
+        if (string.IsNullOrEmpty(Origin))
+            throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseOrigin, Fido2ErrorMessages.MissingAuthenticatorResponseOrigin);
+
+        string fullyQualifiedOrigin;
+        try
+        {
+            fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
+        }
+        catch (UriFormatException ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, $"{Fido2ErrorMessages.InvalidAuthenticatorResponseOrigin}: '{Origin}'", ex);
+        }
 
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
         if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
-            throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, $"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
 
         // 13?. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.
         // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.

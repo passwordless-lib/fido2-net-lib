@@ -27,7 +27,7 @@ public class AuthenticatorAssertionRawResponse
     public AssertionResponse Response { get; init; }
 
     [JsonPropertyName("type"), Required]
-    public PublicKeyCredentialType Type { get; init; }
+    public PublicKeyCredentialType? Type { get; init; }
 
     [JsonPropertyName("extensions")]
     [Obsolete("Use ClientExtensionResults instead")]

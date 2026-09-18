@@ -19,8 +19,13 @@ public sealed class AuthenticatorAttestationRawResponse
     [JsonPropertyName("rawId"), Required]
     public byte[] RawId { get; init; }
 
+    /// <summary>
+    /// Nullable so that a JSON payload omitting <c>type</c> entirely is distinguishable from one that explicitly
+    /// sends <c>"public-key"</c> -- <see cref="PublicKeyCredentialType.PublicKey"/> is enum member zero, so a
+    /// non-nullable field would silently default to it instead of failing the "type must be public-key" check.
+    /// </summary>
     [JsonPropertyName("type"), Required]
-    public PublicKeyCredentialType Type { get; init; }
+    public PublicKeyCredentialType? Type { get; init; }
 
     [JsonPropertyName("response"), Required]
     public AttestationResponse Response { get; init; }

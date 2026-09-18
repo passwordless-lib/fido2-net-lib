@@ -22,16 +22,22 @@ public enum Fido2ErrorCode
     InvalidAssertionResponse,
     InvalidAttestationResponse,
     InvalidAttestedCredentialData,
+    InvalidCredentialPublicKey,
     InvalidAuthenticatorResponse,
     MalformedAuthenticatorResponse,
     MissingAuthenticatorData,
     InvalidAuthenticatorData,
     MissingAuthenticatorResponseChallenge,
     InvalidAuthenticatorResponseChallenge,
+    MissingAuthenticatorResponseOrigin,
+    InvalidAuthenticatorResponseOrigin,
     NonUniqueCredentialId,
     AaGuidNotFound,
     UnimplementedAlgorithm,
     BackupEligibilityRequirementNotMet,
     BackupStateRequirementNotMet,
-    CredentialAlgorithmRequirementNotMet
+    CredentialAlgorithmRequirementNotMet,
+    MissingAttestationObject,
+    InvalidCertificateChain,
+    UndesiredMetadataStatus
 }

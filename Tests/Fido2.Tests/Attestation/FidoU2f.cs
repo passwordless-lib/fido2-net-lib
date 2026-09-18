@@ -59,6 +59,7 @@ public class FidoU2f : Fido2Tests.Attestation
         Assert.Equal(_aaguid, credential.AaGuid);
         Assert.Equal(_signCount, credential.SignCount);
         Assert.Equal("fido-u2f", credential.AttestationFormat);
+        Assert.Equal("attca", credential.AttestationType);
         Assert.Equal(_credentialID, credential.Id);
         Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
         Assert.Equal("Test User", credential.User.DisplayName);
@@ -173,5 +174,54 @@ public class FidoU2f : Fido2Tests.Attestation
         attnStmt.Set("sig", new CborByteString(sig));
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Invalid fido-u2f attestation signature", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestU2fAttCertNotEc()
+    {
+        using var rsaAtt = RSA.Create(2048);
+        var attRequest = new CertificateRequest("CN=U2FTesting, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US", rsaAtt, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        attRequest.CertificateExtensions.Add(notCAExt);
+        using X509Certificate2 attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { attestnCert.RawData });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("Attestation certificate public key is not an Elliptic Curve (EC) public key over the P-256 curve", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestU2fCredentialPublicKeyNotEc2()
+    {
+        using var rsa = RSA.Create(2048);
+        var rsaParams = rsa.ExportParameters(false);
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.RSA, COSE.Algorithm.RS256, rsaParams.Modulus, rsaParams.Exponent);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("fido-u2f attestation requires an EC2 credential public key, got RSA", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestU2fCredentialPublicKeyCoordinateNot32Bytes()
+    {
+        // the same P-256 point with a leading zero octet on each coordinate: a valid key, but not the 32-byte
+        // coordinates the U2F public key format is assembled from. Corrupting the coordinates on the already-built
+        // CredentialPublicKey (rather than constructing a new one from the bad bytes) avoids feeding an invalid EC
+        // point through ECDsa.Create, whose validation is stricter on some platforms than others.
+        //
+        // CredentialPublicKey.CreateECDsa validates coordinate length itself before ever reaching ECDsa.Create, so
+        // this is rejected while parsing the attested credential data -- before the fido-u2f verifier's own,
+        // otherwise-unreachable copy of the same check (WebAuthn 8.6 step 4a/4b) would run.
+        var cpk = _credentialPublicKey.GetCborObject();
+        var x = (byte[])cpk[COSE.KeyTypeParameter.X];
+        var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
+        cpk.Set(COSE.KeyTypeParameter.X, [0x00, .. x]);
+        cpk.Set(COSE.KeyTypeParameter.Y, [0x00, .. y]);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("EC2 credential public key x-coordinate must be 32 bytes for curve P256, got 33", ex.Message);
     }
 }
