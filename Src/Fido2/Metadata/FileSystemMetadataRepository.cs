@@ -46,7 +46,8 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
 
         if (Directory.Exists(_directoryPath))
         {
-            foreach (var filename in Directory.GetFiles(_directoryPath))
+            // Statements may sit in subdirectories, as they do when the conformance tool's metadata zip is unpacked as-is
+            foreach (var filename in Directory.GetFiles(_directoryPath, "*.json", SearchOption.AllDirectories))
             {
                 await using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
                 MetadataStatement statement = await JsonSerializer.DeserializeAsync(fileStream, FidoModelSerializerContext.Default.MetadataStatement, cancellationToken: cancellationToken) ?? throw new NullReferenceException(nameof(statement));
