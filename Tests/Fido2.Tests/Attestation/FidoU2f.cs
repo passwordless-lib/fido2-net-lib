@@ -207,10 +207,14 @@ public class FidoU2f : Fido2Tests.Attestation
     public async Task TestU2fCredentialPublicKeyCoordinateNot32Bytes()
     {
         // the same P-256 point with a leading zero octet on each coordinate: a valid key, but not the 32-byte
-        // coordinates the U2F public key format is assembled from
-        var x = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.X];
-        var y = (byte[])_credentialPublicKey.GetCborObject()[COSE.KeyTypeParameter.Y];
-        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, [0x00, .. x], [0x00, .. y]);
+        // coordinates the U2F public key format is assembled from. Corrupting the coordinates on the already-built
+        // CredentialPublicKey (rather than constructing a new one from the bad bytes) avoids feeding an invalid EC
+        // point through ECDsa.Create, whose validation is stricter on some platforms than others.
+        var cpk = _credentialPublicKey.GetCborObject();
+        var x = (byte[])cpk[COSE.KeyTypeParameter.X];
+        var y = (byte[])cpk[COSE.KeyTypeParameter.Y];
+        cpk.Set(COSE.KeyTypeParameter.X, [0x00, .. x]);
+        cpk.Set(COSE.KeyTypeParameter.Y, [0x00, .. y]);
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
