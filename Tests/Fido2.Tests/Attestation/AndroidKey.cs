@@ -31,7 +31,17 @@ public class AndroidKey : Fido2Tests.Attestation
             }
             using (writer.PushSequence()) // teeEnforced
             {
-                writer.WriteNull();
+                using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1))) // purpose
+                {
+                    using (writer.PushSetOf())
+                    {
+                        writer.WriteInteger(2); // KM_PURPOSE_SIGN
+                    }
+                }
+                using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 702))) // origin
+                {
+                    writer.WriteInteger(0); // KM_ORIGIN_GENERATED
+                }
             }
         }
         return writer.Encode();
@@ -548,7 +558,10 @@ public class AndroidKey : Fido2Tests.Attestation
             }
             using (writer.PushSequence())
             {
-                writer.WriteNull();
+                using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 702))) // valid origin so the purpose check is reached
+                {
+                    writer.WriteInteger(0);
+                }
             }
         }
         var attRecord = writer.Encode();
@@ -593,7 +606,10 @@ public class AndroidKey : Fido2Tests.Attestation
             writer.WriteOctetString(_credentialID);
             using (writer.PushSequence())
             {
-                writer.WriteNull();
+                using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 702))) // valid origin so the purpose check is reached
+                {
+                    writer.WriteInteger(0);
+                }
             }
             using (writer.PushSequence())
             {
@@ -630,6 +646,96 @@ public class AndroidKey : Fido2Tests.Attestation
             }
         }
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension", ex.Message);
+    }
+
+    private async Task<Fido2VerificationException> RunWithAttestationRecordAsync(byte[] attRecord)
+    {
+        _attestationObject = new CborMap { { "fmt", "android-key" } };
+
+        using (var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256))
+        {
+            var attRequest = new CertificateRequest("CN=AndroidKeyTesting, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US", ecdsaAtt, HashAlgorithmName.SHA256);
+
+            attRequest.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.11129.2.1.17", attRecord, false));
+
+            using var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+            var X5c = new CborArray { attestnCert.RawData };
+
+            byte[] signature = SignData(COSE.KeyType.EC2, COSE.Algorithm.ES256, COSE.EllipticCurve.P256, ecdsa: ecdsaAtt);
+
+            _attestationObject.Add("attStmt", new CborMap {
+                { "alg", COSE.Algorithm.ES256 },
+                { "x5c", X5c },
+                { "sig", signature }
+            });
+        }
+
+        return await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+    }
+
+    private byte[] EncodeAttestationRecord(Action<AsnWriter> writeSoftwareEnforced, Action<AsnWriter> writeTeeEnforced)
+    {
+        var writer = new AsnWriter(AsnEncodingRules.BER);
+
+        using (writer.PushSequence()) // KeyDescription
+        {
+            writer.WriteInteger(3); // attestationVersion
+            writer.WriteNull(); // attestationSecurityLevel
+            writer.WriteInteger(2); // keymasterVersion
+            writer.WriteNull(); // keymasterSecurityLevel
+            writer.WriteOctetString(_clientDataHash); // attestationChallenge
+            writer.WriteOctetString(_credentialID); // uniqueId
+            using (writer.PushSequence()) // softwareEnforced
+            {
+                writeSoftwareEnforced(writer);
+            }
+            using (writer.PushSequence()) // teeEnforced
+            {
+                writeTeeEnforced(writer);
+            }
+        }
+
+        return writer.Encode();
+    }
+
+    [Fact]
+    public async Task TestAndroidKeyOriginMissingIsRejected()
+    {
+        // A KeyMint authorization list with a valid purpose but no origin (702) must fail closed: an absent
+        // origin is not evidence the key was generated inside secure hardware rather than imported.
+        byte[] attRecord = EncodeAttestationRecord(
+            w => w.WriteNull(),
+            w =>
+            {
+                using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1))) // purpose
+                using (w.PushSetOf())
+                {
+                    w.WriteInteger(2); // KM_PURPOSE_SIGN
+                }
+            });
+
+        var ex = await RunWithAttestationRecordAsync(attRecord);
+        Assert.Equal("Found origin field not set to KM_ORIGIN_GENERATED in android key attestation certificate extension", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestAndroidKeyPurposeMissingIsRejected()
+    {
+        // A KeyMint authorization list with a valid origin but no purpose (1) must fail closed: an absent
+        // purpose is not evidence the key may be used to sign.
+        byte[] attRecord = EncodeAttestationRecord(
+            w => w.WriteNull(),
+            w =>
+            {
+                using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 702))) // origin
+                {
+                    w.WriteInteger(0); // KM_ORIGIN_GENERATED
+                }
+            });
+
+        var ex = await RunWithAttestationRecordAsync(attRecord);
         Assert.Equal("Found purpose field not set to KM_PURPOSE_SIGN in android key attestation certificate extension", ex.Message);
     }
 }
