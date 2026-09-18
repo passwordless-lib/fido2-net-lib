@@ -1418,7 +1418,11 @@ public class AuthenticatorResponseTests
         var rawResponse = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = Base64Url.EncodeToString(acd.CredentialId),
+            // Id must encode rawId (checked earlier than this test's own target check) even though rawId itself is
+            // wrong -- otherwise this would exercise the id-doesn't-match-rawId rejection instead. Except when
+            // rawId is empty: an empty Id would instead trip the still-earlier "Id is missing" check, short of the
+            // "RawId is missing" rejection this case targets, so Id keeps a real (mismatched) value there.
+            Id = rawId.Length is 0 ? Base64Url.EncodeToString(acd.CredentialId) : Base64Url.EncodeToString(rawId),
             RawId = rawId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {

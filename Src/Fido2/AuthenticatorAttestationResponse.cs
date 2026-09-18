@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers.Text;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -100,6 +102,21 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         if (Raw.RawId is null || Raw.RawId.Length == 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseRawIdMissing);
+
+        // credential.id is base64url(credential.rawId); a value that doesn't decode to exactly RawId's bytes is
+        // either malformed or was tampered with in transit.
+        byte[] decodedId;
+        try
+        {
+            decodedId = Base64Url.DecodeFromChars(Raw.Id);
+        }
+        catch (FormatException e)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdNotBase64Url, e);
+        }
+
+        if (!decodedId.AsSpan().SequenceEqual(Raw.RawId))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseIdNotBase64Url);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestationResponse, Fido2ErrorMessages.AttestationResponseNotPublicKey);
@@ -221,7 +238,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
 
         return new RegisteredPublicKeyCredential
         {
-            Type = Raw.Type,
+            Type = Raw.Type!.Value,
             Id = authData.AttestedCredentialData.CredentialId,
             PublicKey = authData.AttestedCredentialData.CredentialPublicKey.GetBytes(),
             SignCount = authData.SignCount,
