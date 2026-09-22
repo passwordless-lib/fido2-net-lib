@@ -13,6 +13,21 @@ namespace Fido2NetLib;
 
 internal sealed class AppleAppAttest : AttestationVerifier
 {
+    private readonly X509Certificate2 _trustAnchor;
+
+    /// <summary>
+    /// Verifies against Apple's App Attest root.
+    /// </summary>
+    public AppleAppAttest() : this(AppleAppAttestRootCA) { }
+
+    /// <summary>
+    /// Verifies against the given root, as the tests do with a root of their own.
+    /// </summary>
+    public AppleAppAttest(X509Certificate2 trustAnchor)
+    {
+        _trustAnchor = trustAnchor;
+    }
+
     public static byte[] GetAppleAppIdFromCredCertExtValue(X509ExtensionCollection exts)
     {
         var appleExtension = exts.FirstOrDefault(static e => e.Oid?.Value is "1.2.840.113635.100.8.5");
@@ -58,7 +73,7 @@ internal sealed class AppleAppAttest : AttestationVerifier
         // Verify the validity of the certificates using Apple's App Attest root certificate.
         var chain = new X509Chain();
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-        chain.ChainPolicy.CustomTrustStore.Add(AppleAppAttestRootCA);
+        chain.ChainPolicy.CustomTrustStore.Add(_trustAnchor);
         chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
 
         X509Certificate2 intermediateCert = X509CertificateHelper.CreateFromRawData((byte[])x5cArray[1]);
