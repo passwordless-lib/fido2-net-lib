@@ -177,6 +177,13 @@ jobs:
           --no-build
           --configuration Release
 
+      # Static web assets are enumerated when the project is evaluated, so anything a build step generates
+      # into wwwroot afterwards is silently left out of the package (#633). Fail here rather than on NuGet.
+      - name: Check Fido2.BlazorWebAssembly ships its JavaScript module
+        run: |
+          pkg=$(ls Src/Fido2.BlazorWebAssembly/bin/Release/Fido2.BlazorWebAssembly.*.nupkg)
+          unzip -l "$pkg" | grep -q 'staticwebassets/js/WebAuthn.js$' || { echo "::error::$pkg is missing staticwebassets/js/WebAuthn.js"; unzip -l "$pkg"; exit 1; }
+
       - name: Upload artifacts
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
