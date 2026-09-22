@@ -118,6 +118,14 @@ public class RegisteredPublicKeyCredential
     public ulong? FirmwareVersion { get; init; }
 
     /// <summary>
+    /// The attestation type the attestation statement's verification procedure established: "none", "self",
+    /// "basic", "attca" or "anonca" (WebAuthn Level 3, 6.5.3 Attestation Types). Registration succeeds for every
+    /// type, so a Relying Party that only wants to trust certain kinds of attestation, for instance not "self",
+    /// which asserts nothing about the authenticator that created the credential, and not "none", decides here.
+    /// </summary>
+    public string AttestationType { get; init; }
+
+    /// <summary>
     /// The value of the attestationObject attribute when the public key credential source was registered.
     /// Storing this enables the Relying Party to reference the credential's attestation statement at a later time.
     /// </summary>

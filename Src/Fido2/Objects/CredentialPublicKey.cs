@@ -132,7 +132,7 @@ public sealed class CredentialPublicKey
 #endif
                 }
             default:
-                throw new InvalidOperationException($"Missing or unknown kty {_type}");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Missing or unknown kty {_type}");
         }
     }
 
@@ -214,6 +214,7 @@ public sealed class CredentialPublicKey
         };
 
         ECCurve curve;
+        int coordinateSize;
 
         // https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
         // A fully-specified algorithm (ESP256/ESP384/ESP512) fixes its own curve, so crv carries no information
@@ -222,17 +223,31 @@ public sealed class CredentialPublicKey
         {
             case COSE.Algorithm.ESP256:
                 curve = ECCurve.NamedCurves.nistP256;
+                coordinateSize = 32;
                 break;
             case COSE.Algorithm.ESP384:
                 curve = ECCurve.NamedCurves.nistP384;
+                coordinateSize = 48;
                 break;
             case COSE.Algorithm.ESP512:
                 curve = ECCurve.NamedCurves.nistP521;
+                coordinateSize = 66;
                 break;
             default:
-                curve = CurveFromAlgAndCrv();
+                (curve, coordinateSize) = CurveFromAlgAndCrv();
                 break;
         }
+
+        // Coordinates of the wrong length are attacker-reachable (a credential public key in authenticator data,
+        // or an attestation statement's alg paired with its certificate's key) and must be rejected here with a
+        // precise, consistent error. Left unchecked, ECDsa.Create's own validation of a malformed ECPoint differs
+        // by platform crypto backend -- OpenSSL tolerates lengths CNG (Windows) rejects -- so which exception
+        // surfaces, and from where, would otherwise depend on the host OS.
+        if (point.X!.Length != coordinateSize)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"EC2 credential public key x-coordinate must be {coordinateSize} bytes, got {point.X.Length}");
+
+        if (point.Y!.Length != coordinateSize)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"EC2 credential public key y-coordinate must be {coordinateSize} bytes, got {point.Y.Length}");
 
         // ECDsa.Create validates that the point actually lies on the curve, which WebAuthn L3 §5.8.5 calls out
         // as being at particular risk of falling between a crypto library and its caller.
@@ -243,11 +258,9 @@ public sealed class CredentialPublicKey
         });
     }
 
-    private ECCurve CurveFromAlgAndCrv()
+    private (ECCurve Curve, int CoordinateSize) CurveFromAlgAndCrv()
     {
         var crv = (COSE.EllipticCurve)(int)_cpk[COSE.KeyTypeParameter.Crv]!;
-
-        ECCurve curve;
 
         switch ((_alg, crv))
         {
@@ -257,26 +270,19 @@ public sealed class CredentialPublicKey
                     throw new PlatformNotSupportedException("The secP256k1 curve is not supported on macOS");
                 }
 
-                curve = ECCurve.CreateFromFriendlyName("secP256k1");
-                break;
+                return (ECCurve.CreateFromFriendlyName("secP256k1"), 32);
             case (COSE.Algorithm.ES256, COSE.EllipticCurve.P256):
-                curve = ECCurve.NamedCurves.nistP256;
-                break;
+                return (ECCurve.NamedCurves.nistP256, 32);
             case (COSE.Algorithm.ES384, COSE.EllipticCurve.P384):
-                curve = ECCurve.NamedCurves.nistP384;
-                break;
+                return (ECCurve.NamedCurves.nistP384, 48);
             case (COSE.Algorithm.ES512, COSE.EllipticCurve.P521):
-                curve = ECCurve.NamedCurves.nistP521;
-                break;
+                return (ECCurve.NamedCurves.nistP521, 66);
             default:
                 // ES256/ES384/ES512 each pin their curve (WebAuthn L3 §5.8.5), so a mismatched pair is a
-                // malformed key rather than an unsupported one.
-                throw new Fido2VerificationException(
-                    Fido2ErrorCode.InvalidCredentialPublicKey,
-                    $"Credential public key algorithm {_alg} is not valid with curve {crv}");
+                // malformed key rather than an unsupported one. Also reached with attacker-chosen values when
+                // an attestation statement's alg is paired with its certificate's key.
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an EC2 key on curve {crv}");
         }
-
-        return curve;
     }
 
     internal RSASignaturePadding Padding
@@ -301,7 +307,7 @@ public sealed class CredentialPublicKey
                 case COSE.Algorithm.RS512:
                     return RSASignaturePadding.Pkcs1;
                 default:
-                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Missing or unknown alg {_alg}");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an RSA key");
             }
         }
     }
@@ -346,9 +352,7 @@ public sealed class CredentialPublicKey
                 throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "Ed448 is not yet supported. NSec.Cryptography library version does not include Ed448 support.");
 
             default:
-                throw new Fido2VerificationException(
-                    Fido2ErrorCode.UnimplementedAlgorithm,
-                    $"Credential public key algorithm {_alg} is not supported for OKP keys");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an OKP key");
         }
     }
 #endif

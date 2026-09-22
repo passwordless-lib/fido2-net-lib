@@ -1,4 +1,5 @@
-﻿using System.Formats.Asn1;
+﻿using System;
+using System.Formats.Asn1;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
@@ -16,9 +17,14 @@ public abstract class AttestationVerifier
         return VerifyAsync(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash));
     }
 
+    public ValueTask<VerifyAttestationResult> VerifyAsync(CborMap attStmt, AuthenticatorData authenticatorData, byte[] clientDataHash, FidoValidationMode validationMode)
+    {
+        return VerifyAsync(new VerifyAttestationRequest(attStmt, authenticatorData, clientDataHash, validationMode));
+    }
+
     public abstract ValueTask<VerifyAttestationResult> VerifyAsync(VerifyAttestationRequest request);
 
-    public static AttestationVerifier Create(string formatIdentifier)
+    public static AttestationVerifier Create(string formatIdentifier, Fido2Configuration config)
     {
         #pragma warning disable format
         return formatIdentifier switch
@@ -26,10 +32,10 @@ public abstract class AttestationVerifier
             "none"              => new None(),             // https://www.w3.org/TR/webauthn-2/#sctn-none-attestation
             "tpm"               => new Tpm(),              // https://www.w3.org/TR/webauthn-2/#sctn-tpm-attestation
             "android-key"       => new AndroidKey(),       // https://www.w3.org/TR/webauthn-2/#sctn-android-key-attestation
-            "android-safetynet" => new AndroidSafetyNet(), // deprecated in L3: https://www.w3.org/TR/webauthn-3/#sctn-android-safetynet-attestation
+            "android-safetynet" => new AndroidSafetyNet(config?.AndroidSafetyNetRootCertificate ?? AndroidSafetyNet.GtsRootR1), // deprecated in L3: https://www.w3.org/TR/webauthn-3/#sctn-android-safetynet-attestation
             "fido-u2f"          => new FidoU2f(),          // https://www.w3.org/TR/webauthn-2/#sctn-fido-u2f-attestation
             "packed"            => new Packed(),           // https://www.w3.org/TR/webauthn-2/#sctn-packed-attestation
-            "apple"             => new Apple(),            // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation
+            "apple"             => new Apple(config?.AppleWebAuthnRootCertificate ?? Apple.AppleWebAuthnRootCA), // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation
             "apple-appattest"   => new AppleAppAttest(),   // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
             // "compound" carries an array of sub-statements rather than a map, so it does not fit this
             // contract; AuthenticatorAttestationResponse dispatches it to Compound.VerifyAsync instead.
@@ -56,13 +62,27 @@ public abstract class AttestationVerifier
         var ext = exts.FirstOrDefault(static e => e.Oid?.Value is "1.3.6.1.4.1.45724.1.1.4"); // id-fido-gen-ce-aaguid
         if (ext != null)
         {
-            var decodedAaguid = Asn1Element.Decode(ext.RawData);
-            decodedAaguid.CheckTag(Asn1Tag.PrimitiveOctetString);
+            Asn1Element decodedAaguid;
+            try
+            {
+                decodedAaguid = Asn1Element.Decode(ext.RawData);
+                decodedAaguid.CheckTag(Asn1Tag.PrimitiveOctetString);
+            }
+            catch (Exception ex)
+            {
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "id-fido-gen-ce-aaguid extension is not an OCTET STRING", ex);
+            }
+
             aaguid = decodedAaguid.GetOctetString();
+
+            // ... containing the AAGUID as a 16-byte OCTET STRING; anything else cannot be compared with the
+            // authenticator data's AAGUID (and would make the Guid constructor throw)
+            if (aaguid.Length != 16)
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"id-fido-gen-ce-aaguid extension must be a 16-byte OCTET STRING, got {aaguid.Length} bytes");
 
             // The extension MUST NOT be marked as critical
             if (ext.Critical)
-                throw new Fido2VerificationException("extension MUST NOT be marked as critical");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "extension MUST NOT be marked as critical");
         }
 
         return aaguid;

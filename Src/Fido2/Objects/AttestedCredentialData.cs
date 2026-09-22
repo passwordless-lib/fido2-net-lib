@@ -108,6 +108,11 @@ public sealed class AttestedCredentialData
 
         position += 2;
 
+        // The declared length must fit within the remaining buffer. Without this guard the slice below
+        // throws a raw ArgumentOutOfRangeException on malformed input instead of a Fido2VerificationException.
+        if (credentialIDLen > data.Length - position)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_TooShort);
+
         // Read the credential ID bytes
         var credentialID = data.Slice(position, credentialIDLen).ToArray();
 

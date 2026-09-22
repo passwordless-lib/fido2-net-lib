@@ -2,9 +2,15 @@
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
+
+using fido2_net_lib.Test;
 
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
+using Fido2NetLib.Objects;
 
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -153,6 +159,307 @@ public class MetadataServiceTests
 
         Assert.Equal(2, handler.CallCount);
         Assert.False(handler.AnyRequestSentIfNoneMatch);
+    }
+
+    // The live MDS BLOB lists most entries' status reports newest first (BLOB #280: 42 entries newest first, 3
+    // oldest first), and the spec defines no order at all, so the latest report has to be picked by effective date.
+    [Fact]
+    public void GetLatestStatusReport_Uses_Effective_Date_Not_Array_Position()
+    {
+        // TruU Windows Authenticator, ba86dc56-635f-4141-aef6-00227b1b9af6, as published in BLOB #280
+        var newestFirst = new MetadataBLOBPayloadEntry
+        {
+            StatusReports =
+            [
+                new StatusReport { Status = AuthenticatorStatus.REVOKED, EffectiveDate = "2023-12-20", AuthenticatorVersion = 1 },
+                new StatusReport { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED, EffectiveDate = "2023-11-07" }
+            ]
+        };
+        Assert.Equal(AuthenticatorStatus.REVOKED, newestFirst.GetLatestStatusReport().Status);
+
+        var oldestFirst = new MetadataBLOBPayloadEntry
+        {
+            StatusReports =
+            [
+                new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED, EffectiveDate = "2018-11-08" },
+                new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED_L1, EffectiveDate = "2020-11-19" }
+            ]
+        };
+        Assert.Equal(AuthenticatorStatus.FIDO_CERTIFIED_L1, oldestFirst.GetLatestStatusReport().Status);
+
+        var dateTimes = new MetadataBLOBPayloadEntry
+        {
+            StatusReports =
+            [
+                new StatusReport { Status = AuthenticatorStatus.UPDATE_AVAILABLE, EffectiveDate = "2024-02-19T10:00:00Z" },
+                new StatusReport { Status = AuthenticatorStatus.USER_VERIFICATION_BYPASS, EffectiveDate = "2024-02-19T09:00:00Z" },
+                new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED, EffectiveDate = "2024-01-07" }
+            ]
+        };
+        Assert.Equal(AuthenticatorStatus.UPDATE_AVAILABLE, dateTimes.GetLatestStatusReport().Status);
+    }
+
+    [Fact]
+    public void GetLatestStatusReport_Ties_Missing_Dates_And_Empty_Arrays()
+    {
+        // same effective date: the last in the array wins, as it always did for undated reports
+        var tied = new MetadataBLOBPayloadEntry
+        {
+            StatusReports =
+            [
+                new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED, EffectiveDate = "2023-12-28" },
+                new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED_L1, EffectiveDate = "2023-12-28" }
+            ]
+        };
+        Assert.Equal(AuthenticatorStatus.FIDO_CERTIFIED_L1, tied.GetLatestStatusReport().Status);
+
+        var undatedInOrder = new MetadataBLOBPayloadEntry
+        {
+            StatusReports =
+            [
+                new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED },
+                new StatusReport { Status = AuthenticatorStatus.REVOKED },
+                new StatusReport { Status = AuthenticatorStatus.UPDATE_AVAILABLE }
+            ]
+        };
+        Assert.Equal(AuthenticatorStatus.UPDATE_AVAILABLE, undatedInOrder.GetLatestStatusReport().Status);
+
+        // a report without a date (as FileSystemMetadataRepository produces) is older than any dated one
+        var undated = new MetadataBLOBPayloadEntry
+        {
+            StatusReports =
+            [
+                new StatusReport { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED },
+                new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED, EffectiveDate = "2019-01-01" },
+                new StatusReport { Status = AuthenticatorStatus.SELF_ASSERTION_SUBMITTED, EffectiveDate = "not a date" }
+            ]
+        };
+        Assert.Equal(AuthenticatorStatus.FIDO_CERTIFIED, undated.GetLatestStatusReport().Status);
+
+        var onlyUndated = new MetadataBLOBPayloadEntry { StatusReports = [new StatusReport { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED }] };
+        Assert.Equal(AuthenticatorStatus.NOT_FIDO_CERTIFIED, onlyUndated.GetLatestStatusReport().Status);
+
+        Assert.Null(new MetadataBLOBPayloadEntry { StatusReports = [] }.GetLatestStatusReport());
+        Assert.Null(new MetadataBLOBPayloadEntry().GetLatestStatusReport());
+    }
+
+    private sealed class StatusReportRepository(Guid aaguid, params StatusReport[] statusReports) : IMetadataRepository
+    {
+        public Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new MetadataBLOBPayload
+            {
+                Number = 1,
+                NextUpdate = "2099-01-01",
+                LegalHeader = "test",
+                Entries =
+                [
+                    new MetadataBLOBPayloadEntry
+                    {
+                        AaGuid = aaguid,
+                        MetadataStatement = new MetadataStatement { Description = "Revoked model", AttestationTypes = ["basic_full"] },
+                        StatusReports = statusReports
+                    }
+                ]
+            });
+        }
+
+        public Task<MetadataStatement> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(entry.MetadataStatement);
+        }
+    }
+
+    private static DistributedCacheMetadataService CreateService(IMetadataRepository repository, ISystemClock clock = null, IMemoryCache memoryCache = null)
+    {
+        var services = new ServiceCollection();
+        services.AddDistributedMemoryCache();
+        services.AddMemoryCache();
+        services.AddLogging();
+
+        var provider = services.BuildServiceProvider();
+
+        return new DistributedCacheMetadataService(
+            [repository],
+            provider.GetService<IDistributedCache>(),
+            memoryCache ?? provider.GetService<IMemoryCache>(),
+            provider.GetService<ILogger<DistributedCacheMetadataService>>(),
+            clock ?? new MockClock(DateTimeOffset.UtcNow)
+        );
+    }
+
+    [Fact]
+    public async Task Registration_Is_Refused_For_An_Authenticator_Whose_Revocation_Is_Not_The_Last_Status_Report()
+    {
+        var aaguid = new Guid("ba86dc56-635f-4141-aef6-00227b1b9af6");
+        var metadataService = CreateService(new StatusReportRepository(aaguid,
+            new StatusReport { Status = AuthenticatorStatus.REVOKED, EffectiveDate = "2023-12-20", AuthenticatorVersion = 1 },
+            new StatusReport { Status = AuthenticatorStatus.NOT_FIDO_CERTIFIED, EffectiveDate = "2023-11-07" }));
+
+        const string rp = "https://www.passwordless.dev";
+        var config = new Fido2Configuration { RPID = rp, RPName = rp, Origins = new HashSet<string> { rp } };
+        var lib = new Fido2(config, metadataService);
+
+        var challenge = RandomNumberGenerator.GetBytes(32);
+        var credentialId = RandomNumberGenerator.GetBytes(16);
+        var credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
+        var authData = new AuthenticatorData(
+            SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
+            AuthenticatorFlags.AT | AuthenticatorFlags.UP,
+            0,
+            new AttestedCredentialData(aaguid, credentialId, credentialPublicKey));
+        var attestationObject = new CborMap
+        {
+            { "fmt", "none" },
+            { "attStmt", new CborMap() },
+            { "authData", authData.ToByteArray() }
+        };
+        var clientDataJson = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new MockClientData { Type = "webauthn.create", Challenge = challenge, Origin = rp });
+
+        var ex = await Assert.ThrowsAsync<UndesiredMetadataStatusFido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = new AuthenticatorAttestationRawResponse
+            {
+                Type = PublicKeyCredentialType.PublicKey,
+                Id = "8dA",
+                RawId = [0xf1, 0xd0],
+                Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+                {
+                    AttestationObject = attestationObject.Encode(),
+                    ClientDataJson = clientDataJson,
+                    Transports = [AuthenticatorTransport.Usb]
+                },
+                ClientExtensionResults = new AuthenticationExtensionsClientOutputs()
+            },
+            OriginalOptions = new CredentialCreateOptions
+            {
+                Challenge = challenge,
+                Rp = new PublicKeyCredentialRpEntity(rp, rp),
+                User = new Fido2User { Id = "testuser"u8.ToArray(), Name = "testuser", DisplayName = "Test User" },
+                PubKeyCredParams = PubKeyCredParam.Defaults,
+                AuthenticatorSelection = AuthenticatorSelection.Default
+            },
+            IsCredentialIdUniqueToUserCallback = (_, _) => Task.FromResult(true)
+        }));
+
+        Assert.Equal(AuthenticatorStatus.REVOKED, ex.StatusReport.Status);
+    }
+
+    private sealed class FlakyRepository(int failures) : IMetadataRepository
+    {
+        private int _remainingFailures = failures;
+
+        public int Calls { get; private set; }
+
+        public Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
+        {
+            Calls++;
+
+            if (_remainingFailures-- > 0)
+                throw new HttpRequestException("MDS is unreachable");
+
+            return Task.FromResult(new MetadataBLOBPayload
+            {
+                Number = 1,
+                NextUpdate = "2099-01-01",
+                LegalHeader = "test",
+                Entries =
+                [
+                    new MetadataBLOBPayloadEntry
+                    {
+                        AaGuid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"),
+                        MetadataStatement = new MetadataStatement { Description = "Security Key by Yubico with NFC" },
+                        StatusReports = [new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED_L1 }]
+                    }
+                ]
+            });
+        }
+
+        public Task<MetadataStatement> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(entry.MetadataStatement);
+        }
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Does_Not_Cache_A_Failed_Fetch()
+    {
+        var repository = new FlakyRepository(failures: 1);
+        var service = CreateService(repository);
+        var aaguid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
+
+        // the repository is unreachable on the first lookup...
+        Assert.Null(await service.GetEntryAsync(aaguid));
+        Assert.Equal(1, repository.Calls);
+
+        // ...so the next lookup must try it again rather than answer from a cached failure
+        var entry = await service.GetEntryAsync(aaguid);
+
+        Assert.Equal(2, repository.Calls);
+        Assert.NotNull(entry);
+        Assert.Equal("Security Key by Yubico with NFC", entry.MetadataStatement.Description);
+
+        // and once the BLOB is in hand it is cached, with no further fetches
+        await service.GetEntryAsync(aaguid);
+        Assert.Equal(2, repository.Calls);
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Caches_An_Unknown_Aaguid_Only_When_A_Blob_Was_Searched()
+    {
+        var clock = new MockClock(DateTimeOffset.Parse("2021-11-30T00:00:00Z"));
+        var memoryCache = new MemoryCache(new MemoryCacheOptions { Clock = clock });
+        var repository = new FlakyRepository(failures: 1);
+        var service = CreateService(repository, clock, memoryCache);
+        var unknown = Guid.NewGuid();
+        var cacheKey = $"DistributedCacheMetadataService:V2:{unknown}";
+
+        // no BLOB could be fetched: the miss is not remembered
+        Assert.Null(await service.GetEntryAsync(unknown));
+        Assert.False(memoryCache.TryGetValue(cacheKey, out _));
+
+        // a BLOB was searched and had no such entry: the miss is remembered...
+        Assert.Null(await service.GetEntryAsync(unknown));
+        Assert.Equal(2, repository.Calls);
+        Assert.True(memoryCache.TryGetValue(cacheKey, out MetadataBLOBPayloadEntry cached));
+        Assert.Null(cached);
+
+        // ...but only for as long as the BLOB it was searched in
+        clock.UtcNow = clock.UtcNow.AddHours(2);
+        Assert.False(memoryCache.TryGetValue(cacheKey, out _));
+    }
+
+    [Fact]
+    public async Task FileSystemMetadataRepository_Can_Be_Fetched_More_Than_Once()
+    {
+        var repository = new FileSystemMetadataRepository("./metadata");
+
+        var first = await repository.GetBLOBAsync();
+        var second = await repository.GetBLOBAsync();
+
+        Assert.NotEmpty(first.Entries);
+        Assert.Equal(first.Entries.Select(e => e.AaGuid), second.Entries.Select(e => e.AaGuid));
+    }
+
+    [Fact]
+    public async Task FileSystemMetadataRepository_Refuses_Two_Statements_With_The_Same_Aaguid()
+    {
+        var directory = Directory.CreateTempSubdirectory("fido2-metadata-");
+        try
+        {
+            var statement = Directory.GetFiles("./metadata").First();
+            File.Copy(statement, Path.Combine(directory.FullName, "one.json"));
+            File.Copy(statement, Path.Combine(directory.FullName, "two.json"));
+
+            var repository = new FileSystemMetadataRepository(directory.FullName);
+
+            var ex = await Assert.ThrowsAsync<Fido2MetadataException>(() => repository.GetBLOBAsync());
+            Assert.Contains("same AAGUID", ex.Message);
+        }
+        finally
+        {
+            directory.Delete(recursive: true);
+        }
     }
 
     [Fact]

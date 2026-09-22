@@ -100,12 +100,25 @@ public class AuthenticatorResponse
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, Fido2ErrorMessages.InvalidAuthenticatorResponseChallenge);
 
-        var fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
+        // C.origin is attacker-controlled; a missing or unparseable value must fail verification rather than
+        // surface as an ArgumentNullException or UriFormatException from the URI parser.
+        if (string.IsNullOrEmpty(Origin))
+            throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseOrigin, Fido2ErrorMessages.MissingAuthenticatorResponseOrigin);
+
+        string fullyQualifiedOrigin;
+        try
+        {
+            fullyQualifiedOrigin = Origin.ToFullyQualifiedOrigin();
+        }
+        catch (UriFormatException ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, $"{Fido2ErrorMessages.InvalidAuthenticatorResponseOrigin}: '{Origin}'", ex);
+        }
 
         // Verify that the value of C.origin is an origin expected by the Relying Party.
         // (Step 9 of §7.1; step 12 of §7.2.)
         if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
-            throw new Fido2VerificationException($"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, $"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
 
         // Token Binding was dropped from the ceremonies in Level 3, which no longer numbers a step for it.
         // C.tokenBinding is still validated here for callers on older clients that populate it.

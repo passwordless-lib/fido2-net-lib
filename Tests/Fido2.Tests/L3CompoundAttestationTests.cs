@@ -166,7 +166,7 @@ public class L3CompoundAttestationTests : Fido2Tests.Attestation
     {
         // AttestationVerifier.Create() takes a CborMap attStmt, which "compound" doesn't use -- the
         // ceremony dispatches to Compound.VerifyAsync itself instead of going through Create() at all.
-        var ex = Assert.Throws<Fido2VerificationException>(() => AttestationVerifier.Create("compound"));
+        var ex = Assert.Throws<Fido2VerificationException>(() => AttestationVerifier.Create("compound", new Fido2Configuration()));
 
         Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
         Assert.Contains(nameof(Compound), ex.Message, System.StringComparison.Ordinal);

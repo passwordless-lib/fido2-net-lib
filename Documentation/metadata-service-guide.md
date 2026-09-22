@@ -222,3 +222,22 @@ services
     .AddMetadataRepository<DatabaseMetadataRepository>()  // Custom repository
     .AddCachedMetadataService();                          // Built-in caching
 ```
+
+## How attestation is checked against metadata
+
+When a registration carries a full attestation and the authenticator's metadata statement lists
+`attestationRootCertificates`, the library verifies that the attestation certificate chains to one of them.
+
+- **Any kind of anchor works, on every platform.** MDS allows an anchor to be a root, an intermediate CA, or the
+  attestation certificate itself. The chain is built by the platform's engine with partial chains permitted, and
+  the attestation certificate is accepted when a declared anchor appears anywhere above it in the verified path.
+  This is the same on Windows, Linux and macOS; earlier versions only handled intermediate anchors on Windows.
+- **Revocation of the attestation certificate is checked by the library, not by the platform.** If the attestation
+  certificate names an HTTP(S) CRL distribution point, the CRL is fetched (once per URL, until its next update),
+  its signature is verified against the CA the chain established as the issuer, and the certificate's serial
+  number is looked up. A CRL that cannot be fetched, does not verify, or is past its next update fails the
+  registration, as does a listed certificate. This needs outbound HTTP from the server to the CA's distribution
+  point. The issuing CAs' own status is not checked: the metadata statement vouches for them by naming an anchor.
+- **Conformance mode** (`FidoValidationMode.FidoConformance2024`, selected automatically for the conformance
+  metadata repository) skips revocation checking, since the conformance tool's certificates name distribution
+  points that do not exist.

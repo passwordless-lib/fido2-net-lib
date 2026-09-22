@@ -233,4 +233,21 @@ public sealed class CborMap : CborObject, IReadOnlyDictionary<CborObject, CborOb
 
         _items.Add(new(new CborTextString(key), value));
     }
+
+    internal void Set(COSE.KeyTypeParameter key, byte[] value)
+    {
+        var intKey = new CborInteger((int)key);
+
+        for (int i = 0; i < _items.Count; i++)
+        {
+            if (_items[i].Key is CborInteger integerKey && integerKey.Value == (long)key)
+            {
+                _items[i] = new KeyValuePair<CborObject, CborObject>(intKey, new CborByteString(value));
+
+                return;
+            }
+        }
+
+        _items.Add(new(intKey, new CborByteString(value)));
+    }
 }

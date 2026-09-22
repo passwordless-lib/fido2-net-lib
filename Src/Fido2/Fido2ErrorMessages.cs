@@ -28,12 +28,19 @@ internal static class Fido2ErrorMessages
     public static readonly string MalformedAttestationObject             = "Malformed AttestationObject";
     public static readonly string UserPresentFlagNotSet                  = "User Present flag not set in authenticator data";
     public static readonly string InvalidCertificateChain                = "Invalid certificate chain";
+    public static readonly string SelfAttestationNotDeclaredInMetadata   = "Self attestation from an authenticator model whose metadata statement does not declare basic_surrogate attestation";
+    public static readonly string AttestationResponseRawIdMissing        = "AttestationResponse RawId is missing";
+    public static readonly string AttestationResponseRawIdMismatch       = "AttestationResponse rawId does not match the credentialId in the attested credential data";
+    public static readonly string FullAttestationNotDeclaredInMetadata   = "Attestation statement carries a full attestation, but the authenticator's metadata does not declare basic full or privacy CA attestation";
     public static readonly string UserHandleIsEmpty                      = "UserHandle was empty DOMString. It should either be null or have a value.";
     public static readonly string UserHandleIsRequired                   = "UserHandle is required when the assertion options carry no allowCredentials, because nothing else identifies the user account.";
     public static readonly string InvalidAttestedCredentialData_TooShort = "Not enough bytes to be a valid AttestedCredentialData";
     public static readonly string InvalidAttestedCredentialData_CredentialIdTooLong = "CredentialId too many bytes";
     public static readonly string MissingAuthenticatorResponseChallenge  = "Authenticator response challenge may not be null";
     public static readonly string InvalidAuthenticatorResponseChallenge  = "Authenticator response challenge does not match original challenge";
+    public static readonly string MissingAuthenticatorResponseOrigin     = "Authenticator response origin may not be null or empty";
+    public static readonly string InvalidAuthenticatorResponseOrigin     = "Authenticator response origin is not a valid origin";
+    public static readonly string MissingRawResponse                     = "Expected rawResponse, got null";
     public static readonly string AttestedCredentialDataFlagNotSet       = "Attestation flag not set on attestation data";
     public static readonly string MissingAuthenticatorData               = "Authenticator data may not be null";
     public static readonly string InvalidAuthenticatorData_TooShort      = $"Authenticator data is less than the minimum structure length of {AuthenticatorData.MinLength}";
@@ -73,6 +80,7 @@ internal static class Fido2ErrorMessages
     public static readonly string MissingAndroidKeyAttestationStatement  = "Attestation format android-key must have attestation statement";
 
     public static readonly string InvalidAndroidKeyAttestationSignature  = "Invalid android-key attestation signature";
+    public static readonly string InvalidAndroidKeyAttestationPublicKey  = "Invalid android-key attestation public key";
     public static readonly string InvalidFidoU2fAttestationSignature     = "Invalid fido-u2f attestation signature";
     public static readonly string InvalidPackedAttestationSignature      = "Invalid packed attestation signature";
     public static readonly string InvalidTpmAttestationSignature         = "Invalid TPM attestation signature";

@@ -89,7 +89,8 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
     public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
     {
         var (rawBLOB, blobUri) = await GetRawBlobAsync(cancellationToken);
-        return await DeserializeAndValidateBlobAsync(rawBLOB, blobUri, cancellationToken);
+        using var rootCert = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
+        return await DeserializeAndValidateBlobAsync(rawBLOB, rootCert, cancellationToken, blobUri);
     }
 
     /// <summary>
@@ -159,7 +160,11 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         return backoff > MaxRetryDelay ? MaxRetryDelay : backoff;
     }
 
-    private async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, Uri blobUri, CancellationToken cancellationToken)
+    // internal for testing: the trust root is injected so a self-built chain can be validated without the
+    // real GlobalSign root. Production always passes the bundled ROOT_CERT. blobUri is only required when the
+    // BLOB header actually names an x5u -- its web-origin is checked against it -- so tests that only exercise
+    // x5c can omit it.
+    internal async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, X509Certificate2 rootCert, CancellationToken cancellationToken = default, Uri? blobUri = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(rawBLOBJwt);
 
@@ -182,14 +187,15 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         }
 
 
-        var rootCert = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
-
         // MDS 3.1.1 §3.2: prefer x5u, fall back to x5c, and if neither is present the BLOB signing trust
         // anchor is itself considered the signing certificate chain.
         X509Certificate2[] blobCerts;
 
         if (blobHeader.TryGetProperty("x5u", out var x5uEl))
         {
+            if (blobUri is null)
+                throw new Fido2MetadataException("The BLOB header named an x5u, but no BLOB URI was supplied to check its web-origin against");
+
             blobCerts = await GetCertificateChainFromX5uAsync(x5uEl, blobUri, cancellationToken);
         }
         else if (blobHeader.TryGetProperty("x5c", out var x5cEl))
@@ -265,43 +271,55 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
         var certChainIsValid = certChain.Build(blobCerts[0]);
 
-        // MDS 3.1.1 §3.2: "All certificates in the chain MUST be checked for revocation", and the FIDO Server
-        // SHOULD ignore the BLOB if one of them is revoked. The requirement is scoped to the BLOB payload
-        // certificates -- CRL checking for the certificates inside individual metadata statements is left to
-        // the server vendor.
-        //
-        // The chain is built with RevocationMode.NoCheck because the CRLs live at the MDS CRL location rather
-        // than wherever the platform would look, so this is done explicitly. It has to happen whether or not
-        // Build() succeeded: the BLOB signing root is a public GlobalSign root that most platform trust stores
-        // already carry, which makes the success path the common one, and it used to skip revocation entirely.
-        await VerifyNoCertificateIsRevokedAsync(certChain, cancellationToken);
+        // The BLOB signing chain MUST terminate at the bundled FIDO Alliance root, regardless of the host's
+        // trust store. X509Chain's default System trust mode returns true for a chain to ANY publicly-trusted
+        // CA, so a successful Build() alone would accept a BLOB signed under an unrelated public CA. Pin the
+        // terminal certificate to the downloaded root.
+        bool pinnedToFidoRoot = certChain.ChainElements.Count > 0
+            && rootCert.Thumbprint.Equals(certChain.ChainElements[^1].Certificate.Thumbprint, StringComparison.Ordinal);
 
-        // if the root is trusted in the context we are running in, valid should be true here
-        if (!certChainIsValid)
+        if (certChainIsValid)
         {
+            if (!pinnedToFidoRoot)
+                throw new Fido2VerificationException("The MDS BLOB signing certificate chain does not terminate at the FIDO Alliance root");
+        }
+        else
+        {
+            // The host does not trust the FIDO root (the usual case outside the browser PKI). Validate the chain
+            // manually against the pinned root before trusting -- or fetching anything named by -- its certificates.
             #pragma warning disable format
-            // otherwise we have to manually validate that the root in the chain we are testing is the root we downloaded
-            if (rootCert.Thumbprint == certChain.ChainElements[^1].Certificate.Thumbprint &&
-                // and that the number of elements in the chain accounts for the certificates the header
-                // supplied, plus the root we added -- unless the header's chain already ended at that root
+            bool manualChainIsValid =
+                pinnedToFidoRoot &&
+                // the chain accounts for exactly the certificates the header supplied, plus the root we added --
+                // unless the header's chain already ended at that root
                 certChain.ChainElements.Count == blobCerts.Length + (rootCert.Thumbprint == blobCerts[^1].Thumbprint ? 0 : 1) &&
                 // and that the root cert has exactly one status with the value of UntrustedRoot
-                certChain.ChainElements[^1].ChainElementStatus is [{ Status: X509ChainStatusFlags.UntrustedRoot }])
+                certChain.ChainElements[^1].ChainElementStatus is [{ Status: X509ChainStatusFlags.UntrustedRoot }];
+            #pragma warning restore format
+
+            if (manualChainIsValid)
             {
-                // if we are good so far, that is a good sign
-                certChainIsValid = true;
                 for (int i = 0; i < certChain.ChainElements.Count - 1; i++)
                 {
-                    // check each non-root cert to verify zero status listed against it, otherwise, invalidate chain
+                    // every non-root cert must carry no status of its own
                     if (certChain.ChainElements[i].ChainElementStatus.Length != 0)
-                        certChainIsValid = false;
+                        manualChainIsValid = false;
                 }
             }
-            #pragma warning restore format
+
+            if (!manualChainIsValid)
+                throw new Fido2VerificationException("Failed to validate cert chain while parsing BLOB");
         }
 
-        if (!certChainIsValid)
-            throw new Fido2VerificationException("Failed to validate cert chain while parsing BLOB");
+        // MDS 3.1.1 §3.2: "All certificates in the chain MUST be checked for revocation", and the FIDO Server
+        // SHOULD ignore the BLOB if one of them is revoked. This runs whether or not the platform's trust store
+        // already accepted the chain above -- the BLOB signing root is a public GlobalSign root that most
+        // platform trust stores already carry, which makes that the common path, and it must not skip
+        // revocation checking. The chain is built with RevocationMode.NoCheck because the CRLs live at the MDS
+        // CRL location rather than wherever the platform would look, so this is done explicitly; the CRL
+        // distribution point is taken from the certificate, so it is restricted to http(s) to avoid an SSRF via
+        // a crafted CDP (e.g. file:// or an internal-service URL).
+        await VerifyNoCertificateIsRevokedAsync(certChain, cancellationToken);
 
         var blobPayload = ((JsonWebToken)validateTokenResult.SecurityToken).EncodedPayload;
 
@@ -394,11 +412,8 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             if (element.Certificate.Issuer == element.Certificate.Subject)
                 continue;
 
-            var cdp = CryptoUtils.CDPFromCertificateExts(element.Certificate.Extensions);
-
-            // Nothing names a CRL for this certificate, so there is nothing to check it against.
-            if (string.IsNullOrEmpty(cdp))
-                continue;
+            if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
+                throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
 
             using var client = _httpClientFactory.CreateClient();
             var crlFile = await client.GetByteArrayAsync(cdp, cancellationToken);

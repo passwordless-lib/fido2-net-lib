@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Buffers.Text;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
@@ -116,6 +117,13 @@ public class Fido2Tests
         protected X509BasicConstraintsExtension notCAExt = new(false, false, 0, false);
         public X509Extension idFidoGenCeAaGuidExt;
 
+        // When set, injected into the Fido2Configuration so an apple-format test can chain-verify against its
+        // own root instead of Apple's real WebAuthn root.
+        public X509Certificate2 AppleWebAuthnRootOverride;
+
+        // Likewise for android-safetynet against Google's real root.
+        public X509Certificate2 AndroidSafetyNetRootOverride;
+
         public byte[] _rpIdHash => SHA256.HashData(Encoding.UTF8.GetBytes(rp));
 
         public byte[] _clientDataJson
@@ -194,6 +202,15 @@ public class Fido2Tests
             return MakeAttestationResponseAsync(null);
         }
 
+        /// <summary>
+        /// Runs the registration ceremony over <see cref="_attestationObject"/>, consulting <paramref name="metadataService"/>
+        /// for the authenticator's metadata when one is given.
+        /// </summary>
+        public Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync(IMetadataService metadataService)
+        {
+            return MakeAttestationResponseAsync(null, metadataService: metadataService);
+        }
+
         public async Task<RegisteredPublicKeyCredential> MakeAttestationResponseAsync(
             AuthenticationExtensionsClientInputs requestedExtensions,
             UnsolicitedExtensionPolicy unsolicitedExtensionPolicy = UnsolicitedExtensionPolicy.Ignore,
@@ -210,8 +227,8 @@ public class Fido2Tests
             var attestationResponse = new AuthenticatorAttestationRawResponse
             {
                 Type = PublicKeyCredentialType.PublicKey,
-                Id = id ?? "8dA",
-                RawId = rawId ?? [0xf1, 0xd0],
+                Id = id ?? Base64Url.EncodeToString(_credentialID),
+                RawId = rawId ?? _credentialID,
                 Response = new AuthenticatorAttestationRawResponse.AttestationResponse
                 {
                     AttestationObject = _attestationObject.Encode(),
@@ -268,6 +285,8 @@ public class Fido2Tests
                 RPName = rp,
                 Origins = new HashSet<string> { rp },
                 UnsolicitedExtensionPolicy = unsolicitedExtensionPolicy,
+                AppleWebAuthnRootCertificate = AppleWebAuthnRootOverride,
+                AndroidSafetyNetRootCertificate = AndroidSafetyNetRootOverride,
             };
 
             configure?.Invoke(config);
@@ -683,9 +702,6 @@ public class Fido2Tests
     [Fact]
     public async Task TestPackedttestationAsyncFailTrustAnchorOnRootCertInTrustPath()
     {
-        if (!OperatingSystem.IsWindows())
-            return;
-
         var targetGuid = new Guid("42383245-4437-3343-3846-423445354132");
         var metadataService = CreateMetadataService("./metadata");
         metadataService.ChangeEntryGuid(new Guid("00000000-0000-0000-0000-000000000004"), targetGuid);
@@ -694,10 +710,12 @@ public class Fido2Tests
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
         CborArray X5c = o.AttestationObject.AttStmt["x5c"] as CborArray;
         var entry = await metadataService.GetEntryAsync(targetGuid);
+        // x5c carries DER; the text form only ever passed because Windows' certificate loader sniffs base64
         foreach (var attRootCert in entry.MetadataStatement.AttestationRootCertificates)
-            X5c.Add(Encoding.UTF8.GetBytes(attRootCert));
+            X5c.Add(Convert.FromBase64String(attRootCert));
 
-        await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, cancellationToken: CancellationToken.None));
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), metadataService, null, cancellationToken: CancellationToken.None));
+        Assert.Equal("Invalid certificate chain", ex.Message);
     }
 
     [Fact]
@@ -756,13 +774,27 @@ public class Fido2Tests
         await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, cancellationToken: CancellationToken.None);
     }
 
+    /// <summary>
+    /// Stands in for the FIDO conformance tools' metadata service: the TPM fixtures below were captured from the
+    /// tools' simulated TPM, whose manufacturer (id:FFFFF1D0) is only accepted on a conformance run, and the tools'
+    /// metadata has an entry for every authenticator they simulate.
+    /// </summary>
+    private static IMetadataService ConformanceRunMetadataService()
+    {
+        var service = new Mock<IMetadataService>(MockBehavior.Strict);
+        service.Setup(m => m.ConformanceTesting()).Returns(true);
+        service.Setup(m => m.GetEntryAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid aaguid, CancellationToken _) => new MetadataBLOBPayloadEntry { AaGuid = aaguid, StatusReports = [] });
+        return service.Object;
+    }
+
     [Fact]
     public async Task TestTPMSHA256AttestationAsync()
     {
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA256Response.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA256Options.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, cancellationToken: CancellationToken.None);
+        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), ConformanceRunMetadataService(), null, cancellationToken: CancellationToken.None);
     }
 
     [Fact]
@@ -771,7 +803,18 @@ public class Fido2Tests
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA1Response.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA1Options.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);
-        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), _metadataService, null, cancellationToken: CancellationToken.None);
+        await o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), ConformanceRunMetadataService(), null, cancellationToken: CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task TestTPMConformanceToolCaptureIsRefusedOutsideAConformanceRun()
+    {
+        // the same capture, verified as a production registration: id:FFFFF1D0 is not a TCG-registered vendor
+        var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationTPMSHA256Response.json"));
+        var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationTPMSHA256Options.json"));
+        var o = AuthenticatorAttestationResponse.Parse(jsonPost);
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => o.VerifyAsync(options, _config, (x, cancellationToken) => Task.FromResult(true), null, null, cancellationToken: CancellationToken.None));
+        Assert.Equal("Invalid TPM manufacturer found parsing TPM attestation", ex.Message);
     }
 
     [Fact]
@@ -808,10 +851,6 @@ public class Fido2Tests
     [Fact]
     public async Task TestInvalidU2FAttestationAsync()
     {
-        // TODO: Figure out why this test fails on macOS and Linux
-        if (!OperatingSystem.IsWindows())
-            return;
-
         var jsonPost = JsonSerializer.Deserialize<AuthenticatorAttestationRawResponse>(await File.ReadAllTextAsync("./attestationResultsATKey.json"));
         var options = JsonSerializer.Deserialize<CredentialCreateOptions>(await File.ReadAllTextAsync("./attestationOptionsATKey.json"));
         var o = AuthenticatorAttestationResponse.Parse(jsonPost);

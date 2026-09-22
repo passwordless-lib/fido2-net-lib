@@ -19,6 +19,31 @@ This guide helps you migrate your code from FIDO2 .NET Library version 3.0.1 to 
 - **Framework Target**: Now targets .NET 8.0
 - **Nullable Reference Types**: Comprehensive nullable annotations
 
+## Behavioural Changes (Won't Show Up as Compiler Errors)
+
+These changes compile silently but change what your application does. Review them even if your build is clean.
+
+### `AuthenticatorSelection.Default` changed both its defaults
+
+| Property | v3.0.1 | v4.0.0 |
+|---|---|---|
+| `UserVerification` | `Preferred` | `Discouraged` ([#564](https://github.com/passwordless-lib/fido2-net-lib/pull/564)) |
+| `ResidentKey` | `Discouraged` | `Preferred` ([#563](https://github.com/passwordless-lib/fido2-net-lib/pull/563)) |
+
+If you relied on `AuthenticatorSelection.Default` and expect user verification to be requested, set it explicitly:
+
+```csharp
+var authenticatorSelection = new AuthenticatorSelection
+{
+    UserVerification = UserVerificationRequirement.Preferred,
+    ResidentKey = ResidentKeyRequirement.Discouraged // if you don't want resident keys
+};
+```
+
+### `status` and `errorMessage` were removed from `options` objects
+
+`CredentialCreateOptions` and `AssertionOptions` no longer carry `Status`/`ErrorMessage` ([#529](https://github.com/passwordless-lib/fido2-net-lib/pull/529)). The library only ever set `Status = "ok"` — errors were always raised as `Fido2VerificationException`, so nothing consumed these values for real error handling. If your client-side code branches on `data.status === "ok"`, drop that check; the response no longer has the field, and its absence is not an error.
+
 ## Migration Steps
 
 ### 1. Update Target Framework

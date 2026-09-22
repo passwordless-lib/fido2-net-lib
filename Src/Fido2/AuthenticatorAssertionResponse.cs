@@ -38,10 +38,27 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
     public static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
     {
-        return new AuthenticatorAssertionResponse(
-            raw: rawResponse,
-            authenticatorData: AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData)
-        );
+        if (rawResponse?.Response is null)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.MissingRawResponse);
+
+        // AuthenticatorData.Parse decodes attacker-controlled bytes; an assertion may set the AT flag over
+        // truncated attested credential data. Funnel any malformed-input failure into a
+        // Fido2VerificationException rather than leaking a raw ArgumentOutOfRangeException/KeyNotFoundException.
+        AuthenticatorData authenticatorData;
+        try
+        {
+            authenticatorData = AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData);
+        }
+        catch (Fido2VerificationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, "Malformed authenticator data", ex);
+        }
+
+        return new AuthenticatorAssertionResponse(rawResponse, authenticatorData);
     }
 
     /// <summary>
@@ -223,8 +240,11 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (!cpk.Verify(data, Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
-        // 22. If authData.signCount is nonzero or credentialRecord.signCount is nonzero
-        if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)
+        // 20. If authData.signCount is nonzero or credentialRecord.signCount is nonzero, and authData.signCount
+        // is less than or equal to the stored counter, the authenticator may be cloned (WebAuthn L3 7.2 step 21).
+        // The earlier `authData.SignCount > 0` guard silently skipped this when a previously-counting credential
+        // (stored counter > 0) presented a zero counter, which is exactly the cloned-authenticator signal.
+        if ((authData.SignCount != 0 || storedSignatureCounter != 0) && authData.SignCount <= storedSignatureCounter)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignCount, Fido2ErrorMessages.SignCountIsLessThanSignatureCounter);
 
 

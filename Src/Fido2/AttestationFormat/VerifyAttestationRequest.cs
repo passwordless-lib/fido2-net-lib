@@ -9,13 +9,22 @@ namespace Fido2NetLib;
 public sealed class VerifyAttestationRequest(
     CborMap attStmt,
     AuthenticatorData authenticationData,
-    byte[] clientDataHash)
+    byte[] clientDataHash,
+    FidoValidationMode validationMode = FidoValidationMode.Default)
 {
     private readonly CborMap _attStmt = attStmt;
     private readonly AuthenticatorData _authenticatorData = authenticationData;
     private readonly byte[] _clientDataHash = clientDataHash;
+    private readonly FidoValidationMode _validationMode = validationMode;
 
     internal CborMap AttStmt => _attStmt;
+
+    /// <summary>
+    /// How strictly to validate: <see cref="FidoValidationMode.FidoConformance2024"/> when the ceremony is being
+    /// driven by the FIDO conformance tools, whose simulated authenticators differ from production ones in a few
+    /// documented ways (see <see cref="Tpm.FidoConformanceToolTpmManufacturer"/>); otherwise the default.
+    /// </summary>
+    internal FidoValidationMode ValidationMode => _validationMode;
 
     internal ReadOnlySpan<byte> ClientDataHash => _clientDataHash;
 

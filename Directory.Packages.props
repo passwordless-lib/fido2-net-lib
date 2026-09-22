@@ -26,7 +26,6 @@
     
     <!-- Development Tools -->
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
-    <PackageVersion Include="Microsoft.TypeScript.MSBuild" Version="5.6.2" />
     
     <!-- JSON -->
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.5.0" />

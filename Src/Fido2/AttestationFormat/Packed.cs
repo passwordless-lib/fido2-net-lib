@@ -25,6 +25,10 @@ internal sealed class Packed : AttestationVerifier
         {
             int equalIndex = line.IndexOf('=');
 
+            // an empty subject decodes to a single empty line, which is not an attribute
+            if (equalIndex < 0)
+                continue;
+
             var lhs = line.Slice(0, equalIndex).ToString();
             var rhs = line.Slice(equalIndex + 1).ToString();
 

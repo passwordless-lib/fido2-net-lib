@@ -49,7 +49,8 @@ public static class Compound
         CborArray attStmt,
         AuthenticatorData authenticatorData,
         byte[] clientDataHash,
-        CompoundAttestationPolicy policy)
+        CompoundAttestationPolicy policy,
+        Fido2Configuration config)
     {
         ArgumentNullException.ThrowIfNull(attStmt);
 
@@ -69,7 +70,7 @@ public static class Compound
 
             try
             {
-                successes.Add(await AttestationVerifier.Create(fmt).VerifyAsync(subAttStmt, authenticatorData, clientDataHash).ConfigureAwait(false));
+                successes.Add(await AttestationVerifier.Create(fmt, config).VerifyAsync(subAttStmt, authenticatorData, clientDataHash).ConfigureAwait(false));
             }
             catch (Fido2VerificationException e)
             {

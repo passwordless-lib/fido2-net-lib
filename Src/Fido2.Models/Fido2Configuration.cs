@@ -1,6 +1,7 @@
 ﻿#nullable disable
 
 using System.Runtime.Serialization;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json.Serialization;
 
 namespace Fido2NetLib;
@@ -238,6 +239,25 @@ public class Fido2Configuration
     /// Metadata service cache directory path.
     /// </summary>
     public string MDSCacheDirPath { get; set; }
+
+    /// <summary>
+    /// The trust anchor used to validate the certificate chain of the <c>apple</c> anonymous attestation format.
+    /// Apple platform authenticators are not in the FIDO Metadata Service, so their chain is validated against
+    /// this root rather than metadata. Defaults to Apple's published WebAuthn root when left <see langword="null"/>;
+    /// override it only to pin a different root (for example in tests).
+    /// </summary>
+    [JsonIgnore]
+    public X509Certificate2 AppleWebAuthnRootCertificate { get; set; }
+
+    /// <summary>
+    /// The trust anchor used to validate the certificate chain of the <c>android-safetynet</c> attestation
+    /// format. Google's SafetyNet root is not in the FIDO Metadata Service, so its chain is validated against
+    /// this root rather than metadata. Defaults to Google Trust Services root R1 when left <see langword="null"/>;
+    /// override it only to pin a different root (for example in tests). Note that <c>android-safetynet</c> is
+    /// deprecated.
+    /// </summary>
+    [JsonIgnore]
+    public X509Certificate2 AndroidSafetyNetRootCertificate { get; set; }
 
     /// <summary>
     /// List of metadata statuses for an authenticator that should cause attestations to be rejected.

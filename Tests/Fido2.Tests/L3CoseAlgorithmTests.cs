@@ -68,7 +68,7 @@ public class L3CoseAlgorithmTests
         var ex = Assert.Throws<Fido2VerificationException>(() => Ec2Key(alg, crv, curve));
 
         Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
-        Assert.Contains("not valid with curve", ex.Message);
+        Assert.Contains("cannot be used with an EC2 key on curve", ex.Message);
     }
 
     [Fact]

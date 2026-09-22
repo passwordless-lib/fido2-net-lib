@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib.Objects;
+﻿using Fido2NetLib.Exceptions;
+
+namespace Fido2NetLib.Objects;
 
 /// <summary>
 /// CBOR Object Signing and Encryption RFC8152 https://tools.ietf.org/html/rfc8152
@@ -271,7 +273,7 @@ public static class COSE
             "1.2.840.10045.2.1" => KeyType.EC2, // ecPublicKey
             "1.2.840.113549.1.1.1" => KeyType.RSA,
             "1.3.101.112" => KeyType.OKP,
-            _ => throw new Exception($"Unknown oid. Was {oid}")
+            _ => throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Unknown public key algorithm OID {oid}")
         };
     }
 }
