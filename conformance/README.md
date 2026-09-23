@@ -20,11 +20,21 @@ This folder closes that gap for the demo server:
 
 ## Nothing from the tool is in this repository
 
-The conformance tool, its metadata statements and its payloads are licensed to the people who register for
-it and cannot be redistributed. This folder therefore holds only what this library produces: its own error
-codes and messages (with the tool's test values trimmed off), the request *shape* (attestation format and
-algorithm), and paraphrased one-line descriptions of what each test probes. Suite and test identifiers are kept
-because the checker aligns by them.
+The conformance tool is licensed to the individual or organization who registers for it, under FIDO Alliance's
+own End User License Agreement (shown on first launch, and bundled inside the tool's installer as
+`END USER LICENSE AGREEMENT FOR FIDO ALLIANCE FUNCTIONAL CERTIFICATION TEST TOOLS.pdf`). That license is
+non-transferable (§1.1); prohibits redistributing, sub-licensing, or otherwise letting a third party use the
+tool (§2.2) or making derivative works of it (§2.4); and separately treats the tool and "any and all other
+software, documentation or other information licensed to you by FIDO" as confidential for five years from
+disclosure (§5.1, §5.3) -- a broader, standalone obligation, not just a copyright restriction.
+
+**If you're running this yourself: register for the tool under your own name or organization, and don't hand
+your `metadata.zip`, traffic logs, or the installer itself to anyone else -- including a teammate, even
+informally.** Each person who needs it registers for their own copy.
+
+This folder holds only what this library itself produces: its own error codes and messages (with the tool's
+test values trimmed off), the request *shape* (attestation format and algorithm), and paraphrased one-line
+descriptions of what each test probes. Suite and test identifiers are kept because the checker aligns by them.
 
 Keep it that way. Traffic logs contain the tool's full request payloads and the metadata zip is the tool's;
 `.gitignore` here excludes both, and a run should never be committed.
