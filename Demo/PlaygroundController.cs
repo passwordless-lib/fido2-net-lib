@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System.Buffers.Text;
+using System.Collections.Concurrent;
 using System.Formats.Cbor;
 using System.Text;
 using System.Text.Json;
@@ -25,8 +26,11 @@ public class PlaygroundController : Controller
 {
     private readonly IMetadataService _metadataService;
 
-    /// <summary>Credential nicknames, keyed by base64url credential ID. Demo-local; not part of a credential record.</summary>
-    private static readonly Dictionary<string, string> s_nicknames = new(StringComparer.Ordinal);
+    /// <summary>
+    /// Credential nicknames, keyed by base64url credential ID. Demo-local; not part of a credential record.
+    /// A concurrent collection, not a plain Dictionary, since this is a singleton shared across every request.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, string> s_nicknames = new(StringComparer.Ordinal);
 
     public PlaygroundController(IMetadataService metadataService)
     {
@@ -426,7 +430,7 @@ public class PlaygroundController : Controller
     public JsonResult SetNickname([FromForm] string credentialId, [FromForm] string nickname)
     {
         if (string.IsNullOrWhiteSpace(nickname))
-            s_nicknames.Remove(credentialId);
+            s_nicknames.TryRemove(credentialId, out _);
         else
             s_nicknames[credentialId] = nickname.Trim();
 
@@ -440,7 +444,7 @@ public class PlaygroundController : Controller
         try
         {
             var removed = DemoController.DemoStorage.RemoveCredential(Base64Url.DecodeFromChars(credentialId));
-            s_nicknames.Remove(credentialId);
+            s_nicknames.TryRemove(credentialId, out _);
 
             // A deleted credential is exactly the case WebAuthn L3 §5.1.10 exists for: the authenticator will
             // keep offering it until told otherwise. The page follows up with a signal call.
