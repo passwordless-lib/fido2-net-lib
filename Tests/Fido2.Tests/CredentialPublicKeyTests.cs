@@ -56,7 +56,7 @@ public class CredentialPublicKeyTests
         var cpkBytes = Convert.FromHexString(str);
         var ex = Assert.Throws<Fido2VerificationException>(() => new CredentialPublicKey(cpkBytes));
         Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
-        Assert.Equal("EC2 credential public key x-coordinate must be 32 bytes for curve P256, got 31", ex.Message);
+        Assert.Equal("EC2 credential public key x-coordinate must be 32 bytes, got 31", ex.Message);
     }
 
     [Fact]
@@ -67,14 +67,74 @@ public class CredentialPublicKeyTests
     }
 
     [Fact]
-    public void Ed448IsRefusedAsUnimplementedRatherThanCrashing()
+    public void Ed448IsRefusedAsInvalidRatherThanCrashing()
     {
         byte[] x = RandomNumberGenerator.GetBytes(57); // Ed448 public keys are 57 bytes
 
+        // WebAuthn L3 §5.8.5: "Keys with algorithm -8 (EdDSA) MUST specify 6 (Ed25519) as the crv parameter."
+        // An Ed448 key is expected to declare the fully-specified algorithm -53 instead, so alg=EdDSA with
+        // crv=Ed448 is invalid rather than merely unimplemented.
         var ex = Assert.Throws<Fido2VerificationException>(() =>
             Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed448, x));
 
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+    }
+
+    [Fact]
+    public void FullySpecifiedEd448IsUnimplemented()
+    {
+        // COSE.Algorithm.Ed448 (-53) is the fully-specified algorithm for an Ed448 key, as opposed to
+        // EdDSA (-8) with crv=Ed448, which is rejected as invalid rather than unimplemented above.
+        byte[] x = RandomNumberGenerator.GetBytes(57);
+
+        var ex = Assert.Throws<Fido2VerificationException>(() =>
+            Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.Ed448, COSE.EllipticCurve.Ed448, x));
+
         Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
+    }
+
+    [Fact]
+    public void RejectsAnEC2KeyWithACompressedYCoordinate()
+    {
+        // A compressed point encodes y as a sign-bit rather than a byte string; WebAuthn L3 §5.8.5 requires
+        // the uncompressed point form, so this is a malformed key rather than one to decompress.
+        var cpk = new CborMap();
+        cpk.Add(COSE.KeyCommonParameter.KeyType, COSE.KeyType.EC2);
+        cpk.Add(COSE.KeyCommonParameter.Alg, COSE.Algorithm.ES256);
+        cpk.Add((int)COSE.KeyTypeParameter.Crv, (int)COSE.EllipticCurve.P256);
+        cpk.Add(COSE.KeyTypeParameter.X, RandomNumberGenerator.GetBytes(32));
+        cpk.Add((int)COSE.KeyTypeParameter.Y, 1L);
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => new CredentialPublicKey(cpk));
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Contains("uncompressed point form", ex.Message);
+    }
+
+    [Theory]
+    [InlineData(COSE.Algorithm.ESP256)]
+    [InlineData(COSE.Algorithm.ESP384)]
+    [InlineData(COSE.Algorithm.ESP512)]
+    public void FullySpecifiedEcdsaAlgorithmsFixTheirOwnCurve(COSE.Algorithm alg)
+    {
+        // ESP256/384/512 each pin their curve directly, so crv is not consulted for them -- unlike
+        // ES256/384/512/ES256K, which go through CurveFromAlgAndCrv below.
+        ECCurve curve = alg switch
+        {
+            COSE.Algorithm.ESP256 => ECCurve.NamedCurves.nistP256,
+            COSE.Algorithm.ESP384 => ECCurve.NamedCurves.nistP384,
+            COSE.Algorithm.ESP512 => ECCurve.NamedCurves.nistP521,
+            _ => throw new ArgumentOutOfRangeException(nameof(alg)),
+        };
+
+        byte[] signedData = RandomNumberGenerator.GetBytes(64);
+        using var ecDsa = ECDsa.Create(curve);
+        var signature = SignatureHelper.EcDsaSigFromSig(ecDsa.SignData(signedData, CryptoUtils.HashAlgFromCOSEAlg(alg)), ecDsa.KeySize);
+
+        var credentialPublicKey = new CredentialPublicKey(ecDsa, alg);
+        using var decodedPublicKey = credentialPublicKey.CreateECDsa();
+
+        Assert.True(credentialPublicKey.Verify(signedData, signature));
     }
 
     // Each of these is reachable with attacker-chosen values (a credential public key in authenticator data, or an

@@ -7,6 +7,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 using Fido2NetLib;
+using Fido2NetLib.Exceptions;
+using Fido2NetLib.Objects;
 
 namespace Test;
 
@@ -112,6 +114,22 @@ public class CryptoUtilsTests
 
         Assert.True(CryptoUtils.ValidateTrustChain(certs, certs));
         Assert.False(CryptoUtils.ValidateTrustChain(certs, otherCerts));
+    }
+
+    [Theory]
+    [InlineData((COSE.Algorithm)11, "SHA256")] // TPM_ALG_RSASSA / TPM_ALG_ECDSA with SHA-256
+    [InlineData((COSE.Algorithm)12, "SHA384")] // TPM_ALG_RSASSA / TPM_ALG_ECDSA with SHA-384
+    [InlineData((COSE.Algorithm)13, "SHA512")] // TPM_ALG_RSASSA / TPM_ALG_ECDSA with SHA-512
+    public void HashAlgFromCOSEAlgMapsTpmSchemeIdentifiers(COSE.Algorithm alg, string expectedHashAlgorithm)
+    {
+        Assert.Equal(expectedHashAlgorithm, CryptoUtils.HashAlgFromCOSEAlg(alg).Name);
+    }
+
+    [Fact]
+    public void HashAlgFromCOSEAlgRejectsAnUnknownAlgorithm()
+    {
+        var ex = Assert.Throws<Fido2VerificationException>(() => CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)9999));
+        Assert.Equal(Fido2ErrorMessages.InvalidCoseAlgorithmValue, ex.Message);
     }
 
     [Fact]

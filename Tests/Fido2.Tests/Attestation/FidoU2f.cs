@@ -222,6 +222,6 @@ public class FidoU2f : Fido2Tests.Attestation
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
-        Assert.Equal("EC2 credential public key x-coordinate must be 32 bytes for curve P256, got 33", ex.Message);
+        Assert.Equal("EC2 credential public key x-coordinate must be 32 bytes, got 33", ex.Message);
     }
 }

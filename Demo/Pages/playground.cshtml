@@ -1,0 +1,174 @@
+﻿@page "/playground"
+@model Fido2Demo.Pages.playgroundModel
+@{
+    ViewData["Title"] = "playground";
+    Layout = "_Layout.cshtml";
+}
+
+<div class="section">
+    <div class="container">
+        <h1 class="title is-1">Playground</h1>
+        <div class="content">
+            <p>
+                Every option this Relying Party can set, the exact JSON it puts on the wire, and the decoded
+                result. Unlike a browser-only playground, the decoding here is done by the same library code
+                that verifies a real ceremony &mdash; including all eight attestation statement formats and a
+                live FIDO Metadata Service lookup.
+            </p>
+        </div>
+
+        <div class="notification is-danger" id="notSupportedWarning" style="display:none">
+            Please note: Your browser does not seem to support WebAuthn yet.
+            <a href="https://caniuse.com/#search=webauthn" target="_blank">Supported browsers</a>
+        </div>
+
+        <div class="tabs is-boxed" id="playground-tabs">
+            <ul>
+                <li class="is-active" data-tab="ceremony"><a>Ceremony</a></li>
+                <li data-tab="response"><a>Response</a></li>
+                <li data-tab="decoder"><a>Decoder</a></li>
+                <li data-tab="credentials"><a>Credentials</a></li>
+            </ul>
+        </div>
+
+        @* ---------------------------------------------------------------- Ceremony *@
+        <div class="playground-panel" id="panel-ceremony">
+            <div class="columns">
+                <div class="column is-5">
+                    <h3 class="title is-4">Identity</h3>
+                    <div class="field">
+                        <label class="label">Username</label>
+                        <div class="control">
+                            <input class="input" type="text" id="pg-username" placeholder="abergs" value="playground-user" />
+                        </div>
+                        <p class="help">Leave blank when registering to exercise the usernameless flow.</p>
+                    </div>
+                    <div class="field">
+                        <label class="label">Display name</label>
+                        <div class="control">
+                            <input class="input" type="text" id="pg-displayname" value="Playground User" />
+                        </div>
+                    </div>
+
+                    <div class="buttons" style="margin-top: 1.5rem">
+                        <button class="button is-link" id="pg-register">Register</button>
+                        <button class="button is-link is-light" id="pg-authenticate">Authenticate</button>
+                    </div>
+                    <p class="help" id="pg-status"></p>
+
+                    <h3 class="title is-4" style="margin-top: 2rem">Client capabilities</h3>
+                    <p class="help">
+                        &sect;5.1.7 <code>getClientCapabilities()</code> &mdash; what this browser reports it can do.
+                    </p>
+                    <div id="client-capabilities" style="margin-top: 0.5rem"></div>
+                </div>
+
+                <div class="column is-7">
+                    <h3 class="title is-4">Request preview</h3>
+                    <p class="help">
+                        The options the server produced for the last ceremony you started, exactly as they went
+                        over the wire &mdash; the JSON form of
+                        <code>PublicKeyCredentialCreationOptions</code> / <code>RequestOptions</code> that
+                        &sect;5.1.8 has the browser parse.
+                    </p>
+                    <pre class="pg-json" id="pg-request-preview">Start a ceremony to see the request.</pre>
+                </div>
+            </div>
+
+            <partial name="_options.cshtml" />
+        </div>
+
+        @* ---------------------------------------------------------------- Response *@
+        <div class="playground-panel" id="panel-response" style="display:none">
+            <h3 class="title is-4">Decoded response</h3>
+            <p class="help">
+                What the authenticator returned, decoded server-side: authenticator data flags, the attested
+                credential data, the COSE public key, and the attestation statement.
+            </p>
+            <div id="pg-response-summary" style="margin-top: 1rem"></div>
+            <pre class="pg-json" id="pg-response-raw" style="margin-top: 1rem">Complete a ceremony to see the decoded response.</pre>
+        </div>
+
+        @* ---------------------------------------------------------------- Decoder *@
+        <div class="playground-panel" id="panel-decoder" style="display:none">
+            <h3 class="title is-4">Decoder</h3>
+            <p class="help">
+                Paste an attestation object, authenticator data, clientDataJSON, or a COSE public key &mdash;
+                base64url, base64, or hex. The type is detected automatically, or pick one.
+            </p>
+            <div class="field" style="margin-top: 1rem">
+                <div class="control">
+                    <textarea class="textarea" id="pg-decode-input" rows="6"
+                              placeholder="o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVkBZ..."></textarea>
+                </div>
+            </div>
+            <div class="field is-grouped">
+                <div class="control">
+                    <div class="select">
+                        <select id="pg-decode-kind">
+                            <option value="auto">Detect automatically</option>
+                            <option value="attestationObject">attestationObject</option>
+                            <option value="authenticatorData">authenticatorData</option>
+                            <option value="clientDataJSON">clientDataJSON</option>
+                            <option value="coseKey">COSE public key</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control">
+                    <button class="button is-link" id="pg-decode">Decode</button>
+                </div>
+            </div>
+            <pre class="pg-json" id="pg-decode-output" style="margin-top: 1rem"></pre>
+        </div>
+
+        @* ---------------------------------------------------------------- Credentials *@
+        <div class="playground-panel" id="panel-credentials" style="display:none">
+            <h3 class="title is-4">Credential records</h3>
+            <p class="help">
+                The <a href="https://www.w3.org/TR/webauthn-3/#credential-record">credential record</a> this
+                Relying Party keeps for each registration, and the &sect;5.1.10 signal methods that keep the
+                authenticator's view of them in step.
+            </p>
+            <div class="field is-grouped" style="margin-top: 1rem">
+                <div class="control">
+                    <button class="button is-link is-light" id="pg-refresh-credentials">Refresh</button>
+                </div>
+                <div class="control">
+                    <button class="button is-link is-light" id="pg-signal-all">signalAllAcceptedCredentials()</button>
+                </div>
+                <div class="control">
+                    <button class="button is-link is-light" id="pg-signal-user">signalCurrentUserDetails()</button>
+                </div>
+            </div>
+            <p class="help" id="pg-credential-status"></p>
+            <div id="pg-credentials" style="margin-top: 1rem"></div>
+        </div>
+
+        <div class="section">
+            <div class="container">
+                <div class="content">
+                    <p>
+                        Read the source code for this page here:
+                        <a href="@Url.ToGithub("Demo/wwwroot/js/playground.js")">playground.js</a>,
+                        <a href="@Url.ToGithub("Demo/wwwroot/js/webauthn.js")">webauthn.js</a> and
+                        <a href="@Url.ToGithub("Demo/PlaygroundController.cs")">PlaygroundController.cs</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pg-json {
+        background: #f5f5f5;
+        max-height: 32rem;
+        overflow: auto;
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+    .pg-flag { margin-right: 0.35rem; }
+</style>
+
+<script src="~/js/webauthn.js"></script>
+<script src="~/js/playground.js"></script>

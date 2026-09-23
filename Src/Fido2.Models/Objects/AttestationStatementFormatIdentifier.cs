@@ -44,6 +44,10 @@ public enum AttestationStatementFormatIdentifier
     /// <summary>
     /// Android-based platform authenticators MAY produce an attestation statement based on the Android SafetyNet API.
     /// </summary>
+    /// <remarks>
+    /// Deprecated by WebAuthn Level 3 §8.5: "This format is deprecated and is expected to be removed in a
+    /// future revision of this document."
+    /// </remarks>
 #if NET9_0_OR_GREATER
     [JsonStringEnumMemberName("android-safetynet")]
 #endif
@@ -75,6 +79,16 @@ public enum AttestationStatementFormatIdentifier
     [JsonStringEnumMemberName("none")]
 #endif
     [EnumMember(Value = "none")]
-    None
+    None,
+
+    /// <summary>
+    /// Used to pass multiple, self-contained attestation statements in a single ceremony.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-compound-attestation"/>
+    /// </summary>
+#if NET9_0_OR_GREATER
+    [JsonStringEnumMemberName("compound")]
+#endif
+    [EnumMember(Value = "compound")]
+    Compound
 }
 

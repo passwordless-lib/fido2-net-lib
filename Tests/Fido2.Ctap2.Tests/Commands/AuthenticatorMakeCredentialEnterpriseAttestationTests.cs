@@ -1,4 +1,4 @@
-using Fido2NetLib.Cbor;
+﻿using Fido2NetLib.Cbor;
 using Fido2NetLib.Objects;
 
 namespace Fido2NetLib.Ctap2.Tests;

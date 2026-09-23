@@ -70,12 +70,16 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
-    private sealed record CachedRawBlob(EntityTagHeaderValue ETag, string RawBlob);
+    private sealed record CachedRawBlob(EntityTagHeaderValue ETag, string RawBlob, Uri BlobUri);
 
     // Set after each successful (non-304) fetch that returns an ETag, and read at the start of the next fetch
     // to conditionally re-validate. Plain field access is fine here: a torn read just means an occasional
     // fetch skips the conditional GET optimization, not a correctness issue.
     private CachedRawBlob? _cachedRawBlob;
+
+    // The highest BLOB serial number seen so far, for rollback protection. Same reasoning as _cachedRawBlob
+    // applies: a torn read can only cost us one rejected rollback, and the value never decreases.
+    private int _highestBlobNumber;
 
     public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
     {
@@ -84,12 +88,16 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
     public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
     {
-        var rawBLOB = await GetRawBlobAsync(cancellationToken);
+        var (rawBLOB, blobUri) = await GetRawBlobAsync(cancellationToken);
         using var rootCert = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
-        return await DeserializeAndValidateBlobAsync(rawBLOB, rootCert, cancellationToken);
+        return await DeserializeAndValidateBlobAsync(rawBLOB, rootCert, cancellationToken, blobUri);
     }
 
-    private async Task<string> GetRawBlobAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Downloads the raw BLOB JWT, returning it along with the URI it was actually downloaded from -- which is
+    /// the URI after any redirects, and is what an <c>x5u</c> header has to share a web-origin with.
+    /// </summary>
+    private async Task<(string RawBlob, Uri BlobUri)> GetRawBlobAsync(CancellationToken cancellationToken)
     {
         var httpClient = _httpClientFactory.CreateClient(nameof(Fido2MetadataServiceRepository));
         var cached = _cachedRawBlob;
@@ -106,18 +114,19 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
             if (response.StatusCode is HttpStatusCode.NotModified && cached is not null)
             {
-                return cached.RawBlob;
+                return (cached.RawBlob, cached.BlobUri);
             }
 
             if (response.IsSuccessStatusCode)
             {
                 var rawBlob = await response.Content.ReadAsStringAsync(cancellationToken);
+                var blobUri = response.RequestMessage?.RequestUri ?? request.RequestUri!;
 
                 _cachedRawBlob = response.Headers.ETag is { } etag
-                    ? new CachedRawBlob(etag, rawBlob)
+                    ? new CachedRawBlob(etag, rawBlob, blobUri)
                     : null;
 
-                return rawBlob;
+                return (rawBlob, blobUri);
             }
 
             var isThrottled = response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
@@ -152,8 +161,10 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
     }
 
     // internal for testing: the trust root is injected so a self-built chain can be validated without the
-    // real GlobalSign root. Production always passes the bundled ROOT_CERT.
-    internal async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, X509Certificate2 rootCert, CancellationToken cancellationToken)
+    // real GlobalSign root. Production always passes the bundled ROOT_CERT. blobUri is only required when the
+    // BLOB header actually names an x5u -- its web-origin is checked against it -- so tests that only exercise
+    // x5c can omit it.
+    internal async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, X509Certificate2 rootCert, CancellationToken cancellationToken = default, Uri? blobUri = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(rawBLOBJwt);
 
@@ -176,29 +187,41 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         }
 
 
-        if (!blobHeader.TryGetProperty("x5c", out var x5cEl))
+        // MDS 3.1.1 §3.2: prefer x5u, fall back to x5c, and if neither is present the BLOB signing trust
+        // anchor is itself considered the signing certificate chain.
+        X509Certificate2[] blobCerts;
+
+        if (blobHeader.TryGetProperty("x5u", out var x5uEl))
         {
-            throw new Fido2MetadataException("No x5c value was present in the BLOB header");
+            if (blobUri is null)
+                throw new Fido2MetadataException("The BLOB header named an x5u, but no BLOB URI was supplied to check its web-origin against");
+
+            blobCerts = await GetCertificateChainFromX5uAsync(x5uEl, blobUri, cancellationToken);
+        }
+        else if (blobHeader.TryGetProperty("x5c", out var x5cEl))
+        {
+            if (!x5cEl.TryDecodeArrayOfBase64EncodedBytes(out var x5cRawKeys))
+            {
+                throw new Fido2MetadataException("The x5c value in the BLOB header is malformed");
+            }
+
+            if (x5cRawKeys.Length is 0)
+            {
+                throw new Fido2MetadataException("No x5c keys were present in the BLOB header");
+            }
+
+            blobCerts = Array.ConvertAll(x5cRawKeys, static raw => X509CertificateHelper.CreateFromRawData(raw));
+        }
+        else
+        {
+            blobCerts = [rootCert];
         }
 
-        if (!x5cEl.TryDecodeArrayOfBase64EncodedBytes(out var x5cRawKeys))
-        {
-            throw new Fido2MetadataException("The x5c value in the BLOB header is malformed");
-        }
-
-        if (x5cRawKeys.Length is 0)
-        {
-            throw new Fido2MetadataException("No x5c keys were present in the BLOB header");
-        }
-
-        var blobCerts = new X509Certificate2[x5cRawKeys.Length];
-        var keys = new SecurityKey[x5cRawKeys.Length];
+        var keys = new SecurityKey[blobCerts.Length];
 
         for (int i = 0; i < blobCerts.Length; i++)
         {
-            var cert = X509CertificateHelper.CreateFromRawData(x5cRawKeys[i]);
-
-            blobCerts[i] = cert;
+            var cert = blobCerts[i];
 
             if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
             {
@@ -267,9 +290,10 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             #pragma warning disable format
             bool manualChainIsValid =
                 pinnedToFidoRoot &&
-                // the chain accounts for exactly what was in x5c plus the root we added
-                certChain.ChainElements.Count == (x5cRawKeys.Length + 1) &&
-                // and the root cert has exactly one status, UntrustedRoot
+                // the chain accounts for exactly the certificates the header supplied, plus the root we added --
+                // unless the header's chain already ended at that root
+                certChain.ChainElements.Count == blobCerts.Length + (rootCert.Thumbprint == blobCerts[^1].Thumbprint ? 0 : 1) &&
+                // and that the root cert has exactly one status with the value of UntrustedRoot
                 certChain.ChainElements[^1].ChainElementStatus is [{ Status: X509ChainStatusFlags.UntrustedRoot }];
             #pragma warning restore format
 
@@ -285,29 +309,117 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
             if (!manualChainIsValid)
                 throw new Fido2VerificationException("Failed to validate cert chain while parsing BLOB");
-
-            // Only now that the chain is known to pin to the FIDO root do we consult revocation. The CRL
-            // distribution point is taken from the certificate, so it is restricted to http(s) to avoid an
-            // SSRF via a crafted CDP (e.g. file:// or an internal-service URL).
-            foreach (var element in certChain.ChainElements)
-            {
-                if (element.Certificate.Issuer != element.Certificate.Subject)
-                {
-                    if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
-                        throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
-
-                    using var client = _httpClientFactory.CreateClient();
-                    var crlFile = await client.GetByteArrayAsync(cdp, cancellationToken);
-                    if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
-                        throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");
-                }
-            }
         }
+
+        // MDS 3.1.1 §3.2: "All certificates in the chain MUST be checked for revocation", and the FIDO Server
+        // SHOULD ignore the BLOB if one of them is revoked. This runs whether or not the platform's trust store
+        // already accepted the chain above -- the BLOB signing root is a public GlobalSign root that most
+        // platform trust stores already carry, which makes that the common path, and it must not skip
+        // revocation checking. The chain is built with RevocationMode.NoCheck because the CRLs live at the MDS
+        // CRL location rather than wherever the platform would look, so this is done explicitly; the CRL
+        // distribution point is taken from the certificate, so it is restricted to http(s) to avoid an SSRF via
+        // a crafted CDP (e.g. file:// or an internal-service URL).
+        await VerifyNoCertificateIsRevokedAsync(certChain, cancellationToken);
 
         var blobPayload = ((JsonWebToken)validateTokenResult.SecurityToken).EncodedPayload;
 
         MetadataBLOBPayload blob = JsonSerializer.Deserialize(Base64Url.DecodeFromChars(blobPayload), FidoModelSerializerContext.Default.MetadataBLOBPayload)!;
+
+        EnsureBlobIsNotARollback(blob.Number);
+
         blob.JwtAlg = blobAlg;
         return blob;
+    }
+
+    /// <summary>
+    /// Rejects a BLOB whose serial number went backwards, and records the number otherwise.
+    /// </summary>
+    /// <remarks>
+    /// MDS 3.1.1 §3.2: the FIDO Server "SHOULD also ignore the file if its number (no) is less or equal to the
+    /// number of the last Metadata BLOB object cached locally". Only a strictly lower number is rejected here.
+    /// This repository hands the parsed BLOB back on every call rather than serving one from its own cache, so
+    /// re-fetching the current BLOB legitimately produces the same number and rejecting equality would break
+    /// the ordinary refresh. A lower number can only be a rollback, and is refused.
+    /// </remarks>
+    internal void EnsureBlobIsNotARollback(int blobNumber)
+    {
+        if (blobNumber < _highestBlobNumber)
+        {
+            throw new Fido2MetadataException(
+                $"The MDS BLOB number {blobNumber} is lower than the previously seen number {_highestBlobNumber}, which indicates a rollback");
+        }
+
+        _highestBlobNumber = blobNumber;
+    }
+
+    /// <summary>
+    /// Downloads the BLOB signing certificate chain from the URL in the JWS <c>x5u</c> header.
+    /// </summary>
+    /// <remarks>
+    /// MDS 3.1.1 §3.2 requires the FIDO Server to verify that the x5u URL has the same web-origin as the URL the
+    /// BLOB itself was downloaded from, and to ignore the file otherwise, so that a BLOB cannot point at
+    /// certificates on an arbitrary site. [JWS] requires the resource to be PEM encoded.
+    /// </remarks>
+    private async Task<X509Certificate2[]> GetCertificateChainFromX5uAsync(JsonElement x5uEl, Uri blobUri, CancellationToken cancellationToken)
+    {
+        // Uri.TryCreate accepts a Unix absolute path as a file:// URI, so the scheme has to be checked
+        // explicitly rather than inferred from the parse succeeding.
+        if (x5uEl.ValueKind is not JsonValueKind.String
+            || !Uri.TryCreate(x5uEl.GetString(), UriKind.Absolute, out var x5uUri)
+            || x5uUri.Scheme is not (("http") or ("https")))
+        {
+            throw new Fido2MetadataException("The x5u value in the BLOB header is not an absolute http(s) URL");
+        }
+
+        if (!string.Equals(x5uUri.Scheme, blobUri.Scheme, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(x5uUri.Host, blobUri.Host, StringComparison.OrdinalIgnoreCase)
+            || x5uUri.Port != blobUri.Port)
+        {
+            throw new Fido2MetadataException(
+                $"The x5u value in the BLOB header has web-origin '{x5uUri.Scheme}://{x5uUri.Authority}', which differs from the BLOB's web-origin '{blobUri.Scheme}://{blobUri.Authority}'");
+        }
+
+        using var client = _httpClientFactory.CreateClient();
+        var pem = await client.GetStringAsync(x5uUri, cancellationToken);
+
+        var chain = new X509Certificate2Collection();
+
+        try
+        {
+            chain.ImportFromPem(pem);
+        }
+        catch (CryptographicException ex)
+        {
+            throw new Fido2MetadataException($"The certificate chain at the x5u URL '{x5uUri}' could not be parsed", ex);
+        }
+
+        if (chain.Count is 0)
+        {
+            throw new Fido2MetadataException($"No certificates were present at the x5u URL '{x5uUri}'");
+        }
+
+        return [.. chain];
+    }
+
+    /// <summary>
+    /// Checks every non-self-issued certificate in the chain against the CRL its distribution point names.
+    /// </summary>
+    private async Task VerifyNoCertificateIsRevokedAsync(X509Chain certChain, CancellationToken cancellationToken)
+    {
+        foreach (var element in certChain.ChainElements)
+        {
+            // A self-issued certificate is the trust anchor, which no CRL of its own covers.
+            if (element.Certificate.Issuer == element.Certificate.Subject)
+                continue;
+
+            if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
+                throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
+
+            using var client = _httpClientFactory.CreateClient();
+            var crlFile = await client.GetByteArrayAsync(cdp, cancellationToken);
+
+            if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
+                throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");
+        }
     }
 }

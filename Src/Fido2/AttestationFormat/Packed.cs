@@ -91,7 +91,7 @@ internal sealed class Packed : AttestationVerifier
             if (!cpk.Verify(request.Data, sig))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid full packed signature");
 
-            // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn/#packed-attestation-cert-requirements
+            // Verify that attestnCert meets the requirements in https://www.w3.org/TR/webauthn-3/#sctn-packed-attestation-cert-requirements
             // 2bi. Version MUST be set to 3
             if (attestnCert.Version != 3)
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Packed x5c attestation certificate not V3");
@@ -120,9 +120,24 @@ internal sealed class Packed : AttestationVerifier
             // id-fido-u2f-ce-transports
             byte u2fTransports = U2FTransportsFromAttnCert(attestnCert.Extensions);
 
+            // The Extension OID 1.3.6.1.4.1.45724.1.1.2 (id-fido-gen-ce-sernum) MAY additionally be present for
+            // enterprise use, carrying a unique octet string value per device against a particular AAGUID.
+            // It MUST NOT be present in non-enterprise attestations; that rule is enforced by
+            // AuthenticatorAttestationResponse, which is the layer that knows the conveyance preference the
+            // Relying Party asked for.
+            // https://www.w3.org/TR/webauthn-3/#sctn-enterprise-packed-attestation-cert-requirements
+            byte[]? enterpriseAttestationSerialNumber = SerialNumberFromAttnCertExts(attestnCert.Extensions);
+
+            // The Extension OID 1.3.6.1.4.1.45724.1.1.5 (id-fido-gen-ce-fw-version) MAY be present, carrying
+            // the firmware version of this particular authenticator. Comparing it against the
+            // authenticatorVersion in the model's Metadata Service status report is how a Relying Party tells
+            // that an authenticator predates a certification or a firmware fix.
+            // https://www.w3.org/TR/webauthn-3/#sctn-packed-attestation-cert-requirements
+            ulong? firmwareVersion = FirmwareVersionFromAttnCertExts(attestnCert.Extensions);
+
             // 2d. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation
 
-            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath));
+            return new(new VerifyAttestationResult(AttestationType.AttCa, trustPath, enterpriseAttestationSerialNumber, firmwareVersion));
         }
 
         // 3. If ecdaaKeyId is present, then the attestation type is ECDAA
@@ -132,7 +147,7 @@ internal sealed class Packed : AttestationVerifier
 
             // 3a. Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash
             // using ECDAA-Verify with ECDAA-Issuer public key identified by ecdaaKeyId
-            // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
+            // https://www.w3.org/TR/webauthn-1/#biblio-fidoecdaaalgorithm
 
             // 3b. If successful, return attestation type ECDAA and attestation trust path ecdaaKeyId.
             // attnType = AttestationType.ECDAA;

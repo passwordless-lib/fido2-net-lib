@@ -216,7 +216,7 @@ internal sealed class Tpm : AttestationVerifier
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Bad signature in TPM with aikCert");
 
             // 5b. Verify that aikCert meets the TPM attestation statement certificate requirements
-            // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
+            // https://www.w3.org/TR/webauthn-3/#sctn-tpm-cert-requirements
             // 5bi. Version MUST be set to 3
             if (aikCert.Version != 3)
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert must be V3");
@@ -226,7 +226,7 @@ internal sealed class Tpm : AttestationVerifier
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "aikCert subject must be empty");
 
             // 5biii. The Subject Alternative Name extension MUST be set as defined in [TPMv2-EK-Profile] section 3.2.9.
-            // https://www.w3.org/TR/webauthn/#tpm-cert-requirements
+            // https://www.w3.org/TR/webauthn-3/#sctn-tpm-cert-requirements
             (string? tpmManufacturer, string? tpmModel, string? tpmVersion) = SANFromAttnCertExts(aikCert.Extensions);
 
             // From https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf
@@ -277,7 +277,7 @@ internal sealed class Tpm : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, Fido2ErrorMessages.UnimplementedAlgorithm_Ecdaa_Tpm);
 
             // Perform ECDAA-Verify on sig to verify that it is a valid signature over certInfo
-            // https://www.w3.org/TR/webauthn/#biblio-fidoecdaaalgorithm
+            // https://www.w3.org/TR/webauthn-1/#biblio-fidoecdaaalgorithm
 
             // If successful, return attestation type ECDAA and the identifier of the ECDAA-Issuer public key ecdaaKeyId.
             // attnType = AttestationType.ECDAA;

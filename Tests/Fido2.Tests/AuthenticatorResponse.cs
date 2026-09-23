@@ -14,6 +14,11 @@ using NSec.Cryptography;
 
 namespace Test;
 
+// uvm and exts were removed in WebAuthn Level 3 and are [Obsolete] here. These tests still exercise them:
+// the members remain functional for Relying Parties on Level 2 semantics, and the FIDO conformance tool
+// continues to test uvm. Remove this suppression when the members themselves go.
+#pragma warning disable CS0618
+
 public class AuthenticatorResponseTests
 {
     [Fact]
@@ -289,6 +294,155 @@ public class AuthenticatorResponseTests
         Assert.Equal(expectedCode, ex.Code);
     }
 
+    private static AuthenticatorAttestationRawResponse BuildCrossOriginRawResponse(string rp, byte[] challenge, bool crossOrigin, string topOrigin)
+    {
+        var acd = AttestedCredentialData.Parse(Convert.FromHexString("000000000000000000000000000000000040FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2CA5010203262001215820A6D109385AC78E5BF03D1C2E0874BE6DBBA40B4F2A5F2F1182456565534F672822582043E1082AF3135B40609379AC474258AAB397B8861DE441B44E83085D1C6BE0D0"));
+        var authData = new AuthenticatorData(
+            SHA256.HashData(Encoding.UTF8.GetBytes(rp)),
+            AuthenticatorFlags.UP | AuthenticatorFlags.AT,
+            0,
+            acd
+        ).ToByteArray();
+
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(new MockClientData
+        {
+            Type = "webauthn.create",
+            Challenge = challenge,
+            Origin = rp,
+            CrossOrigin = crossOrigin,
+            TopOrigin = topOrigin
+        });
+
+        return new AuthenticatorAttestationRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = Base64Url.EncodeToString(acd.CredentialId),
+            RawId = acd.CredentialId,
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = new CborMap {
+                    { "fmt", "none" },
+                    { "attStmt", new CborMap() },
+                    { "authData", authData }
+                }.Encode(),
+                ClientDataJson = clientDataJson
+            },
+        };
+    }
+
+    private static CredentialCreateOptions BuildCrossOriginOptions(string rp, byte[] challenge)
+    {
+        return new CredentialCreateOptions
+        {
+            Attestation = AttestationConveyancePreference.Direct,
+            AuthenticatorSelection = new AuthenticatorSelection
+            {
+                AuthenticatorAttachment = AuthenticatorAttachment.CrossPlatform,
+                ResidentKey = ResidentKeyRequirement.Required,
+                UserVerification = UserVerificationRequirement.Discouraged,
+            },
+            Challenge = challenge,
+            PubKeyCredParams =
+            [
+                new PubKeyCredParam(COSE.Algorithm.ES256)
+            ],
+            Rp = new PublicKeyCredentialRpEntity(rp, rp, ""),
+            User = new Fido2User
+            {
+                Name = "testuser",
+                Id = "testuser"u8.ToArray(),
+                DisplayName = "Test User",
+            },
+            Timeout = 60000,
+        };
+    }
+
+    [Fact]
+    public async Task TestAuthenticatorCrossOriginRejectedByDefaultAsync()
+    {
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+
+        var rawResponse = BuildCrossOriginRawResponse(rp, challenge, crossOrigin: true, topOrigin: rp);
+        var originalOptions = BuildCrossOriginOptions(rp, challenge);
+
+        IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) => Task.FromResult(true);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
+
+        Assert.Equal(Fido2ErrorMessages.CrossOriginRequestNotAllowed, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestAuthenticatorCrossOriginAllowedWithMatchingTopOriginAsync()
+    {
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+
+        var rawResponse = BuildCrossOriginRawResponse(rp, challenge, crossOrigin: true, topOrigin: rp);
+        var originalOptions = BuildCrossOriginOptions(rp, challenge);
+
+        IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) => Task.FromResult(true);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+            AllowCrossOriginRequests = true,
+        });
+
+        var result = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        });
+
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task TestAuthenticatorCrossOriginAllowedButTopOriginMismatchAsync()
+    {
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+
+        var rawResponse = BuildCrossOriginRawResponse(rp, challenge, crossOrigin: true, topOrigin: "https://evil.example");
+        var originalOptions = BuildCrossOriginOptions(rp, challenge);
+
+        IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) => Task.FromResult(true);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+            AllowCrossOriginRequests = true,
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
+
+        Assert.StartsWith("Fully qualified top origin", ex.Message);
+    }
+
     [Fact]
     public void TestAuthenticatorAttestationRawResponse()
     {
@@ -313,6 +467,7 @@ public class AuthenticatorResponseTests
             ClientExtensionResults = new AuthenticationExtensionsClientOutputs
             {
                 AppID = true,
+                AppIDExclude = true,
                 Extensions = ["foo", "bar"],
                 Example = true,
                 UserVerificationMethod = new ulong[][]
@@ -330,7 +485,8 @@ public class AuthenticatorResponseTests
                         First = [0xf1, 0xd0],
                         Second = [0xf1, 0xd0]
                     }
-                }
+                },
+                MinPinLength = 6
             }
         };
         Assert.Equal(PublicKeyCredentialType.PublicKey, rawResponse.Type);
@@ -339,12 +495,14 @@ public class AuthenticatorResponseTests
         Assert.Equal([0xa0], rawResponse.Response.AttestationObject);
         Assert.Equal(clientDataJson, rawResponse.Response.ClientDataJson);
         Assert.True(rawResponse.ClientExtensionResults.AppID);
+        Assert.True(rawResponse.ClientExtensionResults.AppIDExclude);
         Assert.Equal(new string[] { "foo", "bar" }, rawResponse.ClientExtensionResults.Extensions);
         Assert.True(rawResponse.ClientExtensionResults.Example);
         Assert.Equal((ulong)4, rawResponse.ClientExtensionResults.UserVerificationMethod[0][0]);
         Assert.True(rawResponse.ClientExtensionResults.PRF.Enabled);
         Assert.Equal(rawResponse.ClientExtensionResults.PRF.Results.First, [0xf1, 0xd0]);
         Assert.Equal([0xf1, 0xd0], rawResponse.ClientExtensionResults.PRF.Results.Second);
+        Assert.Equal((uint)6, rawResponse.ClientExtensionResults.MinPinLength);
     }
 
     [Fact]
@@ -1389,7 +1547,7 @@ public class AuthenticatorResponseTests
             OriginalOptions = originalOptions,
             IsCredentialIdUniqueToUserCallback = callback
         }));
-        Assert.Equal("CredentialId is not unique to this user", ex.Message);
+        Assert.Equal("CredentialId is already registered", ex.Message);
     }
 
     // credential.rawId is the credential ID (5.1), the same bytes as the credentialId in the attested credential
@@ -2628,7 +2786,8 @@ public class AuthenticatorResponseTests
 
         var assertion = new AuthenticatorAssertionRawResponse.AssertionResponse()
         {
-            AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BS, 0, null).ToByteArray(),
+            // BS requires BE: a credential that is not backup eligible can never be backed up.
+            AuthenticatorData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(rp)), AuthenticatorFlags.UP | AuthenticatorFlags.UV | AuthenticatorFlags.BE | AuthenticatorFlags.BS, 0, null).ToByteArray(),
             Signature = [0xf1, 0xd0],
             ClientDataJson = clientDataJson,
             UserHandle = [0xf1, 0xd0],

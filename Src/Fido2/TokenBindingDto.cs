@@ -8,7 +8,7 @@ namespace Fido2NetLib;
 public class TokenBindingDto
 {
     /// <summary>
-    /// Either "present" or "supported". https://www.w3.org/TR/webauthn/#enumdef-tokenbindingstatus
+    /// Either "present" or "supported". https://www.w3.org/TR/webauthn-3/#enumdef-tokenbindingstatus
     /// supported: Indicates the client supports token binding, but it was not negotiated when communicating with the Relying Party.
     /// present: Indicates token binding was used when communicating with the Relying Party. In this case, the id member MUST be present
     /// </summary>

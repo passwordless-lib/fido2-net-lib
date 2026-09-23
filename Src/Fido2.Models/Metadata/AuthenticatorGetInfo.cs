@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -218,6 +218,7 @@ public sealed class AuthenticatorGetInfo
     /// <summary>
     /// List of supported authenticatorConfig sub-command identifiers.
     /// </summary>
+    [JsonConverter(typeof(CommandIdentifierArrayConverter))]
     [JsonPropertyName("authenticatorConfigCommands")]
-    public int[]? AuthenticatorConfigCommands { get; set; }
+    public ulong[]? AuthenticatorConfigCommands { get; set; }
 }

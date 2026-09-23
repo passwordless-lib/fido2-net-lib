@@ -11,10 +11,13 @@ internal static class PublicKeyCredentialUserEntityExtensions
             { "id", user.Id }
         };
 
+        // The icon member is [Obsolete] but CTAP2 still round-trips whatever an authenticator sends.
+#pragma warning disable CS0618
         if (user.Icon is string icon)
         {
             result.Add("icon", icon);
         }
+#pragma warning restore CS0618
 
         if (user.Name is string name)
         {

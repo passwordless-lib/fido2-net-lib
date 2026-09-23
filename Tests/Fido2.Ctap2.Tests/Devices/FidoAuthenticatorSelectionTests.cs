@@ -1,4 +1,4 @@
-namespace Fido2NetLib.Ctap2.Tests;
+﻿namespace Fido2NetLib.Ctap2.Tests;
 
 public class FidoAuthenticatorSelectionTests
 {

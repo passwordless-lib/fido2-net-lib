@@ -17,7 +17,7 @@ internal sealed class FidoU2f : AttestationVerifier
         if (request.AuthData.AttestedCredentialData!.AaGuid.CompareTo(Guid.Empty) != 0)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Aaguid was not empty parsing fido-u2f attestation statement");
 
-        // https://www.w3.org/TR/webauthn/#fido-u2f-attestation
+        // https://www.w3.org/TR/webauthn-3/#sctn-fido-u2f-attestation
         // 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to extract the contained fields.
         // (handled in base class)
 

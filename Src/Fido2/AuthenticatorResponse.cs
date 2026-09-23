@@ -15,11 +15,13 @@ namespace Fido2NetLib;
 public class AuthenticatorResponse
 {
     [JsonConstructor]
-    public AuthenticatorResponse(string type, byte[] challenge, string origin) // for deserialization
+    public AuthenticatorResponse(string type, byte[] challenge, string origin, bool crossOrigin = false, string? topOrigin = null) // for deserialization
     {
         Type = type;
         Challenge = challenge;
         Origin = origin;
+        CrossOrigin = crossOrigin;
+        TopOrigin = topOrigin;
     }
 
     protected AuthenticatorResponse(ReadOnlySpan<byte> utf8EncodedJson)
@@ -48,6 +50,8 @@ public class AuthenticatorResponse
         Type = response.Type;
         Challenge = response.Challenge;
         Origin = response.Origin;
+        CrossOrigin = response.CrossOrigin;
+        TopOrigin = response.TopOrigin;
         TokenBinding = response.TokenBinding;
     }
 
@@ -63,11 +67,27 @@ public class AuthenticatorResponse
     [JsonPropertyName("origin")]
     public string Origin { get; }
 
+    /// <summary>
+    /// This member contains the fully qualified top-level origin of the relying party. It is set only if the
+    /// document loaded in the top-level browsing context is different from that of a cross-origin embedded iframe,
+    /// which invokes the WebAuthn API. See <see href="https://www.w3.org/TR/webauthn-3/#dom-collectedclientdata-toporigin"/>.
+    /// </summary>
+    [JsonPropertyName("topOrigin")]
+    public string? TopOrigin { get; }
+
+    /// <summary>
+    /// This member contains the inverse of the <c>sameOriginWithAncestors</c> boolean adjacent to the WebAuthn API's
+    /// invocation, i.e. whether the call to the WebAuthn API happened from an iframe that is not same-origin with
+    /// its ancestor frames. See <see href="https://www.w3.org/TR/webauthn-3/#dom-collectedclientdata-crossorigin"/>.
+    /// </summary>
+    [JsonPropertyName("crossOrigin")]
+    public bool CrossOrigin { get; }
+
     // [Obsolete("This property is not used and will be removed in a future version once the conformance tool stops testing for it.")]
     [JsonPropertyName("tokenBinding")]
     public TokenBindingDto? TokenBinding { get; set; }
 
-    protected void BaseVerify(IReadOnlySet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, byte[]? requestTokenBindingId)
+    protected void BaseVerify(IReadOnlySet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, byte[]? requestTokenBindingId, bool allowCrossOriginRequests = false)
     {
         if (Type is not "webauthn.create" && Type is not "webauthn.get")
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
@@ -75,7 +95,8 @@ public class AuthenticatorResponse
         if (Challenge is null)
             throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallenge);
 
-        // 11. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
+        // Verify that the value of C.challenge equals the base64url encoding of pkOptions.challenge.
+        // (Step 8 of WebAuthn L3 §7.1; step 11 of §7.2.)
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, Fido2ErrorMessages.InvalidAuthenticatorResponseChallenge);
 
@@ -94,13 +115,31 @@ public class AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, $"{Fido2ErrorMessages.InvalidAuthenticatorResponseOrigin}: '{Origin}'", ex);
         }
 
-        // 12. Verify that the value of C.origin matches the Relying Party's origin.
+        // Verify that the value of C.origin is an origin expected by the Relying Party.
+        // (Step 9 of §7.1; step 12 of §7.2.)
         if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedOrigin))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseOrigin, $"Fully qualified origin {fullyQualifiedOrigin} of {Origin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
 
-        // 13?. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the assertion was obtained.
-        // If Token Binding was used on that TLS connection, also verify that C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
+        // Token Binding was dropped from the ceremonies in Level 3, which no longer numbers a step for it.
+        // C.tokenBinding is still validated here for callers on older clients that populate it.
         TokenBinding?.Verify(requestTokenBindingId);
+
+        // If C.crossOrigin is present and set to true, verify that the Relying Party expects the ceremony to
+        // have taken place within an iframe that is not same-origin with its ancestors.
+        // (Step 10 of §7.1; step 13 of §7.2.)
+        if (CrossOrigin && !allowCrossOriginRequests)
+            throw new Fido2VerificationException(Fido2ErrorCode.CrossOriginRequestNotAllowed, Fido2ErrorMessages.CrossOriginRequestNotAllowed);
+
+        // If C.topOrigin is present, verify the same, and that its value matches the origin of a page that
+        // the Relying Party expects to be sub-framed within.
+        // (Step 11 of §7.1; step 14 of §7.2.)
+        if (TopOrigin is not null)
+        {
+            var fullyQualifiedTopOrigin = TopOrigin.ToFullyQualifiedOrigin();
+
+            if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedTopOrigin))
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseTopOrigin, $"Fully qualified top origin {fullyQualifiedTopOrigin} of {TopOrigin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");
+        }
     }
 
     /*
