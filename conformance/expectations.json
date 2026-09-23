@@ -1,8 +1,8 @@
 {
-  "tool": "fido-conformance-tools-electron/1.9.1",
+  "tool": "fido-conformance-tools-electron/1.9.2",
   "generatedFrom": [
-    "run6.jsonl",
-    "run7.jsonl"
+    "demo.jsonl",
+    "run-windows.jsonl"
   ],
   "entries": [
     {
@@ -124,7 +124,7 @@
         "alg": -7
       },
       "outcome": "rejected",
-      "message": "Malformed request: Expected a base64url string but found ",
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.",
       "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
     },
     {
@@ -154,8 +154,18 @@
       "request": {
         "path": "/attestation/result"
       },
-      "outcome": "rejected",
-      "message": "Malformed request: Expected a base64url string but found "
+      "anyOf": [
+        {
+          "outcome": "rejected",
+          "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+        },
+        {
+          "outcome": "verified",
+          "code": "InvalidAttestationObject",
+          "message": "Invalid AttestationObject CBOR data"
+        }
+      ],
+      "note": "The tool draws a random wrong-typed JSON value each run (an object, array, boolean or number). Base64UrlConverter only throws if the token isn't a string, or if its literal text isn't valid base64url; a number whose digits are all in the base64url alphabet at a valid block length (e.g. \"1469\") decodes successfully as garbage bytes instead of throwing, and whatever check runs on the decoded value rejects it there instead. Either reason is a correct rejection of the malformed field."
     },
     {
       "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-14",
@@ -446,18 +456,9 @@
         "path": "/attestation/result",
         "fmt": "packed"
       },
-      "anyOf": [
-        {
-          "outcome": "verified",
-          "code": "InvalidAttestation",
-          "message": "Attestation statement must be a CBOR map"
-        },
-        {
-          "outcome": "verified",
-          "code": "MalformedAttestationObject",
-          "message": "Malformed AttestationObject"
-        }
-      ]
+      "outcome": "verified",
+      "code": "MalformedAttestationObject",
+      "message": "Malformed AttestationObject"
     },
     {
       "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-6",
@@ -586,7 +587,7 @@
       },
       "outcome": "verified",
       "code": "InvalidCredentialPublicKey",
-      "message": "Credential public key algorithm -42 is not valid with curve P256",
+      "message": "Algorithm -42 cannot be used with an EC2 key on curve P256",
       "note": "Rejected by the key/algorithm consistency check (-42 is not valid for a P-256 key); the comparison against the metadata statement's algorithm never runs."
     },
     {
@@ -697,7 +698,7 @@
       "request": {
         "path": "/attestation/result",
         "fmt": "packed",
-        "alg": -7
+        "alg": -65535
       },
       "outcome": "ok",
       "message": "",
@@ -823,8 +824,8 @@
         "alg": -7
       },
       "outcome": "verified",
-      "code": "InvalidAttestation",
-      "message": "Invalid full packed signature"
+      "code": "InvalidSignature",
+      "message": "Signature does not match"
     },
     {
       "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-3",
@@ -897,7 +898,7 @@
       },
       "outcome": "verified",
       "code": "InvalidCredentialPublicKey",
-      "message": "Credential public key algorithm ES256 is not valid with curve P256K",
+      "message": "Algorithm ES256 cannot be used with an EC2 key on curve P256K",
       "note": "Rejected by the key/curve consistency check (ES256 against a P-256K key); the comparison against the metadata statement's algorithm never runs."
     },
     {
@@ -995,8 +996,8 @@
         "alg": -7
       },
       "outcome": "verified",
-      "code": "InvalidAttestation",
-      "message": "Failed to validate signature"
+      "code": "InvalidSignature",
+      "message": "Signature does not match"
     },
     {
       "test": "Server-ServerAuthenticatorAttestationResponse-Resp-6 F-2",
@@ -1085,7 +1086,7 @@
       },
       "outcome": "verified",
       "code": "InvalidAttestation",
-      "message": "Invalid fido-u2f attestation signature"
+      "message": "Failed to decode fido-u2f attestation signature from ASN.1 encoded form"
     },
     {
       "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 P-1",
@@ -1117,10 +1118,9 @@
         "fmt": "tpm",
         "alg": -7
       },
-      "outcome": "verified",
-      "code": "InvalidCertificateChain",
-      "message": "Invalid certificate chain",
-      "note": "Conformance tool bug, behind its \"EXPERIMENTAL: TPM ECDSA SECP256R1 SHA256\" checkbox: the ES256 leaf's Authority Key Identifier is a double-wrapped OCTET STRING whose key id is not the batch certificate's SKI. OpenSSL refuses the batch cert as issuer, so this fails on Linux; Windows treats the AKI as a hint and passes. Expected to fail until the tool is fixed."
+      "outcome": "ok",
+      "message": "",
+      "note": "Conformance tool bug, behind its \"EXPERIMENTAL: TPM ECDSA SECP256R1 SHA256\" checkbox: fixed as of tool 1.9.2 (2026-09-23). The ES256 leaf's Authority Key Identifier used to be a double-wrapped OCTET STRING whose key id was not the batch certificate's SKI, which OpenSSL refused as an issuer -- confirmed correctly encoded and matching the batch SKI across two independent runs. Filed as fido-alliance/conformance-test-tools-resources#862. If this starts failing again, the tool likely regressed."
     },
     {
       "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 F-1",
@@ -1296,13 +1296,13 @@
       },
       "anyOf": [
         {
+          "outcome": "rejected",
+          "message": "Malformed request: The JSON value could not be converted to System.Nullable`1[Fido2NetLib.Objects.PublicKeyCredentialType]. Path: $.type"
+        },
+        {
           "outcome": "verified",
           "code": "InvalidAssertionResponse",
           "message": "AssertionResponse type must be 'public-key'"
-        },
-        {
-          "outcome": "rejected",
-          "message": "Malformed request: The JSON value could not be converted to System.Nullable`1[Fido2NetLib.Objects.PublicKeyCredentialType]. Path: $.type"
         }
       ],
       "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
@@ -1350,8 +1350,18 @@
       "request": {
         "path": "/assertion/result"
       },
-      "outcome": "rejected",
-      "message": "Malformed request: Expected a base64url string but found "
+      "anyOf": [
+        {
+          "outcome": "verified",
+          "code": "MalformedAuthenticatorResponse",
+          "message": "Malformed clientDataJson"
+        },
+        {
+          "outcome": "rejected",
+          "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+        }
+      ],
+      "note": "The tool draws a random wrong-typed JSON value each run (an object, array, boolean or number). Base64UrlConverter only throws if the token isn't a string, or if its literal text isn't valid base64url; a number whose digits are all in the base64url alphabet at a valid block length (e.g. \"1469\") decodes successfully as garbage bytes instead of throwing, and whatever check runs on the decoded value rejects it there instead. Either reason is a correct rejection of the malformed field."
     },
     {
       "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-11",
@@ -1379,7 +1389,7 @@
         "path": "/assertion/result"
       },
       "outcome": "rejected",
-      "message": "Malformed request: Expected a base64url string but found "
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
     },
     {
       "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-14",
@@ -1416,7 +1426,7 @@
         "path": "/assertion/result"
       },
       "outcome": "rejected",
-      "message": "Malformed request: Expected a base64url string but found ",
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.",
       "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
     },
     {
@@ -1454,9 +1464,18 @@
       "request": {
         "path": "/assertion/result"
       },
-      "outcome": "rejected",
-      "message": "Malformed request: Expected a base64url string but found ",
-      "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
+      "anyOf": [
+        {
+          "outcome": "verified",
+          "code": "InvalidAssertionResponse",
+          "message": "User is not owner of the public key identified by the credential id"
+        },
+        {
+          "outcome": "rejected",
+          "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+        }
+      ],
+      "note": "The tool draws a random wrong-typed JSON value each run (an object, array, boolean or number). Base64UrlConverter only throws if the token isn't a string, or if its literal text isn't valid base64url; a number whose digits are all in the base64url alphabet at a valid block length (e.g. \"1469\") decodes successfully as garbage bytes instead of throwing, and whatever check runs on the decoded value rejects it there instead. Either reason is a correct rejection of the malformed field."
     },
     {
       "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 setup",
@@ -1536,8 +1555,8 @@
         "path": "/assertion/result"
       },
       "outcome": "verified",
-      "code": "MalformedAuthenticatorResponse",
-      "message": "Malformed clientDataJson",
+      "code": "InvalidAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge does not match original challenge",
       "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
     },
     {
