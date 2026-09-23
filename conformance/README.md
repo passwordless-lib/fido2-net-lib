@@ -57,6 +57,28 @@ conformance__metadata=<path to metadata.zip> conformance__trafficLog=<run>.jsonl
 dotnet Demo.dll
 ```
 
+On Windows, PowerShell doesn't support that `VAR=value command` form -- set each one first, then run the command:
+
+```powershell
+cd Demo\bin\Release\net10.0
+$env:ASPNETCORE_URLS = "http://127.0.0.1:5000"
+$env:ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true"
+$env:fido2__serverDomain = "<host>"
+$env:fido2__origins__0 = "https://<host>"
+$env:conformance__metadata = "<path to metadata.zip>"
+$env:conformance__trafficLog = "<run>.jsonl"
+dotnet Demo.dll
+```
+
+`serverDomain` is the bare host only (`127.0.0.1`, or the tunnel's hostname) -- never a full URL with a scheme
+or port. Setting it to something like `http://127.0.0.1:5000` makes the server compute the RP ID hash from that
+whole string, which will never match the hash the browser computes from the actual host, and every ceremony
+fails with `InvalidRpidHash`. `origins` is the one that takes the full URL (scheme and port included).
+
+`ASPNETCORE_FORWARDEDHEADERS_ENABLED` and the tunnel are only needed if the tool can't reach `127.0.0.1`
+directly -- testing purely on `localhost` (tool and demo on the same machine) needs neither; just point
+`serverDomain`/`origins` at `127.0.0.1`/`http://127.0.0.1:5000` and skip the tunnel entirely.
+
 At startup the demo prints how many statements it loaded and one line per conformance MDS BLOB it refused,
 with the reason. The Server-MDS3 F-tests can only be judged from those lines: a refused BLOB leaves nothing for
 the request log to see but `AaGuidNotFound`.
