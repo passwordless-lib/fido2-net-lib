@@ -112,12 +112,12 @@ function renderResponseSummary(decoded) {
 
     const f = authData.flags;
     let html = '<div class="tags">'
-        + flagTag('UP', f.UP, 'User Present')
-        + flagTag('UV', f.UV, 'User Verified')
-        + flagTag('BE', f.BE, 'Backup Eligible')
-        + flagTag('BS', f.BS, 'Backup State')
-        + flagTag('AT', f.AT, 'Attested credential data included')
-        + flagTag('ED', f.ED, 'Extension data included')
+        + flagTag('UP', f.up, 'User Present')
+        + flagTag('UV', f.uv, 'User Verified')
+        + flagTag('BE', f.be, 'Backup Eligible')
+        + flagTag('BS', f.bs, 'Backup State')
+        + flagTag('AT', f.at, 'Attested credential data included')
+        + flagTag('ED', f.ed, 'Extension data included')
         + '</div>';
 
     html += '<p><strong>Sign count:</strong> ' + authData.signCount + '</p>';
