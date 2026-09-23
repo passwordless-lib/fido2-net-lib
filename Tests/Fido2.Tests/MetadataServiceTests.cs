@@ -404,6 +404,53 @@ public class MetadataServiceTests
         Assert.Equal(2, repository.Calls);
     }
 
+    private sealed class SlowRepository(TimeSpan delay) : IMetadataRepository
+    {
+        public int Calls { get; private set; }
+
+        public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            await Task.Delay(delay, cancellationToken);
+
+            return new MetadataBLOBPayload
+            {
+                Number = 1,
+                NextUpdate = "2099-01-01",
+                LegalHeader = "test",
+                Entries =
+                [
+                    new MetadataBLOBPayloadEntry
+                    {
+                        AaGuid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73"),
+                        MetadataStatement = new MetadataStatement { Description = "Security Key by Yubico with NFC" },
+                        StatusReports = [new StatusReport { Status = AuthenticatorStatus.FIDO_CERTIFIED_L1 }]
+                    }
+                ]
+            };
+        }
+
+        public Task<MetadataStatement> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(entry.MetadataStatement);
+        }
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Coalesces_Concurrent_Fetches_For_A_Cold_Cache()
+    {
+        var repository = new SlowRepository(TimeSpan.FromMilliseconds(100));
+        var service = CreateService(repository);
+        var aaguid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
+
+        // 20 lookups racing a cold cache must produce one repository fetch, not 20.
+        var lookups = Enumerable.Range(0, 20).Select(_ => service.GetEntryAsync(aaguid));
+        var entries = await Task.WhenAll(lookups);
+
+        Assert.Equal(1, repository.Calls);
+        Assert.All(entries, entry => Assert.Equal("Security Key by Yubico with NFC", entry.MetadataStatement.Description));
+    }
+
     [Fact]
     public async Task DistributedCacheMetadataService_Caches_An_Unknown_Aaguid_Only_When_A_Blob_Was_Searched()
     {

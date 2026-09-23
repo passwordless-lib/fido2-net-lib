@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.Collections.Concurrent;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 
 using Microsoft.Extensions.Caching.Distributed;
@@ -49,6 +50,12 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
     protected readonly TimeSpan _defaultDistributedCacheInterval = TimeSpan.FromDays(30);
 
     protected const string CACHE_PREFIX = nameof(DistributedCacheMetadataService) + ":V2";
+
+    /// <summary>
+    /// In-flight distributed-cache/repository fetches, keyed by cache key, so concurrent memory-cache misses for
+    /// the same repository share one fetch instead of each independently hitting the MDS endpoint.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, Lazy<Task<MetadataBLOBPayload>>> _distributedCacheFetches = new(StringComparer.Ordinal);
 
     public DistributedCacheMetadataService(
         IEnumerable<IMetadataRepository> repositories,
@@ -205,7 +212,7 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
         if (_memoryCache.TryGetValue(cacheKey, out MetadataBLOBPayload cachedBlob))
             return cachedBlob;
 
-        var distributedCacheBlob = await GetDistributedCachedBlob(repository, cancellationToken);
+        var distributedCacheBlob = await GetCoalescedDistributedCachedBlob(repository, cacheKey);
 
         if (distributedCacheBlob is null)
             return null;
@@ -213,6 +220,40 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
         _memoryCache.Set(cacheKey, distributedCacheBlob, GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(distributedCacheBlob)));
 
         return distributedCacheBlob;
+    }
+
+    /// <summary>
+    /// Coalesces concurrent memory-cache misses for the same repository into a single distributed-cache (and,
+    /// behind that, repository) fetch. Without this, every request racing a cold memory cache -- e.g. right
+    /// after process start, or after the BLOB expires -- independently repeats the full fetch-and-retry
+    /// sequence against the live MDS endpoint at the same time.
+    /// </summary>
+    /// <remarks>
+    /// The shared fetch deliberately runs with <see cref="CancellationToken.None"/> rather than any individual
+    /// caller's token: it is now shared work, so one caller's cancellation (its own request being aborted, say)
+    /// must not cancel the fetch for every other caller waiting on the same result.
+    /// </remarks>
+    private Task<MetadataBLOBPayload> GetCoalescedDistributedCachedBlob(IMetadataRepository repository, string cacheKey)
+    {
+        return _distributedCacheFetches.GetOrAdd(
+            cacheKey,
+            _ => new Lazy<Task<MetadataBLOBPayload>>(
+                () => FetchAndUncoalesce(repository, cacheKey),
+                LazyThreadSafetyMode.ExecutionAndPublication)).Value;
+    }
+
+    private async Task<MetadataBLOBPayload> FetchAndUncoalesce(IMetadataRepository repository, string cacheKey)
+    {
+        try
+        {
+            return await GetDistributedCachedBlob(repository, CancellationToken.None);
+        }
+        finally
+        {
+            // Not cached permanently: the next miss after this fetch completes (success, empty, or failure)
+            // starts a fresh coalesced fetch rather than replaying this one's result forever.
+            _distributedCacheFetches.TryRemove(cacheKey, out _);
+        }
     }
 
     public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, CancellationToken cancellationToken = default)
