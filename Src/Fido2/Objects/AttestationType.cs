@@ -14,6 +14,13 @@ public sealed class AttestationType : IEquatable<AttestationType>
     public static readonly AttestationType AttCa = new("attca");
     public static readonly AttestationType ECDAA = new("ecdaa");
 
+    /// <summary>
+    /// Anonymization CA: the authenticator uses per-credential attestation certificates issued by a CA that
+    /// only it can reach, so the attestation identifies the authenticator's make but not the device.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#anonymization-ca"/>
+    /// </summary>
+    public static readonly AttestationType AnonCA = new("anonca");
+
     private readonly string _value;
 
     internal AttestationType(string value)
@@ -67,6 +74,7 @@ public sealed class AttestationType : IEquatable<AttestationType>
             "self" => Self,
             "attca" => AttCa,
             "ecdaa" => ECDAA,
+            "anonca" => AnonCA,
             _ => new AttestationType(value)
         };
     }

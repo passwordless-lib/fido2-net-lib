@@ -9,8 +9,10 @@ internal static class Fido2ErrorMessages
     public static readonly string AssertionResponseNotPublicKey          = "AssertionResponse type must be 'public-key'";
     public static readonly string AssertionResponseIdMissing             = "AssertionResponse Id is missing";
     public static readonly string AssertionResponseRawIdMissing          = "AssertionResponse RawId is missing";
+    public static readonly string AssertionResponseIdNotBase64Url        = "AssertionResponse Id is not valid base64url, or does not match RawId";
 
     public static readonly string AttestationResponseIdMissing           = "AttestationResponse Id is missing";
+    public static readonly string AttestationResponseIdNotBase64Url      = "AttestationResponse Id is not valid base64url, or does not match RawId";
     public static readonly string AttestationResponseNotPublicKey        = "AttestationResponse type must be 'public-key'";
     public static readonly string AttestationResponseTypeNotWebAuthnGet  = "AttestationResponse type must be 'webauthn.create'";
 
@@ -26,19 +28,37 @@ internal static class Fido2ErrorMessages
     public static readonly string MalformedAttestationObject             = "Malformed AttestationObject";
     public static readonly string UserPresentFlagNotSet                  = "User Present flag not set in authenticator data";
     public static readonly string InvalidCertificateChain                = "Invalid certificate chain";
+    public static readonly string SelfAttestationNotDeclaredInMetadata   = "Self attestation from an authenticator model whose metadata statement does not declare basic_surrogate attestation";
+    public static readonly string AttestationResponseRawIdMissing        = "AttestationResponse RawId is missing";
+    public static readonly string AttestationResponseRawIdMismatch       = "AttestationResponse rawId does not match the credentialId in the attested credential data";
+    public static readonly string FullAttestationNotDeclaredInMetadata   = "Attestation statement carries a full attestation, but the authenticator's metadata does not declare basic full or privacy CA attestation";
     public static readonly string UserHandleIsEmpty                      = "UserHandle was empty DOMString. It should either be null or have a value.";
+    public static readonly string UserHandleIsRequired                   = "UserHandle is required when the assertion options carry no allowCredentials, because nothing else identifies the user account.";
     public static readonly string InvalidAttestedCredentialData_TooShort = "Not enough bytes to be a valid AttestedCredentialData";
     public static readonly string InvalidAttestedCredentialData_CredentialIdTooLong = "CredentialId too many bytes";
     public static readonly string MissingAuthenticatorResponseChallenge  = "Authenticator response challenge may not be null";
     public static readonly string InvalidAuthenticatorResponseChallenge  = "Authenticator response challenge does not match original challenge";
+    public static readonly string MissingAuthenticatorResponseOrigin     = "Authenticator response origin may not be null or empty";
+    public static readonly string InvalidAuthenticatorResponseOrigin     = "Authenticator response origin is not a valid origin";
+    public static readonly string MissingRawResponse                     = "Expected rawResponse, got null";
     public static readonly string AttestedCredentialDataFlagNotSet       = "Attestation flag not set on attestation data";
     public static readonly string MissingAuthenticatorData               = "Authenticator data may not be null";
     public static readonly string InvalidAuthenticatorData_TooShort      = $"Authenticator data is less than the minimum structure length of {AuthenticatorData.MinLength}";
     public static readonly string InvalidCoseAlgorithmValue              = "Unrecognized COSE algorithm value";
     public static readonly string BackupEligibilityRequirementNotMet     = "Backup eligibility does not match policy requirement";
     public static readonly string BackupStateRequirementNotMet           = "Backup state does not match policy requirement";
+    public static readonly string CrossOriginRequestNotAllowed           = "Authenticator response was created in a cross-origin context, but the Relying Party does not allow cross-origin requests";
+    public static readonly string InvalidAttestationStatement          = "Attestation statement must be a CBOR map";
+    public static readonly string InvalidCompoundAttestationStatement   = "Compound attestation statement must be a CBOR array of sub-statements";
+    public static readonly string InvalidBackupFlags                     = "The backup state (BS) flag is set but the backup eligibility (BE) flag is not";
+    public static readonly string BackupEligibilityChanged               = "Backup eligibility (BE) does not match the value recorded when the credential was registered";
     public static readonly string CredentialAlgorithmRequirementNotMet   = "Credential algorithm does not match policy requirement";
-    public static readonly string NonUniqueCredentialId                  = "CredentialId is not unique to this user";
+    public static readonly string NonUniqueCredentialId                  = "CredentialId is already registered";
+    public static readonly string CriticalEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST NOT be marked as critical";
+    public static readonly string EmptyEnterpriseAttestationSerialNumber = "The id-fido-gen-ce-sernum extension MUST indicate a unique octet string value per device, but was empty";
+    public static readonly string CriticalFirmwareVersion                = "The id-fido-gen-ce-fw-version extension MUST NOT be marked as critical";
+    public static readonly string InvalidFirmwareVersion                 = "The id-fido-gen-ce-fw-version extension MUST contain a non-negative INTEGER representable as an unsigned 64-bit authenticator version";
+    public static readonly string UnexpectedEnterpriseAttestation        = "The attestation certificate carries the id-fido-gen-ce-sernum extension, which MUST NOT be present in non-enterprise attestations";
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
     public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";
     public static readonly string UserHandleNotOwnerOfPublicKey          = "User is not owner of the public key identified by the credential id";
@@ -60,6 +80,7 @@ internal static class Fido2ErrorMessages
     public static readonly string MissingAndroidKeyAttestationStatement  = "Attestation format android-key must have attestation statement";
 
     public static readonly string InvalidAndroidKeyAttestationSignature  = "Invalid android-key attestation signature";
+    public static readonly string InvalidAndroidKeyAttestationPublicKey  = "Invalid android-key attestation public key";
     public static readonly string InvalidFidoU2fAttestationSignature     = "Invalid fido-u2f attestation signature";
     public static readonly string InvalidPackedAttestationSignature      = "Invalid packed attestation signature";
     public static readonly string InvalidTpmAttestationSignature         = "Invalid TPM attestation signature";

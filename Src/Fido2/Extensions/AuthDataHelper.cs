@@ -4,7 +4,7 @@ using System.Buffers.Binary;
 namespace Fido2NetLib;
 
 /// <summary>
-/// Helper functions that implements https://w3c.github.io/webauthn/#authenticator-data
+/// Helper functions that implements https://www.w3.org/TR/webauthn-3/#authenticator-data
 /// </summary>
 internal static class AuthDataHelper
 {

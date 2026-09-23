@@ -14,6 +14,18 @@ public static class AsnHelper
     }
 
 
+    /// <summary>
+    /// DER-encodes an ASN.1 INTEGER, as the id-fido-gen-ce-fw-version extension carries.
+    /// </summary>
+    public static byte[] GetIntegerBlob(long value)
+    {
+        var writer = new AsnWriter(AsnEncodingRules.DER);
+
+        writer.WriteInteger(value);
+
+        return writer.Encode();
+    }
+
     public static byte[] GetAaguidBlob(Guid aaGuid)
     {
         var aaguid = aaGuid.ToByteArray();

@@ -17,7 +17,7 @@ public sealed class AuthenticatorData(
 {
     /// <summary>
     /// Minimum length of the authenticator data structure.
-    /// <see href="https://www.w3.org/TR/webauthn/#sec-authenticator-data"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data"/>
     /// </summary>
     internal const int MinLength = SHA256.HashSizeInBytes + sizeof(AuthenticatorFlags) + sizeof(uint);
 
@@ -50,13 +50,13 @@ public sealed class AuthenticatorData(
 
     /// <summary>
     /// UserPresent indicates that the user presence test has completed successfully.
-    /// <see href="https://www.w3.org/TR/webauthn/#up"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#authdata-flags-up"/>
     /// </summary>
     public bool UserPresent => _flags.HasFlag(AuthenticatorFlags.UP);
 
     /// <summary>
     /// UserVerified indicates that the user verification process has completed successfully.
-    /// <see href="https://www.w3.org/TR/webauthn/#uv"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#authdata-flags-uv"/>
     /// </summary>
     public bool UserVerified => _flags.HasFlag(AuthenticatorFlags.UV);
 
@@ -65,27 +65,27 @@ public sealed class AuthenticatorData(
     /// Backup eligibility is signaled in authenticator data's flags along with the current backup state.
     /// Backup eligibility is a credential property and is permanent for a given public key credential source.
     /// A backup eligible public key credential source is referred to as a multi-device credential whereas one that is not backup eligible is referred to as a single-device credential.
-    /// <see href="https://w3c.github.io/webauthn/#backup-eligibility"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#backup-eligibility"/>
     /// </summary>
     public bool IsBackupEligible => _flags.HasFlag(AuthenticatorFlags.BE);
 
     /// <summary>
     /// The current backup state of a multi-device credential as determined by the current managing authenticator.
     /// Backup state is signaled in authenticator data's flags and can change over time.
-    /// <see href="https://w3c.github.io/webauthn/#backup-state"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#backup-state"/>
     /// </summary>
     public bool IsBackedUp => _flags.HasFlag(AuthenticatorFlags.BS);
 
     /// <summary>
     /// HasAttestedCredentialData indicates that the authenticator added attested credential data to the authenticator data.
-    /// <see href="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#attested-credential-data"/>
     /// </summary>
     [MemberNotNullWhen(true, nameof(AttestedCredentialData))]
     public bool HasAttestedCredentialData => _flags.HasFlag(AuthenticatorFlags.AT);
 
     /// <summary>
     /// HasExtensionsData indicates that the authenticator added extension data to the authenticator data.
-    /// <see href="https://www.w3.org/TR/webauthn/#authdataextensions"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#authdata-extensions"/>
     /// </summary>
     [MemberNotNullWhen(true, nameof(Extensions))]
     public bool HasExtensionsData => _flags.HasFlag(AuthenticatorFlags.ED);

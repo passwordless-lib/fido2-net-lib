@@ -10,7 +10,7 @@ public sealed class AttestedCredentialData
 {
     /// <summary>
     /// Minimum length of the attested credential data structure. AAGUID + credentialID length + credential ID + credential public key.
-    /// <see href="https://www.w3.org/TR/webauthn/#attested-credential-data"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#attested-credential-data"/>
     /// </summary>
     private const int _minLength = 20; // Marshal.SizeOf(typeof(Guid)) + sizeof(ushort) + sizeof(byte) + sizeof(byte)
 
@@ -34,20 +34,20 @@ public sealed class AttestedCredentialData
 
     /// <summary>
     /// The AAGUID of the authenticator. Can be used to identify the make and model of the authenticator.
-    /// <see href="https://www.w3.org/TR/webauthn/#aaguid"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#aaguid"/>
     /// </summary>
     public Guid AaGuid { get; }
 
     /// <summary>
     /// A probabilistically-unique byte sequence identifying a public key credential source and its authentication assertions.
-    /// <see href="https://www.w3.org/TR/webauthn/#credential-id"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#credential-id"/>
     /// </summary>
     public byte[] CredentialId { get; }
 
     /// <summary>
     /// The credential public key encoded in COSE_Key format, as defined in
     /// Section 7 of RFC8152, using the CTAP2 canonical CBOR encoding form.
-    /// <see href="https://www.w3.org/TR/webauthn/#credential-public-key"/>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#credential-public-key"/>
     /// </summary>
     public CredentialPublicKey CredentialPublicKey { get; }
 
@@ -107,6 +107,11 @@ public sealed class AttestedCredentialData
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_CredentialIdTooLong);
 
         position += 2;
+
+        // The declared length must fit within the remaining buffer. Without this guard the slice below
+        // throws a raw ArgumentOutOfRangeException on malformed input instead of a Fido2VerificationException.
+        if (credentialIDLen > data.Length - position)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestedCredentialData, Fido2ErrorMessages.InvalidAttestedCredentialData_TooShort);
 
         // Read the credential ID bytes
         var credentialID = data.Slice(position, credentialIDLen).ToArray();

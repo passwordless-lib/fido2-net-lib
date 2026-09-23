@@ -1,11 +1,14 @@
 ﻿using System.Buffers.Text;
 using System.Text.Json.Serialization;
+
+using Fido2NetLib.Exceptions;
+
 namespace Fido2NetLib;
 
 public class TokenBindingDto
 {
     /// <summary>
-    /// Either "present" or "supported". https://www.w3.org/TR/webauthn/#enumdef-tokenbindingstatus
+    /// Either "present" or "supported". https://www.w3.org/TR/webauthn-3/#enumdef-tokenbindingstatus
     /// supported: Indicates the client supports token binding, but it was not negotiated when communicating with the Relying Party.
     /// present: Indicates token binding was used when communicating with the Relying Party. In this case, the id member MUST be present
     /// </summary>
@@ -25,16 +28,16 @@ public class TokenBindingDto
         {
             case "present":
                 if (string.IsNullOrEmpty(Id))
-                    throw new Fido2VerificationException("TokenBinding status was present but Id is missing");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, "TokenBinding status was present but Id is missing");
                 var b64 = Base64Url.EncodeToString(requestTokenbinding);
                 if (Id != b64)
-                    throw new Fido2VerificationException("Tokenbinding Id does not match");
+                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, "Tokenbinding Id does not match");
                 break;
             case "supported":
             case "not-supported":
                 break;
             default:
-                throw new Fido2VerificationException("Malformed tokenbinding status field");
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, "Malformed tokenbinding status field");
         }
     }
 }

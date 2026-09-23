@@ -126,7 +126,9 @@ public sealed class CredentialCreateOptions
         AttestationConveyancePreference attestationConveyancePreference,
         IReadOnlyList<PublicKeyCredentialDescriptor> excludeCredentials,
         AuthenticationExtensionsClientInputs? extensions,
-        IReadOnlyList<PubKeyCredParam> pubKeyCredParams)
+        IReadOnlyList<PubKeyCredParam> pubKeyCredParams,
+        IReadOnlyList<PublicKeyCredentialHint>? hints = null,
+        IReadOnlyList<AttestationStatementFormatIdentifier>? attestationFormats = null)
 
     {
         if (user.Id is null || user.Id.Length is < 1 or > 64)
@@ -135,14 +137,19 @@ public sealed class CredentialCreateOptions
         return new CredentialCreateOptions
         {
             Challenge = challenge,
+#pragma warning disable CS0618 // carried through only so an existing ServerIcon configuration keeps working
             Rp = new PublicKeyCredentialRpEntity(config.RPID, config.RPName, config.ServerIcon),
+#pragma warning restore CS0618
             Timeout = config.Timeout,
             User = user,
             PubKeyCredParams = pubKeyCredParams,
             AuthenticatorSelection = authenticatorSelection,
             Attestation = attestationConveyancePreference,
+            AttestationFormats = attestationFormats ?? [],
             ExcludeCredentials = excludeCredentials,
-            Extensions = extensions
+            Extensions = extensions,
+            // Assigned after AuthenticatorSelection: setting Hints derives the attachment from the first hint.
+            Hints = hints ?? []
         };
     }
 
@@ -223,11 +230,20 @@ public sealed class PublicKeyCredentialRpEntity(
     public string Id { get; set; } = id;
 
     /// <summary>
-    /// A human-readable name for the entity. Its function depends on what the PublicKeyCredentialEntity represents:
+    /// A human-palatable identifier for the Relying Party, intended only for display.
     /// </summary>
+    /// <remarks>
+    /// Deprecated by WebAuthn Level 3 §5.4.1: "This member is deprecated because many clients do not display
+    /// it, but it remains a required dictionary member for backwards compatibility. Relying Parties MAY, as a
+    /// safe default, set this equal to the RP ID."
+    /// </remarks>
     [JsonPropertyName("name")]
     public string Name { get; set; } = name;
 
+    /// <summary>
+    /// No longer part of WebAuthn.
+    /// </summary>
+    [Obsolete("The icon member was removed from PublicKeyCredentialEntity in WebAuthn Level 2 and does not exist in Level 3; clients ignore it. This member will be removed in a future major version.")]
     [JsonPropertyName("icon")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Icon { get; set; } = icon;
@@ -316,7 +332,7 @@ public class Fido2User
     /// <summary>
     /// Required. A human-friendly identifier for a user account.
     /// It is intended only for display, i.e., aiding the user in determining the difference between user accounts with similar displayNames.
-    /// For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://w3c.github.io/webauthn/#dictdef-publickeycredentialentity
+    /// For example, "alexm", "alex.p.mueller@example.com" or "+14255551234". https://www.w3.org/TR/webauthn-3/#dictdef-publickeycredentialentity
     /// </summary>
     [JsonPropertyName("name")]
     public string Name { get; set; }

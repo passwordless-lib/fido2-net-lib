@@ -19,9 +19,14 @@ public class ConformanceTestController : Controller
     private readonly IFido2 _fido2;
     private readonly string _origin;
 
-    public ConformanceTestController(IOptions<Fido2Configuration> fido2Configuration)
+    public ConformanceTestController(IOptions<Fido2Configuration> fido2Configuration, IConfiguration configuration)
     {
         _origin = fido2Configuration.Value.FullyQualifiedOrigins.FirstOrDefault();
+
+        // The tool's metadata statements: the zip it exports, or a directory they were unpacked into
+        var metadataPath = configuration["conformance:metadata"] is { Length: > 0 } configured
+            ? configured
+            : System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance");
 
         _fido2 = new Fido2(new Fido2Configuration
         {
@@ -29,9 +34,7 @@ public class ConformanceTestController : Controller
             RPName = fido2Configuration.Value.RPName,
             Origins = fido2Configuration.Value.FullyQualifiedOrigins,
         },
-        ConformanceTesting.MetadataServiceInstance(
-            System.IO.Path.Combine(fido2Configuration.Value.MDSCacheDirPath, @"Conformance"), _origin)
-        );
+        ConformanceTesting.MetadataServiceInstance(metadataPath, _origin));
     }
 
     [HttpPost]
@@ -117,6 +120,7 @@ public class ConformanceTestController : Controller
         _demoStorage.AddCredentialToUser(options.User, new StoredCredential
         {
             Id = credential.Id,
+            RpId = credential.RpId,
             PublicKey = credential.PublicKey,
             UserHandle = credential.User.Id,
             SignCount = credential.SignCount
@@ -149,10 +153,14 @@ public class ConformanceTestController : Controller
         // The conformance tools have no appid test, and Server-ServerPublicKeyCredentialGetOptionsResponse-Req-1
         // P-1 expects the options' extensions to be what the request asked for, so the appid extension (which
         // now serializes to the client like any other input) is not requested here.
+        // uvm was removed in WebAuthn L3, but the FIDO conformance tool still exercises it, so this controller
+        // keeps requesting it deliberately.
+#pragma warning disable CS0618
         var exts = new AuthenticationExtensionsClientInputs
         {
             UserVerificationMethod = true
         };
+#pragma warning restore CS0618
         if (null != assertionClientParams.Extensions && null != assertionClientParams.Extensions.Example)
             exts.Example = assertionClientParams.Extensions.Example;
 

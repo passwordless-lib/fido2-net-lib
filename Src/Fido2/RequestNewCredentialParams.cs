@@ -39,4 +39,22 @@ public sealed class RequestNewCredentialParams
     /// For advanced use cases. This member lists the key types and signature algorithms the Relying Party supports, ordered from most preferred to least preferred. The client and authenticator make a best-effort to create a credential of the most preferred type possible. If none of the listed types can be created, the create() operation fails.
     /// </summary>
     public IReadOnlyList<PubKeyCredParam> PubKeyCredParams { get; init; } = PubKeyCredParam.Defaults;
+
+    /// <summary>
+    /// Zero or more hints, in descending order of preference, guiding the user agent in how it presents this
+    /// registration to the user. Hints are not requirements and do not bind the user agent.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#enum-hints"/>
+    /// </summary>
+    /// <remarks>
+    /// Setting this also derives <see cref="AuthenticatorSelection"/>'s attachment from the first hint; see
+    /// <see cref="CredentialCreateOptions.Hints"/>.
+    /// </remarks>
+    public IReadOnlyList<PublicKeyCredentialHint> Hints { get; init; } = [];
+
+    /// <summary>
+    /// The attestation statement formats the Relying Party prefers, in descending order of preference. This is
+    /// advisory: the authenticator MAY use a format not listed here.
+    /// <see href="https://www.w3.org/TR/webauthn-3/#dom-publickeycredentialcreationoptions-attestationformats"/>
+    /// </summary>
+    public IReadOnlyList<AttestationStatementFormatIdentifier> AttestationFormats { get; init; } = [];
 }

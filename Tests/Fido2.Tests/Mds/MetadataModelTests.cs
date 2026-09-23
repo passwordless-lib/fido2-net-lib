@@ -47,6 +47,86 @@ public class MetadataModelTests
     }
 
     [Fact]
+    public void CommandIdentifierArraysAcceptValuesWithinUInt64Range()
+    {
+        var json = """{"versions":["FIDO_2_3"],"vendorPrototypeConfigCommands":[18446744073709551615]}""";
+
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>(json);
+
+        Assert.Equal([ulong.MaxValue], info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysClampValuesThatRoundTrippedThroughADouble()
+    {
+        // The FIDO conformance tools' "with configured vendor commands" metadata statement renders CBOR
+        // ulong.MaxValue as 18446744073709552000 after a JavaScript double round-trip, which is technically out
+        // of range for ulong (it is 385 above ulong.MaxValue).
+        var json = """{"versions":["FIDO_2_3"],"vendorPrototypeConfigCommands":[18446744073709552000,184467440737095520]}""";
+
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>(json);
+
+        Assert.Equal([ulong.MaxValue, 184467440737095520UL], info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysRoundTripThroughSerialization()
+    {
+        var info = new AuthenticatorGetInfo
+        {
+            VendorPrototypeConfigCommands = [1, 2, ulong.MaxValue],
+        };
+
+        var json = JsonSerializer.Serialize(info);
+        var roundTripped = JsonSerializer.Deserialize<AuthenticatorGetInfo>(json);
+
+        Assert.Equal(info.VendorPrototypeConfigCommands, roundTripped.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysAreNullWhenTheJsonValueIsNull()
+    {
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":null}""");
+
+        Assert.Null(info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysRejectANonArrayValue()
+    {
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":"not-an-array"}"""));
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysRejectANonNumberElement()
+    {
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":[1,"two"]}"""));
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysAreEmptyWhenTheJsonArrayIsEmpty()
+    {
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"vendorPrototypeConfigCommands":[]}""");
+
+        Assert.Empty(info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
+    public void CommandIdentifierArraysClampAnInRangeValueThatArrivedAsADouble()
+    {
+        // A decimal-formatted literal fails Utf8JsonReader.TryGetUInt64 even though its value is well within
+        // ulong's range, forcing the same GetDouble()+clamp fallback as an out-of-range value -- exercising the
+        // "no clamping needed" side of ClampToUInt64, as opposed to the ulong.MaxValue-saturating side.
+        var json = """{"vendorPrototypeConfigCommands":[123.0]}""";
+
+        var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>(json);
+
+        Assert.Equal([123UL], info.VendorPrototypeConfigCommands);
+    }
+
+    [Fact]
     public void AuthenticatorGetInfoWithoutTheCtap23MembersStillParses()
     {
         var info = JsonSerializer.Deserialize<AuthenticatorGetInfo>("""{"versions":["FIDO_2_0"]}""");

@@ -10,10 +10,19 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
+  <!--
+    Set DisableNSec=true to build without NSec.Cryptography, for consumers whose policy forbids the
+    dependency. EdDSA (COSE -8 and -19) then reports UnimplementedAlgorithm the way Ed448 already does;
+    every other algorithm is unaffected. See Documentation/building-without-nsec.md.
+  -->
+  <PropertyGroup Condition="'$(DisableNSec)' == 'true'">
+    <DefineConstants>$(DefineConstants);FIDO2_DISABLE_NSEC</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
     <PackageReference Include="Microsoft.Extensions.Http" />
-    <PackageReference Include="NSec.Cryptography" />
+    <PackageReference Include="NSec.Cryptography" Condition="'$(DisableNSec)' != 'true'" />
     <PackageReference Include="System.Formats.Cbor" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
   </ItemGroup>

@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Buffers.Text;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
@@ -35,14 +38,31 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
     public static AuthenticatorAssertionResponse Parse(AuthenticatorAssertionRawResponse rawResponse)
     {
-        return new AuthenticatorAssertionResponse(
-            raw: rawResponse,
-            authenticatorData: AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData)
-        );
+        if (rawResponse?.Response is null)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.MissingRawResponse);
+
+        // AuthenticatorData.Parse decodes attacker-controlled bytes; an assertion may set the AT flag over
+        // truncated attested credential data. Funnel any malformed-input failure into a
+        // Fido2VerificationException rather than leaking a raw ArgumentOutOfRangeException/KeyNotFoundException.
+        AuthenticatorData authenticatorData;
+        try
+        {
+            authenticatorData = AuthenticatorData.Parse(rawResponse.Response.AuthenticatorData);
+        }
+        catch (Fido2VerificationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorData, "Malformed authenticator data", ex);
+        }
+
+        return new AuthenticatorAssertionResponse(rawResponse, authenticatorData);
     }
 
     /// <summary>
-    /// Implements algorithm from https://www.w3.org/TR/webauthn/#verifying-assertion.
+    /// Implements algorithm from https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion.
     /// </summary>
     /// <param name="options">The original assertion options that was sent to the client.</param>
     /// <param name="config"></param>
@@ -51,6 +71,11 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="isUserHandleOwnerOfCredId">A function that returns <see langword="true"/> if user handle is owned by the credential ID.</param>
     /// <param name="metadataService"></param>
     /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
+    /// <param name="storedBackupEligible">
+    /// The value of the BE flag recorded when this credential was registered, or <see langword="null"/> if the
+    /// Relying Party does not track backup eligibility. Backup eligibility is a permanent property of a credential,
+    /// so when a value is supplied it MUST match the BE flag of this assertion.
+    /// </param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
     public async Task<VerifyAssertionResult> VerifyAsync(
         AssertionOptions options,
@@ -60,9 +85,10 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredId,
         IMetadataService? metadataService,
         byte[]? requestTokenBindingId,
+        bool? storedBackupEligible = null,
         CancellationToken cancellationToken = default)
     {
-        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId);
+        BaseVerify(config.FullyQualifiedOrigins, options.Challenge, requestTokenBindingId, config.AllowCrossOriginRequests);
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseNotPublicKey);
@@ -73,15 +99,40 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (Raw.RawId is null)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseRawIdMissing);
 
+        // credential.id is base64url(credential.rawId); a value that doesn't decode to exactly RawId's bytes is
+        // either malformed or was tampered with in transit.
+        byte[] decodedId;
+        try
+        {
+            decodedId = Base64Url.DecodeFromChars(Raw.Id);
+        }
+        catch (FormatException e)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseIdNotBase64Url, e);
+        }
+
+        if (!decodedId.AsSpan().SequenceEqual(Raw.RawId))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseIdNotBase64Url);
+
         // 5. If the allowCredentials option was given when this authentication ceremony was initiated, verify that credential.id identifies one of the public key credentials that were listed in allowCredentials.
         if (options.AllowCredentials != null && options.AllowCredentials.Any())
         {
-            // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn/#publickeycredential
+            // might need to transform x.Id and raw.id as described in https://www.w3.org/TR/webauthn-3/#publickeycredential
             if (!options.AllowCredentials.Any(x => x.Id.SequenceEqual(Raw.RawId)))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.CredentialIdNotInAllowedCredentials);
         }
 
-        // 6. Identify the user being authenticated and verify that this user is the owner of the public key credential source credentialSource identified by credential.id
+        // 6. Identify the user being authenticated and let credentialRecord be the credential record for the credential.
+        //    "If the user was not identified before the authentication ceremony was initiated, verify that
+        //     response.userHandle is present." An empty allowCredentials is that case: the Relying Party named no
+        //     credential to use, so the assertion is tied to an account only by the user handle the authenticator
+        //     returns. Without it, the ceremony would identify the user by credential ID alone, which is exactly
+        //     what this step exists to prevent.
+        if (options.AllowCredentials is null or { Count: 0 } && UserHandle is null)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.UserHandleIsRequired);
+
+        //    Otherwise the user was identified up front, and a user handle, if the authenticator returned one,
+        //    must belong to that account.
         if (UserHandle != null)
         {
             if (UserHandle.Length is 0)
@@ -109,9 +160,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         // 12. Verify that the value of C.origin matches the Relying Party's origin.
         // Both handled in BaseVerify
 
-        // 13. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
+        // 15. Verify that the rpIdHash in aData is the SHA - 256 hash of the RP ID expected by the Relying Party.
 
-        // https://www.w3.org/TR/webauthn/#sctn-appid-extension
+        // https://www.w3.org/TR/webauthn-3/#sctn-appid-extension
         // FIDO AppID Extension:
         // If true, the AppID was used and thus, when verifying an assertion, the Relying Party MUST expect the rpIdHash to be the hash of the AppID, not the RP ID.
 
@@ -125,17 +176,30 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
 
         var conformanceTesting = metadataService != null && metadataService.ConformanceTesting();
 
-        // 14. Verify that the UP bit of the flags in authData is set.
+        // 16. Verify that the UP bit of the flags in authData is set.
         // Todo: Conformance testing verifies the UVP flags differently than W3C spec, simplify this by removing the mention of conformanceTesting when conformance tools are updated)
         if (!authData.UserPresent && !conformanceTesting)
             throw new Fido2VerificationException(Fido2ErrorCode.UserPresentFlagNotSet, Fido2ErrorMessages.UserPresentFlagNotSet);
 
-        // 15. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
+        // 17. If the Relying Party requires user verification for this assertion, verify that the UV bit of the flags in authData is set.
         if (options.UserVerification is UserVerificationRequirement.Required && !authData.UserVerified)
             throw new Fido2VerificationException(Fido2ErrorCode.UserVerificationRequirementNotMet, Fido2ErrorMessages.UserVerificationRequirementNotMet);
 
-        // 16. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs be the values of the BE and BS bits, respectively, of the flags in authData.
-        // Compare currentBe and currentBs with credentialRecord.BE and credentialRecord.BS and apply Relying Party policy, if any.
+        // 18. If the BE bit of the flags in authData is not set, verify that the BS bit is not set.
+        //     A credential that is not backup eligible can never be backed up, so this combination is
+        //     malformed regardless of Relying Party policy.
+        if (!authData.IsBackupEligible && authData.IsBackedUp)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidBackupFlags, Fido2ErrorMessages.InvalidBackupFlags);
+
+        // 19. If the credential backup state is used as part of Relying Party business logic or policy, let currentBe and currentBs
+        //     be the values of the BE and BS bits, respectively, of the flags in authData. Compare currentBe and currentBs with
+        //     credentialRecord.backupEligible and credentialRecord.backupState and apply Relying Party policy, if any.
+        //
+        //     Backup eligibility is fixed for the lifetime of a credential, so a change of BE relative to the value recorded at
+        //     registration is not a policy question -- it means this is not the credential that was registered.
+        if (storedBackupEligible is bool recordedBackupEligible && recordedBackupEligible != authData.IsBackupEligible)
+            throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityChanged, Fido2ErrorMessages.BackupEligibilityChanged);
+
         if (authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Disallowed ||
             !authData.IsBackupEligible && config.BackupEligibleCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupEligibilityRequirementNotMet, Fido2ErrorMessages.BackupEligibilityRequirementNotMet);
@@ -145,7 +209,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
 
-        // 17. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
+        // 23. (Out of order: the spec processes extension outputs near the end of the ceremony, but nothing
+        //     in between depends on them, and validating early fails a bad response before the signature check.)
+        //     Verify that the values of the client extension outputs in clientExtensionResults and the authenticator extension outputs in the extensions in authData are as expected,
         // considering the client extension input values that were given in options.extensions and any specific policy of the Relying Party regarding unsolicited extensions,
         // i.e., those that were not specified as part of options.extensions. In the general case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
 
@@ -156,10 +222,14 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (!authData.HasExtensionsData && authData.Extensions != null)
             throw new Fido2VerificationException(Fido2ErrorCode.UnexpectedExtensionsDetected, Fido2ErrorMessages.UnexpectedExtensionsDetected);
 
-        // 18. Let hash be the result of computing a hash over the cData using SHA-256.
-        // done earlier in step 13
+        // Validate extension inputs and outputs for assertion ceremony
+        ValidateAssertionExtensionInputs(options.Extensions, options.AllowCredentials);
+        ValidateAssertionExtensionOutputs(options.Extensions, Raw.ClientExtensionResults);
 
-        // 19. Using credentialRecord.publicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.
+        // 20. Let hash be the result of computing a hash over the cData using SHA-256.
+        // done earlier in step 15
+
+        // 21. Using credentialRecord.publicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.
         byte[] data = [.. Raw.Response.AuthenticatorData, .. hash];
 
         if (storedPublicKey is null || storedPublicKey.Length is 0)
@@ -170,8 +240,11 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         if (!cpk.Verify(data, Signature))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature);
 
-        // 20. If authData.signCount is nonzero or credentialRecord.signCount is nonzero
-        if (authData.SignCount > 0 && authData.SignCount <= storedSignatureCounter)
+        // 20. If authData.signCount is nonzero or credentialRecord.signCount is nonzero, and authData.signCount
+        // is less than or equal to the stored counter, the authenticator may be cloned (WebAuthn L3 7.2 step 21).
+        // The earlier `authData.SignCount > 0` guard silently skipped this when a previously-counting credential
+        // (stored counter > 0) presented a zero counter, which is exactly the cloned-authenticator signal.
+        if ((authData.SignCount != 0 || storedSignatureCounter != 0) && authData.SignCount <= storedSignatureCounter)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignCount, Fido2ErrorMessages.SignCountIsLessThanSignatureCounter);
 
 
@@ -179,8 +252,191 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         {
             CredentialId = Raw.RawId,
             SignCount = authData.SignCount,
-            IsBackedUp = authData.IsBackedUp
-
+            IsBackedUp = authData.IsBackedUp,
+            IsUserVerified = authData.UserVerified,
+            AuthenticatorExtensionResults = authData.Extensions?.Outputs ?? new AuthenticationExtensionsAuthenticatorOutputs()
         };
+    }
+
+    /// <summary>
+    /// Validates extension inputs during assertion ceremony.
+    /// Ensures that extension input parameters are well-formed and don't violate constraints.
+    /// </summary>
+    private static void ValidateAssertionExtensionInputs(
+        AuthenticationExtensionsClientInputs? extensions,
+        IReadOnlyList<PublicKeyCredentialDescriptor>? allowCredentials)
+    {
+        if (extensions == null)
+            return;
+
+        // Validate PRF input structure
+        if (extensions.PRF != null)
+        {
+            ClientExtensionValidation.ValidateAssertionPRFInput(extensions.PRF, allowCredentials);
+        }
+
+        // Validate LargeBlob input constraints for assertion
+        if (extensions.LargeBlob != null)
+        {
+            ValidateLargeBlobAssertionInput(extensions.LargeBlob, allowCredentials);
+        }
+
+        // credBlob stores a blob with a new credential, and pinComplexityPolicy reports the policy in force
+        // when one is created; both are registration-only. Reading a stored blob back is getCredBlob.
+        if (extensions.CredBlob != null)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The credBlob extension is not valid during assertion. Use getCredBlob to read the blob back.");
+        }
+
+        if (extensions.PinComplexityPolicy.HasValue)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The pinComplexityPolicy extension is not valid during assertion. Use only during registration.");
+        }
+
+        // Validate credentialProtectionPolicy input
+        if (extensions.CredentialProtectionPolicy.HasValue)
+        {
+            var policy = extensions.CredentialProtectionPolicy.Value;
+            if (!Enum.IsDefined(typeof(CredentialProtectionPolicy), policy))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Invalid credentialProtectionPolicy value: {policy}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates the <c>largeBlob</c> extension input of an authentication ceremony against the
+    /// <paramref name="allowCredentials"/> it accompanies.
+    /// </summary>
+    /// <remarks>
+    /// The three conditions a client rejects with a <c>NotSupportedError</c>, checked here so that they
+    /// surface as diagnosable server-side failures. Requesting neither a read nor a write is not among them,
+    /// and neither the blob nor the ceremony has a size limit that this specification states.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension"/>
+    /// </para>
+    /// </remarks>
+    private static void ValidateLargeBlobAssertionInput(
+        AuthenticationExtensionsLargeBlobInputs blobInput,
+        IReadOnlyList<PublicKeyCredentialDescriptor>? allowCredentials)
+    {
+        // "If support is present: return a DOMException whose name is NotSupportedError."
+        if (blobInput.Support is not null)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The largeBlob extension's 'support' is not valid during assertion. Use only during registration.");
+        }
+
+        bool hasWrite = blobInput.Write is not null;
+
+        // "If both read and write are present: return a DOMException whose name is NotSupportedError."
+        if (blobInput.Read && hasWrite)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "The largeBlob extension input cannot carry both 'read' and 'write'.");
+        }
+
+        // "If write is present: if allowCredentials does not contain exactly one element, return a
+        //  DOMException whose name is NotSupportedError." The blob is stored against the credential that
+        //  the assertion used, so the ceremony has to name exactly which one that will be.
+        if (hasWrite && allowCredentials is not { Count: 1 })
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                $"The largeBlob extension's 'write' requires allowCredentials to contain exactly one credential, but it contains {allowCredentials?.Count ?? 0}.");
+        }
+    }
+
+    /// <summary>
+    /// Processes the extension outputs of an authentication ceremony, per step 23 of WebAuthn Level 3 §7.2.
+    /// </summary>
+    private static void ValidateAssertionExtensionOutputs(
+        AuthenticationExtensionsClientInputs? requestedExtensions,
+        AuthenticationExtensionsClientOutputs? clientExtensionResults)
+    {
+        // If no extensions were requested, skip validation
+        if (requestedExtensions == null || clientExtensionResults == null)
+            return;
+
+        // Validate PRF extension output (can be used in both registration and assertion)
+        if (requestedExtensions.PRF != null && clientExtensionResults.PRF != null)
+        {
+            ClientExtensionValidation.ValidateAssertionPRFOutput(clientExtensionResults.PRF);
+        }
+
+        // Validate extensions discovery (exts) output
+#pragma warning disable CS0618 // uvm and exts were removed in L3; still honoured for Level 2 callers
+        if (requestedExtensions.Extensions.HasValue && clientExtensionResults.Extensions != null)
+        {
+            ClientExtensionValidation.ValidateExtensionsDiscoveryOutput(clientExtensionResults.Extensions);
+        }
+#pragma warning restore CS0618
+
+        // Validate LargeBlob extension output (assertion context: read/write operations)
+        if (requestedExtensions.LargeBlob != null && clientExtensionResults.LargeBlob != null)
+        {
+            ValidateLargeBlobAssertionOutput(requestedExtensions.LargeBlob, clientExtensionResults.LargeBlob);
+        }
+
+        // Validate credential protection policy output if requested
+        if (requestedExtensions.CredentialProtectionPolicy.HasValue && clientExtensionResults.CredProtect.HasValue)
+        {
+            var credProtect = clientExtensionResults.CredProtect.Value;
+            if (!Enum.IsDefined(typeof(CredentialProtectionPolicy), credProtect))
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    $"Invalid credentialProtectionPolicy value returned: {credProtect}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates the <c>largeBlob</c> extension output of an authentication ceremony, which carries
+    /// <c>blob</c> when a read was requested and <c>written</c> when a write was.
+    /// </summary>
+    /// <remarks>
+    /// <c>supported</c> is "only present in registration outputs", so it is rejected here.
+    /// <para>
+    /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension"/>
+    /// </para>
+    /// </remarks>
+    private static void ValidateLargeBlobAssertionOutput(
+        AuthenticationExtensionsLargeBlobInputs blobInput,
+        AuthenticationExtensionsLargeBlobOutputs blobOutput)
+    {
+        // During assertion, 'supported' field should not be present
+        if (blobOutput.Supported)
+        {
+            throw new Fido2VerificationException(
+                Fido2ErrorCode.MalformedExtensionsDetected,
+                "LargeBlob extension output contains 'supported' field during assertion. This field is only valid during registration.");
+        }
+
+        bool requestedRead = blobInput.Read;
+        bool requestedWrite = blobInput.Write is not null;
+
+        // Note: if write was requested but blobOutput.Written is false, the authenticator may have
+        // had a legitimate reason to reject the write. We don't throw here; the RP can inspect
+        // blobOutput.Written itself and decide whether that's acceptable.
+
+        // If neither read nor write was requested, neither blob nor written should be present
+        if (!requestedRead && !requestedWrite)
+        {
+            if ((blobOutput.Blob != null && blobOutput.Blob.Length > 0) || blobOutput.Written)
+            {
+                throw new Fido2VerificationException(
+                    Fido2ErrorCode.MalformedExtensionsDetected,
+                    "LargeBlob extension output contains data but neither read nor write was requested");
+            }
+        }
     }
 }

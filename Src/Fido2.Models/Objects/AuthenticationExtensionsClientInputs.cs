@@ -18,25 +18,36 @@ public sealed class AuthenticationExtensionsClientInputs
 
     /// <summary>
     /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs to request an assertion.
-    /// https://www.w3.org/TR/webauthn/#sctn-appid-extension
+    /// https://www.w3.org/TR/webauthn-3/#sctn-appid-extension
     /// </summary>
     [JsonPropertyName("appid")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string AppID { get; set; }
 
     /// <summary>
-    /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator supports.
-    /// https://www.w3.org/TR/webauthn/#sctn-supported-extensions-extension
+    /// This extension allows WebAuthn Relying Parties that have previously registered a credential using the legacy FIDO JavaScript APIs
+    /// to prevent re-registration of an existing U2F credential by excluding it, using the same AppID, during a registration ceremony.
+    /// https://www.w3.org/TR/webauthn-3/#sctn-appid-exclude-extension
     /// </summary>
+    [JsonPropertyName("appidExclude")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Always)]
+    public string AppIDExclude { get; set; }
+
+    /// <summary>
+    /// This extension enables the WebAuthn Relying Party to determine which extensions the authenticator
+    /// supports. Defined by WebAuthn Level 1 and removed in Level 2.
+    /// https://www.w3.org/TR/webauthn-1/#sctn-supported-extensions-extension
+    /// </summary>
+    [Obsolete("The exts (supported extensions) extension was defined by WebAuthn Level 1 and removed in Level 2; no client will populate it. This member will be removed in a future major version.")]
     [JsonPropertyName("exts")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Extensions { get; set; }
 
     /// <summary>
     /// This extension enables use of a user verification method.
-    /// https://www.w3.org/TR/webauthn/#sctn-uvm-extension
-    /// TODO: Remove this completely as it's removed in L3
+    /// https://www.w3.org/TR/webauthn-2/#sctn-uvm-extension
     /// </summary>
+    [Obsolete("The uvm extension was removed in WebAuthn Level 3 and no client will populate it; see Level 2 if you still need it. This member will be removed in a future major version.")]
     [JsonPropertyName("uvm")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? UserVerificationMethod { private get; set; }
@@ -52,7 +63,7 @@ public sealed class AuthenticationExtensionsClientInputs
 
     /// <summary>
     /// This extension allows a Relying Party to evaluate outputs from a pseudo-random function (PRF) associated with a credential.
-    /// https://w3c.github.io/webauthn/#prf-extension
+    /// https://www.w3.org/TR/webauthn-3/#prf-extension
     /// </summary>
     [JsonPropertyName("prf")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -60,7 +71,7 @@ public sealed class AuthenticationExtensionsClientInputs
 
     /// <summary>
     /// This client registration extension and authentication extension allows a Relying Party to store opaque data associated with a credential.
-    /// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+    /// https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension
     /// </summary>
     [JsonPropertyName("largeBlob")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -87,5 +98,63 @@ public sealed class AuthenticationExtensionsClientInputs
     [JsonPropertyName("enforceCredentialProtectionPolicy")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? EnforceCredentialProtectionPolicy { get; set; }
+
+    /// <summary>
+    /// A small amount of opaque data, in a Relying Party specific format, to store with the credential. The
+    /// authenticator supports at least 32 bytes; its <c>maxCredBlobLength</c> in <c>authenticatorGetInfo</c>
+    /// reports the actual limit, and a client silently ignores a larger value.
+    /// </summary>
+    /// <remarks>
+    /// Valid only during registration; use <see cref="GetCredBlob"/> to read it back. Anything sensitive stored
+    /// here needs <see cref="CredentialProtectionPolicy"/> set to
+    /// <see cref="Objects.CredentialProtectionPolicy.UserVerificationRequired"/> together with
+    /// <see cref="EnforceCredentialProtectionPolicy"/>, because the blob is otherwise readable without user
+    /// verification.
+    /// <para>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-credBlob-extension"/>
+    /// </para>
+    /// </remarks>
+    [JsonConverter(typeof(Base64UrlConverter))]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("credBlob")]
+    public byte[]? CredBlob { get; set; }
+
+    /// <summary>
+    /// Requests the <c>credBlob</c> stored with the credential. Valid only during assertion.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-credBlob-extension"/>
+    /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("getCredBlob")]
+    public bool? GetCredBlob { get; set; }
+
+    /// <summary>
+    /// Requests the authenticator's current PIN complexity policy, so that an organization issuing configured
+    /// authenticators can check the policy still meets its requirements. Valid only during registration; the
+    /// answer arrives in the authenticator extension outputs rather than the client extension outputs. New in
+    /// CTAP 2.3.
+    /// </summary>
+    /// <remarks>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-pincomplexitypolicy-extension"/>
+    /// </remarks>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonPropertyName("pinComplexityPolicy")]
+    public bool? PinComplexityPolicy { get; set; }
+
+    /// <summary>
+    /// Requests the minimum PIN length the authenticator enforces. Valid only during registration.
+    /// </summary>
+    /// <remarks>
+    /// A CTAP2 authenticator extension exposed to Relying Parties through WebAuthn's generic extension
+    /// passthrough; it is not itself a WebAuthn-defined extension. The authenticator answers only a Relying
+    /// Party it has been configured to answer.
+    /// <para>
+    /// <see href="https://fidoalliance.org/specs/fido-v2.3-ps-20260226/fido-client-to-authenticator-protocol-v2.3-ps-20260226.html#sctn-minpinlength-extension"/>
+    /// </para>
+    /// </remarks>
+    [JsonPropertyName("minPinLength")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? MinPinLength { get; set; }
 }
 

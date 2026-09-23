@@ -59,7 +59,140 @@
                     </div>
                     <p class="help">For register the client will guide the user through setting up user verification if needed to create a discoverable credential. This takes precedence over the setting of userVerification.</p>
                 </div>
+
+                <div class="field">
+                    <label class="label">Algorithms</label>
+                    <div class="control">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-7" checked /> ES256 <span class="has-text-grey">(-7)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-257" checked /> RS256 <span class="has-text-grey">(-257)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-8" checked /> EdDSA <span class="has-text-grey">(-8)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-35" /> ES384 <span class="has-text-grey">(-35)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-36" /> ES512 <span class="has-text-grey">(-36)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-37" /> PS256 <span class="has-text-grey">(-37)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-47" /> ES256K <span class="has-text-grey">(-47)</span>
+                        </label>
+                    </div>
+                    <div class="control" style="margin-top: 0.5rem">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-48" /> ML-DSA-44 <span class="has-text-grey">(-48)</span>
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-algorithm" value="-49" /> ML-DSA-65 <span class="has-text-grey">(-49)</span>
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" class="option-algorithm" value="-50" /> ML-DSA-87 <span class="has-text-grey">(-50)</span>
+                        </label>
+                    </div>
+                    <p class="help">
+                        <code>pubKeyCredParams</code>, ordered by preference &mdash; the client makes a
+                        best-effort to create the most preferred type it can, and fails if it can create none
+                        of them. Unchecking everything falls back to the library's defaults.
+                        Level 3 recommends <em>against</em> offering the fully-specified
+                        <code>-9</code>/<code>-19</code>/<code>-51</code>/<code>-52</code> here.
+                    </p>
+                    <p class="help">
+                        The ML-DSA entries are the post-quantum algorithms RFC 9964 registers for COSE. This
+                        server can verify them, but no shipping authenticator produces them yet, so expect the
+                        client to fall through to whichever conventional algorithm you also offer &mdash; and
+                        to fail outright if you offer nothing else.
+                    </p>
+                </div>
+
+                <hr />
+                <h3 class="is-size-6">WebAuthn Level 3</h3>
+
+                <div class="field">
+                    <label class="label">Hints</label>
+                    <div class="control">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-hint" value="security-key" /> security-key
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-hint" value="client-device" /> client-device
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" class="option-hint" value="hybrid" /> hybrid
+                        </label>
+                    </div>
+                    <p class="help">
+                        &sect;5.8.8. Guides how the browser presents the ceremony, in the order checked here.
+                        Hints are advisory &mdash; they do not restrict what the user may actually use. Setting a
+                        hint also derives the authenticator attachment, so it takes precedence over the
+                        Authenticator setting above.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Attestation formats</label>
+                    <div class="control">
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-attestation-format" value="packed" /> packed
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-attestation-format" value="tpm" /> tpm
+                        </label>
+                        <label class="checkbox" style="margin-right: 1rem">
+                            <input type="checkbox" class="option-attestation-format" value="apple" /> apple
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" class="option-attestation-format" value="none" /> none
+                        </label>
+                    </div>
+                    <p class="help">
+                        &sect;5.4. The attestation statement formats this Relying Party prefers, most preferred
+                        first. Advisory: the authenticator may still use a format that is not listed. Only
+                        meaningful when the attestation type above is not None.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Mediation</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="option-mediation">
+                                <option selected value="">Optional (default)</option>
+                                <option value="conditional">Conditional</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="help">
+                        &sect;5.1.3. A conditional create is offered quietly by the browser rather than in a modal
+                        prompt. Because no user presence test happens, the UP flag is not set and the server has
+                        to know the ceremony was conditional in order to accept it.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="option-prf" /> Request the <code>prf</code> extension
+                    </label>
+                    <p class="help">
+                        &sect;10.1.4. At registration this only asks whether the authenticator can evaluate a
+                        pseudo-random function for this credential; the client reports the answer back as
+                        <code>prf.enabled</code>.
+                    </p>
+                </div>
             </form>
+
+            <h3 class="is-size-6" style="margin-top: 1.5rem">This browser's client capabilities</h3>
+            <p class="help">
+                &sect;5.1.7. What <code>getClientCapabilities()</code> reports, so you can tell what is worth
+                trying here.
+            </p>
+            <div id="client-capabilities" style="margin-top: 0.5rem"></div>
         </div>
     </div>
 </div>

@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -141,10 +141,13 @@ public sealed class AuthenticatorGetInfo
     public int? RemainingDiscoverableCredentials { get; set; }
 
     /// <summary>
-    /// List of authenticatorConfig vendorPrototype subcommand identifiers.
+    /// List of authenticatorConfig vendorPrototype subcommand identifiers. Real subcommand identifiers are small,
+    /// but this is <see langword="double"/> rather than <see langword="int"/> because the FIDO conformance tool's
+    /// test metadata deliberately sends values as large as 2^64 to exercise this field, which int/long/ulong all
+    /// overflow on.
     /// </summary>
     [JsonPropertyName("vendorPrototypeConfigCommands")]
-    public int[]? VendorPrototypeConfigCommands { get; set; }
+    public double[]? VendorPrototypeConfigCommands { get; set; }
 
     /// <summary>
     /// List of supported attestation statement formats, in decreasing order of authenticator preference.
@@ -215,6 +218,7 @@ public sealed class AuthenticatorGetInfo
     /// <summary>
     /// List of supported authenticatorConfig sub-command identifiers.
     /// </summary>
+    [JsonConverter(typeof(CommandIdentifierArrayConverter))]
     [JsonPropertyName("authenticatorConfigCommands")]
-    public int[]? AuthenticatorConfigCommands { get; set; }
+    public ulong[]? AuthenticatorConfigCommands { get; set; }
 }

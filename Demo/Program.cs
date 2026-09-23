@@ -58,19 +58,17 @@ else
 // Enforce HTTPS redirection for all requests
 app.UseHttpsRedirection();
 
+// Optional: record conformance-endpoint traffic and the reason for every rejection (see ConformanceTrafficLog.cs)
+if (builder.Configuration["conformance:trafficLog"] is { Length: > 0 } trafficLogPath)
+{
+    app.UseMiddleware<ConformanceTrafficLogMiddleware>(trafficLogPath);
+}
+
 app.UseSession();
 
-// Serve the .well-known/webauthn file for WebAuthn related origins
-// Can be overridden via WEBAUTHN_WELL_KNOWN environment variable (JSON string)
-app.MapGet("/.well-known/webauthn", (IWebHostEnvironment env, IConfiguration config) =>
-{
-    var envContent = config["WEBAUTHN_WELL_KNOWN"];
-    if (!string.IsNullOrEmpty(envContent))
-    {
-        return Results.Content(envContent, "application/json");
-    }
-    return Results.File(Path.Combine(env.WebRootPath, ".well-known", "webauthn"), "application/json");
-});
+// Serve the .well-known/webauthn resource for WebAuthn related origin requests,
+// generated from the configured Fido2Configuration.Origins.
+app.MapFido2WellKnownWebAuthn();
 
 app.UseStaticFiles();
 

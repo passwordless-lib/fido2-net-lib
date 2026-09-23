@@ -6,7 +6,7 @@ namespace Fido2NetLib;
 /// The BiometricAccuracyDescriptor describes relevant accuracy/complexity aspects in the case of a biometric user verification method.
 /// </summary>
 /// <remarks>
-/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.1.1-ps-20260105.html#biometricaccuracydescriptor-dictionary"/>
+/// <see href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.1.1-ps-20260105.html#dictdef-biometricaccuracydescriptor"/>
 /// </remarks>
 public sealed class BiometricAccuracyDescriptor
 {

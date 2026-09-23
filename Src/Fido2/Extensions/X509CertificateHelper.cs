@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Buffers;
 using System.Buffers.Text;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+
+using Fido2NetLib.Exceptions;
 
 namespace Fido2NetLib;
 
@@ -30,10 +33,19 @@ internal static class X509CertificateHelper
 
     public static X509Certificate2 CreateFromRawData(ReadOnlySpan<byte> rawData)
     {
+        // Attestation verifiers call this with attacker-supplied x5c bytes. A malformed certificate must
+        // surface as a Fido2VerificationException, not a raw CryptographicException that escapes verification.
+        try
+        {
 #if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadCertificate(rawData);
+            return X509CertificateLoader.LoadCertificate(rawData);
 #else
-        return new X509Certificate2(rawData);
+            return new X509Certificate2(rawData);
 #endif
+        }
+        catch (CryptographicException ex)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Malformed X.509 certificate", ex);
+        }
     }
 }

@@ -6,7 +6,7 @@ namespace Fido2NetLib.Objects;
 /// <summary>
 /// The possible values for requesting the largeBlob extension during credential registration.
 ///
-/// https://w3c.github.io/webauthn/#sctn-large-blob-extension
+/// https://www.w3.org/TR/webauthn-3/#sctn-large-blob-extension
 /// </summary>
 #if NET9_0_OR_GREATER
 [JsonConverter(typeof(JsonStringEnumConverter<LargeBlobSupport>))]

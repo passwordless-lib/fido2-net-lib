@@ -32,13 +32,39 @@ public class None : Fido2Tests.Attestation
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);
             Assert.Equal("none", credential.AttestationFormat);
+            Assert.Equal("none", credential.AttestationType);
             Assert.Equal(_credentialID, credential.Id);
             Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
             Assert.Equal("Test User", credential.User.DisplayName);
             Assert.Equal("testuser"u8.ToArray(), credential.User.Id);
             Assert.Equal("testuser", credential.User.Name);
+
+            // WebAuthn L3 §7.1 step 27: the credential record records the rp.id the ceremony was run under.
+            Assert.Equal(rp, credential.RpId);
+
             _attestationObject = new CborMap { { "fmt", "none" } };
         }
+    }
+
+    [Fact]
+    public async Task TestNoneSurfacesAuthenticatorExtensionOutputs()
+    {
+        // WebAuthn L3 §7.1 step 28: the Relying Party processes the authenticator extension outputs in authData.
+        _authenticatorExtensions = new CborMap
+        {
+            { "credProtect", 0x03 },
+            { "minPinLength", 6 },
+            { "hmac-secret", true }
+        };
+
+        _attestationObject.Add("attStmt", new CborMap());
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
+
+        var credential = await MakeAttestationResponseAsync();
+
+        Assert.Equal(CredentialProtectionPolicy.UserVerificationRequired, credential.AuthenticatorExtensionResults.CredProtect);
+        Assert.Equal(6u, credential.AuthenticatorExtensionResults.MinPinLength);
+        Assert.True(credential.AuthenticatorExtensionResults.HmacSecret);
     }
 
     [Fact]

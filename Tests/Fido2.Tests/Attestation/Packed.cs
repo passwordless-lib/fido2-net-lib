@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
+using fido2_net_lib;
 using fido2_net_lib.Test;
 
 using Fido2NetLib;
@@ -38,6 +39,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);
             Assert.Equal("packed", credential.AttestationFormat);
+            Assert.Equal("self", credential.AttestationType);
             Assert.Equal(_credentialID, credential.Id);
             Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
             Assert.Equal("Test User", credential.User.DisplayName);
@@ -77,6 +79,67 @@ public class Packed : Fido2Tests.Attestation
         });
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Failed to validate signature", ex.Message);
+    }
+
+    private static async Task<TestMetadataService> CreateMetadataServiceWithEntryForAsync(Guid entryInMetadataDirectory, Guid aaguid)
+    {
+        var metadataService = new TestMetadataService([new FileSystemMetadataRepository("./metadata")]);
+        await metadataService.InitializeAsync();
+        metadataService.ChangeEntryGuid(entryInMetadataDirectory, aaguid);
+        return metadataService;
+    }
+
+    [Fact]
+    public async Task TestSelfRefusedForModelWhoseMetadataDoesNotDeclareSurrogateAttestation()
+    {
+        // "256K1 U2F Authenticator basic_full": attestationTypes is ["basic_full"] only
+        var metadataService = await CreateMetadataServiceWithEntryForAsync(new Guid("00000000-0000-0000-0000-000000000001"), _aaguid);
+        var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", SignData(type, alg, crv) }
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync(metadataService));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.SelfAttestationNotDeclaredInMetadata, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestSelfAcceptedForModelWhoseMetadataDeclaresSurrogateAttestation()
+    {
+        // "256K1 U2F Authenticator basic_surrogate": attestationTypes is ["basic_surrogate"]
+        var metadataService = await CreateMetadataServiceWithEntryForAsync(new Guid("00000000-0000-0000-0000-000000000003"), _aaguid);
+        var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", SignData(type, alg, crv) }
+        });
+
+        var credential = await MakeAttestationResponseAsync(metadataService);
+
+        Assert.Equal("self", credential.AttestationType);
+        Assert.Equal(_aaguid, credential.AaGuid);
+    }
+
+    [Fact]
+    public async Task TestSelfAcceptedForModelWhoseMetadataDeclaresBothFullAndSurrogateAttestation()
+    {
+        // "Secp256R1 Packed Authenticator": attestationTypes is ["basic_full", "basic_surrogate"]
+        var metadataService = await CreateMetadataServiceWithEntryForAsync(new Guid("00000000-0000-0000-0000-000000000004"), _aaguid);
+        var (type, alg, crv) = Fido2Tests._validCOSEParameters[0];
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", SignData(type, alg, crv) }
+        });
+
+        var credential = await MakeAttestationResponseAsync(metadataService);
+
+        Assert.Equal("self", credential.AttestationType);
     }
 
     [Fact]
@@ -317,6 +380,7 @@ public class Packed : Fido2Tests.Attestation
             Assert.Equal(_aaguid, credential.AaGuid);
             Assert.Equal(_signCount, credential.SignCount);
             Assert.Equal("packed", credential.AttestationFormat);
+            Assert.Equal("attca", credential.AttestationType);
             Assert.Equal(_credentialID, credential.Id);
             Assert.Equal(_credentialPublicKey.GetBytes(), credential.PublicKey);
             Assert.Equal("Test User", credential.User.DisplayName);
@@ -665,8 +729,11 @@ public class Packed : Fido2Tests.Attestation
             { "x5c", x5c }
         });
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(MakeAttestationResponseAsync);
-        Assert.Equal("Missing or unknown alg 42", ex.Message);
+        // An algorithm the library does not know is a malformed credential public key from the wire, so it is
+        // rejected as a Fido2VerificationException rather than escaping as an InvalidOperationException.
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm 42 cannot be used with an EC2 key on curve P256", ex.Message);
     }
 
     [Fact]
@@ -763,9 +830,11 @@ public class Packed : Fido2Tests.Attestation
 
         if (OperatingSystem.IsMacOS())
         {
-            // Actually throws Interop.AppleCrypto.AppleCommonCryptoCryptographicException
-            var ex = await Assert.ThrowsAnyAsync<CryptographicException>(MakeAttestationResponseAsync);
-            Assert.Equal("Unknown format in import.", ex.Message);
+            // Apple's crypto library refuses to even parse these corrupted cert bytes (raw message would be
+            // "Unknown format in import."), before ever reaching the "not V3" check below; X509CertificateHelper
+            // now wraps that parse failure the same way it wraps every other malformed-certificate case.
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+            Assert.Equal("Malformed X.509 certificate", ex.Message);
         }
 
         else
@@ -972,5 +1041,287 @@ public class Packed : Fido2Tests.Attestation
 
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
         Assert.Equal("Attestation certificate has CA cert flag present", ex.Message);
+    }
+
+    /// <summary>
+    /// Builds a full (x5c) packed attestation whose attestation certificate optionally carries
+    /// <paramref name="extraExtension"/>, and runs the registration ceremony under
+    /// <paramref name="attestation"/>.
+    /// </summary>
+    private async Task<RegisteredPublicKeyCredential> MakeFullPackedAttestationResponseAsync(
+        X509Extension extraExtension,
+        AttestationConveyancePreference attestation)
+    {
+        var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
+        DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+        DateTimeOffset notAfter = notBefore.AddDays(2);
+        var attDN = new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
+
+        using var ecdsaRoot = ECDsa.Create();
+        var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+        rootRequest.CertificateExtensions.Add(caExt);
+
+        using X509Certificate2 root = rootRequest.CreateSelfSigned(notBefore, notAfter);
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+        attRequest.CertificateExtensions.Add(notCAExt);
+        attRequest.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
+
+        if (extraExtension is not null)
+            attRequest.CertificateExtensions.Add(extraExtension);
+
+        byte[] serial = RandomNumberGenerator.GetBytes(12);
+
+        X509Certificate2 attestnCert;
+        using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
+        {
+            attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+        }
+
+        var x5c = new CborArray {
+            attestnCert.RawData,
+            root.RawData
+        };
+
+        byte[] signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+
+        _attestationObject.Set("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", signature },
+            { "x5c", x5c }
+        });
+
+        return await MakeAttestationResponseAsync(null, attestation: attestation);
+    }
+
+    [Fact]
+    public async Task TestFullEnterpriseSerialNumberIsSurfaced()
+    {
+        // WebAuthn L3 §8.2.2: id-fido-gen-ce-sernum MAY be present in packed attestations for enterprise use,
+        // carrying a unique octet string value per device against a particular AAGUID.
+        byte[] deviceSerialNumber = "F1D0-0001"u8.ToArray();
+
+        var credential = await MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeSernum, AsnHelper.GetBlob(deviceSerialNumber), false),
+            AttestationConveyancePreference.Enterprise);
+
+        Assert.Equal(deviceSerialNumber, credential.EnterpriseAttestationSerialNumber);
+    }
+
+    [Fact]
+    public async Task TestFullWithoutSerialNumberReportsNone()
+    {
+        var credential = await MakeFullPackedAttestationResponseAsync(null, AttestationConveyancePreference.Enterprise);
+
+        Assert.Null(credential.EnterpriseAttestationSerialNumber);
+    }
+
+    [Theory]
+    [InlineData(AttestationConveyancePreference.None)]
+    [InlineData(AttestationConveyancePreference.Indirect)]
+    [InlineData(AttestationConveyancePreference.Direct)]
+    public async Task TestFullSerialNumberRejectedOutsideEnterpriseAttestation(AttestationConveyancePreference attestation)
+    {
+        // "This extension MUST NOT be present in non-enterprise attestations."
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeSernum, AsnHelper.GetBlob("F1D0-0001"u8.ToArray()), false),
+            attestation));
+
+        Assert.Equal(Fido2ErrorCode.UnexpectedEnterpriseAttestation, ex.Code);
+        Assert.Same(Fido2ErrorMessages.UnexpectedEnterpriseAttestation, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullCriticalSerialNumberIsRejected()
+    {
+        // "This extension MUST NOT be marked as critical"
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeSernum, AsnHelper.GetBlob("F1D0-0001"u8.ToArray()), true),
+            AttestationConveyancePreference.Enterprise));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Same(Fido2ErrorMessages.CriticalEnterpriseAttestationSerialNumber, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullEmptySerialNumberIsRejected()
+    {
+        // "this extension MUST indicate a unique octet string value per device"
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeSernum, AsnHelper.GetBlob([]), false),
+            AttestationConveyancePreference.Enterprise));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Same(Fido2ErrorMessages.EmptyEnterpriseAttestationSerialNumber, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullFirmwareVersionIsSurfaced()
+    {
+        // WebAuthn L3 §8.2.1: "The firmware of a particular authenticator model MAY be differentiated using
+        // the Extension OID 1.3.6.1.4.1.45724.1.1.5 (id-fido-gen-ce-fw-version). When present, this attribute
+        // contains an INTEGER with a non-negative value which is incremented for new firmware release
+        // versions."
+        var credential = await MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(7), false),
+            AttestationConveyancePreference.Direct);
+
+        Assert.Equal(7ul, credential.FirmwareVersion);
+    }
+
+    [Fact]
+    public async Task TestFullWithoutFirmwareVersionReportsNone()
+    {
+        var credential = await MakeFullPackedAttestationResponseAsync(null, AttestationConveyancePreference.Direct);
+
+        Assert.Null(credential.FirmwareVersion);
+    }
+
+    [Theory]
+    [InlineData(AttestationConveyancePreference.None)]
+    [InlineData(AttestationConveyancePreference.Indirect)]
+    [InlineData(AttestationConveyancePreference.Direct)]
+    [InlineData(AttestationConveyancePreference.Enterprise)]
+    public async Task TestFullFirmwareVersionIsNotRestrictedToEnterpriseAttestation(AttestationConveyancePreference attestation)
+    {
+        // Unlike id-fido-gen-ce-sernum, this identifies a firmware build rather than a device, so it carries
+        // no tracking risk and no conveyance preference forbids it.
+        var credential = await MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(42), false),
+            attestation);
+
+        Assert.Equal(42ul, credential.FirmwareVersion);
+    }
+
+    [Fact]
+    public async Task TestFullCriticalFirmwareVersionIsRejected()
+    {
+        // "The extension MUST NOT be marked as critical."
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(7), true),
+            AttestationConveyancePreference.Direct));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Same(Fido2ErrorMessages.CriticalFirmwareVersion, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullNegativeFirmwareVersionIsRejected()
+    {
+        // "an INTEGER with a non-negative value"
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeFullPackedAttestationResponseAsync(
+            new X509Extension(oidIdFidoGenCeFwVersion, AsnHelper.GetIntegerBlob(-1), false),
+            AttestationConveyancePreference.Direct));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Same(Fido2ErrorMessages.InvalidFirmwareVersion, ex.Message);
+    }
+
+    /// <summary>
+    /// Builds a full packed attestation whose ES256 attestation certificate is self-signed with the given subject and
+    /// extensions, so a test can vary just the certificate.
+    /// </summary>
+    private void AddFullAttStmtWithSelfSignedCert(X500DistinguishedName subject, params X509Extension[] extensions)
+    {
+        var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attRequest = new CertificateRequest(subject, ecdsaAtt, HashAlgorithmName.SHA256);
+        foreach (var extension in extensions)
+            attRequest.CertificateExtensions.Add(extension);
+
+        using var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        byte[] signature = SignData(type, alg, curve, ecdsa: ecdsaAtt);
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "alg", alg },
+            { "sig", signature },
+            { "x5c", new CborArray { attestnCert.RawData } }
+        });
+    }
+
+    [Fact]
+    public async Task TestFullAttCertSubjectEmpty()
+    {
+        AddFullAttStmtWithSelfSignedCert(new X500DistinguishedName(""), notCAExt);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.InvalidAttestationCertSubject, ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAttCertAaguidNot16Bytes()
+    {
+        // OCTET STRING of 3 bytes where the AAGUID's 16 are required
+        var shortAaguidExt = new X509Extension(oidIdFidoGenCeAaGuid, [0x04, 0x03, 0xf1, 0xd0, 0xf1], false);
+        AddFullAttStmtWithSelfSignedCert(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), notCAExt, shortAaguidExt);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("id-fido-gen-ce-aaguid extension must be a 16-byte OCTET STRING, got 3 bytes", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAttCertAaguidNotOctetString()
+    {
+        // a UTF8String where an OCTET STRING is required
+        var textAaguidExt = new X509Extension(oidIdFidoGenCeAaGuid, [0x0c, 0x02, 0x41, 0x42], false);
+        AddFullAttStmtWithSelfSignedCert(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), notCAExt, textAaguidExt);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Equal("id-fido-gen-ce-aaguid extension is not an OCTET STRING", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAlgDoesNotMatchAttCertKeyType()
+    {
+        // an EC attestation certificate with an RSA algorithm identifier
+        var (type, _, curve) = Fido2Tests._validCOSEParameters[0];
+
+        using var ecdsaAtt = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attRequest = new CertificateRequest(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), ecdsaAtt, HashAlgorithmName.SHA256);
+        attRequest.CertificateExtensions.Add(notCAExt);
+        using var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "alg", COSE.Algorithm.RS256 },
+            { "sig", SignData(type, COSE.Algorithm.ES256, curve, ecdsa: ecdsaAtt) },
+            { "x5c", new CborArray { attestnCert.RawData } }
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm RS256 cannot be used with an EC2 key on curve P256", ex.Message);
+    }
+
+    [Fact]
+    public async Task TestFullAlgDoesNotMatchRsaAttCertKeyType()
+    {
+        // an RSA attestation certificate with an ECDSA algorithm identifier
+        _credentialPublicKey = Fido2Tests.MakeCredentialPublicKey(Fido2Tests._validCOSEParameters[0]);
+
+        using var rsaAtt = RSA.Create(2048);
+        var attRequest = new CertificateRequest(new X500DistinguishedName("CN=Testing, OU=Authenticator Attestation, O=FIDO2-NET-LIB, C=US"), rsaAtt, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        attRequest.CertificateExtensions.Add(notCAExt);
+        using var attestnCert = attRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(2));
+
+        _attestationObject.Add("attStmt", new CborMap {
+            { "alg", COSE.Algorithm.ES256 },
+            { "sig", new byte[64] },
+            { "x5c", new CborArray { attestnCert.RawData } }
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+        Assert.Equal("Algorithm ES256 cannot be used with an RSA key", ex.Message);
     }
 }

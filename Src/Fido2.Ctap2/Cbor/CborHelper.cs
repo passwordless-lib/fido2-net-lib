@@ -69,7 +69,9 @@ internal sealed class CborHelper
                     result.DisplayName = (string)value;
                     break;
                 case "icon":
+#pragma warning disable CS0618 // obsolete, but CTAP2 round-trips whatever an authenticator sends
                     result.Icon = (string)value;
+#pragma warning restore CS0618
                     break;
             }
         }
