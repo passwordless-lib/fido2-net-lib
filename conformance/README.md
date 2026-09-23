@@ -81,7 +81,9 @@ generated from several runs.
 This is what distinguishes a legitimate result from an accidental one -- the entire point of this tool. Two
 entries from `expectations.json` as it stood when this was written, for a packed registration ceremony (the tool
 itself changes every few days, so treat the specifics below -- test count included -- as illustrative rather
-than current; see "When the tool changes" below):
+than current; see "When the tool changes" below). The total entry count also only means anything for a run with
+every suite and option selected, per "Selecting fewer tests" above -- a run that left some out legitimately
+checks fewer than the total, with a `NOT RUN` line for each one skipped:
 
 ```json
 {
@@ -115,13 +117,15 @@ and still scores F-1 as a pass. The traffic log would instead show `Outcome: "cr
 MISMATCH #2 seq 2 Server-ServerAuthenticatorAttestationResponse-Resp-1 F-1: "id" missing
     got      crash/- 'Object reference not set to an instance of an object.'
     expected verified/InvalidAttestationResponse 'AttestationResponse Id is missing'…
-N of N ledger entries checked against run.jsonl: 1 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
+M of N ledger entries checked against run.jsonl: 1 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
 ```
 
-A clean run against an unchanged library instead prints only the final summary line, with zero mismatches:
+A clean run against an unchanged library instead prints only the final summary line, with zero mismatches. M
+equals N only if every suite and option was selected; run with fewer, and a `NOT RUN` line precedes the summary
+for each one skipped, with M short of N by exactly that many:
 
 ```
-N of N ledger entries checked against run.jsonl: 0 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
+M of N ledger entries checked against run.jsonl: 0 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
 ```
 
 The exit code is `0` only in that second case, so `check` is scriptable in CI: any `MISMATCH`, `DRIFT`, or
