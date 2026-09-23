@@ -79,7 +79,9 @@ generated from several runs.
 ## Reading the output
 
 This is what distinguishes a legitimate result from an accidental one -- the entire point of this tool. Two
-entries from `expectations.json`, for a packed registration ceremony:
+entries from `expectations.json` as it stood when this was written, for a packed registration ceremony (the tool
+itself changes every few days, so treat the specifics below -- test count included -- as illustrative rather
+than current; see "When the tool changes" below):
 
 ```json
 {
@@ -113,13 +115,13 @@ and still scores F-1 as a pass. The traffic log would instead show `Outcome: "cr
 MISMATCH #2 seq 2 Server-ServerAuthenticatorAttestationResponse-Resp-1 F-1: "id" missing
     got      crash/- 'Object reference not set to an instance of an object.'
     expected verified/InvalidAttestationResponse 'AttestationResponse Id is missing'…
-167 of 167 ledger entries checked against run.jsonl: 1 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
+N of N ledger entries checked against run.jsonl: 1 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
 ```
 
 A clean run against an unchanged library instead prints only the final summary line, with zero mismatches:
 
 ```
-167 of 167 ledger entries checked against run.jsonl: 0 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
+N of N ledger entries checked against run.jsonl: 0 mismatch(es), 0 drift warning(s), 0 unmatched request(s)
 ```
 
 The exit code is `0` only in that second case, so `check` is scriptable in CI: any `MISMATCH`, `DRIFT`, or
