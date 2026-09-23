@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Text;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -49,6 +50,44 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         "Mx86OyXShkDOOyyGeMlhLxS67ttVb9+E7gUJTb0o2HLO02JQZR7rkpeDMdmztcpH"u8 +
         "WD9f"u8;
 
+    /// <summary>
+    /// GlobalSign Root R46, self-signed. GlobalSign began issuing under this root (rather than
+    /// <see cref="ROOT_CERT"/>, "GlobalSign Root CA - R3") for TLS/EV certificates including
+    /// mds.fidoalliance.org's own; the BLOB's x5c chain includes a copy of this cert cross-signed by R3 for
+    /// transition compatibility. Because R46 is now itself widely trusted as a root in its own right (it has
+    /// been shipped directly in current OS/browser trust stores for several years), a platform's own chain
+    /// builder commonly terminates at R46 rather than walking the cross-sign up to R3 -- so both roots must be
+    /// accepted, or MDS validation fails on exactly the platforms most likely to already trust the FIDO root.
+    /// </summary>
+    private static ReadOnlySpan<byte> ROOT_CERT_R46 =>
+        "MIIFWjCCA0KgAwIBAgISEdK7udcjGJ5AXwqdLdDfJWfRMA0GCSqGSIb3DQEBDAUAMEYx"u8 +
+        "CzAJBgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMRwwGgYDVQQDExNH"u8 +
+        "bG9iYWxTaWduIFJvb3QgUjQ2MB4XDTE5MDMyMDAwMDAwMFoXDTQ2MDMyMDAwMDAwMFow"u8 +
+        "RjELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExHDAaBgNVBAMT"u8 +
+        "E0dsb2JhbFNpZ24gUm9vdCBSNDYwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoIC"u8 +
+        "AQCsrHQy6LNl5brtQyYdpokNRbopiLKkHWPd08EsCVeJOaFV6Wc0dwxu5FUdUiXSE2te"u8 +
+        "4R2pt32JMl8Nnp8semNgQB+msLZ4j5lUlghYruQGvGIFAha/r6gjA7aUD7xubMLL1aa7"u8 +
+        "DOn2wQL7Id5m3RerdELv8HQvJfTqa1VbkNud316HCkD7rRlr+/fKYIje2sGP1q7Vf9Q8"u8 +
+        "g+7XFkyDRTNrJ9CG0Bwta/OrffGFqfUo0q3v84RLHIf8E6M6cqJaESvWJ3En7YEtbWaB"u8 +
+        "koe0G1h6zD8K+kZPTXhc+CtI4wSEy132tGqzZfxCnlEmIyDLPRT5ge1lFgBPGmSXZgjP"u8 +
+        "jHvjK8Cd+RTyG/FWaha/LIWFzXg4mutCagI0GIMXTpRW+LaCtfOW3T3zvn8gdz57GSNr"u8 +
+        "LNRyc0NXfeD412lPFzYE+cCQYDdF3uYM2HSNrpyibXRdQr4G9dlkbgIQrImwTDsHTUB+"u8 +
+        "JMWKmIJ5jqSngiCNI/onccnfxkF0oE32kRbcRoxfKWMxWXEM2G/CtjJ9++ZdU6Z+Ffy7"u8 +
+        "dXxd7Pj2Fxzsx2sZy/N78CsHpdlseVR2bJ0cpm4O6XkMqCNqo98bMDGfsVR7/mrLZqrc"u8 +
+        "ZdCinkqaByFrgY/bxFn63iLABJzjqls2k+g9vXqhnQt2sQvHnf3PmKgGwvgqo6GDoLcl"u8 +
+        "cqUC4wIDAQABo0IwQDAOBgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNV"u8 +
+        "HQ4EFgQUA1yrc4GHqMywptWU4jaWSf8FmSwwDQYJKoZIhvcNAQEMBQADggIBAHx47PYC"u8 +
+        "LLtbfpIrXTncvtgdokIzTfnvpCo7RGkerNlFo048p9gkUbJUHJNOxO97k4VgJuoJSOD1"u8 +
+        "u8fpaNK7ajFxzHmuEajwmf3lH7wvqMxX63bEIaZHU1VNaL8FpO7XJqti2kM3S+LGteWy"u8 +
+        "gxk6x9PbTZ4IevPuzz5i+6zoYMzRx6Fcg0XERczzF2sUyQQCPtIkpnnpHs6i58FZFZ8d"u8 +
+        "4kuaPp92CC1r2LpXFNqD6v6MVenQTqnMdzGxRBF6XLE+0xRFFRhiJBPSy03OXIPBNvIQ"u8 +
+        "tQ6IbbjhVp+J3pZmOUdkLG5NrmJ7v2B0GbhWrJKsFjLtrWhV/pi60zTe9Mlhww6G9kuE"u8 +
+        "YO4Ne7UyWHmRVSyBQ7N0H3qqJZ4d16GLuc1CLgSkZoNNiTW2bKg2SnkheCLQQrzRQDGQ"u8 +
+        "ob4Ez8pn7fXwgNNgyYMqIgXQBztSvwyeqiv5u+YfjyW6hY0XHgL+XVAEV8/+LbzvXMAa"u8 +
+        "q7afJMbfc2hIkCwU9D9SGuTSyxTDYWnP4vkYxboznxSjBF25cfe1lNj2M8FawTSLfJvd"u8 +
+        "kzrnE6JwYZ+vj+vYxXX4M2bUdGc6N3ec592kD3ZDZopD8p/7DEJ4Y9HiD2971KE9dJeF"u8 +
+        "t0g5QdYg/NA6s/rob8SKunE3vouXsXgxT7PntgMTzlSdriVZzH81Xwj3QEUxeCp6"u8;
+
     private const int MaxRetryAttempts = 4;
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(30);
 
@@ -89,8 +128,9 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
     public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
     {
         var (rawBLOB, blobUri) = await GetRawBlobAsync(cancellationToken);
-        using var rootCert = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
-        return await DeserializeAndValidateBlobAsync(rawBLOB, rootCert, cancellationToken, blobUri);
+        using var rootCertR3 = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
+        using var rootCertR46 = X509CertificateHelper.CreateFromBase64String(ROOT_CERT_R46);
+        return await DeserializeAndValidateBlobAsync(rawBLOB, [rootCertR3, rootCertR46], cancellationToken, blobUri);
     }
 
     /// <summary>
@@ -160,11 +200,11 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         return backoff > MaxRetryDelay ? MaxRetryDelay : backoff;
     }
 
-    // internal for testing: the trust root is injected so a self-built chain can be validated without the
-    // real GlobalSign root. Production always passes the bundled ROOT_CERT. blobUri is only required when the
-    // BLOB header actually names an x5u -- its web-origin is checked against it -- so tests that only exercise
-    // x5c can omit it.
-    internal async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, X509Certificate2 rootCert, CancellationToken cancellationToken = default, Uri? blobUri = null)
+    // internal for testing: the trust root(s) are injected so a self-built chain can be validated without the
+    // real GlobalSign roots. Production always passes the bundled ROOT_CERT and ROOT_CERT_R46. blobUri is only
+    // required when the BLOB header actually names an x5u -- its web-origin is checked against it -- so tests
+    // that only exercise x5c can omit it.
+    internal async Task<MetadataBLOBPayload> DeserializeAndValidateBlobAsync(string rawBLOBJwt, IReadOnlyList<X509Certificate2> trustedRoots, CancellationToken cancellationToken = default, Uri? blobUri = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(rawBLOBJwt);
 
@@ -214,7 +254,11 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         }
         else
         {
-            blobCerts = [rootCert];
+            // Neither header names a chain, so per MDS 3.1.1 the BLOB signing trust anchor is itself the
+            // signing certificate. MDS 3.1.1 always sends x5c in practice, so this is not exercised by the
+            // real service; there is no way to tell which trusted root would have signed it, so the first one
+            // is used.
+            blobCerts = [trustedRoots[0]];
         }
 
         var keys = new SecurityKey[blobCerts.Length];
@@ -239,7 +283,7 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         var blobPublicKeys = keys.ToArray(); // defensive copy
 
         var certChain = new X509Chain();
-        certChain.ChainPolicy.ExtraStore.Add(rootCert);
+        certChain.ChainPolicy.ExtraStore.AddRange(trustedRoots.ToArray());
         certChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
         var tokenHandler = new JsonWebTokenHandler
@@ -271,12 +315,14 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
 
         var certChainIsValid = certChain.Build(blobCerts[0]);
 
-        // The BLOB signing chain MUST terminate at the bundled FIDO Alliance root, regardless of the host's
-        // trust store. X509Chain's default System trust mode returns true for a chain to ANY publicly-trusted
-        // CA, so a successful Build() alone would accept a BLOB signed under an unrelated public CA. Pin the
-        // terminal certificate to the downloaded root.
-        bool pinnedToFidoRoot = certChain.ChainElements.Count > 0
-            && rootCert.Thumbprint.Equals(certChain.ChainElements[^1].Certificate.Thumbprint, StringComparison.Ordinal);
+        // The BLOB signing chain MUST terminate at one of the bundled FIDO Alliance roots, regardless of the
+        // host's trust store. X509Chain's default System trust mode returns true for a chain to ANY
+        // publicly-trusted CA, so a successful Build() alone would accept a BLOB signed under an unrelated
+        // public CA. Pin the terminal certificate to one of the accepted roots.
+        var matchedRoot = certChain.ChainElements.Count > 0
+            ? trustedRoots.FirstOrDefault(r => r.Thumbprint.Equals(certChain.ChainElements[^1].Certificate.Thumbprint, StringComparison.Ordinal))
+            : null;
+        bool pinnedToFidoRoot = matchedRoot is not null;
 
         if (certChainIsValid)
         {
@@ -289,10 +335,10 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             // manually against the pinned root before trusting -- or fetching anything named by -- its certificates.
             #pragma warning disable format
             bool manualChainIsValid =
-                pinnedToFidoRoot &&
+                matchedRoot is not null &&
                 // the chain accounts for exactly the certificates the header supplied, plus the root we added --
                 // unless the header's chain already ended at that root
-                certChain.ChainElements.Count == blobCerts.Length + (rootCert.Thumbprint == blobCerts[^1].Thumbprint ? 0 : 1) &&
+                certChain.ChainElements.Count == blobCerts.Length + (matchedRoot.Thumbprint == blobCerts[^1].Thumbprint ? 0 : 1) &&
                 // and that the root cert has exactly one status with the value of UntrustedRoot
                 certChain.ChainElements[^1].ChainElementStatus is [{ Status: X509ChainStatusFlags.UntrustedRoot }];
             #pragma warning restore format

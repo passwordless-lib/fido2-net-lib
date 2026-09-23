@@ -383,7 +383,34 @@ public class Fido2MetadataServiceRepositoryTests
             // against an empty CRL served for it.
             var repository = new Fido2MetadataServiceRepository(new CrlServingHttpClientFactory(BuildEmptyCrl(root)));
 
-            var blob = await repository.DeserializeAndValidateBlobAsync(jwt, root, CancellationToken.None);
+            var blob = await repository.DeserializeAndValidateBlobAsync(jwt, [root], CancellationToken.None);
+
+            Assert.Equal(1, blob.Number);
+        }
+    }
+
+    // Multiple roots can be accepted at once: FIDO Alliance's live MDS BLOB is currently signed under a chain
+    // that terminates at GlobalSign Root R46 rather than the legacy GlobalSign Root CA - R3 this library
+    // originally pinned to, because R46 is now itself widely trusted as a root in its own right, and a
+    // platform's own chain builder commonly terminates there instead of walking a cross-sign up to R3 -- so
+    // both have to be accepted. This proves the chain validates against whichever configured root actually
+    // matches, not only the first one in the list.
+    [Fact]
+    public async Task DeserializeAndValidateBlob_ValidatesWhenAnyOfSeveralProvidedRootsMatches()
+    {
+        var (root, leaf, leafKey) = BuildChain();
+        using var decoyRoot = new CertificateRequest("CN=Unrelated Root", ECDsa.Create(ECCurve.NamedCurves.nistP256), HashAlgorithmName.SHA256)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+        using (root)
+        using (leaf)
+        using (leafKey)
+        {
+            string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var repository = new Fido2MetadataServiceRepository(new CrlServingHttpClientFactory(BuildEmptyCrl(root)));
+
+            // 'root' is not first, and 'decoyRoot' matches nothing in the chain -- validation must still
+            // succeed by finding 'root' among the candidates.
+            var blob = await repository.DeserializeAndValidateBlobAsync(jwt, [decoyRoot, root], CancellationToken.None);
 
             Assert.Equal(1, blob.Number);
         }
@@ -406,7 +433,7 @@ public class Fido2MetadataServiceRepositoryTests
             // pinned 'otherRoot'. It must be refused, and refused before any CRL fetch (otherwise the throwing
             // factory would surface an InvalidOperationException instead of this Fido2VerificationException).
             var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
-                () => repository.DeserializeAndValidateBlobAsync(jwt, otherRoot, CancellationToken.None));
+                () => repository.DeserializeAndValidateBlobAsync(jwt, [otherRoot], CancellationToken.None));
             Assert.Equal("Failed to validate cert chain while parsing BLOB", ex.Message);
         }
     }
