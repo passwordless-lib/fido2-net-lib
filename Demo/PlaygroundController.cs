@@ -51,7 +51,7 @@ public class PlaygroundController : Controller
 
     [HttpPost]
     [Route("decode")]
-    public JsonResult Decode([FromBody] DecodeRequest request)
+    public async Task<JsonResult> Decode([FromBody] DecodeRequest request, CancellationToken cancellationToken)
     {
         try
         {
@@ -67,9 +67,9 @@ public class PlaygroundController : Controller
             object? decoded = kind switch
             {
                 "clientDataJSON" => DecodeClientData(bytes),
-                "authenticatorData" => DescribeAuthenticatorData(bytes),
+                "authenticatorData" => await DescribeAuthenticatorDataAsync(bytes, cancellationToken),
                 "coseKey" => DecodeCbor(bytes),
-                "attestationObject" => DecodeAttestationObject(bytes),
+                "attestationObject" => await DecodeAttestationObjectAsync(bytes, cancellationToken),
                 _ => throw new InvalidOperationException($"Unrecognized input kind '{kind}'.")
             };
 
@@ -161,7 +161,7 @@ public class PlaygroundController : Controller
         };
     }
 
-    private object DecodeAttestationObject(byte[] bytes)
+    private async Task<object> DecodeAttestationObjectAsync(byte[] bytes, CancellationToken cancellationToken)
     {
         var reader = new CborReader(bytes, CborConformanceMode.Lax);
         var map = ReadCborValue(reader) as Dictionary<string, object?>
@@ -171,7 +171,7 @@ public class PlaygroundController : Controller
         if (map.TryGetValue("authData", out var ad) && ad is byte[] authDataBytes)
         {
             try
-            { authDataDescribed = DescribeAuthenticatorData(authDataBytes); }
+            { authDataDescribed = await DescribeAuthenticatorDataAsync(authDataBytes, cancellationToken); }
             catch (Exception e) { authDataDescribed = new { error = e.Message }; }
         }
 
@@ -193,7 +193,7 @@ public class PlaygroundController : Controller
     /// AAGUID that are perfectly readable. The key itself is still reported, as raw COSE, plus whatever the
     /// library says about it.
     /// </remarks>
-    private object DescribeAuthenticatorData(byte[] bytes)
+    private async Task<object> DescribeAuthenticatorDataAsync(byte[] bytes, CancellationToken cancellationToken)
     {
         if (bytes.Length < 37)
             throw new InvalidOperationException($"Authenticator data is {bytes.Length} bytes; the minimum is 37.");
@@ -232,7 +232,7 @@ public class PlaygroundController : Controller
             attested = new
             {
                 aaguid = aaguid.ToString(),
-                aaguidDescription = DescribeAuthenticator(aaguid),
+                aaguidDescription = await DescribeAuthenticatorAsync(aaguid, cancellationToken),
                 credentialId = Base64Url.EncodeToString(credentialId),
                 credentialIdLength,
                 credentialPublicKey = coseKey,
@@ -282,14 +282,15 @@ public class PlaygroundController : Controller
         }
     }
 
-    private string? DescribeAuthenticator(Guid aaguid)
+    private async Task<string?> DescribeAuthenticatorAsync(Guid aaguid, CancellationToken cancellationToken)
     {
         if (aaguid == Guid.Empty)
             return null;
 
         try
         {
-            return _metadataService.GetEntryAsync(aaguid).GetAwaiter().GetResult()?.MetadataStatement?.Description;
+            var entry = await _metadataService.GetEntryAsync(aaguid, cancellationToken);
+            return entry?.MetadataStatement?.Description;
         }
         catch
         {
