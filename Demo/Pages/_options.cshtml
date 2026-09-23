@@ -106,8 +106,9 @@
                     <p class="help">
                         The ML-DSA entries are the post-quantum algorithms RFC 9964 registers for COSE. This
                         server can verify them, but no shipping authenticator produces them yet, so expect the
-                        client to fall through to whichever conventional algorithm you also offer &mdash; and
-                        to fail outright if you offer nothing else.
+                        client to fall through to whichever conventional algorithm you also offer &mdash; and,
+                        if you offer nothing else, to sit waiting for a security key that can never answer
+                        rather than failing outright. Press Cancel on the prompt to back out.
                     </p>
                 </div>
 
