@@ -54,18 +54,22 @@
                         WebAuthn/FIDO2 is the open standard behind passkeys, supported by every major browser and
                         platform. It is not limited to web applications &mdash; support extends to native apps and
                         Active Directory as well.
-
-                        Read more:
-
-                        FIDO Alliance
-                        passkeycentral.org (UX/design guidance)
-                        Yubico
-                        WebAuthn.Guide from Duo Security
-                        WebAuthn.io
-                        WebAuthn Awesome
                     </p>
+                    <h4 class="title is-6">Read more</h4>
+                    <ul>
+                        <li><a href="https://fidoalliance.org/">FIDO Alliance</a> &mdash; the standards body behind FIDO2/WebAuthn and passkeys</li>
+                        <li><a href="https://www.passkeycentral.org/">passkeycentral.org</a> &mdash; FIDO Alliance's passkey UX/design guidance</li>
+                        <li><a href="https://www.yubico.com/">Yubico</a> &mdash; a security key manufacturer, with good general WebAuthn background</li>
+                        <li><a href="https://webauthn.guide/">WebAuthn.guide</a> &mdash; a developer-focused introduction, from Duo Security</li>
+                        <li><a href="https://webauthn.io/">WebAuthn.io</a> &mdash; a minimal demo/reference implementation</li>
+                        <li><a href="https://github.com/herrjemand/awesome-webauthn">Awesome WebAuthn</a> &mdash; a curated list of WebAuthn/passkey tools, libraries, and resources</li>
+                    </ul>
                 </div>
                 <h3 class="title is-3">Features</h3>
+                <p class="help" style="margin-bottom: 0.75rem">
+                    What the <a href="https://www.nuget.org/packages/Fido2">Fido2 NuGet package</a> itself provides.
+                    Things this demo site does that aren't part of the library's own API are listed separately, below.
+                </p>
                 <ul>
                     <li>
                         <span class="icon has-text-success">
@@ -83,11 +87,10 @@
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        WebAuthn Level 3: hints (&sect;5.8.8), conditional mediation for autofill UI (&sect;5.1.3),
-                        the <code>prf</code> extension (&sect;10.1.4), client capabilities (&sect;5.1.7), and the
-                        &sect;5.1.10 signal methods (<code>signalUnknownCredential</code>,
-                        <code>signalAllAcceptedCredentials</code>, <code>signalCurrentUserDetails</code>) that keep an
-                        authenticator's view of your credentials in sync
+                        WebAuthn Level 3 server-side support: hints (&sect;5.8.8), conditional mediation
+                        (&sect;5.1.3), the <code>prf</code> extension (&sect;10.1.4), and the &sect;5.1.10 signal
+                        method payload types (<code>UnknownCredentialOptions</code>,
+                        <code>AllAcceptedCredentialsOptions</code>, <code>CurrentUserDetailsOptions</code>)
                     </li>
                     <li>
                         <span class="icon has-text-success">
@@ -132,8 +135,7 @@
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        FIDO Metadata Service (MDS) v3.1.1 attestation validation, with authenticator certification
-                        status, icons, and certification details surfaced right in the Playground
+                        FIDO Metadata Service (MDS) v3.1.1 attestation &amp; revocation validation
                     </li>
                     <li>
                         <span class="icon has-text-success">
@@ -145,13 +147,57 @@
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        Examples &amp; demos, including the interactive <a asp-page="/playground">Playground</a>
+                        Intellisense documentation
+                    </li>
+                </ul>
+
+                <h3 class="title is-3" style="margin-top: 2rem">Also in this demo</h3>
+                <p class="help" style="margin-bottom: 0.75rem">
+                    These are things this Demo project does, on top of the library, or that come from the browser
+                    directly &mdash; not part of the Fido2 package's own API surface. Look at the
+                    <a href="https://github.com/passwordless-lib/fido2-net-lib/tree/main/Demo">Demo project's source</a>
+                    if you're building your own.
+                </p>
+                <ul>
+                    <li>
+                        <span class="icon has-text-info">
+                            <i class="fas fa-flask"></i>
+                        </span>
+                        The interactive <a asp-page="/playground">Playground</a>: request/response preview, a
+                        binary decoder, and a Credentials tab
                     </li>
                     <li>
-                        <span class="icon has-text-success">
-                            <i class="fas fa-check-square"></i>
+                        <span class="icon has-text-info">
+                            <i class="fas fa-flask"></i>
                         </span>
-                        Intellisense documentation
+                        Authenticator icons and certification status shown in the Playground &mdash; the library
+                        returns this MDS data (<code>MetadataStatement.Icon</code>, status reports); rendering it
+                        as icons and a hover tooltip is this demo's own UI
+                    </li>
+                    <li>
+                        <span class="icon has-text-info">
+                            <i class="fas fa-flask"></i>
+                        </span>
+                        Grouping the Credentials tab into "Passkeys on your devices" / "Passkeys on security keys",
+                        per <a href="https://www.passkeycentral.org/">passkeycentral.org</a>'s management-UI guidance
+                        &mdash; again, this demo's presentation of data the library already returns
+                    </li>
+                    <li>
+                        <span class="icon has-text-info">
+                            <i class="fas fa-flask"></i>
+                        </span>
+                        &sect;5.1.7 <code>getClientCapabilities()</code> and the actual &sect;5.1.10
+                        <code>PublicKeyCredential.signalX()</code> calls: both are browser APIs the demo's
+                        JavaScript calls directly. The .NET library's part is producing the signal payload (see the
+                        Features list above); it never talks to the browser's credential store itself
+                    </li>
+                    <li>
+                        <span class="icon has-text-info">
+                            <i class="fas fa-flask"></i>
+                        </span>
+                        The scenario pages (<a asp-page="/usernameless">Passkey Sign-In</a>,
+                        <a asp-page="/passwordless">Passkey With a Username</a>) &mdash; example code, not
+                        something the library provides for you
                     </li>
                 </ul>
 
