@@ -1,4 +1,4 @@
-﻿@page "/overview"
+@page "/overview"
 @model Fido2Demo.OverviewModel
 @{
     Layout = "_Layout.cshtml";
@@ -8,51 +8,62 @@
     <div class="container">
         <div class="columns is-centered">
             <div class="column is-8">
-                <h1 class="title is-1">FIDO2 .NET Library (WebAuthn)</h1>
+                <h1 class="title is-1">FIDO2 .NET Library (WebAuthn / Passkeys)</h1>
                 <div class="content">
                     <p>
-                        A battle tested library for FIDO2 and WebAuthn using .NET.
+                        A battle tested library for FIDO2, WebAuthn, and passkeys using .NET.
                     </p>
-                    <p>Bringing FIDO2 &amp; WebAuthn to asp.net and .NET Core.</p>
+                    <p>Bringing passkeys to asp.net and .NET Core.</p>
                     <p>
                         Available on <a href="https://github.com/passwordless-lib/fido2-net-lib">GitHub</a> and <a
                             href="https://www.nuget.org/packages/Fido2">Nuget</a>.
                     </p>
                 </div>
 
+                <div class="notification is-link is-light">
+                    <p>
+                        The fastest way to see what this library does is the <a asp-page="/playground"><strong>Playground</strong></a>
+                        &mdash; every WebAuthn Level 3 option this Relying Party can set, the exact request it sends, the decoded
+                        response, and a Credentials tab showing exactly what a real passkey management UI should (grouped by
+                        where the passkey lives, per <a href="https://www.passkeycentral.org/">passkeycentral.org</a>'s
+                        guidance). The scenario pages below are narrower, scripted walkthroughs of specific flows.
+                    </p>
+                </div>
+
                 <h2 class="title is-2">Purpose</h2>
                 <div class="content">
-                    <p>Enable passwordless sign in for all .net apps (asp, core, native).</p>
+                    <p>Enable passkey sign-in for all .NET apps (asp, core, native).</p>
                     <p>To provide a developer friendly and well tested .NET FIDO2 Server / WebAuthn relying party
                         library for the easy validation of registration (attestation) and authentication (assertion) of
-                        FIDO2 / WebAuthn credentials, in order to increase the adoption of the technology, ultimately
-                        defeating phishing attacks.</p>
+                        FIDO2 / WebAuthn credentials &mdash; passkeys &mdash; in order to increase the adoption of the technology,
+                        ultimately defeating phishing attacks.</p>
                     <p>Consider to <a href="https://opencollective.com/passwordless">become a backer.</a></p>
                 </div>
-                <h2 class="title is-2">What is FIDO2 / WebAuthn?</h2>
+                <h2 class="title is-2">What is a passkey?</h2>
                 <div class="content">
-                    <h3 class="subtitle is-6">The passwordless web is coming</h3>
+                    <h3 class="subtitle is-6">The passwordless web is here</h3>
                     <p>
-                        FIDO2 / WebAuthn is a new open authentication standard, supported by browsers and many large
-                        tech companies such as Microsoft, Google etc. The main driver is to allow a user to login
-                        without passwords, creating passwordless flows or strong MFA for user signup/login on websites.
-                        The standard is not limited to web applications with support coming to Active Directory and
-                        native apps. The technology builds on public/private keys, allowing authentication to happen
-                        without sharing a secret between the user & platform. This brings many benefits, such as easier
-                        and safer logins and makes phishing attempts extremely hard.
+                        A passkey is a WebAuthn credential, branded for end users: FIDO Alliance's umbrella term for
+                        the public/private key pairs this standard creates, whether they sync across a person's devices
+                        via a credential manager (iCloud Keychain, Google Password Manager, 1Password, etc.) or live on
+                        a single hardware security key. Either way, authentication happens without a shared secret ever
+                        crossing the network, which is what makes phishing against a passkey fundamentally different
+                        from phishing a password: there is no password to trick someone into typing into the wrong site.
+                    </p>
+                    <p>
+                        WebAuthn/FIDO2 is the open standard behind passkeys, supported by every major browser and
+                        platform. It is not limited to web applications &mdash; support extends to native apps and
+                        Active Directory as well.
 
                         Read more:
 
-                        Why it's exciting
-                        Medium
                         FIDO Alliance
+                        passkeycentral.org (UX/design guidance)
                         Yubico
                         WebAuthn.Guide from Duo Security
                         WebAuthn.io
                         WebAuthn Awesome
                     </p>
-
-
                 </div>
                 <h3 class="title is-3">Features</h3>
                 <ul>
@@ -60,32 +71,42 @@
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        Attestation API & verification (Register and verify credentials/authenticators)
+                        Attestation API &amp; verification (Register and verify credentials/authenticators)
                     </li>
                     <li>
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        Assertion API & verification (Authenticate users)
+                        Assertion API &amp; verification (Authenticate users)
                     </li>
                     <li>
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        100% pass rate in conformance testing (results)
+                        WebAuthn Level 3: hints (&sect;5.8.8), conditional mediation for autofill UI (&sect;5.1.3),
+                        the <code>prf</code> extension (&sect;10.1.4), client capabilities (&sect;5.1.7), and the
+                        &sect;5.1.10 signal methods (<code>signalUnknownCredential</code>,
+                        <code>signalAllAcceptedCredentials</code>, <code>signalCurrentUserDetails</code>) that keep an
+                        authenticator's view of your credentials in sync
                     </li>
                     <li>
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        FIDO2 security keys aka roaming authenticators , like SoloKeys Solo, Yubico YubiKey, and Feitian
-                        BioPass FIDO2)
+                        100% pass rate in FIDO Alliance conformance testing
                     </li>
                     <li>
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        Device embedded authenticators aka platform authenticators , like Android Key and TPM)
+                        Security keys aka roaming authenticators, like YubiKey and Feitian BioPass FIDO2
+                    </li>
+                    <li>
+                        <span class="icon has-text-success">
+                            <i class="fas fa-check-square"></i>
+                        </span>
+                        Platform authenticators and synced passkeys, like Windows Hello, Android, and every major
+                        credential manager
                     </li>
                     <li>
                         <span class="icon has-text-success">
@@ -97,26 +118,22 @@
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        Windows Hello
-                    </li>
-                    <li>
-                        <span class="icon has-text-success">
-                            <i class="fas fa-check-square"></i>
-                        </span>
-                        All currently referenced cryptographic algorithms for FIDO2 Server
+                        All currently referenced cryptographic algorithms for FIDO2 Server, including the post-quantum
+                        ML-DSA family (RFC 9964)
                     </li>
                     <li>
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
                         All current attestation formats: "packed", "tpm", "android-key", "android-safetynet",
-                        "fido-u2f", and "none"
+                        "fido-u2f", "apple", "apple-appattest", and "none"
                     </li>
                     <li>
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        FIDO2 Server attestation validation via FIDO Metadata Service
+                        FIDO Metadata Service (MDS) v3.1.1 attestation validation, with authenticator certification
+                        status, icons, and certification details surfaced right in the Playground
                     </li>
                     <li>
                         <span class="icon has-text-success">
@@ -128,7 +145,7 @@
                         <span class="icon has-text-success">
                             <i class="fas fa-check-square"></i>
                         </span>
-                        Examples & demos
+                        Examples &amp; demos, including the interactive <a asp-page="/playground">Playground</a>
                     </li>
                     <li>
                         <span class="icon has-text-success">
@@ -140,12 +157,20 @@
 
                 <div class="content">
                     <h3 class="title is-3">Concepts</h3>
-                    <p>The following chapter will explain some of the concepts mentioned in the 3 scenarios</p>
+                    <p>The following section explains some of the concepts mentioned in the scenarios below and in the Playground.</p>
+
+                    <h4 class="title is-4">Passkey</h4>
+                    <p>The end-user-facing name for a WebAuthn credential. Per
+                        <a href="https://www.passkeycentral.org/">passkeycentral.org</a>'s guidance, a passkey lives
+                        either "on your devices" (synced to a credential manager, indicated by the WebAuthn Backup
+                        Eligible flag) or "on a security key" (device-bound hardware). The Playground's Credentials
+                        tab groups a signed-in user's passkeys the same way.</p>
 
                     <h4 class="title is-4">Fido2 vs WebAuthn?</h4>
-                    <p>Fido2 is the umbrella term and branding of two new w3c standards: WebAuthn and CTAP2. WebAuthn is
-                        the JS API that allows browser to talk to the operating system to generate assertions and CTAP2
-                        is the API that allows the operating system to talk to Authenticators (usb security keys etc)
+                    <p>Fido2 is the umbrella term and branding of two W3C/FIDO standards: WebAuthn and CTAP2. WebAuthn is
+                        the JS API that lets the browser talk to the operating system to generate assertions, and CTAP2
+                        is the protocol that lets the operating system talk to external authenticators (security keys,
+                        etc).
                     </p>
 
                     <h4 class="title is-4">Relying Party (RP)</h4>
@@ -158,13 +183,17 @@
                         can be done either via PIN code, biometrics or other factors that securely verifies that it's
                         the expected human in front of the device, not just any human.</p>
 
-                    <h4 class="title is-4">Resident Credentials (RK)</h4>
-                    <p>The resident credential is a credential that can be accessed simply with RP ID. When not using RK
-                        you will have to provide a list of the credentials (array of ID's) you want the authenticator to
-                        use. With RK you don’t need it because the authentication will locate all RK's (only RK
-                        credentials), and for each of them generate the assertion over the challenge and return all of
-                        them to the client. The client then will display all of the credentials to the user and user
-                        will pick one, thus returning selected credential to the relying party.</p>
+                    <h4 class="title is-4">Resident Credentials (RK) / Discoverable Credentials</h4>
+                    <p>A resident (discoverable) credential is one the authenticator can find on its own, given just the
+                        RP ID, without the Relying Party first supplying a list of candidate credential IDs. This is what
+                        makes a truly usernameless passkey sign-in possible: the authenticator (or the user's credential
+                        manager) locates all matching discoverable credentials, and the user picks one.</p>
+
+                    <h4 class="title is-4">Backup Eligible / Backup State</h4>
+                    <p>Two flags a WebAuthn credential carries: whether it is <em>eligible</em> to be backed up/synced
+                        (a property of the authenticator, fixed at creation), and whether it <em>is currently</em>
+                        backed up. Together they're how a Relying Party can tell a synced passkey from a device-bound
+                        one, without asking the user &mdash; see the Credentials tab in the Playground for this in action.</p>
                 </div>
             </div>
         </div>
