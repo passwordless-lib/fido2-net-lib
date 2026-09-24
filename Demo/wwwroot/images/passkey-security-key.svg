@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Passkeys on security keys">
   <title>Passkeys on security keys</title>
-  <!-- Original, generic USB security key silhouette -- a device category glyph, not any product's likeness. -->
+  <!-- Original, generic USB security key silhouette, a device category glyph, not any product's likeness. -->
   <g fill="none" stroke="#3e8ed0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
     <rect x="12" y="30" width="52" height="40" rx="10" />
     <circle cx="34" cy="50" r="8" />
