@@ -139,13 +139,58 @@ function authenticatorTooltipContent(details) {
         return '';
     }
 
-    return '<span class="pg-tooltip-content">' + rows.map(function (r) {
-        return '<span class="pg-tooltip-row"><strong>' + r[0] + ':</strong> ' + r[1] + '</span>';
-    }).join('') + '</span>';
+    return rows.map(function (r) {
+        return '<div class="pg-tooltip-row"><strong>' + r[0] + ':</strong> ' + r[1] + '</div>';
+    }).join('');
 }
 
-// The icon plus whatever text a caller wants labeling it (a description, or a "not in metadata" tag), wrapped
-// so a hover reveals authenticatorTooltipContent -- or left unwrapped when there is nothing to show on hover.
+// Tooltip content is kept out of the badge's own markup and shown through a single element appended to
+// <body> instead. A tooltip nested inside the badge (position: absolute, anchored to a position: relative
+// span) gets clipped by the first scrolling ancestor it has -- the Credentials tab's table-container, for
+// one -- and an inline element that wraps across lines is an unreliable positioning anchor to begin with.
+// Living outside the table/response markup entirely and being placed with getBoundingClientRect() sidesteps
+// both problems.
+let pgTooltipContents = [];
+let pgTooltipEl = null;
+
+function ensurePgTooltipEl() {
+    if (!pgTooltipEl) {
+        pgTooltipEl = document.createElement('div');
+        pgTooltipEl.className = 'pg-tooltip-popover';
+        document.body.appendChild(pgTooltipEl);
+    }
+    return pgTooltipEl;
+}
+
+document.addEventListener('mouseover', function (e) {
+    const trigger = e.target.closest('.pg-authenticator-hover');
+    if (!trigger || trigger.dataset.pgTooltipId === undefined) {
+        return;
+    }
+
+    const el = ensurePgTooltipEl();
+    el.innerHTML = pgTooltipContents[trigger.dataset.pgTooltipId];
+
+    const rect = trigger.getBoundingClientRect();
+    el.style.left = (rect.left + window.scrollX) + 'px';
+    el.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    el.style.display = 'block';
+});
+
+document.addEventListener('mouseout', function (e) {
+    const trigger = e.target.closest('.pg-authenticator-hover');
+    if (!trigger || trigger.contains(e.relatedTarget)) {
+        return;
+    }
+
+    if (pgTooltipEl) {
+        pgTooltipEl.style.display = 'none';
+    }
+});
+
+// The icon plus whatever text a caller wants labeling it (a description, or a "not in metadata" tag), marked
+// up so a hover shows authenticatorTooltipContent via the shared popover above -- or left unmarked when
+// there is nothing to show on hover.
 function authenticatorBadge(iconDataUri, labelHtml, details) {
     const icon = authenticatorIconTag(iconDataUri);
     const tooltip = authenticatorTooltipContent(details);
@@ -154,7 +199,8 @@ function authenticatorBadge(iconDataUri, labelHtml, details) {
         return icon + labelHtml;
     }
 
-    return '<span class="pg-authenticator-hover">' + icon + labelHtml + tooltip + '</span>';
+    const id = pgTooltipContents.push(tooltip) - 1;
+    return '<span class="pg-authenticator-hover" data-pg-tooltip-id="' + id + '">' + icon + labelHtml + '</span>';
 }
 
 function flagTag(name, on, title) {
