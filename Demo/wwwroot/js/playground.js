@@ -282,6 +282,46 @@ function tri(value, trueLabel, falseLabel, unknownTitle) {
     return '<span class="tag is-light" title="' + unknownTitle + '">unknown</span>';
 }
 
+// passkeycentral.org's management-UI guidance: group by where the passkey lives, using the terminology it
+// recommends ("passkeys on your devices" / "passkeys on security keys", not "synced"/"device-bound"), each
+// with its own icon. The WebAuthn Backup Eligible flag is exactly this signal -- BE true means the credential
+// can sync to a credential manager ("on your devices"); false or unreported is treated as device-bound.
+function deviceIconTag() {
+    return '<img class="pg-category-icon" src="/images/passkey-device.svg" alt="" />';
+}
+
+function securityKeyIconTag() {
+    return '<img class="pg-category-icon" src="/images/passkey-security-key.svg" alt="" />';
+}
+
+function credentialRow(c) {
+    return '<tr>'
+        + '<td><input class="input is-small pg-nickname" data-id="' + c.id + '" value="'
+            + (c.nickname || '') + '" placeholder="name this key" /></td>'
+        + '<td>' + authenticatorBadge(c.authenticatorIcon,
+            c.authenticator || '<span class="has-text-grey">not in metadata</span>', c.authenticatorDetails) + '</td>'
+        + '<td>' + new Date(c.regDate).toISOString().slice(0, 16).replace('T', ' ') + '</td>'
+        + '<td>' + c.signCount + '</td>'
+        + '<td>' + c.attestationFormat + '</td>'
+        + '<td>' + (c.transports.length ? c.transports.join(', ') : '<span class="has-text-grey">none</span>') + '</td>'
+        + '<td>' + tri(c.isDiscoverable, 'yes', 'no', 'The client did not report credProps.rk') + '</td>'
+        + '<td>' + tri(c.uvInitialized, 'yes', 'no', '') + '</td>'
+        + '<td>' + tri(c.isBackupEligible, 'yes', 'no', '') + '</td>'
+        + '<td>' + tri(c.isBackedUp, 'yes', 'no', '') + '</td>'
+        + '<td><button class="button is-small is-danger is-light pg-delete" data-id="' + c.id + '">Delete</button></td>'
+        + '</tr>';
+}
+
+function credentialGroup(iconTag, title, credentials) {
+    return '<h4 class="title is-6" style="margin-top: 1.25rem">' + iconTag + title + '</h4>'
+        + '<div class="table-container"><table class="table is-striped is-fullwidth"><thead><tr>'
+        + '<th>Nickname</th><th>Authenticator</th><th>Registered</th><th>Count</th><th>Attestation</th>'
+        + '<th>Transports</th><th>Discoverable</th><th>uvInit</th><th>BE</th><th>BS</th><th></th>'
+        + '</tr></thead><tbody>'
+        + credentials.map(credentialRow).join('')
+        + '</tbody></table></div>';
+}
+
 async function loadCredentials() {
     const username = value('#pg-username');
     const container = document.getElementById('pg-credentials');
@@ -293,35 +333,57 @@ async function loadCredentials() {
         .then(r => r.json());
 
     if (result.status !== 'ok' || !result.credentials.length) {
-        container.innerHTML = '<p class="help">No credentials registered for this user yet.</p>';
+        container.innerHTML = '<div class="pg-empty-state">'
+            + '<p class="help">No credentials registered for this user yet.</p>'
+            + '<div class="buttons" style="margin-top: 0.75rem">'
+            + '<button class="button is-link" id="pg-create-passkey">' + deviceIconTag() + 'Create a passkey</button>'
+            + '<button class="button is-link is-light" id="pg-use-security-key">' + securityKeyIconTag() + 'Use a security key</button>'
+            + '</div></div>';
+        wireEmptyStateActions();
         return;
     }
 
-    let html = '<div class="table-container"><table class="table is-striped is-fullwidth"><thead><tr>'
-        + '<th>Nickname</th><th>Authenticator</th><th>Registered</th><th>Count</th><th>Attestation</th>'
-        + '<th>Transports</th><th>Discoverable</th><th>uvInit</th><th>BE</th><th>BS</th><th></th>'
-        + '</tr></thead><tbody>';
+    const onDevice = result.credentials.filter(function (c) { return c.isBackupEligible === true; });
+    const onSecurityKey = result.credentials.filter(function (c) { return c.isBackupEligible !== true; });
 
-    result.credentials.forEach(function (c) {
-        html += '<tr>'
-            + '<td><input class="input is-small pg-nickname" data-id="' + c.id + '" value="'
-                + (c.nickname || '') + '" placeholder="name this key" /></td>'
-            + '<td>' + authenticatorBadge(c.authenticatorIcon,
-                c.authenticator || '<span class="has-text-grey">not in metadata</span>', c.authenticatorDetails) + '</td>'
-            + '<td>' + new Date(c.regDate).toISOString().slice(0, 16).replace('T', ' ') + '</td>'
-            + '<td>' + c.signCount + '</td>'
-            + '<td>' + c.attestationFormat + '</td>'
-            + '<td>' + (c.transports.length ? c.transports.join(', ') : '<span class="has-text-grey">none</span>') + '</td>'
-            + '<td>' + tri(c.isDiscoverable, 'yes', 'no', 'The client did not report credProps.rk') + '</td>'
-            + '<td>' + tri(c.uvInitialized, 'yes', 'no', '') + '</td>'
-            + '<td>' + tri(c.isBackupEligible, 'yes', 'no', '') + '</td>'
-            + '<td>' + tri(c.isBackedUp, 'yes', 'no', '') + '</td>'
-            + '<td><button class="button is-small is-danger is-light pg-delete" data-id="' + c.id + '">Delete</button></td>'
-            + '</tr>';
-    });
+    let html = '';
+    if (onDevice.length) {
+        html += credentialGroup(deviceIconTag(), 'Passkeys on your devices', onDevice);
+    }
+    if (onSecurityKey.length) {
+        html += credentialGroup(securityKeyIconTag(), 'Passkeys on security keys', onSecurityKey);
+    }
 
-    container.innerHTML = html + '</tbody></table></div>';
+    container.innerHTML = html;
     wireCredentialRowActions();
+}
+
+// The passkeycentral.org empty-state pattern: two distinct calls to action rather than one generic
+// "Register" button, so a user who specifically wants a hardware key isn't left guessing which button
+// does that. "Use a security key" forces the security-key hint regardless of the Advanced settings above;
+// "Create a passkey" is the general-purpose action and defers to whatever is already configured there.
+function wireEmptyStateActions() {
+    const createButton = document.getElementById('pg-create-passkey');
+    if (createButton) {
+        createButton.addEventListener('click', async function () {
+            show('pg-status', 'Registering...');
+            await registerCeremony(currentOptions());
+            show('pg-status', '');
+            loadCredentials();
+        });
+    }
+
+    const securityKeyButton = document.getElementById('pg-use-security-key');
+    if (securityKeyButton) {
+        securityKeyButton.addEventListener('click', async function () {
+            show('pg-status', 'Registering...');
+            const options = currentOptions();
+            options.hints = ['security-key'];
+            await registerCeremony(options);
+            show('pg-status', '');
+            loadCredentials();
+        });
+    }
 }
 
 function wireCredentialRowActions() {
