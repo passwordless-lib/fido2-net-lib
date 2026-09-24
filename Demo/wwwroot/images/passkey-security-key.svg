@@ -1,9 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="Passkeys on security keys">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" width="100" height="100" fill="#3e8ed0" role="img" aria-label="Passkeys on security keys">
   <title>Passkeys on security keys</title>
-  <!-- Original, generic USB security key silhouette, a device category glyph, not any product's likeness. -->
-  <g fill="none" stroke="#3e8ed0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="12" y="30" width="52" height="40" rx="10" />
-    <circle cx="34" cy="50" r="8" />
-    <path d="M64 44 h20 v12 h-8 v10 h-8 v-10 h-4 z" />
-  </g>
+  <!-- Google Material Symbols "usb" icon, Apache License 2.0.
+       https://github.com/google/material-design-icons -->
+  <path d="M480-80q-33 0-56.5-23.5T400-160q0-21 11-39t29-29v-92H320q-33 0-56.5-23.5T240-400v-92q-18-9-29-27t-11-41q0-33 23.5-56.5T280-640q33 0 56.5 23.5T360-560q0 23-11 40t-29 28v92h120v-320h-80l120-160 120 160h-80v320h120v-80h-40v-160h160v160h-40v80q0 33-23.5 56.5T640-320H520v92q19 10 29.5 28t10.5 40q0 33-23.5 56.5T480-80Z" />
 </svg>
