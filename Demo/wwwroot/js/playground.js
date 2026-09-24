@@ -104,6 +104,59 @@ function authenticatorIconTag(dataUri) {
     return dataUri ? '<img class="pg-authenticator-icon" src="' + dataUri + '" alt="" />' : '';
 }
 
+// Builds the hover tooltip content from a PlaygroundController "*Details" object (everything MDS reports
+// about the authenticator besides the name/icon already shown inline). Empty when MDS had nothing to say.
+function authenticatorTooltipContent(details) {
+    if (!details) {
+        return '';
+    }
+
+    const rows = [];
+    if (details.certificationStatus) {
+        rows.push(['Certification', details.certificationStatus
+            + (details.certificationUrl ? ' (<a href="' + details.certificationUrl + '" target="_blank" rel="noopener">record</a>)' : '')]);
+    }
+    if (details.lastStatusChange) {
+        rows.push(['Last status change', details.lastStatusChange]);
+    }
+    if (details.multiDeviceCredentialSupport) {
+        rows.push(['Multi-device credentials', details.multiDeviceCredentialSupport]);
+    }
+    if (details.attestationTypes && details.attestationTypes.length) {
+        rows.push(['Attestation types', details.attestationTypes.join(', ')]);
+    }
+    if (details.keyProtection && details.keyProtection.length) {
+        rows.push(['Key protection', details.keyProtection.join(', ')]);
+    }
+    if (details.matcherProtection && details.matcherProtection.length) {
+        rows.push(['Matcher protection', details.matcherProtection.join(', ')]);
+    }
+    if (details.protocolFamily) {
+        rows.push(['Protocol', details.protocolFamily + (details.protocolVersion ? ' ' + details.protocolVersion : '')]);
+    }
+
+    if (!rows.length) {
+        return '';
+    }
+
+    return '<span class="pg-tooltip-content">' + rows.map(function (r) {
+        return '<span class="pg-tooltip-row"><strong>' + r[0] + ':</strong> ' + r[1] + '</span>';
+    }).join('') + '</span>';
+}
+
+// The icon plus whatever text a caller wants labeling it (a description, or a "not in metadata" tag), wrapped
+// so a hover reveals authenticatorTooltipContent -- or left unwrapped when there is nothing to show on hover.
+function authenticatorBadge(iconDataUri, labelHtml, details) {
+    const icon = authenticatorIconTag(iconDataUri);
+    const tooltip = authenticatorTooltipContent(details);
+
+    if (!tooltip) {
+        return icon + labelHtml;
+    }
+
+    return '<span class="pg-authenticator-hover">' + icon + labelHtml + tooltip + '</span>';
+}
+
 function flagTag(name, on, title) {
     return '<span class="tag pg-flag ' + (on ? 'is-success' : 'is-light') + '" title="' + title + '">'
         + name + ': ' + (on ? 'set' : 'clear') + '</span>';
@@ -134,13 +187,13 @@ function renderResponseSummary(decoded) {
 
     const acd = authData.attestedCredentialData;
     if (acd) {
-        html += '<p>' + authenticatorIconTag(acd.aaguidIcon) + '<strong>AAGUID:</strong> <code>' + acd.aaguid + '</code>';
+        let aaguidLabel = '<strong>AAGUID:</strong> <code>' + acd.aaguid + '</code>';
         if (acd.aaguidDescription) {
-            html += ' &mdash; ' + acd.aaguidDescription + ' <span class="tag is-info is-light">FIDO MDS</span>';
+            aaguidLabel += ' &mdash; ' + acd.aaguidDescription + ' <span class="tag is-info is-light">FIDO MDS</span>';
         } else {
-            html += ' <span class="tag is-light">not in metadata</span>';
+            aaguidLabel += ' <span class="tag is-light">not in metadata</span>';
         }
-        html += '</p>';
+        html += '<p>' + authenticatorBadge(acd.aaguidIcon, aaguidLabel, acd.aaguidDetails) + '</p>';
         html += '<p><strong>Credential ID:</strong> <code>' + acd.credentialId + '</code> ('
             + acd.credentialIdLength + ' bytes)</p>';
     }
@@ -207,8 +260,8 @@ async function loadCredentials() {
         html += '<tr>'
             + '<td><input class="input is-small pg-nickname" data-id="' + c.id + '" value="'
                 + (c.nickname || '') + '" placeholder="name this key" /></td>'
-            + '<td>' + authenticatorIconTag(c.authenticatorIcon)
-                + (c.authenticator || '<span class="has-text-grey">not in metadata</span>') + '</td>'
+            + '<td>' + authenticatorBadge(c.authenticatorIcon,
+                c.authenticator || '<span class="has-text-grey">not in metadata</span>', c.authenticatorDetails) + '</td>'
             + '<td>' + new Date(c.regDate).toISOString().slice(0, 16).replace('T', ' ') + '</td>'
             + '<td>' + c.signCount + '</td>'
             + '<td>' + c.attestationFormat + '</td>'

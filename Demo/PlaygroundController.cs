@@ -236,6 +236,7 @@ public class PlaygroundController : Controller
                 aaguid = aaguid.ToString(),
                 aaguidDescription = authenticator.Description,
                 aaguidIcon = authenticator.Icon,
+                aaguidDetails = ToTooltipDetails(authenticator),
                 credentialId = Base64Url.EncodeToString(credentialId),
                 credentialIdLength,
                 credentialPublicKey = coseKey,
@@ -285,11 +286,40 @@ public class PlaygroundController : Controller
         }
     }
 
-    /// <summary>A name and icon for an AAGUID, from FIDO Metadata Service. Either or both may be absent.</summary>
-    private sealed record AuthenticatorLookup(string? Description, string? Icon)
+    /// <summary>
+    /// What FIDO Metadata Service has to say about an AAGUID, for display. Every field may be absent -- MDS
+    /// coverage varies a lot by authenticator, and even a matched entry rarely populates everything.
+    /// </summary>
+    private sealed record AuthenticatorLookup(
+        string? Description,
+        string? Icon,
+        string? CertificationStatus,
+        string? CertificationUrl,
+        string? LastStatusChange,
+        string? MultiDeviceCredentialSupport,
+        string[]? AttestationTypes,
+        string[]? KeyProtection,
+        string[]? MatcherProtection,
+        string? ProtocolFamily,
+        string? ProtocolVersion)
     {
-        public static readonly AuthenticatorLookup None = new(null, null);
+        public static readonly AuthenticatorLookup None = new(null, null, null, null, null, null, null, null, null, null, null);
     }
+
+    /// <summary>The parts of an <see cref="AuthenticatorLookup"/> worth a hover tooltip -- everything except the
+    /// name and icon, which are already shown inline.</summary>
+    private static object ToTooltipDetails(AuthenticatorLookup a) => new
+    {
+        certificationStatus = a.CertificationStatus,
+        certificationUrl = a.CertificationUrl,
+        lastStatusChange = a.LastStatusChange,
+        multiDeviceCredentialSupport = a.MultiDeviceCredentialSupport,
+        attestationTypes = a.AttestationTypes,
+        keyProtection = a.KeyProtection,
+        matcherProtection = a.MatcherProtection,
+        protocolFamily = a.ProtocolFamily,
+        protocolVersion = a.ProtocolVersion
+    };
 
     private async Task<AuthenticatorLookup> DescribeAuthenticatorAsync(Guid aaguid, CancellationToken cancellationToken)
     {
@@ -298,13 +328,32 @@ public class PlaygroundController : Controller
 
         try
         {
-            var statement = (await _metadataService.GetEntryAsync(aaguid, cancellationToken))?.MetadataStatement;
-            if (statement is null)
+            var entry = await _metadataService.GetEntryAsync(aaguid, cancellationToken);
+            var statement = entry?.MetadataStatement;
+            if (entry is null || statement is null)
                 return AuthenticatorLookup.None;
 
-            // MetadataStatement.Icon is a data: URI [RFC 2397] of a PNG, so it can be dropped straight into an
-            // <img src>. No dark-mode variant is populated on real MDS entries yet, even where the field exists.
-            return new AuthenticatorLookup(statement.Description, statement.Icon);
+            // The same status lookup Fido2.MakeNewCredentialAsync uses to decide whether to reject a
+            // registration, so this shows exactly what the library itself would trust, not a separate view of it.
+            var latestStatus = entry.GetLatestStatusReport();
+
+            return new AuthenticatorLookup(
+                Description: statement.Description,
+                // MetadataStatement.Icon is a data: URI [RFC 2397] of a PNG, so it can be dropped straight into
+                // an <img src>. No dark-mode variant is populated on real MDS entries yet, even where the field
+                // exists.
+                Icon: statement.Icon,
+                CertificationStatus: latestStatus?.Status.ToString(),
+                CertificationUrl: latestStatus?.Url,
+                LastStatusChange: entry.TimeOfLastStatusChange,
+                MultiDeviceCredentialSupport: statement.MultiDeviceCredentialSupport,
+                AttestationTypes: statement.AttestationTypes,
+                KeyProtection: statement.KeyProtection,
+                MatcherProtection: statement.MatcherProtection,
+                ProtocolFamily: statement.ProtocolFamily,
+                ProtocolVersion: statement.Upv is { Length: > 0 } upv
+                    ? string.Join(", ", upv.Select(v => $"{v.Major}.{v.Minor}"))
+                    : null);
         }
         catch
         {
@@ -413,6 +462,7 @@ public class PlaygroundController : Controller
                     nickname = s_nicknames.TryGetValue(id, out var n) ? n : null,
                     authenticator = authenticator.Description,
                     authenticatorIcon = authenticator.Icon,
+                    authenticatorDetails = ToTooltipDetails(authenticator),
                     aaguid = c.AaGuid.ToString(),
                     regDate = c.RegDate,
                     signCount = c.SignCount,

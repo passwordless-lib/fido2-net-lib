@@ -175,6 +175,41 @@
         margin-right: 0.4rem;
         object-fit: contain;
     }
+    .pg-authenticator-hover {
+        position: relative;
+        cursor: help;
+        border-bottom: 1px dotted #b5b5b5;
+    }
+    .pg-tooltip-content {
+        display: none;
+        position: absolute;
+        z-index: 20;
+        top: 100%;
+        left: 0;
+        margin-top: 0.35rem;
+        min-width: 16rem;
+        max-width: 22rem;
+        padding: 0.6rem 0.75rem;
+        background: #1a1a1a;
+        color: #f5f5f5;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        white-space: normal;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    .pg-authenticator-hover:hover .pg-tooltip-content {
+        display: block;
+    }
+    .pg-tooltip-content a {
+        color: #7fd1ff;
+    }
+    .pg-tooltip-row {
+        display: block;
+    }
+    .pg-tooltip-row + .pg-tooltip-row {
+        margin-top: 0.2rem;
+    }
 </style>
 
 <script src="~/js/webauthn.js"></script>
