@@ -27,7 +27,7 @@ namespace Fido2NetLib;
 /// and reusing it lets a re-fetch (once the caller's own cache has expired) receive a 304 Not Modified instead
 /// of re-downloading the full multi-megabyte BLOB when it hasn't actually changed.
 /// </remarks>
-public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory) : IMetadataRepository
+public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClientFactory, Fido2Configuration? config = null) : IMetadataRepository
 {
     private static ReadOnlySpan<byte> ROOT_CERT =>
         "MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G"u8 +
@@ -128,6 +128,16 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
     public async Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
     {
         var (rawBLOB, blobUri) = await GetRawBlobAsync(cancellationToken);
+
+        // Fido2Configuration.MdsRootCertificates lets a consumer override the pinned root(s) -- e.g. if FIDO
+        // Alliance rotates roots again before this library ships an update, or against a self-hosted/enterprise
+        // MDS mirror -- same pattern as AppleWebAuthnRootCertificate/AndroidSafetyNetRootCertificate. Ownership of
+        // configured certs stays with the caller, so they are not disposed here.
+        if (config?.MdsRootCertificates is { Count: > 0 } configuredRoots)
+        {
+            return await DeserializeAndValidateBlobAsync(rawBLOB, configuredRoots, cancellationToken, blobUri);
+        }
+
         using var rootCertR3 = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
         using var rootCertR46 = X509CertificateHelper.CreateFromBase64String(ROOT_CERT_R46);
         return await DeserializeAndValidateBlobAsync(rawBLOB, [rootCertR3, rootCertR46], cancellationToken, blobUri);

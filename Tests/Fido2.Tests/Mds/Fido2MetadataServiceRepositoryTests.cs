@@ -437,4 +437,65 @@ public class Fido2MetadataServiceRepositoryTests
             Assert.Equal("Failed to validate cert chain while parsing BLOB", ex.Message);
         }
     }
+
+    // Serves the BLOB JWT for the named ("Fido2MetadataServiceRepository") client GetBLOBAsync fetches it
+    // through, and the CRL for the unnamed client the revocation check uses -- lets a test exercise the full
+    // GetBLOBAsync() entry point, not just DeserializeAndValidateBlobAsync directly.
+    private sealed class BlobAndCrlHttpClientFactory(string jwt, byte[] crl) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) =>
+            name == nameof(Fido2MetadataServiceRepository)
+                ? new HttpClient(new StaticContentHandler(new StringContent(jwt))) { BaseAddress = new Uri("https://mds3.example.org/") }
+                : new HttpClient(new StaticContentHandler(new ByteArrayContent(crl)));
+
+        private sealed class StaticContentHandler(HttpContent content) : HttpMessageHandler
+        {
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+            }
+        }
+    }
+
+    // Fido2Configuration.MdsRootCertificates lets a consumer override the pinned root(s), the same pattern as
+    // AppleWebAuthnRootCertificate/AndroidSafetyNetRootCertificate -- default to the hardcoded roots, accept
+    // configured ones if set. This exercises the real public entry point (GetBLOBAsync), not the internal
+    // DeserializeAndValidateBlobAsync test seam, to prove the constructor/config wiring itself works.
+    [Fact]
+    public async Task GetBLOBAsync_UsesConfiguredMdsRootCertificates_WhenSet()
+    {
+        var (root, leaf, leafKey) = BuildChain();
+        using (root)
+        using (leaf)
+        using (leafKey)
+        {
+            var jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var factory = new BlobAndCrlHttpClientFactory(jwt, BuildEmptyCrl(root));
+            var config = new Fido2Configuration { MdsRootCertificates = [root] };
+            var repository = new Fido2MetadataServiceRepository(factory, config);
+
+            var blob = await repository.GetBLOBAsync();
+
+            Assert.Equal(1, blob.Number);
+        }
+    }
+
+    [Fact]
+    public async Task GetBLOBAsync_FallsBackToHardcodedRoots_WhenMdsRootCertificatesNotSet()
+    {
+        var (root, leaf, leafKey) = BuildChain();
+        using (root)
+        using (leaf)
+        using (leafKey)
+        {
+            var jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var factory = new BlobAndCrlHttpClientFactory(jwt, BuildEmptyCrl(root));
+            // MdsRootCertificates left unset: a test-signed BLOB must be rejected against the real hardcoded
+            // GlobalSign roots, exactly as if no Fido2Configuration had been supplied at all.
+            var repository = new Fido2MetadataServiceRepository(factory, new Fido2Configuration());
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => repository.GetBLOBAsync());
+            Assert.Equal("Failed to validate cert chain while parsing BLOB", ex.Message);
+        }
+    }
 }
