@@ -229,10 +229,13 @@ public class PlaygroundController : Controller
 
             var keyBytes = bytes.AsSpan(keyStart, offset - keyStart).ToArray();
 
+            var authenticator = await DescribeAuthenticatorAsync(aaguid, cancellationToken);
+
             attested = new
             {
                 aaguid = aaguid.ToString(),
-                aaguidDescription = await DescribeAuthenticatorAsync(aaguid, cancellationToken),
+                aaguidDescription = authenticator.Description,
+                aaguidIcon = authenticator.Icon,
                 credentialId = Base64Url.EncodeToString(credentialId),
                 credentialIdLength,
                 credentialPublicKey = coseKey,
@@ -282,19 +285,30 @@ public class PlaygroundController : Controller
         }
     }
 
-    private async Task<string?> DescribeAuthenticatorAsync(Guid aaguid, CancellationToken cancellationToken)
+    /// <summary>A name and icon for an AAGUID, from FIDO Metadata Service. Either or both may be absent.</summary>
+    private sealed record AuthenticatorLookup(string? Description, string? Icon)
+    {
+        public static readonly AuthenticatorLookup None = new(null, null);
+    }
+
+    private async Task<AuthenticatorLookup> DescribeAuthenticatorAsync(Guid aaguid, CancellationToken cancellationToken)
     {
         if (aaguid == Guid.Empty)
-            return null;
+            return AuthenticatorLookup.None;
 
         try
         {
-            var entry = await _metadataService.GetEntryAsync(aaguid, cancellationToken);
-            return entry?.MetadataStatement?.Description;
+            var statement = (await _metadataService.GetEntryAsync(aaguid, cancellationToken))?.MetadataStatement;
+            if (statement is null)
+                return AuthenticatorLookup.None;
+
+            // MetadataStatement.Icon is a data: URI [RFC 2397] of a PNG, so it can be dropped straight into an
+            // <img src>. No dark-mode variant is populated on real MDS entries yet, even where the field exists.
+            return new AuthenticatorLookup(statement.Description, statement.Icon);
         }
         catch
         {
-            return null;
+            return AuthenticatorLookup.None;
         }
     }
 
@@ -391,20 +405,14 @@ public class PlaygroundController : Controller
             foreach (var c in DemoController.DemoStorage.GetCredentialsByUser(user))
             {
                 var id = Base64Url.EncodeToString(c.Id);
-                string? description = null;
-
-                try
-                {
-                    if (c.AaGuid != Guid.Empty)
-                        description = (await _metadataService.GetEntryAsync(c.AaGuid, cancellationToken))?.MetadataStatement?.Description;
-                }
-                catch { /* metadata is best-effort */ }
+                var authenticator = await DescribeAuthenticatorAsync(c.AaGuid, cancellationToken);
 
                 result.Add(new
                 {
                     id,
                     nickname = s_nicknames.TryGetValue(id, out var n) ? n : null,
-                    authenticator = description,
+                    authenticator = authenticator.Description,
+                    authenticatorIcon = authenticator.Icon,
                     aaguid = c.AaGuid.ToString(),
                     regDate = c.RegDate,
                     signCount = c.SignCount,

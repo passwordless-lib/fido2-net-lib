@@ -98,6 +98,12 @@ async function decodeCeremonyResponse(response) {
     renderResponseSummary(decoded);
 }
 
+// MetadataStatement.Icon/IconDark are data: URIs [RFC 2397], safe to drop straight into an <img src> --
+// base64 and the fixed "data:image/png;..." prefix can't contain a quote to break out of the attribute.
+function authenticatorIconTag(dataUri) {
+    return dataUri ? '<img class="pg-authenticator-icon" src="' + dataUri + '" alt="" />' : '';
+}
+
 function flagTag(name, on, title) {
     return '<span class="tag pg-flag ' + (on ? 'is-success' : 'is-light') + '" title="' + title + '">'
         + name + ': ' + (on ? 'set' : 'clear') + '</span>';
@@ -128,7 +134,7 @@ function renderResponseSummary(decoded) {
 
     const acd = authData.attestedCredentialData;
     if (acd) {
-        html += '<p><strong>AAGUID:</strong> <code>' + acd.aaguid + '</code>';
+        html += '<p>' + authenticatorIconTag(acd.aaguidIcon) + '<strong>AAGUID:</strong> <code>' + acd.aaguid + '</code>';
         if (acd.aaguidDescription) {
             html += ' &mdash; ' + acd.aaguidDescription + ' <span class="tag is-info is-light">FIDO MDS</span>';
         } else {
@@ -201,7 +207,8 @@ async function loadCredentials() {
         html += '<tr>'
             + '<td><input class="input is-small pg-nickname" data-id="' + c.id + '" value="'
                 + (c.nickname || '') + '" placeholder="name this key" /></td>'
-            + '<td>' + (c.authenticator || '<span class="has-text-grey">not in metadata</span>') + '</td>'
+            + '<td>' + authenticatorIconTag(c.authenticatorIcon)
+                + (c.authenticator || '<span class="has-text-grey">not in metadata</span>') + '</td>'
             + '<td>' + new Date(c.regDate).toISOString().slice(0, 16).replace('T', ' ') + '</td>'
             + '<td>' + c.signCount + '</td>'
             + '<td>' + c.attestationFormat + '</td>'
