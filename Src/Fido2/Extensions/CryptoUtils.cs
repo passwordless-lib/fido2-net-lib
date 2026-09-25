@@ -29,6 +29,11 @@ internal static class CryptoUtils
         #pragma warning restore format
     }
 
+    /// <summary>
+    /// The digest a COSE signature algorithm applies to the data it signs.
+    /// </summary>
+    /// <exception cref="Fido2VerificationException">The algorithm is unknown, or is one that signs the message
+    /// directly and so has no digest to name (EdDSA).</exception>
     public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
     {
         return alg switch
@@ -44,15 +49,9 @@ internal static class CryptoUtils
             COSE.Algorithm.RS384 => HashAlgorithmName.SHA384,
             COSE.Algorithm.RS512 => HashAlgorithmName.SHA512,
             COSE.Algorithm.ES256K => HashAlgorithmName.SHA256,
-            (COSE.Algorithm)4 => HashAlgorithmName.SHA1,
-            (COSE.Algorithm)11 => HashAlgorithmName.SHA256,
-            (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
-            (COSE.Algorithm)13 => HashAlgorithmName.SHA512,
-            COSE.Algorithm.EdDSA => HashAlgorithmName.SHA512,
             COSE.Algorithm.ESP256 => HashAlgorithmName.SHA256,
             COSE.Algorithm.ESP384 => HashAlgorithmName.SHA384,
             COSE.Algorithm.ESP512 => HashAlgorithmName.SHA512,
-            COSE.Algorithm.Ed25519 => HashAlgorithmName.SHA512,
             _ => throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCoseAlgorithmValue),
         };
     }
