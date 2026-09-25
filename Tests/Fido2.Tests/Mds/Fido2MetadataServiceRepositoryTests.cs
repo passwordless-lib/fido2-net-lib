@@ -339,6 +339,20 @@ public class Fido2MetadataServiceRepositoryTests
         return builder.Build(root, crlNumber: 1, DateTimeOffset.UtcNow.AddDays(7), HashAlgorithmName.SHA256);
     }
 
+    // Same issuer *name* as the real root (so the RFC 5280 6.3.3(b) name-match check passes), but signed with a
+    // different key the real root never signed anything with. Simulates a CRL response an attacker who does not
+    // hold the real root's private key could produce -- e.g. by intercepting the plain http(s) CRL fetch.
+    private static byte[] BuildForgedCrl(X509Certificate2 root, DateTimeOffset? nextUpdate = null)
+    {
+        using var forgedKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var forgedRequest = new CertificateRequest(root.SubjectName, forgedKey, HashAlgorithmName.SHA256);
+        forgedRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        using var forgedRoot = forgedRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+
+        var builder = new CertificateRevocationListBuilder();
+        return builder.Build(forgedRoot, crlNumber: 1, nextUpdate ?? DateTimeOffset.UtcNow.AddDays(7), HashAlgorithmName.SHA256);
+    }
+
     // Serves the given CRL bytes for any request, so a chain that pins to the provided root and whose leaf
     // names an HTTP(S) CRL distribution point can be revocation-checked without a real network fetch.
     private sealed class CrlServingHttpClientFactory(byte[] crl) : IHttpClientFactory
@@ -413,6 +427,56 @@ public class Fido2MetadataServiceRepositoryTests
             var blob = await repository.DeserializeAndValidateBlobAsync(jwt, [decoyRoot, root], CancellationToken.None);
 
             Assert.Equal(1, blob.Number);
+        }
+    }
+
+    // MDS 3.1.1 §3.2's revocation check is worthless if the CRL response itself is never authenticated: a CRL
+    // distribution point is a plain http(s) URL, so anyone who can intercept or spoof that fetch could serve a
+    // forged "nothing is revoked" response. This proves a CRL whose signature doesn't verify against the real
+    // issuing certificate is rejected outright, not silently trusted.
+    [Fact]
+    public async Task DeserializeAndValidateBlob_RejectsForgedCrlSignature()
+    {
+        var (root, leaf, leafKey) = BuildChain();
+        using (root)
+        using (leaf)
+        using (leafKey)
+        {
+            string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var repository = new Fido2MetadataServiceRepository(new CrlServingHttpClientFactory(BuildForgedCrl(root)));
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+                () => repository.DeserializeAndValidateBlobAsync(jwt, [root], CancellationToken.None));
+            Assert.Contains("could not be used", ex.Message);
+        }
+    }
+
+    // A CRL past its nextUpdate time is stale: an attacker could replay an old, legitimately-signed CRL from
+    // before a certificate was revoked to hide that revocation. This proves a stale CRL is rejected the same
+    // way a forged one is, not silently trusted just because its signature happens to verify.
+    [Fact]
+    public async Task DeserializeAndValidateBlob_RejectsStaleCrl()
+    {
+        var (root, leaf, leafKey) = BuildChain();
+        using (root)
+        using (leaf)
+        using (leafKey)
+        {
+            string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var builder = new CertificateRevocationListBuilder();
+            // thisUpdate must precede nextUpdate, so both sit in the past -- stale relative to the
+            // verification time (now), not relative to each other.
+            var staleCrl = builder.Build(
+                root,
+                crlNumber: 1,
+                nextUpdate: DateTimeOffset.UtcNow.AddDays(-1),
+                hashAlgorithm: HashAlgorithmName.SHA256,
+                thisUpdate: DateTimeOffset.UtcNow.AddDays(-2));
+            var repository = new Fido2MetadataServiceRepository(new CrlServingHttpClientFactory(staleCrl));
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+                () => repository.DeserializeAndValidateBlobAsync(jwt, [root], CancellationToken.None));
+            Assert.Contains("could not be used", ex.Message);
         }
     }
 
