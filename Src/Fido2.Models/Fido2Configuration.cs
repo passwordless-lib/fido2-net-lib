@@ -260,6 +260,18 @@ public class Fido2Configuration
     public X509Certificate2 AndroidSafetyNetRootCertificate { get; set; }
 
     /// <summary>
+    /// The trust anchors the FIDO Metadata Service BLOB signing certificate chain must terminate at. Defaults to
+    /// GlobalSign Root CA - R3 and GlobalSign Root R46 when left <see langword="null"/> or empty (both are
+    /// currently valid termini: the BLOB's chain includes a copy of R46 cross-signed by R3, and platforms differ
+    /// on which one their own trust store already carries directly -- see
+    /// <see href="https://github.com/passwordless-lib/fido2-net-lib/issues/517"/>). Override only to pin different
+    /// root(s), for example if FIDO Alliance rotates roots again before this library ships an update, or against a
+    /// self-hosted/enterprise MDS mirror with its own signing chain.
+    /// </summary>
+    [JsonIgnore]
+    public IReadOnlyList<X509Certificate2> MdsRootCertificates { get; set; }
+
+    /// <summary>
     /// List of metadata statuses for an authenticator that should cause attestations to be rejected.
     /// </summary>
     public AuthenticatorStatus[] UndesiredAuthenticatorMetadataStatuses { get; set; } =
