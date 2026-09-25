@@ -611,7 +611,14 @@ public sealed class CertInfo
     /// The hash algorithm that <see cref="Alg"/>, a TPM_ALG_ID, names; <see cref="AttestedName"/> is a digest computed
     /// with it. The constructor has already rejected any value that is not one of the four below.
     /// </summary>
-    internal HashAlgorithmName NameHashAlgorithm => (TpmAlg)Alg switch
+    internal HashAlgorithmName NameHashAlgorithm => ToHashAlgorithmName((TpmAlg)Alg);
+
+    /// <summary>
+    /// Maps a TPM_ALG_ID to the hash algorithm it names. A free-standing method, rather than inlined into
+    /// <see cref="NameHashAlgorithm"/>, so the default case -- unreachable through the constructor, which already
+    /// restricts <see cref="Alg"/> to one of the four below -- can still be exercised directly by a test.
+    /// </summary>
+    internal static HashAlgorithmName ToHashAlgorithmName(TpmAlg alg) => alg switch
     {
         TpmAlg.TPM_ALG_SHA1 => HashAlgorithmName.SHA1,
         TpmAlg.TPM_ALG_SHA256 => HashAlgorithmName.SHA256,
