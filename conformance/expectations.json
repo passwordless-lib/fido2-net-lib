@@ -1,0 +1,1878 @@
+{
+  "tool": "fido-conformance-tools-electron/1.9.2",
+  "generatedFrom": [
+    "demo.jsonl",
+    "run-windows.jsonl"
+  ],
+  "entries": [
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 P-1",
+      "description": "Valid packed registration; a second options request must list it in excludeCredentials",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-1",
+      "description": "\"id\" missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "AttestationResponse Id is missing"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-2",
+      "description": "\"id\" not a DOMString",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The JSON value could not be converted to System.String. Path: $.id"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-3",
+      "description": "\"id\" not base64url",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "AttestationResponse Id is not valid base64url, or does not match RawId"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-4",
+      "description": "\"type\" missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "AttestationResponse type must be 'public-key'"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-5",
+      "description": "\"type\" not a DOMString",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The JSON value could not be converted to System.Nullable`1[Fido2NetLib.Objects.PublicKeyCredentialType]. Path: $.type"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-6",
+      "description": "\"type\" not \"public-key\"",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The JSON value could not be converted to System.Nullable`1[Fido2NetLib.Objects.PublicKeyCredentialType]. Path: $.type"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-7",
+      "description": "\"response\" missing",
+      "request": {
+        "path": "/attestation/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "Expected rawResponse, got null"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-8",
+      "description": "\"response\" not an Object",
+      "request": {
+        "path": "/attestation/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The JSON value could not be converted to Fido2NetLib.AuthenticatorAttestationRawResponse+AttestationResponse. Path: $.response"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-9",
+      "description": "response.clientDataJSON missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: JSON deserialization for type 'Fido2NetLib.AuthenticatorAttestationRawResponse+AttestationResponse' was missing required properties including: 'clientDataJSON'."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-10",
+      "description": "response.clientDataJSON not a DOMString",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.",
+      "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-11",
+      "description": "response.clientDataJSON empty",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "utf8EncodedJson may not be empty"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-12",
+      "description": "response.attestationObject missing",
+      "request": {
+        "path": "/attestation/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: JSON deserialization for type 'Fido2NetLib.AuthenticatorAttestationRawResponse+AttestationResponse' was missing required properties including: 'attestationObject'."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-13",
+      "description": "response.attestationObject not a DOMString",
+      "request": {
+        "path": "/attestation/result"
+      },
+      "anyOf": [
+        {
+          "outcome": "rejected",
+          "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+        },
+        {
+          "outcome": "verified",
+          "code": "InvalidAttestationObject",
+          "message": "Invalid AttestationObject CBOR data"
+        }
+      ],
+      "note": "The tool draws a random wrong-typed JSON value each run (an object, array, boolean or number). Base64UrlConverter only throws if the token isn't a string, or if its literal text isn't valid base64url; a number whose digits are all in the base64url alphabet at a valid block length (e.g. \"1469\") decodes successfully as garbage bytes instead of throwing, and whatever check runs on the decoded value rejects it there instead. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-14",
+      "description": "response.attestationObject empty",
+      "request": {
+        "path": "/attestation/result"
+      },
+      "outcome": "verified",
+      "code": "MissingAttestationObject",
+      "message": "Missing AttestationObject"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-1 F-15",
+      "description": "authData.flags.uv clear while userVerification is required",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "UserVerificationRequirementNotMet",
+      "message": "User Verified flag not set in authenticator data and user verification was required"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-1",
+      "description": "clientDataJSON.type missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "AttestationResponse type must be 'webauthn.create'"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-2",
+      "description": "clientDataJSON.type not a DOMString",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-3",
+      "description": "clientDataJSON.type empty",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "AttestationResponse type must be 'webauthn.create'"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-4",
+      "description": "clientDataJSON.type not \"webauthn.create\"",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "AttestationResponse type must be 'webauthn.create'"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-5",
+      "description": "clientDataJSON.type set to \"webauthn.get\"",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationResponse",
+      "message": "AttestationResponse type must be 'webauthn.create'"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-6",
+      "description": "clientDataJSON.challenge missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MissingAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge may not be null"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-7",
+      "description": "clientDataJSON.challenge not a DOMString",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson",
+      "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-8",
+      "description": "clientDataJSON.challenge empty",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge does not match original challenge"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-9",
+      "description": "clientDataJSON.challenge not base64url",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-10",
+      "description": "clientDataJSON.challenge differs from the request challenge",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge does not match original challenge"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-11",
+      "description": "clientDataJSON.origin missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MissingAuthenticatorResponseOrigin",
+      "message": "Authenticator response origin may not be null or empty"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-12",
+      "description": "clientDataJSON.origin not a DOMString",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-13",
+      "description": "clientDataJSON.origin empty",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MissingAuthenticatorResponseOrigin",
+      "message": "Authenticator response origin may not be null or empty"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-14",
+      "description": "clientDataJSON.origin is not the RP origin",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponseOrigin",
+      "message": "Fully qualified origin "
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-15",
+      "description": "clientDataJSON.tokenBinding not an Object",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-16",
+      "description": "clientDataJSON.tokenBinding.status missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "Malformed tokenbinding status field"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-2 F-17",
+      "description": "clientDataJSON.tokenBinding.status not present/supported/not-supported",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "Malformed tokenbinding status field"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 P-1",
+      "description": "Packed attestation with the ED flag set and extension data present is accepted",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-1",
+      "description": "attestationObject is not a CBOR map",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "<unparseable>"
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestationObject",
+      "message": "Invalid AttestationObject CBOR data"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-2",
+      "description": "attestationObject.fmt missing",
+      "request": {
+        "path": "/attestation/result",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAttestationObject",
+      "message": "Malformed AttestationObject"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-3",
+      "description": "attestationObject.fmt not a String",
+      "request": {
+        "path": "/attestation/result",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAttestationObject",
+      "message": "Malformed AttestationObject"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-4",
+      "description": "attestationObject.attStmt missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed"
+      },
+      "outcome": "verified",
+      "code": "MalformedAttestationObject",
+      "message": "Malformed AttestationObject"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-5",
+      "description": "attestationObject.attStmt not a MAP",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed"
+      },
+      "outcome": "verified",
+      "code": "MalformedAttestationObject",
+      "message": "Malformed AttestationObject"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-6",
+      "description": "attestationObject.authData missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAttestationObject",
+      "message": "Malformed AttestationObject"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-7",
+      "description": "attestationObject.authData not a BYTE SEQUENCE",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "MalformedAttestationObject",
+      "message": "Malformed AttestationObject"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-8",
+      "description": "attestationObject.authData empty",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorData",
+      "message": "Authenticator data is less than the minimum structure length of 37"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-9",
+      "description": "AT flag clear but attested credential data present",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorData",
+      "message": "Leftover bytes decoding AuthenticatorData"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-10",
+      "description": "AT flag clear and no attested credential data",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "AttestedCredentialDataFlagNotSet",
+      "message": "Attestation flag not set on attestation data"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-11",
+      "description": "AT flag set but no attested credential data",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestedCredentialData",
+      "message": "Not enough bytes to be a valid AttestedCredentialData"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-12",
+      "description": "attested credential data has leftover bytes",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorData",
+      "message": "Leftover bytes decoding AuthenticatorData"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-13",
+      "description": "packed attStmt is an empty map",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed"
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Attestation format packed must have attestation statement"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-14",
+      "description": "packed attStmt.alg missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed"
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid packed attestation algorithm"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-15",
+      "description": "packed attStmt.alg not a Number",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed"
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid packed attestation algorithm"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-16",
+      "description": "packed attStmt.alg does not match the metadata statement",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -42
+      },
+      "outcome": "verified",
+      "code": "InvalidCredentialPublicKey",
+      "message": "Algorithm -42 cannot be used with an EC2 key on curve P256",
+      "note": "Rejected by the key/algorithm consistency check (-42 is not valid for a P-256 key); the comparison against the metadata statement's algorithm never runs."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-17",
+      "description": "packed attStmt.sig missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid packed attestation signature"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-18",
+      "description": "packed attStmt.sig not a BYTE STRING",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid packed attestation signature"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-3 F-19",
+      "description": "packed attStmt.sig empty",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid packed attestation signature"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-2",
+      "description": "PS256",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -37
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-3",
+      "description": "PS384",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -38
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-4",
+      "description": "PS512",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -39
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-5",
+      "description": "RS256",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -257
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-6",
+      "description": "RS384",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -258
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-7",
+      "description": "RS512",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -259
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-8",
+      "description": "RS1 (the tool actually sends an ES256 credential with ES256 self-attestation)",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -65535
+      },
+      "outcome": "ok",
+      "message": "",
+      "note": "Conformance tool quirk: this test sends an ES256 credential with ES256 self-attestation, so RS1 is not exercised."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-9",
+      "description": "ES256",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-10",
+      "description": "ES384",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -35
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-11",
+      "description": "ES512",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -36
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-4 P-12",
+      "description": "Ed25519",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -8
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 P-1",
+      "description": "Valid FULL packed attestation",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 P-2",
+      "description": "Chain links to the root certificate in the metadata",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 P-3",
+      "description": "Batch certificate that is itself the metadata trust anchor",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 P-4",
+      "description": "Root certificate with critical Basic Constraints",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 P-5",
+      "description": "Metadata with 64-bit vendorPrototypeConfigCommands",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-1",
+      "description": "fmt is an unknown attestation format",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "BananaPancake",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "UnknownAttestationType",
+      "message": "Unknown attestation type. Was '"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-2",
+      "description": "attStmt.sig cannot be verified",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidSignature",
+      "message": "Signature does not match"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-3",
+      "description": "attStmt.x5c missing",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Failed to validate signature",
+      "note": "Without x5c the statement is treated as self-attestation and its signature fails; nothing checks that the metadata requires a certificate."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-4",
+      "description": "attStmt.x5c not an ARRAY",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Malformed x5c in packed attestation"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-5",
+      "description": "attStmt.x5c is an empty ARRAY",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Malformed x5c in packed attestation"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-6",
+      "description": "Leaf certificate expired",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Packed signing certificate expired or not yet valid"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-7",
+      "description": "Leaf certificate not yet valid",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Packed signing certificate expired or not yet valid"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-8",
+      "description": "Leaf certificate algorithm differs from the metadata statement",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidCredentialPublicKey",
+      "message": "Algorithm ES256 cannot be used with an EC2 key on curve P256K",
+      "note": "Rejected by the key/curve consistency check (ES256 against a P-256K key); the comparison against the metadata statement's algorithm never runs."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-9",
+      "description": "Certificate chain cannot be verified",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Packed signing certificate expired or not yet valid",
+      "note": "The tool's intermediate expired in 2018, so the x5c expiry loop in Packed.cs rejects it before any chain is built. The message says 'signing certificate' but the loop covers every x5c certificate."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-10",
+      "description": "x5c contains the full chain including the root",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidCertificateChain",
+      "message": "Invalid certificate chain"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-11",
+      "description": "x5c contains the full chain, wrongly ordered",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid full packed signature",
+      "note": "The wrong order puts the intermediate first, so the signature check against x5c[0] fails; ordering itself is not what is checked."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-12",
+      "description": "Intermediate certificate expired",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Packed signing certificate expired or not yet valid",
+      "note": "Rejected by the x5c expiry loop; the message names the signing certificate although the intermediate is the expired one."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-13",
+      "description": "Signature not verifiable with the leaf public key",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid full packed signature"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-5 F-14",
+      "description": "Signature made with the credential private key instead of the batch key",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid full packed signature"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-6 P-1",
+      "description": "Valid SELF packed attestation",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-6 F-1",
+      "description": "attStmt.sig invalid",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidSignature",
+      "message": "Signature does not match"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-6 F-2",
+      "description": "Full attestation from an authenticator whose metadata only allows self attestation",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Attestation statement carries a full attestation, but the authenticator's metadata does not declare basic full or privacy CA attestation"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-6 F-3",
+      "description": "fmt is an unknown attestation format",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "BananaPancake",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "UnknownAttestationType",
+      "message": "Unknown attestation type. Was '"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-7 P-1",
+      "description": "Valid none attestation",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "none"
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-7 P-2",
+      "description": "Valid SELF packed attestation when none was requested",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-7 F-1",
+      "description": "FULL packed attestation statement carried under fmt \"none\"",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "none",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Attestation format none should have no attestation statement"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-8 P-1",
+      "description": "Valid fido-u2f attestation",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "fido-u2f"
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-8 F-1",
+      "description": "authData.AAGUID is not all zeros",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "fido-u2f"
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Aaguid was not empty parsing fido-u2f attestation statement"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-8 F-2",
+      "description": "attStmt.sig invalid",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "fido-u2f"
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Failed to decode fido-u2f attestation signature from ASN.1 encoded form"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 P-1",
+      "description": "Valid TPM attestation, SHA-256",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "tpm",
+        "alg": -257
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 P-2",
+      "description": "Valid TPM attestation, SHA-1",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "tpm",
+        "alg": -65535
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 P-4",
+      "description": "Valid TPM attestation, ES256 (P-3 is disabled in the tool)",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "tpm",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": "",
+      "note": "Conformance tool bug, behind its \"EXPERIMENTAL: TPM ECDSA SECP256R1 SHA256\" checkbox: fixed as of tool 1.9.2 (2026-09-23). The ES256 leaf's Authority Key Identifier used to be a double-wrapped OCTET STRING whose key id was not the batch certificate's SKI, which OpenSSL refused as an issuer -- confirmed correctly encoded and matching the batch SKI across two independent runs. Filed as fido-alliance/conformance-test-tools-resources#862. If this starts failing again, the tool likely regressed."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 F-1",
+      "description": "Certificates in the wrong order",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "tpm",
+        "alg": -257
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Bad signature in TPM with aikCert",
+      "note": "The wrong order puts the AIK certificate second, so the signature check against x5c[0] fails; ordering itself is not what is checked."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 F-2",
+      "description": "certInfo.extraData is not the hash of attToBeSigned",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "tpm",
+        "alg": -257
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Hash value mismatch extraData and attToBeSigned"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 F-3",
+      "description": "certInfo.magic is not TPM_GENERATED_VALUE",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "tpm",
+        "alg": -257
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Bad magic number "
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-9 F-4",
+      "description": "pubArea.unique is not the new public key",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "tpm",
+        "alg": -257
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Public key mismatch between pubArea and credentialPublicKey"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-A P-1",
+      "description": "Valid android-key attestation",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "android-key",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-A F-1",
+      "description": "Leaf certificate carries the wrong clientDataHash",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "android-key",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Mismatch between attestationChallenge and hashedClientDataJson verifying android key attestation certificate extension"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-A F-2",
+      "description": "Leaf certificate carries an invalid public key",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "android-key",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid android-key attestation public key"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAttestationResponse-Resp-A F-3",
+      "description": "Certificates in the wrong order",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "android-key",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "InvalidAttestation",
+      "message": "Invalid android-key attestation signature",
+      "note": "The wrong order puts the attestation certificate second, so the signature check against x5c[0] fails; ordering itself is not what is checked."
+    },
+    {
+      "test": "Server-ServerPublicKeyCredentialGetOptionsResponse-Req-1 P-1",
+      "description": "Registers a credential, then checks the assertion options",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 setup",
+      "description": "Registers the credential this suite asserts against",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 P-1",
+      "description": "Valid assertion",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-1",
+      "description": "\"id\" missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAssertionResponse",
+      "message": "AssertionResponse Id is missing"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-2",
+      "description": "\"id\" not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The JSON value could not be converted to System.String. Path: $.id"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-3",
+      "description": "\"id\" not base64url",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAssertionResponse",
+      "message": "AssertionResponse Id is not valid base64url, or does not match RawId"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-4",
+      "description": "\"type\" missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAssertionResponse",
+      "message": "AssertionResponse type must be 'public-key'"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-5",
+      "description": "\"type\" not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "anyOf": [
+        {
+          "outcome": "rejected",
+          "message": "Malformed request: The JSON value could not be converted to System.Nullable`1[Fido2NetLib.Objects.PublicKeyCredentialType]. Path: $.type"
+        },
+        {
+          "outcome": "verified",
+          "code": "InvalidAssertionResponse",
+          "message": "AssertionResponse type must be 'public-key'"
+        }
+      ],
+      "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-6",
+      "description": "\"type\" not \"public-key\"",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The JSON value could not be converted to System.Nullable`1[Fido2NetLib.Objects.PublicKeyCredentialType]. Path: $.type"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-7",
+      "description": "\"response\" missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAssertionResponse",
+      "message": "Expected rawResponse, got null"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-8",
+      "description": "\"response\" not an Object",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The JSON value could not be converted to Fido2NetLib.AuthenticatorAssertionRawResponse+AssertionResponse. Path: $.response"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-9",
+      "description": "response.clientDataJSON missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: JSON deserialization for type 'Fido2NetLib.AuthenticatorAssertionRawResponse+AssertionResponse' was missing required properties including: 'clientDataJSON'."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-10",
+      "description": "response.clientDataJSON not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "anyOf": [
+        {
+          "outcome": "verified",
+          "code": "MalformedAuthenticatorResponse",
+          "message": "Malformed clientDataJson"
+        },
+        {
+          "outcome": "rejected",
+          "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+        }
+      ],
+      "note": "The tool draws a random wrong-typed JSON value each run (an object, array, boolean or number). Base64UrlConverter only throws if the token isn't a string, or if its literal text isn't valid base64url; a number whose digits are all in the base64url alphabet at a valid block length (e.g. \"1469\") decodes successfully as garbage bytes instead of throwing, and whatever check runs on the decoded value rejects it there instead. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-11",
+      "description": "response.clientDataJSON empty",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "utf8EncodedJson may not be empty"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-12",
+      "description": "response.authenticatorData missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: JSON deserialization for type 'Fido2NetLib.AuthenticatorAssertionRawResponse+AssertionResponse' was missing required properties including: 'authenticatorData'."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-13",
+      "description": "response.authenticatorData not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-14",
+      "description": "response.authenticatorData not base64url",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-15",
+      "description": "response.authenticatorData empty",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorData",
+      "message": "Authenticator data is less than the minimum structure length of 37"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-16",
+      "description": "response.signature missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: JSON deserialization for type 'Fido2NetLib.AuthenticatorAssertionRawResponse+AssertionResponse' was missing required properties including: 'signature'."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-17",
+      "description": "response.signature not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters.",
+      "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-18",
+      "description": "response.signature not base64url",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "rejected",
+      "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-19",
+      "description": "response.signature empty",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidSignature",
+      "message": "Signature does not match"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-20",
+      "description": "response.signature cannot be verified",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidSignature",
+      "message": "Signature does not match"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-1 F-21",
+      "description": "response.userHandle not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "anyOf": [
+        {
+          "outcome": "verified",
+          "code": "InvalidAssertionResponse",
+          "message": "User is not owner of the public key identified by the credential id"
+        },
+        {
+          "outcome": "rejected",
+          "message": "Malformed request: The input is not a valid Base-64 string as it contains a non-base 64 character, more than two padding characters, or an illegal character among the padding characters."
+        }
+      ],
+      "note": "The tool draws a random wrong-typed JSON value each run (an object, array, boolean or number). Base64UrlConverter only throws if the token isn't a string, or if its literal text isn't valid base64url; a number whose digits are all in the base64url alphabet at a valid block length (e.g. \"1469\") decodes successfully as garbage bytes instead of throwing, and whatever check runs on the decoded value rejects it there instead. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 setup",
+      "description": "Registers the credential this suite asserts against",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-1",
+      "description": "clientDataJSON.type missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "Type must be 'webauthn.create' or 'webauthn.get'. Was '"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-2",
+      "description": "clientDataJSON.type not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-3",
+      "description": "clientDataJSON.type empty",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "Type must be 'webauthn.create' or 'webauthn.get'. Was '"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-4",
+      "description": "clientDataJSON.type not \"webauthn.get\"",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "Type must be 'webauthn.create' or 'webauthn.get'. Was '"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-5",
+      "description": "clientDataJSON.type set to \"webauthn.create\"",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAssertionResponse",
+      "message": "AssertionResponse type must be 'webauthn.get'"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-6",
+      "description": "clientDataJSON.challenge missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "MissingAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge may not be null"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-7",
+      "description": "clientDataJSON.challenge not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge does not match original challenge",
+      "note": "The tool draws a random wrong-typed value each run (an object, array, boolean or number). Byte-string fields refuse every non-string at deserialization since Base64UrlConverter checks the token type; an enum field accepts an integer, so a number reaches the library and is rejected there. Either reason is a correct rejection of the malformed field."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-8",
+      "description": "clientDataJSON.challenge empty",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge does not match original challenge"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-9",
+      "description": "clientDataJSON.challenge not base64url",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-10",
+      "description": "clientDataJSON.challenge differs from the request challenge",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponseChallenge",
+      "message": "Authenticator response challenge does not match original challenge"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-11",
+      "description": "clientDataJSON.origin missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "MissingAuthenticatorResponseOrigin",
+      "message": "Authenticator response origin may not be null or empty"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-12",
+      "description": "clientDataJSON.origin not a DOMString",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-13",
+      "description": "clientDataJSON.origin empty",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "MissingAuthenticatorResponseOrigin",
+      "message": "Authenticator response origin may not be null or empty"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-14",
+      "description": "clientDataJSON.origin is not the RP origin",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponseOrigin",
+      "message": "Fully qualified origin "
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-15",
+      "description": "clientDataJSON.tokenBinding not an Object",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "MalformedAuthenticatorResponse",
+      "message": "Malformed clientDataJson"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-16",
+      "description": "clientDataJSON.tokenBinding.status missing",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "Malformed tokenbinding status field"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-2 F-17",
+      "description": "clientDataJSON.tokenBinding.status not present/supported/not-supported",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorResponse",
+      "message": "Malformed tokenbinding status field"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 setup",
+      "description": "Registers the credential this suite asserts against",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-1 (1/2)",
+      "description": "Registers and asserts with an authenticator that does not support a counter (always 0)",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-1 (2/2)",
+      "description": "Registers and asserts with an authenticator that does not support a counter (always 0)",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-2",
+      "description": "UV set, userVerification required",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-3",
+      "description": "UV clear, userVerification preferred",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-4",
+      "description": "UV set, userVerification preferred",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-5",
+      "description": "UV clear, userVerification discouraged",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-6",
+      "description": "UV set, userVerification discouraged",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 P-7",
+      "description": "ED flag set with extension data present",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "ok"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 F-1",
+      "description": "authenticatorData has leftover bytes",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidAuthenticatorData",
+      "message": "Leftover bytes decoding AuthenticatorData"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 F-2",
+      "description": "authenticatorData.rpIdHash invalid",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidRpidHash",
+      "message": "RPID hash does not match"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 F-3",
+      "description": "clientDataHash invalid",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidSignature",
+      "message": "Signature does not match",
+      "note": "An invalid clientDataHash is only detectable through the signature."
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 F-4 (1/2)",
+      "description": "Registers, then asserts with a counter that did not increase",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 F-4 (2/2)",
+      "description": "Registers, then asserts with a counter that did not increase",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "InvalidSignCount",
+      "message": "SignCount must be greater than the current SignatureCounter"
+    },
+    {
+      "test": "Server-ServerAuthenticatorAssertionResponse-Resp-3 F-5",
+      "description": "Only UP set while userVerification is required",
+      "request": {
+        "path": "/assertion/result"
+      },
+      "outcome": "verified",
+      "code": "UserVerificationRequirementNotMet",
+      "message": "User Verified flag not set in authenticator data and user verification was required"
+    },
+    {
+      "test": "Server-MDS3 P-1",
+      "description": "Authenticator from the valid MDS BLOB is accepted",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "ok",
+      "message": ""
+    },
+    {
+      "test": "Server-MDS3 F-1",
+      "description": "Authenticator whose MDS status is a compromise/bypass status",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "UndesiredMetadataStatus",
+      "message": "Authenticator found with undesirable status. Was "
+    },
+    {
+      "test": "Server-MDS3 F-2",
+      "description": "Authenticator from the BLOB whose signature cannot be verified",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "AaGuidNotFound",
+      "message": "AAGUID not found in MDS test metadata",
+      "note": "The BLOB was refused when the metadata loaded, so the authenticator is simply unknown here. The refusal reason ('rawBLOBJwt is not valid') is in the demo's startup output via ConformanceMetadataRepository.RejectedBlobs."
+    },
+    {
+      "test": "Server-MDS3 F-3",
+      "description": "Authenticator from the BLOB whose certificate chain cannot be verified",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "AaGuidNotFound",
+      "message": "AAGUID not found in MDS test metadata",
+      "note": "Refused at metadata load ('Failed to validate cert chain while parsing BLOB'); see the demo's startup output."
+    },
+    {
+      "test": "Server-MDS3 F-4",
+      "description": "Authenticator from the BLOB whose intermediate certificate is revoked",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "AaGuidNotFound",
+      "message": "AAGUID not found in MDS test metadata",
+      "note": "Conformance tool bug: this BLOB's x5c is [good signer, revoked *leaf* signer] with the CA-1 intermediate absent, and the root CRL does not revoke CA-1. It is refused for an unbuildable chain, not for a revoked intermediate, and cannot be refused for the stated reason."
+    },
+    {
+      "test": "Server-MDS3 F-5",
+      "description": "Authenticator from the BLOB whose leaf certificate is revoked",
+      "request": {
+        "path": "/attestation/result",
+        "fmt": "packed",
+        "alg": -7
+      },
+      "outcome": "verified",
+      "code": "AaGuidNotFound",
+      "message": "AAGUID not found in MDS test metadata",
+      "note": "Refused at metadata load ('Cert ... Signer 4 ... found in CRL .../MDSCA-1.crl'); see the demo's startup output."
+    }
+  ]
+}

@@ -1,0 +1,972 @@
+{
+  "tool": "fido-conformance-tools-electron/1.9.1",
+  "notes": [
+    "Suites and tests in the order the tool runs them; 'results' is how many /attestation/result or /assertion/result requests the test issues.",
+    "'group' is the checkbox under SELECT TESTS TO RUN that covers the suite; suites can also be picked individually under it. 'option' is the checkbox under 'Server support for OPTIONAL algorithms and attestations' that must be ticked for the suite or test to run.",
+    "'setup' entries are registrations the tool performs before a suite's own tests.",
+    "Descriptions are paraphrases; nothing here is copied from the tool, whose contents cannot be redistributed."
+  ],
+  "suites": [
+    {
+      "id": "Server-ServerPublicKeyCredentialCreationOptions-Req-1",
+      "group": "MakeCredential Request",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 0,
+          "description": "Creation options carry status, errorMessage, user, rp, challenge, pubKeyCredParams, timeout and the example extension"
+        },
+        {
+          "id": "P-2",
+          "results": 0,
+          "description": "attestation \"none\" is echoed back"
+        },
+        {
+          "id": "P-3",
+          "results": 0,
+          "description": "Two option sets carry different challenges"
+        },
+        {
+          "id": "P-4",
+          "results": 0,
+          "description": "authenticatorSelection.userVerification \"required\" is echoed back"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-1",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid packed registration; a second options request must list it in excludeCredentials"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "\"id\" missing"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "\"id\" not a DOMString"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "\"id\" not base64url"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "\"type\" missing"
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "\"type\" not a DOMString"
+        },
+        {
+          "id": "F-6",
+          "results": 1,
+          "description": "\"type\" not \"public-key\""
+        },
+        {
+          "id": "F-7",
+          "results": 1,
+          "description": "\"response\" missing"
+        },
+        {
+          "id": "F-8",
+          "results": 1,
+          "description": "\"response\" not an Object"
+        },
+        {
+          "id": "F-9",
+          "results": 1,
+          "description": "response.clientDataJSON missing"
+        },
+        {
+          "id": "F-10",
+          "results": 1,
+          "description": "response.clientDataJSON not a DOMString"
+        },
+        {
+          "id": "F-11",
+          "results": 1,
+          "description": "response.clientDataJSON empty"
+        },
+        {
+          "id": "F-12",
+          "results": 1,
+          "description": "response.attestationObject missing"
+        },
+        {
+          "id": "F-13",
+          "results": 1,
+          "description": "response.attestationObject not a DOMString"
+        },
+        {
+          "id": "F-14",
+          "results": 1,
+          "description": "response.attestationObject empty"
+        },
+        {
+          "id": "F-15",
+          "results": 1,
+          "description": "authData.flags.uv clear while userVerification is required"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-2",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "clientDataJSON.type missing"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "clientDataJSON.type not a DOMString"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "clientDataJSON.type empty"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "clientDataJSON.type not \"webauthn.create\""
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "clientDataJSON.type set to \"webauthn.get\""
+        },
+        {
+          "id": "F-6",
+          "results": 1,
+          "description": "clientDataJSON.challenge missing"
+        },
+        {
+          "id": "F-7",
+          "results": 1,
+          "description": "clientDataJSON.challenge not a DOMString"
+        },
+        {
+          "id": "F-8",
+          "results": 1,
+          "description": "clientDataJSON.challenge empty"
+        },
+        {
+          "id": "F-9",
+          "results": 1,
+          "description": "clientDataJSON.challenge not base64url"
+        },
+        {
+          "id": "F-10",
+          "results": 1,
+          "description": "clientDataJSON.challenge differs from the request challenge"
+        },
+        {
+          "id": "F-11",
+          "results": 1,
+          "description": "clientDataJSON.origin missing"
+        },
+        {
+          "id": "F-12",
+          "results": 1,
+          "description": "clientDataJSON.origin not a DOMString"
+        },
+        {
+          "id": "F-13",
+          "results": 1,
+          "description": "clientDataJSON.origin empty"
+        },
+        {
+          "id": "F-14",
+          "results": 1,
+          "description": "clientDataJSON.origin is not the RP origin"
+        },
+        {
+          "id": "F-15",
+          "results": 1,
+          "description": "clientDataJSON.tokenBinding not an Object"
+        },
+        {
+          "id": "F-16",
+          "results": 1,
+          "description": "clientDataJSON.tokenBinding.status missing"
+        },
+        {
+          "id": "F-17",
+          "results": 1,
+          "description": "clientDataJSON.tokenBinding.status not present/supported/not-supported"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-3",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Packed attestation with the ED flag set and extension data present is accepted"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "attestationObject is not a CBOR map"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "attestationObject.fmt missing"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "attestationObject.fmt not a String"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "attestationObject.attStmt missing"
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "attestationObject.attStmt not a MAP"
+        },
+        {
+          "id": "F-6",
+          "results": 1,
+          "description": "attestationObject.authData missing"
+        },
+        {
+          "id": "F-7",
+          "results": 1,
+          "description": "attestationObject.authData not a BYTE SEQUENCE"
+        },
+        {
+          "id": "F-8",
+          "results": 1,
+          "description": "attestationObject.authData empty"
+        },
+        {
+          "id": "F-9",
+          "results": 1,
+          "description": "AT flag clear but attested credential data present"
+        },
+        {
+          "id": "F-10",
+          "results": 1,
+          "description": "AT flag clear and no attested credential data"
+        },
+        {
+          "id": "F-11",
+          "results": 1,
+          "description": "AT flag set but no attested credential data"
+        },
+        {
+          "id": "F-12",
+          "results": 1,
+          "description": "attested credential data has leftover bytes"
+        },
+        {
+          "id": "F-13",
+          "results": 1,
+          "description": "packed attStmt is an empty map"
+        },
+        {
+          "id": "F-14",
+          "results": 1,
+          "description": "packed attStmt.alg missing"
+        },
+        {
+          "id": "F-15",
+          "results": 1,
+          "description": "packed attStmt.alg not a Number"
+        },
+        {
+          "id": "F-16",
+          "results": 1,
+          "description": "packed attStmt.alg does not match the metadata statement"
+        },
+        {
+          "id": "F-17",
+          "results": 1,
+          "description": "packed attStmt.sig missing"
+        },
+        {
+          "id": "F-18",
+          "results": 1,
+          "description": "packed attStmt.sig not a BYTE STRING"
+        },
+        {
+          "id": "F-19",
+          "results": 1,
+          "description": "packed attStmt.sig empty"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-4",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 0,
+          "option": "ECDSA SECP256K1 SHA256",
+          "description": "secp256k1 (the tool marks it AWAITS IANA and sends nothing)"
+        },
+        {
+          "id": "P-2",
+          "results": 1,
+          "description": "PS256",
+          "option": "RSASSA PSS SHA256"
+        },
+        {
+          "id": "P-3",
+          "results": 1,
+          "description": "PS384",
+          "option": "RSASSA PSS SHA384"
+        },
+        {
+          "id": "P-4",
+          "results": 1,
+          "description": "PS512",
+          "option": "RSASSA PSS SHA512"
+        },
+        {
+          "id": "P-5",
+          "results": 1,
+          "description": "RS256"
+        },
+        {
+          "id": "P-6",
+          "results": 1,
+          "description": "RS384",
+          "option": "RSASSA PKCSV15 SHA384"
+        },
+        {
+          "id": "P-7",
+          "results": 1,
+          "description": "RS512",
+          "option": "RSASSA PKCSV15 SHA512"
+        },
+        {
+          "id": "P-8",
+          "results": 1,
+          "description": "RS1 (the tool actually sends an ES256 credential with ES256 self-attestation)"
+        },
+        {
+          "id": "P-9",
+          "results": 1,
+          "description": "ES256"
+        },
+        {
+          "id": "P-10",
+          "results": 1,
+          "description": "ES384",
+          "option": "ECDSA SECP384R1 SHA384"
+        },
+        {
+          "id": "P-11",
+          "results": 1,
+          "description": "ES512",
+          "option": "ECDSA SECP521R1 SHA512"
+        },
+        {
+          "id": "P-12",
+          "results": 1,
+          "description": "Ed25519"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-5",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid FULL packed attestation"
+        },
+        {
+          "id": "P-2",
+          "results": 1,
+          "description": "Chain links to the root certificate in the metadata"
+        },
+        {
+          "id": "P-3",
+          "results": 1,
+          "description": "Batch certificate that is itself the metadata trust anchor"
+        },
+        {
+          "id": "P-4",
+          "results": 1,
+          "description": "Root certificate with critical Basic Constraints"
+        },
+        {
+          "id": "P-5",
+          "results": 1,
+          "description": "Metadata with 64-bit vendorPrototypeConfigCommands"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "fmt is an unknown attestation format"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "attStmt.sig cannot be verified"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "attStmt.x5c missing"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "attStmt.x5c not an ARRAY"
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "attStmt.x5c is an empty ARRAY"
+        },
+        {
+          "id": "F-6",
+          "results": 1,
+          "description": "Leaf certificate expired"
+        },
+        {
+          "id": "F-7",
+          "results": 1,
+          "description": "Leaf certificate not yet valid"
+        },
+        {
+          "id": "F-8",
+          "results": 1,
+          "description": "Leaf certificate algorithm differs from the metadata statement"
+        },
+        {
+          "id": "F-9",
+          "results": 1,
+          "description": "Certificate chain cannot be verified"
+        },
+        {
+          "id": "F-10",
+          "results": 1,
+          "description": "x5c contains the full chain including the root"
+        },
+        {
+          "id": "F-11",
+          "results": 1,
+          "description": "x5c contains the full chain, wrongly ordered"
+        },
+        {
+          "id": "F-12",
+          "results": 1,
+          "description": "Intermediate certificate expired"
+        },
+        {
+          "id": "F-13",
+          "results": 1,
+          "description": "Signature not verifiable with the leaf public key"
+        },
+        {
+          "id": "F-14",
+          "results": 1,
+          "description": "Signature made with the credential private key instead of the batch key"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-6",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid SELF packed attestation"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "attStmt.sig invalid"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "Full attestation from an authenticator whose metadata only allows self attestation"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "fmt is an unknown attestation format"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-7",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid none attestation"
+        },
+        {
+          "id": "P-2",
+          "results": 1,
+          "description": "Valid SELF packed attestation when none was requested"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "FULL packed attestation statement carried under fmt \"none\""
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-8",
+      "group": "MakeCredential Response",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid fido-u2f attestation"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "authData.AAGUID is not all zeros"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "attStmt.sig invalid"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-9",
+      "group": "MakeCredential: Platform Attestations",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid TPM attestation, SHA-256"
+        },
+        {
+          "id": "P-2",
+          "results": 1,
+          "description": "Valid TPM attestation, SHA-1"
+        },
+        {
+          "id": "P-4",
+          "results": 1,
+          "description": "Valid TPM attestation, ES256 (P-3 is disabled in the tool)",
+          "option": "EXPERIMENTAL: TPM ECDSA SECP256R1 SHA256"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "Certificates in the wrong order"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "certInfo.extraData is not the hash of attToBeSigned"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "certInfo.magic is not TPM_GENERATED_VALUE"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "pubArea.unique is not the new public key"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAttestationResponse-Resp-A",
+      "group": "MakeCredential: Platform Attestations",
+      "option": "Android Keystore Attestation",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid android-key attestation"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "Leaf certificate carries the wrong clientDataHash"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "Leaf certificate carries an invalid public key"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "Certificates in the wrong order"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerPublicKeyCredentialGetOptionsResponse-Req-1",
+      "group": "GetAssertion Request",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Registers a credential, then checks the assertion options"
+        },
+        {
+          "id": "P-2",
+          "results": 0,
+          "description": "Two assertion options carry different challenges"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAssertionResponse-Resp-1",
+      "group": "GetAssertion Response",
+      "tests": [
+        {
+          "id": "setup",
+          "results": 1,
+          "description": "Registers the credential this suite asserts against"
+        },
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Valid assertion"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "\"id\" missing"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "\"id\" not a DOMString"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "\"id\" not base64url"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "\"type\" missing"
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "\"type\" not a DOMString"
+        },
+        {
+          "id": "F-6",
+          "results": 1,
+          "description": "\"type\" not \"public-key\""
+        },
+        {
+          "id": "F-7",
+          "results": 1,
+          "description": "\"response\" missing"
+        },
+        {
+          "id": "F-8",
+          "results": 1,
+          "description": "\"response\" not an Object"
+        },
+        {
+          "id": "F-9",
+          "results": 1,
+          "description": "response.clientDataJSON missing"
+        },
+        {
+          "id": "F-10",
+          "results": 1,
+          "description": "response.clientDataJSON not a DOMString"
+        },
+        {
+          "id": "F-11",
+          "results": 1,
+          "description": "response.clientDataJSON empty"
+        },
+        {
+          "id": "F-12",
+          "results": 1,
+          "description": "response.authenticatorData missing"
+        },
+        {
+          "id": "F-13",
+          "results": 1,
+          "description": "response.authenticatorData not a DOMString"
+        },
+        {
+          "id": "F-14",
+          "results": 1,
+          "description": "response.authenticatorData not base64url"
+        },
+        {
+          "id": "F-15",
+          "results": 1,
+          "description": "response.authenticatorData empty"
+        },
+        {
+          "id": "F-16",
+          "results": 1,
+          "description": "response.signature missing"
+        },
+        {
+          "id": "F-17",
+          "results": 1,
+          "description": "response.signature not a DOMString"
+        },
+        {
+          "id": "F-18",
+          "results": 1,
+          "description": "response.signature not base64url"
+        },
+        {
+          "id": "F-19",
+          "results": 1,
+          "description": "response.signature empty"
+        },
+        {
+          "id": "F-20",
+          "results": 1,
+          "description": "response.signature cannot be verified"
+        },
+        {
+          "id": "F-21",
+          "results": 1,
+          "description": "response.userHandle not a DOMString"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAssertionResponse-Resp-2",
+      "group": "GetAssertion Response",
+      "tests": [
+        {
+          "id": "setup",
+          "results": 1,
+          "description": "Registers the credential this suite asserts against"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "clientDataJSON.type missing"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "clientDataJSON.type not a DOMString"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "clientDataJSON.type empty"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "clientDataJSON.type not \"webauthn.get\""
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "clientDataJSON.type set to \"webauthn.create\""
+        },
+        {
+          "id": "F-6",
+          "results": 1,
+          "description": "clientDataJSON.challenge missing"
+        },
+        {
+          "id": "F-7",
+          "results": 1,
+          "description": "clientDataJSON.challenge not a DOMString"
+        },
+        {
+          "id": "F-8",
+          "results": 1,
+          "description": "clientDataJSON.challenge empty"
+        },
+        {
+          "id": "F-9",
+          "results": 1,
+          "description": "clientDataJSON.challenge not base64url"
+        },
+        {
+          "id": "F-10",
+          "results": 1,
+          "description": "clientDataJSON.challenge differs from the request challenge"
+        },
+        {
+          "id": "F-11",
+          "results": 1,
+          "description": "clientDataJSON.origin missing"
+        },
+        {
+          "id": "F-12",
+          "results": 1,
+          "description": "clientDataJSON.origin not a DOMString"
+        },
+        {
+          "id": "F-13",
+          "results": 1,
+          "description": "clientDataJSON.origin empty"
+        },
+        {
+          "id": "F-14",
+          "results": 1,
+          "description": "clientDataJSON.origin is not the RP origin"
+        },
+        {
+          "id": "F-15",
+          "results": 1,
+          "description": "clientDataJSON.tokenBinding not an Object"
+        },
+        {
+          "id": "F-16",
+          "results": 1,
+          "description": "clientDataJSON.tokenBinding.status missing"
+        },
+        {
+          "id": "F-17",
+          "results": 1,
+          "description": "clientDataJSON.tokenBinding.status not present/supported/not-supported"
+        }
+      ]
+    },
+    {
+      "id": "Server-ServerAuthenticatorAssertionResponse-Resp-3",
+      "group": "GetAssertion Response",
+      "tests": [
+        {
+          "id": "setup",
+          "results": 1,
+          "description": "Registers the credential this suite asserts against"
+        },
+        {
+          "id": "P-1",
+          "results": 2,
+          "description": "Registers and asserts with an authenticator that does not support a counter (always 0)"
+        },
+        {
+          "id": "P-2",
+          "results": 1,
+          "description": "UV set, userVerification required"
+        },
+        {
+          "id": "P-3",
+          "results": 1,
+          "description": "UV clear, userVerification preferred"
+        },
+        {
+          "id": "P-4",
+          "results": 1,
+          "description": "UV set, userVerification preferred"
+        },
+        {
+          "id": "P-5",
+          "results": 1,
+          "description": "UV clear, userVerification discouraged"
+        },
+        {
+          "id": "P-6",
+          "results": 1,
+          "description": "UV set, userVerification discouraged"
+        },
+        {
+          "id": "P-7",
+          "results": 1,
+          "description": "ED flag set with extension data present"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "authenticatorData has leftover bytes"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "authenticatorData.rpIdHash invalid"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "clientDataHash invalid"
+        },
+        {
+          "id": "F-4",
+          "results": 2,
+          "description": "Registers, then asserts with a counter that did not increase"
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "Only UP set while userVerification is required"
+        }
+      ]
+    },
+    {
+      "id": "Server-MDS3",
+      "group": "Metadata Service Tests",
+      "tests": [
+        {
+          "id": "P-1",
+          "results": 1,
+          "description": "Authenticator from the valid MDS BLOB is accepted"
+        },
+        {
+          "id": "F-1",
+          "results": 1,
+          "description": "Authenticator whose MDS status is a compromise/bypass status"
+        },
+        {
+          "id": "F-2",
+          "results": 1,
+          "description": "Authenticator from the BLOB whose signature cannot be verified"
+        },
+        {
+          "id": "F-3",
+          "results": 1,
+          "description": "Authenticator from the BLOB whose certificate chain cannot be verified"
+        },
+        {
+          "id": "F-4",
+          "results": 1,
+          "description": "Authenticator from the BLOB whose intermediate certificate is revoked"
+        },
+        {
+          "id": "F-5",
+          "results": 1,
+          "description": "Authenticator from the BLOB whose leaf certificate is revoked"
+        }
+      ]
+    }
+  ]
+}

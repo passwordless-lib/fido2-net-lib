@@ -147,6 +147,7 @@ public class AuthController : Controller
 - **[Demo Controller](Demo/DemoController.cs)** - Main demo API endpoints for registration and authentication
 - **[Blazor WebAssembly Demo](BlazorWasmDemo/)** - Client-side Blazor example
 - **[Conformance Test Controller](Demo/ConformanceTestController.cs)** - Conformance testing endpoints
+- **[Conformance Expectations Ledger](conformance/README.md)** - Verifies the FIDO conformance tool's negative-test passes are for the right reason, not just any rejection
 
 For integration patterns, see:
 

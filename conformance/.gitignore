@@ -1,0 +1,5 @@
+# Runs and metadata contain the conformance tool's own payloads and statements, which cannot be redistributed
+*.jsonl
+*.zip
+metadata/
+metadataStatements/
