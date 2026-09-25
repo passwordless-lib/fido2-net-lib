@@ -34,4 +34,14 @@ public class VerifyAssertionResult
     /// authenticator returned no such output.
     /// </summary>
     public AuthenticationExtensionsAuthenticatorOutputs AuthenticatorExtensionResults { get; init; } = new();
+
+    /// <summary>
+    /// For a Secure Payment Confirmation assertion, the browser-bound key's public key as a COSE_Key, when the browser
+    /// supplied one and its signature over the client data verified; otherwise <see langword="null"/>. Compare it with
+    /// the one seen at registration, or on earlier transactions, for evidence that the same browser installation is
+    /// confirming.
+    /// </summary>
+#nullable enable
+    public byte[]? BrowserBoundPublicKey { get; init; }
+#nullable restore
 }

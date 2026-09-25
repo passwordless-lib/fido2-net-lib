@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using Fido2NetLib.Exceptions;
+using Fido2NetLib.Objects;
 using Fido2NetLib.Serialization;
 
 namespace Fido2NetLib;
@@ -53,6 +54,7 @@ public class AuthenticatorResponse
         CrossOrigin = response.CrossOrigin;
         TopOrigin = response.TopOrigin;
         TokenBinding = response.TokenBinding;
+        Payment = response.Payment;
     }
 
     public const int MAX_ORIGINS_TO_PRINT = 5;
@@ -87,10 +89,19 @@ public class AuthenticatorResponse
     [JsonPropertyName("tokenBinding")]
     public TokenBindingDto? TokenBinding { get; set; }
 
+    /// <summary>
+    /// The transaction details a Secure Payment Confirmation ceremony signed, or <see langword="null"/> for an ordinary
+    /// WebAuthn ceremony.
+    /// </summary>
+    [JsonPropertyName("payment")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public CollectedClientAdditionalPaymentData? Payment { get; set; }
+
     protected void BaseVerify(IReadOnlySet<string> fullyQualifiedExpectedOrigins, ReadOnlySpan<byte> originalChallenge, byte[]? requestTokenBindingId, bool allowCrossOriginRequests = false)
     {
-        if (Type is not "webauthn.create" && Type is not "webauthn.get")
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create' or 'webauthn.get'. Was '{Type}'");
+        // Each ceremony pins the type down further: "payment.get" is only acceptable to an assertion that was expected to be a payment.
+        if (Type is not ("webauthn.create" or "webauthn.get" or "payment.get"))
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponse, $"Type must be 'webauthn.create', 'webauthn.get' or 'payment.get'. Was '{Type}'");
 
         if (Challenge is null)
             throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallenge);

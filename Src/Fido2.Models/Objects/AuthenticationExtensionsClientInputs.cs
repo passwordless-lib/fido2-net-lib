@@ -156,5 +156,15 @@ public sealed class AuthenticationExtensionsClientInputs
     [JsonPropertyName("minPinLength")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? MinPinLength { get; set; }
+
+    /// <summary>
+    /// The Secure Payment Confirmation extension. At registration, mark the credential as usable for payments with
+    /// <see cref="AuthenticationExtensionsPaymentInputs.IsPayment"/>; a payment authentication is not started with
+    /// these options but through the Payment Request API.
+    /// https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration
+    /// </summary>
+    [JsonPropertyName("payment")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AuthenticationExtensionsPaymentInputs? Payment { get; set; }
 }
 
