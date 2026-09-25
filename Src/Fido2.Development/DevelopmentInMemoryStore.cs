@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 using Fido2NetLib.Objects;
 
@@ -7,7 +7,15 @@ namespace Fido2NetLib.Development;
 public class DevelopmentInMemoryStore
 {
     private readonly ConcurrentDictionary<string, Fido2User> _storedUsers = new();
+
+    // A plain List<T> is not thread-safe, and this store is a singleton shared across every request. Guarded by
+    // _storedCredentialsLock rather than swapped for a concurrent collection, since removal and the
+    // predicate-based lookups below need an atomic read-modify-write that ConcurrentBag/ConcurrentDictionary
+    // don't offer any more simply than a lock does.
     private readonly List<StoredCredential> _storedCredentials = new();
+
+    // A plain object, not System.Threading.Lock, since this project targets net8.0 as well as net10.0.
+    private readonly object _storedCredentialsLock = new();
 
     public Fido2User GetOrAddUser(string username, Func<Fido2User> addCallback)
     {
@@ -22,23 +30,35 @@ public class DevelopmentInMemoryStore
 
     public List<StoredCredential> GetCredentialsByUser(Fido2User user)
     {
-        return _storedCredentials.Where(c => c.UserId.AsSpan().SequenceEqual(user.Id)).ToList();
+        lock (_storedCredentialsLock)
+        {
+            return _storedCredentials.Where(c => c.UserId.AsSpan().SequenceEqual(user.Id)).ToList();
+        }
     }
 
     public StoredCredential? GetCredentialById(byte[] id)
     {
-        return _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(id));
+        lock (_storedCredentialsLock)
+        {
+            return _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(id));
+        }
     }
 
     public Task<List<StoredCredential>> GetCredentialsByUserHandleAsync(byte[] userHandle, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(_storedCredentials.Where(c => c.UserHandle.AsSpan().SequenceEqual(userHandle)).ToList());
+        lock (_storedCredentialsLock)
+        {
+            return Task.FromResult(_storedCredentials.Where(c => c.UserHandle.AsSpan().SequenceEqual(userHandle)).ToList());
+        }
     }
 
     public void UpdateCounter(byte[] credentialId, uint counter)
     {
-        var cred = _storedCredentials.First(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
-        cred.SignCount = counter;
+        lock (_storedCredentialsLock)
+        {
+            var cred = _storedCredentials.First(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
+            cred.SignCount = counter;
+        }
     }
 
     /// <summary>
@@ -53,19 +73,26 @@ public class DevelopmentInMemoryStore
     /// </remarks>
     public void UpdateCredentialRecord(VerifyAssertionResult assertionResult)
     {
-        var cred = _storedCredentials.First(c => c.Descriptor.Id.AsSpan().SequenceEqual(assertionResult.CredentialId));
+        lock (_storedCredentialsLock)
+        {
+            var cred = _storedCredentials.First(c => c.Descriptor.Id.AsSpan().SequenceEqual(assertionResult.CredentialId));
 
-        cred.SignCount = assertionResult.SignCount;
-        cred.IsBackedUp = assertionResult.IsBackedUp;
+            cred.SignCount = assertionResult.SignCount;
+            cred.IsBackedUp = assertionResult.IsBackedUp;
 
-        if (!cred.UvInitialized)
-            cred.UvInitialized = assertionResult.IsUserVerified;
+            if (!cred.UvInitialized)
+                cred.UvInitialized = assertionResult.IsUserVerified;
+        }
     }
 
     public void AddCredentialToUser(Fido2User user, StoredCredential credential)
     {
         credential.UserId = user.Id;
-        _storedCredentials.Add(credential);
+
+        lock (_storedCredentialsLock)
+        {
+            _storedCredentials.Add(credential);
+        }
     }
 
     /// <summary>
@@ -78,18 +105,25 @@ public class DevelopmentInMemoryStore
     /// </remarks>
     public bool RemoveCredential(byte[] credentialId)
     {
-        var cred = _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
+        lock (_storedCredentialsLock)
+        {
+            var cred = _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
 
-        if (cred is null)
-            return false;
+            if (cred is null)
+                return false;
 
-        return _storedCredentials.Remove(cred);
+            return _storedCredentials.Remove(cred);
+        }
     }
 
     public Task<List<Fido2User>> GetUsersByCredentialIdAsync(byte[] credentialId, CancellationToken cancellationToken = default)
     {
         // our in-mem storage does not allow storing multiple users for a given credentialId. Yours shouldn't either.
-        var cred = _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
+        StoredCredential? cred;
+        lock (_storedCredentialsLock)
+        {
+            cred = _storedCredentials.FirstOrDefault(c => c.Descriptor.Id.AsSpan().SequenceEqual(credentialId));
+        }
 
         if (cred is null)
             return Task.FromResult<List<Fido2User>>([]);
