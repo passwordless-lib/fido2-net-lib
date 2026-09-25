@@ -168,6 +168,52 @@
         line-height: 1.4;
     }
     .pg-flag { margin-right: 0.35rem; }
+    .pg-authenticator-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        vertical-align: middle;
+        margin-right: 0.4rem;
+        object-fit: contain;
+    }
+    .pg-category-icon {
+        width: 1.1rem;
+        height: 1.1rem;
+        vertical-align: middle;
+        margin-right: 0.4rem;
+    }
+    .pg-authenticator-hover {
+        cursor: help;
+        border-bottom: 1px dotted #b5b5b5;
+    }
+    /* Appended directly to the document body by playground.js and positioned via getBoundingClientRect(), so
+       it is never clipped by a scrolling ancestor (e.g. the Credentials tab's table-container) and never
+       anchored to a wrapping inline element. */
+    .pg-tooltip-popover {
+        display: none;
+        position: absolute;
+        z-index: 100;
+        min-width: 16rem;
+        max-width: 22rem;
+        padding: 0.6rem 0.75rem;
+        background: #1a1a1a;
+        color: #f5f5f5;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        white-space: normal;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    .pg-tooltip-popover a {
+        color: #7fd1ff;
+    }
+    /* Bulma's base stylesheet sets an explicit dark color on <strong>, which otherwise wins over this
+       popover's own light color by specificity -- inheritance alone isn't enough to override it. */
+    .pg-tooltip-popover strong {
+        color: inherit;
+    }
+    .pg-tooltip-row + .pg-tooltip-row {
+        margin-top: 0.2rem;
+    }
 </style>
 
 <script src="~/js/webauthn.js"></script>

@@ -83,22 +83,16 @@
                 <div class="container">
                     <ul>
                         <li class="@isActive("/overview")">
-                            <a asp-page="/overview" asp-fragment="heroFoot">Overview</a>
-                        </li>
-                        <li class="@isActive("/mfa")">
-                            <a asp-page="/mfa" asp-fragment="heroFoot">Use as 2FA/MFA</a>
-                        </li>
-                        <li class="@isActive("/passwordless")">
-                            <a asp-page="/passwordless" asp-fragment="heroFoot">Go Passwordless</a>
-                        </li>
-                        <li class="@isActive("/usernameless")">
-                            <a asp-page="/usernameless" asp-fragment="heroFoot">Go Usernameless too</a>
-                        </li>
-                        <li class="@isActive("/custom")">
-                            <a asp-page="/custom" asp-fragment="heroFoot">Custom</a>
+                            <a asp-page="/overview">Overview</a>
                         </li>
                         <li class="@isActive("/playground")">
-                            <a asp-page="/playground" asp-fragment="heroFoot">Playground</a>
+                            <a asp-page="/playground">Playground</a>
+                        </li>
+                        <li class="@isActive("/usernameless")">
+                            <a asp-page="/usernameless">Passkey Sign-In</a>
+                        </li>
+                        <li class="@isActive("/passwordless")">
+                            <a asp-page="/passwordless">Passkey With a Username</a>
                         </li>
                     </ul>
                 </div>

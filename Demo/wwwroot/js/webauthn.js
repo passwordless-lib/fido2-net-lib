@@ -100,9 +100,9 @@ async function registerCeremony(config) {
     console.log('Credential Options Formatted', options);
 
     Swal.fire({
-        title: 'Registering...',
-        text: 'Tap your security key to finish registration.',
-        imageUrl: '/images/securitykey.min.svg',
+        title: 'Creating your passkey...',
+        text: 'Follow your browser or device\'s prompt to finish registration.',
+        imageUrl: '/images/passkey.svg',
         showCancelButton: true,
         showConfirmButton: false,
         focusConfirm: false,
@@ -219,9 +219,9 @@ async function signInCeremony(config) {
     console.log('Assertion options', options);
 
     Swal.fire({
-        title: 'Logging In...',
-        text: 'Tap your security key to login.',
-        imageUrl: '/images/securitykey.min.svg',
+        title: 'Signing in with your passkey...',
+        text: 'Follow your browser or device\'s prompt to continue.',
+        imageUrl: '/images/passkey.svg',
         showCancelButton: true,
         showConfirmButton: false,
         focusConfirm: false,

@@ -98,6 +98,111 @@ async function decodeCeremonyResponse(response) {
     renderResponseSummary(decoded);
 }
 
+// MetadataStatement.Icon/IconDark are data: URIs [RFC 2397], safe to drop straight into an <img src> --
+// base64 and the fixed "data:image/png;..." prefix can't contain a quote to break out of the attribute.
+function authenticatorIconTag(dataUri) {
+    return dataUri ? '<img class="pg-authenticator-icon" src="' + dataUri + '" alt="" />' : '';
+}
+
+// Builds the hover tooltip content from a PlaygroundController "*Details" object (everything MDS reports
+// about the authenticator besides the name/icon already shown inline). Empty when MDS had nothing to say.
+function authenticatorTooltipContent(details) {
+    if (!details) {
+        return '';
+    }
+
+    const rows = [];
+    if (details.certificationStatus) {
+        rows.push(['Certification', details.certificationStatus
+            + (details.certificationUrl ? ' (<a href="' + details.certificationUrl + '" target="_blank" rel="noopener">record</a>)' : '')]);
+    }
+    if (details.lastStatusChange) {
+        rows.push(['Last status change', details.lastStatusChange]);
+    }
+    if (details.multiDeviceCredentialSupport) {
+        rows.push(['Multi-device credentials', details.multiDeviceCredentialSupport]);
+    }
+    if (details.attestationTypes && details.attestationTypes.length) {
+        rows.push(['Attestation types', details.attestationTypes.join(', ')]);
+    }
+    if (details.keyProtection && details.keyProtection.length) {
+        rows.push(['Key protection', details.keyProtection.join(', ')]);
+    }
+    if (details.matcherProtection && details.matcherProtection.length) {
+        rows.push(['Matcher protection', details.matcherProtection.join(', ')]);
+    }
+    if (details.protocolFamily) {
+        rows.push(['Protocol', details.protocolFamily + (details.protocolVersion ? ' ' + details.protocolVersion : '')]);
+    }
+
+    if (!rows.length) {
+        return '';
+    }
+
+    return rows.map(function (r) {
+        return '<div class="pg-tooltip-row"><strong>' + r[0] + ':</strong> ' + r[1] + '</div>';
+    }).join('');
+}
+
+// Tooltip content is kept out of the badge's own markup and shown through a single element appended to
+// <body> instead. A tooltip nested inside the badge (position: absolute, anchored to a position: relative
+// span) gets clipped by the first scrolling ancestor it has -- the Credentials tab's table-container, for
+// one -- and an inline element that wraps across lines is an unreliable positioning anchor to begin with.
+// Living outside the table/response markup entirely and being placed with getBoundingClientRect() sidesteps
+// both problems.
+let pgTooltipContents = [];
+let pgTooltipEl = null;
+
+function ensurePgTooltipEl() {
+    if (!pgTooltipEl) {
+        pgTooltipEl = document.createElement('div');
+        pgTooltipEl.className = 'pg-tooltip-popover';
+        document.body.appendChild(pgTooltipEl);
+    }
+    return pgTooltipEl;
+}
+
+document.addEventListener('mouseover', function (e) {
+    const trigger = e.target.closest('.pg-authenticator-hover');
+    if (!trigger || trigger.dataset.pgTooltipId === undefined) {
+        return;
+    }
+
+    const el = ensurePgTooltipEl();
+    el.innerHTML = pgTooltipContents[trigger.dataset.pgTooltipId];
+
+    const rect = trigger.getBoundingClientRect();
+    el.style.left = (rect.left + window.scrollX) + 'px';
+    el.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+    el.style.display = 'block';
+});
+
+document.addEventListener('mouseout', function (e) {
+    const trigger = e.target.closest('.pg-authenticator-hover');
+    if (!trigger || trigger.contains(e.relatedTarget)) {
+        return;
+    }
+
+    if (pgTooltipEl) {
+        pgTooltipEl.style.display = 'none';
+    }
+});
+
+// The icon plus whatever text a caller wants labeling it (a description, or a "not in metadata" tag), marked
+// up so a hover shows authenticatorTooltipContent via the shared popover above -- or left unmarked when
+// there is nothing to show on hover.
+function authenticatorBadge(iconDataUri, labelHtml, details) {
+    const icon = authenticatorIconTag(iconDataUri);
+    const tooltip = authenticatorTooltipContent(details);
+
+    if (!tooltip) {
+        return icon + labelHtml;
+    }
+
+    const id = pgTooltipContents.push(tooltip) - 1;
+    return '<span class="pg-authenticator-hover" data-pg-tooltip-id="' + id + '">' + icon + labelHtml + '</span>';
+}
+
 function flagTag(name, on, title) {
     return '<span class="tag pg-flag ' + (on ? 'is-success' : 'is-light') + '" title="' + title + '">'
         + name + ': ' + (on ? 'set' : 'clear') + '</span>';
@@ -112,12 +217,12 @@ function renderResponseSummary(decoded) {
 
     const f = authData.flags;
     let html = '<div class="tags">'
-        + flagTag('UP', f.UP, 'User Present')
-        + flagTag('UV', f.UV, 'User Verified')
-        + flagTag('BE', f.BE, 'Backup Eligible')
-        + flagTag('BS', f.BS, 'Backup State')
-        + flagTag('AT', f.AT, 'Attested credential data included')
-        + flagTag('ED', f.ED, 'Extension data included')
+        + flagTag('UP', f.up, 'User Present')
+        + flagTag('UV', f.uv, 'User Verified')
+        + flagTag('BE', f.be, 'Backup Eligible')
+        + flagTag('BS', f.bs, 'Backup State')
+        + flagTag('AT', f.at, 'Attested credential data included')
+        + flagTag('ED', f.ed, 'Extension data included')
         + '</div>';
 
     html += '<p><strong>Sign count:</strong> ' + authData.signCount + '</p>';
@@ -128,13 +233,13 @@ function renderResponseSummary(decoded) {
 
     const acd = authData.attestedCredentialData;
     if (acd) {
-        html += '<p><strong>AAGUID:</strong> <code>' + acd.aaguid + '</code>';
+        let aaguidLabel = '<strong>AAGUID:</strong> <code>' + acd.aaguid + '</code>';
         if (acd.aaguidDescription) {
-            html += ' &mdash; ' + acd.aaguidDescription + ' <span class="tag is-info is-light">FIDO MDS</span>';
+            aaguidLabel += ' &mdash; ' + acd.aaguidDescription + ' <span class="tag is-info is-light">FIDO MDS</span>';
         } else {
-            html += ' <span class="tag is-light">not in metadata</span>';
+            aaguidLabel += ' <span class="tag is-light">not in metadata</span>';
         }
-        html += '</p>';
+        html += '<p>' + authenticatorBadge(acd.aaguidIcon, aaguidLabel, acd.aaguidDetails) + '</p>';
         html += '<p><strong>Credential ID:</strong> <code>' + acd.credentialId + '</code> ('
             + acd.credentialIdLength + ' bytes)</p>';
     }
@@ -177,6 +282,46 @@ function tri(value, trueLabel, falseLabel, unknownTitle) {
     return '<span class="tag is-light" title="' + unknownTitle + '">unknown</span>';
 }
 
+// passkeycentral.org's management-UI guidance: group by where the passkey lives, using the terminology it
+// recommends ("passkeys on your devices" / "passkeys on security keys", not "synced"/"device-bound"), each
+// with its own icon. The WebAuthn Backup Eligible flag is exactly this signal -- BE true means the credential
+// can sync to a credential manager ("on your devices"); false or unreported is treated as device-bound.
+function deviceIconTag() {
+    return '<img class="pg-category-icon" src="/images/passkey-device.svg" alt="" />';
+}
+
+function securityKeyIconTag() {
+    return '<img class="pg-category-icon" src="/images/passkey-security-key.svg" alt="" />';
+}
+
+function credentialRow(c) {
+    return '<tr>'
+        + '<td><input class="input is-small pg-nickname" data-id="' + c.id + '" value="'
+            + (c.nickname || '') + '" placeholder="name this key" /></td>'
+        + '<td>' + authenticatorBadge(c.authenticatorIcon,
+            c.authenticator || '<span class="has-text-grey">not in metadata</span>', c.authenticatorDetails) + '</td>'
+        + '<td>' + new Date(c.regDate).toISOString().slice(0, 16).replace('T', ' ') + '</td>'
+        + '<td>' + c.signCount + '</td>'
+        + '<td>' + c.attestationFormat + '</td>'
+        + '<td>' + (c.transports.length ? c.transports.join(', ') : '<span class="has-text-grey">none</span>') + '</td>'
+        + '<td>' + tri(c.isDiscoverable, 'yes', 'no', 'The client did not report credProps.rk') + '</td>'
+        + '<td>' + tri(c.uvInitialized, 'yes', 'no', '') + '</td>'
+        + '<td>' + tri(c.isBackupEligible, 'yes', 'no', '') + '</td>'
+        + '<td>' + tri(c.isBackedUp, 'yes', 'no', '') + '</td>'
+        + '<td><button class="button is-small is-danger is-light pg-delete" data-id="' + c.id + '">Delete</button></td>'
+        + '</tr>';
+}
+
+function credentialGroup(iconTag, title, credentials) {
+    return '<h4 class="title is-6" style="margin-top: 1.25rem">' + iconTag + title + '</h4>'
+        + '<div class="table-container"><table class="table is-striped is-fullwidth"><thead><tr>'
+        + '<th>Nickname</th><th>Authenticator</th><th>Registered</th><th>Count</th><th>Attestation</th>'
+        + '<th>Transports</th><th>Discoverable</th><th>uvInit</th><th>BE</th><th>BS</th><th></th>'
+        + '</tr></thead><tbody>'
+        + credentials.map(credentialRow).join('')
+        + '</tbody></table></div>';
+}
+
 async function loadCredentials() {
     const username = value('#pg-username');
     const container = document.getElementById('pg-credentials');
@@ -188,34 +333,57 @@ async function loadCredentials() {
         .then(r => r.json());
 
     if (result.status !== 'ok' || !result.credentials.length) {
-        container.innerHTML = '<p class="help">No credentials registered for this user yet.</p>';
+        container.innerHTML = '<div class="pg-empty-state">'
+            + '<p class="help">No credentials registered for this user yet.</p>'
+            + '<div class="buttons" style="margin-top: 0.75rem">'
+            + '<button class="button is-link" id="pg-create-passkey">' + deviceIconTag() + 'Create a passkey</button>'
+            + '<button class="button is-link is-light" id="pg-use-security-key">' + securityKeyIconTag() + 'Use a security key</button>'
+            + '</div></div>';
+        wireEmptyStateActions();
         return;
     }
 
-    let html = '<div class="table-container"><table class="table is-striped is-fullwidth"><thead><tr>'
-        + '<th>Nickname</th><th>Authenticator</th><th>Registered</th><th>Count</th><th>Attestation</th>'
-        + '<th>Transports</th><th>Discoverable</th><th>uvInit</th><th>BE</th><th>BS</th><th></th>'
-        + '</tr></thead><tbody>';
+    const onDevice = result.credentials.filter(function (c) { return c.isBackupEligible === true; });
+    const onSecurityKey = result.credentials.filter(function (c) { return c.isBackupEligible !== true; });
 
-    result.credentials.forEach(function (c) {
-        html += '<tr>'
-            + '<td><input class="input is-small pg-nickname" data-id="' + c.id + '" value="'
-                + (c.nickname || '') + '" placeholder="name this key" /></td>'
-            + '<td>' + (c.authenticator || '<span class="has-text-grey">not in metadata</span>') + '</td>'
-            + '<td>' + new Date(c.regDate).toISOString().slice(0, 16).replace('T', ' ') + '</td>'
-            + '<td>' + c.signCount + '</td>'
-            + '<td>' + c.attestationFormat + '</td>'
-            + '<td>' + (c.transports.length ? c.transports.join(', ') : '<span class="has-text-grey">none</span>') + '</td>'
-            + '<td>' + tri(c.isDiscoverable, 'yes', 'no', 'The client did not report credProps.rk') + '</td>'
-            + '<td>' + tri(c.uvInitialized, 'yes', 'no', '') + '</td>'
-            + '<td>' + tri(c.isBackupEligible, 'yes', 'no', '') + '</td>'
-            + '<td>' + tri(c.isBackedUp, 'yes', 'no', '') + '</td>'
-            + '<td><button class="button is-small is-danger is-light pg-delete" data-id="' + c.id + '">Delete</button></td>'
-            + '</tr>';
-    });
+    let html = '';
+    if (onDevice.length) {
+        html += credentialGroup(deviceIconTag(), 'Passkeys on your devices', onDevice);
+    }
+    if (onSecurityKey.length) {
+        html += credentialGroup(securityKeyIconTag(), 'Passkeys on security keys', onSecurityKey);
+    }
 
-    container.innerHTML = html + '</tbody></table></div>';
+    container.innerHTML = html;
     wireCredentialRowActions();
+}
+
+// The passkeycentral.org empty-state pattern: two distinct calls to action rather than one generic
+// "Register" button, so a user who specifically wants a hardware key isn't left guessing which button
+// does that. "Use a security key" forces the security-key hint regardless of the Advanced settings above;
+// "Create a passkey" is the general-purpose action and defers to whatever is already configured there.
+function wireEmptyStateActions() {
+    const createButton = document.getElementById('pg-create-passkey');
+    if (createButton) {
+        createButton.addEventListener('click', async function () {
+            show('pg-status', 'Registering...');
+            await registerCeremony(currentOptions());
+            show('pg-status', '');
+            loadCredentials();
+        });
+    }
+
+    const securityKeyButton = document.getElementById('pg-use-security-key');
+    if (securityKeyButton) {
+        securityKeyButton.addEventListener('click', async function () {
+            show('pg-status', 'Registering...');
+            const options = currentOptions();
+            options.hints = ['security-key'];
+            await registerCeremony(options);
+            show('pg-status', '');
+            loadCredentials();
+        });
+    }
 }
 
 function wireCredentialRowActions() {

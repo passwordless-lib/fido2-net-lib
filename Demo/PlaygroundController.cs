@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System.Buffers.Text;
+using System.Collections.Concurrent;
 using System.Formats.Cbor;
 using System.Text;
 using System.Text.Json;
@@ -25,8 +26,11 @@ public class PlaygroundController : Controller
 {
     private readonly IMetadataService _metadataService;
 
-    /// <summary>Credential nicknames, keyed by base64url credential ID. Demo-local; not part of a credential record.</summary>
-    private static readonly Dictionary<string, string> s_nicknames = new(StringComparer.Ordinal);
+    /// <summary>
+    /// Credential nicknames, keyed by base64url credential ID. Demo-local; not part of a credential record.
+    /// A concurrent collection, not a plain Dictionary, since this is a singleton shared across every request.
+    /// </summary>
+    private static readonly ConcurrentDictionary<string, string> s_nicknames = new(StringComparer.Ordinal);
 
     public PlaygroundController(IMetadataService metadataService)
     {
@@ -47,7 +51,7 @@ public class PlaygroundController : Controller
 
     [HttpPost]
     [Route("decode")]
-    public JsonResult Decode([FromBody] DecodeRequest request)
+    public async Task<JsonResult> Decode([FromBody] DecodeRequest request, CancellationToken cancellationToken)
     {
         try
         {
@@ -63,9 +67,9 @@ public class PlaygroundController : Controller
             object? decoded = kind switch
             {
                 "clientDataJSON" => DecodeClientData(bytes),
-                "authenticatorData" => DescribeAuthenticatorData(bytes),
+                "authenticatorData" => await DescribeAuthenticatorDataAsync(bytes, cancellationToken),
                 "coseKey" => DecodeCbor(bytes),
-                "attestationObject" => DecodeAttestationObject(bytes),
+                "attestationObject" => await DecodeAttestationObjectAsync(bytes, cancellationToken),
                 _ => throw new InvalidOperationException($"Unrecognized input kind '{kind}'.")
             };
 
@@ -157,7 +161,7 @@ public class PlaygroundController : Controller
         };
     }
 
-    private object DecodeAttestationObject(byte[] bytes)
+    private async Task<object> DecodeAttestationObjectAsync(byte[] bytes, CancellationToken cancellationToken)
     {
         var reader = new CborReader(bytes, CborConformanceMode.Lax);
         var map = ReadCborValue(reader) as Dictionary<string, object?>
@@ -167,7 +171,7 @@ public class PlaygroundController : Controller
         if (map.TryGetValue("authData", out var ad) && ad is byte[] authDataBytes)
         {
             try
-            { authDataDescribed = DescribeAuthenticatorData(authDataBytes); }
+            { authDataDescribed = await DescribeAuthenticatorDataAsync(authDataBytes, cancellationToken); }
             catch (Exception e) { authDataDescribed = new { error = e.Message }; }
         }
 
@@ -189,7 +193,7 @@ public class PlaygroundController : Controller
     /// AAGUID that are perfectly readable. The key itself is still reported, as raw COSE, plus whatever the
     /// library says about it.
     /// </remarks>
-    private object DescribeAuthenticatorData(byte[] bytes)
+    private async Task<object> DescribeAuthenticatorDataAsync(byte[] bytes, CancellationToken cancellationToken)
     {
         if (bytes.Length < 37)
             throw new InvalidOperationException($"Authenticator data is {bytes.Length} bytes; the minimum is 37.");
@@ -225,10 +229,14 @@ public class PlaygroundController : Controller
 
             var keyBytes = bytes.AsSpan(keyStart, offset - keyStart).ToArray();
 
+            var authenticator = await DescribeAuthenticatorAsync(aaguid, cancellationToken);
+
             attested = new
             {
                 aaguid = aaguid.ToString(),
-                aaguidDescription = DescribeAuthenticator(aaguid),
+                aaguidDescription = authenticator.Description,
+                aaguidIcon = authenticator.Icon,
+                aaguidDetails = ToTooltipDetails(authenticator),
                 credentialId = Base64Url.EncodeToString(credentialId),
                 credentialIdLength,
                 credentialPublicKey = coseKey,
@@ -278,18 +286,78 @@ public class PlaygroundController : Controller
         }
     }
 
-    private string? DescribeAuthenticator(Guid aaguid)
+    /// <summary>
+    /// What FIDO Metadata Service has to say about an AAGUID, for display. Every field may be absent -- MDS
+    /// coverage varies a lot by authenticator, and even a matched entry rarely populates everything.
+    /// </summary>
+    private sealed record AuthenticatorLookup(
+        string? Description,
+        string? Icon,
+        string? CertificationStatus,
+        string? CertificationUrl,
+        string? LastStatusChange,
+        string? MultiDeviceCredentialSupport,
+        string[]? AttestationTypes,
+        string[]? KeyProtection,
+        string[]? MatcherProtection,
+        string? ProtocolFamily,
+        string? ProtocolVersion)
+    {
+        public static readonly AuthenticatorLookup None = new(null, null, null, null, null, null, null, null, null, null, null);
+    }
+
+    /// <summary>The parts of an <see cref="AuthenticatorLookup"/> worth a hover tooltip -- everything except the
+    /// name and icon, which are already shown inline.</summary>
+    private static object ToTooltipDetails(AuthenticatorLookup a) => new
+    {
+        certificationStatus = a.CertificationStatus,
+        certificationUrl = a.CertificationUrl,
+        lastStatusChange = a.LastStatusChange,
+        multiDeviceCredentialSupport = a.MultiDeviceCredentialSupport,
+        attestationTypes = a.AttestationTypes,
+        keyProtection = a.KeyProtection,
+        matcherProtection = a.MatcherProtection,
+        protocolFamily = a.ProtocolFamily,
+        protocolVersion = a.ProtocolVersion
+    };
+
+    private async Task<AuthenticatorLookup> DescribeAuthenticatorAsync(Guid aaguid, CancellationToken cancellationToken)
     {
         if (aaguid == Guid.Empty)
-            return null;
+            return AuthenticatorLookup.None;
 
         try
         {
-            return _metadataService.GetEntryAsync(aaguid).GetAwaiter().GetResult()?.MetadataStatement?.Description;
+            var entry = await _metadataService.GetEntryAsync(aaguid, cancellationToken);
+            var statement = entry?.MetadataStatement;
+            if (entry is null || statement is null)
+                return AuthenticatorLookup.None;
+
+            // The same status lookup Fido2.MakeNewCredentialAsync uses to decide whether to reject a
+            // registration, so this shows exactly what the library itself would trust, not a separate view of it.
+            var latestStatus = entry.GetLatestStatusReport();
+
+            return new AuthenticatorLookup(
+                Description: statement.Description,
+                // MetadataStatement.Icon is a data: URI [RFC 2397] of a PNG, so it can be dropped straight into
+                // an <img src>. No dark-mode variant is populated on real MDS entries yet, even where the field
+                // exists.
+                Icon: statement.Icon,
+                CertificationStatus: latestStatus?.Status.ToString(),
+                CertificationUrl: latestStatus?.Url,
+                LastStatusChange: entry.TimeOfLastStatusChange,
+                MultiDeviceCredentialSupport: statement.MultiDeviceCredentialSupport,
+                AttestationTypes: statement.AttestationTypes,
+                KeyProtection: statement.KeyProtection,
+                MatcherProtection: statement.MatcherProtection,
+                ProtocolFamily: statement.ProtocolFamily,
+                ProtocolVersion: statement.Upv is { Length: > 0 } upv
+                    ? string.Join(", ", upv.Select(v => $"{v.Major}.{v.Minor}"))
+                    : null);
         }
         catch
         {
-            return null;
+            return AuthenticatorLookup.None;
         }
     }
 
@@ -386,20 +454,15 @@ public class PlaygroundController : Controller
             foreach (var c in DemoController.DemoStorage.GetCredentialsByUser(user))
             {
                 var id = Base64Url.EncodeToString(c.Id);
-                string? description = null;
-
-                try
-                {
-                    if (c.AaGuid != Guid.Empty)
-                        description = (await _metadataService.GetEntryAsync(c.AaGuid, cancellationToken))?.MetadataStatement?.Description;
-                }
-                catch { /* metadata is best-effort */ }
+                var authenticator = await DescribeAuthenticatorAsync(c.AaGuid, cancellationToken);
 
                 result.Add(new
                 {
                     id,
                     nickname = s_nicknames.TryGetValue(id, out var n) ? n : null,
-                    authenticator = description,
+                    authenticator = authenticator.Description,
+                    authenticatorIcon = authenticator.Icon,
+                    authenticatorDetails = ToTooltipDetails(authenticator),
                     aaguid = c.AaGuid.ToString(),
                     regDate = c.RegDate,
                     signCount = c.SignCount,
@@ -426,7 +489,7 @@ public class PlaygroundController : Controller
     public JsonResult SetNickname([FromForm] string credentialId, [FromForm] string nickname)
     {
         if (string.IsNullOrWhiteSpace(nickname))
-            s_nicknames.Remove(credentialId);
+            s_nicknames.TryRemove(credentialId, out _);
         else
             s_nicknames[credentialId] = nickname.Trim();
 
@@ -440,7 +503,7 @@ public class PlaygroundController : Controller
         try
         {
             var removed = DemoController.DemoStorage.RemoveCredential(Base64Url.DecodeFromChars(credentialId));
-            s_nicknames.Remove(credentialId);
+            s_nicknames.TryRemove(credentialId, out _);
 
             // A deleted credential is exactly the case WebAuthn L3 §5.1.10 exists for: the authenticator will
             // keep offering it until told otherwise. The page follows up with a signal call.

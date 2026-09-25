@@ -5,10 +5,10 @@
 
 <div class="section">
     <div class="container">
-        <h1 class="title is-1">Scenario: Usernameless</h1>
+        <h1 class="title is-1">Scenario: Passkey sign-in (usernameless)</h1>
         <div class="content">
-            <p>In this scenario we have removed the need for both usernames and passwords. The WebAuthn flow is very similiar to the paswordless flow, but when registering we require the resident key option. User account selection is handled by the client/authenticator. If multiple credentials are found, the user will be able to choose which credential to use.</p>
-            <p>Note: When we say passwordless, what we mean is that no password is sent over the internet or stored in a database. Password, PINs or Biometrics might be used by the authenticator on the client</p>
+            <p>This is the closest thing to a real passkey experience: no username, no password. Registering requires the resident key (discoverable credential) option, so the credential itself carries enough information for the authenticator to find it. Signing in, the user picks their account from whatever passkeys their device or credential manager offers &mdash; there is nothing to type.</p>
+            <p>Note: "passwordless" means no password is sent over the internet or stored in a database. A PIN or biometric might still be used locally, by the authenticator, to unlock the passkey.</p>
         </div>
 
         <div class="notification is-danger" id="notSupportedWarning" style="display:none">
@@ -19,7 +19,7 @@
             <div class="column is-4">
 
                 <h3 class="title is-3">Register user</h3>
-                <form action="/mfa" method="post" id="register">
+                <form action="/usernameless" method="post" id="register">
                     @*<div class="field">
                             <label class="label">Username</label>
                             <div class="control has-icons-left has-icons-right">
@@ -54,7 +54,7 @@
                 <h3 class="title is-3">Sign in</h3>
 
 
-                <form action="/mfa" method="post" id="signin">
+                <form action="/usernameless" method="post" id="signin">
                     @*<div class="field">
                             <label class="label">Username</label>
                             <div class="control has-icons-left has-icons-right">
@@ -81,13 +81,13 @@
 <div class="section">
     <div class="container">
         <div class="content">
-            <h1 class="title is-2">Explanation: Username and paswordless login with FIDO2</h1>
+            <h1 class="title is-2">Explanation: Passkey sign-in with FIDO2</h1>
             <p>
-                In this scenario, WebAuthn is used without a username to securely authenticate the user. This requires the Authenticator to support Resident Keys.
+                A passkey is a discoverable WebAuthn credential: one the authenticator can find on its own, without the Relying Party naming it by ID first. That's what makes typing a username unnecessary here, and it's what the resident key / <code>residentKey</code> option requests at registration.
                 The flow is visualized in the figure below.
             </p>
             <img src="~/images/scenario3.png" alt="figure visualizing username and challenge sent together with assertion" />
-            <p>In this flow the Relying Party should tell the Authenticator to do User Verification (set UserVerification to required) via Biometrics/pin, thus the authentication is MFA (Something the user has - the private key - and something the user knows/is - the PIN or biometrics). However in scenarios where security requirements are very low we we could discourage user verification to minimize the user interaction needed to sign in. If discouraged, only user presence will be checked (Any human is present at the device).</p>
+            <p>The Relying Party can still ask for user verification (PIN or biometrics) by setting <code>UserVerification</code> to required &mdash; two factors in one gesture, since unlocking the passkey both proves possession of the private key and verifies the person. Setting it to discouraged instead checks only user presence, minimizing the interaction needed to sign in.</p>
 
             <p>
                 Read the source code for this demo here: <a href="@Url.ToGithub("Demo/wwwroot/js/usernameless.register.js")">usernameless.register.js</a> and <a href="@Url.ToGithub("Demo/wwwroot/js/usernameless.login.js")">usernameless.login.js</a> &mdash; these set the options that make this scenario what it is. The ceremony they run is shared by every scenario and lives in <a href="@Url.ToGithub("Demo/wwwroot/js/webauthn.js")">webauthn.js</a>.
