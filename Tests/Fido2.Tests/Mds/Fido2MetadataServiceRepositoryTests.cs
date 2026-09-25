@@ -480,6 +480,48 @@ public class Fido2MetadataServiceRepositoryTests
         }
     }
 
+    // A non-root chain certificate that names no CRL distribution point at all must not be silently treated as
+    // "nothing to check" -- a well-formed chain's non-root certificates are expected to be checkable, so a missing
+    // CDP is itself suspicious, and the check happens before any HTTP request (the throwing factory proves it).
+    [Fact]
+    public async Task DeserializeAndValidateBlob_RejectsWhenChainCertHasNoCrlDistributionPoint()
+    {
+        var (root, leaf, leafKey) = BuildChain(leafHasCrlDistributionPoint: false);
+        using (root)
+        using (leaf)
+        using (leafKey)
+        {
+            string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var repository = new Fido2MetadataServiceRepository(new ThrowingHttpClientFactory());
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+                () => repository.DeserializeAndValidateBlobAsync(jwt, [root], CancellationToken.None));
+            Assert.Contains("has no CRL distribution point", ex.Message);
+        }
+    }
+
+    // The actual point of the whole check: a certificate whose serial number the CRL lists must be refused, not
+    // just a forged or stale CRL response. A genuine, validly-signed, current CRL that names the leaf as revoked.
+    [Fact]
+    public async Task DeserializeAndValidateBlob_RejectsWhenCertIsRevoked()
+    {
+        var (root, leaf, leafKey) = BuildChain();
+        using (root)
+        using (leaf)
+        using (leafKey)
+        {
+            string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var builder = new CertificateRevocationListBuilder();
+            builder.AddEntry(leaf, DateTimeOffset.UtcNow.AddDays(-1));
+            byte[] crl = builder.Build(root, crlNumber: 1, DateTimeOffset.UtcNow.AddDays(7), HashAlgorithmName.SHA256);
+            var repository = new Fido2MetadataServiceRepository(new CrlServingHttpClientFactory(crl));
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+                () => repository.DeserializeAndValidateBlobAsync(jwt, [root], CancellationToken.None));
+            Assert.Contains("found in CRL", ex.Message);
+        }
+    }
+
     [Fact]
     public async Task DeserializeAndValidateBlob_RejectsWhenChainDoesNotPinToProvidedRoot()
     {
