@@ -96,4 +96,26 @@ public class ExistingU2fRegistrationDataTests
 
         return coseKey;
     }
+
+    [Fact]
+    public void AppIdExtensionInputReachesTheClientAndSurvivesTheRoundTrip()
+    {
+        // The Relying Party only learns the assertion was made under the AppID from clientExtensionResults.appid,
+        // and the client only sets that when the options it received asked for the extension.
+        var options = new AssertionOptions
+        {
+            Challenge = RandomNumberGenerator.GetBytes(16),
+            RpId = "localhost",
+            Extensions = new AuthenticationExtensionsClientInputs { AppID = "https://localhost:44336" }
+        };
+
+        var json = options.ToJson();
+
+        Assert.Contains("\"appid\":\"https://localhost:44336\"", json);
+        Assert.Equal("https://localhost:44336", AssertionOptions.FromJson(json).Extensions.AppID);
+
+        // and an options object that did not ask for it does not mention it
+        options.Extensions.AppID = null;
+        Assert.DoesNotContain("appid", options.ToJson());
+    }
 }

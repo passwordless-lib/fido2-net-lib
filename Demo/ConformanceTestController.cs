@@ -150,12 +150,14 @@ public class ConformanceTestController : Controller
         if (null != assertionClientParams.authenticatorSelection)
             uv = assertionClientParams.authenticatorSelection.UserVerification;
 
+        // The conformance tools have no appid test, and Server-ServerPublicKeyCredentialGetOptionsResponse-Req-1
+        // P-1 expects the options' extensions to be what the request asked for, so the appid extension (which
+        // now serializes to the client like any other input) is not requested here.
         // uvm was removed in WebAuthn L3, but the FIDO conformance tool still exercises it, so this controller
         // keeps requesting it deliberately.
 #pragma warning disable CS0618
         var exts = new AuthenticationExtensionsClientInputs
         {
-            AppID = _origin,
             UserVerificationMethod = true
         };
 #pragma warning restore CS0618
