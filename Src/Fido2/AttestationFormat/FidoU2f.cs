@@ -85,20 +85,11 @@ internal sealed class FidoU2f : AttestationVerifier
         if (!request.TryGetSig(out byte[]? sig))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, Fido2ErrorMessages.InvalidFidoU2fAttestationSignature);
 
-        byte[] ecsig;
-        try
-        {
-            ecsig = CryptoUtils.SigFromEcDsaSig(sig, pubKey.KeySize);
-        }
-        catch (Exception ex)
-        {
-            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex);
-        }
-
         var coseAlg = (COSE.Algorithm)(int)request.CredentialPublicKey[COSE.KeyCommonParameter.Alg];
         var hashAlg = CryptoUtils.HashAlgFromCOSEAlg(coseAlg);
 
-        if (!pubKey.VerifyData(verificationData, ecsig, hashAlg))
+        // The signature is the DER Ecdsa-Sig-Value of WebAuthn §6.5.6; a malformed one simply fails to verify.
+        if (!pubKey.VerifyData(verificationData, sig, hashAlg, DSASignatureFormat.Rfc3279DerSequence))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Invalid fido-u2f attestation signature");
 
         // 7. Optionally, inspect x5c and consult externally provided knowledge to determine whether attStmt conveys a Basic or AttCA attestation

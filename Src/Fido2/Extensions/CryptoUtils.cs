@@ -273,52 +273,6 @@ internal static class CryptoUtils
         return false;
     }
 
-    public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
-    {
-        var decoded = Asn1Element.Decode(ecDsaSig);
-        var r = decoded[0].GetIntegerBytes();
-        var s = decoded[1].GetIntegerBytes();
-
-        // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
-        // ASN.1 requires storing positive integer values with any leading 0s removed
-        // Convert ASN.1 format to IEEE P-1363 format
-        // determine coefficient size
-
-        // common coefficient sizes include: 32, 48, and 64
-        var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
-
-        // Create buffer to copy R into
-        Span<byte> p1363R = coefficientSize <= 64
-            ? stackalloc byte[coefficientSize]
-            : new byte[coefficientSize];
-
-        if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
-        {
-            r.Slice(1).CopyTo(p1363R.Slice(coefficientSize - r.Length + 1));
-        }
-        else
-        {
-            r.CopyTo(p1363R.Slice(coefficientSize - r.Length));
-        }
-
-        // Create byte array to copy S into
-        Span<byte> p1363S = coefficientSize <= 64
-            ? stackalloc byte[coefficientSize]
-            : new byte[coefficientSize];
-
-        if (0x0 == s[0] && (s[1] & (1 << 7)) != 0)
-        {
-            s.Slice(1).CopyTo(p1363S.Slice(coefficientSize - s.Length + 1));
-        }
-        else
-        {
-            s.CopyTo(p1363S.Slice(coefficientSize - s.Length));
-        }
-
-        // Concatenate R + S coordinates and return the raw signature
-        return [.. p1363R, .. p1363S];
-    }
-
     /// <summary>
     /// Finds the first HTTP or HTTPS location in the certificate's CRL Distribution Points extension.
     /// </summary>
