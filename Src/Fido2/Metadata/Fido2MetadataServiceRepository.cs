@@ -60,10 +60,11 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
     /// accepted, or MDS validation fails on exactly the platforms most likely to already trust the FIDO root.
     /// </summary>
     /// <remarks>
-    /// Verbatim from GlobalSign's own published copy at
-    /// <see href="https://valid.r46.roots.globalsign.com/"/>, whose "Base64" section is this same cert; the
-    /// underlying data was diffed byte-for-byte against it, and the line wrap below matches
-    /// <see cref="ROOT_CERT"/>'s (64 base64 characters per line, the same as a PEM export).
+    /// FIDO Alliance's own metadata documentation, <see href="https://fidoalliance.org/metadata/"/> (retrieved
+    /// 2026-09-24), names R46 as the current root and links to GlobalSign's published copy at
+    /// <see href="https://valid.r46.roots.globalsign.com/"/> (retrieved 2026-09-25), whose "Base64" section is
+    /// this same cert verbatim -- the underlying data was diffed byte-for-byte against it, and the line wrap
+    /// below matches <see cref="ROOT_CERT"/>'s (64 base64 characters per line, the same as a PEM export).
     /// </remarks>
     private static ReadOnlySpan<byte> ROOT_CERT_R46 =>
         "MIIFWjCCA0KgAwIBAgISEdK7udcjGJ5AXwqdLdDfJWfRMA0GCSqGSIb3DQEBDAUA"u8 +
