@@ -193,6 +193,10 @@ public class DemoController : Controller
                 ?? throw new InvalidOperationException("Registration session expired. Start the registration again.");
             var options = CredentialCreateOptions.FromJson(jsonOptions);
 
+            // A challenge is good for one attempt. Removed before verifying, so a response cannot be replayed
+            // against it -- whether this attempt succeeds or fails.
+            HttpContext.Session.Remove("fido2.attestationOptions");
+
             // 2. Create callback so that lib can verify credential id is unique to this user
             IsCredentialIdUniqueToUserAsyncDelegate callback = static async (args, cancellationToken) =>
             {
@@ -299,6 +303,10 @@ public class DemoController : Controller
             var jsonOptions = HttpContext.Session.GetString("fido2.assertionOptions")
                 ?? throw new InvalidOperationException("Sign-in session expired. Start the sign-in again.");
             var options = AssertionOptions.FromJson(jsonOptions);
+
+            // A challenge is good for one attempt. Removed before verifying: a passkey whose signature counter is
+            // always 0 has no counter to catch a replay, so this is the only thing that does.
+            HttpContext.Session.Remove("fido2.assertionOptions");
 
             // 2. Get registered credential from database
             var creds = DemoStorage.GetCredentialById(clientResponse.RawId) ?? throw new Exception("Unknown credentials");

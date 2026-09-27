@@ -98,10 +98,17 @@ async function decodeCeremonyResponse(response) {
     renderResponseSummary(decoded);
 }
 
-// MetadataStatement.Icon/IconDark are data: URIs [RFC 2397], safe to drop straight into an <img src> --
-// base64 and the fixed "data:image/png;..." prefix can't contain a quote to break out of the attribute.
+// MetadataStatement.Icon/IconDark are data: URIs [RFC 2397]. Only an image data: URI is used, and it is escaped
+// like any other attribute value rather than trusted not to contain a quote.
 function authenticatorIconTag(dataUri) {
-    return dataUri ? '<img class="pg-authenticator-icon" src="' + dataUri + '" alt="" />' : '';
+    return typeof dataUri === 'string' && dataUri.startsWith('data:image/')
+        ? '<img class="pg-authenticator-icon" src="' + escapeHtml(dataUri) + '" alt="" />'
+        : '';
+}
+
+// A link target from metadata, if it is an ordinary web URL -- never javascript: or the like.
+function safeHttpUrl(url) {
+    return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null;
 }
 
 // Builds the hover tooltip content from a PlaygroundController "*Details" object (everything MDS reports
@@ -111,28 +118,30 @@ function authenticatorTooltipContent(details) {
         return '';
     }
 
+    // Each row's value is HTML, so everything taken from the details object is escaped on the way in.
     const rows = [];
     if (details.certificationStatus) {
-        rows.push(['Certification', details.certificationStatus
-            + (details.certificationUrl ? ' (<a href="' + details.certificationUrl + '" target="_blank" rel="noopener">record</a>)' : '')]);
+        const recordUrl = safeHttpUrl(details.certificationUrl);
+        rows.push(['Certification', escapeHtml(details.certificationStatus)
+            + (recordUrl ? ' (<a href="' + escapeHtml(recordUrl) + '" target="_blank" rel="noopener">record</a>)' : '')]);
     }
     if (details.lastStatusChange) {
-        rows.push(['Last status change', details.lastStatusChange]);
+        rows.push(['Last status change', escapeHtml(details.lastStatusChange)]);
     }
     if (details.multiDeviceCredentialSupport) {
-        rows.push(['Multi-device credentials', details.multiDeviceCredentialSupport]);
+        rows.push(['Multi-device credentials', escapeHtml(details.multiDeviceCredentialSupport)]);
     }
     if (details.attestationTypes && details.attestationTypes.length) {
-        rows.push(['Attestation types', details.attestationTypes.join(', ')]);
+        rows.push(['Attestation types', escapeHtml(details.attestationTypes.join(', '))]);
     }
     if (details.keyProtection && details.keyProtection.length) {
-        rows.push(['Key protection', details.keyProtection.join(', ')]);
+        rows.push(['Key protection', escapeHtml(details.keyProtection.join(', '))]);
     }
     if (details.matcherProtection && details.matcherProtection.length) {
-        rows.push(['Matcher protection', details.matcherProtection.join(', ')]);
+        rows.push(['Matcher protection', escapeHtml(details.matcherProtection.join(', '))]);
     }
     if (details.protocolFamily) {
-        rows.push(['Protocol', details.protocolFamily + (details.protocolVersion ? ' ' + details.protocolVersion : '')]);
+        rows.push(['Protocol', escapeHtml(details.protocolFamily + (details.protocolVersion ? ' ' + details.protocolVersion : ''))]);
     }
 
     if (!rows.length) {
@@ -225,23 +234,24 @@ function renderResponseSummary(decoded) {
         + flagTag('ED', f.ed, 'Extension data included')
         + '</div>';
 
-    html += '<p><strong>Sign count:</strong> ' + authData.signCount + '</p>';
+    // Everything below was decoded from what the authenticator sent, so it is escaped like any other input.
+    html += '<p><strong>Sign count:</strong> ' + escapeHtml(authData.signCount) + '</p>';
 
     if (decoded.decoded.fmt) {
-        html += '<p><strong>Attestation format:</strong> <code>' + decoded.decoded.fmt + '</code></p>';
+        html += '<p><strong>Attestation format:</strong> <code>' + escapeHtml(decoded.decoded.fmt) + '</code></p>';
     }
 
     const acd = authData.attestedCredentialData;
     if (acd) {
-        let aaguidLabel = '<strong>AAGUID:</strong> <code>' + acd.aaguid + '</code>';
+        let aaguidLabel = '<strong>AAGUID:</strong> <code>' + escapeHtml(acd.aaguid) + '</code>';
         if (acd.aaguidDescription) {
-            aaguidLabel += ' &mdash; ' + acd.aaguidDescription + ' <span class="tag is-info is-light">FIDO MDS</span>';
+            aaguidLabel += ' &mdash; ' + escapeHtml(acd.aaguidDescription) + ' <span class="tag is-info is-light">FIDO MDS</span>';
         } else {
             aaguidLabel += ' <span class="tag is-light">not in metadata</span>';
         }
         html += '<p>' + authenticatorBadge(acd.aaguidIcon, aaguidLabel, acd.aaguidDetails) + '</p>';
-        html += '<p><strong>Credential ID:</strong> <code>' + acd.credentialId + '</code> ('
-            + acd.credentialIdLength + ' bytes)</p>';
+        html += '<p><strong>Credential ID:</strong> <code>' + escapeHtml(acd.credentialId) + '</code> ('
+            + escapeHtml(acd.credentialIdLength) + ' bytes)</p>';
     }
 
     document.getElementById('pg-response-summary').innerHTML = html;
@@ -294,21 +304,23 @@ function securityKeyIconTag() {
     return '<img class="pg-category-icon" src="/images/passkey-security-key.svg" alt="" />';
 }
 
+// A nickname is set by anyone who can reach the page, for any credential, and shown to everyone who looks at
+// that user's credentials -- so every value here is escaped, not only the ones that look user-supplied.
 function credentialRow(c) {
     return '<tr>'
-        + '<td><input class="input is-small pg-nickname" data-id="' + c.id + '" value="'
-            + (c.nickname || '') + '" placeholder="name this key" /></td>'
+        + '<td><input class="input is-small pg-nickname" data-id="' + escapeHtml(c.id) + '" value="'
+            + escapeHtml(c.nickname) + '" placeholder="name this key" /></td>'
         + '<td>' + authenticatorBadge(c.authenticatorIcon,
-            c.authenticator || '<span class="has-text-grey">not in metadata</span>', c.authenticatorDetails) + '</td>'
+            c.authenticator ? escapeHtml(c.authenticator) : '<span class="has-text-grey">not in metadata</span>', c.authenticatorDetails) + '</td>'
         + '<td>' + new Date(c.regDate).toISOString().slice(0, 16).replace('T', ' ') + '</td>'
-        + '<td>' + c.signCount + '</td>'
-        + '<td>' + c.attestationFormat + '</td>'
-        + '<td>' + (c.transports.length ? c.transports.join(', ') : '<span class="has-text-grey">none</span>') + '</td>'
+        + '<td>' + escapeHtml(c.signCount) + '</td>'
+        + '<td>' + escapeHtml(c.attestationFormat) + '</td>'
+        + '<td>' + (c.transports.length ? escapeHtml(c.transports.join(', ')) : '<span class="has-text-grey">none</span>') + '</td>'
         + '<td>' + tri(c.isDiscoverable, 'yes', 'no', 'The client did not report credProps.rk') + '</td>'
         + '<td>' + tri(c.uvInitialized, 'yes', 'no', '') + '</td>'
         + '<td>' + tri(c.isBackupEligible, 'yes', 'no', '') + '</td>'
         + '<td>' + tri(c.isBackedUp, 'yes', 'no', '') + '</td>'
-        + '<td><button class="button is-small is-danger is-light pg-delete" data-id="' + c.id + '">Delete</button></td>'
+        + '<td><button class="button is-small is-danger is-light pg-delete" data-id="' + escapeHtml(c.id) + '">Delete</button></td>'
         + '</tr>';
 }
 

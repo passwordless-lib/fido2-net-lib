@@ -1,9 +1,24 @@
 ﻿// HELPERS
 
+/**
+ * Escapes a value for use in HTML text or in a quoted attribute. Every string the server or an authenticator
+ * supplies goes through this before it is concatenated into markup: a nickname is whatever anyone typed, and a
+ * ceremony response is whatever the authenticator (or whoever is scripting the client) sent.
+ */
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function showErrorAlert(message, error) {
     let footermsg = '';
     if (error) {
-        footermsg = 'exception: ' + error.toString();
+        // sweetalert2 renders the footer as HTML, unlike the text
+        footermsg = escapeHtml('exception: ' + error.toString());
     }
     Swal.fire({
         // sweetalert2 renamed "type" to "icon" in v8; the old name is silently ignored, which is why these
