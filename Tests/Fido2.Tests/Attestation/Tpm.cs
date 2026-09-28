@@ -5387,6 +5387,68 @@ public class Tpm : Fido2Tests.Attestation
         Assert.Equal("Leftover bits decoding certInfo", ex.Message);
     }
 
+    // TPM_ALG_SHA1's own numeric value is 4, which NameFromTPM2BName's "if (size is 4)" check treats as a handle
+    // rather than a name -- so a SHA1 name, unlike SHA256/384/512, can never actually reach CertInfo through this
+    // parser; SHA256 is used here to exercise the fields this parser can produce, including
+    // AttestedQualifiedNameBuffer, which nothing else asserts on.
+    [Fact]
+    public void TestCertInfoParsesEveryField()
+    {
+        byte[] tpmAlgSha256 = GetUInt16BigEndianBytes((ushort)TpmAlg.TPM_ALG_SHA256);
+        byte[] digest = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray(); // SHA256.HashSizeInBytes
+        byte[] tpm2bName = [.. GetUInt16BigEndianBytes(tpmAlgSha256.Length + digest.Length), .. tpmAlgSha256, .. digest];
+        byte[] attestedQualifiedNameBuffer = [0x00, 0x04, 0xAA, 0xBB, 0xCC, 0xDD];
+
+        byte[] certInfo = CertInfoHelper.CreateCertInfo(
+            new byte[] { 0x47, 0x43, 0x54, 0xff }.Reverse().ToArray(), // Magic
+            new byte[] { 0x17, 0x80 }.Reverse().ToArray(), // Type
+            [0x00, 0x01, 0x00], // QualifiedSigner
+            [0x00, 0x01, 0x00], // ExtraData
+            [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // Clock
+            [0x00, 0x00, 0x00, 0x00], // ResetCount
+            [0x00, 0x00, 0x00, 0x00], // RestartCount
+            [0x00], // Safe
+            [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // FirmwareVersion
+            tpm2bName,
+            attestedQualifiedNameBuffer
+        );
+
+        var parsed = new CertInfo(certInfo);
+
+        Assert.Equal((ushort)TpmAlg.TPM_ALG_SHA256, parsed.Alg);
+        Assert.Equal(digest, parsed.AttestedName);
+        Assert.Equal(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }, parsed.AttestedQualifiedNameBuffer);
+        Assert.Equal(HashAlgorithmName.SHA256, parsed.NameHashAlgorithm);
+    }
+
+    // TPM_ALG_SHA1 = 4, and NameFromTPM2BName's "if (size is 4)" check means a SHA1 name can never actually reach
+    // CertInfo.NameHashAlgorithm through the real parser -- see TestCertInfoParsesEveryField. Proven directly
+    // against the mapping function itself, since the instance property cannot be exercised for this one case.
+    [Fact]
+    public void ToHashAlgorithmNameMapsTpmAlgSha1()
+    {
+        Assert.Equal("SHA1", CertInfo.ToHashAlgorithmName(TpmAlg.TPM_ALG_SHA1).Name);
+    }
+
+    [Theory]
+    [InlineData(TpmAlg.TPM_ALG_SHA256, "SHA256")]
+    [InlineData(TpmAlg.TPM_ALG_SHA384, "SHA384")]
+    [InlineData(TpmAlg.TPM_ALG_SHA512, "SHA512")]
+    public void ToHashAlgorithmNameMapsEachSupportedTpmAlg(TpmAlg alg, string expectedHashAlgorithm)
+    {
+        Assert.Equal(expectedHashAlgorithm, CertInfo.ToHashAlgorithmName(alg).Name);
+    }
+
+    // Unreachable through CertInfo's own constructor, which already restricts Alg to the four TPM_ALG_ID SHA
+    // variants above -- see ToHashAlgorithmName's remarks. Tested directly so the defensive default case is
+    // proven correct even though nothing in the current parser can trigger it.
+    [Fact]
+    public void ToHashAlgorithmNameRejectsATpmAlgThatIsNotASupportedHash()
+    {
+        var ex = Assert.Throws<Fido2VerificationException>(() => CertInfo.ToHashAlgorithmName(TpmAlg.TPM_ALG_RSA));
+        Assert.Equal("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm", ex.Message);
+    }
+
     [Fact]
     public void TestPubAreaAltKeyedHash()
     {

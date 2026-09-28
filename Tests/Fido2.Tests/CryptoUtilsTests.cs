@@ -116,13 +116,18 @@ public class CryptoUtilsTests
         Assert.False(CryptoUtils.ValidateTrustChain(certs, otherCerts));
     }
 
+    // 4/11/12/13 are TPM_ALG_ID values (TPM_ALG_SHA1/RSASSA/RSAPSS/ECDSA-with-SHA-256/384/512 depending on context),
+    // not COSE algorithm identifiers; they must not be accepted here even though they happen to collide with real
+    // COSE values. TPM's own hash algorithm is resolved separately, via CertInfo.NameHashAlgorithm.
     [Theory]
-    [InlineData((COSE.Algorithm)11, "SHA256")] // TPM_ALG_RSASSA / TPM_ALG_ECDSA with SHA-256
-    [InlineData((COSE.Algorithm)12, "SHA384")] // TPM_ALG_RSASSA / TPM_ALG_ECDSA with SHA-384
-    [InlineData((COSE.Algorithm)13, "SHA512")] // TPM_ALG_RSASSA / TPM_ALG_ECDSA with SHA-512
-    public void HashAlgFromCOSEAlgMapsTpmSchemeIdentifiers(COSE.Algorithm alg, string expectedHashAlgorithm)
+    [InlineData((COSE.Algorithm)4)]
+    [InlineData((COSE.Algorithm)11)]
+    [InlineData((COSE.Algorithm)12)]
+    [InlineData((COSE.Algorithm)13)]
+    public void HashAlgFromCOSEAlgRejectsTpmAlgIdValuesSmuggledAsCoseAlgorithms(COSE.Algorithm alg)
     {
-        Assert.Equal(expectedHashAlgorithm, CryptoUtils.HashAlgFromCOSEAlg(alg).Name);
+        var ex = Assert.Throws<Fido2VerificationException>(() => CryptoUtils.HashAlgFromCOSEAlg(alg));
+        Assert.Equal(Fido2ErrorMessages.InvalidCoseAlgorithmValue, ex.Message);
     }
 
     [Fact]

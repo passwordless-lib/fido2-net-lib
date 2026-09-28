@@ -29,6 +29,11 @@ internal static class CryptoUtils
         #pragma warning restore format
     }
 
+    /// <summary>
+    /// The digest a COSE signature algorithm applies to the data it signs.
+    /// </summary>
+    /// <exception cref="Fido2VerificationException">The algorithm is unknown, or is one that signs the message
+    /// directly and so has no digest to name (EdDSA).</exception>
     public static HashAlgorithmName HashAlgFromCOSEAlg(COSE.Algorithm alg)
     {
         return alg switch
@@ -44,15 +49,9 @@ internal static class CryptoUtils
             COSE.Algorithm.RS384 => HashAlgorithmName.SHA384,
             COSE.Algorithm.RS512 => HashAlgorithmName.SHA512,
             COSE.Algorithm.ES256K => HashAlgorithmName.SHA256,
-            (COSE.Algorithm)4 => HashAlgorithmName.SHA1,
-            (COSE.Algorithm)11 => HashAlgorithmName.SHA256,
-            (COSE.Algorithm)12 => HashAlgorithmName.SHA384,
-            (COSE.Algorithm)13 => HashAlgorithmName.SHA512,
-            COSE.Algorithm.EdDSA => HashAlgorithmName.SHA512,
             COSE.Algorithm.ESP256 => HashAlgorithmName.SHA256,
             COSE.Algorithm.ESP384 => HashAlgorithmName.SHA384,
             COSE.Algorithm.ESP512 => HashAlgorithmName.SHA512,
-            COSE.Algorithm.Ed25519 => HashAlgorithmName.SHA512,
             _ => throw new Fido2VerificationException(Fido2ErrorMessages.InvalidCoseAlgorithmValue),
         };
     }
@@ -271,52 +270,6 @@ internal static class CryptoUtils
         }
 
         return false;
-    }
-
-    public static byte[] SigFromEcDsaSig(byte[] ecDsaSig, int keySize)
-    {
-        var decoded = Asn1Element.Decode(ecDsaSig);
-        var r = decoded[0].GetIntegerBytes();
-        var s = decoded[1].GetIntegerBytes();
-
-        // .NET requires IEEE P-1363 fixed size unsigned big endian values for R and S
-        // ASN.1 requires storing positive integer values with any leading 0s removed
-        // Convert ASN.1 format to IEEE P-1363 format
-        // determine coefficient size
-
-        // common coefficient sizes include: 32, 48, and 64
-        var coefficientSize = (int)Math.Ceiling((decimal)keySize / 8);
-
-        // Create buffer to copy R into
-        Span<byte> p1363R = coefficientSize <= 64
-            ? stackalloc byte[coefficientSize]
-            : new byte[coefficientSize];
-
-        if (0x0 == r[0] && (r[1] & (1 << 7)) != 0)
-        {
-            r.Slice(1).CopyTo(p1363R.Slice(coefficientSize - r.Length + 1));
-        }
-        else
-        {
-            r.CopyTo(p1363R.Slice(coefficientSize - r.Length));
-        }
-
-        // Create byte array to copy S into
-        Span<byte> p1363S = coefficientSize <= 64
-            ? stackalloc byte[coefficientSize]
-            : new byte[coefficientSize];
-
-        if (0x0 == s[0] && (s[1] & (1 << 7)) != 0)
-        {
-            s.Slice(1).CopyTo(p1363S.Slice(coefficientSize - s.Length + 1));
-        }
-        else
-        {
-            s.CopyTo(p1363S.Slice(coefficientSize - s.Length));
-        }
-
-        // Concatenate R + S coordinates and return the raw signature
-        return [.. p1363R, .. p1363S];
     }
 
     /// <summary>

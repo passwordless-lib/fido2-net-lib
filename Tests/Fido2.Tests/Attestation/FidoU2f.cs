@@ -163,7 +163,7 @@ public class FidoU2f : Fido2Tests.Attestation
     {
         ((CborMap)_attestationObject["attStmt"]).Set("sig", new CborByteString([0xf1, 0xd0]));
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
-        Assert.Equal("Failed to decode fido-u2f attestation signature from ASN.1 encoded form", ex.Message);
+        Assert.Equal("Invalid fido-u2f attestation signature", ex.Message);
     }
     [Fact]
     public async Task TestU2fBadSig()

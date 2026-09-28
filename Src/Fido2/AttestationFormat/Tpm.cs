@@ -183,7 +183,7 @@ internal sealed class Tpm : AttestationVerifier
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch extraData and attToBeSigned");
 
         // 4d. Verify that attested contains a TPMS_CERTIFY_INFO structure, whose name field contains a valid Name for pubArea, as computed using the algorithm in the nameAlg field of pubArea
-        ReadOnlySpan<byte> pubAreaRawHash = CryptoUtils.HashData(CryptoUtils.HashAlgFromCOSEAlg((COSE.Algorithm)certInfo.Alg), pubArea.Raw);
+        ReadOnlySpan<byte> pubAreaRawHash = CryptoUtils.HashData(certInfo.NameHashAlgorithm, pubArea.Raw);
 
         if (!pubAreaRawHash.SequenceEqual(certInfo.AttestedName))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Hash value mismatch attested and pubArea");
@@ -606,6 +606,26 @@ public sealed class CertInfo
     public ushort Alg { get; }
     public byte[] AttestedName { get; }
     public byte[] AttestedQualifiedNameBuffer { get; }
+
+    /// <summary>
+    /// The hash algorithm that <see cref="Alg"/>, a TPM_ALG_ID, names; <see cref="AttestedName"/> is a digest computed
+    /// with it. The constructor has already rejected any value that is not one of the four below.
+    /// </summary>
+    internal HashAlgorithmName NameHashAlgorithm => ToHashAlgorithmName((TpmAlg)Alg);
+
+    /// <summary>
+    /// Maps a TPM_ALG_ID to the hash algorithm it names. A free-standing method, rather than inlined into
+    /// <see cref="NameHashAlgorithm"/>, so the default case -- unreachable through the constructor, which already
+    /// restricts <see cref="Alg"/> to one of the four below -- can still be exercised directly by a test.
+    /// </summary>
+    internal static HashAlgorithmName ToHashAlgorithmName(TpmAlg alg) => alg switch
+    {
+        TpmAlg.TPM_ALG_SHA1 => HashAlgorithmName.SHA1,
+        TpmAlg.TPM_ALG_SHA256 => HashAlgorithmName.SHA256,
+        TpmAlg.TPM_ALG_SHA384 => HashAlgorithmName.SHA384,
+        TpmAlg.TPM_ALG_SHA512 => HashAlgorithmName.SHA512,
+        _ => throw new Fido2VerificationException("TPM_ALG_ID found in TPM2B_NAME not acceptable hash algorithm"),
+    };
 
     private static readonly Dictionary<TpmAlg, ushort> s_tpmAlgToDigestSizeMap = new()
     {

@@ -141,16 +141,8 @@ public sealed class CredentialPublicKey
         switch (_type)
         {
             case COSE.KeyType.EC2:
-                byte[] ecsig;
-                try
-                {
-                    ecsig = CryptoUtils.SigFromEcDsaSig(signature.ToArray(), _ecdsa!.KeySize);
-                }
-                catch (Exception ex)
-                {
-                    throw new Fido2VerificationException(Fido2ErrorCode.InvalidSignature, Fido2ErrorMessages.InvalidSignature, ex);
-                }
-                return _ecdsa!.VerifyData(data, ecsig, CryptoUtils.HashAlgFromCOSEAlg(_alg));
+                // The signature is the DER Ecdsa-Sig-Value of WebAuthn §6.5.6; a malformed one simply fails to verify.
+                return _ecdsa!.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), DSASignatureFormat.Rfc3279DerSequence);
 
             case COSE.KeyType.RSA:
                 return _rsa!.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);

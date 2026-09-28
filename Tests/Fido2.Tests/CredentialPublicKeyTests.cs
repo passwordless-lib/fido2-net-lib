@@ -46,6 +46,22 @@ public class CredentialPublicKeyTests
         Assert.True(credentialPublicKey.Verify(signedData, signature));
     }
 
+    // The signature is the DER Ecdsa-Sig-Value WebAuthn §6.5.6 describes; ECDsa.VerifyData is asked to parse it
+    // directly (DSASignatureFormat.Rfc3279DerSequence) rather than through a hand-rolled conversion. A signature
+    // that isn't well-formed DER, or is DER but not a valid Ecdsa-Sig-Value, must fail verification like any other
+    // wrong signature -- not throw -- since it is attacker-controlled input on every assertion and registration.
+    [Theory]
+    [InlineData(new byte[] { })]                   // empty
+    [InlineData(new byte[] { 0x30, 0x00 })]         // well-formed DER, empty SEQUENCE
+    [InlineData(new byte[] { 0xf1, 0xd0 })]         // not DER at all
+    public void Ec2VerifyReturnsFalseRatherThanThrowingOnAMalformedSignature(byte[] signature)
+    {
+        using var ecDsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var credentialPublicKey = new CredentialPublicKey(ecDsa, COSE.Algorithm.ES256);
+
+        Assert.False(credentialPublicKey.Verify(RandomNumberGenerator.GetBytes(64), signature));
+    }
+
     [Theory]
     // A 31-byte (not 32) EC2 x-coordinate. Left to ECDsa.Create, this surfaces as a raw CryptographicException
     // whose exact type/HResult depends on the platform's crypto backend; CredentialPublicKey now rejects the

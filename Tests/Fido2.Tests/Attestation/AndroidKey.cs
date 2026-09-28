@@ -254,10 +254,7 @@ public class AndroidKey : Fido2Tests.Attestation
         var attStmt = (CborMap)_attestationObject["attStmt"];
         attStmt.Set("sig", new CborByteString([0xf1, 0xd0]));
         var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
-        Assert.Equal("Failed to decode android key attestation signature from ASN.1 encoded form", ex.Message);
-
-        var innerException = (AsnContentException)ex.InnerException;
-        Assert.Equal("The ASN.1 value is invalid.", innerException.Message);
+        Assert.Equal("Invalid android-key attestation signature", ex.Message);
     }
 
     [Fact]
