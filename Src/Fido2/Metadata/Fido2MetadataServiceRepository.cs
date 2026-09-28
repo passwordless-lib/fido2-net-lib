@@ -467,24 +467,41 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
     }
 
     /// <summary>
-    /// Checks every non-self-issued certificate in the chain against the CRL its distribution point names.
+    /// Checks every non-root certificate in the chain against the CRL its distribution point names.
     /// </summary>
+    /// <remarks>
+    /// The distribution point is a plain http(s) URL, so whatever it returns proves nothing on its own until
+    /// its signature has been verified against the issuing certificate (the next element up the chain) and its
+    /// <c>nextUpdate</c> time checked -- otherwise a forged or replayed CRL response could be used to hide a
+    /// real revocation. A CRL that fails either check is treated as unusable, the same as one that could not be
+    /// fetched at all: see <see cref="CryptoUtils.IsCertInCRL(ReadOnlyMemory{byte}, X509Certificate2, X509Certificate2, DateTimeOffset?)"/>.
+    /// </remarks>
     private async Task VerifyNoCertificateIsRevokedAsync(X509Chain certChain, CancellationToken cancellationToken)
     {
-        foreach (var element in certChain.ChainElements)
+        // The last element is the trust anchor: it has no issuer above it, and no CRL of its own covers it.
+        for (int i = 0; i < certChain.ChainElements.Count - 1; i++)
         {
-            // A self-issued certificate is the trust anchor, which no CRL of its own covers.
-            if (element.Certificate.Issuer == element.Certificate.Subject)
-                continue;
+            var certificate = certChain.ChainElements[i].Certificate;
+            var issuer = certChain.ChainElements[i + 1].Certificate;
 
-            if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
-                throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
+            if (!CryptoUtils.TryGetCrlDistributionPointUrl(certificate, out var cdp))
+                throw new Fido2VerificationException($"Cert {certificate.Subject} has no CRL distribution point");
 
             using var client = _httpClientFactory.CreateClient();
             var crlFile = await client.GetByteArrayAsync(cdp, cancellationToken);
 
-            if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))
-                throw new Fido2VerificationException($"Cert {element.Certificate.Subject} found in CRL {cdp}");
+            bool isRevoked;
+            try
+            {
+                isRevoked = CryptoUtils.IsCertInCRL(crlFile, certificate, issuer, DateTimeOffset.UtcNow);
+            }
+            catch (CryptographicException ex)
+            {
+                throw new Fido2VerificationException($"The CRL at {cdp} could not be used to check {certificate.Subject}: {ex.Message}", ex);
+            }
+
+            if (isRevoked)
+                throw new Fido2VerificationException($"Cert {certificate.Subject} found in CRL {cdp}");
         }
     }
 }
