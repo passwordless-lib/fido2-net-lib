@@ -20,7 +20,7 @@ internal static class PublicKeyCredentialDescriptorExtensions
         foreach (PublicKeyCredentialDescriptor item in list)
         {
             result.Add(item.ToCborObject());
-        };
+        }
 
         return result;
     }

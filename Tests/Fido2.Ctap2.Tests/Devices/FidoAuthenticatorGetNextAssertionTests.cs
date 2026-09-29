@@ -1,4 +1,4 @@
-using Fido2NetLib.Ctap2.Exceptions;
+﻿using Fido2NetLib.Ctap2.Exceptions;
 
 namespace Fido2NetLib.Ctap2.Tests;
 

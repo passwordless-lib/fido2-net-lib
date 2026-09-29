@@ -33,7 +33,7 @@ public class FidoEnumConverterTests
     public void CorrectlyDeserializesNumericEnumValue()
     {
         Assert.Equal(CredentialProtectionPolicy.UserVerificationRequired, JsonSerializer.Deserialize<CredentialProtectionPolicy>($"{CredentialProtectionPolicy.UserVerificationRequired:d}"));
-        
+
 #if NET8_0
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CredentialProtectionPolicy>($"99"));
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CredentialProtectionPolicy>($"99.7"));
