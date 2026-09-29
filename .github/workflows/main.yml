@@ -177,6 +177,73 @@ jobs:
           --no-build
           --configuration Release
 
+      # Fido2.WithoutNSec is the same Src/Fido2/Fido2.csproj, packed a second time with the Fido2.NSec
+      # dependency and its own project reference left out -- see Documentation/building-without-nsec.md. Its
+      # own restore/build/pack sequence (rather than reusing the one above) is deliberate: overriding
+      # PackageId on an already-restored, already-built project produces a NuGet "ambiguous project name"
+      # error, confirmed while developing this locally. A separate obj/bin (via -p:BaseIntermediateOutputPath)
+      # keeps this from clobbering the normal Fido2 package's own build output, which the step above still
+      # needs to exist afterwards.
+      #
+      # PackageId/AssemblyName are NOT passed here as -p: overrides: Fido2.csproj's own
+      # Condition="'$(ExcludeFido2NSec)' == 'true'" PropertyGroup sets them instead. A global MSBuild
+      # property propagates into every referenced project in the build graph, so passing
+      # -p:AssemblyName=Fido2.WithoutNSec here previously renamed Fido2.Models' own assembly to
+      # Fido2.WithoutNSec too -- confirmed via a real pack and a clean consumer app, which threw
+      # ReflectionTypeLoadException trying to load a type from the mis-named Fido2.Models assembly.
+      #
+      # -p:BaseIntermediateOutputPath, unlike PackageId/AssemblyName, still has to be passed as a global
+      # override here (restore reads it before the project body is parsed, so setting it inside Fido2.csproj
+      # doesn't work for that). It still propagates into Fido2.Models as a referenced project, which exposed
+      # a second, independent bug: the "Run build"/"Run pack" steps above already generated
+      # Src/Fido2.Models/obj/Release/.../Fido2.Models.AssemblyInfo.cs under the *default* intermediate path.
+      # Once this step changes BaseIntermediateOutputPath to obj/WithoutNSec/, the SDK's default Compile-glob
+      # exclude (which is derived from the *current* BaseIntermediateOutputPath) no longer matches that old
+      # default path, so the implicit "**/*.cs" glob picks the stale generated file back up alongside the
+      # freshly-regenerated one under obj/WithoutNSec/ -- CS0579 duplicate assembly attributes. Confirmed by
+      # reproducing it locally in the same build order CI uses, and confirmed the cleanup below fixes it.
+      # Deletes intermediate (obj) output only, never bin/Release -- the normal packages' .nupkg files already
+      # live there from the "Run pack" step above and are still needed afterward.
+      - name: Run restore, build and pack Fido2.WithoutNSec
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          rm -rf Src/Fido2/obj/Release Src/Fido2.Models/obj/Release
+          dotnet restore Src/Fido2/Fido2.csproj \
+            -p:ExcludeFido2NSec=true \
+            -p:BaseIntermediateOutputPath=obj/WithoutNSec/
+          dotnet build Src/Fido2/Fido2.csproj \
+            --no-restore \
+            --configuration Release \
+            -p:ContinuousIntegrationBuild=true \
+            -p:ExcludeFido2NSec=true \
+            -p:BaseIntermediateOutputPath=obj/WithoutNSec/ \
+            -p:BaseOutputPath=bin/WithoutNSec/ \
+            "-p:Version=$VERSION"
+          dotnet pack Src/Fido2/Fido2.csproj \
+            --no-restore \
+            --no-build \
+            --configuration Release \
+            -p:ContinuousIntegrationBuild=true \
+            -p:ExcludeFido2NSec=true \
+            -p:BaseIntermediateOutputPath=obj/WithoutNSec/ \
+            -p:BaseOutputPath=bin/WithoutNSec/ \
+            "-p:Version=$VERSION"
+
+      # Confirms Fido2.WithoutNSec really does omit NSec.Cryptography, not just from its own dependency
+      # list -- a regression here would mean the ExcludeFido2NSec condition in Fido2.csproj stopped working.
+      # The patterns below are deliberately more specific than a bare "nsec" grep: the package's own ID,
+      # "Fido2.WithoutNSec", contains "NSec" as a substring, and a loose match flags itself as a false
+      # positive (caught by testing this check locally before adding it here).
+      - name: Check Fido2.WithoutNSec has no NSec.Cryptography dependency or reference
+        run: |
+          pkg=$(ls Src/Fido2/bin/WithoutNSec/Release/Fido2.WithoutNSec.*.nupkg)
+          unzip -p "$pkg" 'Fido2.WithoutNSec.nuspec' | grep -qiE 'NSec\.Cryptography|"Fido2\.NSec"' \
+            && { echo "::error::$pkg's nuspec depends on NSec.Cryptography or Fido2.NSec"; exit 1; }
+          unzip -p "$pkg" 'lib/net8.0/Fido2.WithoutNSec.dll' | strings | grep -qiE '^NSec$|NSec\.Cryptography' \
+            && { echo "::error::$pkg's assembly still references NSec.Cryptography"; exit 1; }
+          echo "Confirmed: no NSec.Cryptography dependency or assembly reference."
+
       # Static web assets are enumerated when the project is evaluated, so anything a build step generates
       # into wwwroot afterwards is silently left out of the package (#633). Fail here rather than on NuGet.
       - name: Check Fido2.BlazorWebAssembly ships its JavaScript module
