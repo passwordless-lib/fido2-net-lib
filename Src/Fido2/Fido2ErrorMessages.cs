@@ -63,6 +63,17 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidAttestationCertSubject          = "Invalid attestation cert subject";
     public static readonly string CredentialIdNotInAllowedCredentials    = "Credential ID not in allowed credentials";
     public static readonly string UserHandleNotOwnerOfPublicKey          = "User is not owner of the public key identified by the credential id";
+    public static readonly string AaguidDenied                           = "Authenticator AAGUID is on the configured deny list";
+    public static readonly string AaguidNotAllowed                       = "Authenticator AAGUID is not on the configured allow list";
+    public static readonly string BackupEligibilityNotDeclaredInMetadata = "Backup eligible credential from an authenticator model whose metadata statement does not declare multi-device credential support";
+    public static readonly string AaguidNotAttested                      = "Authenticator AAGUID is on the configured allow list, but the attestation does not prove it";
+    public static readonly string AlgorithmNotDeclaredInMetadata         = "Credential algorithm is not one the authenticator's own metadata statement declares it supports";
+    public static readonly string CredentialIdExceedsMetadataMaximum    = "Credential ID is longer than the authenticator's own metadata statement declares it can generate";
+    public static readonly string DiscoverableCredentialNotDeclaredInMetadata = "credProps.rk claims a discoverable credential, but the authenticator's own metadata statement says it does not support them";
+    public static readonly string TransportNotDeclaredInMetadata        = "A reported transport is not one the authenticator's own metadata statement declares it supports";
+    public static readonly string ExtensionNotDeclaredInMetadata        = "An extension output was returned for an extension the authenticator's own metadata statement does not declare support for";
+    public static readonly string BackupStateNotDeclaredInMetadata      = "Backed-up assertion from an authenticator model whose metadata statement does not declare multi-device credential support";
+    public static readonly string AttachmentNotDeclaredInMetadata       = "Reported authenticator attachment is not consistent with any transport the authenticator's own metadata statement declares it supports";
 
     public static readonly string UnimplementedAlgorithm_Ecdaa_Packed    = "ECDAA support for packed attestation is not yet implemented";
     public static readonly string UnimplementedAlgorithm_Ecdaa_Tpm       = "ECDAA support for TPM attestation is not yet implemented";
