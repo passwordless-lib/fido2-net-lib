@@ -488,13 +488,35 @@ public class PlaygroundController : Controller
     [Route("credentials/nickname")]
     public JsonResult SetNickname([FromForm] string credentialId, [FromForm] string nickname)
     {
-        if (string.IsNullOrWhiteSpace(nickname))
-            s_nicknames.TryRemove(credentialId, out _);
+        // Anyone can call this, so only a credential that exists can be named, under the same key the
+        // credentials list reads it back by: otherwise every request could add an entry to this process-wide
+        // dictionary, and memory would grow for as long as someone kept sending new IDs.
+        byte[] id;
+        try
+        {
+            id = Base64Url.DecodeFromChars(credentialId ?? "");
+        }
+        catch (FormatException)
+        {
+            return Json(new { status = "error", errorMessage = "Not a credential ID." });
+        }
+
+        if (DemoController.DemoStorage.GetCredentialById(id) is null)
+            return Json(new { status = "error", errorMessage = "No such credential." });
+
+        var key = Base64Url.EncodeToString(id);
+
+        var trimmed = nickname?.Trim() ?? "";
+
+        if (trimmed.Length is 0)
+            s_nicknames.TryRemove(key, out _);
         else
-            s_nicknames[credentialId] = nickname.Trim();
+            s_nicknames[key] = trimmed.Length > MaxNicknameLength ? trimmed[..MaxNicknameLength] : trimmed;
 
         return Json(new { status = "ok" });
     }
+
+    private const int MaxNicknameLength = 64;
 
     [HttpPost]
     [Route("credentials/delete")]

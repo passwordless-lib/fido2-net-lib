@@ -373,7 +373,7 @@ async function renderClientCapabilities(containerId) {
     const tags = Object.keys(capabilities).sort().map(function (name) {
         const supported = capabilities[name];
         return '<span class="tag ' + (supported ? 'is-success' : 'is-light') + '">'
-            + name + ': ' + supported + '</span>';
+            + escapeHtml(name) + ': ' + escapeHtml(supported) + '</span>';
     });
 
     container.innerHTML = '<div class="tags">' + tags.join('') + '</div>';
