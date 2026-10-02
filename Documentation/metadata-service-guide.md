@@ -241,3 +241,40 @@ When a registration carries a full attestation and the authenticator's metadata 
 - **Conformance mode** (`FidoValidationMode.FidoConformance2024`, selected automatically for the conformance
   metadata repository) skips revocation checking, since the conformance tool's certificates name distribution
   points that do not exist.
+
+## Logging
+
+The metadata pipeline reports what it does through `Microsoft.Extensions.Logging`. Every built-in repository and
+service takes an optional `ILogger<T>`; the DI registrations pass one in whenever logging is registered, and the
+types work without one. The verification hot path does not log -- every failure there surfaces as a
+`Fido2VerificationException` with a `Fido2ErrorCode`.
+
+Categories are the type names (`Fido2NetLib.Fido2MetadataServiceRepository` and so on). The events:
+
+| Event | Level | Source | When |
+| --- | --- | --- | --- |
+| 1000 | Debug | `Fido2MetadataServiceRepository` | Fetching the BLOB (says whether the fetch is conditional on the last ETag) |
+| 1001 | Debug | `Fido2MetadataServiceRepository` | The service answered 304; the cached BLOB is reused |
+| 1002 | Information | `Fido2MetadataServiceRepository` | The BLOB was downloaded (with its size) |
+| 1003 | Warning | `Fido2MetadataServiceRepository` | The service throttled the fetch; a retry is scheduled |
+| 1004 | Debug | `Fido2MetadataServiceRepository` | The BLOB signature verified |
+| 1005 | Debug | both repositories | The platform did not trust the signing chain; it is checked against the pinned root |
+| 1006 | Debug | both repositories | A signing certificate is being checked against its CRL |
+| 1007 | Information | `Fido2MetadataServiceRepository` | The BLOB was accepted (number, entry count, next update) |
+| 1010 | Warning | `FileSystemMetadataRepository` | The metadata directory does not exist |
+| 1011 | Debug | `FileSystemMetadataRepository` | A statement was loaded |
+| 1012 | Warning | `FileSystemMetadataRepository` | A statement has no AAGUID and was skipped |
+| 1013 | Information | `FileSystemMetadataRepository` | How many statements were loaded |
+| 1020 | Information | `ConformanceMetadataRepository` | The conformance tool provisioned its endpoints |
+| 1021 | Warning | `ConformanceMetadataRepository` | A BLOB was rejected and skipped (previously silent) |
+| 1022 | Information | `ConformanceMetadataRepository` | The accepted BLOBs were combined |
+| 1100 | Error | `DistributedCacheMetadataService` | A repository fetch failed |
+| 1101 | Warning | `DistributedCacheMetadataService` | The distributed cache held an unreadable BLOB |
+| 1102 | Debug | `DistributedCacheMetadataService` | The cached BLOB is current and was used |
+| 1103 | Debug | `DistributedCacheMetadataService` | The cached BLOB is due for update; fetching |
+| 1104 | Warning | `DistributedCacheMetadataService` | The refresh failed; the due copy is kept |
+| 1105 | Information | `DistributedCacheMetadataService` | A BLOB was cached (with its expiry) |
+| 1106 | Warning | `DistributedCacheMetadataService` | Nothing is available: the fetch failed and nothing is cached |
+
+Enable `Debug` for `Fido2NetLib` to see every step of a fetch; at `Information` you get one line per download
+and one per accepted BLOB, which is enough to confirm the metadata is being refreshed.

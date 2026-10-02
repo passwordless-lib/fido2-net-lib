@@ -14,6 +14,8 @@ using System.Threading.Tasks;
 using Fido2NetLib.Internal;
 using Fido2NetLib.Serialization;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
@@ -42,10 +44,16 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
     private readonly string _getEndpointsUrl = "https://mds3.fido.tools/getEndpoints";
 
-    public ConformanceMetadataRepository(HttpClient? client, string origin)
+    private readonly ILogger _logger;
+
+    /// <param name="client">The client to fetch with, or <see langword="null"/> for a default one.</param>
+    /// <param name="origin">The relying party's origin, as registered with the conformance tool.</param>
+    /// <param name="logger">Where fetches and rejected BLOBs are reported; see <see cref="MetadataLog"/> for the events.</param>
+    public ConformanceMetadataRepository(HttpClient? client, string origin, ILogger<ConformanceMetadataRepository>? logger = null)
     {
         _httpClient = client ?? new HttpClient();
         _origin = origin;
+        _logger = logger ?? NullLogger<ConformanceMetadataRepository>.Instance;
     }
 
     public Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
@@ -75,6 +83,8 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         MDSGetEndpointResponse? result = await response.Content.ReadFromJsonAsync(FidoSerializerContext.Default.MDSGetEndpointResponse, cancellationToken);
         var conformanceEndpoints = result!.Result;
 
+        _logger.ConformanceEndpointsReceived(conformanceEndpoints.Length, _origin);
+
         var combinedBlob = new MetadataBLOBPayload
         {
             Number = -1,
@@ -84,6 +94,7 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         };
 
         List<MetadataBLOBPayloadEntry> entries = [];
+        int accepted = 0;
 
         foreach (var blobUrl in conformanceEndpoints)
         {
@@ -95,10 +106,14 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
             {
                 blob = await DeserializeAndValidateBlobAsync(rawBlob, cancellationToken);
             }
-            catch
+            catch (Exception ex)
             {
+                // The tool serves BLOBs that are meant to fail, to prove the server rejects them
+                _logger.ConformanceBlobRejected(ex, blobUrl);
                 continue;
             }
+
+            accepted++;
 
             if (string.Compare(blob.NextUpdate, combinedBlob.NextUpdate, StringComparison.InvariantCulture) < 0)
                 combinedBlob.NextUpdate = blob.NextUpdate;
@@ -112,6 +127,8 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         }
 
         combinedBlob.Entries = [.. entries];
+
+        _logger.ConformanceBlobsCombined(combinedBlob.Entries.Length, accepted);
         return combinedBlob;
     }
 
@@ -207,12 +224,16 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         // if the root is trusted in the context we are running in, valid should be true here
         if (!certChainIsValid)
         {
+            _logger.BlobChainCheckedAgainstPinnedRoot();
+
             foreach (var element in certChain.ChainElements)
             {
                 if (element.Certificate.Issuer != element.Certificate.Subject)
                 {
                     if (!CryptoUtils.TryGetCrlDistributionPointUrl(element.Certificate, out var cdp))
                         throw new Fido2VerificationException($"Cert {element.Certificate.Subject} has no CRL distribution point");
+
+                    _logger.CheckingBlobCertificateRevocation(element.Certificate.Subject, cdp);
 
                     var crlFile = await DownloadDataAsync(cdp, cancellationToken);
                     if (CryptoUtils.IsCertInCRL(crlFile, element.Certificate))

@@ -8,18 +8,25 @@ using System.Threading.Tasks;
 
 using Fido2NetLib.Serialization;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Fido2NetLib;
 
 public sealed class FileSystemMetadataRepository : IMetadataRepository
 {
     private readonly string _directoryPath;
     private Dictionary<Guid, MetadataBLOBPayloadEntry> _entries;
+    private readonly ILogger _logger;
     private MetadataBLOBPayload? _blob;
 
-    public FileSystemMetadataRepository(string directoryPath)
+    /// <param name="directoryPath">The directory holding one metadata statement JSON file per authenticator.</param>
+    /// <param name="logger">Where loading is reported; see <see cref="MetadataLog"/> for the events.</param>
+    public FileSystemMetadataRepository(string directoryPath, ILogger<FileSystemMetadataRepository>? logger = null)
     {
         _directoryPath = directoryPath;
         _entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
+        _logger = logger ?? NullLogger<FileSystemMetadataRepository>.Instance;
     }
 
     public async Task<MetadataStatement?> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default)
@@ -44,7 +51,11 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
     {
         var entries = new Dictionary<Guid, MetadataBLOBPayloadEntry>();
 
-        if (Directory.Exists(_directoryPath))
+        if (!Directory.Exists(_directoryPath))
+        {
+            _logger.MetadataDirectoryMissing(_directoryPath);
+        }
+        else
         {
             // Statements may sit in subdirectories, as they do when the conformance tool's metadata zip is unpacked as-is
             foreach (var filename in Directory.GetFiles(_directoryPath, "*.json", SearchOption.AllDirectories))
@@ -78,9 +89,20 @@ public sealed class FileSystemMetadataRepository : IMetadataRepository
                     ]
                 };
 
-                if (conformanceEntry.AaGuid is Guid aaGuid && !entries.TryAdd(aaGuid, conformanceEntry))
-                    throw new Fido2MetadataException($"Metadata statement '{filename}' has the same AAGUID ({aaGuid}) as another statement in '{_directoryPath}'");
+                if (conformanceEntry.AaGuid is Guid aaGuid)
+                {
+                    if (!entries.TryAdd(aaGuid, conformanceEntry))
+                        throw new Fido2MetadataException($"Metadata statement '{filename}' has the same AAGUID ({aaGuid}) as another statement in '{_directoryPath}'");
+
+                    _logger.MetadataStatementLoaded(aaGuid, filename);
+                }
+                else
+                {
+                    _logger.MetadataStatementWithoutAaGuid(filename);
+                }
             }
+
+            _logger.MetadataStatementsLoaded(entries.Count, _directoryPath);
         }
 
         _entries = entries;

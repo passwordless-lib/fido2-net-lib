@@ -5,6 +5,7 @@ using Fido2NetLib;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -145,7 +146,7 @@ public static class Fido2NetLibBuilderExtensions
     {
         builder.Services.AddScoped<IMetadataRepository, FileSystemMetadataRepository>(provider =>
         {
-            return new FileSystemMetadataRepository(directoryPath);
+            return new FileSystemMetadataRepository(directoryPath, provider.GetService<ILogger<FileSystemMetadataRepository>>());
         });
 
         return builder;
@@ -173,7 +174,7 @@ public static class Fido2NetLibBuilderExtensions
     {
         builder.Services.AddScoped<IMetadataRepository>(provider =>
         {
-            return new ConformanceMetadataRepository(client, origin);
+            return new ConformanceMetadataRepository(client, origin, provider.GetService<ILogger<ConformanceMetadataRepository>>());
         });
 
         return builder;

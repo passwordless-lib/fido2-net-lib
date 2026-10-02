@@ -7,6 +7,7 @@
   <ItemGroup>
     <!-- Core Framework Packages -->
     <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageVersion Include="System.Formats.Cbor" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Bcl.Memory" Version="9.0.14" />
     

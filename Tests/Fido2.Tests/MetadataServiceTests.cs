@@ -1,9 +1,12 @@
-﻿using System.Linq;
+﻿using System.Globalization;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using fido2_net_lib.Test;
 
@@ -787,5 +790,348 @@ public class MetadataServiceTests
         await serviceInstance1.GetEntryAsync(entryIdGuid);
 
         Assert.Equal(2, staticClient.GetBLOBAsyncCount);
+    }
+
+    [Fact]
+    public async Task Fido2MetadataServiceRepository_Logs_Each_Fetch_Retry_And_Download()
+    {
+        var handler = new StubHttpMessageHandler(
+        [
+            ThrottledResponse(TimeSpan.FromMilliseconds(10)),
+            ThrottledResponse(TimeSpan.FromMilliseconds(10)),
+            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("not-a-valid-jwt") }
+        ]);
+        var logger = new ListLogger<Fido2MetadataServiceRepository>();
+
+        var repository = new Fido2MetadataServiceRepository(new StubHttpClientFactory(handler), logger: logger);
+        await Assert.ThrowsAsync<ArgumentException>(() => repository.GetBLOBAsync());
+
+        // One fetch attempt per request, two throttled answers, one download
+        Assert.Equal(3, logger.WithEventId(1000).Count());
+
+        var throttled = logger.WithEventId(1003).ToList();
+        Assert.Equal(2, throttled.Count);
+        Assert.All(throttled, e => Assert.Equal(LogLevel.Warning, e.Level));
+        Assert.Contains("429", throttled[0].Message);
+        Assert.Contains("attempt 1 of 5", throttled[0].Message);
+        Assert.Contains("attempt 2 of 5", throttled[1].Message);
+
+        var downloaded = Assert.Single(logger.WithEventId(1002));
+        Assert.Equal(LogLevel.Information, downloaded.Level);
+        Assert.Contains("https://mds.example.test", downloaded.Message);
+        Assert.Contains("15 bytes", downloaded.Message);
+
+        // Nothing was accepted: the content never got as far as signature verification
+        Assert.Empty(logger.WithEventId(1004));
+        Assert.Empty(logger.WithEventId(1007));
+    }
+
+    [Fact]
+    public async Task Fido2MetadataServiceRepository_Logs_When_The_Blob_Is_Not_Modified()
+    {
+        var logger = new ListLogger<Fido2MetadataServiceRepository>();
+        var repository = new Fido2MetadataServiceRepository(new StubHttpClientFactory(new ETagAwareHttpMessageHandler()), logger: logger);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => repository.GetBLOBAsync());
+        await Assert.ThrowsAsync<ArgumentException>(() => repository.GetBLOBAsync());
+
+        // The first fetch is unconditional and downloads; the second sends the ETag and gets a 304
+        Assert.Contains("conditional: False", logger.WithEventId(1000).First().Message);
+        Assert.Contains("conditional: True", logger.WithEventId(1000).Last().Message);
+        Assert.Single(logger.WithEventId(1002));
+        Assert.Single(logger.WithEventId(1001));
+    }
+
+    [Fact]
+    public async Task Fido2MetadataServiceRepository_Works_Without_A_Logger()
+    {
+        var handler = new StubHttpMessageHandler([new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("not-a-valid-jwt") }]);
+
+        // The logger parameter is optional, so existing callers and DI containers without logging are unaffected
+        var repository = new Fido2MetadataServiceRepository(new StubHttpClientFactory(handler));
+
+        await Assert.ThrowsAsync<ArgumentException>(() => repository.GetBLOBAsync());
+        Assert.Equal(1, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task FileSystemMetadataRepository_Logs_What_It_Loaded_And_What_It_Skipped()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "fido2-metadata-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            // One statement as the conformance tool ships them, and one with its AAGUID removed
+            string source = Path.Combine("metadata", "256K1 U2F Authenticator basic_full.json");
+            File.Copy(source, Path.Combine(directory, "with-aaguid.json"));
+
+            var statement = JsonNode.Parse(File.ReadAllText(source))!.AsObject();
+            statement.Remove("aaguid");
+            File.WriteAllText(Path.Combine(directory, "without-aaguid.json"), statement.ToJsonString());
+
+            var logger = new ListLogger<FileSystemMetadataRepository>();
+            var repository = new FileSystemMetadataRepository(directory, logger);
+
+            var blob = await repository.GetBLOBAsync();
+
+            Assert.Single(blob.Entries);
+
+            var loaded = Assert.Single(logger.WithEventId(1011));
+            Assert.Contains("with-aaguid.json", loaded.Message);
+
+            var skipped = Assert.Single(logger.WithEventId(1012));
+            Assert.Equal(LogLevel.Warning, skipped.Level);
+            Assert.Contains("without-aaguid.json", skipped.Message);
+
+            var summary = Assert.Single(logger.WithEventId(1013));
+            Assert.Equal(LogLevel.Information, summary.Level);
+            Assert.StartsWith("Loaded 1 metadata statement(s)", summary.Message);
+            Assert.Empty(logger.WithEventId(1010));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task FileSystemMetadataRepository_Warns_When_The_Directory_Is_Missing()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "fido2-metadata-missing-" + Guid.NewGuid().ToString("N"));
+        var logger = new ListLogger<FileSystemMetadataRepository>();
+
+        var blob = await new FileSystemMetadataRepository(directory, logger).GetBLOBAsync();
+
+        Assert.Empty(blob.Entries);
+        var missing = Assert.Single(logger.Entries);
+        Assert.Equal(1010, missing.EventId.Id);
+        Assert.Equal(LogLevel.Warning, missing.Level);
+        Assert.Contains(directory, missing.Message);
+    }
+
+    private sealed class ConformanceToolStubHandler(string[] endpoints) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            // POST getEndpoints answers with the provisioned BLOB URLs; every GET of a BLOB answers with junk
+            HttpResponseMessage response = request.Method == HttpMethod.Post
+                ? new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(new { status = "ok", result = endpoints }), Encoding.UTF8, "application/json")
+                }
+                : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("not-a-blob") };
+
+            return Task.FromResult(response);
+        }
+    }
+
+    [Fact]
+    public async Task ConformanceMetadataRepository_Logs_Every_Rejected_Blob_Instead_Of_Dropping_It_Silently()
+    {
+        string[] endpoints = ["https://mds3.fido.tools/execute/aaaa", "https://mds3.fido.tools/execute/bbbb"];
+        var logger = new ListLogger<ConformanceMetadataRepository>();
+        var repository = new ConformanceMetadataRepository(new HttpClient(new ConformanceToolStubHandler(endpoints)), "https://rp.example", logger);
+
+        var blob = await repository.GetBLOBAsync();
+
+        Assert.Empty(blob.Entries);
+
+        var provisioned = Assert.Single(logger.WithEventId(1020));
+        Assert.Contains("2 metadata endpoint(s) for https://rp.example", provisioned.Message);
+
+        var rejected = logger.WithEventId(1021).ToList();
+        Assert.Equal(2, rejected.Count);
+        Assert.All(rejected, e => Assert.Equal(LogLevel.Warning, e.Level));
+        Assert.All(rejected, e => Assert.NotNull(e.Exception));
+        Assert.Contains(endpoints[0], rejected[0].Message);
+        Assert.Contains(endpoints[1], rejected[1].Message);
+
+        var combined = Assert.Single(logger.WithEventId(1022));
+        Assert.Contains("0 entries from 0 conformance BLOB(s)", combined.Message);
+    }
+
+    /// <summary>
+    /// A <see cref="MockRepository"/> that can be told to fail. The cache is keyed by repository type, so the phases of
+    /// a test that fill the cache and then fail must use the same type.
+    /// </summary>
+    private sealed class FailableCacheRepository(string nextUpdate) : IMetadataRepository
+    {
+        private readonly MockRepository _inner = new(nextUpdate);
+
+        public bool Fail { get; set; }
+
+        public Task<MetadataBLOBPayload> GetBLOBAsync(CancellationToken cancellationToken = default)
+        {
+            return Fail ? throw new HttpRequestException("metadata service down") : _inner.GetBLOBAsync(cancellationToken);
+        }
+
+        public Task<MetadataStatement> GetMetadataStatementAsync(MetadataBLOBPayload blob, MetadataBLOBPayloadEntry entry, CancellationToken cancellationToken = default) => Task.FromResult(entry.MetadataStatement);
+    }
+
+    private static DistributedCacheMetadataService CreateCachedService(IMetadataRepository repository, DateTimeOffset now, ListLogger<DistributedCacheMetadataService> logger, out IDistributedCache distributedCache)
+    {
+        var clock = new MockClock(now);
+        var services = new ServiceCollection();
+        services.AddDistributedMemoryCache(options => options.Clock = clock);
+        services.AddMemoryCache(options => options.Clock = clock);
+        var provider = services.BuildServiceProvider();
+
+        distributedCache = provider.GetRequiredService<IDistributedCache>();
+
+        return new DistributedCacheMetadataService([repository], distributedCache, provider.GetRequiredService<IMemoryCache>(), logger, clock);
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Logs_A_Failed_Fetch_And_That_Nothing_Is_Cached()
+    {
+        var logger = new ListLogger<DistributedCacheMetadataService>();
+        var service = CreateCachedService(new FailableCacheRepository("2021-12-01") { Fail = true }, DateTimeOffset.Parse("2021-11-30T00:00:00Z"), logger, out _);
+
+        Assert.Null(await service.GetEntryAsync(Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73")));
+
+        var failed = Assert.Single(logger.WithEventId(1100));
+        Assert.Equal(LogLevel.Error, failed.Level);
+        Assert.IsType<HttpRequestException>(failed.Exception);
+        Assert.Contains(nameof(FailableCacheRepository), failed.Message);
+
+        var unavailable = Assert.Single(logger.WithEventId(1106));
+        Assert.Equal(LogLevel.Warning, unavailable.Level);
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Logs_Caching_Reuse_And_Falling_Back_To_A_Due_Copy()
+    {
+        var aaguid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
+        var now = DateTimeOffset.Parse("2021-11-30T00:00:00Z");
+
+        var repository = new FailableCacheRepository("2021-12-01");
+
+        // A working repository fills the cache...
+        var fillLogger = new ListLogger<DistributedCacheMetadataService>();
+        var working = CreateCachedService(repository, now, fillLogger, out var distributedCache);
+        Assert.NotNull(await working.GetEntryAsync(aaguid));
+
+        var cached = Assert.Single(fillLogger.WithEventId(1105));
+        Assert.Equal(LogLevel.Information, cached.Level);
+        Assert.Contains(nameof(FailableCacheRepository), cached.Message);
+
+        // ...which a second service instance over the same distributed cache reads back while it is current...
+        var reuseLogger = new ListLogger<DistributedCacheMetadataService>();
+        var clock = new MockClock(now);
+        var reusing = new DistributedCacheMetadataService([repository], distributedCache, new MemoryCache(new MemoryCacheOptions { Clock = clock }), reuseLogger, clock);
+        Assert.NotNull(await reusing.GetEntryAsync(aaguid));
+        Assert.Single(reuseLogger.WithEventId(1102));
+        Assert.Empty(reuseLogger.WithEventId(1103));
+
+        // ...and, once it is due, a failing fetch is reported and the due copy is kept rather than losing metadata
+        repository.Fail = true;
+        var dueLogger = new ListLogger<DistributedCacheMetadataService>();
+        var later = new MockClock(DateTimeOffset.Parse("2021-12-03T00:00:00Z"));
+        var stale = new DistributedCacheMetadataService([repository], distributedCache, new MemoryCache(new MemoryCacheOptions { Clock = later }), dueLogger, later);
+        Assert.NotNull(await stale.GetEntryAsync(aaguid));
+        Assert.Single(dueLogger.WithEventId(1103));
+        Assert.Single(dueLogger.WithEventId(1100));
+        var fallback = Assert.Single(dueLogger.WithEventId(1104));
+        Assert.Equal(LogLevel.Warning, fallback.Level);
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Logs_A_Refresh_Once_The_Cached_Blob_Is_Due()
+    {
+        var aaguid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
+        var repository = new FailableCacheRepository("2021-12-01");
+
+        var fillLogger = new ListLogger<DistributedCacheMetadataService>();
+        var filling = CreateCachedService(repository, DateTimeOffset.Parse("2021-11-30T00:00:00Z"), fillLogger, out var distributedCache);
+        Assert.NotNull(await filling.GetEntryAsync(aaguid));
+
+        // Past the next update plus the buffer, with the repository answering: due, fetched, cached again
+        var later = new MockClock(DateTimeOffset.Parse("2021-12-03T00:00:00Z"));
+        var refreshLogger = new ListLogger<DistributedCacheMetadataService>();
+        var refreshing = new DistributedCacheMetadataService([repository], distributedCache, new MemoryCache(new MemoryCacheOptions { Clock = later }), refreshLogger, later);
+
+        Assert.NotNull(await refreshing.GetEntryAsync(aaguid));
+        Assert.Single(refreshLogger.WithEventId(1103));
+        Assert.Single(refreshLogger.WithEventId(1105));
+        Assert.Empty(refreshLogger.WithEventId(1104));
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Logs_An_Unreadable_Cache_Entry_And_Fetches_Again()
+    {
+        var aaguid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
+        var logger = new ListLogger<DistributedCacheMetadataService>();
+        var service = CreateCachedService(new FailableCacheRepository("2021-12-01"), DateTimeOffset.Parse("2021-11-30T00:00:00Z"), logger, out var distributedCache);
+
+        // Something that is not a BLOB under the key the service uses for this repository
+        await distributedCache.SetStringAsync($"{nameof(DistributedCacheMetadataService)}:V2:{nameof(FailableCacheRepository)}:TOC", "{not json");
+
+        Assert.NotNull(await service.GetEntryAsync(aaguid));
+
+        var unreadable = Assert.Single(logger.WithEventId(1101));
+        Assert.Equal(LogLevel.Warning, unreadable.Level);
+        Assert.IsAssignableFrom<System.Text.Json.JsonException>(unreadable.Exception);
+        Assert.Single(logger.WithEventId(1105));
+    }
+
+    [Fact]
+    public async Task DistributedCacheMetadataService_Caches_A_Blob_Without_A_Next_Update_For_The_Default_Interval()
+    {
+        var aaguid = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
+        var now = DateTimeOffset.Parse("2021-11-30T00:00:00Z");
+        var logger = new ListLogger<DistributedCacheMetadataService>();
+        var service = CreateCachedService(new FailableCacheRepository(nextUpdate: ""), now, logger, out _);
+
+        Assert.NotNull(await service.GetEntryAsync(aaguid));
+        Assert.Null(await service.GetEntryAsync(Guid.NewGuid()));
+
+        // No next update to go by: the default 30-day interval from now. Microsoft.Extensions.Logging's
+        // message formatter always renders arguments with CultureInfo.InvariantCulture (LogValuesFormatter),
+        // regardless of the host's current culture -- match that here rather than using the thread's
+        // CurrentCulture, which can format the AM/PM designator differently (e.g. a narrow no-break space
+        // on some ICU versions vs. a plain space under InvariantCulture) and make this assertion flaky
+        // across machines/runners even though the logged message itself never changes.
+        var cached = Assert.Single(logger.WithEventId(1105));
+        Assert.Contains(now.AddDays(30).ToString(CultureInfo.InvariantCulture), cached.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task FileSystemMetadataRepository_Loads_On_First_Statement_Lookup()
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "fido2-metadata-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            string source = Path.Combine("metadata", "256K1 U2F Authenticator basic_full.json");
+            File.Copy(source, Path.Combine(directory, "statement.json"));
+            var aaguid = JsonNode.Parse(File.ReadAllText(source))!["aaguid"]!.GetValue<string>();
+
+            var repository = new FileSystemMetadataRepository(directory);
+
+            // Looking a statement up before any BLOB was requested loads the directory; an unknown AAGUID finds nothing
+            var statement = await repository.GetMetadataStatementAsync(null!, new MetadataBLOBPayloadEntry { AaGuid = Guid.Parse(aaguid) });
+            Assert.NotNull(statement);
+            Assert.Null(await repository.GetMetadataStatementAsync(null!, new MetadataBLOBPayloadEntry { AaGuid = Guid.NewGuid() }));
+            Assert.Null(await repository.GetMetadataStatementAsync(null!, new MetadataBLOBPayloadEntry { AaGuid = null }));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ConformanceMetadataService_Logs_What_Each_Repository_Contributed()
+    {
+        var logger = new ListLogger<ConformanceMetadataService>();
+        var service = new ConformanceMetadataService([new MockRepository("2099-01-01")], logger);
+
+        await service.InitializeAsync();
+
+        var loaded = Assert.Single(logger.Entries);
+        Assert.Equal(LogLevel.Information, loaded.Level);
+        Assert.Contains("Loaded 1 of 1 metadata entries from MockRepository", loaded.Message);
     }
 }

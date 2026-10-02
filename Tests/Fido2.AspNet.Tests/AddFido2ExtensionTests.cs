@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 using Fido2NetLib;
 
@@ -166,6 +168,52 @@ public class AddFido2ExtensionTests
         var metadataRepository = serviceProvider.GetService<IMetadataRepository>();
         Assert.NotNull(metadataRepository);
         Assert.IsType<FileSystemMetadataRepository>(metadataRepository);
+    }
+
+    [Fact]
+    public async Task AddFileSystemMetadataRepository_LogsThroughTheRegisteredLoggingWhenThereIsAny()
+    {
+        // Arrange: no logging registered at all, then logging with a provider we can inspect
+        var withoutLogging = new ServiceCollection();
+        withoutLogging.AddFido2(config => { }).AddFileSystemMetadataRepository("/tmp/fido2-missing-" + Guid.NewGuid().ToString("N"));
+
+        var provider = new RecordingLoggerProvider();
+        var withLogging = new ServiceCollection();
+        withLogging.AddLogging(logging => logging.AddProvider(provider).SetMinimumLevel(LogLevel.Trace));
+        withLogging.AddFido2(config => { }).AddFileSystemMetadataRepository("/tmp/fido2-missing-" + Guid.NewGuid().ToString("N"));
+
+        // Act
+        await withoutLogging.BuildServiceProvider().GetRequiredService<IMetadataRepository>().GetBLOBAsync();
+        await withLogging.BuildServiceProvider().GetRequiredService<IMetadataRepository>().GetBLOBAsync();
+
+        // Assert: the repository works without a logger, and reports through one when it is there
+        var entry = Assert.Single(provider.Entries);
+        Assert.Equal(typeof(FileSystemMetadataRepository).FullName, entry.Category);
+        Assert.Equal(1010, entry.EventId.Id);
+        Assert.Equal(LogLevel.Warning, entry.Level);
+    }
+
+    private sealed class RecordingLoggerProvider : ILoggerProvider
+    {
+        public sealed record Entry(string Category, LogLevel Level, EventId EventId, string Message);
+
+        public List<Entry> Entries { get; } = [];
+
+        public ILogger CreateLogger(string categoryName) => new Logger(categoryName, Entries);
+
+        public void Dispose() { }
+
+        private sealed class Logger(string category, List<Entry> entries) : ILogger
+        {
+            public IDisposable BeginScope<TState>(TState state) where TState : notnull => null;
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+            {
+                entries.Add(new Entry(category, logLevel, eventId, formatter(state, exception)));
+            }
+        }
     }
 
     [Fact]
