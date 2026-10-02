@@ -44,5 +44,6 @@ public enum Fido2ErrorCode
     UnexpectedEnterpriseAttestation,
     MissingAttestationObject,
     InvalidCertificateChain,
-    UndesiredMetadataStatus
+    UndesiredMetadataStatus,
+    InvalidPaymentData
 }
