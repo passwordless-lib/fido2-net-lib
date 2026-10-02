@@ -219,6 +219,10 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         certChain.ChainPolicy.ExtraStore.Add(rootCert);
         certChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
+        // The chain is whatever the BLOB header names, so never fetch an issuer from a URL one of its certificates
+        // gives. x5c carries every certificate below the root, and the pinned roots are added above.
+        certChain.ChainPolicy.DisableCertificateDownloads = true;
+
         var tokenHandler = new JsonWebTokenHandler
         {
             // 250k isn't enough bytes for conformance test tool

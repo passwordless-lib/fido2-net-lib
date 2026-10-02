@@ -536,6 +536,26 @@ public class CryptoUtilsTests
         Assert.False(CryptoUtils.TryGetCrlDistributionPointUrl(pki.IssueLeafWithRawCrlDistributionPoints([0x30, 0x05, 0x30]), out _));
     }
 
+    [Fact]
+    public void ValidateTrustChainNeverFetchesAnIssuerNamedByTheAttestationCertificate()
+    {
+        // A metadata statement names this anchor; the attestation certificate claims an issuer that is nowhere to be
+        // found except at the URL the certificate itself names -- which an attacker points at an internal service.
+        using var trap = new AiaTrap();
+
+        using var anchorKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var anchorRequest = new CertificateRequest("CN=Metadata Attestation Root", anchorKey, HashAlgorithmName.SHA256);
+        anchorRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        using var anchor = anchorRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+
+        using var attestationKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var attestationCert = trap.IssueFromAbsentIssuer(new CertificateRequest("CN=Attestation", attestationKey, HashAlgorithmName.SHA256));
+
+        Assert.False(CryptoUtils.ValidateTrustChain([attestationCert], [anchor]));
+        Assert.False(CryptoUtils.ValidateTrustChain([attestationCert], [anchor], FidoValidationMode.FidoConformance2024));
+        Assert.Equal(0, trap.CountRequests());
+    }
+
     /// <summary>
     /// Serves CRLs over HTTP on the loopback interface, so that the platform's chain engine can fetch them. Every
     /// URL is unique, since the engine caches what it fetched by URL.

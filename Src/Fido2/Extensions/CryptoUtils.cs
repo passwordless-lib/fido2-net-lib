@@ -124,6 +124,12 @@ internal static class CryptoUtils
 
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
+        // Every certificate here came from the attestation statement, which anyone can send. Left enabled, the
+        // platform fetches a missing issuer from the attestation certificate's own AIA URL -- a request to any
+        // address the sender names, made before the chain is known to reach an anchor, and blocking this thread
+        // for up to 15 seconds. x5c carries the whole chain up to the anchor, so nothing legitimate needs it.
+        chain.ChainPolicy.DisableCertificateDownloads = true;
+
         if (!chain.Build(attestationCert))
         {
             return false;

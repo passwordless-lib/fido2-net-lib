@@ -221,41 +221,24 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
     }
 
     /// <remarks>
-    /// A lookup that found no entry is cached (as null) only when at least one repository actually supplied a
-    /// BLOB to search, and then only until the earliest of those BLOBs expires, so an AAGUID that is genuinely
-    /// unknown is not looked up again on every registration, while one that could not be looked up because no
-    /// BLOB was available is retried next time.
+    /// Each lookup searches the repositories' BLOBs, which are themselves cached; the result is not cached separately.
+    /// Keyed by AAGUID alone it would be wrong: an entry for an authenticator without an AAGUID (FIDO U2F) is found by
+    /// the attestation certificate instead, so the first all-zero-AAGUID lookup -- a match or a miss -- would have been
+    /// handed to every later one, whatever certificate it carried, until the BLOB expired. And every attacker-chosen
+    /// AAGUID would have added an entry to the cache.
     /// </remarks>
     public async Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaguid, X509Certificate2[] attestationCertificates, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"{CACHE_PREFIX}:{aaguid}";
-
-        if (_memoryCache.TryGetValue(cacheKey, out MetadataBLOBPayloadEntry cachedEntry))
-            return cachedEntry;
-
-        DateTimeOffset? missExpiry = null;
-
         foreach (var repo in _repositories)
         {
             var cachedPayload = await GetMemoryCachedPayload(repo, cancellationToken);
             if (cachedPayload is null)
                 continue;
 
-            var payloadExpiry = GetMemoryCacheAbsoluteExpiryTime(GetNextUpdateTimeFromPayload(cachedPayload));
-
             var matchingEntry = FindMatchingEntry(cachedPayload, aaguid, attestationCertificates);
             if (matchingEntry != null)
-            {
-                _memoryCache.Set(cacheKey, matchingEntry, payloadExpiry);
                 return matchingEntry;
-            }
-
-            if (missExpiry is null || payloadExpiry < missExpiry.Value)
-                missExpiry = payloadExpiry;
         }
-
-        if (missExpiry.HasValue)
-            _memoryCache.Set<MetadataBLOBPayloadEntry>(cacheKey, null, missExpiry.Value);
 
         return null;
     }
@@ -278,8 +261,13 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
         if (attestationCertificates is not { Length: > 0 })
             return null;
 
+        // The same comparison as MetadataBLOBPayloadEntry.MatchesAttestationCertificate, with each certificate's key
+        // identifier computed once rather than once per entry searched.
+        var keyIdentifiers = Array.ConvertAll(attestationCertificates, MetadataBLOBPayloadEntry.ComputeAttestationCertificateKeyIdentifier);
+
         return payload.Entries.FirstOrDefault(entry =>
             entry.AaGuid is null &&
-            attestationCertificates.Any(entry.MatchesAttestationCertificate));
+            entry.AttestationCertificateKeyIdentifiers is { Length: > 0 } entryIdentifiers &&
+            keyIdentifiers.Any(id => entryIdentifiers.Contains(id, StringComparer.OrdinalIgnoreCase)));
     }
 }

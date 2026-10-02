@@ -75,6 +75,11 @@ public class AuthenticatorResponse
         if (Challenge is null)
             throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallenge);
 
+        // Options with no challenge at all -- a default instance, or options that lost theirs on the way back from
+        // storage -- would otherwise match any response that also carries an empty one, tying it to no ceremony.
+        if (originalChallenge.IsEmpty)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, "The options this response is verified against have no challenge");
+
         // 11. Verify that the value of C.challenge matches the challenge that was sent to the authenticator in the create() call
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, Fido2ErrorMessages.InvalidAuthenticatorResponseChallenge);

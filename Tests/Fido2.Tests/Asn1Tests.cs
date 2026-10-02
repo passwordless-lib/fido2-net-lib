@@ -150,4 +150,68 @@ public class Asn1Tests
         Assert.Equal(2, element6_1_0_0.TagValue);
         Assert.Equal(1, element6_1_0_0.GetInt32());
     }
+
+    // SEQUENCEs nested `depth` deep around a NULL. DER writes definite lengths; CER writes indefinite ones, which the
+    // runtime resolves by searching for each end-of-contents.
+    private static byte[] NestedSequences(AsnEncodingRules rules, int depth)
+    {
+        var writer = new AsnWriter(rules);
+        var scopes = new Stack<AsnWriter.Scope>();
+
+        for (int i = 0; i < depth; i++)
+            scopes.Push(writer.PushSequence());
+
+        writer.WriteNull();
+
+        while (scopes.Count > 0)
+            scopes.Pop().Dispose();
+
+        return writer.Encode();
+    }
+
+    [Theory]
+    [InlineData(AsnEncodingRules.DER)]
+    [InlineData(AsnEncodingRules.CER)]
+    public void DecodeAcceptsNestingUpToTheLimit(AsnEncodingRules rules)
+    {
+        var element = Asn1Element.Decode(NestedSequences(rules, Asn1Element.MaxNestingDepth));
+
+        for (int i = 1; i < Asn1Element.MaxNestingDepth; i++)
+            element = element[0];
+
+        Assert.Equal(Asn1Tag.Null, element[0].Tag);
+    }
+
+    [Theory]
+    [InlineData(AsnEncodingRules.DER)]
+    [InlineData(AsnEncodingRules.CER)]
+    public void DecodeRefusesNestingPastTheLimit(AsnEncodingRules rules)
+    {
+        // Refused before any decoding starts: the check walks the encoding without recursing.
+        var ex = Assert.Throws<AsnContentException>(() => Asn1Element.Decode(NestedSequences(rules, Asn1Element.MaxNestingDepth + 1)));
+
+        Assert.Contains("nested", ex.Message);
+    }
+
+    [Fact]
+    public void DecodeStillIgnoresBytesAfterTheFirstValue()
+    {
+        var element = Asn1Element.Decode(Convert.FromHexString("0500FFFF"));
+
+        Assert.Equal(Asn1Tag.Null, element.Tag);
+    }
+
+    [Theory]
+    [InlineData("300204050000000000")] // an OCTET STRING running past the end of the SEQUENCE holding it
+    [InlineData("04800000")]           // a primitive value with an indefinite length
+    [InlineData("30050500")]           // a SEQUENCE claiming more bytes than there are
+    [InlineData("3080")]               // an indefinite-length SEQUENCE with no end-of-contents
+    [InlineData("1F")]                 // an identifier with no length
+    [InlineData("3085FFFFFFFFFF")]     // a length too large to represent
+    public void DecodeRefusesMalformedStructure(string hex)
+    {
+        // Each of these was refused before the depth check existed too, with the same exception type -- which is
+        // what callers handle; only some of the messages were more specific.
+        Assert.Throws<AsnContentException>(() => Asn1Element.Decode(Convert.FromHexString(hex)));
+    }
 }

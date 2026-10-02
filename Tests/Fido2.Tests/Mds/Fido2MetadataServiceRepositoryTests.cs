@@ -9,6 +9,8 @@ using Fido2NetLib.Exceptions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using Test;
+
 namespace Fido2NetLib.Tests.Mds;
 
 /// <summary>
@@ -218,5 +220,44 @@ public class Fido2MetadataServiceRepositoryTests
                 () => repository.DeserializeAndValidateBlobAsync(jwt, otherRoot, CancellationToken.None));
             Assert.Equal("Failed to validate cert chain while parsing BLOB", ex.Message);
         }
+    }
+
+    // The header's x5c is not the only way a chain could be completed: the platform will fetch a missing issuer
+    // from the AIA URL of a certificate being built unless told not to. The BLOB names its signing certificates
+    // itself, so a BLOB from anywhere other than the real service -- a misconfigured or hostile BLOB URL, or the
+    // conformance tool's -- must not be able to make the server request an address of its choosing.
+    [Fact]
+    public async Task DeserializeAndValidateBlob_NeverFetchesAnIssuerNamedByTheBlobChain()
+    {
+        var (root, unusedLeaf, unusedLeafKey) = BuildChain();
+        using var trap = new AiaTrap();
+        using var leafKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using (root)
+        using (unusedLeaf)
+        using (unusedLeafKey)
+        using (var leaf = trap.IssueFromAbsentIssuer(new CertificateRequest("CN=Test MDS Signer", leafKey, HashAlgorithmName.SHA256)))
+        {
+            string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+            var repository = new Fido2MetadataServiceRepository(new ThrowingHttpClientFactory());
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+                () => repository.DeserializeAndValidateBlobAsync(jwt, root, CancellationToken.None));
+            Assert.Equal("Failed to validate cert chain while parsing BLOB", ex.Message);
+            Assert.Equal(0, trap.CountRequests());
+        }
+    }
+
+    [Fact]
+    public async Task ConformanceDeserializeAndValidateBlob_NeverFetchesAnIssuerNamedByTheBlobChain()
+    {
+        using var trap = new AiaTrap();
+        using var leafKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var leaf = trap.IssueFromAbsentIssuer(new CertificateRequest("CN=Test Conformance MDS Signer", leafKey, HashAlgorithmName.SHA256));
+        string jwt = BuildBlobJwt(leaf, leafKey, ValidBlobPayload);
+
+        var repository = new ConformanceMetadataRepository(null, "http://localhost");
+
+        await Assert.ThrowsAsync<Fido2VerificationException>(() => repository.DeserializeAndValidateBlobAsync(jwt, CancellationToken.None));
+        Assert.Equal(0, trap.CountRequests());
     }
 }

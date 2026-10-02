@@ -18,6 +18,44 @@ public class RequestNewCredentialTests
         Origins = new HashSet<string> { "https://example.org" },
     });
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(Fido2.MinimumChallengeSize - 1)]
+    public void ChallengesShorterThanTheMinimumAreRefused(int challengeSize)
+    {
+        // A challenge of 0 bytes used to be issued as configured, and then matched any response with an empty one.
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = "example.org",
+            RPName = "example.org",
+            Origins = new HashSet<string> { "https://example.org" },
+            ChallengeSize = challengeSize,
+        });
+        var user = new Fido2User { Id = [0xf1, 0xd0], Name = "testuser", DisplayName = "Test User" };
+
+        Assert.Throws<Fido2ConfigurationException>(() => lib.RequestNewCredential(new RequestNewCredentialParams { User = user }));
+        Assert.Throws<Fido2ConfigurationException>(() => lib.GetAssertionOptions(new GetAssertionOptionsParams()));
+        Assert.Throws<Fido2ConfigurationException>(() => lib.GetAssertionOptions([], null));
+    }
+
+    [Fact]
+    public void ChallengesOfTheMinimumSizeAreIssued()
+    {
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = "example.org",
+            RPName = "example.org",
+            Origins = new HashSet<string> { "https://example.org" },
+            ChallengeSize = Fido2.MinimumChallengeSize,
+        });
+        var user = new Fido2User { Id = [0xf1, 0xd0], Name = "testuser", DisplayName = "Test User" };
+
+        Assert.Equal(Fido2.MinimumChallengeSize, lib.RequestNewCredential(new RequestNewCredentialParams { User = user }).Challenge.Length);
+        Assert.Equal(Fido2.MinimumChallengeSize, lib.GetAssertionOptions(new GetAssertionOptionsParams()).Challenge.Length);
+        Assert.Equal(Fido2.MinimumChallengeSize, lib.GetAssertionOptions([], null).Challenge.Length);
+    }
+
     [Fact]
     public void RequestNewCredential_WithValidUserHandle_ReturnsOptions()
     {
