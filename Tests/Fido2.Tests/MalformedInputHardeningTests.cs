@@ -79,4 +79,72 @@ public class MalformedInputHardeningTests
 
         Assert.Throws<Fido2VerificationException>(() => AuthenticatorAssertionResponse.Parse(rawResponse));
     }
+
+    // Nested far past CborObject.MaxNestingDepth, in few enough bytes to arrive in an ordinary request body.
+    // Decoding used to recurse once per level, so input like this overflowed the stack and killed the process.
+    private static readonly byte[] s_deeplyNestedCbor = [.. Enumerable.Repeat((byte)0x81, 200_000), 0x00];
+
+    [Fact]
+    public void AttestationResponse_Parse_DeeplyNestedAttestationObject_ThrowsFido2()
+    {
+        var rawResponse = new AuthenticatorAttestationRawResponse
+        {
+            Id = "aa",
+            RawId = [0xAA, 0xBB],
+            Type = PublicKeyCredentialType.PublicKey,
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = [0xA1, 0x63, (byte)'f', (byte)'m', (byte)'t', .. s_deeplyNestedCbor], // { "fmt": [[[...]]] }
+                ClientDataJson = "{}"u8.ToArray(),
+            },
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs(),
+        };
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAttestationResponse.Parse(rawResponse));
+        Assert.Equal(Fido2ErrorCode.InvalidAttestationObject, ex.Code);
+    }
+
+    [Fact]
+    public void AssertionResponse_Parse_DeeplyNestedExtensions_ThrowsFido2()
+    {
+        // An assertion's extensions are decoded while parsing, before the signature is checked, so no key is
+        // needed to reach this.
+        byte[] authData = [.. new byte[32], (byte)(AuthenticatorFlags.UP | AuthenticatorFlags.ED), 0, 0, 0, 1, .. s_deeplyNestedCbor];
+
+        var rawResponse = new AuthenticatorAssertionRawResponse
+        {
+            Id = "aa",
+            RawId = [0xAA, 0xBB],
+            Type = PublicKeyCredentialType.PublicKey,
+            Response = new AuthenticatorAssertionRawResponse.AssertionResponse
+            {
+                AuthenticatorData = authData,
+                Signature = [0x01],
+                ClientDataJson = "{}"u8.ToArray(),
+            },
+            ClientExtensionResults = new AuthenticationExtensionsClientOutputs(),
+        };
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => AuthenticatorAssertionResponse.Parse(rawResponse));
+        Assert.Equal(Fido2ErrorCode.InvalidAuthenticatorData, ex.Code);
+    }
+
+    [Fact]
+    public async Task AppAttest_DeeplyNestedAttestationObject_ThrowsFido2()
+    {
+        var appAttest = new AppAttest(new AppAttestConfiguration { AppId = "TEAMID1234.com.example.app" });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => appAttest.VerifyAttestationAsync(s_deeplyNestedCbor, keyId: [0x01], clientDataHash: new byte[32]));
+        Assert.Equal(Fido2ErrorCode.MalformedAttestationObject, ex.Code);
+    }
+
+    [Fact]
+    public void AppAttest_DeeplyNestedAssertion_ThrowsFido2()
+    {
+        var appAttest = new AppAttest(new AppAttestConfiguration { AppId = "TEAMID1234.com.example.app" });
+        var key = new AppAttestKey { KeyId = [0x01], PublicKey = [0x01], Counter = 0, Environment = AppAttestEnvironment.Production };
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => appAttest.VerifyAssertion(s_deeplyNestedCbor, new byte[32], key));
+        Assert.Equal(Fido2ErrorCode.MalformedAuthenticatorResponse, ex.Code);
+    }
 }

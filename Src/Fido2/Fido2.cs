@@ -30,7 +30,7 @@ public class Fido2 : IFido2
     /// <returns></returns>
     public CredentialCreateOptions RequestNewCredential(RequestNewCredentialParams requestNewCredentialParams)
     {
-        var challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
+        var challenge = NewChallenge();
         return CredentialCreateOptions.Create(_config, challenge, requestNewCredentialParams.User, requestNewCredentialParams.AuthenticatorSelection, requestNewCredentialParams.AttestationPreference, requestNewCredentialParams.ExcludeCredentials, requestNewCredentialParams.Extensions, requestNewCredentialParams.PubKeyCredParams, requestNewCredentialParams.Hints, requestNewCredentialParams.AttestationFormats);
 
     }
@@ -57,7 +57,7 @@ public class Fido2 : IFido2
     /// <returns></returns>
     public AssertionOptions GetAssertionOptions(GetAssertionOptionsParams getAssertionOptionsParams)
     {
-        byte[] challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
+        byte[] challenge = NewChallenge();
 
         return AssertionOptions.Create(_config, challenge, getAssertionOptionsParams.AllowedCredentials, getAssertionOptionsParams.UserVerification, getAssertionOptionsParams.Extensions, getAssertionOptionsParams.Hints);
     }
@@ -67,7 +67,7 @@ public class Fido2 : IFido2
         UserVerificationRequirement? userVerification,
         AuthenticationExtensionsClientInputs? extensions = null)
     {
-        byte[] challenge = RandomNumberGenerator.GetBytes(_config.ChallengeSize);
+        byte[] challenge = NewChallenge();
 
         return AssertionOptions.Create(_config, challenge, allowedCredentials, userVerification, extensions);
     }
@@ -137,6 +137,24 @@ public class Fido2 : IFido2
             Name = user.Name,
             DisplayName = user.DisplayName
         };
+    }
+
+    /// <summary>
+    /// The fewest bytes a challenge may have. Challenges "MUST contain enough entropy to make guessing them
+    /// infeasible" and "SHOULD therefore be at least 16 bytes long" (WebAuthn §13.4.3): the challenge is the only
+    /// thing that ties a response to one ceremony. This library enforces the SHOULD.
+    /// </summary>
+    public const int MinimumChallengeSize = 16;
+
+    private byte[] NewChallenge()
+    {
+        if (_config.ChallengeSize < MinimumChallengeSize)
+        {
+            throw new Fido2ConfigurationException(
+                $"{nameof(Fido2Configuration)}.{nameof(Fido2Configuration.ChallengeSize)} is {_config.ChallengeSize}; challenges must be at least {MinimumChallengeSize} bytes.");
+        }
+
+        return RandomNumberGenerator.GetBytes(_config.ChallengeSize);
     }
 }
 

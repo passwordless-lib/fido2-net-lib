@@ -173,6 +173,27 @@ public class L3CompoundAttestationTests : Fido2Tests.Attestation
     }
 
     [Fact]
+    public void AttestationVerifierCreateRefusesAppleAppAttest()
+    {
+        // App Attest is not a WebAuthn attestation format; AppAttest is its entry point, and a registration
+        // ceremony must not reach its verifier.
+        var ex = Assert.Throws<Fido2VerificationException>(() => AttestationVerifier.Create("apple-appattest", new Fido2Configuration()));
+
+        Assert.Equal(Fido2ErrorCode.UnknownAttestationType, ex.Code);
+    }
+
+    [Fact]
+    public async Task CompoundAppAttestSubStatementIsNotVerifiedAsync()
+    {
+        SetCompound(ValidNoneSubStatement(), new CborMap { { "fmt", "apple-appattest" }, { "attStmt", new CborMap() } });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+
+        Assert.Equal(Fido2ErrorCode.InvalidAttestation, ex.Code);
+        Assert.Contains("Unknown attestation type", ex.Message, System.StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task CompoundFallsBackToTheFirstSuccessWhenNoneConveyRealAttestationAsync()
     {
         // Every sub-statement here verifies but reports AttestationType.None, so there is no "real"

@@ -76,6 +76,9 @@ internal sealed class AppleAppAttest : AttestationVerifier
         chain.ChainPolicy.CustomTrustStore.Add(_trustAnchor);
         chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
 
+        // Both certificates are the sender's; never fetch an issuer from a URL they name. x5c carries the intermediate.
+        chain.ChainPolicy.DisableCertificateDownloads = true;
+
         X509Certificate2 intermediateCert = X509CertificateHelper.CreateFromRawData((byte[])x5cArray[1]);
         chain.ChainPolicy.ExtraStore.Add(intermediateCert);
 

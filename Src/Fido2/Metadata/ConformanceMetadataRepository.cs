@@ -171,6 +171,9 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
         var certChain = new X509Chain();
         certChain.ChainPolicy.ExtraStore.Add(rootCert);
+
+        // The chain is whatever the BLOB header names, so never fetch an issuer from a URL one of its certificates gives.
+        certChain.ChainPolicy.DisableCertificateDownloads = true;
         certChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
         var tokenHandler = new JsonWebTokenHandler

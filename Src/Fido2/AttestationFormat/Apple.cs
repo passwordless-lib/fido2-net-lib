@@ -133,6 +133,9 @@ internal sealed class Apple : AttestationVerifier
             chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
             chain.ChainPolicy.CustomTrustStore.Add(_trustAnchor);
 
+            // credCert is the sender's; never fetch an issuer from a URL it names. x5c carries the intermediate.
+            chain.ChainPolicy.DisableCertificateDownloads = true;
+
             for (int i = 1; i < trustPath.Length; i++)
                 chain.ChainPolicy.ExtraStore.Add(trustPath[i]);
 

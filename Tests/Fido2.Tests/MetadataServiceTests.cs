@@ -452,28 +452,36 @@ public class MetadataServiceTests
     }
 
     [Fact]
-    public async Task DistributedCacheMetadataService_Caches_An_Unknown_Aaguid_Only_When_A_Blob_Was_Searched()
+    public async Task DistributedCacheMetadataService_Retries_A_Lookup_That_Had_No_Blob_To_Search()
     {
         var clock = new MockClock(DateTimeOffset.Parse("2021-11-30T00:00:00Z"));
         var memoryCache = new MemoryCache(new MemoryCacheOptions { Clock = clock });
         var repository = new FlakyRepository(failures: 1);
         var service = CreateService(repository, clock, memoryCache);
-        var unknown = Guid.NewGuid();
-        var cacheKey = $"DistributedCacheMetadataService:V2:{unknown}";
+        var known = Guid.Parse("6d44ba9b-f6ec-2e49-b930-0c8fe920cb73");
 
-        // no BLOB could be fetched: the miss is not remembered
-        Assert.Null(await service.GetEntryAsync(unknown));
-        Assert.False(memoryCache.TryGetValue(cacheKey, out _));
+        // no BLOB could be fetched: nothing is found, and nothing is remembered
+        Assert.Null(await service.GetEntryAsync(known));
 
-        // a BLOB was searched and had no such entry: the miss is remembered...
-        Assert.Null(await service.GetEntryAsync(unknown));
+        // so the next lookup fetches again, and finds the entry
+        Assert.NotNull(await service.GetEntryAsync(known));
         Assert.Equal(2, repository.Calls);
-        Assert.True(memoryCache.TryGetValue(cacheKey, out MetadataBLOBPayloadEntry cached));
-        Assert.Null(cached);
+    }
 
-        // ...but only for as long as the BLOB it was searched in
-        clock.UtcNow = clock.UtcNow.AddHours(2);
-        Assert.False(memoryCache.TryGetValue(cacheKey, out _));
+    [Fact]
+    public async Task DistributedCacheMetadataService_Lookups_Do_Not_Add_To_The_Cache()
+    {
+        // Registrations choose their own AAGUIDs; looking one up must not leave anything behind for it.
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        var service = CreateService(new MockRepository("2099-01-01"), memoryCache: memoryCache);
+
+        await service.GetEntryAsync(Guid.NewGuid());
+        var afterFirst = memoryCache.Count;
+
+        for (int i = 0; i < 100; i++)
+            Assert.Null(await service.GetEntryAsync(Guid.NewGuid()));
+
+        Assert.Equal(afterFirst, memoryCache.Count);
     }
 
     [Fact]
@@ -658,6 +666,40 @@ public class MetadataServiceTests
         Assert.Equal("U2F Security Key", match.MetadataStatement.Description);
     }
 
+    // Every FIDO U2F registration carries the all-zero AAGUID, and U2F metadata is found by the attestation
+    // certificate instead. The answer for one certificate must never be handed to another -- as it was when lookups
+    // were cached by AAGUID alone, in either order below.
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task DistributedCacheMetadataService_Finds_Aaguidless_Entries_By_Each_Lookups_Own_Certificate(bool unmatchedFirst)
+    {
+        static System.Security.Cryptography.X509Certificates.X509Certificate2 SelfSigned(string subject)
+        {
+            using var key = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+            return new System.Security.Cryptography.X509Certificates.CertificateRequest(subject, key, System.Security.Cryptography.HashAlgorithmName.SHA256)
+                .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        }
+
+        using var listed = SelfSigned("CN=Listed U2F Attestation");
+        using var unlisted = SelfSigned("CN=Unlisted Attestation");
+        var service = CreateService(new U2FStyleMockRepository(MetadataBLOBPayloadEntry.ComputeAttestationCertificateKeyIdentifier(listed)));
+
+        if (unmatchedFirst)
+        {
+            Assert.Null(await service.GetEntryAsync(Guid.Empty, [unlisted]));
+            Assert.Equal("U2F Security Key", (await service.GetEntryAsync(Guid.Empty, [listed]))?.MetadataStatement.Description);
+        }
+        else
+        {
+            Assert.Equal("U2F Security Key", (await service.GetEntryAsync(Guid.Empty, [listed]))?.MetadataStatement.Description);
+            Assert.Null(await service.GetEntryAsync(Guid.Empty, [unlisted]));
+        }
+
+        // and a lookup with no certificate at all never matches an AAGUID-less entry
+        Assert.Null(await service.GetEntryAsync(Guid.Empty));
+    }
+
     [Fact]
     public async Task DistributeCacheMetadataService_Cache_Rollover_Works()
     {
@@ -712,11 +754,12 @@ public class MetadataServiceTests
 
         var blobEntry = await distributedCache.GetStringAsync("DistributedCacheMetadataService:V2:" + staticClient.GetType().Name + ":TOC");
 
-        var itemEntry = memCache.Get<MetadataBLOBPayloadEntry>($"DistributedCacheMetadataService:V2:{entryIdGuid}");
+        // The BLOB is what is cached in memory; entries are looked up in it, not cached one by one.
+        var memoryCachedBlob = memCache.Get<MetadataBLOBPayload>("DistributedCacheMetadataService:V2:" + staticClient.GetType().Name + ":TOC");
 
         Assert.NotNull(blobEntry);
 
-        Assert.Equal(itemEntry.AaGuid, entryIdGuid);
+        Assert.Contains(memoryCachedBlob.Entries, e => e.AaGuid == entryIdGuid);
 
         currentTimeClock.UtcNow = DateTimeOffset.Parse("2021-11-30 23:59:59.999Z"); //Before next update
 

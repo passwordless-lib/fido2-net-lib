@@ -6,20 +6,32 @@ namespace Fido2NetLib.Cbor;
 
 public abstract class CborObject
 {
+    /// <summary>
+    /// The deepest nesting of arrays and maps <see cref="Decode(ReadOnlyMemory{byte})"/> accepts, counting the
+    /// outermost container as depth 1.
+    /// </summary>
+    /// <remarks>
+    /// Decoding recurses once per level, and the input is attacker-controlled: without a bound, a request of a
+    /// few hundred kilobytes of nested one-element arrays overflows the stack, which .NET cannot catch and which
+    /// terminates the process. Nothing WebAuthn or CTAP defines comes close to this -- a compound attestation
+    /// object, the deepest, nests five levels (object, attStmt array, sub-statement, attStmt, x5c).
+    /// </remarks>
+    internal const int MaxNestingDepth = 16;
+
     public abstract CborType Type { get; }
 
     public static CborObject Decode(ReadOnlyMemory<byte> data)
     {
         var reader = new CborReader(data);
 
-        return Read(reader);
+        return Read(reader, depth: 0);
     }
 
     public static CborObject Decode(ReadOnlyMemory<byte> data, out int bytesRead)
     {
         var reader = new CborReader(data);
 
-        var result = Read(reader);
+        var result = Read(reader, depth: 0);
 
         bytesRead = data.Length - reader.BytesRemaining;
 
@@ -55,14 +67,14 @@ public abstract class CborObject
         return ((CborBoolean)obj).Value;
     }
 
-    private static CborObject Read(CborReader reader)
+    private static CborObject Read(CborReader reader, int depth)
     {
         CborReaderState s = reader.PeekState();
 
         return s switch
         {
-            CborReaderState.StartMap => ReadMap(reader),
-            CborReaderState.StartArray => ReadArray(reader),
+            CborReaderState.StartMap => ReadMap(reader, EnterContainer(depth)),
+            CborReaderState.StartArray => ReadArray(reader, EnterContainer(depth)),
             CborReaderState.TextString => new CborTextString(reader.ReadTextString()),
             CborReaderState.Boolean => (CborBoolean)reader.ReadBoolean(),
             CborReaderState.ByteString => new CborByteString(reader.ReadByteString()),
@@ -80,7 +92,15 @@ public abstract class CborObject
         return CborNull.Instance;
     }
 
-    private static CborArray ReadArray(CborReader reader)
+    private static int EnterContainer(int depth)
+    {
+        if (depth >= MaxNestingDepth)
+            throw new CborContentException($"CBOR arrays and maps are nested more than {MaxNestingDepth} levels deep");
+
+        return depth + 1;
+    }
+
+    private static CborArray ReadArray(CborReader reader, int depth)
     {
         int? count = reader.ReadStartArray();
 
@@ -90,7 +110,7 @@ public abstract class CborObject
 
         while (!(reader.PeekState() is CborReaderState.EndArray or CborReaderState.Finished))
         {
-            items.Add(Read(reader));
+            items.Add(Read(reader, depth));
         }
 
         reader.ReadEndArray();
@@ -98,7 +118,7 @@ public abstract class CborObject
         return new CborArray(items);
     }
 
-    private static CborMap ReadMap(CborReader reader)
+    private static CborMap ReadMap(CborReader reader, int depth)
     {
         int? count = reader.ReadStartMap();
 
@@ -106,8 +126,8 @@ public abstract class CborObject
 
         while (!(reader.PeekState() is CborReaderState.EndMap or CborReaderState.Finished))
         {
-            CborObject k = Read(reader);
-            CborObject v = Read(reader);
+            CborObject k = Read(reader, depth);
+            CborObject v = Read(reader, depth);
 
             map.Add(k, v);
         }

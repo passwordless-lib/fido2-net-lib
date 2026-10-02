@@ -283,6 +283,39 @@ public class Apple : Fido2Tests.Attestation
         }
     }
 
+    [Fact]
+    public async Task TestAppleNeverFetchesAnIssuerNamedByCredCert()
+    {
+        // Anyone can send fmt "apple" with any certificates, and the chain is built whether or not a metadata service
+        // is configured. credCert passes every check before the chain (nonce, public key) but names its issuer only
+        // by an AIA URL, pointed at an internal service.
+        using var trap = new AiaTrap();
+        using var credCertKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        _credentialPublicKey = new CredentialPublicKey(credCertKey, COSE.Algorithm.ES256);
+        byte[] nonce = SHA256.HashData([.. _authData.ToByteArray(), .. _clientDataHash]);
+
+        var writer = new AsnWriter(AsnEncodingRules.DER);
+        using (writer.PushSequence())
+        using (writer.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1)))
+        {
+            writer.WriteOctetString(nonce);
+        }
+
+        var credRequest = new CertificateRequest("CN=attest.apple.com", credCertKey, HashAlgorithmName.SHA256);
+        credRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, false));
+        credRequest.CertificateExtensions.Add(new X509Extension("1.2.840.113635.100.8.2", writer.Encode(), false));
+
+        using var credCert = trap.IssueFromAbsentIssuer(credRequest);
+        using var unrelatedKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var unrelated = new CertificateRequest("CN=Unrelated", unrelatedKey, HashAlgorithmName.SHA256).CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+
+        ((CborMap)_attestationObject["attStmt"]).Set("x5c", new CborArray { credCert.RawData, unrelated.RawData });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(MakeAttestationResponseAsync);
+        Assert.StartsWith("Failed to build chain in Apple attestation", ex.Message);
+        Assert.Equal(0, trap.CountRequests());
+    }
+
     private (X509Certificate2 root, X509Certificate2 credCert) BuildAppleCredentialChain(ECDsa credCertKey, byte[] nonce)
     {
         // Shared across root and leaf: CertificateRequest.Create rejects a leaf notAfter later than the issuer's,

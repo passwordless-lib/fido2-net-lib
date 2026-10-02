@@ -95,6 +95,11 @@ public class AuthenticatorResponse
         if (Challenge is null)
             throw new Fido2VerificationException(Fido2ErrorCode.MissingAuthenticatorResponseChallenge, Fido2ErrorMessages.MissingAuthenticatorResponseChallenge);
 
+        // Options with no challenge at all -- a default instance, or options that lost theirs on the way back from
+        // storage -- would otherwise match any response that also carries an empty one, tying it to no ceremony.
+        if (originalChallenge.IsEmpty)
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, "The options this response is verified against have no challenge");
+
         // Verify that the value of C.challenge equals the base64url encoding of pkOptions.challenge.
         // (Step 8 of WebAuthn L3 §7.1; step 11 of §7.2.)
         if (!Challenge.AsSpan().SequenceEqual(originalChallenge))
@@ -135,7 +140,17 @@ public class AuthenticatorResponse
         // (Step 11 of §7.1; step 14 of §7.2.)
         if (TopOrigin is not null)
         {
-            var fullyQualifiedTopOrigin = TopOrigin.ToFullyQualifiedOrigin();
+            // C.topOrigin is as much the client's to write as C.origin, and gets the same handling of a value that
+            // is not a URI at all: a verification failure, not a UriFormatException out of the ceremony.
+            string fullyQualifiedTopOrigin;
+            try
+            {
+                fullyQualifiedTopOrigin = TopOrigin.ToFullyQualifiedOrigin();
+            }
+            catch (UriFormatException ex)
+            {
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseTopOrigin, $"The client data's topOrigin is not a valid origin: '{TopOrigin}'", ex);
+            }
 
             if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedTopOrigin))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseTopOrigin, $"Fully qualified top origin {fullyQualifiedTopOrigin} of {TopOrigin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");

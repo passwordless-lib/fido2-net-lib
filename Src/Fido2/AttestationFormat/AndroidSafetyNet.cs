@@ -230,6 +230,9 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
             chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
             chain.ChainPolicy.CustomTrustStore.Add(_trustAnchor);
 
+            // The JWS x5c is the sender's; never fetch an issuer from a URL it names.
+            chain.ChainPolicy.DisableCertificateDownloads = true;
+
             for (int i = 1; i < certs.Length; i++)
                 chain.ChainPolicy.ExtraStore.Add(certs[i]);
 

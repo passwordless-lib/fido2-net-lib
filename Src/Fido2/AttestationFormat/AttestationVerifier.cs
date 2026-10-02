@@ -36,7 +36,10 @@ public abstract class AttestationVerifier
             "fido-u2f"          => new FidoU2f(),          // https://www.w3.org/TR/webauthn-2/#sctn-fido-u2f-attestation
             "packed"            => new Packed(),           // https://www.w3.org/TR/webauthn-2/#sctn-packed-attestation
             "apple"             => new Apple(config?.AppleWebAuthnRootCertificate ?? Apple.AppleWebAuthnRootCA), // https://www.w3.org/TR/webauthn-2/#sctn-apple-anonymous-attestation
-            "apple-appattest"   => new AppleAppAttest(),   // https://developer.apple.com/documentation/devicecheck/validating_apps_that_connect_to_your_server
+            // "apple-appattest" is not a WebAuthn attestation format: App Attest has no client data, origin or user
+            // presence, and is verified through AppAttest, its own entry point. It is not accepted here, where it
+            // would otherwise be reachable from a registration ceremony (a conditional one skips the UP check) or
+            // as a sub-statement of a compound attestation.
             // "compound" carries an array of sub-statements rather than a map, so it does not fit this
             // contract; AuthenticatorAttestationResponse dispatches it to Compound.VerifyAsync instead.
             "compound"          => throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, $"Compound attestation is not verified through {nameof(AttestationVerifier)}; use {nameof(Compound)}.{nameof(Compound.VerifyAsync)}"),

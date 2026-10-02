@@ -136,8 +136,23 @@ internal readonly struct Asn1Element
         return AsnDecoder.ReadBitString(_encodedValue.Span, AsnEncodingRules.BER, out int _, out int _);
     }
 
+    /// <summary>
+    /// The deepest nesting of constructed values <see cref="Decode"/> accepts, counting the outermost as depth 1.
+    /// </summary>
+    /// <remarks>
+    /// Decoding recurses once per level, and so does the runtime's own search for the end of an indefinite-length
+    /// value. The input is a certificate extension, which on every attestation format is the sender's to write:
+    /// a few hundred kilobytes of nested SEQUENCEs overflowed the stack, which .NET cannot catch and which
+    /// terminates the process. Nothing decoded here comes close -- an Android key description, the deepest,
+    /// nests four levels (KeyDescription, AuthorizationList, an explicit tag, a SET OF).
+    /// </remarks>
+    internal const int MaxNestingDepth = 32;
+
     public static Asn1Element Decode(ReadOnlyMemory<byte> data)
     {
+        // Before any AsnReader sees the bytes: it recurses into indefinite-length values while locating their end.
+        CheckNestingDepth(data.Span);
+
         var reader = new AsnReader(data, AsnEncodingRules.BER);
 
         Asn1Tag tag = reader.PeekTag();
@@ -157,6 +172,123 @@ internal readonly struct Asn1Element
         else
         {
             return new Asn1Element(tag, reader.ReadEncodedValue());
+        }
+    }
+
+    /// <summary>
+    /// Walks the BER encoding iteratively, without recursing, and refuses it if constructed values nest deeper than
+    /// <see cref="MaxNestingDepth"/>. Anything it cannot walk is refused too, so nothing deeper can slip past it
+    /// into a decoder that does recurse -- with AsnReader's own default exception, so malformed input fails exactly
+    /// as it did before.
+    /// </summary>
+    /// <exception cref="AsnContentException">Nested too deeply, or not well-formed BER.</exception>
+    private static void CheckNestingDepth(ReadOnlySpan<byte> data)
+    {
+        // The end offset of each open constructed value, or -1 for one of indefinite length (ended by 00 00).
+        Span<int> ends = stackalloc int[MaxNestingDepth];
+        int depth = 0;
+        int position = 0;
+
+        // Only the first value is walked: Decode reads one value and ignores whatever follows it.
+        do
+        {
+            if (position >= data.Length)
+                throw new AsnContentException();
+
+            if (depth > 0 && ends[depth - 1] is -1 && data[position] is 0)
+            {
+                if (position + 1 >= data.Length || data[position + 1] is not 0)
+                    throw new AsnContentException();
+
+                position += 2;
+                depth--;
+                depth = CloseFinished(ends, depth, position);
+                continue;
+            }
+
+            // Identifier octets: the low five bits all set means the tag number continues in later octets.
+            bool constructed = (data[position] & 0x20) != 0;
+            bool highTagNumber = (data[position] & 0x1F) == 0x1F;
+            position++;
+
+            if (highTagNumber)
+            {
+                while (position < data.Length && (data[position] & 0x80) != 0)
+                    position++;
+
+                position++;
+            }
+
+            if (position >= data.Length)
+                throw new AsnContentException();
+
+            // Length octets: short form, indefinite (0x80), or long form with up to four length octets.
+            int lengthByte = data[position++];
+            int length;
+
+            if (lengthByte < 0x80)
+            {
+                length = lengthByte;
+            }
+            else if (lengthByte is 0x80)
+            {
+                length = -1;
+            }
+            else
+            {
+                int count = lengthByte & 0x7F;
+
+                if (count > 4 || count > data.Length - position)
+                    throw new AsnContentException();
+
+                long value = 0;
+                for (int i = 0; i < count; i++)
+                    value = (value << 8) | data[position++];
+
+                if (value > data.Length - position)
+                    throw new AsnContentException();
+
+                length = (int)value;
+            }
+
+            if (length > data.Length - position)
+                throw new AsnContentException();
+
+            // A definite-length value inside a definite-length container must end within it.
+            if (length >= 0 && depth > 0 && ends[depth - 1] >= 0 && position + length > ends[depth - 1])
+                throw new AsnContentException();
+
+            if (constructed)
+            {
+                if (depth == MaxNestingDepth)
+                    throw new AsnContentException($"Constructed values are nested more than {MaxNestingDepth} levels deep.");
+
+                ends[depth++] = length is -1 ? -1 : position + length;
+            }
+            else
+            {
+                if (length is -1)
+                    throw new AsnContentException();
+
+                position += length;
+            }
+
+            depth = CloseFinished(ends, depth, position);
+        }
+        while (depth > 0);
+
+        // Closes every definite-length value that ends at the current position, innermost first.
+        static int CloseFinished(Span<int> ends, int depth, int position)
+        {
+            while (depth > 0 && ends[depth - 1] >= 0 && position >= ends[depth - 1])
+            {
+                if (position > ends[depth - 1])
+                    throw new AsnContentException();
+
+                depth--;
+            }
+
+            return depth;
         }
     }
 

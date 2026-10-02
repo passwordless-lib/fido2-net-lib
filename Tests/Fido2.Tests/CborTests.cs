@@ -1,4 +1,6 @@
-﻿namespace Fido2NetLib.Cbor.Tests;
+﻿using System.Formats.Cbor;
+
+namespace Fido2NetLib.Cbor.Tests;
 
 public class CborTests
 {
@@ -46,5 +48,57 @@ public class CborTests
         Assert.Equal("pQECAzguIVggy6rAanAqDpv7VJqZVJWgUVG6jIQvURLOH9Ylf/+nyesiWCDb75V3vgcbm7P0M1pI55cc6EkopDxVV7RXKQfm/xNlNyAI", Convert.ToBase64String(encoded));
 
         Assert.Equal(78, encoded.Length);
+    }
+
+    // Each level is one container holding the next; the innermost holds the integer 0.
+    private static byte[] NestedArrays(int depth, byte header = 0x81) => [.. Enumerable.Repeat(header, depth), 0x00];
+
+    // { 0: { 0: ... 0 } }
+    private static byte[] NestedMapValues(int depth) => [.. Enumerable.Range(0, depth).SelectMany(_ => new byte[] { 0xA1, 0x00 }), 0x00];
+
+    // { { ... { 0: 0 } ...: 0 }: 0 } -- the nesting runs through the keys rather than the values.
+    private static byte[] NestedMapKeys(int depth) => [.. Enumerable.Repeat((byte)0xA1, depth), 0x00, .. Enumerable.Repeat((byte)0x00, depth)];
+
+    public static TheoryData<string> NestingShapes => ["array", "indefinite array", "map value", "map key"];
+
+    private static byte[] Nested(string shape, int depth) => shape switch
+    {
+        "array" => NestedArrays(depth),
+        // An indefinite-length array needs its break byte (0xFF) after each level's single item.
+        "indefinite array" => [.. Enumerable.Repeat((byte)0x9F, depth), 0x00, .. Enumerable.Repeat((byte)0xFF, depth)],
+        "map value" => NestedMapValues(depth),
+        "map key" => NestedMapKeys(depth),
+        _ => throw new ArgumentOutOfRangeException(nameof(shape)),
+    };
+
+    [Theory]
+    [MemberData(nameof(NestingShapes))]
+    public void Decode_AcceptsNestingUpToTheLimit(string shape)
+    {
+        byte[] data = Nested(shape, CborObject.MaxNestingDepth);
+
+        CborObject.Decode(data, out int read);
+
+        Assert.Equal(data.Length, read);
+    }
+
+    [Theory]
+    [MemberData(nameof(NestingShapes))]
+    public void Decode_RejectsNestingPastTheLimit(string shape)
+    {
+        byte[] data = Nested(shape, CborObject.MaxNestingDepth + 1);
+
+        Assert.Throws<CborContentException>(() => CborObject.Decode(data));
+    }
+
+    [Theory]
+    [MemberData(nameof(NestingShapes))]
+    public void Decode_DeeplyNestedInputThrowsRatherThanOverflowingTheStack(string shape)
+    {
+        // A million levels is ~1-2 MB of input. Decoding recursed once per level, so this used to overflow the
+        // stack and kill the process -- which no catch block can stop, so a regression fails this whole test run.
+        byte[] data = Nested(shape, 1_000_000);
+
+        Assert.Throws<CborContentException>(() => CborObject.Decode(data));
     }
 }

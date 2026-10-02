@@ -244,6 +244,27 @@ public class AppAttestTests
     }
 
     [Fact]
+    public async Task Attestation_never_fetches_an_issuer_named_by_the_credential_certificate()
+    {
+        using var device = new AppAttestDevice();
+        using var trap = new AiaTrap();
+        byte[] clientDataHash = ClientDataHash("challenge-1");
+
+        // The chain is the first thing checked, so a credential certificate from anyone reaches it. This one names
+        // its issuer only by an AIA URL, pointed at an internal service.
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var credCert = trap.IssueFromAbsentIssuer(new CertificateRequest("CN=Attacker", key, HashAlgorithmName.SHA256));
+
+        var attestation = (CborMap)CborObject.Decode(device.Attest(clientDataHash));
+        ((CborMap)attestation["attStmt"]!).Set("x5c", new CborArray { credCert.RawData, device.Intermediate.RawData });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => Verifier(device).VerifyAttestationAsync(attestation.Encode(), device.KeyId, clientDataHash));
+
+        Assert.StartsWith("Failed to build chain in Apple AppAttest attestation", ex.Message);
+        Assert.Equal(0, trap.CountRequests());
+    }
+
+    [Fact]
     public async Task Attestation_is_refused_when_the_challenge_differs()
     {
         using var device = new AppAttestDevice();

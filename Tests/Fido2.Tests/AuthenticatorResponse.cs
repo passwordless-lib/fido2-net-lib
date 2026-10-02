@@ -443,6 +443,64 @@ public class AuthenticatorResponseTests
         Assert.StartsWith("Fully qualified top origin", ex.Message);
     }
 
+    [Theory]
+    [InlineData("not a uri")]
+    [InlineData("")]
+    public async Task TestAuthenticatorTopOriginThatIsNotAUriIsAVerificationFailureAsync(string topOrigin)
+    {
+        // topOrigin is the client's to write, like origin. It used to reach the URI parser unguarded, so a value
+        // that is not a URI surfaced as a UriFormatException rather than a Fido2VerificationException.
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+
+        var rawResponse = BuildCrossOriginRawResponse(rp, challenge, crossOrigin: true, topOrigin: topOrigin);
+        var originalOptions = BuildCrossOriginOptions(rp, challenge);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+            AllowCrossOriginRequests = true,
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = (_, _) => Task.FromResult(true)
+        }));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAuthenticatorResponseTopOrigin, ex.Code);
+    }
+
+    [Fact]
+    public async Task TestAuthenticatorOptionsWithoutAChallengeAreRefusedAsync()
+    {
+        // Options that have lost their challenge must not match a response that carries an empty one: that
+        // response would be tied to no ceremony at all.
+        var rp = "https://www.passwordless.dev";
+
+        var rawResponse = BuildCrossOriginRawResponse(rp, [], crossOrigin: false, topOrigin: null);
+        var originalOptions = BuildCrossOriginOptions(rp, []);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = (_, _) => Task.FromResult(true)
+        }));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAuthenticatorResponseChallenge, ex.Code);
+    }
+
     [Fact]
     public void TestAuthenticatorAttestationRawResponse()
     {
