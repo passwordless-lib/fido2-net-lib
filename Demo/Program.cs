@@ -43,14 +43,9 @@ builder.Services.AddFido2(options =>
     // re-check of the MDS status at every sign-in, so a model revoked after registration stops working.
     options.AaguidDenyList = builder.Configuration.GetSection("fido2:aaguidDenyList").Get<HashSet<Guid>>() ?? [];
     options.RecheckMetadataStatusOnAssertion = true;
-
-    // Friendly names and icons for passkey providers that have no FIDO Metadata Service statement (most don't).
-    options.DisplayMetadata.UseConvenienceMetadataService = builder.Configuration.GetValue("fido2:useConvenienceMetadataService", true);
 })
 .AddFidoMetadataRepository()
-.AddCachedMetadataService()
-.AddAuthenticatorDisplayMetadata()
-.AddFido2MetadataHealthCheck();
+.AddCachedMetadataService();
 
 var app = builder.Build();
 
@@ -83,9 +78,6 @@ app.MapFido2WellKnownWebAuthn();
 app.UseStaticFiles();
 
 app.UseRouting();
-
-// Unhealthy when no metadata BLOB is available, degraded when refreshes are failing.
-app.MapHealthChecks("/health");
 
 app.MapFallbackToPage("/", "/overview");
 app.MapRazorPages();

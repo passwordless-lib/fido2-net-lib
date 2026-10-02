@@ -10,12 +10,10 @@ namespace Fido2Demo.Pages;
 public class dashboardModel : PageModel
 {
     private readonly IMetadataService _metadataService;
-    private readonly IAuthenticatorDisplayMetadataService _displayMetadata;
 
-    public dashboardModel(IMetadataService metadataService, IAuthenticatorDisplayMetadataService displayMetadata)
+    public dashboardModel(IMetadataService metadataService)
     {
         _metadataService = metadataService;
-        _displayMetadata = displayMetadata;
     }
 
     public string Username { get; private set; } = "";
@@ -42,56 +40,44 @@ public class dashboardModel : PageModel
 
         foreach (var credential in DemoController.DemoStorage.GetCredentialsByUser(user))
         {
-            var (description, icon) = await DescribeAuthenticatorAsync(credential.AaGuid);
-            views.Add(new CredentialView(credential, description, icon));
+            views.Add(new CredentialView(credential, await DescribeAuthenticatorAsync(credential.AaGuid)));
         }
 
         Credentials = views;
     }
 
     /// <summary>
-    /// Names the authenticator model: from its FIDO Metadata Service statement when it has one, otherwise from
-    /// the display-only metadata (which covers passkey providers such as Google Password Manager and iCloud
-    /// Keychain that have no MDS statement). Both are best-effort; the dashboard renders without them.
+    /// Looks the authenticator model up in the FIDO Metadata Service. Returns null when there is no metadata
+    /// for the AAGUID, which is the normal case for a self-attested or "none" attestation registration.
     /// </summary>
-    private async Task<(string? Description, string? Icon)> DescribeAuthenticatorAsync(Guid aaguid)
+    private async Task<string?> DescribeAuthenticatorAsync(Guid aaguid)
     {
         if (aaguid == Guid.Empty)
-            return (null, null);
-
-        string? description = null;
+            return null;
 
         try
         {
             var entry = await _metadataService.GetEntryAsync(aaguid);
-            description = entry?.MetadataStatement?.Description;
+            return entry?.MetadataStatement?.Description;
         }
         catch
         {
-            // The metadata service is best-effort here.
+            // The metadata service is best-effort here; the dashboard still renders without it.
+            return null;
         }
-
-        // Display metadata never throws for a failed download; it just has nothing to say.
-        var display = await _displayMetadata.GetDisplayInfoAsync(aaguid);
-
-        return (description ?? display?.Name, display?.IconLight);
     }
 
     public sealed class CredentialView
     {
-        public CredentialView(StoredCredential credential, string? authenticatorDescription, string? authenticatorIcon)
+        public CredentialView(StoredCredential credential, string? authenticatorDescription)
         {
             Credential = credential;
             AuthenticatorDescription = authenticatorDescription;
-            AuthenticatorIcon = authenticatorIcon;
         }
 
         public StoredCredential Credential { get; }
 
         public string? AuthenticatorDescription { get; }
-
-        /// <summary>A <c>data:image/...</c> URL, only ever rendered as an <c>img</c> source.</summary>
-        public string? AuthenticatorIcon { get; }
 
         public string CredentialId => Convert.ToBase64String(Credential.Id);
 

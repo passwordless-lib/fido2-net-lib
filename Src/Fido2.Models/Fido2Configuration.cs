@@ -347,13 +347,6 @@ public class Fido2Configuration
     public bool RecheckMetadataStatusOnAssertion { get; set; }
 
     /// <summary>
-    /// Configuration for resolving display-only authenticator names/icons by AAGUID (for UI, logs, and admin
-    /// tooling), separate from the signed FIDO Metadata Service used above for trust decisions. Read by
-    /// <c>AddAuthenticatorDisplayMetadata()</c> in Fido2.AspNet.
-    /// </summary>
-    public DisplayMetadataOptions DisplayMetadata { get; set; } = new();
-
-    /// <summary>
     /// How many sub-statements of a <c>compound</c> attestation statement must verify successfully.
     /// Defaults to <see cref="Fido2NetLib.CompoundAttestationPolicy.RequireAll"/>.
     /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-compound-attestation"/>

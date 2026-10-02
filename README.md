@@ -103,7 +103,7 @@ Read more:
 - ✅ All current attestation formats: "packed", "tpm", "android-key", "android-safetynet", "fido-u2f", "apple", "apple-appattest", and "none" ([spec](https://www.iana.org/assignments/webauthn/webauthn.xhtml))
 - ✅ Apple App Attest outside WebAuthn: attesting an app's key and verifying its assertions -- see [the guide](Documentation/app-attest.md)
 - ✅ FIDO2 Server attestation validation via FIDO Metadata Service V3 ([spec](https://fidoalliance.org/specs/mds/fido-metadata-service-v3.0-ps-20210518.html))
-- ✅ Admin controls: AAGUID allow/deny lists, re-checking metadata status at sign-in, ceremony logging, a metadata health check, and display names/icons for authenticators -- see [the guide](Documentation/metadata-service-guide.md#admin-controls)
+- ✅ Admin controls: AAGUID allow/deny lists, re-checking metadata status at sign-in, and ceremony logging -- see [the guide](Documentation/metadata-service-guide.md#admin-controls)
 - ✅ WebAuthn extensions ([spec](https://www.w3.org/TR/webauthn/#extensions)) including PRF, Large Blob, Credential Protection
 - ✅ Secure Payment Confirmation ([spec](https://www.w3.org/TR/secure-payment-confirmation/)): payment credentials, and verification of what the user confirmed -- see [the guide](Documentation/secure-payment-confirmation.md)
 - ✅ Blazor WebAssembly support for client-side applications
