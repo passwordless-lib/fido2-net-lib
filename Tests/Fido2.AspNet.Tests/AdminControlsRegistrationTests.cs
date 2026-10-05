@@ -1,5 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,8 +15,8 @@ using Microsoft.Extensions.Logging;
 namespace Fido2.AspNet.Tests;
 
 /// <summary>
-/// Covers how the admin controls reach an application through Fido2.AspNet: settings binding and the logger
-/// reaching <see cref="Fido2"/>.
+/// Covers how the admin controls reach an application through Fido2.AspNet: settings binding, the logger reaching
+/// <see cref="Fido2"/>, and <c>AddAuthenticatorDisplayMetadata()</c>.
 /// </summary>
 public class AdminControlsRegistrationTests
 {
@@ -31,6 +34,10 @@ public class AdminControlsRegistrationTests
             ["AaguidAllowListRequiresAttestation"] = "false",
             ["MetadataConsistencyStrictness"] = "strict",
             ["RecheckMetadataStatusOnAssertion"] = "true",
+            ["DisplayMetadata:UseConvenienceMetadataService"] = "true",
+            ["DisplayMetadata:ConvenienceMetadataServiceUrl"] = "https://mirror.example.test/c-mds",
+            ["DisplayMetadata:LocalFilePath"] = "aaguids.json",
+            ["DisplayMetadata:RefreshInterval"] = "02:00:00",
         }).Build();
 
         var services = new ServiceCollection();
@@ -42,6 +49,10 @@ public class AdminControlsRegistrationTests
         Assert.False(config.AaguidAllowListRequiresAttestation);
         Assert.Equal(MetadataConsistencyStrictness.Strict, config.MetadataConsistencyStrictness);
         Assert.True(config.RecheckMetadataStatusOnAssertion);
+        Assert.True(config.DisplayMetadata.UseConvenienceMetadataService);
+        Assert.Equal(new Uri("https://mirror.example.test/c-mds"), config.DisplayMetadata.ConvenienceMetadataServiceUrl);
+        Assert.Equal("aaguids.json", config.DisplayMetadata.LocalFilePath);
+        Assert.Equal(TimeSpan.FromHours(2), config.DisplayMetadata.RefreshInterval);
     }
 
     [Theory]
@@ -85,11 +96,74 @@ public class AdminControlsRegistrationTests
         Assert.NotNull(fido2.GetUnknownCredentialOptions([1]));
     }
 
+    [Fact]
+    public async Task DisplayMetadataWithNothingConfiguredAnswersNothingAsync()
+    {
+        var services = new ServiceCollection();
+        services.AddFido2(config => config.DisplayMetadata = null).AddAuthenticatorDisplayMetadata();
+
+        var service = Assert.IsType<CompositeAuthenticatorDisplayMetadataService>(services.BuildServiceProvider().GetRequiredService<IAuthenticatorDisplayMetadataService>());
+
+        Assert.Empty(service.Sources);
+        Assert.Null(await service.GetDisplayInfoAsync(Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task DisplayMetadataPutsTheLocalFileBeforeTheConvenienceServiceAsync()
+    {
+        var aaguid = Guid.NewGuid();
+        var path = Path.GetTempFileName();
+        await File.WriteAllTextAsync(path, $$"""{ "{{aaguid}}": { "name": "Local Name" } }""");
+
+        try
+        {
+            var handler = new StubHandler($$"""{ "no": 1, "{{aaguid}}": { "friendlyNames": { "en-US": "Remote Name" }, "icon": "data:image/png;base64,AAAA" } }""");
+            var services = new ServiceCollection();
+            services.AddFido2(config =>
+            {
+                config.DisplayMetadata.LocalFilePath = path;
+                config.DisplayMetadata.UseConvenienceMetadataService = true;
+            })
+            .AddAuthenticatorDisplayMetadata(client => client.ConfigurePrimaryHttpMessageHandler(() => handler));
+
+            var service = Assert.IsType<CompositeAuthenticatorDisplayMetadataService>(services.BuildServiceProvider().GetRequiredService<IAuthenticatorDisplayMetadataService>());
+            var info = await service.GetDisplayInfoAsync(aaguid);
+
+            Assert.Collection(service.Sources,
+                s => Assert.IsType<FileSystemDisplayMetadataRepository>(s),
+                s => Assert.IsType<ConvenienceMetadataService>(s));
+            Assert.Equal("Local Name", info?.Name);
+            Assert.Equal("data:image/png;base64,AAAA", info?.IconLight);
+            Assert.Equal(DisplayMetadataOptions.DefaultConvenienceMetadataServiceUrl, handler.LastRequest);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void TheRegistrationMethodRejectsANullBuilder()
+    {
+        Assert.Throws<ArgumentNullException>(() => ((IFido2NetLibBuilder)null).AddAuthenticatorDisplayMetadata());
+    }
+
     private sealed class NoMetadataService : IMetadataService
     {
         public bool ConformanceTesting() => false;
 
         public Task<MetadataBLOBPayloadEntry> GetEntryAsync(Guid aaGuid, CancellationToken cancellationToken = default) => Task.FromResult<MetadataBLOBPayloadEntry>(null);
+    }
+
+    private sealed class StubHandler(string content) : HttpMessageHandler
+    {
+        public Uri LastRequest { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            LastRequest = request.RequestUri;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) });
+        }
     }
 
     private sealed class RecordingLoggerProvider : ILoggerProvider

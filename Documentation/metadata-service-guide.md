@@ -234,7 +234,8 @@ Everything here is off by default; existing behaviour does not change until a se
     "aaguidDenyList": [ "cb69481e-8ff7-4039-93ec-0a2729a154a8" ],
     "aaguidAllowList": [ "ee882879-721c-4913-9775-3dfcce97072a" ],
     "recheckMetadataStatusOnAssertion": true,
-    "backupFlagMetadataConsistencyPolicy": "Enforce"
+    "backupFlagMetadataConsistencyPolicy": "Enforce",
+    "displayMetadata": { "useConvenienceMetadataService": true, "localFilePath": "aaguids.json" }
   }
 }
 ```
@@ -294,6 +295,29 @@ registered. Credential IDs are logged base64url-encoded and truncated to 64 char
 | 1205 | Error | A ceremony failed with an unexpected exception, e.g. from your own callback (with the exception) |
 
 Rejections are logged without a stack trace, since anyone can trigger them. Cancelled ceremonies are not logged.
+
+### Display names and icons
+
+`AddAuthenticatorDisplayMetadata()` registers an `IAuthenticatorDisplayMetadataService` for labelling AAGUIDs in UI,
+logs and admin tools, from the sources in `Fido2Configuration.DisplayMetadata`: a local file in the
+[passkey-authenticator-aaguids](https://github.com/passkeydeveloper/passkey-authenticator-aaguids) shape
+(`LocalFilePath`, which takes priority field by field) and the FIDO Alliance
+[Convenience Metadata Service](https://fidoalliance.org/specs/mds/fido-convenience-metadata-service-v1.0-ps-20250521.html)
+(`UseConvenienceMetadataService`). The service's document is downloaded, kept in memory, and re-checked every
+`RefreshInterval` (one day) with a conditional request; a failed download is logged (event 1302) and retried after
+`RetryAfterFailure` (one hour), and a lookup never throws because of it.
+
+This data is never used for trust decisions. It is third-party content: the library only passes on `data:image/...`
+icons and names without control characters, but HTML-encode names and show icons only through `<img src>`.
+
+| Event | Level | When |
+| --- | --- | --- |
+| 1300 | Information | The Convenience Metadata Service document was downloaded |
+| 1301 | Debug | It had not changed |
+| 1302 | Warning | The download failed; the last good copy is used until the next attempt |
+| 1303 | Warning | The local display metadata file does not exist |
+| 1304 | Error | The local display metadata file could not be read |
+| 1305 | Warning | One display metadata source failed; the others answered |
 
 ## How attestation is checked against metadata
 
