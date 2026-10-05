@@ -338,7 +338,8 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
 
     /// <summary>
     /// The BLOB each repository is currently being served from, loading it (through the same caches and
-    /// coalesced fetch every lookup uses) if nothing has asked for it yet. Read by <c>Fido2MetadataHealthCheck</c>.
+    /// coalesced fetch every lookup uses) if nothing has asked for it yet. A general-purpose accessor for
+    /// building a "is my metadata repository healthy" check.
     /// </summary>
     /// <remarks>
     /// This reports what verification would actually use, wherever it came from -- this process's own fetch, or a
