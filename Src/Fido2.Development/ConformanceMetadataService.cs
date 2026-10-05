@@ -1,5 +1,8 @@
 ﻿using System.Collections.Concurrent;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Fido2NetLib;
 
 public class ConformanceMetadataService : IMetadataService
@@ -8,12 +11,16 @@ public class ConformanceMetadataService : IMetadataService
     protected readonly ConcurrentDictionary<Guid, MetadataStatement> _metadataStatements;
     protected readonly ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry> _entries;
     protected bool _initialized;
+    private readonly ILogger _logger;
 
-    public ConformanceMetadataService(IEnumerable<IMetadataRepository> repositories)
+    /// <param name="repositories">The metadata sources to load.</param>
+    /// <param name="logger">Where loading is reported.</param>
+    public ConformanceMetadataService(IEnumerable<IMetadataRepository> repositories, ILogger<ConformanceMetadataService>? logger = null)
     {
         _repositories = repositories.ToList();
         _metadataStatements = new ConcurrentDictionary<Guid, MetadataStatement>();
         _entries = new ConcurrentDictionary<Guid, MetadataBLOBPayloadEntry>();
+        _logger = logger ?? NullLogger<ConformanceMetadataService>.Instance;
     }
 
     public bool ConformanceTesting()
@@ -57,6 +64,7 @@ public class ConformanceMetadataService : IMetadataService
     protected virtual async Task InitializeRepositoryAsync(IMetadataRepository repository, CancellationToken cancellationToken)
     {
         var blob = await repository.GetBLOBAsync(cancellationToken);
+        int loaded = 0;
 
         foreach (var entry in blob.Entries)
         {
@@ -66,9 +74,13 @@ public class ConformanceMetadataService : IMetadataService
                 {
                     // Load if it doesn't already exist
                     await LoadEntryStatementAsync(repository, blob, entry, cancellationToken);
+                    loaded++;
                 }
             }
         }
+
+        _logger.LogInformation("Loaded {EntryCount} of {TotalEntries} metadata entries from {Repository}; the rest were already known or have no AAGUID",
+            loaded, blob.Entries.Length, repository.GetType().Name);
     }
 
     public virtual async Task InitializeAsync(CancellationToken cancellationToken = default)
