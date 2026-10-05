@@ -136,4 +136,13 @@ public class RegisteredPublicKeyCredential
     /// Storing this in combination with the above attestationObject item enables the Relying Party to re-verify the attestation signature at a later time.
     /// </summary>
     public byte[] AttestationClientDataJson { get; init; }
+
+    /// <summary>
+    /// For a credential created for Secure Payment Confirmation, the browser-bound key's public key as a COSE_Key, when
+    /// the browser supplied one and its signature over the client data verified; otherwise <see langword="null"/>.
+    /// Store it to compare against the key later transactions are confirmed with.
+    /// </summary>
+#nullable enable
+    public byte[]? BrowserBoundPublicKey { get; init; }
+#nullable restore
 }

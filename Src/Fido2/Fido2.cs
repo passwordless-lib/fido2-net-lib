@@ -91,6 +91,7 @@ public class Fido2 : IFido2
                                                       _metadataService,
                                                       makeAssertionParams.RequestTokenBindingId,
                                                       makeAssertionParams.StoredBackupEligible,
+                                                      makeAssertionParams.SecurePaymentConfirmation,
                                                       cancellationToken);
 
         return result;

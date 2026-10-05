@@ -6,7 +6,7 @@ namespace Test;
 
 /// <summary>
 /// Covers the id/rawId cross-check, the allowCredentials membership check, and the extension
-/// input/output validation branches of <see cref="AuthenticatorAssertionResponse.VerifyAsync"/> that
+/// input/output validation branches of <see cref="AuthenticatorAssertionResponse"/>'s <c>VerifyAsync</c> that
 /// <see cref="L3AssertionUserHandleTests"/> and <see cref="L3LargeBlobAssertionTests"/> don't reach.
 /// </summary>
 public class L3AssertionResponseValidationTests

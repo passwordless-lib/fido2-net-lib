@@ -283,6 +283,10 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         //     the Relying Party SHOULD fail the registration ceremony.
         //     This implementation throws if the outputs are not trustworthy for a particular attestation type.
 
+        // Secure Payment Confirmation: a credential created for payments may come with a browser-bound key, whose
+        // signature over the client data proves the key belongs to this browser. Nothing else about registration changes.
+        byte[]? browserBoundPublicKey = SecurePaymentConfirmation.VerifyBrowserBoundSignature(Payment, Raw.ClientExtensionResults?.Payment, Raw.Response.ClientDataJson);
+
         return new RegisteredPublicKeyCredential
         {
             Type = Raw.Type!.Value,
@@ -303,7 +307,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
             EnterpriseAttestationSerialNumber = attestationResult.EnterpriseAttestationSerialNumber,
             FirmwareVersion = attestationResult.FirmwareVersion,
             AuthenticatorExtensionResults = authData.Extensions?.Outputs ?? new AuthenticationExtensionsAuthenticatorOutputs(),
-            AttestationType = attType.Value
+            AttestationType = attType.Value,
+            BrowserBoundPublicKey = browserBoundPublicKey
         };
     }
 

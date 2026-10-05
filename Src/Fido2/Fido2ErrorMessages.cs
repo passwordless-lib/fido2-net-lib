@@ -6,6 +6,7 @@ namespace Fido2NetLib.Exceptions;
 internal static class Fido2ErrorMessages
 {
     public static readonly string AssertionResponseTypeNotWebAuthnGet    = "AssertionResponse type must be 'webauthn.get'";
+    public static readonly string AssertionResponseTypeNotPaymentGet     = "AssertionResponse type must be 'payment.get' for Secure Payment Confirmation";
     public static readonly string AssertionResponseNotPublicKey          = "AssertionResponse type must be 'public-key'";
     public static readonly string AssertionResponseIdMissing             = "AssertionResponse Id is missing";
     public static readonly string AssertionResponseRawIdMissing          = "AssertionResponse RawId is missing";
