@@ -18,7 +18,7 @@ namespace Test;
 /// <summary>
 /// Covers <see cref="Fido2Configuration.AaguidDenyList"/>/<see cref="Fido2Configuration.AaguidAllowList"/>
 /// enforcement in <see cref="AuthenticatorAttestationResponse.VerifyAsync"/> (registration) and
-/// <see cref="AuthenticatorAssertionResponse.VerifyAsync(AssertionOptions, Fido2Configuration, byte[], uint, IsUserHandleOwnerOfCredentialIdAsync, IMetadataService, byte[], bool?, Guid?, CancellationToken, Microsoft.Extensions.Logging.ILogger{Fido2})"/>
+/// <see cref="AuthenticatorAssertionResponse"/>'s <c>VerifyAsync</c>
 /// (assertion, deny list only), including <see cref="Fido2Configuration.AaguidAllowListRequiresAttestation"/>:
 /// an allow-listed AAGUID only counts when the attestation proves it.
 /// </summary>
