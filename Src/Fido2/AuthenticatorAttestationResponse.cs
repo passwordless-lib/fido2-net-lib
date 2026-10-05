@@ -12,6 +12,8 @@ using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
+using Microsoft.Extensions.Logging;
+
 namespace Fido2NetLib;
 
 /// <summary>
@@ -80,7 +82,8 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         IMetadataService? metadataService,
         byte[]? requestTokenBindingId,
         CredentialMediationRequirement mediation = CredentialMediationRequirement.Optional,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ILogger<Fido2>? logger = null)
     {
         // https://www.w3.org/TR/webauthn-3/#sctn-registering-a-new-credential
         // 5. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
@@ -171,6 +174,18 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (!authData.HasAttestedCredentialData)
             throw new Fido2VerificationException(Fido2ErrorCode.AttestedCredentialDataFlagNotSet, Fido2ErrorMessages.AttestedCredentialDataFlagNotSet);
 
+        // AAGUID allow/deny lists are a Relying Party policy decision independent of MDS status, so they're
+        // checked as soon as the AAGUID is known, before the more expensive attestation statement verification.
+        // Membership is all that can be checked here; whether the attestation proves an allowed AAGUID is
+        // checked once the trust path has been validated, below.
+        var aaguid = authData.AttestedCredentialData.AaGuid;
+
+        if (config.AaguidDenyList.Contains(aaguid))
+            throw new Fido2VerificationException(Fido2ErrorCode.AaguidDenied, Fido2ErrorMessages.AaguidDenied);
+
+        if (config.AaguidAllowList.Count > 0 && !config.AaguidAllowList.Contains(aaguid))
+            throw new Fido2VerificationException(Fido2ErrorCode.AaguidNotAllowed, Fido2ErrorMessages.AaguidNotAllowed);
+
         // 20. Verify that the "alg" parameter in the credential public key in authData matches the alg attribute of one of the items in options.pubKeyCredParams.
         if (!originalOptions.PubKeyCredParams.Any(a => authData.AttestedCredentialData.CredentialPublicKey.IsSameAlg(a.Alg)))
             throw new Fido2VerificationException(Fido2ErrorCode.CredentialAlgorithmRequirementNotMet, Fido2ErrorMessages.CredentialAlgorithmRequirementNotMet);
@@ -237,7 +252,17 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         if (metadataService?.ConformanceTesting() is true && metadataEntry is null && attType != AttestationType.None && AttestationObject.Fmt is not "fido-u2f")
             throw new Fido2VerificationException(Fido2ErrorCode.AaGuidNotFound, "AAGUID not found in MDS test metadata");
 
-        TrustAnchor.Verify(metadataEntry, trustPath, attType, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
+        var chainValidatedAgainstMetadata = TrustAnchor.VerifyAndReportChainValidation(metadataEntry, trustPath, attType, metadataService?.ConformanceTesting() is true ? FidoValidationMode.FidoConformance2024 : FidoValidationMode.Default);
+
+        // An AAGUID is only as trustworthy as the attestation carrying it: under none or self attestation it is
+        // whatever the authenticator (or a modified client) chose to send. An allow list is therefore only met by
+        // an AAGUID whose basic/attestation-CA chain was validated against that very model's metadata roots.
+        if (config.AaguidAllowList.Count > 0 &&
+            config.AaguidAllowListRequiresAttestation &&
+            !(chainValidatedAgainstMetadata && (AttestationType.Basic.Equals(attType) || AttestationType.AttCa.Equals(attType))))
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.AaguidNotAttested, Fido2ErrorMessages.AaguidNotAttested);
+        }
 
         // 24. Assess the attestation trustworthiness using the outputs of the verification procedure in step 22, as follows:
         //     If no attestation was provided, verify that None attestation is acceptable under Relying Party policy.
@@ -252,6 +277,12 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         {
             throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
         }
+
+        // Everything the attestation claims that the authenticator's own metadata statement can confirm or
+        // contradict -- backup eligibility, algorithm, credential ID length, discoverability, transports,
+        // extensions -- gated behind one configurable strictness level. See the remarks on
+        // Fido2Configuration.MetadataConsistencyStrictness for the full list and why each is tiered as it is.
+        CheckMetadataConsistency(config, metadataEntry?.MetadataStatement, authData, logger);
 
         // 25. Verify that the credentialId is ≤ 1023 bytes.
         // Handled by AttestedCredentialData constructor
@@ -399,7 +430,7 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
         {
             if (unsolicitedExtensionPolicy is UnsolicitedExtensionPolicy.Reject)
             {
-                var clientExtensionIdentifiers = GetClientExtensionResultIdentifiers(clientExtensionResults);
+                var clientExtensionIdentifiers = MetadataConsistency.GetClientExtensionResultIdentifiers(clientExtensionResults);
                 foreach (var identifier in clientExtensionIdentifiers)
                 {
                     if (!requestedIdentifiers.Contains(identifier))
@@ -577,49 +608,93 @@ public sealed class AuthenticatorAttestationResponse : AuthenticatorResponse
     }
 
     /// <summary>
-    /// Extracts the set of extension identifiers from the client extension results.
+    /// Runs every registration-time check described on <see cref="Fido2Configuration.MetadataConsistencyStrictness"/> and enforces
+    /// it at the configured strictness. A no-op when strictness is <see cref="MetadataConsistencyStrictness.Off"/>
+    /// or the AAGUID has no metadata statement -- a model with no statement has claimed nothing to contradict.
     /// </summary>
-    private static HashSet<string> GetClientExtensionResultIdentifiers(AuthenticationExtensionsClientOutputs clientExtensionResults)
+    private void CheckMetadataConsistency(Fido2Configuration config, MetadataStatement? statement, AuthenticatorData authData, ILogger<Fido2>? logger)
     {
-        var identifiers = new HashSet<string>(StringComparer.Ordinal);
+        var strictness = config.MetadataConsistencyStrictness;
+        if (strictness is MetadataConsistencyStrictness.Off || statement is null)
+            return;
 
-        if (clientExtensionResults.Example.HasValue)
-            identifiers.Add("example.extension.bool");
+        // Always present by the time VerifyAsync reaches its caller of this method -- the AT flag (and so
+        // AttestedCredentialData) is required for a registration response and checked well before this point.
+        var attestedCredentialData = authData.AttestedCredentialData!;
+        var aaguid = attestedCredentialData.AaGuid;
 
-#pragma warning disable CS0618 // uvm and exts were removed in L3; still honoured for Level 2 callers
-        if (clientExtensionResults.Extensions != null && clientExtensionResults.Extensions.Length > 0)
-            identifiers.Add("exts");
+        // Backup eligibility: "unsupported", "explicit" or "implicit", and "if this field is missing the implicit
+        // value is 'unsupported'" (FIDO Metadata Statement v3.1 §4) -- so a statement that omits the field
+        // contradicts BE too. Weak tier: most live-BLOB statements predate the field, so treating a missing
+        // field as a contradiction -- the spec's own reading -- would reject most real, honest models by default.
+        if (authData.IsBackupEligible && statement.MultiDeviceCredentialSupport is null or "unsupported")
+        {
+            MetadataConsistency.ReportMismatch(strictness, strong: false, Fido2ErrorCode.BackupEligibilityNotDeclaredInMetadata, Fido2ErrorMessages.BackupEligibilityNotDeclaredInMetadata,
+                "backup-eligibility", aaguid, $"multiDeviceCredentialSupport={statement.MultiDeviceCredentialSupport ?? "(absent)"}", logger);
+        }
 
-        if (clientExtensionResults.UserVerificationMethod != null && clientExtensionResults.UserVerificationMethod.Length > 0)
-            identifiers.Add("uvm");
-#pragma warning restore CS0618
+        // Everything below is only knowable for FIDO2 authenticators that publish authenticatorGetInfo -- UAF/U2F
+        // statements, and platform API-only FIDO2 statements, don't have it, and claim nothing by its absence.
+        if (statement.AuthenticatorGetInfo is not { } info)
+            return;
 
-        if (clientExtensionResults.CredProps != null)
-            identifiers.Add("credProps");
+        if (info.Algorithms is { Length: > 0 } algorithms &&
+            !algorithms.Any(a => a.Alg == attestedCredentialData.CredentialPublicKey._alg))
+        {
+            MetadataConsistency.ReportMismatch(strictness, strong: true, Fido2ErrorCode.AlgorithmNotDeclaredInMetadata, Fido2ErrorMessages.AlgorithmNotDeclaredInMetadata,
+                "algorithm", aaguid, $"credential={attestedCredentialData.CredentialPublicKey._alg}, declared={string.Join(",", algorithms.Select(a => a.Alg))}", logger);
+        }
 
-        if (clientExtensionResults.PRF != null)
-            identifiers.Add("prf");
+        if (info.MaxCredentialIdLength is int maxCredentialIdLength && attestedCredentialData.CredentialId.Length > maxCredentialIdLength)
+        {
+            MetadataConsistency.ReportMismatch(strictness, strong: true, Fido2ErrorCode.CredentialIdExceedsMetadataMaximum, Fido2ErrorMessages.CredentialIdExceedsMetadataMaximum,
+                "credential-id-length", aaguid, $"length={attestedCredentialData.CredentialId.Length}, declaredMax={maxCredentialIdLength}", logger);
+        }
 
-        if (clientExtensionResults.LargeBlob != null)
-            identifiers.Add("largeBlob");
+        if (Raw.ClientExtensionResults?.CredProps?.Rk is true &&
+            info.Options is { } options && options.TryGetValue("rk", out var declaresRk) && !declaresRk)
+        {
+            MetadataConsistency.ReportMismatch(strictness, strong: true, Fido2ErrorCode.DiscoverableCredentialNotDeclaredInMetadata, Fido2ErrorMessages.DiscoverableCredentialNotDeclaredInMetadata,
+                "discoverable-credential", aaguid, "credProps.rk=true, authenticatorGetInfo.options.rk=false", logger);
+        }
 
-        if (clientExtensionResults.CredBlob.HasValue)
-            identifiers.Add("credBlob");
+        // Weak tier below: real, honest authenticators -- especially cross-device/hybrid flows and synced
+        // credential providers -- are known to disagree with their own metadata on these in ordinary use.
+        if (info.Transports is { Length: > 0 } declaredTransports && Raw.Response.Transports is { Length: > 0 } reportedTransports)
+        {
+            var declaredSet = new HashSet<string>(declaredTransports, StringComparer.Ordinal);
+            var undeclared = reportedTransports.Select(t => t.ToEnumMemberValue()).Where(t => !declaredSet.Contains(t)).ToArray();
+            if (undeclared.Length > 0)
+            {
+                MetadataConsistency.ReportMismatch(strictness, strong: false, Fido2ErrorCode.TransportNotDeclaredInMetadata, Fido2ErrorMessages.TransportNotDeclaredInMetadata,
+                    "transports", aaguid, $"reported={string.Join(",", reportedTransports.Select(t => t.ToEnumMemberValue()))}, declared={string.Join(",", declaredTransports)}", logger);
+            }
+        }
 
-        if (clientExtensionResults.CredProtect.HasValue)
-            identifiers.Add("credProtect");
+        if (Raw.ClientExtensionResults is { } clientExtensionResults)
+        {
+            var declaredExtensions = new HashSet<string>(StringComparer.Ordinal);
+            if (statement.SupportedExtensions is { } supportedExtensions)
+            {
+                foreach (var extension in supportedExtensions)
+                    declaredExtensions.Add(extension.Id);
+            }
+            if (info.Extensions is { } infoExtensions)
+                declaredExtensions.UnionWith(infoExtensions);
 
-        // Note: credProtect is the output for credentialProtectionPolicy input
-        if (clientExtensionResults.CredProtect.HasValue)
-            identifiers.Add("credentialProtectionPolicy");
-
-        if (clientExtensionResults.AppIDExclude)
-            identifiers.Add("appidExclude");
-
-        if (clientExtensionResults.MinPinLength.HasValue)
-            identifiers.Add("minPinLength");
-
-        return identifiers;
+            if (declaredExtensions.Count > 0)
+            {
+                var observed = MetadataConsistency.GetClientExtensionResultIdentifiers(clientExtensionResults);
+                foreach (var (webAuthnId, metadataId) in MetadataConsistency.AuthenticatorLevelExtensions)
+                {
+                    if (observed.Contains(webAuthnId) && !declaredExtensions.Contains(metadataId) && !declaredExtensions.Contains(webAuthnId))
+                    {
+                        MetadataConsistency.ReportMismatch(strictness, strong: false, Fido2ErrorCode.ExtensionNotDeclaredInMetadata, Fido2ErrorMessages.ExtensionNotDeclaredInMetadata,
+                            "extension", aaguid, $"extension={webAuthnId}", logger);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>

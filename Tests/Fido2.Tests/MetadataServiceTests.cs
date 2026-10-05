@@ -472,6 +472,27 @@ public class MetadataServiceTests
     }
 
     [Fact]
+    public async Task GetRepositoryStatusAsync_Reports_Unavailable_Then_Available_After_A_Successful_Fetch()
+    {
+        var repository = new FlakyRepository(failures: 1);
+        var service = CreateService(repository);
+
+        // nothing has asked for this repository's BLOB yet; the status accessor itself must trigger the fetch
+        var beforeFetch = Assert.Single(await service.GetRepositoryStatusAsync());
+        Assert.Equal(nameof(FlakyRepository), beforeFetch.Repository);
+        Assert.False(beforeFetch.Available);
+        Assert.Null(beforeFetch.BlobNumber);
+        Assert.Null(beforeFetch.NextUpdate);
+
+        var afterFetch = Assert.Single(await service.GetRepositoryStatusAsync());
+        Assert.True(afterFetch.Available);
+        Assert.Equal(1, afterFetch.BlobNumber);
+        Assert.Equal(
+            DateTimeOffset.Parse("2099-01-01", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal),
+            afterFetch.NextUpdate);
+    }
+
+    [Fact]
     public async Task DistributedCacheMetadataService_Lookups_Do_Not_Add_To_The_Cache()
     {
         // Registrations choose their own AAGUIDs; looking one up must not leave anything behind for it.

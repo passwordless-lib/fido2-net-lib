@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 using Fido2NetLib.Internal;
 
@@ -7,6 +8,8 @@ namespace Fido2NetLib.Serialization;
 [JsonSerializable(typeof(AuthenticatorResponse))]
 [JsonSerializable(typeof(MDSGetEndpointResponse))]
 [JsonSerializable(typeof(GetBLOBRequest))]
+[JsonSerializable(typeof(ConvenienceMetadataEntry))]
+[JsonSerializable(typeof(Dictionary<string, LocalAuthenticatorDisplayEntry>))]
 public partial class FidoSerializerContext : JsonSerializerContext
 {
 }

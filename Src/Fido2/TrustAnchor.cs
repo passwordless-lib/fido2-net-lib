@@ -24,8 +24,23 @@ public static class TrustAnchor
     /// <param name="validationMode">How strictly to validate.</param>
     public static void Verify(MetadataBLOBPayloadEntry? metadataEntry, X509Certificate2[]? trustPath, AttestationType? attestationType, FidoValidationMode validationMode = FidoValidationMode.Default)
     {
+        VerifyAndReportChainValidation(metadataEntry, trustPath, attestationType, validationMode);
+    }
+
+    /// <summary>
+    /// <see cref="Verify(MetadataBLOBPayloadEntry, X509Certificate2[], AttestationType, FidoValidationMode)"/>,
+    /// reporting whether the trust path was validated against the attestation roots in the metadata statement --
+    /// the only outcome that proves the credential came from the model its AAGUID names.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when the chain was built to one of the statement's attestation root certificates;
+    /// <see langword="false"/> when the statement did not call for that (no metadata, no trust path, AnonCA, or a
+    /// self-signed surrogate), even though nothing was wrong.
+    /// </returns>
+    internal static bool VerifyAndReportChainValidation(MetadataBLOBPayloadEntry? metadataEntry, X509Certificate2[]? trustPath, AttestationType? attestationType, FidoValidationMode validationMode = FidoValidationMode.Default)
+    {
         if (metadataEntry?.MetadataStatement?.AttestationTypes is null)
-            return;
+            return false;
 
         static bool ContainsAttestationType(MetadataBLOBPayloadEntry entry, MetadataAttestationType type)
         {
@@ -64,6 +79,8 @@ public static class TrustAnchor
                 {
                     throw new Fido2VerificationException(Fido2ErrorCode.InvalidCertificateChain, Fido2ErrorMessages.InvalidCertificateChain);
                 }
+
+                return true;
             }
 
             else if (ContainsAttestationType(metadataEntry, MetadataAttestationType.ATTESTATION_ANONCA))
@@ -86,5 +103,7 @@ public static class TrustAnchor
             // [ ] ATTESTATION_ANONCA "anonca"  | currently not verified            w/ no test coverage
             // [ ] ATTESTATION_NONE "none"      | currently handled as self signed  w/ no test coverage
         }
+
+        return false;
     }
 }

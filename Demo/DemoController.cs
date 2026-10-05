@@ -329,6 +329,8 @@ public class DemoController : Controller
                 StoredPublicKey = creds.PublicKey,
                 StoredSignatureCounter = storedCounter,
                 StoredBackupEligible = creds.IsBackupEligible,
+                // Lets AaguidDenyList and RecheckMetadataStatusOnAssertion act on this sign-in.
+                StoredAaGuid = creds.AaGuid,
                 IsUserHandleOwnerOfCredentialIdCallback = callback
             }, cancellationToken: cancellationToken);
 

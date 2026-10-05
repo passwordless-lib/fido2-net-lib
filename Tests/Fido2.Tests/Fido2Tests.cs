@@ -220,7 +220,9 @@ public class Fido2Tests
             IMetadataService metadataService = null,
             List<PubKeyCredParam> pubKeyCredParams = null,
             string id = null,
-            byte[] rawId = null)
+            byte[] rawId = null,
+            ILogger<Fido2> logger = null,
+            AuthenticatorTransport[] transports = null)
         {
             _attestationObject.Set("authData", new CborByteString(_authData.ToByteArray()));
 
@@ -233,7 +235,7 @@ public class Fido2Tests
                 {
                     AttestationObject = _attestationObject.Encode(),
                     ClientDataJson = _clientDataJson,
-                    Transports = [AuthenticatorTransport.Internal]
+                    Transports = transports ?? [AuthenticatorTransport.Internal]
                 },
                 ClientExtensionResults = _clientExtensionResults
             };
@@ -291,7 +293,7 @@ public class Fido2Tests
 
             configure?.Invoke(config);
 
-            var lib = new Fido2(config, metadataService);
+            var lib = new Fido2(config, metadataService, logger);
 
             var credentialMakeResult = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
             {
