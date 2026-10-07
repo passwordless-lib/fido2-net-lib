@@ -3,6 +3,8 @@
 Some organisations cannot take a dependency on `NSec.Cryptography` (or on the `libsodium` native library
 it carries). The `Fido2` package pulls it in by default so that EdDSA/Ed25519 credential support works out
 of the box with nothing extra to install; **`Fido2.WithoutNSec` is the same library without that dependency.**
+If you use the ASP.NET Core integration, see [Using the ASP.NET Core integration](#using-the-aspnet-core-integration)
+below -- `Fido2.AspNet` itself depends on plain `Fido2`, so it needs its own substitute.
 
 ## Use `Fido2.WithoutNSec` instead of `Fido2`
 
@@ -43,6 +45,11 @@ only `Verify()` does. This means `Fido2.WithoutNSec` can still parse, store, and
 (e.g. to log its algorithm, or to reject it via `pubKeyCredParams` before ever reaching signature
 verification); it just cannot verify a signature under it.
 
+If you're on `Fido2` and expected EdDSA to work, `OkpSignatureVerifiers.BootstrapError` distinguishes "nothing
+registered because `Fido2.NSec` genuinely isn't referenced" (the normal `Fido2.WithoutNSec` outcome, where this
+stays `null`) from "`Fido2.NSec` is referenced but failed to load or initialize" (a broken install, surfaced
+here rather than silently producing the same `UnimplementedAlgorithm` either way).
+
 ## What changes with `Fido2.WithoutNSec`
 
 | Algorithm | `Fido2` | `Fido2.WithoutNSec` |
@@ -54,8 +61,23 @@ verification); it just cannot verify a signature under it.
 | **EdDSA (-8), Ed25519 (-19)** | **verified** | **`UnimplementedAlgorithm`** |
 | Ed448 (-53) | `UnimplementedAlgorithm` -- no `IOkpSignatureVerifier` implements it yet | `UnimplementedAlgorithm` |
 
-Nothing else is affected. Attestation formats, metadata service, CTAP2 and the ASP.NET integration all
-behave identically.
+Nothing else is affected. Attestation formats, metadata service, and CTAP2 all behave identically. The ASP.NET
+Core integration behaves identically too, but only once you're on the right package -- see the next section.
+
+## Using the ASP.NET Core integration
+
+`Fido2.AspNet` has its own `ProjectReference` to `Fido2`, independent of whichever package your own project
+references directly. Installing `Fido2.WithoutNSec` alongside plain `Fido2.AspNet` does not drop
+`NSec.Cryptography`: `Fido2.AspNet` still pulls in plain `Fido2`, which still pulls in `Fido2.NSec`, right back
+into your dependency tree. Use `Fido2.AspNet.WithoutNSec` instead of `Fido2.AspNet` to get the ASP.NET Core
+integration without NSec -- it depends on `Fido2.WithoutNSec` rather than `Fido2`, the same packaging trick
+one level up:
+
+```bash
+dotnet add package Fido2.AspNet.WithoutNSec
+```
+
+As with `Fido2`/`Fido2.WithoutNSec`, install one or the other, never both in the same dependency graph.
 
 ## What this means for your Relying Party
 
@@ -91,6 +113,20 @@ project reference, so the resulting `Fido2.dll` carries no reference to `NSec.Cr
 metadata at all (confirmed by inspection, not just by omission from the dependency list). The test suite
 uses `NSec.Cryptography` directly to construct Ed25519 test fixtures, so `dotnet test` on a tree built this
 way will not compile; build `Src/Fido2/Fido2.csproj` on its own, as the command above does.
+
+The same flag works on `Src/Fido2.AspNet/Fido2.AspNet.csproj` too, and packs the ASP.NET Core integration as
+`Fido2.AspNet.WithoutNSec` the same way:
+
+```bash
+dotnet build Src/Fido2.AspNet/Fido2.AspNet.csproj -c Release -p:ExcludeFido2NSec=true
+```
+
+`ExcludeFido2NSec`, passed to `Fido2.AspNet.csproj`, also applies to its own `ProjectReference` to
+`Fido2.csproj` -- MSBuild global properties propagate into referenced projects, which is normally a trap (see
+the CI workflow's own notes on `PackageId`/`AssemblyName` and `BaseIntermediateOutputPath` for two ways it
+bit this package during development) but is exactly what's wanted here: it's what makes `Fido2.AspNet`
+automatically depend on `Fido2.WithoutNSec` instead of `Fido2` in this build, with nothing
+`Fido2.AspNet`-specific needed beyond its own matching `PackageId`/`AssemblyName` condition.
 
 ## Adding EdDSA support back later
 

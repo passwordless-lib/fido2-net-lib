@@ -202,13 +202,15 @@ jobs:
       # default path, so the implicit "**/*.cs" glob picks the stale generated file back up alongside the
       # freshly-regenerated one under obj/WithoutNSec/ -- CS0579 duplicate assembly attributes. Confirmed by
       # reproducing it locally in the same build order CI uses, and confirmed the cleanup below fixes it.
-      # Deletes intermediate (obj) output only, never bin/Release -- the normal packages' .nupkg files already
-      # live there from the "Run pack" step above and are still needed afterward.
+      # Deletes the whole default obj/ directory (every configuration, not just obj/Release -- any stray
+      # generated source under obj/ would collide the same way) and never touches bin/Release, where the
+      # normal packages' .nupkg files already live from the "Run pack" step above and are still needed
+      # afterward.
       - name: Run restore, build and pack Fido2.WithoutNSec
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
-          rm -rf Src/Fido2/obj/Release Src/Fido2.Models/obj/Release
+          rm -rf Src/Fido2/obj Src/Fido2.Models/obj
           dotnet restore Src/Fido2/Fido2.csproj \
             -p:ExcludeFido2NSec=true \
             -p:BaseIntermediateOutputPath=obj/WithoutNSec/
@@ -243,6 +245,210 @@ jobs:
           unzip -p "$pkg" 'lib/net8.0/Fido2.WithoutNSec.dll' | strings | grep -qiE '^NSec$|NSec\.Cryptography' \
             && { echo "::error::$pkg's assembly still references NSec.Cryptography"; exit 1; }
           echo "Confirmed: no NSec.Cryptography dependency or assembly reference."
+
+      # Fido2.AspNet.WithoutNSec is the ASP.NET counterpart: referencing plain Fido2.AspNet alongside
+      # Fido2.WithoutNSec would otherwise silently reintroduce NSec.Cryptography through Fido2.AspNet's own
+      # ProjectReference to Fido2.csproj (the #660 review feedback that prompted this package). Same mechanism
+      # as Fido2.WithoutNSec above: ExcludeFido2NSec, passed globally, propagates into Fido2.AspNet's
+      # ProjectReference to Fido2.csproj, so it ends up depending on Fido2.WithoutNSec automatically via
+      # Fido2.csproj's own conditional PackageId -- nothing Fido2.AspNet-specific needed beyond its own
+      # matching PackageId/AssemblyName PropertyGroup. The same stale-obj cleanup applies, now including
+      # Fido2.AspNet's own obj/ alongside Fido2's and Fido2.Models'.
+      - name: Run restore, build and pack Fido2.AspNet.WithoutNSec
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          rm -rf Src/Fido2/obj Src/Fido2.Models/obj Src/Fido2.AspNet/obj
+          dotnet restore Src/Fido2.AspNet/Fido2.AspNet.csproj \
+            -p:ExcludeFido2NSec=true \
+            -p:BaseIntermediateOutputPath=obj/WithoutNSec/
+          dotnet build Src/Fido2.AspNet/Fido2.AspNet.csproj \
+            --no-restore \
+            --configuration Release \
+            -p:ContinuousIntegrationBuild=true \
+            -p:ExcludeFido2NSec=true \
+            -p:BaseIntermediateOutputPath=obj/WithoutNSec/ \
+            -p:BaseOutputPath=bin/WithoutNSec/ \
+            "-p:Version=$VERSION"
+          dotnet pack Src/Fido2.AspNet/Fido2.AspNet.csproj \
+            --no-restore \
+            --no-build \
+            --configuration Release \
+            -p:ContinuousIntegrationBuild=true \
+            -p:ExcludeFido2NSec=true \
+            -p:BaseIntermediateOutputPath=obj/WithoutNSec/ \
+            -p:BaseOutputPath=bin/WithoutNSec/ \
+            "-p:Version=$VERSION"
+
+      - name: Check Fido2.AspNet.WithoutNSec has no NSec.Cryptography dependency or reference
+        run: |
+          pkg=$(ls Src/Fido2.AspNet/bin/WithoutNSec/Release/Fido2.AspNet.WithoutNSec.*.nupkg)
+          unzip -p "$pkg" 'Fido2.AspNet.WithoutNSec.nuspec' | grep -qiE 'NSec\.Cryptography|"Fido2\.NSec"|"Fido2"' \
+            && { echo "::error::$pkg's nuspec depends on NSec.Cryptography, Fido2.NSec, or plain Fido2"; exit 1; }
+          unzip -p "$pkg" 'lib/net8.0/Fido2.AspNet.WithoutNSec.dll' | strings | grep -qiE '^NSec$|NSec\.Cryptography' \
+            && { echo "::error::$pkg's assembly still references NSec.Cryptography"; exit 1; }
+          echo "Confirmed: no NSec.Cryptography dependency or assembly reference, and depends on Fido2.WithoutNSec."
+
+      # Exercises the built packages the way a real consumer would, rather than just inspecting a nupkg
+      # directly -- the check above wouldn't have caught the AssemblyName-propagation bug from #660 review
+      # feedback: a Fido2.Models assembly silently renamed to Fido2.WithoutNSec still "looks right" in a
+      # nuspec/DLL-string inspection, it only breaks the instant something calls GetTypes() on it. Three
+      # scenarios, each restored from a local feed of exactly the nupkgs built above, each run (not just
+      # built) on both net8.0 and net10.0:
+      #   - Fido2 alone supports Ed25519 out of the box.
+      #   - Fido2.WithoutNSec alone does not, and its actual restore/publish output (project.assets.json plus
+      #     every output file, not just the nuspec) carries no NSec.Cryptography/libsodium/Bouncy Castle
+      #     identifier -- deliberately more specific than a bare "nsec" grep, since "Fido2.WithoutNSec" itself
+      #     contains "NSec" as a substring (same pitfall as the check above, caught by testing against a
+      #     deliberately-broken scenario locally before trusting this).
+      #   - Adding Fido2.NSec back to Fido2.WithoutNSec restores Ed25519 support, without switching to Fido2.
+      #   - Fido2.AspNet.WithoutNSec repeats the WithoutNSec/plusNSec pair, confirming Fido2.AspNet's own
+      #     ProjectReference to Fido2.csproj doesn't reintroduce NSec via a second, independent path.
+      - name: Verify the packed Fido2/Fido2.AspNet (With and Without NSec) packages end-to-end
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.version.outputs.version }}"
+          feed="$RUNNER_TEMP/local-feed"
+          mkdir -p "$feed"
+          cp Src/Fido2.Models/bin/Release/*.nupkg "$feed/"
+          cp Src/Fido2/bin/Release/*.nupkg "$feed/"
+          cp Src/Fido2.NSec/bin/Release/*.nupkg "$feed/"
+          cp Src/Fido2/bin/WithoutNSec/Release/*.nupkg "$feed/"
+          cp Src/Fido2.AspNet/bin/Release/*.nupkg "$feed/"
+          cp Src/Fido2.AspNet/bin/WithoutNSec/Release/*.nupkg "$feed/"
+
+          FORBIDDEN_PATTERN='NSec\.Cryptography|"Fido2\.NSec"|libsodium|bouncycastle'
+
+          write_nuget_config() {
+            cat > "$1/nuget.config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="local" value="$feed" />
+              <add key="nuget" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+          </configuration>
+          EOF
+          }
+
+          # $1 = scenario name, $2 = extra PackageReference lines, $3 = expected Ed25519Available (True/False),
+          # $4 = "audit" to also fail if a forbidden dependency identifier shows up in the restore/publish output
+          run_scenario() {
+            local name=$1 refs=$2 expect_available=$3 mode=${4:-}
+            local dir="$RUNNER_TEMP/$name"
+            rm -rf "$dir"
+            mkdir -p "$dir"
+            write_nuget_config "$dir"
+            cat > "$dir/app.csproj" <<EOF
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <OutputType>Exe</OutputType>
+              <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+              <ImplicitUsings>enable</ImplicitUsings>
+            </PropertyGroup>
+            <ItemGroup>
+              <FrameworkReference Include="Microsoft.AspNetCore.App" />
+            </ItemGroup>
+            <ItemGroup>
+              <PackageReference Include="Fido2.Models" Version="$VERSION" />
+          $refs
+            </ItemGroup>
+          </Project>
+          EOF
+            cat > "$dir/Program.cs" <<'PROG'
+          var types = typeof(Fido2NetLib.OkpSignatureVerifiers).Assembly.GetTypes();
+          Console.WriteLine($"Loaded {types.Length} types without error.");
+
+          // Constructs a real Fido2NetLib.Fido2 (not just a Fido2.Models type) so a trimmed publish of this
+          // program has a genuine static reference into the Fido2 assembly itself -- without that, the
+          // trimmer removes Fido2.dll as unreferenced, which would make a later check for Fido2.NSec.dll's
+          // presence meaningless rather than a real test of whether it gets trimmed away.
+          _ = new Fido2NetLib.Fido2(new Fido2NetLib.Fido2Configuration
+          {
+              RPID = "example.com",
+              RPName = "example",
+              Origins = new HashSet<string> { "https://example.com" },
+          });
+
+          var available = Fido2NetLib.OkpSignatureVerifiers.Find(Fido2NetLib.Objects.COSE.EllipticCurve.Ed25519) is not null;
+          Console.WriteLine($"Ed25519Available={available}");
+          PROG
+            echo "=== $name ==="
+            (cd "$dir" && dotnet restore --verbosity quiet)
+            for tfm in net8.0 net10.0; do
+              (cd "$dir" && dotnet run --no-restore -f "$tfm" --verbosity quiet) > "$dir/out.$tfm.log" 2>&1 \
+                || { cat "$dir/out.$tfm.log"; echo "::error::$name ($tfm) did not run"; exit 1; }
+              cat "$dir/out.$tfm.log"
+              if ! grep -q "Ed25519Available=$expect_available" "$dir/out.$tfm.log"; then
+                echo "::error::$name ($tfm) expected Ed25519Available=$expect_available"
+                exit 1
+              fi
+            done
+            if [[ "$mode" == "audit" ]]; then
+              if grep -qiE "$FORBIDDEN_PATTERN" "$dir/obj/project.assets.json"; then
+                echo "::error::$name's project.assets.json references a forbidden dependency"
+                grep -iE "$FORBIDDEN_PATTERN" "$dir/obj/project.assets.json"
+                exit 1
+              fi
+              for tfm in net8.0 net10.0; do
+                if find "$dir/bin/Debug/$tfm" -type f | grep -qiE "$FORBIDDEN_PATTERN"; then
+                  echo "::error::$name's $tfm output directory contains a forbidden dependency's file"
+                  find "$dir/bin/Debug/$tfm" -type f | grep -iE "$FORBIDDEN_PATTERN"
+                  exit 1
+                fi
+              done
+            fi
+            echo "OK: $name"
+          }
+
+          run_scenario "fido2-default"        "    <PackageReference Include=\"Fido2\" Version=\"$VERSION\" />"                                                                                   True
+          run_scenario "withoutnsec-bare"     "    <PackageReference Include=\"Fido2.WithoutNSec\" Version=\"$VERSION\" />"                                                                      False audit
+          run_scenario "withoutnsec-plusnsec" $'    <PackageReference Include="Fido2.WithoutNSec" Version="'"$VERSION"$'" />\n    <PackageReference Include="Fido2.NSec" Version="'"$VERSION"$'" />' True
+          run_scenario "aspnet-withoutnsec"   "    <PackageReference Include=\"Fido2.AspNet.WithoutNSec\" Version=\"$VERSION\" />"                                                                 False audit
+          run_scenario "aspnet-withoutnsec-plusnsec" $'    <PackageReference Include="Fido2.AspNet.WithoutNSec" Version="'"$VERSION"$'" />\n    <PackageReference Include="Fido2.NSec" Version="'"$VERSION"$'" />' True
+
+          # A self-contained trimmed publish is a separate code path from a plain `dotnet run` above: the
+          # trimmer removes any assembly it finds no static reference to, and OkpSignatureVerifiers loads
+          # Fido2.NSec purely by name via reflection, so a plain Fido2 consumer's trimmed publish silently lost
+          # Fido2.NSec.dll (and EdDSA support) until build/fido2.targets rooted it conditionally on
+          # @(ReferencePath) actually containing it (see that file's own remarks) -- confirmed with a real
+          # `dotnet publish -p:PublishTrimmed=true -p:SelfContained=true` against a packed nupkg before fixing
+          # it, so this asserts the fix rather than just the original problem.
+          # $1 = scenario name (reuses the app.csproj/Program.cs already written by run_scenario above),
+          # $2 = expected Ed25519Available (True/False), $3 = "present" or "absent" for Fido2.NSec.dll in the
+          # trimmed publish output
+          run_trim_scenario() {
+            local name=$1 expect_available=$2 expect_nsec_dll=$3
+            local dir="$RUNNER_TEMP/$name"
+            echo "--- $name (trimmed, self-contained) ---"
+            (cd "$dir" && dotnet publish -f net8.0 -c Release -r linux-x64 --self-contained -p:PublishTrimmed=true --verbosity quiet)
+            local pub="$dir/bin/Release/net8.0/linux-x64/publish"
+            local has_nsec=False
+            [[ -f "$pub/Fido2.NSec.dll" ]] && has_nsec=True
+            if [[ "$expect_nsec_dll" == "present" && "$has_nsec" != "True" ]]; then
+              echo "::error::$name's trimmed publish is missing Fido2.NSec.dll"
+              ls "$pub"
+              exit 1
+            fi
+            if [[ "$expect_nsec_dll" == "absent" && "$has_nsec" == "True" ]]; then
+              echo "::error::$name's trimmed publish unexpectedly contains Fido2.NSec.dll"
+              exit 1
+            fi
+            local out
+            out=$("$pub/app")
+            echo "$out"
+            if ! grep -q "Ed25519Available=$expect_available" <<< "$out"; then
+              echo "::error::$name's trimmed publish expected Ed25519Available=$expect_available"
+              exit 1
+            fi
+            echo "OK: $name (trimmed)"
+          }
+
+          run_trim_scenario "fido2-default"    True  present
+          run_trim_scenario "withoutnsec-bare" False absent
+
+          echo "All package-consumer scenarios passed."
 
       # Static web assets are enumerated when the project is evaluated, so anything a build step generates
       # into wwwroot afterwards is silently left out of the package (#633). Fail here rather than on NuGet.

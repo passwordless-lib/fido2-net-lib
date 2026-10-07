@@ -6,10 +6,32 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
+  <!--
+    ExcludeFido2NSec=true packs this same project as Fido2.AspNet.WithoutNSec instead of Fido2.AspNet, the
+    ASP.NET counterpart to Fido2.WithoutNSec (see Documentation/building-without-nsec.md): referencing plain
+    Fido2.AspNet alongside Fido2.WithoutNSec would otherwise silently reintroduce NSec.Cryptography through
+    Fido2.AspNet's own ProjectReference to Fido2.csproj, which is exactly the gap passwordless-lib/fido2-net-lib#660
+    review feedback flagged. PackageId/AssemblyName live here, inside the condition, for the same reason as the
+    identical PropertyGroup in Fido2.csproj: a global MSBuild property propagates into every referenced project
+    in the build graph, so passing these as -p: overrides from the CI workflow would also rename Fido2 and
+    Fido2.Models' own assemblies.
+  -->
+  <PropertyGroup Condition="'$(ExcludeFido2NSec)' == 'true'">
+    <PackageId>Fido2.AspNet.WithoutNSec</PackageId>
+    <AssemblyName>Fido2.AspNet.WithoutNSec</AssemblyName>
+  </PropertyGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <!--
+    ExcludeFido2NSec, passed as a global property to this project's own build, propagates into this
+    ProjectReference the same way it propagates into Fido2's own ProjectReference to Fido2.NSec, which is
+    exactly what's wanted here: it's what makes packing this project as Fido2.AspNet.WithoutNSec pull in
+    Fido2.WithoutNSec as its package dependency (via Fido2.csproj's own conditional PackageId) instead of
+    Fido2, with nothing Fido2.AspNet-specific needed to make that happen.
+  -->
   <ItemGroup>
     <ProjectReference Include="..\Fido2\Fido2.csproj" />
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
