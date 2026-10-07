@@ -109,15 +109,21 @@ public class L3CoseAlgorithmTests
     }
 
     [Fact]
-    public void Ed448IsRecognizedButUnimplemented()
+    public void Ed448IsRecognizedAtConstructionButUnimplementedAtVerification()
     {
-        var ex = Assert.Throws<Fido2VerificationException>(() => new CredentialPublicKey(new CborMap
+        // Constructing the key succeeds: no IOkpSignatureVerifier is consulted until Verify() actually needs
+        // one, so parsing an Ed448 credential public key never requires NSec.Cryptography (or any other OKP
+        // provider) to be present, whether or not one that supports Ed448 ever comes along.
+        var cpk = new CredentialPublicKey(new CborMap
         {
             { COSE.KeyCommonParameter.KeyType, COSE.KeyType.OKP },
             { COSE.KeyCommonParameter.Alg, COSE.Algorithm.Ed448 },
             { COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.Ed448 },
             { COSE.KeyTypeParameter.X, new byte[57] },
-        }));
+        });
+
+        // NSec.Cryptography (the only registered provider in this test process) does not implement Ed448.
+        var ex = Assert.Throws<Fido2VerificationException>(() => cpk.Verify([1, 2, 3], [4, 5, 6]));
 
         Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
     }

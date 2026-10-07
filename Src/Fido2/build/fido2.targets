@@ -1,10 +1,34 @@
 <Project>
-  <Target Name="ErrorForFrameworksMissingNETStandardAPIs" 
+  <Target Name="ErrorForFrameworksMissingNETStandardAPIs"
           BeforeTargets="BeforeCompile"
           Condition="'$(TargetFramework)' == 'net461' Or '$(TargetFramework)' == 'net462'">
     <Error  Code="FI0404"
             File="$(MSBuildProjectFullPath)"
             Text="FIDO2 cannot be used with .NET 4.6.1 and .NET 4.6.2 due to missing APIs. %0a%0d
                   Visit https://github.com/passwordless-lib/fido2-net-lib/blob/master/Documentation/NET46X.md for more information." />
+  </Target>
+
+  <!--
+    OkpSignatureVerifiers loads Fido2.NSec by assembly name via reflection (see its own remarks), so nothing
+    in Fido2.dll's IL has a static reference to any type in it; that is deliberate, since it is what lets
+    Fido2.WithoutNSec be packed from the identical source with the dependency simply absent. A trimmer has no
+    static reference to follow either, though, so a self-contained trimmed publish of a plain Fido2 consumer
+    removed Fido2.NSec.dll from the output even though it was never opted out of, confirmed via a real
+    `dotnet publish -p:PublishTrimmed=true -p:SelfContained=true` against a packed nupkg, which silently lost
+    EdDSA/Ed25519 support this way. This file is the only part of the package a consumer's own build actually
+    imports (PackagePath="build/$(PackageId).targets" is NuGet's own convention for auto-import); a
+    TrimmerRootAssembly item in Fido2.csproj itself, by contrast, only ever affected an in-repo
+    ProjectReference build, which is exactly how this went unnoticed.
+
+    Rooting Fido2.NSec unconditionally would break a Fido2.WithoutNSec publish, since this same file is also
+    packed as build/Fido2.WithoutNSec.targets (see Fido2.csproj), by naming an assembly that was never
+    referenced at all. Checking @(ReferencePath) for Fido2.NSec, inside a target that runs once that item is
+    actually populated, makes this apply precisely when there is something to root, and simply never fires
+    for a framework-dependent (non-trimmed) publish, where PrepareForILLink never runs anyway.
+  -->
+  <Target Name="Fido2RootNSecForTrimming" BeforeTargets="PrepareForILLink">
+    <ItemGroup Condition="'@(ReferencePath->AnyHaveMetadataValue('FileName', 'Fido2.NSec'))' == 'true'">
+      <TrimmerRootAssembly Include="Fido2.NSec" />
+    </ItemGroup>
   </Target>
 </Project>

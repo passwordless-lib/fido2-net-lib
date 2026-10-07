@@ -5,10 +5,6 @@ using System.Security.Cryptography.X509Certificates;
 using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 
-#if !FIDO2_DISABLE_NSEC
-using NSec.Cryptography;
-#endif
-
 namespace Fido2NetLib.Objects;
 
 public sealed class CredentialPublicKey
@@ -18,9 +14,7 @@ public sealed class CredentialPublicKey
     internal readonly CborMap _cpk;
     internal readonly ECDsa? _ecdsa;
     internal readonly RSA? _rsa;
-#if !FIDO2_DISABLE_NSEC
-    internal readonly NSec.Cryptography.PublicKey? _eddsa;
-#endif
+    internal readonly COSE.EllipticCurve? _okpCurve;
 #if NET10_0_OR_GREATER
     internal readonly MLDsa? _mldsa;
 #endif
@@ -47,12 +41,8 @@ public sealed class CredentialPublicKey
                 }
             case COSE.KeyType.OKP:
                 {
-#if FIDO2_DISABLE_NSEC
-                    throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, EdDsaUnavailable);
-#else
-                    _eddsa = CreateEdDSA();
+                    _okpCurve = ResolveOkpCurve();
                     return;
-#endif
                 }
             case COSE.KeyType.AKP:
                 {
@@ -122,14 +112,10 @@ public sealed class CredentialPublicKey
                 }
             case COSE.KeyType.OKP:
                 {
-#if FIDO2_DISABLE_NSEC
-                    throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, EdDsaUnavailable);
-#else
                     _cpk.Add(COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.Ed25519);
                     _cpk.Add(COSE.KeyTypeParameter.X, cert.PublicKey.EncodedKeyValue.RawData);
-                    _eddsa = CreateEdDSA();
+                    _okpCurve = ResolveOkpCurve();
                     break;
-#endif
                 }
             default:
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Missing or unknown kty {_type}");
@@ -148,11 +134,18 @@ public sealed class CredentialPublicKey
                 return _rsa!.VerifyData(data, signature, CryptoUtils.HashAlgFromCOSEAlg(_alg), Padding);
 
             case COSE.KeyType.OKP:
-#if FIDO2_DISABLE_NSEC
-                throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, EdDsaUnavailable);
-#else
-                return SignatureAlgorithm.Ed25519.Verify(_eddsa!, data, signature);
-#endif
+                {
+                    var curve = _okpCurve!.Value;
+                    var verifier = OkpSignatureVerifiers.Find(curve)
+                        ?? throw new Fido2VerificationException(
+                            Fido2ErrorCode.UnimplementedAlgorithm,
+                            $"No IOkpSignatureVerifier is registered for curve {curve}. The Fido2.NSec package "
+                            + "provides Ed25519; if this build references Fido2.WithoutNSec instead, or the "
+                            + "curve is one no provider implements yet, OKP credentials on that curve cannot "
+                            + "be verified.");
+
+                    return verifier.Verify(curve, (byte[])_cpk[COSE.KeyTypeParameter.X], data, signature);
+                }
 
             case COSE.KeyType.AKP:
 #if NET10_0_OR_GREATER
@@ -304,16 +297,14 @@ public sealed class CredentialPublicKey
         }
     }
 
-#if FIDO2_DISABLE_NSEC
     /// <summary>
-    /// Message used wherever an EdDSA operation is refused because the library was built with
-    /// <c>DisableNSec=true</c>.
+    /// Validates the OKP credential public key's algorithm/curve combination and resolves which curve it
+    /// signs under. Deliberately does not consult <see cref="OkpSignatureVerifiers"/> -- that only happens
+    /// in <see cref="Verify"/>, so constructing an OKP <see cref="CredentialPublicKey"/> never requires a
+    /// verifier to be registered, and (unlike when this used NSec.Cryptography directly) never touches any
+    /// third-party crypto code either.
     /// </summary>
-    private const string EdDsaUnavailable =
-        "EdDSA is not available: this build of Fido2 was compiled with DisableNSec=true, which omits the "
-        + "NSec.Cryptography dependency that provides Ed25519.";
-#else
-    internal NSec.Cryptography.PublicKey CreateEdDSA()
+    internal COSE.EllipticCurve ResolveOkpCurve()
     {
         if (_type != COSE.KeyType.OKP)
         {
@@ -335,19 +326,43 @@ public sealed class CredentialPublicKey
                         $"Credential public key algorithm EdDSA must specify curve Ed25519, was {crv}");
                 }
 
-                goto case COSE.Algorithm.Ed25519;
+                ValidateOkpKeyLength(COSE.EllipticCurve.Ed25519, 32);
+                return crv;
 
             case COSE.Algorithm.Ed25519:
-                return NSec.Cryptography.PublicKey.Import(SignatureAlgorithm.Ed25519, (byte[])_cpk[COSE.KeyTypeParameter.X], KeyBlobFormat.RawPublicKey);
+                ValidateOkpKeyLength(COSE.EllipticCurve.Ed25519, 32);
+                return COSE.EllipticCurve.Ed25519;
 
             case COSE.Algorithm.Ed448:
-                throw new Fido2VerificationException(Fido2ErrorCode.UnimplementedAlgorithm, "Ed448 is not yet supported. NSec.Cryptography library version does not include Ed448 support.");
+                // No IOkpSignatureVerifier implements Ed448 yet, but one could be registered later -- unlike
+                // Ed25519 under Fido2.WithoutNSec, the gap here isn't a packaging choice, so this doesn't
+                // throw UnimplementedAlgorithm the way the old NSec-only constructor did. The raw point's
+                // length is a fixed fact of the curve regardless of who eventually verifies it, though, so
+                // it's still checked eagerly rather than left to surface as a confusing failure much later.
+                ValidateOkpKeyLength(COSE.EllipticCurve.Ed448, 57);
+                return COSE.EllipticCurve.Ed448;
 
             default:
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"Algorithm {_alg} cannot be used with an OKP key");
         }
     }
-#endif
+
+    /// <summary>
+    /// Rejects an OKP key whose raw point is the wrong length for its curve, at construction time, the same
+    /// way <c>NSec.Cryptography.PublicKey.Import</c> used to for Ed25519 when this constructor called into
+    /// NSec eagerly. Checked here (independent of <see cref="OkpSignatureVerifiers"/>) so a malformed key
+    /// fails registration immediately under every attestation format, not just the ones that call
+    /// <see cref="Verify"/> against the credential's own key during registration -- deferring this to the
+    /// first authentication attempt would otherwise permanently strand the credential instead of rejecting
+    /// it up front.
+    /// </summary>
+    private void ValidateOkpKeyLength(COSE.EllipticCurve curve, int expectedLength)
+    {
+        if (((byte[])_cpk[COSE.KeyTypeParameter.X]).Length != expectedLength)
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"{curve} credential public key must be a {expectedLength}-byte raw point");
+        }
+    }
 
 #if NET10_0_OR_GREATER
     /// <summary>

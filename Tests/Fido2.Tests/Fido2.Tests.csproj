@@ -20,6 +20,10 @@
     <ProjectReference Include="..\..\Src\Fido2.AspNet\Fido2.AspNet.csproj" />
     <ProjectReference Include="..\..\Src\Fido2.Development\Fido2.Development.csproj" />
     <ProjectReference Include="..\..\Src\Fido2.Models\Fido2.Models.csproj" />
+    <!-- Not needed for Fido2 itself to verify EdDSA test fixtures (that comes transitively through Fido2's
+         own reference to Fido2.NSec): referenced directly because this project's own test helpers use
+         NSec.Cryptography to construct Ed25519 test keys and signatures. -->
+    <ProjectReference Include="..\..\Src\Fido2.NSec\Fido2.NSec.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +33,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="NSec.Cryptography" />
     <PackageReference Include="ReportGenerator" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">

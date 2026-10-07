@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(SupportedTargetFrameworks)</TargetFrameworks>
+    <RootNamespace>Fido2NetLib.NSec</RootNamespace>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <Description>Registers NSec.Cryptography as the IOkpSignatureVerifier for Fido2, providing EdDSA/Ed25519 credential verification. A transitive dependency of the Fido2 package; see Fido2.WithoutNSec if you need Fido2 without it.</Description>
+    <!-- CA2255 warns that a module initializer is unusual in library code, which is right in general; this
+         project's only purpose is to self-register a plugin the moment it loads, the "advanced" scenario the
+         rule's own description exempts, without asking every consumer to call a setup method by hand. -->
+    <NoWarn>$(NoWarn);CA2255</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
+    <PackageReference Include="NSec.Cryptography" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Fido2.NSec.Tests" />
+  </ItemGroup>
+
+</Project>

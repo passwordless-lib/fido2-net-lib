@@ -213,7 +213,7 @@
   "section": "16.12",
   "title": "Packed Attestation with Ed448 Credential",
   "format": "packed",
-  "alg": -8,
+  "alg": -53,
   "aaguid": "41c913aeda925fe02273322e34c2ae67",
   "credentialId": "224fcde324e6b075ede55098a24b9ddce5f5a7c71d23703efd528a38f8a5f33c",
   "crossOrigin": false,

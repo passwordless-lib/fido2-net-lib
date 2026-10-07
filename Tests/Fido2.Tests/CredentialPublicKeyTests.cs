@@ -97,16 +97,48 @@ public class CredentialPublicKeyTests
     }
 
     [Fact]
-    public void FullySpecifiedEd448IsUnimplemented()
+    public void FullySpecifiedEd448ConstructsButIsUnimplementedAtVerification()
     {
         // COSE.Algorithm.Ed448 (-53) is the fully-specified algorithm for an Ed448 key, as opposed to
-        // EdDSA (-8) with crv=Ed448, which is rejected as invalid rather than unimplemented above.
+        // EdDSA (-8) with crv=Ed448, which is rejected as invalid rather than unimplemented (see
+        // L3CoseAlgorithmTests). Construction itself succeeds either way -- no IOkpSignatureVerifier is
+        // consulted until Verify() actually needs one -- and NSec.Cryptography (the only registered provider
+        // in this test process) does not implement Ed448.
         byte[] x = RandomNumberGenerator.GetBytes(57);
+
+        var cpk = Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.Ed448, COSE.EllipticCurve.Ed448, x);
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => cpk.Verify([1, 2, 3], [4, 5, 6]));
+
+        Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
+    }
+
+    [Fact]
+    public void RejectsAMalformedEd25519KeyAtConstructionRatherThanAtVerification()
+    {
+        // Registration under an attestation format that never calls Verify() against the credential's own
+        // key (e.g. "none") would otherwise store this credential successfully and only discover it's
+        // unusable at the first authentication attempt.
+        byte[] x = RandomNumberGenerator.GetBytes(31); // Ed25519 public keys are 32 raw bytes
+
+        var ex = Assert.Throws<Fido2VerificationException>(() =>
+            Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.EdDSA, COSE.EllipticCurve.Ed25519, x));
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+    }
+
+    [Fact]
+    public void RejectsAMalformedEd448KeyAtConstructionRatherThanAtVerification()
+    {
+        // Same reasoning as RejectsAMalformedEd25519KeyAtConstructionRatherThanAtVerification: a malformed
+        // key should never survive registration, regardless of whether any IOkpSignatureVerifier yet exists
+        // for this curve (see FullySpecifiedEd448ConstructsButIsUnimplementedAtVerification).
+        byte[] x = RandomNumberGenerator.GetBytes(56); // Ed448 public keys are 57 raw bytes
 
         var ex = Assert.Throws<Fido2VerificationException>(() =>
             Fido2Tests.MakeCredentialPublicKey(COSE.KeyType.OKP, COSE.Algorithm.Ed448, COSE.EllipticCurve.Ed448, x));
 
-        Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
     }
 
     [Fact]

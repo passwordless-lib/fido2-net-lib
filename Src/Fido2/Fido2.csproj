@@ -11,21 +11,50 @@
   </PropertyGroup>
 
   <!--
-    Set DisableNSec=true to build without NSec.Cryptography, for consumers whose policy forbids the
-    dependency. EdDSA (COSE -8 and -19) then reports UnimplementedAlgorithm the way Ed448 already does;
-    every other algorithm is unaffected. See Documentation/building-without-nsec.md.
+    ExcludeFido2NSec=true packs this same project as Fido2.WithoutNSec instead of Fido2 (see
+    Documentation/building-without-nsec.md). PackageId/AssemblyName belong here, inside the condition,
+    rather than passed as global -p: properties from the CI workflow: a global MSBuild property propagates
+    into every referenced project in the build graph, so passing AssemblyName=Fido2.WithoutNSec globally
+    renamed Fido2.Models' own assembly to Fido2.WithoutNSec too, confirmed via a real pack plus a clean
+    consumer app, which threw ReflectionTypeLoadException trying to load a type the mis-named Fido2.Models
+    assembly no longer matched by name. Setting it only here means it affects just this project.
   -->
-  <PropertyGroup Condition="'$(DisableNSec)' == 'true'">
-    <DefineConstants>$(DefineConstants);FIDO2_DISABLE_NSEC</DefineConstants>
+  <PropertyGroup Condition="'$(ExcludeFido2NSec)' == 'true'">
+    <PackageId>Fido2.WithoutNSec</PackageId>
+    <AssemblyName>Fido2.WithoutNSec</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Fido2.Models\Fido2.Models.csproj" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="NSec.Cryptography" Condition="'$(DisableNSec)' != 'true'" />
     <PackageReference Include="System.Formats.Cbor" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+  </ItemGroup>
+
+  <!--
+    Fido2 core never calls into NSec.Cryptography directly: OKP (EdDSA/Ed25519) verification goes through
+    the IOkpSignatureVerifier registry in Fido2.Models instead (see CredentialPublicKey.Verify). This
+    ProjectReference exists purely to make Fido2.NSec a *package* dependency of the packed Fido2 nupkg (SDK
+    pack turns a ProjectReference into the equivalent PackageReference automatically), not because this
+    project's code uses anything in it: Fido2.NSec's own [ModuleInitializer] is what actually registers the
+    verifier once its assembly is loaded, entirely at runtime, with nothing here referencing it by name.
+    That is what makes EdDSA support work out of the box with zero extra steps for a plain `dotnet add
+    package Fido2`; the only way to not get it is to reference Fido2.WithoutNSec instead, which omits
+    this dependency; see Documentation/building-without-nsec.md.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Fido2.NSec\Fido2.NSec.csproj" Condition="'$(ExcludeFido2NSec)' != 'true'" />
+    <!-- OkpSignatureVerifiers loads Fido2.NSec by name via reflection (see its own remarks), which the
+         trimmer's static analysis cannot see coming. This only protects an in-repo trimmed, self-contained
+         publish via ProjectReference to this project directly, which nothing in this repo currently does;
+         it does NOT reach a real `dotnet add package Fido2` consumer's own trimmed publish, since that build
+         never evaluates this csproj at all, confirmed by a real trimmed publish against a packed nupkg,
+         which lost Fido2.NSec.dll (and EdDSA support) despite this item. build/fido2.targets carries the
+         equivalent protection for real consumers, since it's the one file NuGet actually imports into their
+         build (PackagePath="build/$(PackageId).targets"); this item is kept anyway for the in-repo case, and
+         because it costs nothing. -->
+    <TrimmerRootAssembly Include="Fido2.NSec" Condition="'$(ExcludeFido2NSec)' != 'true'" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,10 +63,11 @@
 
   <ItemGroup>
     <!--
-      The name of the file must equal to the name of the package which is currently
-      defaulting to the project file name (excluding file extension of course).
+      NuGet's build/*.targets auto-import convention requires the packed file's name to match the package
+      ID exactly, computed here via PackagePath rather than a static name, since this same project is also
+      packed as Fido2.WithoutNSec (see Documentation/building-without-nsec.md), which needs this file too.
     -->
-    <Content Include="build/fido2.targets" PackagePath="build/" />
+    <Content Include="build/fido2.targets" PackagePath="build/$(PackageId).targets" />
   </ItemGroup>
 
 </Project>

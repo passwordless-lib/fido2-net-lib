@@ -120,10 +120,30 @@ public class L3SpecTestVectorTests
     [Fact]
     public async Task Sctn_16_12_Ed448IsRecognizedButUnimplementedAsync()
     {
-        // This vector's credential public key declares COSE algorithm -53, the fully-specified Ed448. The
-        // algorithm is recognized, so the ceremony is refused cleanly; verifying the signature would need
-        // Ed448 support that NSec.Cryptography does not provide.
-        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => RegisterAsync(Vector("16.12")));
+        // This vector's credential public key declares COSE algorithm -53, the fully-specified Ed448 --
+        // recognized, so registration itself succeeds cleanly (the attestation statement is a real x5c chain,
+        // verified against the attestation certificate's own ECDSA key, not the credential's Ed448 key).
+        // Ed448 only comes into play at authentication, when the assertion signature is verified under the
+        // credential's own key: that needs Ed448 support no registered IOkpSignatureVerifier provides.
+        var vector = Vector("16.12");
+        var lib = MakeLib(vector);
+
+        var credential = await lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = MakeAttestationResponse(vector),
+            OriginalOptions = MakeCreateOptions(vector),
+            IsCredentialIdUniqueToUserCallback = static (args, cancellationToken) => Task.FromResult(true),
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeAssertionAsync(new MakeAssertionParams
+        {
+            AssertionResponse = MakeAssertionResponse(vector),
+            OriginalOptions = MakeAssertionOptions(vector, credential),
+            StoredPublicKey = credential.PublicKey,
+            StoredSignatureCounter = credential.SignCount,
+            StoredBackupEligible = credential.IsBackupEligible,
+            IsUserHandleOwnerOfCredentialIdCallback = static (args, cancellationToken) => Task.FromResult(true),
+        }));
 
         Assert.Equal(Fido2ErrorCode.UnimplementedAlgorithm, ex.Code);
         Assert.Contains("Ed448", ex.Message);
