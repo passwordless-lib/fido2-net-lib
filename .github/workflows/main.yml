@@ -357,8 +357,16 @@ jobs:
           </Project>
           EOF
             cat > "$dir/Program.cs" <<'PROG'
-          var types = typeof(Fido2NetLib.OkpSignatureVerifiers).Assembly.GetTypes();
-          Console.WriteLine($"Loaded {types.Length} types without error.");
+          var modelsTypes = typeof(Fido2NetLib.OkpSignatureVerifiers).Assembly.GetTypes();
+          Console.WriteLine($"Loaded {modelsTypes.Length} types from Fido2.Models without error.");
+
+          // Fido2NetLib.Fido2 lives in the main Fido2/Fido2.WithoutNSec assembly, not Fido2.Models -- loading
+          // every type from it directly (not just constructing one, below) is what would have caught the
+          // AssemblyName-propagation release blocker without needing a dedicated repro: that bug renamed
+          // Fido2.Models' assembly, not this one, but a similar corruption in Fido2 itself could otherwise
+          // pass every other check here while still throwing ReflectionTypeLoadException on a real consumer.
+          var fido2Types = typeof(Fido2NetLib.Fido2).Assembly.GetTypes();
+          Console.WriteLine($"Loaded {fido2Types.Length} types from Fido2/Fido2.WithoutNSec without error.");
 
           // Constructs a real Fido2NetLib.Fido2 (not just a Fido2.Models type) so a trimmed publish of this
           // program has a genuine static reference into the Fido2 assembly itself -- without that, the
@@ -447,6 +455,46 @@ jobs:
 
           run_trim_scenario "fido2-default"    True  present
           run_trim_scenario "withoutnsec-bare" False absent
+
+          # The scenarios above only construct a bare Fido2NetLib.Fido2 directly; the ASP.NET integration's own
+          # surface (AddFido2, IFido2NetLibBuilder, resolving IFido2 from a real container) is never exercised.
+          # Loads every type in Fido2.AspNet(.WithoutNSec)'s own assembly, not just Fido2's, for the same reason
+          # the main Program.cs now does that for Fido2 itself: constructing one object only touches the types
+          # that one call path happens to need, GetTypes() fails if any type in the assembly is broken.
+          # $1 = scenario name (reuses the app.csproj already written by run_scenario above)
+          run_aspnet_di_scenario() {
+            local name=$1
+            local dir="$RUNNER_TEMP/$name"
+            cat > "$dir/Program.cs" <<'PROG'
+          using Microsoft.Extensions.DependencyInjection;
+
+          var aspNetTypes = typeof(Fido2NetLibBuilderExtensions).Assembly.GetTypes();
+          Console.WriteLine($"Loaded {aspNetTypes.Length} types from Fido2.AspNet/Fido2.AspNet.WithoutNSec without error.");
+
+          var services = new ServiceCollection();
+          services.AddFido2(options =>
+          {
+              options.RPID = "example.com";
+              options.RPName = "example";
+              options.Origins = new HashSet<string> { "https://example.com" };
+          });
+          using var provider = services.BuildServiceProvider();
+          var fido2 = provider.GetRequiredService<Fido2NetLib.IFido2>();
+          Console.WriteLine($"Resolved IFido2 from a real ServiceCollection: {fido2 is not null}");
+          PROG
+            echo "--- $name (AddFido2 via a real ServiceCollection) ---"
+            for tfm in net8.0 net10.0; do
+              (cd "$dir" && dotnet run --no-restore -f "$tfm" --verbosity quiet) > "$dir/out.di.$tfm.log" 2>&1 \
+                || { cat "$dir/out.di.$tfm.log"; echo "::error::$name ($tfm) AddFido2 scenario did not run"; exit 1; }
+              cat "$dir/out.di.$tfm.log"
+              grep -q "Resolved IFido2 from a real ServiceCollection: True" "$dir/out.di.$tfm.log" \
+                || { echo "::error::$name ($tfm) did not resolve IFido2 from a real ServiceCollection"; exit 1; }
+            done
+            echo "OK: $name (AddFido2)"
+          }
+
+          run_aspnet_di_scenario "aspnet-withoutnsec"
+          run_aspnet_di_scenario "aspnet-withoutnsec-plusnsec"
 
           echo "All package-consumer scenarios passed."
 

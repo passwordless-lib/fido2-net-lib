@@ -50,11 +50,16 @@ public static class OkpSignatureVerifiers
             var assembly = Assembly.Load("Fido2.NSec");
             RuntimeHelpers.RunModuleConstructor(assembly.ManifestModule.ModuleHandle);
         }
-        catch (Exception ex) when (ex is FileNotFoundException or FileLoadException or BadImageFormatException)
+        catch (FileNotFoundException)
         {
             // Expected: Fido2.NSec isn't referenced (Fido2.WithoutNSec was used instead of Fido2, or this
             // process never referenced either package). Not recorded in BootstrapError -- this is the normal,
             // unremarkable outcome for a correctly-configured Fido2.WithoutNSec consumer.
+            //
+            // FileLoadException/BadImageFormatException are NOT included here, unlike an earlier version of
+            // this catch: those mean the assembly was found but couldn't actually be loaded (a version/strong-
+            // name conflict, or an incompatible/corrupted file) -- a broken install, not an intentional
+            // absence, and otherwise indistinguishable from one if swallowed here the same way.
         }
         catch (Exception ex)
         {
