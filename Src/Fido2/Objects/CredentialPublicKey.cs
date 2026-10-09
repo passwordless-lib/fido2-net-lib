@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -326,8 +327,7 @@ public sealed class CredentialPublicKey
                         $"Credential public key algorithm EdDSA must specify curve Ed25519, was {crv}");
                 }
 
-                ValidateOkpKeyLength(COSE.EllipticCurve.Ed25519, 32);
-                return crv;
+                goto case COSE.Algorithm.Ed25519;
 
             case COSE.Algorithm.Ed25519:
                 ValidateOkpKeyLength(COSE.EllipticCurve.Ed25519, 32);
@@ -358,7 +358,22 @@ public sealed class CredentialPublicKey
     /// </summary>
     private void ValidateOkpKeyLength(COSE.EllipticCurve curve, int expectedLength)
     {
-        if (((byte[])_cpk[COSE.KeyTypeParameter.X]).Length != expectedLength)
+        byte[] x;
+        try
+        {
+            x = (byte[])_cpk[COSE.KeyTypeParameter.X];
+        }
+        catch (Exception ex) when (ex is KeyNotFoundException or InvalidCastException)
+        {
+            // KeyNotFoundException: the credential public key map has no X parameter at all (CborMap's
+            // indexer throws rather than returning null). InvalidCastException: X is present but isn't a
+            // byte string (e.g. an integer). Either way this is malformed input from the wire -- caught here
+            // so it surfaces as the same Fido2VerificationException every other malformed-key case in this
+            // class produces, not a raw framework exception a caller's own catch clause may not expect.
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"{curve} credential public key has no valid X parameter", ex);
+        }
+
+        if (x.Length != expectedLength)
         {
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidCredentialPublicKey, $"{curve} credential public key must be a {expectedLength}-byte raw point");
         }

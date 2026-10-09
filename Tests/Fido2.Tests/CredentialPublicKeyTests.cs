@@ -10,6 +10,27 @@ namespace fido2_net_lib.Test;
 
 public class CredentialPublicKeyTests
 {
+    [Fact]
+    public void RejectsAnOkpKeyWithNoXParameterAtAllRatherThanThrowingRaw()
+    {
+        // A credential public key missing X entirely (not merely the wrong length) reaches
+        // ValidateOkpKeyLength's cast of a CborMap lookup that throws KeyNotFoundException, not
+        // InvalidCastException, when the key is absent -- a gap AppAttest.ValidateAsync's narrower catch
+        // filter (CborContentException/InvalidCastException only) would let escape unhandled, unlike the main
+        // WebAuthn ceremony paths' blanket catch. Fails cleanly as Fido2VerificationException either way.
+        var cpk = new CborMap
+        {
+            { COSE.KeyCommonParameter.KeyType, COSE.KeyType.OKP },
+            { COSE.KeyCommonParameter.Alg, COSE.Algorithm.Ed448 },
+            { COSE.KeyTypeParameter.Crv, COSE.EllipticCurve.Ed448 },
+        };
+
+        var ex = Assert.Throws<Fido2VerificationException>(() => new CredentialPublicKey(cpk));
+
+        Assert.Equal(Fido2ErrorCode.InvalidCredentialPublicKey, ex.Code);
+    }
+
+
     [Theory]
     [InlineData("1.3.132.0.10", COSE.Algorithm.ES256K)] // secP256k1
     [InlineData("1.2.840.10045.3.1.7", COSE.Algorithm.ES256)]  // P256
