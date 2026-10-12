@@ -46,6 +46,7 @@ public class L3SpecTestVectorTests
         var regAttestationObject = Hex("a363666d74646e6f6e656761747453746d74a068617574684461746158a4bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b54500000000883f4f6014f19c09d87aa38123be48d000206e1050c0d2ca2f07c755cb2c66a74c64fa43065c18f938354d9915db2bd5ce57a501020326200121582022200a473f90b11078851550d03b4e44a2279f8c4eca27b3153dedfe03e4e97d225820cbd0be95e746ad6f5a8191be11756e4c0420e72f65b466d39bc56b8b123a9c6e");
         var expectedAaGuid = new Guid(Hex("883f4f6014f19c09d87aa38123be48d0"), bigEndian: true);
         var expectedCredentialId = Hex("6e1050c0d2ca2f07c755cb2c66a74c64fa43065c18f938354d9915db2bd5ce57");
+        var expectedCredentialIdB64 = "bhBQwNLKLwfHVcssZqdMZPpDBlwY-Tg1TZkV2yvVzlc";
 
         var authChallenge = Hex("876aa517ba83fdee65fcffdbca4c84eeae5d54f8041a1fc85c991e5bbb273137");
         var authAuthenticatorData = Hex("bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b50500000000");
@@ -65,7 +66,7 @@ public class L3SpecTestVectorTests
         var rawAttestation = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
+            Id = expectedCredentialIdB64,
             RawId = expectedCredentialId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
@@ -93,7 +94,7 @@ public class L3SpecTestVectorTests
         var rawAssertion = new AuthenticatorAssertionRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
+            Id = expectedCredentialIdB64,
             RawId = expectedCredentialId,
             Response = new AuthenticatorAssertionRawResponse.AssertionResponse
             {
@@ -124,6 +125,7 @@ public class L3SpecTestVectorTests
         var regAttestationObject = Hex("a363666d74646e6f6e656761747453746d74a068617574684461746158a4bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b5410000000097586fd09799a76401c200455099ef2a0020b8ad59b996047ab18e2ceb57206c362da57458793481f4a8ebf101c7ca7cc0f1a5010203262001215820a1c47c1d82da4ebe82cd72207102b380670701993bc35398ae2e5726427fe01d22582086c1080d82987028c7f54ecb1b01185de243b359294a0ed210cd47480f0adc88");
         var expectedAaGuid = new Guid(Hex("97586fd09799a76401c200455099ef2a"), bigEndian: true);
         var expectedCredentialId = Hex("b8ad59b996047ab18e2ceb57206c362da57458793481f4a8ebf101c7ca7cc0f1");
+        var expectedCredentialIdB64 = "uK1ZuZYEerGOLOtXIGw2LaV0WHk0gfSo6_EBx8p8wPE";
 
         var authChallenge = Hex("d54a5c8ca4b62a8e3bb321e3b2bc73856f85a10150db2939ac195739eb1ea066");
         var authAuthenticatorData = Hex("bfabc37432958b063360d3ad6461c9c4735ae7f8edd46592a5e0f01452b2e4b50500000000");
@@ -147,7 +149,7 @@ public class L3SpecTestVectorTests
         var rawAttestation = new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
+            Id = expectedCredentialIdB64,
             RawId = expectedCredentialId,
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
@@ -175,7 +177,7 @@ public class L3SpecTestVectorTests
         var rawAssertion = new AuthenticatorAssertionRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "credId",
+            Id = expectedCredentialIdB64,
             RawId = expectedCredentialId,
             Response = new AuthenticatorAssertionRawResponse.AssertionResponse
             {

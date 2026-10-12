@@ -363,8 +363,8 @@ public class AuthenticatorResponseTests
         return new AuthenticatorAttestationRawResponse
         {
             Type = PublicKeyCredentialType.PublicKey,
-            Id = "8dA",
-            RawId = [0xf1, 0xd0],
+            Id = "_moyY7430QGxLlfKlmwAIpPkGcjNAQYjC8aS6Mx3EiHx2xFdQQ-Ca9uYrGQusa61qAPR28FH7zcc_bHOsEjLLA",
+            RawId = Convert.FromHexString("FE6A3263BE37D101B12E57CA966C002293E419C8CD0106230BC692E8CC771221F1DB115D410F826BDB98AC642EB1AEB5A803D1DBC147EF371CFDB1CEB048CB2C"),
             Response = new AuthenticatorAttestationRawResponse.AttestationResponse
             {
                 AttestationObject = new CborMap {
