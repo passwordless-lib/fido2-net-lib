@@ -127,10 +127,16 @@ public class Fido2MetadataServiceRepositoryTests
 
     private static (X509Certificate2 root, X509Certificate2 leaf, ECDsa leafKey) BuildChain(bool leafHasCrlDistributionPoint = true)
     {
+        // Shared across root and leaf: CertificateRequest.Create rejects a leaf notAfter later than the issuer's,
+        // and computing each bound from its own DateTimeOffset.UtcNow call risks the leaf's landing a few
+        // milliseconds after the root's, worse on a loaded CI runner.
+        var notBefore = DateTimeOffset.UtcNow.AddDays(-1);
+        var notAfter = DateTimeOffset.UtcNow.AddYears(1);
+
         using var rootKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var rootRequest = new CertificateRequest("CN=Test MDS Root", rootKey, HashAlgorithmName.SHA256);
         rootRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
-        var root = rootRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+        var root = rootRequest.CreateSelfSigned(notBefore, notAfter);
 
         var leafKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var leafRequest = new CertificateRequest("CN=Test MDS Signer", leafKey, HashAlgorithmName.SHA256);
@@ -139,7 +145,7 @@ public class Fido2MetadataServiceRepositoryTests
         {
             leafRequest.CertificateExtensions.Add(CertificateRevocationListBuilder.BuildCrlDistributionPointExtension([LeafCrlUrl]));
         }
-        var leaf = leafRequest.Create(root, DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1), RandomNumberGenerator.GetBytes(8));
+        var leaf = leafRequest.Create(root, notBefore, notAfter, RandomNumberGenerator.GetBytes(8));
 
         return (root, leaf, leafKey);
     }
