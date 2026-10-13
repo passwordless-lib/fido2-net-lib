@@ -39,6 +39,7 @@ internal static class Fido2ErrorMessages
     public static readonly string InvalidAuthenticatorResponseChallenge  = "Authenticator response challenge does not match original challenge";
     public static readonly string MissingAuthenticatorResponseOrigin     = "Authenticator response origin may not be null or empty";
     public static readonly string InvalidAuthenticatorResponseOrigin     = "Authenticator response origin is not a valid origin";
+    public static readonly string InvalidAuthenticatorResponseTopOrigin  = "Authenticator response topOrigin is not a valid origin";
     public static readonly string MissingRawResponse                     = "Expected rawResponse, got null";
     public static readonly string AttestedCredentialDataFlagNotSet       = "Attestation flag not set on attestation data";
     public static readonly string MissingAuthenticatorData               = "Authenticator data may not be null";

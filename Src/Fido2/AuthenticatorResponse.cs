@@ -136,9 +136,20 @@ public class AuthenticatorResponse
         // If C.topOrigin is present, verify that the Relying Party expects this credential to be usable
         // from within a cross-origin iframe, and that C.topOrigin matches the Relying Party's origin.
         // See https://www.w3.org/TR/webauthn-3/#dom-collectedclientdata-toporigin
+        //
+        // C.topOrigin is attacker-controlled just like C.origin above, so an unparseable value must fail
+        // verification rather than surface as a raw UriFormatException from the URI parser.
         if (TopOrigin is not null)
         {
-            var fullyQualifiedTopOrigin = TopOrigin.ToFullyQualifiedOrigin();
+            string fullyQualifiedTopOrigin;
+            try
+            {
+                fullyQualifiedTopOrigin = TopOrigin.ToFullyQualifiedOrigin();
+            }
+            catch (UriFormatException ex)
+            {
+                throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseTopOrigin, $"{Fido2ErrorMessages.InvalidAuthenticatorResponseTopOrigin}: '{TopOrigin}'", ex);
+            }
 
             if (!fullyQualifiedExpectedOrigins.Contains(fullyQualifiedTopOrigin))
                 throw new Fido2VerificationException(Fido2ErrorCode.InvalidAuthenticatorResponseTopOrigin, $"Fully qualified top origin {fullyQualifiedTopOrigin} of {TopOrigin} not equal to fully qualified original origin {string.Join(", ", fullyQualifiedExpectedOrigins.Take(MAX_ORIGINS_TO_PRINT))} ({fullyQualifiedExpectedOrigins.Count})");

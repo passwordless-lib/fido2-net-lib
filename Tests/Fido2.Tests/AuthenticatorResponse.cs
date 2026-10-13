@@ -491,6 +491,37 @@ public class AuthenticatorResponseTests
     }
 
     [Fact]
+    public async Task TestAuthenticatorCrossOriginRejectsMalformedTopOriginAsync()
+    {
+        // C.topOrigin is attacker-controlled just like C.origin; an unparseable value must surface as a
+        // Fido2VerificationException rather than an unhandled UriFormatException from the URI parser.
+        var challenge = RandomNumberGenerator.GetBytes(128);
+        var rp = "https://www.passwordless.dev";
+
+        var rawResponse = BuildCrossOriginRawResponse(rp, challenge, crossOrigin: true, topOrigin: "not a url");
+        var originalOptions = BuildCrossOriginOptions(rp, challenge);
+
+        IsCredentialIdUniqueToUserAsyncDelegate callback = (args, cancellationToken) => Task.FromResult(true);
+
+        var lib = new Fido2(new Fido2Configuration
+        {
+            RPID = rp,
+            RPName = rp,
+            Origins = new HashSet<string> { rp },
+            AllowCrossOriginRequests = true,
+        });
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = rawResponse,
+            OriginalOptions = originalOptions,
+            IsCredentialIdUniqueToUserCallback = callback
+        }));
+
+        Assert.Equal(Fido2ErrorCode.InvalidAuthenticatorResponseTopOrigin, ex.Code);
+    }
+
+    [Fact]
     public void TestAuthenticatorAttestationRawResponse()
     {
         var challenge = RandomNumberGenerator.GetBytes(128);

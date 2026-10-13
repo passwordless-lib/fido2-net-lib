@@ -10,9 +10,11 @@ using Fido2NetLib.Serialization;
 namespace Test;
 
 /// <summary>
-/// Covers the WebAuthn Level 3 credential record rules that apply to the authentication ceremony:
-/// the BE/BS flag invariant (§7.2 step 21), the comparison of the current BE flag against the value
-/// recorded at registration (§7.2 step 22), and the <c>uvInitialized</c> state update (§7.2 step 28).
+/// Covers the WebAuthn Level 3 BE/BS flag invariant that applies to the authentication ceremony
+/// (§7.2 step 21): if the BE bit is not set, the BS bit must not be set either. This is the only
+/// L3 credential-record rule backported to the 4.x line; the comparison of the current BE flag
+/// against the value recorded at registration (§7.2 step 22) and the <c>uvInitialized</c> state
+/// update (§7.2 step 28) are later L3 additions not included here.
 /// </summary>
 public class L3CredentialRecordTests
 {
