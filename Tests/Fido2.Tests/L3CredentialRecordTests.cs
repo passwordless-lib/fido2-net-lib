@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 
 using Fido2NetLib;
+using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 using Fido2NetLib.Serialization;
@@ -10,11 +11,12 @@ using Fido2NetLib.Serialization;
 namespace Test;
 
 /// <summary>
-/// Covers the WebAuthn Level 3 BE/BS flag invariant that applies to the authentication ceremony
-/// (§7.2 step 21): if the BE bit is not set, the BS bit must not be set either. This is the only
-/// L3 credential-record rule backported to the 4.x line; the comparison of the current BE flag
-/// against the value recorded at registration (§7.2 step 22) and the <c>uvInitialized</c> state
-/// update (§7.2 step 28) are later L3 additions not included here.
+/// Covers the WebAuthn Level 3 BE/BS flag invariant that applies to the registration ceremony
+/// (§7.1 step 15) and the authentication ceremony (§7.2 step 21): if the BE bit is not set, the
+/// BS bit must not be set either. This is the only L3 credential-record rule backported to the
+/// 4.x line; the comparison of the current BE flag against the value recorded at registration
+/// (§7.2 step 22) and the <c>uvInitialized</c> state update (§7.2 step 28) are later L3 additions
+/// not included here.
 /// </summary>
 public class L3CredentialRecordTests
 {
@@ -54,6 +56,48 @@ public class L3CredentialRecordTests
         return (options, response);
     }
 
+    private static (CredentialCreateOptions Options, AuthenticatorAttestationRawResponse Response) MakeRegistration(AuthenticatorFlags flags)
+    {
+        var challenge = RandomNumberGenerator.GetBytes(128);
+
+        var clientDataJson = JsonSerializer.SerializeToUtf8Bytes(
+            new AuthenticatorResponse(type: "webauthn.create", challenge: challenge, origin: Rp),
+            FidoSerializerContext.Default.AuthenticatorResponse);
+
+        // No AT flag / attested credential data: the BE/BS invariant (step 15) is checked before the
+        // HasAttestedCredentialData check (step 17), so a minimal, attestation-data-free authData reaches it.
+        var authData = new AuthenticatorData(SHA256.HashData(Encoding.UTF8.GetBytes(Rp)), flags, 0, null).ToByteArray();
+
+        var attestationObject = new CborMap
+        {
+            { "fmt", "none" },
+            { "attStmt", new CborMap() },
+            { "authData", authData }
+        }.Encode();
+
+        var options = new CredentialCreateOptions
+        {
+            Challenge = challenge,
+            PubKeyCredParams = [new PubKeyCredParam(COSE.Algorithm.ES256)],
+            Rp = new PublicKeyCredentialRpEntity(Rp, Rp, ""),
+            User = new Fido2User { Name = "testuser", Id = "testuser"u8.ToArray(), DisplayName = "Test User" },
+        };
+
+        var response = new AuthenticatorAttestationRawResponse
+        {
+            Type = PublicKeyCredentialType.PublicKey,
+            Id = "8dA",
+            RawId = [0xf1, 0xd0],
+            Response = new AuthenticatorAttestationRawResponse.AttestationResponse
+            {
+                AttestationObject = attestationObject,
+                ClientDataJson = clientDataJson,
+            },
+        };
+
+        return (options, response);
+    }
+
     private static Fido2 MakeLib() => new(new Fido2Configuration
     {
         RPID = Rp,
@@ -75,6 +119,30 @@ public class L3CredentialRecordTests
             StoredSignatureCounter = 0,
             IsUserHandleOwnerOfCredentialIdCallback = static (args, cancellationToken) => Task.FromResult(true)
         });
+    }
+
+    private static Task<RegisteredPublicKeyCredential> RegisterAsync(Fido2 lib, CredentialCreateOptions options, AuthenticatorAttestationRawResponse response)
+    {
+        return lib.MakeNewCredentialAsync(new MakeNewCredentialParams
+        {
+            AttestationResponse = response,
+            OriginalOptions = options,
+            IsCredentialIdUniqueToUserCallback = static (args, cancellationToken) => Task.FromResult(true)
+        });
+    }
+
+    [Fact]
+    public async Task RegistrationWithBackupStateButNotBackupEligibleIsRejectedAsync()
+    {
+        // Same invariant as the assertion-side check below, enforced at registration too: a credential
+        // can already be backed up (BS set) at creation, e.g. a synced passkey, so the check can't wait
+        // until the first assertion.
+        var (options, response) = MakeRegistration(AuthenticatorFlags.UP | AuthenticatorFlags.BS);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => RegisterAsync(MakeLib(), options, response));
+
+        Assert.Equal(Fido2ErrorCode.InvalidBackupFlags, ex.Code);
+        Assert.Equal(Fido2ErrorMessages.InvalidBackupFlags, ex.Message);
     }
 
     [Fact]
