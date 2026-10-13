@@ -16,9 +16,11 @@ on:
   push:
     branches:
       - main
+      - maintenance-4.x
   pull_request:
     branches:
       - main
+      - maintenance-4.x
   release:
     types:
       - published
