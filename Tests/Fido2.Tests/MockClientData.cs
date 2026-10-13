@@ -13,4 +13,10 @@ public sealed class MockClientData
 
     [JsonPropertyName("origin")]
     public required string Origin { get; set; }
+
+    [JsonPropertyName("crossOrigin")]
+    public bool CrossOrigin { get; set; }
+
+    [JsonPropertyName("topOrigin")]
+    public string TopOrigin { get; set; }
 }

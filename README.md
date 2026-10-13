@@ -67,7 +67,7 @@ For Blazor WebAssembly support:
 dotnet add package Fido2.BlazorWebAssembly
 ```
 
-> **⚠️ Breaking Changes**: If upgrading from v3.x, see the [Upgrade Guide](Documentation/migration-guide-4.0.0.md) for migration instructions.
+> **⚠️ Breaking Changes**: If upgrading from v3.x, see the [Upgrade Guide](Documentation/migration-guide-4.0.0.md) for migration instructions. If upgrading from v4.2.x, see the [v4.3.0 Upgrade Guide](Documentation/migration-guide-4.3.0.md) for a behavioural change around cross-origin ceremonies.
 
 ### Demo
 
