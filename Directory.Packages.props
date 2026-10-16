@@ -18,10 +18,10 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.2.0" />
     
     <!-- ASP.NET Core -->
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="8.0.10" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.10" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.10" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.10" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="8.0.32" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.32" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.32" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.32" />
     
     <!-- Development Tools -->
     <PackageVersion Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.6" />
