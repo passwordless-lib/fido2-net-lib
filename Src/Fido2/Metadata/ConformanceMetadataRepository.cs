@@ -154,20 +154,23 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
 
         var rootCert = X509CertificateHelper.CreateFromBase64String(ROOT_CERT);
         var blobCertificates = new X509Certificate2[x5cRawKeys.Length];
-        var blobPublicKeys = new List<SecurityKey>(x5cRawKeys.Length);
 
         for (int i = 0; i < x5cRawKeys.Length; i++)
         {
-            var cert = X509CertificateHelper.CreateFromRawData(x5cRawKeys[i]);
-            blobCertificates[i] = cert;
-
-            if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
-                blobPublicKeys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
-
-            else if (cert.GetRSAPublicKey() is RSA rsa)
-                blobPublicKeys.Add(new RsaSecurityKey(rsa));
-
+            blobCertificates[i] = X509CertificateHelper.CreateFromRawData(x5cRawKeys[i]);
         }
+
+        // x5c[0] is the certificate that actually signed the BLOB; the rest of x5c only supplies the
+        // chain up to the root. Trusting every certificate in x5c as a JWT signer would let an attacker
+        // append a self-signed certificate of their own and sign the BLOB with it.
+        var leafCertificate = blobCertificates[0];
+        var blobPublicKeys = new List<SecurityKey>(1);
+
+        if (leafCertificate.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
+            blobPublicKeys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
+
+        else if (leafCertificate.GetRSAPublicKey() is RSA rsa)
+            blobPublicKeys.Add(new RsaSecurityKey(rsa));
 
         var certChain = new X509Chain();
         certChain.ChainPolicy.ExtraStore.Add(rootCert);
@@ -205,7 +208,18 @@ public sealed class ConformanceMetadataRepository : IMetadataRepository
         var certChainIsValid = certChain.Build(blobCertificates[0]);
 
         // if the root is trusted in the context we are running in, valid should be true here
-        if (!certChainIsValid)
+        if (certChainIsValid)
+        {
+            // The chain MUST terminate at the pinned (fake, conformance-test) root, and a 1-element chain
+            // means blobCertificates[0] (the cert whose key we trusted above) built a trivial chain to
+            // itself -- i.e. the "signing cert" the caller supplied IS the pinned root.
+            if (certChain.ChainElements.Count < 2 ||
+                !rootCert.Thumbprint.Equals(certChain.ChainElements[^1].Certificate.Thumbprint, StringComparison.Ordinal))
+            {
+                certChainIsValid = false;
+            }
+        }
+        else
         {
             foreach (var element in certChain.ChainElements)
             {

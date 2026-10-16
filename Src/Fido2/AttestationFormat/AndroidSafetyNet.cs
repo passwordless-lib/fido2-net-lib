@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers.Text;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -111,21 +110,29 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
         }
 
         var certs = new X509Certificate2[x5cRawKeys.Length];
-        var keys = new List<SecurityKey>(certs.Length);
 
         for (int i = 0; i < certs.Length; i++)
         {
-            var cert = X509CertificateHelper.CreateFromRawData(x5cRawKeys[i]);
-            certs[i] = cert;
+            certs[i] = X509CertificateHelper.CreateFromRawData(x5cRawKeys[i]);
+        }
 
-            if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
-            {
-                keys.Add(new ECDsaSecurityKey(ecdsaPublicKey));
-            }
-            else if (cert.GetRSAPublicKey() is RSA rsaPublicKey)
-            {
-                keys.Add(new RsaSecurityKey(rsaPublicKey));
-            }
+        // x5c[0] is the attestation certificate that actually signed the SafetyNet response; the rest of
+        // x5c only supplies chain material. Trusting every certificate in x5c as a JWS signer would let an
+        // attacker keep a legitimate x5c[0] -- used below for the attest.android.com and chain-to-Google-root
+        // checks -- while appending their own self-signed certificate and re-signing the response with its key.
+        var leafCert = certs[0];
+        SecurityKey leafKey;
+        if (leafCert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
+        {
+            leafKey = new ECDsaSecurityKey(ecdsaPublicKey);
+        }
+        else if (leafCert.GetRSAPublicKey() is RSA rsaPublicKey)
+        {
+            leafKey = new RsaSecurityKey(rsaPublicKey);
+        }
+        else
+        {
+            throw new Fido2VerificationException(Fido2ErrorCode.InvalidAttestation, "Unknown certificate algorithm in SafetyNet attestation cert");
         }
 
         var tokenHandler = new JsonWebTokenHandler();
@@ -136,7 +143,7 @@ internal sealed class AndroidSafetyNet : AttestationVerifier
             ValidateAudience = false,
             ValidateLifetime = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKeys = keys
+            IssuerSigningKeys = new SecurityKey[] { leafKey }
         }).ConfigureAwait(false);
 
         if (!validateTokenResult.IsValid)
