@@ -35,13 +35,7 @@ public static class Fido2NetLibBuilderExtensions
     {
         services.Configure<Fido2Configuration>(configuration);
 
-        services.AddSingleton(
-            resolver => resolver.GetRequiredService<IOptions<Fido2Configuration>>().Value);
-
-        services.AddScoped<IFido2, Fido2>();
-        services.TryAddSingleton<ISystemClock, SystemClock>();
-
-        return new Fido2NetLibBuilder(services);
+        return AddFido2Core(services);
     }
 
     /// <summary>
@@ -64,10 +58,20 @@ public static class Fido2NetLibBuilderExtensions
     {
         services.Configure(setupAction);
 
+        return AddFido2Core(services);
+    }
+
+    private static IFido2NetLibBuilder AddFido2Core(IServiceCollection services)
+    {
         services.AddSingleton(
             resolver => resolver.GetRequiredService<IOptions<Fido2Configuration>>().Value);
 
-        services.AddScoped<IFido2, Fido2>();
+        // Built explicitly rather than by constructor selection, so the logger reaches Fido2 whether or not a
+        // metadata service is registered: the container would otherwise fall back to the constructor without one.
+        services.AddScoped<IFido2>(provider => new Fido2(
+            provider.GetRequiredService<Fido2Configuration>(),
+            provider.GetService<IMetadataService>(),
+            provider.GetService<ILogger<Fido2>>()));
         services.TryAddSingleton<ISystemClock, SystemClock>();
 
         return new Fido2NetLibBuilder(services);
@@ -215,6 +219,58 @@ public static class Fido2NetLibBuilderExtensions
 
         return builder;
     }
+
+    /// <summary>
+    /// Registers an <see cref="IAuthenticatorDisplayMetadataService"/> that resolves display-only authenticator
+    /// names and icons by AAGUID from the sources configured in <see cref="Fido2Configuration.DisplayMetadata"/>.
+    /// </summary>
+    /// <param name="builder">The FIDO2 builder instance.</param>
+    /// <param name="clientBuilder">Optional action to configure the HTTP client the Convenience Metadata Service is downloaded with.</param>
+    /// <returns>The <see cref="IFido2NetLibBuilder"/> for method chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// Registers a singleton <see cref="CompositeAuthenticatorDisplayMetadataService"/> over, in priority order, a
+    /// <see cref="FileSystemDisplayMetadataRepository"/> for <see cref="DisplayMetadataOptions.LocalFilePath"/> (when
+    /// set) and a <see cref="ConvenienceMetadataService"/> (when
+    /// <see cref="DisplayMetadataOptions.UseConvenienceMetadataService"/> is on). With neither configured, every
+    /// lookup returns <see langword="null"/>.
+    /// </para>
+    /// <para>
+    /// These sources carry no trust information and are never consulted by attestation or assertion verification.
+    /// Their names and icons are third-party data: HTML-encode names and show icons only through
+    /// <c>&lt;img src&gt;</c>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
+    public static IFido2NetLibBuilder AddAuthenticatorDisplayMetadata(this IFido2NetLibBuilder builder, Action<IHttpClientBuilder> clientBuilder = null)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        var httpClientBuilder = builder.Services.AddHttpClient(nameof(ConvenienceMetadataService));
+        clientBuilder?.Invoke(httpClientBuilder);
+
+        builder.Services.AddSingleton<IAuthenticatorDisplayMetadataService>(provider =>
+        {
+            var options = provider.GetRequiredService<Fido2Configuration>().DisplayMetadata ?? new DisplayMetadataOptions();
+            var sources = new List<IAuthenticatorDisplayMetadataService>();
+
+            if (!string.IsNullOrWhiteSpace(options.LocalFilePath))
+                sources.Add(new FileSystemDisplayMetadataRepository(options.LocalFilePath, provider.GetService<ILogger<FileSystemDisplayMetadataRepository>>()));
+
+            if (options.UseConvenienceMetadataService)
+            {
+                sources.Add(new ConvenienceMetadataService(
+                    provider.GetRequiredService<IHttpClientFactory>(),
+                    options,
+                    provider.GetService<ILogger<ConvenienceMetadataService>>()));
+            }
+
+            return new CompositeAuthenticatorDisplayMetadataService(sources, provider.GetService<ILogger<CompositeAuthenticatorDisplayMetadataService>>());
+        });
+
+        return builder;
+    }
+
 }
 
 /// <summary>

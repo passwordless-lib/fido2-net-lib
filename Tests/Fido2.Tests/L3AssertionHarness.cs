@@ -7,6 +7,8 @@ using fido2_net_lib.Test;
 using Fido2NetLib;
 using Fido2NetLib.Objects;
 
+using Microsoft.Extensions.Logging;
+
 namespace Test;
 
 /// <summary>
@@ -26,7 +28,15 @@ internal static class L3AssertionHarness
         bool omitUserHandle = false,
         byte[] userHandle = null,
         string id = null,
-        byte[] rawId = null)
+        byte[] rawId = null,
+        Fido2Configuration config = null,
+        Guid? storedAaGuid = null,
+        IMetadataService metadataService = null,
+        ILogger<Fido2> logger = null,
+        IsUserHandleOwnerOfCredentialIdAsync isUserHandleOwnerOfCredentialId = null,
+        bool viaPreAaguidOverload = false,
+        AuthenticatorFlags flags = AuthenticatorFlags.UP | AuthenticatorFlags.UV,
+        AuthenticatorAttachment? authenticatorAttachment = null)
     {
         using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var parameters = ecdsa.ExportParameters(false);
@@ -44,7 +54,7 @@ internal static class L3AssertionHarness
 
         byte[] authenticatorData = new AuthenticatorData(
             SHA256.HashData(Encoding.UTF8.GetBytes(Rp)),
-            AuthenticatorFlags.UP | AuthenticatorFlags.UV,
+            flags,
             1,
             null).ToByteArray();
 
@@ -67,6 +77,7 @@ internal static class L3AssertionHarness
             Type = PublicKeyCredentialType.PublicKey,
             Id = id ?? "8dA",
             RawId = rawId ?? CredentialId,
+            AuthenticatorAttachment = authenticatorAttachment,
             ClientExtensionResults = clientExtensionResults ?? new AuthenticationExtensionsClientOutputs(),
             Response = new AuthenticatorAssertionRawResponse.AssertionResponse
             {
@@ -77,12 +88,24 @@ internal static class L3AssertionHarness
             }
         };
 
-        var lib = new Fido2(new Fido2Configuration
+        config ??= new Fido2Configuration
         {
             RPID = Rp,
             RPName = Rp,
             Origins = new HashSet<string> { Rp }
-        });
+        };
+
+        if (viaPreAaguidOverload)
+        {
+            // Positionally, with a CancellationToken where storedAaGuid now sits in the newer overload -- how code
+            // compiled before that parameter existed calls it.
+            return AuthenticatorAssertionResponse.Parse(response).VerifyAsync(
+                options, config, credentialPublicKey.GetBytes(), 0,
+                isUserHandleOwnerOfCredentialId ?? (static (args, cancellationToken) => Task.FromResult(true)),
+                metadataService, null, null, CancellationToken.None);
+        }
+
+        var lib = new Fido2(config, metadataService, logger);
 
         return lib.MakeAssertionAsync(new MakeAssertionParams
         {
@@ -90,7 +113,8 @@ internal static class L3AssertionHarness
             OriginalOptions = options,
             StoredPublicKey = credentialPublicKey.GetBytes(),
             StoredSignatureCounter = 0,
-            IsUserHandleOwnerOfCredentialIdCallback = static (args, cancellationToken) => Task.FromResult(true)
+            StoredAaGuid = storedAaGuid,
+            IsUserHandleOwnerOfCredentialIdCallback = isUserHandleOwnerOfCredentialId ?? (static (args, cancellationToken) => Task.FromResult(true))
         });
     }
 }

@@ -284,6 +284,76 @@ public class Fido2Configuration
     ];
 
     /// <summary>
+    /// AAGUIDs of authenticator models that are always rejected, regardless of their MDS status.
+    /// Checked at registration, and at assertion for any credential whose AAGUID the caller supplies
+    /// (<c>MakeAssertionParams.StoredAaGuid</c>).
+    /// </summary>
+    /// <remarks>
+    /// The AAGUID is reported by the authenticator itself, so a deny list stops a model that identifies
+    /// itself honestly -- the usual case for a recalled or unwanted product -- but not an authenticator (or a
+    /// modified client) that lies about its AAGUID. Keeping out authenticators that might lie takes an
+    /// <see cref="AaguidAllowList"/> with <see cref="AaguidAllowListRequiresAttestation"/>, which only accepts
+    /// an AAGUID the attestation statement proves.
+    /// <para>
+    /// A <see cref="HashSet{T}"/> rather than an interface so that <c>Microsoft.Extensions.Configuration</c> can
+    /// bind it from settings (e.g. <c>"AaguidDenyList": [ "cb69481e-8ff7-4039-93ec-0a2729a154a8" ]</c>); the
+    /// binder leaves <c>ISet&lt;Guid&gt;</c> and <c>IReadOnlySet&lt;Guid&gt;</c> properties empty.
+    /// </para>
+    /// </remarks>
+    public HashSet<Guid> AaguidDenyList { get; set; } = [];
+
+    /// <summary>
+    /// AAGUIDs of authenticator models that may register. Empty (the default) means no restriction.
+    /// </summary>
+    /// <remarks>
+    /// Only enforced at registration; narrowing the list does not retroactively block credentials registered
+    /// before it changed. To withdraw a model from existing users, add it to <see cref="AaguidDenyList"/>,
+    /// which is also enforced at sign-in.
+    /// <para>
+    /// While <see cref="AaguidAllowListRequiresAttestation"/> is <see langword="true"/> (the default), an
+    /// AAGUID on the list is only accepted when the attestation proves it, so registration options must ask for
+    /// attestation (<see cref="Fido2NetLib.Objects.AttestationConveyancePreference.Direct"/> or
+    /// <see cref="Fido2NetLib.Objects.AttestationConveyancePreference.Enterprise"/>) and a metadata service must be configured.
+    /// </para>
+    /// </remarks>
+    public HashSet<Guid> AaguidAllowList { get; set; } = [];
+
+    /// <summary>
+    /// Whether an AAGUID on a non-empty <see cref="AaguidAllowList"/> is only accepted when the attestation
+    /// proves it. Defaults to <see langword="true"/>.
+    /// </summary>
+    /// <remarks>
+    /// An AAGUID is proven when the attestation is a basic or attestation-CA attestation (<c>AttestationType.Basic</c>
+    /// or <c>AttestationType.AttCa</c>) and its certificate chain was validated against
+    /// the attestation roots in that model's FIDO Metadata Service statement. Without that, the AAGUID is
+    /// whatever the authenticator chose to send: under <c>none</c> or self attestation any software
+    /// authenticator can claim an allowed model's AAGUID. Set this to <see langword="false"/> only when the
+    /// allow list is a user-experience filter rather than a security control.
+    /// </remarks>
+    public bool AaguidAllowListRequiresAttestation { get; set; } = true;
+
+    /// <summary>
+    /// Whether to re-check <see cref="UndesiredAuthenticatorMetadataStatuses"/> at assertion time, not only at
+    /// registration, for any credential whose AAGUID the caller supplies (<c>MakeAssertionParams.StoredAaGuid</c>).
+    /// Off by default, since it adds a metadata lookup to every authentication rather than only to registration.
+    /// </summary>
+    /// <remarks>
+    /// Like the registration-time check, this only acts on a status report the metadata service actually has:
+    /// an authenticator model with no metadata entry (most synced passkey providers) passes, and so does every
+    /// credential when the metadata service cannot be reached. FIDO U2F authenticators have no AAGUID -- their
+    /// metadata is keyed by attestation certificate -- so they are not re-checked. A call without
+    /// <c>StoredAaGuid</c> skips the re-check and logs a warning (event 1204).
+    /// </remarks>
+    public bool RecheckMetadataStatusOnAssertion { get; set; }
+
+    /// <summary>
+    /// Configuration for resolving display-only authenticator names/icons by AAGUID (for UI, logs, and admin
+    /// tooling), separate from the signed FIDO Metadata Service used above for trust decisions. Read by
+    /// <c>AddAuthenticatorDisplayMetadata()</c> in Fido2.AspNet.
+    /// </summary>
+    public DisplayMetadataOptions DisplayMetadata { get; set; } = new();
+
+    /// <summary>
     /// How many sub-statements of a <c>compound</c> attestation statement must verify successfully.
     /// Defaults to <see cref="Fido2NetLib.CompoundAttestationPolicy.RequireAll"/>.
     /// <see href="https://www.w3.org/TR/webauthn-3/#sctn-compound-attestation"/>
@@ -315,6 +385,95 @@ public class Fido2Configuration
     /// </summary>
     public CredentialBackupPolicy BackedUpCredentialPolicy { get; set; } = CredentialBackupPolicy.Allowed;
 
+    /// <summary>
+    /// How strictly to reject a ceremony whose attestation or assertion contradicts what the authenticator's own
+    /// FIDO Metadata Service statement says it is capable of. Defaults to <see cref="Fido2NetLib.MetadataConsistencyStrictness.Standard"/>.
+    /// </summary>
+    /// <remarks>
+    /// Most checks only make sense at registration -- algorithm, credential ID length and discoverability are
+    /// fixed for the credential's lifetime, so there is nothing new to learn about them at assertion. The
+    /// assertion-time checks below exist because a handful of properties genuinely can disagree with what was
+    /// true at registration, and because WebAuthn gives a Relying Party less to work with at assertion than at
+    /// registration -- notably, there is no assertion-time equivalent of <c>getTransports()</c> at all, so an
+    /// actual transport-for-this-login check is not something this library (or any other) can implement; the
+    /// closest available signal is <c>authenticatorAttachment</c>, which is checked instead, with the caveats
+    /// described below. Every check, at either ceremony, is skipped entirely when the AAGUID has no metadata
+    /// entry: a model with no statement has claimed nothing to contradict. (Contrast
+    /// <see cref="RecheckMetadataStatusOnAssertion"/>, which re-checks revocation status -- a different kind of
+    /// property, a per-model judgement from the FIDO Alliance rather than a per-credential capability claim.)
+    /// <para>
+    /// <b>Strong-tier checks</b> (reject at <see cref="Fido2NetLib.MetadataConsistencyStrictness.Standard"/> and above), <i>registration only</i>:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>
+    /// <b>Algorithm.</b> For a FIDO2 statement that declares <c>authenticatorGetInfo.algorithms</c>, the
+    /// credential's COSE algorithm must be one of them.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Credential ID length.</b> The credential ID must not exceed the statement's declared
+    /// <c>authenticatorGetInfo.maxCredentialIdLength</c>, when present.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Discoverability.</b> The <c>credProps.rk</c> extension output must not claim a discoverable credential
+    /// was created when the statement's <c>authenticatorGetInfo.options.rk</c> is explicitly <see langword="false"/>.
+    /// </description></item>
+    /// </list>
+    /// <para>
+    /// <b>Weak-tier checks</b> (logged always; reject only at <see cref="Fido2NetLib.MetadataConsistencyStrictness.Strict"/>):
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>
+    /// <b>Backup eligibility</b> (registration). The statement's <c>multiDeviceCredentialSupport</c> is
+    /// <c>"unsupported"</c>, <c>"explicit"</c> or <c>"implicit"</c>, and "if this field is missing the implicit
+    /// value is <c>unsupported</c>" (FIDO Metadata Statement v3.1 §4) -- so a BE credential from a model whose
+    /// statement says or, by omission, implies <c>"unsupported"</c> is claiming a capability its own statement
+    /// denies. Weak tier specifically because of that omission case: most statements in the live BLOB predate
+    /// this field, so treating a missing field as a contradiction -- which is the spec's own reading -- would
+    /// reject BE credentials from most real, honest models if it blocked by default.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Backup state</b> (assertion). The same check as backup eligibility above, applied to the BS flag on
+    /// every assertion rather than only the BE flag at registration. BE is fixed for a credential's lifetime and
+    /// already checked for agreement with the stored value elsewhere; BS is not -- a credential can start backing
+    /// up (e.g. synced into a cloud keychain) well after registration, which is exactly the case this check is
+    /// for: a hardware authenticator whose statement denies multi-device support should not suddenly show up
+    /// backed up. Requires <c>MakeAssertionParams.StoredAaGuid</c>; skipped without it.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Transports</b> (registration). The client's reported <c>getTransports()</c> values should be a subset
+    /// of the statement's <c>authenticatorGetInfo.transports</c>, when declared. Real authenticators --
+    /// especially cross-device/hybrid flows and synced credential providers -- are known to report transports
+    /// inconsistently with their own metadata in ordinary, non-malicious use, hence weak tier.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Attachment</b> (assertion). WebAuthn has no assertion-time equivalent of <c>getTransports()</c> --
+    /// <c>AuthenticatorAttestationResponse.getTransports()</c> exists only on the registration response -- so
+    /// this is the closest available proxy for "did this login use a transport the statement doesn't mention":
+    /// the reported <c>authenticatorAttachment</c> (<c>"platform"</c> or <c>"cross-platform"</c>) is checked for
+    /// agreement with the statement's <c>authenticatorGetInfo.transports</c> (<c>"platform"</c> requires
+    /// <c>"internal"</c> to be declared; <c>"cross-platform"</c> requires at least one non-<c>"internal"</c>
+    /// transport). This is a coarser signal than a real transport check and the client-supplied value it relies
+    /// on is, per <see cref="Fido2NetLib.Objects.AuthenticatorAttachment"/>'s own remarks, "informational only" and never part of the
+    /// signed assertion -- weak tier reflects that explicitly, on top of the usual honest-disagreement reasoning.
+    /// Requires <c>MakeAssertionParams.StoredAaGuid</c>; skipped without it, or when the client reported no
+    /// attachment.
+    /// </description></item>
+    /// <item><description>
+    /// <b>Extensions</b> (registration and assertion). An authenticator-level extension output (<c>credProtect</c>,
+    /// <c>credBlob</c>, <c>minPinLength</c>, and <c>prf</c>/<c>largeBlob</c> via their CTAP2 counterparts
+    /// <c>hmac-secret</c>/<c>largeBlobKey</c>) should appear in the statement's <c>supportedExtensions</c> or
+    /// <c>authenticatorGetInfo.extensions</c>. MDS extension declarations are known to be incomplete for many
+    /// statements, hence weak tier. Client-only extension outputs that an authenticator statement would never
+    /// declare (<c>credProps</c> itself, legacy <c>exts</c>/<c>uvm</c>) are not checked. Checked at assertion only
+    /// when <c>MakeAssertionParams.StoredAaGuid</c> is supplied.
+    /// </description></item>
+    /// </list>
+    /// </remarks>
+    public MetadataConsistencyStrictness MetadataConsistencyStrictness { get; set; } = MetadataConsistencyStrictness.Standard;
+
+    /// <summary>
+    /// What the relying party requires of a credential's backup eligibility (BE) and backup state (BS) flags.
+    /// </summary>
 #if NET9_0_OR_GREATER
     [JsonConverter(typeof(JsonStringEnumConverter<CredentialBackupPolicy>))]
 #else

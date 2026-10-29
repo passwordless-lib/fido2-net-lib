@@ -57,6 +57,14 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
     /// </summary>
     private readonly ConcurrentDictionary<string, Lazy<Task<MetadataBLOBPayload>>> _distributedCacheFetches = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Initializes the service.
+    /// </summary>
+    /// <param name="repositories">The metadata sources, consulted in order.</param>
+    /// <param name="distributedCache">Keeps the last good BLOB of each repository across restarts.</param>
+    /// <param name="memoryCache">Keeps the parsed BLOB of each repository for fast lookups.</param>
+    /// <param name="logger">Where fetch failures are reported.</param>
+    /// <param name="systemClock">The clock cache expiry is computed against.</param>
     public DistributedCacheMetadataService(
         IEnumerable<IMetadataRepository> repositories,
         IDistributedCache distributedCache,
@@ -327,4 +335,44 @@ public class DistributedCacheMetadataService : IMetadataService, IMetadataServic
             entry.AttestationCertificateKeyIdentifiers is { Length: > 0 } entryIdentifiers &&
             keyIdentifiers.Any(id => entryIdentifiers.Contains(id, StringComparer.OrdinalIgnoreCase)));
     }
+
+    /// <summary>
+    /// The BLOB each repository is currently being served from, loading it (through the same caches and
+    /// coalesced fetch every lookup uses) if nothing has asked for it yet. A general-purpose accessor for
+    /// building a "is my metadata repository healthy" check.
+    /// </summary>
+    /// <remarks>
+    /// This reports what verification would actually use, wherever it came from -- this process's own fetch, or a
+    /// copy another instance left in the distributed cache -- rather than when this process last fetched. A BLOB
+    /// whose <see cref="MetadataRepositoryStatus.NextUpdate"/> is well in the past means refreshes are failing
+    /// and an old copy is being kept; why they fail is logged by the fetch itself.
+    /// </remarks>
+    /// <param name="cancellationToken">Stops waiting for a load in progress; the load itself carries on for other callers.</param>
+    public async Task<IReadOnlyList<MetadataRepositoryStatus>> GetRepositoryStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var statuses = new List<MetadataRepositoryStatus>(_repositories.Count);
+
+        foreach (var repository in _repositories)
+        {
+            var payload = await GetMemoryCachedPayload(repository, cancellationToken).WaitAsync(cancellationToken);
+
+            statuses.Add(new MetadataRepositoryStatus(
+                repository.GetType().Name,
+                payload is not null,
+                payload?.Number,
+                payload is null ? null : GetNextUpdateTimeFromPayload(payload)));
+        }
+
+        return statuses;
+    }
 }
+
+/// <summary>
+/// Which metadata BLOB a repository is being served from, as reported by
+/// <see cref="DistributedCacheMetadataService.GetRepositoryStatusAsync"/>.
+/// </summary>
+/// <param name="Repository">The repository's type name, which is also its cache key.</param>
+/// <param name="Available">Whether any BLOB is available: <see langword="false"/> when the fetch failed and nothing is cached.</param>
+/// <param name="BlobNumber">The BLOB's serial number (<c>no</c>), or <see langword="null"/> when none is available.</param>
+/// <param name="NextUpdate">When the BLOB says it will be replaced, or <see langword="null"/> when none is available or it does not say.</param>
+public sealed record MetadataRepositoryStatus(string Repository, bool Available, int? BlobNumber, DateTimeOffset? NextUpdate);

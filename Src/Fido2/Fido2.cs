@@ -1,9 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
+
+using Microsoft.Extensions.Logging;
 
 namespace Fido2NetLib;
 
@@ -14,13 +18,38 @@ public class Fido2 : IFido2
 {
     private readonly Fido2Configuration _config;
     private readonly IMetadataService? _metadataService;
+    private readonly ILogger<Fido2>? _logger;
 
+    /// <summary>
+    /// Initializes the library for one relying party.
+    /// </summary>
+    /// <param name="config">The relying party's settings.</param>
+    /// <param name="metadataService">Where to look authenticators up during registration, or <see langword="null"/> to skip metadata checks.</param>
     public Fido2(
         Fido2Configuration config,
         IMetadataService? metadataService = null)
+        : this(config, metadataService, logger: null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes the library for one relying party, logging the outcome of every ceremony.
+    /// </summary>
+    /// <param name="config">The relying party's settings.</param>
+    /// <param name="metadataService">Where to look authenticators up during registration, or <see langword="null"/> to skip metadata checks.</param>
+    /// <param name="logger">
+    /// Where to log ceremony outcomes (event IDs 1200-1299), or <see langword="null"/> for no logging. Successful
+    /// ceremonies are logged at <see cref="LogLevel.Information"/>, rejected ones at <see cref="LogLevel.Warning"/>
+    /// with their <see cref="Fido2ErrorCode"/>, and unexpected failures at <see cref="LogLevel.Error"/>.
+    /// </param>
+    public Fido2(
+        Fido2Configuration config,
+        IMetadataService? metadataService,
+        ILogger<Fido2>? logger)
     {
         _config = config;
         _metadataService = metadataService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -44,10 +73,24 @@ public class Fido2 : IFido2
     public async Task<RegisteredPublicKeyCredential> MakeNewCredentialAsync(MakeNewCredentialParams makeNewCredentialParams,
         CancellationToken cancellationToken = default)
     {
-        var parsedResponse = AuthenticatorAttestationResponse.Parse(makeNewCredentialParams.AttestationResponse);
-        var credential = await parsedResponse.VerifyAsync(makeNewCredentialParams.OriginalOptions, _config, makeNewCredentialParams.IsCredentialIdUniqueToUserCallback, _metadataService, makeNewCredentialParams.RequestTokenBindingId, makeNewCredentialParams.Mediation, cancellationToken);
+        try
+        {
+            var parsedResponse = AuthenticatorAttestationResponse.Parse(makeNewCredentialParams.AttestationResponse);
+            var credential = await parsedResponse.VerifyAsync(makeNewCredentialParams.OriginalOptions, _config, makeNewCredentialParams.IsCredentialIdUniqueToUserCallback, _metadataService, makeNewCredentialParams.RequestTokenBindingId, makeNewCredentialParams.Mediation, cancellationToken, _logger);
 
-        return credential;
+            _logger?.RegistrationSucceeded(_config.RPID, credential);
+            return credential;
+        }
+        catch (Fido2VerificationException ex)
+        {
+            _logger?.RegistrationRejected(_config.RPID, RawIdOf(makeNewCredentialParams), ex);
+            throw;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException && _logger is not null)
+        {
+            _logger.CeremonyFailed("registration", RawIdOf(makeNewCredentialParams), ex);
+            throw;
+        }
     }
 
     /// <summary>
@@ -81,21 +124,51 @@ public class Fido2 : IFido2
     public async Task<VerifyAssertionResult> MakeAssertionAsync(MakeAssertionParams makeAssertionParams,
         CancellationToken cancellationToken = default)
     {
-        var parsedResponse = AuthenticatorAssertionResponse.Parse(makeAssertionParams.AssertionResponse);
+        var credentialId = RawIdOf(makeAssertionParams);
 
-        var result = await parsedResponse.VerifyAsync(makeAssertionParams.OriginalOptions,
-                                                      _config,
-                                                      makeAssertionParams.StoredPublicKey,
-                                                      makeAssertionParams.StoredSignatureCounter,
-                                                      makeAssertionParams.IsUserHandleOwnerOfCredentialIdCallback,
-                                                      _metadataService,
-                                                      makeAssertionParams.RequestTokenBindingId,
-                                                      makeAssertionParams.StoredBackupEligible,
-                                                      makeAssertionParams.SecurePaymentConfirmation,
-                                                      cancellationToken);
+        try
+        {
+            var parsedResponse = AuthenticatorAssertionResponse.Parse(makeAssertionParams.AssertionResponse);
 
-        return result;
+            var result = await parsedResponse.VerifyAsync(makeAssertionParams.OriginalOptions,
+                                                          _config,
+                                                          makeAssertionParams.StoredPublicKey,
+                                                          makeAssertionParams.StoredSignatureCounter,
+                                                          makeAssertionParams.IsUserHandleOwnerOfCredentialIdCallback,
+                                                          _metadataService,
+                                                          makeAssertionParams.RequestTokenBindingId,
+                                                          makeAssertionParams.StoredBackupEligible,
+                                                          makeAssertionParams.SecurePaymentConfirmation,
+                                                          makeAssertionParams.StoredAaGuid,
+                                                          cancellationToken,
+                                                          _logger);
+
+            // Both the status re-check and the assertion-time metadata consistency checks need the credential's
+            // AAGUID; without it, either setting silently does nothing, which is worth telling whoever enabled it.
+            if (makeAssertionParams.StoredAaGuid is null && _metadataService is not null &&
+                (_config.RecheckMetadataStatusOnAssertion || _config.MetadataConsistencyStrictness is not MetadataConsistencyStrictness.Off))
+                _logger?.MetadataRecheckSkipped(credentialId);
+
+            _logger?.AssertionSucceeded(_config.RPID, result);
+            return result;
+        }
+        catch (Fido2VerificationException ex)
+        {
+            _logger?.AssertionRejected(_config.RPID, credentialId, ex);
+            throw;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException && _logger is not null)
+        {
+            _logger.CeremonyFailed("authentication", credentialId, ex);
+            throw;
+        }
     }
+
+    // Read without asserting the response is there: a missing one is reported by Parse, and the log should say so
+    // rather than fail with a NullReferenceException of its own.
+    private static byte[]? RawIdOf(MakeNewCredentialParams parameters) => parameters.AttestationResponse is { } response ? response.RawId : null;
+
+    private static byte[]? RawIdOf(MakeAssertionParams parameters) => parameters.AssertionResponse is { } response ? response.RawId : null;
 
     /// <summary>
     /// Builds the payload for <c>PublicKeyCredential.signalUnknownCredential()</c>, to tell an authenticator that

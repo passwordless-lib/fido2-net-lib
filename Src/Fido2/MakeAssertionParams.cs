@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 
 using Fido2NetLib.Objects;
 
@@ -40,6 +41,13 @@ public sealed class MakeAssertionParams
     /// See step 19 of <see href="https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion"/>.
     /// </remarks>
     public bool? StoredBackupEligible { get; init; }
+
+    /// <summary>
+    /// The AAGUID recorded for this credential at registration, or <see langword="null"/> if the Relying Party
+    /// does not track it. Supplying this lets <see cref="Fido2Configuration.AaguidDenyList"/> keep blocking an
+    /// authenticator model at sign-in even after it was deny-listed post-registration.
+    /// </summary>
+    public Guid? StoredAaGuid { get; init; }
 
     /// <summary>
     /// The delegate used to validate that the user handle is indeed owned of the CredentialId.

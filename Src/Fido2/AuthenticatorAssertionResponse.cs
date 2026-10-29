@@ -11,6 +11,8 @@ using Fido2NetLib.Cbor;
 using Fido2NetLib.Exceptions;
 using Fido2NetLib.Objects;
 
+using Microsoft.Extensions.Logging;
+
 namespace Fido2NetLib;
 
 /// <summary>
@@ -88,13 +90,15 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         bool? storedBackupEligible = null,
         CancellationToken cancellationToken = default)
     {
-        return VerifyAsync(options, config, storedPublicKey, storedSignatureCounter, isUserHandleOwnerOfCredId, metadataService, requestTokenBindingId, storedBackupEligible, securePaymentConfirmation: null, cancellationToken);
+        return VerifyAsync(options, config, storedPublicKey, storedSignatureCounter, isUserHandleOwnerOfCredId, metadataService, requestTokenBindingId, storedBackupEligible, securePaymentConfirmation: null, storedAaGuid: null, cancellationToken);
     }
 
     /// <summary>
     /// Implements algorithm from https://www.w3.org/TR/webauthn-3/#sctn-verifying-assertion, or, when
     /// <paramref name="securePaymentConfirmation"/> is given, the Secure Payment Confirmation variant of it from
-    /// https://www.w3.org/TR/secure-payment-confirmation/#sctn-verifying-assertion.
+    /// https://www.w3.org/TR/secure-payment-confirmation/#sctn-verifying-assertion. Additionally applies the
+    /// AAGUID-based policy in <see cref="Fido2Configuration.AaguidDenyList"/> and
+    /// <see cref="Fido2Configuration.RecheckMetadataStatusOnAssertion"/>.
     /// </summary>
     /// <param name="options">The original assertion options that was sent to the client.</param>
     /// <param name="config"></param>
@@ -105,13 +109,18 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
     /// <param name="requestTokenBindingId">DO NOT USE - Deprecated, but kept in code due to conformance testing tool</param>
     /// <param name="storedBackupEligible">
     /// The value of the BE flag recorded when this credential was registered, or <see langword="null"/> if the
-    /// Relying Party does not track backup eligibility. Backup eligibility is a permanent property of a credential,
-    /// so when a value is supplied it MUST match the BE flag of this assertion.
+    /// Relying Party does not track backup eligibility.
     /// </param>
     /// <param name="securePaymentConfirmation">What the user should have been shown, for an assertion from Secure
     /// Payment Confirmation; the client data must then be of type <c>payment.get</c> and its <c>payment</c> member must
     /// match. When <see langword="null"/>, a <c>payment.get</c> response is refused.</param>
+    /// <param name="storedAaGuid">
+    /// The AAGUID recorded for this credential at registration, or <see langword="null"/> if the Relying Party
+    /// does not track it. When supplied, it is checked against <see cref="Fido2Configuration.AaguidDenyList"/> so
+    /// a model deny-listed after registration is still blocked at sign-in.
+    /// </param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <param name="logger">Where ceremony and metadata-consistency events are logged, or <see langword="null"/> for none.</param>
     public async Task<VerifyAssertionResult> VerifyAsync(
         AssertionOptions options,
         Fido2Configuration config,
@@ -122,7 +131,9 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
         byte[]? requestTokenBindingId,
         bool? storedBackupEligible,
         SecurePaymentConfirmationExpectations? securePaymentConfirmation,
-        CancellationToken cancellationToken = default)
+        Guid? storedAaGuid,
+        CancellationToken cancellationToken = default,
+        ILogger<Fido2>? logger = null)
     {
         // SPC §9.1 step 13: the origin is whichever the relying party expects SPC to have been called from
         var expectedOrigins = securePaymentConfirmation?.Origins is { } origins
@@ -130,6 +141,27 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             : config.FullyQualifiedOrigins;
 
         BaseVerify(expectedOrigins, options.Challenge, requestTokenBindingId, config.AllowCrossOriginRequests);
+
+        if (storedAaGuid is Guid aaguid && config.AaguidDenyList.Contains(aaguid))
+            throw new Fido2VerificationException(Fido2ErrorCode.AaguidDenied, Fido2ErrorMessages.AaguidDenied);
+
+        // Both of these need the credential's AAGUID, which an assertion itself never carries (no
+        // AttestedCredentialData), so both are opt-in via storedAaGuid and a no-op without it.
+        MetadataBLOBPayloadEntry? metadataEntry = null;
+        if (storedAaGuid is Guid metadataAaGuid && metadataService != null &&
+            (config.RecheckMetadataStatusOnAssertion || config.MetadataConsistencyStrictness is not MetadataConsistencyStrictness.Off))
+        {
+            // A device revoked in MDS after this credential was registered is otherwise never re-checked, since
+            // metadata is normally only consulted during the registration ceremony.
+            metadataEntry = await metadataService.GetEntryAsync(metadataAaGuid, cancellationToken);
+
+            if (config.RecheckMetadataStatusOnAssertion)
+            {
+                var latestStatusReport = metadataEntry?.GetLatestStatusReport();
+                if (latestStatusReport != null && config.UndesiredAuthenticatorMetadataStatuses.Contains(latestStatusReport.Status))
+                    throw new UndesiredMetadataStatusFido2VerificationException(latestStatusReport);
+            }
+        }
 
         if (Raw.Type != PublicKeyCredentialType.PublicKey)
             throw new Fido2VerificationException(Fido2ErrorCode.InvalidAssertionResponse, Fido2ErrorMessages.AssertionResponseNotPublicKey);
@@ -258,6 +290,12 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
             !authData.IsBackedUp && config.BackedUpCredentialPolicy is Fido2Configuration.CredentialBackupPolicy.Required)
             throw new Fido2VerificationException(Fido2ErrorCode.BackupStateRequirementNotMet, Fido2ErrorMessages.BackupStateRequirementNotMet);
 
+        // Everything the assertion claims that the authenticator's own metadata statement can confirm or
+        // contradict, for the subset of checks that are actually possible (and actually changeable) at assertion
+        // time. See the remarks on Fido2Configuration.MetadataConsistencyStrictness for the full list and why
+        // registration-only checks (algorithm, credential ID length, discoverability) are not repeated here.
+        if (storedAaGuid is Guid consistencyAaGuid)
+            CheckMetadataConsistency(config, metadataEntry?.MetadataStatement, authData, consistencyAaGuid, logger);
 
         // 23. (Out of order: the spec processes extension outputs near the end of the ceremony, but nothing
         //     in between depends on them, and validating early fails a bad response before the signature check.)
@@ -495,6 +533,75 @@ public sealed class AuthenticatorAssertionResponse : AuthenticatorResponse
                 throw new Fido2VerificationException(
                     Fido2ErrorCode.MalformedExtensionsDetected,
                     "LargeBlob extension output contains data but neither read nor write was requested");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Runs the assertion-time checks described on <see cref="Fido2Configuration.MetadataConsistencyStrictness"/>
+    /// and enforces them at the configured strictness. A no-op when strictness is
+    /// <see cref="MetadataConsistencyStrictness.Off"/> or the AAGUID has no metadata statement.
+    /// </summary>
+    private void CheckMetadataConsistency(Fido2Configuration config, MetadataStatement? statement, AuthenticatorData authData, Guid aaguid, ILogger<Fido2>? logger)
+    {
+        var strictness = config.MetadataConsistencyStrictness;
+        if (strictness is MetadataConsistencyStrictness.Off || statement is null)
+            return;
+
+        // Same reasoning as the registration-time version of this check: weak tier because most live-BLOB
+        // statements predate multiDeviceCredentialSupport, so a missing field would otherwise reject most real,
+        // honest models by default. Unlike BE, BS is not fixed for the credential's lifetime -- a credential
+        // that was never backed up at registration can become backed up later (e.g. synced into a cloud
+        // keychain), which is exactly the scenario this check is for.
+        if (authData.IsBackedUp && statement.MultiDeviceCredentialSupport is null or "unsupported")
+        {
+            MetadataConsistency.ReportMismatch(strictness, strong: false, Fido2ErrorCode.BackupStateNotDeclaredInMetadata, Fido2ErrorMessages.BackupStateNotDeclaredInMetadata,
+                "backup-state", aaguid, $"multiDeviceCredentialSupport={statement.MultiDeviceCredentialSupport ?? "(absent)"}", logger);
+        }
+
+        if (statement.AuthenticatorGetInfo is { Transports.Length: > 0 } info && Raw.AuthenticatorAttachment is { } attachment)
+        {
+            var declaresInternal = Array.IndexOf(info.Transports, "internal") >= 0;
+            var declaresExternal = info.Transports.Any(t => t != "internal");
+
+            // "platform" is specified as meaning the authenticator is not removable from the client device --
+            // the WebAuthn analogue of the "internal" transport -- and "cross-platform" as everything else.
+            var mismatch = attachment switch
+            {
+                AuthenticatorAttachment.Platform when !declaresInternal => true,
+                AuthenticatorAttachment.CrossPlatform when !declaresExternal => true,
+                _ => false
+            };
+
+            if (mismatch)
+            {
+                MetadataConsistency.ReportMismatch(strictness, strong: false, Fido2ErrorCode.AttachmentNotDeclaredInMetadata, Fido2ErrorMessages.AttachmentNotDeclaredInMetadata,
+                    "attachment", aaguid, $"attachment={attachment.ToEnumMemberValue()}, declaredTransports={string.Join(",", info.Transports)}", logger);
+            }
+        }
+
+        if (statement.AuthenticatorGetInfo is { } infoForExtensions && Raw.ClientExtensionResults is { } clientExtensionResults)
+        {
+            var declaredExtensions = new HashSet<string>(StringComparer.Ordinal);
+            if (statement.SupportedExtensions is { } supportedExtensions)
+            {
+                foreach (var extension in supportedExtensions)
+                    declaredExtensions.Add(extension.Id);
+            }
+            if (infoForExtensions.Extensions is { } infoExtensions)
+                declaredExtensions.UnionWith(infoExtensions);
+
+            if (declaredExtensions.Count > 0)
+            {
+                var observed = MetadataConsistency.GetClientExtensionResultIdentifiers(clientExtensionResults);
+                foreach (var (webAuthnId, metadataId) in MetadataConsistency.AuthenticatorLevelExtensions)
+                {
+                    if (observed.Contains(webAuthnId) && !declaredExtensions.Contains(metadataId) && !declaredExtensions.Contains(webAuthnId))
+                    {
+                        MetadataConsistency.ReportMismatch(strictness, strong: false, Fido2ErrorCode.ExtensionNotDeclaredInMetadata, Fido2ErrorMessages.ExtensionNotDeclaredInMetadata,
+                            "extension", aaguid, $"extension={webAuthnId}", logger);
+                    }
+                }
             }
         }
     }
