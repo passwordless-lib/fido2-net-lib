@@ -1,6 +1,5 @@
 ﻿namespace Fido2NetLib.Exceptions;
 
-[Flags]
 public enum Fido2ErrorCode
 {
     Unknown = 0,
