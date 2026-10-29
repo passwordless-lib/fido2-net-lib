@@ -292,26 +292,24 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
             blobCerts = [trustedRoots[0]];
         }
 
-        var keys = new SecurityKey[blobCerts.Length];
-
-        for (int i = 0; i < blobCerts.Length; i++)
+        // x5c[0] is the certificate that actually signed the BLOB; the rest of x5c only supplies the
+        // chain up to the root. Trusting every certificate in x5c as a JWT signer would let an attacker
+        // append a self-signed certificate of their own and sign the BLOB with it.
+        var leafCert = blobCerts[0];
+        SecurityKey leafKey;
+        if (leafCert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
         {
-            var cert = blobCerts[i];
-
-            if (cert.GetECDsaPublicKey() is ECDsa ecdsaPublicKey)
-            {
-                keys[i] = new ECDsaSecurityKey(ecdsaPublicKey);
-            }
-            else if (cert.GetRSAPublicKey() is RSA rsaPublicKey)
-            {
-                keys[i] = new RsaSecurityKey(rsaPublicKey);
-            }
-            else
-            {
-                throw new Fido2MetadataException("Unknown certificate algorithm");
-            }
+            leafKey = new ECDsaSecurityKey(ecdsaPublicKey);
         }
-        var blobPublicKeys = keys.ToArray(); // defensive copy
+        else if (leafCert.GetRSAPublicKey() is RSA rsaPublicKey)
+        {
+            leafKey = new RsaSecurityKey(rsaPublicKey);
+        }
+        else
+        {
+            throw new Fido2MetadataException("Unknown certificate algorithm");
+        }
+        var blobPublicKeys = new SecurityKey[] { leafKey };
 
         var certChain = new X509Chain();
         certChain.ChainPolicy.ExtraStore.AddRange(trustedRoots.ToArray());
@@ -365,6 +363,13 @@ public sealed class Fido2MetadataServiceRepository(IHttpClientFactory httpClient
         {
             if (!pinnedToFidoRoot)
                 throw new Fido2VerificationException("The MDS BLOB signing certificate chain does not terminate at the FIDO Alliance root");
+
+            // A 1-element chain means blobCerts[0] (the cert whose key we trusted above) built a trivial
+            // chain to itself -- i.e. the "signing cert" the caller supplied IS the pinned root. Reject
+            // that degenerate case rather than only relying on pinnedToFidoRoot, which a self-signed root
+            // reused as the leaf would otherwise satisfy.
+            if (certChain.ChainElements.Count < 2)
+                throw new Fido2VerificationException("The MDS BLOB signing certificate chain is too short to be a valid chain to the FIDO Alliance root");
         }
         else
         {

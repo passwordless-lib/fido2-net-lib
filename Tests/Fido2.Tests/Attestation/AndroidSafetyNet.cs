@@ -117,6 +117,93 @@ public class AndroidSafetyNet : Fido2Tests.Attestation
         Assert.Equal([AuthenticatorTransport.Internal], credential.Transports);
     }
 
+    // Every certificate in x5c was trusted as a possible JWS signer, not just x5c[0] (the attestation cert
+    // that attest.android.com + the chain-to-Google-root checks actually inspect). x5c[0] here is the
+    // legitimate, correctly-chained attestation cert; the response is instead signed by an unrelated,
+    // attacker-controlled key whose self-signed certificate rides along in x5c[1]. That must be rejected.
+    [Fact]
+    public async Task TestAndroidSafetyNet_RejectsJwtSignedByANonLeafX5cCertificate()
+    {
+        var (type, alg, curve) = Fido2Tests._validCOSEParameters[0];
+        X509Certificate2 root, attestnCert;
+        DateTimeOffset notBefore = DateTimeOffset.UtcNow;
+        DateTimeOffset notAfter = notBefore.AddDays(2);
+        var attDN = new X500DistinguishedName("CN=attest.android.com, OU=SafetyNet Authenticator Attestation, O=FIDO2-NET-LIB, C=US");
+
+        using var ecdsaRoot = ECDsa.Create();
+        var rootRequest = new CertificateRequest(rootDN, ecdsaRoot, HashAlgorithmName.SHA256);
+        rootRequest.CertificateExtensions.Add(caExt);
+
+        ECCurve eCCurve = ECCurve.NamedCurves.nistP256;
+        using (root = rootRequest.CreateSelfSigned(notBefore, notAfter))
+        using (var ecdsaAtt = ECDsa.Create(eCCurve))
+        using (var ecdsaAttacker = ECDsa.Create(eCCurve))
+        {
+            _safetyNetRootRawData = root.RawData;
+            var attRequest = new CertificateRequest(attDN, ecdsaAtt, HashAlgorithmName.SHA256);
+            var serial = RandomNumberGenerator.GetBytes(12);
+
+            using (X509Certificate2 publicOnly = attRequest.Create(root, notBefore, notAfter, serial))
+            {
+                attestnCert = publicOnly.CopyWithPrivateKey(ecdsaAtt);
+            }
+
+            var attackerRequest = new CertificateRequest("CN=Attacker", ecdsaAttacker, HashAlgorithmName.SHA256);
+            using var attackerCert = attackerRequest.CreateSelfSigned(notBefore, notAfter);
+
+            var ecParams = ecdsaAtt.ExportParameters(true);
+
+            var cpk = new CborMap {
+                { COSE.KeyCommonParameter.KeyType, type },
+                { COSE.KeyCommonParameter.Alg, alg },
+                { COSE.KeyTypeParameter.X, ecParams.Q.X },
+                { COSE.KeyTypeParameter.Y, ecParams.Q.Y },
+                { COSE.KeyTypeParameter.Crv, curve }
+            };
+
+            _credentialPublicKey = new CredentialPublicKey(cpk);
+
+            var attToBeSigned = _attToBeSignedHash(HashAlgorithmName.SHA256);
+
+            var claims = new[]
+            {
+                new Claim("nonce", Convert.ToBase64String(attToBeSigned) , ClaimValueTypes.String),
+                new Claim("ctsProfileMatch", bool.TrueString, ClaimValueTypes.Boolean),
+                new Claim("timestampMs", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), ClaimValueTypes.Integer64)
+            };
+
+            var tokenHandler = new JsonWebTokenHandler();
+
+            // x5c = [legitimate attestnCert, attacker's self-signed cert], but signed by the attacker's key.
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                AdditionalHeaderClaims = new Dictionary<string, object>()
+                {
+                    {
+                        JwtHeaderParameterNames.X5c, new[] {
+                            Convert.ToBase64String(attestnCert.RawData),
+                            Convert.ToBase64String(attackerCert.RawData)
+                        }
+                    }
+                },
+                Subject = new ClaimsIdentity(claims),
+                SigningCredentials = new SigningCredentials(new ECDsaSecurityKey(ecdsaAttacker), SecurityAlgorithms.EcdsaSha256Signature)
+            };
+
+            string securityToken = tokenHandler.CreateToken(tokenDescriptor);
+
+            _attestationObject.Set("attStmt", new CborMap {
+                { "ver", "F1D0" },
+                { "response", Encoding.UTF8.GetBytes(securityToken) }
+            });
+        }
+
+        AndroidSafetyNetRootOverride = X509CertificateHelper.CreateFromRawData(_safetyNetRootRawData);
+
+        var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => MakeAttestationResponseAsync());
+        Assert.Equal("SafetyNet response security token validation failed", ex.Message);
+    }
+
     [Fact]
     public void BundledGtsRootR1_HasExpectedThumbprint()
     {

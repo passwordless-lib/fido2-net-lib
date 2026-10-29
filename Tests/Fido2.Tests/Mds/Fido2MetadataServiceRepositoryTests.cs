@@ -1,4 +1,5 @@
 ﻿using System.Buffers.Text;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -375,12 +376,16 @@ public class Fido2MetadataServiceRepositoryTests
 
     private static string ToBase64Url(byte[] data) => Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-    private static string BuildBlobJwt(X509Certificate2 leaf, ECDsa leafKey, string payloadJson)
+    private static string BuildBlobJwt(X509Certificate2 leaf, ECDsa leafKey, string payloadJson) =>
+        BuildBlobJwt([leaf], leafKey, payloadJson);
+
+    private static string BuildBlobJwt(X509Certificate2[] x5c, ECDsa signingKey, string payloadJson)
     {
         // x5c entries are standard base64 per RFC 7515; the header/payload segments are base64url.
-        string header = $"{{\"alg\":\"ES256\",\"x5c\":[\"{Convert.ToBase64String(leaf.RawData)}\"]}}";
+        string x5cJson = string.Join(",", x5c.Select(c => $"\"{Convert.ToBase64String(c.RawData)}\""));
+        string header = $"{{\"alg\":\"ES256\",\"x5c\":[{x5cJson}]}}";
         string signingInput = ToBase64Url(Encoding.UTF8.GetBytes(header)) + "." + ToBase64Url(Encoding.UTF8.GetBytes(payloadJson));
-        byte[] signature = leafKey.SignData(Encoding.UTF8.GetBytes(signingInput), HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+        byte[] signature = signingKey.SignData(Encoding.UTF8.GetBytes(signingInput), HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
         return signingInput + "." + ToBase64Url(signature);
     }
 
@@ -643,6 +648,50 @@ public class Fido2MetadataServiceRepositoryTests
 
             var ex = await Assert.ThrowsAsync<Fido2VerificationException>(() => repository.GetBLOBAsync());
             Assert.Equal("Failed to validate cert chain while parsing BLOB", ex.Message);
+        }
+    }
+
+    // GHSA advisory: every certificate in x5c was trusted as a possible JWS signer, not just x5c[0] (the cert
+    // that is actually supposed to have signed the BLOB). An attacker who can serve/intercept the BLOB response
+    // could append their own self-signed certificate to x5c and sign arbitrary metadata with its key. x5c[0]
+    // here is the legitimate leaf; the BLOB is instead signed by an unrelated, attacker-controlled key whose
+    // certificate rides along in x5c[1]. That must be rejected regardless of chain/trust-store state.
+    [Fact]
+    public async Task DeserializeAndValidateBlob_RejectsJwtSignedByANonLeafX5cCertificate()
+    {
+        var (root, leaf, _) = BuildChain();
+        using var attackerKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attackerCert = new CertificateRequest("CN=Attacker", attackerKey, HashAlgorithmName.SHA256)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+        using (root)
+        using (leaf)
+        using (attackerCert)
+        {
+            string jwt = BuildBlobJwt([leaf, attackerCert], attackerKey, ValidBlobPayload);
+            var repository = new Fido2MetadataServiceRepository(new ThrowingHttpClientFactory());
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+                () => repository.DeserializeAndValidateBlobAsync(jwt, [root], CancellationToken.None));
+            Assert.Equal("rawBLOBJwt is not valid", ex.Message);
+        }
+    }
+
+    [Fact]
+    public async Task ConformanceDeserializeAndValidateBlob_RejectsJwtSignedByANonLeafX5cCertificate()
+    {
+        var (_, leaf, _) = BuildChain();
+        using var attackerKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var attackerCert = new CertificateRequest("CN=Attacker", attackerKey, HashAlgorithmName.SHA256)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+        using (leaf)
+        using (attackerCert)
+        {
+            string jwt = BuildBlobJwt([leaf, attackerCert], attackerKey, ValidBlobPayload);
+            var repository = new ConformanceMetadataRepository(null, "http://localhost");
+
+            var ex = await Assert.ThrowsAsync<Fido2VerificationException>(
+                () => repository.DeserializeAndValidateBlobAsync(jwt, CancellationToken.None));
+            Assert.Equal("rawBLOBJwt is not valid", ex.Message);
         }
     }
 }
