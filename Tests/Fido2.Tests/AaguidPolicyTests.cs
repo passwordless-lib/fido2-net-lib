@@ -197,7 +197,7 @@ public class AaguidPolicyTests : Fido2Tests.Attestation
         request.CertificateExtensions.Add(notCAExt);
         request.CertificateExtensions.Add(idFidoGenCeAaGuidExt);
 
-        using var attestationCertificate = request.Create(root, DateTimeOffset.UtcNow.AddMinutes(-5), DateTimeOffset.UtcNow.AddDays(2), RandomNumberGenerator.GetBytes(12));
+        using var attestationCertificate = request.Create(root, DateTimeOffset.UtcNow.AddMinutes(-5), new DateTimeOffset(root.NotAfter), RandomNumberGenerator.GetBytes(12));
 
         _attestationObject = new CborMap { { "fmt", "packed" } };
         _attestationObject.Add("attStmt", new CborMap {
